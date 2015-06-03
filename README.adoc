@@ -1,0 +1,8 @@
+This repository contains scripts used by OpenShift Operations for various
+purposes, many of which do not pertain directly to management of OpenShift
+itself.
+
+Code here may be under heavy development, and none of these scripts are
+officially supported by Red Hat.  Use at your own risk.
+
+The repository layout is designed for use with http://rm-rf.ca/tito/[Tito]
