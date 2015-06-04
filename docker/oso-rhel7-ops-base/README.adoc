@@ -1,0 +1,44 @@
+= oso-rhel7-ops-base Docker Container
+
+The purpose of this container is to be a base container for other OpenShift Operations containers.
+
+It contains the base utilities, configuration and conveniences that we expect all operations containers to have.
+
+
+== Setup
+This container expects a secrets directory to be setup with a structure like:
+
+[source]
+----
+/etc/pki/entitlement
+└── yum
+    ├── certs
+    │   ├── client-cert.pem
+    │   └── client-key.pem
+    ├── repos
+    │   ├── oo-ops-rpm.repo
+    │   ├── oso-rhui-rhel-7-extras.repo
+    │   └── oso-rhui-rhel-7-server.repo
+    └── rpm-gpg
+        └── RPM-GPG-KEY-redhat-release
+----
+
+== Build
+
+To build this container, simply execute the build script.
+
+.Example:
+[source,bash]
+----
+./build.sh
+----
+
+== Run
+
+To run this container, simply execute the run script.
+
+.Example:
+[source,bash]
+----
+./run.sh
+----
