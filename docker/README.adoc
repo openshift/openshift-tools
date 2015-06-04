@@ -1,0 +1,32 @@
+= OpenShift Online Operations Docker Containers
+
+This directory contains the OpenShift Online Operations docker containers.
+
+These containers are used for various things, some are specific just to OpenShift Online, but in an effort to be as open as possible, we're sharing these here.
+
+We hope you find them useful.
+
+== Setup
+All containers in this directory expect a secrets directory to be setup with a structure like:
+
+[source]
+----
+/etc/pki/entitlement
+└── yum
+    ├── certs
+    │   ├── client-cert.pem
+    │   └── client-key.pem
+    ├── repos
+    │   ├── oo-ops-rpm.repo
+    │   ├── oso-rhui-rhel-7-extras.repo
+    │   └── oso-rhui-rhel-7-server.repo
+    └── rpm-gpg
+        └── RPM-GPG-KEY-redhat-release
+----
+
+== Structure
+
+.All containers in this directory should have the following files:
+* README.adoc - Information specific to the container
+* build.sh - a script to make building the container easy
+* run.sh - a script to make running the container easy

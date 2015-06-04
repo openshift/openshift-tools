@@ -1,0 +1,40 @@
+---
+- debug: var=ctp_template
+
+- name: Create Template
+  zbxapi:
+    server: "{{ ctp_zserver }}"
+    user: "{{ ctp_zuser }}"
+    password: "{{ ctp_zpassword }}"
+    zbx_class: Template
+    state: present
+    params: "{{ ctp_template.params }}"
+  register: ctp_created_templates
+
+- debug: var=ctp_created_templates
+
+- name: Create Items
+  zbxapi:
+    server: "{{ ctp_zserver }}"
+    user: "{{ ctp_zuser }}"
+    password: "{{ ctp_zpassword }}"
+    zbx_class: Item
+    state: present
+    params: "{{ item | oo_set_zbx_item_hostid(ctp_created_templates.results) }}"
+  with_items: ctp_template.zitems
+  register: ctp_created_items
+
+- debug: var=ctp_created_items
+
+- name: Create Triggers
+  zbxapi:
+    server: "{{ ctp_zserver }}"
+    user: "{{ ctp_zuser }}"
+    password: "{{ ctp_zpassword }}"
+    zbx_class: Trigger
+    state: present
+    params: "{{ item }}"
+  with_items: ctp_template.ztriggers
+  register: ctp_created_triggers
+
+- debug: var=ctp_created_triggers
