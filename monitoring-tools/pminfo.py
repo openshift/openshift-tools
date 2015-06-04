@@ -121,8 +121,6 @@ class PMInfo(object):
         inst_line = re.compile(r'\[\d+ or')
 
         for metric, metric_value in self.metric_dict.items():
-            #if 'No value(s) available!' in metric_value:
-            #    results[metric] = None
             if metric_value.startswith('    value'):
                 metric_value = metric_value.strip()
                 value = metric_value.split()[1]
