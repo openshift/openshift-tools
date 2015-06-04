@@ -1,0 +1,10 @@
+idp_url: 'https://idp.redhat.com/idp/authUser'
+sp_url:  'https://gss.my.salesforce.com'
+test_url: 'https://unified.gsslab.rdu2.redhat.com/user?where=%28sbrName%20is%20%22Shift%22%20or%20roleSbrName%20is%20%22Shift%22%29'
+auth_params:
+  j_username: 'rhn-support-XXXXXX'
+  j_password: 's3kr1t'
+  redirect:   'https://gss.my.salesforce.com'
+sso_cookie_name: 'rh_sso'
+cookie_jar_path: 'cookiejar'
+
