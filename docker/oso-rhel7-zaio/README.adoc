@@ -1,9 +1,6 @@
-= oso-rhel7-ops-base Docker Container
+= oso-rhel7-zaio Docker Container
 
-The purpose of this container is to be a base container for other OpenShift Operations containers.
-
-It contains the base utilities, configuration and conveniences that we expect all operations containers to have.
-
+This container is an zabbix all in one (zaio) installation. The is normally used to develop and test against.
 
 == Setup
 See https://github.com/openshift/openshift-ops/blob/pr/docker/README.adoc#setup[general setup].
