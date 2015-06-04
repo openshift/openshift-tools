@@ -10,23 +10,40 @@
 
     Examples:
 
-    Collect known values:
+    # Collect known values:
 
-    p = PMINFOParser()
+    import pminfo
+
     metrics = ['quota.project.files.soft', 'kernel.all.load',
           'kernel.percpu.interrupts.THR', 'kernel.all.cpu.irq.hard']
-    metric_dict = p.PPparse(metrics)
 
-    Collect all values:
+    metric_dict = pminfo.get_metrics(metrics)
 
-    p = PMINFOParser()
-    metric_dict = p.PPparse()
+    # Collect all values:
+
+    metric_dict = pminfo.get_metrics()
 '''
 
 import subprocess
 import re
 
-class PMINFOParser(object):
+def get_metrics(metrics=None):
+    '''
+        docstring placeholder
+    '''
+    pminfo = PMInfo()
+
+    if metrics == None:
+        metrics = pminfo.get_pminfo_metrics()
+
+    pminfo.fetch_pminfo_metrics(metrics)
+    pminfo.build_metric_regex(metrics)
+    pminfo.create_metric_dict()
+    pminfo.parse_pminfo()
+
+    return pminfo.metric_dict
+
+class PMInfo(object):
     '''
         PMINFOParser perfomant Performance CoPilot pminfo output parser
     '''
@@ -35,20 +52,6 @@ class PMINFOParser(object):
         self.data = None
         self.metric_regex = None
         self.metric_dict = {}
-
-    def parse(self, metrics=None):
-        '''
-            docstring placeholder
-        '''
-        if metrics == None:
-            metrics = self.get_pminfo_metrics()
-
-        self.fetch_pminfo_metrics(metrics)
-        self.build_metric_regex(metrics)
-        self.create_metric_dict()
-        self.parse_pminfo()
-
-        return self.metric_dict
 
     def metric_print(self):
         '''
@@ -118,9 +121,9 @@ class PMINFOParser(object):
         inst_line = re.compile(r'\[\d+ or')
 
         for metric, metric_value in self.metric_dict.items():
-            if 'No value(s) available!' in metric_value:
-                results[metric] = None
-            elif metric_value.startswith('    value'):
+            #if 'No value(s) available!' in metric_value:
+            #    results[metric] = None
+            if metric_value.startswith('    value'):
                 metric_value = metric_value.strip()
                 value = metric_value.split()[1]
                 results[metric] = value
@@ -139,7 +142,7 @@ class PMINFOParser(object):
                     metric_name = metric + "." + metric_subname
                     results[metric_name] = metric_value
             else:
-                print "PMINFOParser: Uunknown metric key and value: %s : %s" \
+                print "PMINFOParser: Unknown metric key and value: %s : %s" \
                       % (metric, metric_value)
 
         self.metric_dict = results
