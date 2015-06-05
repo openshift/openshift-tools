@@ -29,7 +29,9 @@ import re
 
 def get_metrics(metrics=None):
     '''
-        docstring placeholder
+    This function can be used to do the heavy lifting.
+    Pass in a list of metrics that will be returned.
+    If nothing is passed in, all metric will be returned
     '''
     pminfo = PMInfo()
 
@@ -45,7 +47,7 @@ def get_metrics(metrics=None):
 
 class PMInfo(object):
     '''
-        PMINFOParser perfomant Performance CoPilot pminfo output parser
+    PMINFOParser perfomant Performance CoPilot pminfo output parser
     '''
 
     def __init__(self):
@@ -63,7 +65,7 @@ class PMInfo(object):
 
     def build_metric_regex(self, metrics):
         '''
-        build the metric regex
+        Build the metric regex
         '''
         joined_metrics = '|'.join(metrics)
         metric_str = '\n(' + joined_metrics + ')\n'
@@ -71,7 +73,7 @@ class PMInfo(object):
 
     def get_pminfo_metrics(self):
         '''
-        get a list of metrics from pminfo.  Return them in a list
+        Get a list of metrics from pminfo.  Return them in a list
         '''
         metrics = self.run_pminfo().strip().split('\n')
         metrics = [s.strip() for s in metrics]
@@ -79,13 +81,15 @@ class PMInfo(object):
         return  metrics
 
     def fetch_pminfo_metrics(self, metrics):
-        ''' blah
+        '''
+        This function calls the pminfo function with the -f swith.
+        The -f switch 'fetches' the values from pminfo.
         '''
         self.data = self.run_pminfo(['-f'], metrics)
 
     def run_pminfo(self, args=None, metric_keys=None):
         '''
-            function to run pminfo command with a list of metrics
+        Function to run pminfo command with a list of metrics
         '''
         cmd = ['/usr/bin/pminfo']
 
@@ -100,7 +104,7 @@ class PMInfo(object):
 
     def create_metric_dict(self):
         '''
-        building a dict
+        Buile a metci dict that will be used to collect the metrics and values
 
         '''
         split_data = re.split(self.metric_regex, self.data)
@@ -114,7 +118,7 @@ class PMInfo(object):
 
     def parse_pminfo(self):
         '''
-            function to parse pminfo and return a dict of metric: metric_value
+        Function to parse pminfo and return a dict of { metric: metric_value(s) }
         '''
 
         results = {}
