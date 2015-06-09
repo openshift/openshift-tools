@@ -1,7 +1,10 @@
 #!/usr/bin/python
+# vim: expandtab:tabstop=4:shiftwidth=4
+
 '''
-PMINFO Python implementation
+PMInfo Python implementation
 '''
+
 #
 # Copyright (C) 2014 Red Hat.
 #
@@ -23,7 +26,7 @@ import sys
 from pcp import pmapi
 import re
 
-class PMINFO(object):
+class PMInfo(object):
     """ Looks up values from pcp through the pmapi.
     """
 
@@ -117,7 +120,7 @@ def get_metrics(metrics=None):
     '''Get a list of metrics and query pcp for their values
     '''
     try:
-        pcp = PMINFO()
+        pcp = PMInfo()
         pcp.connect()
         return pcp.execute(metrics)
     except pmapi.pmErr as error:
