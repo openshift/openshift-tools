@@ -1,6 +1,7 @@
 #!/usr/bin/env python
+# vim: expandtab:tabstop=4:shiftwidth=4
 '''
-    PMINFOParser perfomant Performance CoPilot pminfo output parser
+    PMInfo - Get metrics from Performance CoPilot
 
     This will parse the output of pminfo and return a dictionary of
     the metrics and their values
@@ -36,7 +37,7 @@ def get_metrics(metrics=None):
     pminfo = PMInfo()
 
     if metrics == None:
-        metrics = pminfo.get_pminfo_metrics()
+        metrics = PMInfo.get_pminfo_metrics()
 
     pminfo.fetch_pminfo_metrics(metrics)
     pminfo.build_metric_regex(metrics)
@@ -71,11 +72,12 @@ class PMInfo(object):
         metric_str = '\n(' + joined_metrics + ')\n'
         self.metric_regex = re.compile(metric_str)
 
-    def get_pminfo_metrics(self):
+    @staticmethod
+    def get_pminfo_metrics():
         '''
         Get a list of metrics from pminfo.  Return them in a list
         '''
-        metrics = self.run_pminfo().strip().split('\n')
+        metrics = PMInfo.run_pminfo().strip().split('\n')
         metrics = [s.strip() for s in metrics]
 
         return  metrics
@@ -85,9 +87,10 @@ class PMInfo(object):
         This function calls the pminfo function with the -f swith.
         The -f switch 'fetches' the values from pminfo.
         '''
-        self.data = self.run_pminfo(['-f'], metrics)
+        self.data = PMInfo.run_pminfo(['-f'], metrics)
 
-    def run_pminfo(self, args=None, metric_keys=None):
+    @staticmethod
+    def run_pminfo(args=None, metric_keys=None):
         '''
         Function to run pminfo command with a list of metrics
         '''
