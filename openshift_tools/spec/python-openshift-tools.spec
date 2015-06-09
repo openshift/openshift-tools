@@ -20,7 +20,7 @@ OpenShift Tools Python Package
 %install
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools
 
-cp -p __init__.py %{buildroot}%{python_sitelib}/openshift_tools
+cp -p *.py %{buildroot}%{python_sitelib}/openshift_tools/
 
 
 %files
