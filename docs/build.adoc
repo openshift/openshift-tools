@@ -1,0 +1,57 @@
+# openshift-tools RPM Build instructions
+We use tito to make building and tracking revisions easy.
+
+For more information on tito, please see the http://rm-rf.ca/tito[Tito home page]
+
+
+## Build python-openshift-tools RPM
+. Change into openshift-tools/openshift_tools/spec directory
++
+----
+cd openshift-tools/openshift_tools/spec
+----
++
+. Build a test package (no tagging needed)
++
+----
+tito build --test --rpm
+----
++
+. Tag a new build (bumps version number and adds log entries)
++
+----
+tito tag
+----
++
+. Follow the on screen tito instructions to push the tags
+. Build a new package based on the latest tag information
++
+----
+tito build --rpm
+----
+
+## Build python-openshift-tools-monitoring RPM
+. Change into openshift-tools/openshift_tools/monitoring directory
++
+----
+cd openshift-tools/openshift_tools/monitoring
+----
++
+. Build a test package (no tagging needed)
++
+----
+tito build --test --rpm
+----
++
+. Tag a new build (bumps version number and adds log entries)
++
+----
+tito tag
+----
++
+. Follow the on screen tito instructions to push the tags
+. Build a new package based on the latest tag information
++
+----
+tito build --rpm
+----
