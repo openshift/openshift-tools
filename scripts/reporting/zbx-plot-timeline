@@ -19,7 +19,7 @@
 
 from __future__ import print_function, division
 import argparse
-from plot_common import ZabbixPlot
+from openshift_tools.reporting.zabbixplot import ZabbixPlot
 
 parser = argparse.ArgumentParser(description='Plots a timeline of events for hosts in a group')
 
