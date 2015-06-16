@@ -18,10 +18,14 @@
 
 """Plots a bar chart from aggregated event occurences"""
 
-def main():
+def zbx_plot_aggregate():
     """main"""
+    # Reason: Disable import checking for third party libraries
+    # Status: permanently disabled
+    # pylint: disable=import-error
     import argparse
-    from openshift_tools.reporting.zabbixplot import ZabbixPlot
+    from pyzabbix import ZabbixAPI
+    from openshift_tools.reporting.zabbixplot import ZabbixPlot, ZabbixTimespan
 
     parser = argparse.ArgumentParser(description='Plots a bar chart from aggregated event occurences')
 
@@ -32,26 +36,26 @@ def main():
     parser.add_argument('-t', '--trigger', required=True,
                         help='trigger description (variables in the description will not be filled in)')
     parser.add_argument('-d', '--days', default=7, type=int, help='days of data to retrieve (default: 7)')
-    parser.add_argument('-n', '--num-hosts', type=int, help='number of hosts contained in host group. the default is '
-                        'the number of hosts seen in the returned data, but this number will exclude hosts with no'
-                        'events.')
     parser.add_argument('-c', '--periods', type=int, help='number of periods to display (default: number of days)')
     parser.add_argument('-l', '--limit', default=25000, type=int, help='maximum number of events to fetch '
                         '(default: 25000)')
 
     args = parser.parse_args()
 
+    zapi = ZabbixAPI(args.server)
+    zapi.login(args.username, args.password)
+
+    timespan = ZabbixTimespan(args.days)
+
     plot = ZabbixPlot(
-        server=args.server,
-        username=args.username,
-        password=args.password,
+        zapi=zapi,
         group=args.group,
         trigger=args.trigger,
-        days=args.days,
+        timespan=timespan,
         limit=args.limit
     )
 
-    plot.plot_aggregate(args.periods, args.num_hosts)
+    plot.plot_aggregate(args.periods or args.days)
 
 if __name__ == "__main__":
-    main()
+    zbx_plot_aggregate()

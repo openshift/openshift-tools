@@ -29,7 +29,6 @@ from itertools import groupby
 from matplotlib import pyplot as plt
 from matplotlib import dates as mdates, ticker
 import numpy as np
-from pyzabbix import ZabbixAPI
 
 def get_period(timestamp, periods):
     """Gets the period a timestamp is in (the one to the left)"""
@@ -51,6 +50,7 @@ def get_next_period(timestamp, periods):
 class ZabbixTimespan(object):
     """Data class for holding timespan-related objects"""
     def __init__(self, days):
+        # TODO: Allow arbitrary end time
         self.time_start = datetime.datetime.now() - datetime.timedelta(days=days)
         self.time_end = datetime.datetime.now()
         self.timestamp_start = int(self.time_start.strftime("%s"))
@@ -61,50 +61,50 @@ class ZabbixTimespan(object):
 class ZabbixPlot(object):
     """Contains utilities for plotting data from Zabbix API"""
 
+    # Reason: All of these parameters are needed
+    # Status: permanently disabled
+    # pylint: disable=too-many-arguments
+    def __init__(self, zapi, group, trigger, timespan, limit):
+        self.zapi = zapi
+        self.group = group
+        self.trigger = trigger
+        self.timespan = timespan
+        self.limit = limit
+
+        self.events = None
+        self.num_hosts = None
+
     def get_event_data(self):
         """Retrieve event data from Zabbix API"""
-        # Using a double negative because empty arrays are truthy
-        if self.events is not False:
-            return self.events
         # Warning: If there are variables in the description, they won't be filled in
         triggers = self.zapi.trigger.get(group=self.group, search={"description": self.trigger}, selectHosts="extend")
         triggerids = [t["triggerid"] for t in triggers]
         self.events = self.zapi.event.get(time_from=self.timespan.timestamp_start,
-                                          time_till=self.timespan.timestamp_end, triggerids=triggerids,
+                                          time_till=self.timespan.timestamp_end, objectids=triggerids,
                                           limit=self.limit, selectHosts="extend", sortfield="clock", sortorder="DESC")
         if len(self.events) >= self.limit:
             print("Warning! Data has been truncated by the result limit. The graph will be inaccurate.",
                   file=sys.stderr)
 
-    # Reason: All of these parameters are needed
-    # Status: permanently disabled
-    # pylint: disable=too-many-arguments
-    def __init__(self, server, username, password, group, trigger, days, limit):
-        self.group = group
-        self.trigger = trigger
-        self.days = days
-        self.limit = limit
-
-        self.timespan = ZabbixTimespan(days)
-
-        self.zapi = ZabbixAPI(server)
-        self.zapi.login(username, password)
-        self.events = False
+    def get_num_hosts_in_group(self, group_name):
+        """Retrieve the number of hosts in a hostgroup from Zabbix API"""
+        self.num_hosts = int(self.zapi.hostgroup.get(filter={"name": group_name}, selectHosts="count")[0]["hosts"])
 
     @staticmethod
     def _calculate_event_downtime(event_value, event_clock, current_period_end, down):
         """Calculate the amount of downtime or uptime caused by an event"""
-        deltatime = 0
         # TODO: This will ignore events that start before the data
         if event_value != "0":
             # Add downtime, assuming this may be the last event
-            deltatime = current_period_end - event_clock
-            down = True
-        elif event_value == "0" and down:
+            return True, current_period_end - event_clock
+
+        if event_value == "0" and down:
             # Remove downtime, compensating for recovered downtime
-            deltatime = current_period_end - event_clock
-            down = False
-        return down, deltatime
+            return False, current_period_end - event_clock
+
+        # Unchanged status of "up", and we're not recovering from downtime
+        # Last event covered this time, so return a delta of zero
+        return False, 0
 
     def _calculate_total_downtime(self, periods):
         """Calculates the total amount of downtime divided into periods (and number of nodes it found)"""
@@ -116,37 +116,37 @@ class ZabbixPlot(object):
         for period in periods:
             downtime[period] = 0  # Yay
 
-        nodes = set()
         for period_id, period_events in groupby(self.events, period_func):
             # Loop through periods
             current_period_end = get_next_period(period_id, periods)
-            for host_id, host_events in groupby(period_events, host_func):
+            for _, host_events in groupby(period_events, host_func):
                 # Loop through hosts in period
-                nodes.add(host_id)
-                down = False
+                is_down = False
                 for event in host_events:
                     # Loop through events from this host
-                    down, deltatime = self._calculate_event_downtime(event["value"], int(event["clock"]),
-                                                                     current_period_end, down)
+                    is_down, deltatime = self._calculate_event_downtime(event["value"], int(event["clock"]),
+                                                                        current_period_end, is_down)
                     downtime[period_id] += deltatime
-        return downtime, len(nodes)
+        return downtime
 
-    def plot_aggregate(self, periods, num_hosts):
+    def plot_aggregate(self, period_count):
         """Plots a bar chart from aggregated event occurences"""
-        self.get_event_data()
+        if self.events is None:
+            self.get_event_data()
+        if self.num_hosts is None:
+            self.get_num_hosts_in_group(self.group)
 
         # Set up periods
-        period_count = (periods or self.days) + 1  # One more for the ending pseudo-period
+        period_count += 1  # One more for the ending pseudo-period
         periods = np.linspace(self.timespan.timestamp_start, self.timespan.timestamp_end, num=period_count,
                               endpoint=True)
         period_seconds = (self.timespan.timestamp_end - self.timespan.timestamp_start) / (period_count - 1)
 
-        downtime, nodes = self._calculate_total_downtime(periods)
-        node_count = num_hosts or nodes
+        downtime = self._calculate_total_downtime(periods)
 
         # Make downtime relative and a percentage
         downtime_list = sorted(downtime.items(), key=itemgetter(0))
-        rel_downtime = np.array([i[1] / node_count / period_seconds * 100 for i in downtime_list])
+        rel_downtime = np.array([i[1] / self.num_hosts / period_seconds * 100 for i in downtime_list])
         period2mdate = lambda p: mdates.date2num(datetime.datetime.fromtimestamp(p))
         times = np.array([period2mdate(i[0]) for i in downtime_list])
 
@@ -165,7 +165,7 @@ class ZabbixPlot(object):
         plt.ylabel("Percent time in problem state")
 
         plt.title("Average percent time in \"" + self.trigger + "\" problem state over " +
-                  str(node_count) + " nodes from " + self.timespan.time_start.strftime("%a, %b %d %H:%M") +
+                  str(self.num_hosts) + " nodes from " + self.timespan.time_start.strftime("%a, %b %d %H:%M") +
                   " to " + self.timespan.time_end.strftime("%a, %b %d %H:%M"))
         plt.tight_layout()
 
@@ -173,7 +173,8 @@ class ZabbixPlot(object):
 
     def plot_timeline(self):
         """Plots a timeline of events for hosts in a group"""
-        self.get_event_data()
+        if self.events is None:
+            self.get_event_data()
 
         host_func = lambda event: event["hosts"][0]["name"]
         combo_func = lambda event: (event["hosts"][0]["name"], event["clock"])
@@ -191,18 +192,18 @@ class ZabbixPlot(object):
                 if not plotted:
                     # TODO: This will ignore events that start before the data
                     # Plot first left gray bar
-                    axis.barh(len(hosts), self.timespan.mtime_end - self.timespan.mtime_start,
-                              left=self.timespan.mtime_start, height=0.8, alpha=1, color="0.95", linewidth=0)
                     hosts.append(event["hosts"][0]["host"].replace(".rhcloud.com", ""))
+                    axis.barh(len(hosts) - 1, self.timespan.mtime_end - self.timespan.mtime_start,
+                              left=self.timespan.mtime_start, height=0.8, alpha=1, color="0.95", linewidth=0, zorder=0)
                     plotted = True
                 timestamp = mdates.date2num(datetime.datetime.fromtimestamp(int(event["clock"])))
                 if event["value"] != "0":
                     # Event is in error state; plot event
-                    axis.barh(len(hosts), self.timespan.mtime_end - timestamp, left=timestamp, height=0.8, alpha=1,
+                    axis.barh(len(hosts) - 1, self.timespan.mtime_end - timestamp, left=timestamp, height=0.8, alpha=1,
                               color="r", linewidth=0)
-                elif event["value"] == "0":
+                else:
                     # Plot gray bar
-                    axis.barh(len(hosts), self.timespan.mtime_end - timestamp, left=timestamp, height=0.8, alpha=1,
+                    axis.barh(len(hosts) - 1, self.timespan.mtime_end - timestamp, left=timestamp, height=0.8, alpha=1,
                               color="0.95", linewidth=0)
 
         # Set x axis bounds

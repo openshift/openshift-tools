@@ -18,10 +18,14 @@
 
 """Plots a timeline of events for hosts in a group"""
 
-def main():
+def zbx_plot_timeline():
     """main"""
+    # Reason: Disable import checking for third party libraries
+    # Status: permanently disabled
+    # pylint: disable=import-error
     import argparse
-    from openshift_tools.reporting.zabbixplot import ZabbixPlot
+    from pyzabbix import ZabbixAPI
+    from openshift_tools.reporting.zabbixplot import ZabbixPlot, ZabbixTimespan
 
     parser = argparse.ArgumentParser(description='Plots a timeline of events for hosts in a group')
 
@@ -37,17 +41,20 @@ def main():
 
     args = parser.parse_args()
 
+    zapi = ZabbixAPI(args.server)
+    zapi.login(args.username, args.password)
+
+    timespan = ZabbixTimespan(args.days)
+
     plot = ZabbixPlot(
-        server=args.server,
-        username=args.username,
-        password=args.password,
+        zapi=zapi,
         group=args.group,
         trigger=args.trigger,
-        days=args.days,
+        timespan=timespan,
         limit=args.limit
     )
 
     plot.plot_timeline()
 
 if __name__ == "__main__":
-    main()
+    zbx_plot_timeline()
