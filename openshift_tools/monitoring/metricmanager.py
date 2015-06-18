@@ -43,45 +43,13 @@ import os
 import uuid
 import calendar
 import time
+import zbxsend
 
-class Metric(object):
-    """ This is copied from https://github.com/pistolero/zbxsend/blob/master/zbxsend.py
-        TODO: Once zbxsend is packaged, use that package!!!
-    """
-
-    def __init__(self, host, key, value, clock=None):
-        """ Construct object
-
-            Keyword arguments:
-            host  -- the host that the metric is for
-            key   -- the zabbix item name
-            value -- the value that zabbix should put in for the key
-            clock -- the time the metric was taken (default: current time)
-        """
-        self.host = host
-        self.key = key
-        self.value = value
-        self.clock = clock
-
-    def __repr__(self):
-        ''' How this object is represented as a string '''
-        if self.clock is None:
-            return 'Metric(%r, %r, %r)' % (self.host, self.key, self.value)
-        return 'Metric(%r, %r, %r, %r)' % (self.host, self.key, self.value, self.clock)
-
-    def make_pylint_happy(self):
-        ''' Make Pylint Happy, I don't want to fix as this is an upstream class.
-            I don't want to disable because it'd disable it for the block.
-        '''
-        pass
-
-    def make_pylint_happy_2(self):
-        ''' Make Pylint Happy, I don't want to fix as this is an upstream class.
-            I don't want to disable because it'd disable it for the block.
-        '''
-        pass
-
-class UniqueMetric(Metric):
+# Reason: disable pylint too-few-public-methods because this is
+#     a DTO with a little ctor logic.
+# Status: permanently disabled
+# pylint: disable=too-few-public-methods
+class UniqueMetric(zbxsend.Metric):
     ''' Represents a unique metric being reported on. Inherits from Metric and
         adds a unique ID, plus also adds auto-populating of the clock value.
     '''

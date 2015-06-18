@@ -5,7 +5,7 @@ Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
 Source0:       %{name}-%{version}.tar.gz
-Requires:      python2,python-openshift-tools
+Requires:      python2,python-openshift-tools,python-zbxsend
 BuildRequires: python2-devel
 BuildArch:     noarch
 
