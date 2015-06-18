@@ -12,8 +12,12 @@ ENV TERM xterm
 WORKDIR /root
 ADD bashrc /root/.bashrc
 
+# Make working in Python nice
+ADD pythonrc /root/.pythonrc
+ENV PYTHONSTARTUP=/root/.pythonrc
+
 # setup epel repo
-RUN rpm -ivh https://download-i2.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
+RUN rpm -ivh https://download.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
 
 # setup yum repos
 ADD setup-yum.sh /usr/local/bin/setup-yum.sh
