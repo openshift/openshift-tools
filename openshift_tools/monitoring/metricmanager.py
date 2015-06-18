@@ -82,6 +82,30 @@ class UniqueMetric(zbxsend.Metric):
 
         super(UniqueMetric, self).__init__(host, key, value, clock)
 
+    @staticmethod
+    def from_request(data):
+        result = []
+        if isinstance(data, dict):
+            data = [data]
+        for metric in data:
+            result.append(UniqueMetric(
+                                       host=metric['host'],
+                                       key=metric['key'],
+                                       value=metric['value'],
+                                       clock=metric['clock']
+                                      )
+                         )
+        return result
+
+    def to_dict(self):
+        return {
+                'host': self.host,
+                'key': self.key,
+                'value': self.value,
+                'clock': self.clock,
+                'unique_id': self.unique_id,
+        }
+
     def __repr__(self):
         ''' How this object is represented as a string '''
         return 'UniqueMetric(%r, %r, %r, %r, %r)' % (self.host, self.key, self.value, self.clock, self.unique_id)
