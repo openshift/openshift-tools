@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Monitoring Python Package
 Name:          python-openshift-tools-monitoring
-Version:       0.0.2
+Version:       0.0.3
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -27,6 +27,9 @@ cp -p *.py %{buildroot}%{python_sitelib}/openshift_tools/monitoring/
 %{python_sitelib}/openshift_tools/monitoring/
 
 %changelog
+* Thu Jun 18 2015 Thomas Wiest <twiest@redhat.com> 0.0.3-1
+- changed metricmanager to explicitly use zbxsend.Metric (twiest@redhat.com)
+
 * Mon Jun 15 2015 Thomas Wiest <twiest@redhat.com> 0.0.2-1
 - added metricmanager (twiest@redhat.com)
 
