@@ -35,7 +35,7 @@ def zbx_plot_aggregate():
     parser.add_argument('-g', '--group', required=True, help='host group name')
     parser.add_argument('-t', '--trigger', required=True,
                         help='trigger description (variables in the description will not be filled in)')
-    parser.add_argument('-d', '--days', default=7, type=int, help='days of data to retrieve (default: 7)')
+    parser.add_argument('-d', '--days', default=7, type=float, help='days of data to retrieve (default: 7)')
     parser.add_argument('-c', '--periods', type=int, help='number of periods to display (default: number of days)')
     parser.add_argument('-l', '--limit', default=25000, type=int, help='maximum number of events to fetch '
                         '(default: 25000)')
@@ -52,10 +52,10 @@ def zbx_plot_aggregate():
         group=args.group,
         trigger=args.trigger,
         timespan=timespan,
-        limit=args.limit
+        limit=args.limit,
+        periods=args.periods or args.days
     )
-
-    plot.plot_aggregate(args.periods or args.days)
+    plot.plot()
 
 if __name__ == "__main__":
     zbx_plot_aggregate()
