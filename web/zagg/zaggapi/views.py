@@ -10,7 +10,8 @@ from metric.metricmanager import UniqueMetric, MetricManager
 
 #disabling these checks because we are extending the django framework
 # and pylint isn't catching this
-#pylint: disable=too-many-public-methods,no-self-use,unused-argument
+# Pylint isn't checking for APIView parent class, so disablign no-member check
+#pylint: disable=too-many-public-methods,no-self-use,unused-argument,no-member
 class MetricView(APIView):
     """
     Django view class to allow access to rest functions

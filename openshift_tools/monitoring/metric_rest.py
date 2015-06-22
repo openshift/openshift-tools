@@ -1,25 +1,36 @@
 #!/usr/bin/env python2
 # vim: expandtab:tabstop=4:shiftwidth=4
+"""
+REST API for Zagg
 
+Example usage:
+
+     ml = []
+     new_metric = UniqueMetric('a','b','c')
+     ml.append(new_metric)
+     new_metric = UniqueMetric('d','e','f')
+     ml.append(new_metric)
+
+     mr = MetricRest(host='172.17.0.27:8000')
+     print mr.add_metric(ml)
+
+"""
 
 import requests
 import json
 from metricmanager import UniqueMetric
 
+#Currently only one method is used.
+#More will be added in the future, and this can be disabled
+#pylint: disable=too-few-public-methods
 class RestApi(object):
     """
     A base connection class to derive from.
     """
-    proto = 'http'
-    host = '127.0.0.1'
-    username = None
-    password = None
-    headers = None
-    response = None
-    base_uri = None
 
-    def __init__(self, host=None, port=443, username=username, password=password,
-                 headers=None):
+    # All args are required
+    #pylint: disable=too-many-arguments
+    def __init__(self, host=None, username=None, password=None, headers=None):
 
         if host is not None:
             self.host = host
@@ -35,28 +46,25 @@ class RestApi(object):
 
         self.base_uri = "http://" + host + "/"
         self.data = None
-        self.url = None
 
     def request(self, url, method, headers=None, params=None, data=None):
         """
         wrapper method for Requests' methods
         """
-        if url.startswith("https://") or url.startswith("http://"):
-            self.url = url  # self.base_uri + url
-        else:
-            self.url = self.base_uri + url
+        if not url.startswith("https://") or not url.startswith("http://"):
+            url = self.base_uri + url
         _headers = self.headers or {}
         if headers:
             _headers.update(headers)
 
-        self.response = requests.request(
-            auth=None, method=method, url=self.url, params=params, data=data,
+        response = requests.request(
+            auth=None, method=method, url=url, params=params, data=data,
             headers=_headers, timeout=130, verify=False
         )
 
-        self.data = self.response.json()
+        self.data = response.json()
 
-        return (self.response.status_code, self.data)
+        return (response.status_code, self.data)
 
 #This class implements rest calls. We only have one rest call implemented
 # add-metric.  More could be added here
@@ -89,13 +97,13 @@ class MetricRest(object):
         return (status, raw_response)
 
 # This is for testing
-if __name__ == "__main__":
-
-    ml = []
-    new_metric = UniqueMetric('a','b','c')
-    ml.append(new_metric)
-    new_metric = UniqueMetric('d','e','f')
-    ml.append(new_metric)
-
-    mr = MetricRest(host='172.17.0.27:8000')
-    print mr.add_metric(ml)
+#if __name__ == "__main__":
+#
+#    ml = []
+#    new_metric = UniqueMetric('a','b','c')
+#    ml.append(new_metric)
+#    new_metric = UniqueMetric('d','e','f')
+#    ml.append(new_metric)
+#
+#    mr = MetricRest(host='172.17.0.27:8000')
+#    print mr.add_metric(ml)
