@@ -11,4 +11,7 @@ import os
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "zagg.settings")
 
 from django.core.wsgi import get_wsgi_application
+# application is from django and is needed by django.
+# disabling the invalid-name pylint check
+# pylint: disable=invalid-name
 application = get_wsgi_application()

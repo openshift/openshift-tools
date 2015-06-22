@@ -37,7 +37,6 @@
         mm.remove_metrics(new_metric) # this can be a list of metrics too!
 '''
 
-
 import yaml
 import os
 import uuid
@@ -84,12 +83,15 @@ class UniqueMetric(zbxsend.Metric):
 
     @staticmethod
     def from_request(data):
+        """
+        Method to receive UniqueMetric data from a request dict
+
+        """
         result = []
         if isinstance(data, dict):
             data = [data]
         for metric in data:
-            result.append(UniqueMetric(
-                                       host=metric['host'],
+            result.append(UniqueMetric(host=metric['host'],
                                        key=metric['key'],
                                        value=metric['value'],
                                        clock=metric['clock']
@@ -98,13 +100,15 @@ class UniqueMetric(zbxsend.Metric):
         return result
 
     def to_dict(self):
-        return {
-                'host': self.host,
+        """
+        return object as a dict
+        """
+        return {'host': self.host,
                 'key': self.key,
                 'value': self.value,
                 'clock': self.clock,
                 'unique_id': self.unique_id,
-        }
+               }
 
     def __repr__(self):
         ''' How this object is represented as a string '''
