@@ -6,7 +6,7 @@ create new Zagg UniqueMetrics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from metric.metricmanager import UniqueMetric, MetricManager
+from metricmanager import UniqueMetric, MetricManager
 
 #disabling these checks because we are extending the django framework
 # and pylint isn't catching this
