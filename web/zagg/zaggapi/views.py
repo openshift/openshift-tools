@@ -6,7 +6,7 @@ create new Zagg UniqueMetrics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from metricmanager import UniqueMetric, MetricManager
+from openshift_tools.monitoring.metricmanager import UniqueMetric, MetricManager
 
 #disabling these checks because we are extending the django framework
 # and pylint isn't catching this
@@ -17,7 +17,7 @@ class MetricView(APIView):
     Django view class to allow access to rest functions
     """
     def __init__(self):
-        pass
+        APIView.__init__()
 
     def post(self, request, *args, **kwargs):
         """
