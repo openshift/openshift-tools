@@ -17,7 +17,7 @@ class MetricView(APIView):
     Django view class to allow access to rest functions
     """
     def __init__(self):
-        pass
+        APIView.__init__()
 
     def post(self, request, *args, **kwargs):
         """
