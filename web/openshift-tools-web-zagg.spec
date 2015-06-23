@@ -3,7 +3,7 @@
 
 Summary:       OpenShift Tools Zagg REST API Package
 Name:          openshift-tools-web-zagg
-Version:       0.0.0
+Version:       0.0.1
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -32,3 +32,6 @@ cp -p zagg-httpd.conf %{buildroot}/etc/httpd/conf.d/
 %config(noreplace) /etc/httpd/conf.d/*.conf
 
 %changelog
+* Tue Jun 23 2015 Thomas Wiest <twiest@redhat.com> 0.0.1-1
+- new package built with tito
+
