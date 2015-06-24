@@ -21,14 +21,14 @@ Zagg REST API
 %build
 
 %install
-mkdir -p %{buildroot}/opt/zagg
-cp -ap zagg %{buildroot}/opt/
+mkdir -p %{buildroot}/opt/rh/zagg
+cp -ap zagg %{buildroot}/opt/rh/
 
 mkdir -p %{buildroot}/etc/httpd/conf.d/
 cp -p zagg-httpd.conf %{buildroot}/etc/httpd/conf.d/
 
 %files
-/opt/zagg/
+/opt/rh/zagg/
 %config(noreplace) /etc/httpd/conf.d/*.conf
 
 %changelog
