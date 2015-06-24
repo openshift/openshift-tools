@@ -1,0 +1,41 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    g_zserver: http://localhost/zabbix/api_jsonrpc.php
+    g_zuser: Admin
+    g_zpassword: zabbix
+  vars_files:
+  #- template_heartbeat.yml
+  #- template_master.yml
+  #- template_node.yml
+  #- template_host.yml
+  - template_router.yml
+  roles:
+  - ../roles/os_zabbix
+  post_tasks:
+  - debug: var=g_template_router
+
+  - debug: "msg={{ item.name }}"
+    with_items: g_template_router.zitems
+
+  - zbxapi:
+      server: "{{ g_zserver }}"
+      user: "{{ g_zuser }}"
+      password: "{{ g_zpassword }}"
+      zbx_class: Template
+      #action: get
+      state: list
+      params:
+        output: extend
+    register: templates
+
+  - debug: var=templates
+
+  - name: Include Template
+    include: create_template.yml
+    vars:
+      ctp_template: "{{ g_template_router }}"
+      ctp_zserver: "{{ g_zserver }}"
+      ctp_zuser: "{{ g_zuser }}"
+      ctp_zpassword: "{{ g_zpassword }}"
