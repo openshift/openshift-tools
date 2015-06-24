@@ -3,7 +3,7 @@
 
 Summary:       OpenShift Tools Zagg REST API Package
 Name:          openshift-tools-web-zagg
-Version:       0.0.2
+Version:       0.0.3
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -32,6 +32,11 @@ cp -p zagg-httpd.conf %{buildroot}/etc/httpd/conf.d/
 %config(noreplace) /etc/httpd/conf.d/*.conf
 
 %changelog
+* Wed Jun 24 2015 Thomas Wiest <twiest@redhat.com> 0.0.3-1
+- changed /opt/zagg to /opt/rh/zagg to comply with FHS (twiest@redhat.com)
+- separated restapi from zagg_client, removed __init__ from views
+  (mwoodson@redhat.com)
+
 * Tue Jun 23 2015 Thomas Wiest <twiest@redhat.com> 0.0.2-1
 - put in bullshit call (mwoodson@redhat.com)
 - fixed pathing for openshift-tools-web-zagg.spec (twiest@redhat.com)
