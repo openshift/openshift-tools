@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # vim: expandtab:tabstop=4:shiftwidth=4
 """
-REST API for Zagg
+ZaggClient uses the openshift_tools.web/rest.py
 
 Example usage:
 
@@ -12,13 +12,13 @@ Example usage:
      new_metric = UniqueMetric('d','e','f')
      ml.append(new_metric)
 
-     mr = ZaggClient(host='172.17.0.27:8000')
-     print mr.add_metric(ml)
+     zc = ZaggClient(host='172.17.0.27:8000')
+     print zc.add_metric(ml)
 
 """
 #These are not installed on the buildbot, disabling this
 #pylint: disable=no-name-in-module,unused-import
-from openshift_tools.web.rest import RestAPI
+from openshift_tools.web.rest import RestApi
 from openshift_tools.monitoring.metricmanager import UniqueMetric, MetricManager
 import json
 
@@ -53,15 +53,3 @@ class ZaggClient(object):
                                                  headers=headers)
 
         return (status, raw_response)
-
-# This is for testing
-#if __name__ == "__main__":
-#
-#    ml = []
-#    new_metric = UniqueMetric('a','b','c')
-#    ml.append(new_metric)
-#    new_metric = UniqueMetric('d','e','f')
-#    ml.append(new_metric)
-#
-#    mr = MetricRest(host='172.17.0.27:8000')
-#    print mr.add_metric(ml)

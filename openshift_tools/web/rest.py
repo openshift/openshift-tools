@@ -3,8 +3,9 @@
 """
 Generic REST class using python requests module
 
-"""
+see zagg_client.py for example on how to use
 
+"""
 import requests
 
 #Currently only one method is used.
@@ -19,17 +20,10 @@ class RestApi(object):
     #pylint: disable=too-many-arguments
     def __init__(self, host=None, username=None, password=None, headers=None):
 
-        if host is not None:
-            self.host = host
-
-        if username:
-            self.username = username
-
-        if password:
-            self.password = password
-
-        if headers:
-            self.headers = headers
+        self.hosts = host
+        self.username = username
+        self.password = password
+        self.headers = headers
 
         self.base_uri = "http://" + host + "/"
         self.data = None
@@ -40,7 +34,9 @@ class RestApi(object):
         """
         if not url.startswith("https://") or not url.startswith("http://"):
             url = self.base_uri + url
+
         _headers = self.headers or {}
+
         if headers:
             _headers.update(headers)
 
@@ -48,7 +44,6 @@ class RestApi(object):
             auth=None, method=method, url=url, params=params, data=data,
             headers=_headers, timeout=130, verify=False
         )
-
         self.data = response.json()
 
         return (response.status_code, self.data)
