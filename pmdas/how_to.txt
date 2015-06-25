@@ -1,0 +1,181 @@
+
+The official documentation can be found here:
+http://www.pcp.io/books/PCP_PG/html-single/#LE98072-PARENT
+
+Here are some un-official instructions on how to create a PMDA client.
+
+I'll give a brief description of what a PMDA client is and how it runs.
+
+A PMDA client has two different modes.  It can run as a daemon or a dso(dynamically shared object).
+
+To start a basic example you can look at 
+https://github.com/openshift/openshift-tools/tree/master/pmdas/http_ping
+
+== Step 1 ==
+Create a new file by copying the pmdahttp_ping.py to pmda<new file>.py
+
+When your pmda metric script is run it needs to call a setup method.  This setup
+method will call the add_metric in the PMDA base class.  This add_metric will add 
+the metric and its data into the pmcd with the right values, format, and description.
+
+Example from http_ping:
+
+self.add_metric(name + '.ping',
+                pmdaMetric(self.pmid(0, 0),
+                           c_api.PM_TYPE_U32,
+                           c_api.PM_INDOM_NULL,
+                           c_api.PM_SEM_INSTANT,
+                           pmUnits(0, 0, 0, 0, 0, 0)),
+                'Http ping to google.com http status codde')
+
+The function definition is here:
+https://github.com/performancecopilot/pcp/blob/master/src/python/pcp/pmda.py
+
+Params to add_metric: (more explanation/example: http://www.pcp.io/books/PCP_PG/html-single/#Z963521873sdc) 
+    1. Name of metric
+    2. PMDA Metric: (https://github.com/performancecopilot/pcp/blob/master/src/python/pcp/pmda.py#L66)
+      - pmid - This is a 2 dimensional array.  For single items, (0, 0) is sufficient.  If we wanted
+               to supply more info around ping we would increment the pmid.
+               pmid(0,0) = http_ping.ping 
+                You could specify the new pmid as follows
+                 - pmid(0,1) = http_ping.latency 
+                 or
+                 - pmid(0,1) = http_ping.ping.latency 
+               The most important issue here is that they are unique.
+      - typeof - unsigned 32 bit integer (Other types can be found here: https://github.com/performancecopilot/pcp/blob/master/src/include/pcp/pmapi.h#L115)
+      - indom - instance domain.  I'm not 100% sure how these work. I used null because I am referencing a single value.  
+                This is a way for pcp to organize data.  The docs are very slim surrounding indoms.  
+                Here is the doc: http://www.pcp.io/books/PCP_PG/html-single/#id5190481.  Scroll to 2.3.4.3.  It refers to the pmdaIndom Structure 
+                in example 2.8 and explains a little further.
+      - sem - There are a couple of different semantic values.  
+          - Counter (PM_SEM_COUNTER)
+          - Instantaneous value (PM_SEM_INSTANT)
+          - Discrete value (PM_SEM_DISCRETE)
+      - units - A description of the value's units based on dimension and scale in the three orthogonal dimensions of space, time, and count (or events)
+                (https://github.com/performancecopilot/pcp/blob/master/src/python/pcp/pmapi.py#L260)
+          - From above link: "Compiler-specific bitfields specifying scale and dimension of metric values
+                              Constants for specifying metric units are defined in module pmapi"
+        _fields_ = [("pad", c_int, 8),
+                    ("scaleCount", c_int, 4),
+                    ("scaleTime", c_int, 4),
+                    ("scaleSpace", c_int, 4),
+                    ("dimCount", c_int, 4),
+                    ("dimTime", c_int, 4),
+                    ("dimSpace", c_int, 4)]
+        Class pmUnits constructor: def __init__(self, dimS=0, dimT=0, dimC=0, scaleS=0, scaleT=0, scaleC=0):
+        dimS = dimension space
+        dimT = dimension time
+        dimC = dimension count
+        scaleS = scale space
+        scaleT = scale time
+        scaleC = scale count
+        
+        The definitions for what we can pass to this unit call can be found here: 
+         https://github.com/performancecopilot/pcp/blob/master/src/include/pcp/pmapi.h#L62
+
+    3. The description of the metric that will show up in pminfo -t <metric_name> 
+       ex: 
+        $ pminfo -t http_ping
+        http_ping.ping [Http ping to google.com http status code]
+
+== Step 2 ==
+
+There are two important functions that need to be called by the pmcd.  These methods will be setup in the ctor of your metric class.
+
+There is a set_fetch method and a set_fetch_callback.
+In the http_ping example:
+        self.set_fetch(self.ping_fetch)
+        self.set_fetch_callback(self.ping_fetch_callback)
+  
+The set_fetch method takes a function that will be called when pmcd "fetches" your metric.  
+*REMEMBER* that this method will need to be performant.  If not, the pmcd could block. If it takes too long it will fail to fetch the value, thus the need for the callback.
+
+The callback will return the latest value for the metric.
+
+== Step 3 ==
+
+http://www.pcp.io/books/PCP_PG/html-single/#LE83854-PARENT
+
+When calling your code you will need to specify a domain.  This happens during the instantiation of your metric class and the Install script will set the domain into the pmns (performance metric name space).  These *must* be unique.
+
+You can list out the current pmns as it lives here:
+/var/lib/pcp/pmns/root*
+
+For my example I chose a number: 301.  According to the documentation in /var/lib/pcp/pmns/stdpmid it says:
+ * Domain Number Range          Use
+ *        0                     reserved -- DO NOT USE
+ *        1-384                 production PMDAs from PCP packages
+ *      385-510                 end-user PMDAs (allocate from high to low)
+ *      511                     reserved for dynamic PMNS entries -- DO NOT USE
+
+I should have used 510 but it doesn't really matter as long as its unique
+
+You pass the domain to your class or to the parent class in your ctor PMDA.__init__(self, name, domain).
+Ex:
+    HttpPing('http_ping', 301).run()
+
+== Step 4 ==
+
+Update the iam= variables in the Install and the Remove files to the name of your metric.
+
+You can also configure whether this will run as a daemon or not with daemon_opt= or whether pmcd needs to restart.
+
+With our example we do not need either of these.  We are just being called as a simple script to check the value.
+
+Run the ./Install and specify that it is a collector by typing 'c'<enter>.
+---
+] ./Install 
+You will need to choose an appropriate configuration for installation of
+the "http_ping" Performance Metrics Domain Agent (PMDA).
+
+  collector     collect performance statistics on this system
+  monitor       allow this system to monitor local and/or remote systems
+  both          collector and monitor configuration for this system
+
+Please enter c(ollector) or m(onitor) or b(oth) [b] c
+Updating the Performance Metrics Name Space (PMNS) ...
+Terminate PMDA if already installed ...
+Updating the PMCD control file, and notifying PMCD ...
+Check http_ping metrics have appeared ... 1 metrics and 1 values
+---
+
+If you need to reload the metric you can ./Remove it.
+---
+] ./Remove 
+Culling the Performance Metrics Name Space ...
+http_ping ... done
+Updating the PMCD control file, and notifying PMCD ...
+Check http_ping metrics have gone away ... OK
+---
+
+== Other Notes ==
+
+To debug your issues I highly recommend you get your python code working before you place it into the pmcd.  Make sure your checks work.
+
+If you need to see what is happening you can call self.log('debug msg here') inside of your pmda and 
+it will show up in the logs here: /var/log/pcp/pmcd/<metric_name>.log
+
+If you have a syntax error it will manifest itself on the ./Install.
+
+You can see the loaded pmcd by looking at the conf file here:
+] cat /etc/pcp/pmcd/pmcd.conf 
+#
+# Performance Metrics Domain Specifications
+# This file is automatically generated during the build
+# Name  Id      IPC     IPC Params      File/Cmd
+root    1       pipe    binary          /var/lib/pcp/pmdas/root/pmdaroot
+pmcd    2       dso     pmcd_init       /var/lib/pcp/pmdas/pmcd/pmda_pmcd.so
+proc    3       pipe    binary          /var/lib/pcp/pmdas/proc/pmdaproc -d 3
+xfs     11      pipe    binary          /var/lib/pcp/pmdas/xfs/pmdaxfs -d 11
+linux   60      pipe    binary          /var/lib/pcp/pmdas/linux/pmdalinux
+mmv     70      dso     mmv_init        /var/lib/pcp/pmdas/mmv/pmda_mmv.so
+jbd2    122     dso     jbd2_init       /var/lib/pcp/pmdas/jbd2/pmda_jbd2.so
+http_ping       301     pipe    binary          python3 /var/lib/pcp/pmdas/http_ping/pmdahttp_ping.py 
+
+[access]
+disallow ".*" : store;
+disallow ":*" : store;
+allow "local:*" : all;
+
+
+
