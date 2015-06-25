@@ -1,56 +1,90 @@
 # openshift-tools RPM Build instructions
-We use tito to make building and tracking revisions easy.
+This repository uses tito to make building and tracking revisions easy.
 
 For more information on tito, please see the http://rm-rf.ca/tito[Tito home page]
 
 
-## Build python-openshift-tools RPM
-. Change into openshift-tools/openshift_tools/spec directory
+## Build python-openshift-tools-* RPMs
+. Change into openshift-tools/openshift_tools directory
 +
 ----
-cd openshift-tools/openshift_tools/spec
+cd openshift-tools/openshift_tools
 ----
 +
-. Build a test package (no tagging needed)
+. Get the latest code
++
+----
+git pull
+----
+. Get the latest tags
++
+----
+git fetch --tags
+----
++
+. Build test packages (no tagging needed)
 +
 ----
 tito build --test --rpm
 ----
 +
-. Tag a new build (bumps version number and adds log entries)
+. OPTIONAL: If a new version of the package is needed, follow these instructions:
+.. Tag a new build (bumps version number and adds log entries)
++
+----
+# Something like this (copy it from the tito output):
+git push && git push origin package-name-and-new-VERSION
+----
 +
 ----
 tito tag
 ----
 +
-. Follow the on screen tito instructions to push the tags
-. Build a new package based on the latest tag information
+.. Follow the on screen tito instructions to push the tags
+. Build new packages based on the latest tag information
 +
 ----
 tito build --rpm
 ----
 
-## Build python-openshift-tools-monitoring RPM
-. Change into openshift-tools/openshift_tools/monitoring directory
+## Build openshift-tools-web-* RPMs
+. Change into openshift-tools/web directory
 +
 ----
-cd openshift-tools/openshift_tools/monitoring
+cd openshift-tools/web
 ----
 +
-. Build a test package (no tagging needed)
+. Get the latest code
++
+----
+git pull
+----
+. Get the latest tags
++
+----
+git fetch --tags
+----
++
+. Build test packages (no tagging needed)
 +
 ----
 tito build --test --rpm
 ----
 +
-. Tag a new build (bumps version number and adds log entries)
+. OPTIONAL: If a new version of the package is needed, follow these instructions:
+.. Tag a new build (bumps version number and adds log entries)
 +
 ----
 tito tag
 ----
 +
-. Follow the on screen tito instructions to push the tags
-. Build a new package based on the latest tag information
+.. Follow the on screen tito instructions to push the tags
++
+----
+# Something like this (copy it from the tito output):
+git push && git push origin package-name-and-new-VERSION
+----
+. Build new packages based on the latest tag information
 +
 ----
 tito build --rpm
