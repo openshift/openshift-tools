@@ -8,6 +8,7 @@ see zagg_client.py for example on how to use
 """
 import requests
 
+
 #Currently only one method is used.
 #More will be added in the future, and this can be disabled
 #pylint: disable=too-few-public-methods
@@ -18,15 +19,25 @@ class RestApi(object):
 
     # All args are required
     #pylint: disable=too-many-arguments
-    def __init__(self, host=None, username=None, password=None, headers=None):
+    def __init__(self, host=None, username=None, password=None, headers=None, token=None):
 
         self.hosts = host
         self.username = username
         self.password = password
+        self.token = token
         self.headers = headers
 
         self.base_uri = "http://" + host + "/"
         self.data = None
+
+    @property
+    def _auth(self):
+        """
+        implement authentication for the rest call
+        """
+        if self.username and self.password:
+            return requests.auth.HTTPBasicAuth(self.username, self.password)
+        return None
 
     def request(self, url, method, headers=None, params=None, data=None):
         """
@@ -41,7 +52,8 @@ class RestApi(object):
             _headers.update(headers)
 
         response = requests.request(
-            auth=None, method=method, url=url, params=params, data=data,
+            auth=None if not self._auth else self._auth,
+            method=method, url=url, params=params, data=data,
             headers=_headers, timeout=130, verify=False
         )
         self.data = response.json()
