@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.5
+Version:       0.0.6
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -77,5 +77,15 @@ Tools developed to make it easy to work with web technologies.
 
 
 %changelog
+* Thu Jun 25 2015 Thomas Wiest <twiest@redhat.com> 0.0.6-1
+- cleaned up zagg_client and rest.py (mwoodson@redhat.com)
+- changed python-openshift-tools.spec to have subpackages (twiest@redhat.com)
+- separated restapi from zagg_client, removed __init__ from views
+  (mwoodson@redhat.com)
+- more pylint cleanup (mwoodson@redhat.com)
+- pylint fixes (mwoodson@redhat.com)
+- initial commit of zagg rest api (mwoodson@redhat.com)
+- changed metricmanager to explicitly use zbxsend.Metric (twiest@redhat.com)
+- added metricmanager (twiest@redhat.com)
 * Thu Jun 25 2015 Thomas Wiest <twiest@redhat.com> 0.0.5-1
 - changed python-openshift-tools.spec to have subpackages (twiest@redhat.com)
