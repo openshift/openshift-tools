@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Monitoring Python Package
 Name:          python-openshift-tools-monitoring
-Version:       0.0.3
+Version:       0.0.4
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -27,6 +27,13 @@ cp -p *.py %{buildroot}%{python_sitelib}/openshift_tools/monitoring/
 %{python_sitelib}/openshift_tools/monitoring/
 
 %changelog
+* Thu Jun 25 2015 Thomas Wiest <twiest@redhat.com> 0.0.4-1
+- separated restapi from zagg_client, removed __init__ from views
+  (mwoodson@redhat.com)
+- more pylint cleanup (mwoodson@redhat.com)
+- pylint fixes (mwoodson@redhat.com)
+- initial commit of zagg rest api (mwoodson@redhat.com)
+
 * Thu Jun 18 2015 Thomas Wiest <twiest@redhat.com> 0.0.3-1
 - changed metricmanager to explicitly use zbxsend.Metric (twiest@redhat.com)
 
