@@ -12,7 +12,12 @@ Example usage:
      new_metric = UniqueMetric('d','e','f')
      ml.append(new_metric)
 
+     # No Auth
      zc = ZaggClient(host='172.17.0.27:8000')
+
+     # Basic Auth
+     zc = ZaggClient(host='172.17.0.27:8000', user='user', passwd='password')
+
      print zc.add_metric(ml)
 
 """
@@ -29,12 +34,8 @@ class ZaggClient(object):
     """
     wrappers class around REST API so use can use it with python
     """
-    rest = None
-    user = None
-    passwd = None
 
     def __init__(self, host, user=None, passwd=None, headers=None):
-
         # pylint doesn't know where RestAPI is
         #pylint: disable=undefined-variable
         self.rest = RestApi(host=host, username=user, password=passwd, headers=headers)
