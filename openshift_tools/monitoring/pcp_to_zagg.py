@@ -7,6 +7,7 @@ module
 
 Examples:
 
+    from openshift_tools.monitoring.zagg_client import ZaggConnection
     HOSTNAME = 'use-tower1.ops.rhcloud.com'
     METRICS = [
         'kernel.all',
@@ -20,7 +21,7 @@ Examples:
     PCPtoZagg(host=HOSTNAME, zagg_connection=ZAGGCONN, metrics=METRICS).run()
 """
 
-from openshift_tools.monitoring.zagg_client import ZaggClient, ZaggConnection
+from openshift_tools.monitoring.zagg_client import ZaggClient
 from openshift_tools.monitoring import pminfo
 from openshift_tools.monitoring.metricmanager import UniqueMetric
 
@@ -68,18 +69,3 @@ class PCPtoZagg(object):
         Send list of Unique Metrics to Zagg
         """
         self.zaggclient.add_metric(self.unique_metrics)
-
-
-if __name__ == "__main__":
-
-    HOSTNAME = 'use-tower1.ops.rhcloud.com'
-    METRICS = [
-        'kernel.all',
-        'swap.free',
-        'swap.length',
-        'swap.used',
-        ]
-
-    ZAGGCONN = ZaggConnection(host='172.17.0.151', user='admin', password='r3dh@t')
-
-    PCPtoZagg(host=HOSTNAME, zagg_connection=ZAGGCONN, metrics=METRICS).run()
