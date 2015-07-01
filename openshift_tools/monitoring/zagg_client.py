@@ -25,7 +25,10 @@ Example usage:
 #pylint: disable=no-name-in-module,unused-import
 from openshift_tools.web.rest import RestApi
 from openshift_tools.monitoring.metricmanager import UniqueMetric, MetricManager
+from collections import namedtuple
 import json
+
+ZaggConnection = namedtuple("ZaggConnection", ["host", "user", "password"])
 
 #This class implements rest calls. We only have one rest call implemented
 # add-metric.  More could be added here
@@ -35,10 +38,15 @@ class ZaggClient(object):
     wrappers class around REST API so use can use it with python
     """
 
-    def __init__(self, host, user=None, passwd=None, headers=None):
+    def __init__(self, zagg_connection, headers=None):
         # pylint doesn't know where RestAPI is
         #pylint: disable=undefined-variable
-        self.rest = RestApi(host=host, username=user, password=passwd, headers=headers)
+        self.zagg_conn = zagg_connection
+        self.rest = RestApi(host=self.zagg_conn.host,
+                            username=self.zagg_conn.user,
+                            password=self.zagg_conn.password,
+                            headers=headers
+                           )
 
     def add_metric(self, unique_metric_list):
         """
