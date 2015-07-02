@@ -19,22 +19,26 @@
     Metric Manager - manages a persistent list of zabbix metrics
 
     Example Usage:
-
         # Create a metric and write it to disk:
-        new_metric = UniqueMetric('a','b','c')
-        mm = MetricManager('/tmp/metrics')
-        mm.write_metrics(new_metric) # this can be a list of metrics too!
+        zbx_metric = UniqueMetric('a.example.com','a.b.c','10')
+        hb_metric = UniqueMetric.create_heartbeat('a.example.com', ['host template'], ['default'])
 
+        mm = MetricManager('/tmp/metrics')
+        mm.write_metrics([zbx_metric, hb_metric]) # this can be a single metric too!
 
         # Read metrics from disk and print them:
-        mm = MetricManager('/tmp/metrics')
-        for metric in mm.read_metrics():
+        all_metrics = mm.read_metrics()
+
+        # Print out just the zabbix metrics:
+        for metric in mm.filter_zbx_metrics(all_metrics):
             print metric
 
+        # Print out just the heartbeat metrics:
+        for metric in mm.filter_heartbeat_metrics(all_metrics):
+            print metric
 
         # Delete this specific metric from disk
-        mm = MetricManager('/tmp/metrics')
-        mm.remove_metrics(new_metric) # this can be a list of metrics too!
+        mm.remove_metrics([zbx_metric, hb_metric]) # this can be a single metric too!
 '''
 
 import yaml
@@ -43,6 +47,7 @@ import uuid
 import calendar
 import time
 import zbxsend
+
 
 # Reason: disable pylint too-few-public-methods because this is
 #     a DTO with a little ctor logic.
@@ -80,6 +85,35 @@ class UniqueMetric(zbxsend.Metric):
         self.filename = self.unique_id + '.yml'
 
         super(UniqueMetric, self).__init__(host, key, value, clock)
+
+    @staticmethod
+    def create_heartbeat(host, templates, hostgroups, clock=None, unique_id=None):
+        ''' Construct a heartbeat specific metric
+
+              Keyword arguments:
+              host       -- the host that the metric is for
+              templates  -- the list of zabbix templates this host belongs to
+              hostgroups -- the list of zabbix hostgroups this host belongs to
+              clock      -- the time the metric was taken (default: current time)
+              unique_id  -- the unique id of this metric (default: generate one)
+        '''
+
+        if isinstance(templates, basestring):
+            templates = templates.split(",")
+
+        if isinstance(hostgroups, basestring):
+            hostgroups = hostgroups.split(",")
+
+        return UniqueMetric(
+            host=host,
+            key='heartbeat',
+            value={
+                'hostgroups': hostgroups,
+                'templates': templates,
+            },
+            clock=clock,
+            unique_id=unique_id
+        )
 
     @staticmethod
     def from_request(data):
@@ -179,3 +213,21 @@ class MetricManager(object):
                 metrics.append(UniqueMetric(doc['host'], doc['key'], doc['value'],
                                             doc['clock'], doc['unique_id']))
         return metrics
+
+    @staticmethod
+    def filter_zbx_metrics(metrics):
+        ''' return only zabbix related metrics from the list
+
+            Keyword arguments:
+            metrics -- a single metric, or a list of metrics
+        '''
+        return [m for m in metrics if m.key != 'heartbeat']
+
+    @staticmethod
+    def filter_heartbeat_metrics(metrics):
+        ''' return only heartbeat metrics from the list
+
+            Keyword arguments:
+            metrics -- a single metric, or a list of metrics
+        '''
+        return [m for m in metrics if m.key == 'heartbeat']
