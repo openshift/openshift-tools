@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.8
+Version:       0.0.9
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -77,6 +77,9 @@ Tools developed to make it easy to work with web technologies.
 
 
 %changelog
+* Thu Jul 02 2015 Thomas Wiest <twiest@redhat.com> 0.0.9-1
+- added heartbeat metric logic to metricmanager (twiest@redhat.com)
+
 * Wed Jul 01 2015 Matt Woodson <mwoodson@redhat.com> 0.0.8-1
 - removed test code (mwoodson@redhat.com)
 - wrote pcp_to_zagg (mwoodson@redhat.com)
