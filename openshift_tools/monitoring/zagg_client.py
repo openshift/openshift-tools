@@ -5,6 +5,9 @@ ZaggClient uses the openshift_tools.web/rest.py
 
 Example usage:
 
+
+    from openshift_tools.monitoring.zagg_common import ZaggConnection
+
      ml = []
      # UniqueMetric from openshift_tools.monitoring.metricmanager
      new_metric = UniqueMetric('a','b','c')
@@ -23,12 +26,10 @@ Example usage:
 """
 #These are not installed on the buildbot, disabling this
 #pylint: disable=no-name-in-module,unused-import
-from openshift_tools.web.rest import RestApi
 from openshift_tools.monitoring.metricmanager import UniqueMetric, MetricManager
-from collections import namedtuple
+from openshift_tools.monitoring.zagg_common import ZaggConnection
+from openshift_tools.web.rest import RestApi
 import json
-
-ZaggConnection = namedtuple("ZaggConnection", ["host", "user", "password"])
 
 #This class implements rest calls. We only have one rest call implemented
 # add-metric.  More could be added here
