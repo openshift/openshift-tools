@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.0
+Version:       0.0.1
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -42,3 +42,5 @@ OpenShift Tools Monitoring Scripts
 %config(noreplace)/etc/openshift_tools/zagg_client.yaml
 
 %changelog
+* Tue Jul 07 2015 Thomas Wiest <twiest@redhat.com> 0.0.1-1
+- new package built with tito
