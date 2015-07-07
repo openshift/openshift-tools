@@ -19,7 +19,6 @@ PMInfo Python implementation
 # for more details.
 #
 
-import sys
 # Our buildbot does not have the pcp libraries installed and most likely
 # will never have them since this runs in a container.
 # pylint: disable=import-error
@@ -33,11 +32,6 @@ class PMInfo(object):
     def __init__(self):
         """ Construct object - prepare for command line handling """
         self.context = None
-        self.opts = pmapi.pmOptions()
-        self.opts.pmSetShortOptions("V?")
-        self.opts.pmSetLongOptionHeader("Options")
-        self.opts.pmSetLongOptionVersion()
-        self.opts.pmSetLongOptionHelp()
         self.metrics = []
 
     def extract_value(self, valfmt, vlist, typ):
@@ -119,8 +113,7 @@ class PMInfo(object):
 
     def connect(self):
         """ Establish a PMAPI context to archive, host or local, via args """
-        self.context = pmapi.pmContext.fromOptions(self.opts, sys.argv)
-
+        self.context = pmapi.pmContext()
 
 def get_metrics(metrics=None):
     '''Get a list of metrics and query pcp for their values
