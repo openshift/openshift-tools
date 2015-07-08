@@ -29,5 +29,5 @@ for i in \
   python3-pcp-3.10.5-1.fc22.x86_64.rpm \
   pcp-debuginfo-3.10.5-1.fc22.x86_64.rpm;
 do
-  wget https://kojipkgs.fedoraproject.org//packages/pcp/3.10.5/1.fc22/x86_64/${i} -O RPMS/${i}
+  wget https://kojipkgs.fedoraproject.org//packages/pcp/3.10.5/1.fc22/x86_64/${i} -O /tmp/RPMS/${i}
 done

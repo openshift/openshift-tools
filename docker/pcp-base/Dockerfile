@@ -29,9 +29,12 @@ RUN mkdir -p /tmp/RPMS; \
 echo -e '[pcp-devel]\nname=PCP Development Yum Repository\n\
 baseurl=file:///tmp/RPMS\ngpgcheck = 0\nenabled = 0'\
 >/etc/yum.repos.d/pcp-devel.repo
-COPY RPMS/*.rpm /tmp/RPMS/
-#ADD /home/kwoodson/git/pcp/build/containers/RPMS /tmp/
-#ADD /home/kwoodson/git/pcp/build/containers/RPMS /tmp/
+
+
+ADD get_pcp_rpms.sh /root/get_pcp_rpms.sh
+RUN /root/get_pcp_rpms.sh
+#COPY RPMS/*.rpm /tmp/RPMS/
+
 RUN createrepo /tmp/RPMS
 
 #
