@@ -19,7 +19,7 @@ MAINTAINER PCP Development Team <pcp@oss.sgi.com>
 
 # update the Fedora base image and clean the dnf cache
 # (normally disabled during development)
-RUN dnf -y install createrepo.noarch && dnf -y update && dnf clean all
+RUN dnf -y install createrepo.noarch wget && dnf -y update && dnf clean all
 
 # Set up a repo for the packages to be installed. This is only for use
 # during development. Production builds would use the Fedora packages.

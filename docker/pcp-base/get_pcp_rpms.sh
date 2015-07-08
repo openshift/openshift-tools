@@ -1,7 +1,5 @@
 #!/bin/bash
 
-mkdir RPMS
-
 for i in \
   pcp-3.10.5-1.fc22.x86_64.rpm \
   pcp-collector-3.10.5-1.fc22.x86_64.rpm \
