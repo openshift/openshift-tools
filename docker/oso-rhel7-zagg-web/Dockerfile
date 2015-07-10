@@ -22,11 +22,12 @@ RUN pip install djangorestframework && \
 
 RUN mkdir /tmp/metrics && chown apache.apache /tmp/metrics
 
-
 # TODO: package this (see trello card) and add that RPM to this container
 ADD zbxapi.py /usr/share/ansible/zbxapi.py
-
 ADD config.yml /root/config.yml
+
+EXPOSE 80
+EXPOSE 443
 
 # Start apache
 ADD start.sh /usr/local/bin/

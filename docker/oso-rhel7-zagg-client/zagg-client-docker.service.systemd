@@ -1,0 +1,49 @@
+# This is a systemd file to run this docker container under systemd.
+# To make this work:
+#  * pull the image (probably from ops docker registry)
+#  * place this file in /etc/systemd/system without the .systemd extension
+#  * run the commands:
+#  systemctl daemon-reload
+#  systemctl enable zagg-client-docker
+#  systemctl start zagg-client-docker
+#
+#
+[Unit]
+Description=Zagg Client Contatainer
+Requires=docker.service
+After=docker.service
+
+
+[Service]
+Type=simple
+TimeoutStartSec=5m
+#Slice=container-small.slice
+
+ExecStartPre=-/usr/bin/docker rm "zagg-client"
+
+#ExecStart=/usr/bin/docker run --rm --name zagg-client                                    \
+#           --privileged --ipc=host --net=host --pid=host                                 \
+#           -e HOST=/host -e NAME=zagg-client -e IMAGE=zagg-client                        \
+#           -e ZAGG_SERVER=oso-rhel7-zagg-web.kwoodsontest2.opstest.online.openshift.com  \
+#           -e ZAGG_PASSWORD=r3dh@t                                                       \
+#           -v /var/log:/var/log -v /etc/localtime:/etc/localtime -v /:/host              \
+#           -v /run/pcp:/run/pcp                                                          \
+#           docker-registry.ops.rhcloud.com/ops/zagg-client
+
+ExecStart=/usr/bin/docker run --name zagg-client            \
+           -e NAME=zagg-client -e IMAGE=zagg-client         \
+           -e ZAGG_SERVER=REPLACE_WITH_ZAGG_URL             \
+           -e ZAGG_PASSWORD=REPLACE_WITH_ZAGG_PASSWORD      \
+           -v /etc/localtime:/etc/localtime                 \
+           -v /run/pcp:/run/pcp                             \
+           docker-registry.ops.rhcloud.com/ops/zagg-client
+
+
+
+
+ExecReload=-/usr/bin/docker stop "zagg-client"
+ExecReload=-/usr/bin/docker rm "zagg-client"
+ExecStop=-/usr/bin/docker stop "zagg-client"
+
+[Install]
+WantedBy=default.target

@@ -81,4 +81,3 @@ for i in \
 do
   wget https://kojipkgs.fedoraproject.org//packages/pcp/3.10.5/1.fc22/x86_64/${i} -O /tmp/RPMS/${i}
 done
-
