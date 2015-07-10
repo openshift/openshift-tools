@@ -2,7 +2,7 @@
 
 # set hostname to register against zabbix
 echo 'setting hostname in ops-zagg-client'
-CONTAINER_HOSTNAME=$(echo CTR-$(hostname))
+CONTAINER_HOSTNAME=$(echo CTR-$(/usr/bin/pminfo -f kernel.uname.nodename | /usr/bin/awk -F \"  /value/'{print $2}'))
 
 sed -i -e  "s/^    name:.*$/    name: $CONTAINER_HOSTNAME/" \
        -e  "s/^    host:.*$/    host: $ZAGG_SERVER/" \

@@ -10,7 +10,11 @@ RUN yum clean metadata && \
         pcp-manager pcp-webapi python-pcp && \
     yum clean all
 
+ADD pamd.crond /etc/pam.d/crond
+RUN chmod 644 /etc/pam.d/crond
+
 ADD ops-zagg-client.cron /etc/cron.d/ops-zagg-client
+RUN chmod 644 /etc/cron.d/ops-zagg-client
 
 # Start cron
 ADD start.sh /usr/local/bin/
