@@ -126,4 +126,3 @@ if __name__ == '__main__':
     # This class inherits from PDMA which includes the run method
     # pylint: disable=no-member
     HttpPing('http_ping', 301).run()
-

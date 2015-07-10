@@ -22,6 +22,8 @@ RUN pip install djangorestframework && \
 
 RUN mkdir /tmp/metrics && chown apache.apache /tmp/metrics
 
+EXPOSE 80
+EXPOSE 443
 # Start apache
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh

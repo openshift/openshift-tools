@@ -1,0 +1,6 @@
+# ops-zagg-client cron schedule
+#
+# run pcp checks every 5 minutes
+*/5  *  *  *  *  root /usr/bin/ops-zagg-client --send-pcp
+# run register every 15 minutes
+*/15  *  *  *  *  root /usr/bin/ops-zagg-client --send-heartbeat

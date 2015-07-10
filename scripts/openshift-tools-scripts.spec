@@ -44,4 +44,3 @@ OpenShift Tools Monitoring Scripts
 %changelog
 * Tue Jul 07 2015 Thomas Wiest <twiest@redhat.com> 0.0.1-1
 - new package built with tito
-
