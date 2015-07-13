@@ -13,7 +13,8 @@ RUN yum clean metadata && \
         openshift-tools-web-zagg \
         python-openshift-tools-web \
         python-openshift-tools-monitoring \
-        tree python-django-bash-completion httpd mod_wsgi && \
+        tree python-django-bash-completion httpd mod_wsgi \
+        telnet bind-utils net-tools iproute && \
     yum clean all
 
 RUN pip install djangorestframework && \
@@ -22,8 +23,12 @@ RUN pip install djangorestframework && \
 
 RUN mkdir /tmp/metrics && chown apache.apache /tmp/metrics
 
-# TODO: package this (see trello card) and add that RPM to this container
+# TODO: package these!!! (see trello card https://trello.com/c/SJsvV9OQ)
+#       and add that RPM to this container
 ADD zbxapi.py /usr/share/ansible/zbxapi.py
+ADD oo_filters.py /usr/share/ansible_plugins/filter_plugins/oo_filters.py
+# END TODO
+
 ADD config.yml /root/config.yml
 
 EXPOSE 80
