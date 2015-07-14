@@ -1,0 +1,10 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  pre_tasks:
+  - name: setup ansible module load path
+    lineinfile:
+      dest: /etc/ansible/ansible.cfg
+      regexp: '^\s*#*\s*library\s*='
+      line: 'library        = /usr/share/ansible/'

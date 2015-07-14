@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+# Configure the container on startup
+ansible-playbook /root/config.yml
+
 # set Django secret key
 echo 'setting Django secret key...'
 DJANGO_SECRET=$(python -c "import random, string; print ''.join([random.SystemRandom().choice('{}{}{}'.format(string.ascii_letters, string.digits, '!#$%()*+,-.:;<=>?@[]^_{|}~')) for i in range(50)])")
