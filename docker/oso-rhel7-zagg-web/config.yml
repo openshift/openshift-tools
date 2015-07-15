@@ -2,9 +2,43 @@
 - hosts: localhost
   connection: local
   gather_facts: no
+  vars:
+    # Get the zagg_server_config from an env var. This can be overridden with ansible-playbook -e
+    zagg_server_config: "{{ lookup('env','ZAGG_SERVER_CONFIG') }}"
   pre_tasks:
+  - fail: "msg=This playbook requires {{ item }} to be set."
+    when: "{{ item }} is not defined or {{ item }} == ''"
+    with_items:
+    - zagg_server_config
+
+  - name: Make sure all of the target's have directories for their metrics
+    file:
+      path: "{{ item }}"
+      state: directory
+      owner: apache
+      group: apache
+      mode: "755"
+    with_items: "{{ zagg_server_config.targets | oo_collect('path') }}"
+
+  - name: Generate the zagg_server.yaml config file
+    copy:
+      content: "{{ zagg_server_config | to_nice_yaml }}"
+      dest: /etc/openshift_tools/zagg_server.yaml
+      mode: "644"
+
   - name: setup ansible module load path
     lineinfile:
       dest: /etc/ansible/ansible.cfg
       regexp: '^\s*#*\s*library\s*='
       line: 'library        = /usr/share/ansible/'
+
+  - name: Generate Django Key
+    command: python -c "import random, string; print ''.join([random.SystemRandom().choice('{}{}{}'.format(string.ascii_letters, string.digits, '!#$%()*+,-.:;<=>?@[]^_{|}~')) for i in range(50)])"
+    changed_when: false
+    register: django_secret
+
+  - name: Set the Django secret key
+    lineinfile:
+      dest: /opt/rh/zagg/zagg/settings.py
+      regexp: '^[#\s]*SECRET_KEY\s*='
+      line: "SECRET_KEY = '{{ django_secret.stdout }}'"

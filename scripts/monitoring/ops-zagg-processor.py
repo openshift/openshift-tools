@@ -27,15 +27,56 @@ from openshift_tools.monitoring.metricmanager import MetricManager
 from openshift_tools.monitoring.zabbix_metric_processor import ZabbixSender, ZabbixMetricProcessor
 from openshift_tools.ansible.simplezabbix import SimpleZabbix
 
+import yaml
+
+class ZaggProcessor(object):
+    """Processes all targets found in /etc/openshift_tools/zagg_server.yaml
+    """
+
+    def __init__(self, config_file):
+        """Constructs the object
+
+        Args:
+            config_file: path to the config file on disk
+        """
+
+        self.config = yaml.load(file(config_file))
+
+    def run(self):
+        """Runs through each defined target in the config file and processes it
+
+        Args: None
+        Returns: None
+        """
+        for target in self.config['targets']:
+            if target['type'] == 'zabbix':
+                self.process_zabbix(target)
+            else:
+                # ERROR: TARGET NOT SUPPORTED!
+                # TODO: add error logging and signaling
+                pass
+
+    @staticmethod
+    def process_zabbix(target):
+        """Process a Zabbix target
+
+        Args:
+            target: the config file portion for this specific target.
+
+        Returns: None
+        """
+
+        mm = MetricManager(target['path'])
+        zbxapi = SimpleZabbix(
+            url=target['api_url'],
+            user=target['api_user'],
+            password=target['api_pass'],
+        )
+
+        zbxsender = ZabbixSender(target['trapper_server'], target['trapper_port'])
+
+        zmp = ZabbixMetricProcessor(mm, zbxapi, zbxsender)
+        zmp.process_metrics()
+
 if __name__ == "__main__":
-    mm = MetricManager('/tmp/metrics')
-    zbxapi = SimpleZabbix(
-        url='http://localhost/zabbix/api_jsonrpc.php',
-        user='Admin',
-        password='zabbix',
-    )
-
-    zbxsender = ZabbixSender('localhost', 10051)
-
-    mp = ZabbixMetricProcessor(mm, zbxapi, zbxsender)
-    mp.process_metrics()
+    ZaggProcessor('/etc/openshift_tools/zagg_server.yaml').run()
