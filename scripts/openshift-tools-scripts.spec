@@ -19,10 +19,14 @@ OpenShift Tools Scripts
 
 # openshift-tools-scripts-monitoring install
 mkdir -p %{buildroot}/usr/bin
-cp -p monitoring/*.py %{buildroot}/usr/bin/
+cp -p monitoring/ops-zagg-client.py %{buildroot}/usr/bin/ops-zagg-client
+cp -p monitoring/ops-zagg-processor.py %{buildroot}/usr/bin/ops-zagg-processor
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
+cp -p monitoring/zagg_server.yaml.example %{buildroot}/etc/openshift_tools/zagg_server.yaml
+
+mkdir -p %{buildroot}/var/run/zagg/data
 
 
 # ----------------------------------------------------------------------------------
@@ -39,7 +43,9 @@ OpenShift Tools Monitoring Scripts
 
 %files monitoring
 /usr/bin/*
-%config(noreplace)/etc/openshift_tools/zagg_client.yaml
+%config(noreplace)/etc/openshift_tools/*.yaml
+/var/run/zagg/
+/var/run/zagg/data/
 
 %changelog
 * Wed Jul 15 2015 Thomas Wiest <twiest@redhat.com> 0.0.2-1
