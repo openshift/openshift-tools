@@ -7,4 +7,4 @@ ansible-playbook /root/config.yml
 # Start the services
 echo 'Starting httpd'
 echo '--------------'
-LANG=C /usr/sbin/httpd -DFOREGROUND
+LANG=C exec /usr/sbin/httpd -DFOREGROUND
