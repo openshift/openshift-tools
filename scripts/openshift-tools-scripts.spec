@@ -19,7 +19,7 @@ OpenShift Tools Scripts
 
 # openshift-tools-scripts-monitoring install
 mkdir -p %{buildroot}/usr/bin
-cp -p monitoring/ops-zagg-client.py %{buildroot}/usr/bin/ops-zagg-client
+cp -p monitoring/*.py %{buildroot}/usr/bin/
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -30,7 +30,7 @@ cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_
 # ----------------------------------------------------------------------------------
 %package monitoring
 Summary:       OpenShift Tools Monitoring Scripts
-Requires:      python2,python-openshift-tools-monitoring
+Requires:      python2,python-openshift-tools-monitoring,python-openshift-tools-ansible
 BuildRequires: python2-devel
 BuildArch:     noarch
 
@@ -38,7 +38,7 @@ BuildArch:     noarch
 OpenShift Tools Monitoring Scripts
 
 %files monitoring
-/usr/bin/ops-zagg-client
+/usr/bin/*
 %config(noreplace)/etc/openshift_tools/zagg_client.yaml
 
 %changelog

@@ -297,7 +297,6 @@ class SimpleZabbix(object):
         """
         results = self.raw.get_hostgroup_info(hostgroups)
         ids = [r['groupid'] for r in results['contacted'][self.raw.pattern]['results']]
-        print ids
         return ids
 
     def ensure_host_is_present(self, name, templates, hostgroups):
