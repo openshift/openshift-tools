@@ -26,6 +26,10 @@ cp -p *.py %{buildroot}%{python_sitelib}/openshift_tools/
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/monitoring
 cp -p monitoring/*.py %{buildroot}%{python_sitelib}/openshift_tools/monitoring
 
+# openshift_tools/ansible install
+mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/ansible
+cp -p ansible/*.py %{buildroot}%{python_sitelib}/openshift_tools/ansible
+
 # openshift_tools/web install
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/web
 cp -p web/*.py %{buildroot}%{python_sitelib}/openshift_tools/web
@@ -56,6 +60,23 @@ Tools developed for monitoring OpenShift.
 %{python_sitelib}/openshift_tools/monitoring/*.py
 %{python_sitelib}/openshift_tools/monitoring/*.py[co]
 
+
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-ansible subpackage
+# ----------------------------------------------------------------------------------
+%package ansible
+Summary:       OpenShift Tools Ansible Python Package
+# TODO: once the zbxapi ansible module is packaged, add it here as a dep
+Requires:      python2,python-openshift-tools,python-zbxsend,ansible
+BuildArch:     noarch
+
+%description ansible
+Tools developed for ansible OpenShift.
+
+%files ansible
+%dir %{python_sitelib}/openshift_tools/ansible
+%{python_sitelib}/openshift_tools/ansible/*.py
+%{python_sitelib}/openshift_tools/ansible/*.py[co]
 
 
 # ----------------------------------------------------------------------------------

@@ -30,7 +30,7 @@ cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_
 # ----------------------------------------------------------------------------------
 %package monitoring
 Summary:       OpenShift Tools Monitoring Scripts
-Requires:      python2,python-openshift-tools-monitoring
+Requires:      python2,python-openshift-tools-monitoring,python-openshift-tools-ansible
 BuildRequires: python2-devel
 BuildArch:     noarch
 
