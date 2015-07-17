@@ -24,8 +24,13 @@ Ansible Runner and the openshift-ansible zbxapi module.
 import ansible.runner
 import json
 
+class InputException(Exception):
+    """Used when the input for an operation isn't what is expected.
+    """
+    pass
+
 class ResultsException(Exception):
-    """Used when the results of an operation aren't what was expect
+    """Used when the results of an operation aren't what was expected.
     """
     pass
 
@@ -282,6 +287,10 @@ class SimpleZabbix(object):
         """
         results = self.raw.get_template_info(templates)
         ids = [r['templateid'] for r in results['contacted'][self.raw.pattern]['results']]
+
+        if not ids:
+            raise ResultsException("Unable to convert template names into template IDs: %s" % templates)
+
         return ids
 
     def get_hostgroup_ids(self, hostgroups):
@@ -297,6 +306,10 @@ class SimpleZabbix(object):
         """
         results = self.raw.get_hostgroup_info(hostgroups)
         ids = [r['groupid'] for r in results['contacted'][self.raw.pattern]['results']]
+
+        if not ids:
+            raise ResultsException("Unable to convert hostgroup names into hostgroup IDs: %s" % hostgroups)
+
         return ids
 
     def ensure_host_is_present(self, name, templates, hostgroups):
@@ -341,6 +354,11 @@ class SimpleZabbix(object):
                 }
             }
         """
+
+
+        if not templates or not hostgroups:
+            raise InputException("This call requires templates and hostgroups to be set")
+
         tids = self.get_template_ids(templates)
         hgids = self.get_hostgroup_ids(hostgroups)
 
