@@ -1,7 +1,6 @@
 ---
 - hosts: localhost
   gather_facts: no
-  connection: local
   vars_files:
   - ../vars/template_heartbeat.yml
   - ../vars/template_master.yml
