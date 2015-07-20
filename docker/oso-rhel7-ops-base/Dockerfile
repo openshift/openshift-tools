@@ -24,12 +24,20 @@ ADD setup-yum.sh /usr/local/bin/setup-yum.sh
 RUN /usr/local/bin/setup-yum.sh
 
 RUN yum clean metadata && \
-    yum -y install ansible screen vim procps less ack tar psmisc && \
+    yum -y install cronie ansible screen vim procps less ack tar psmisc && \
     yum -y update && \
     yum clean all
+
+# Setup Cron
+ADD pamd.crond /etc/pam.d/crond
 
 # Setup Screen
 RUN chmod 777 /var/run/screen
 
 # Setup Ansible
+ADD ansible.cfg /etc/ansible/ansible.cfg
 RUN echo -e '[local]\nlocalhost       ansible_connection=local\n' > /etc/ansible/hosts
+
+# Make the container work more consistently in and out of openshift
+# BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
+RUN time chmod -R o+rwX /boot /dev /etc /home /media /mnt /opt /root /run /srv /var

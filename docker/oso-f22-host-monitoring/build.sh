@@ -2,4 +2,4 @@
 
 
 cd $(dirname $0)
-docker build -t oso-f22-host-monitoring .
+docker build $@ -t oso-f22-host-monitoring .

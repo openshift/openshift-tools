@@ -1,14 +1,9 @@
 #!/bin/bash -e
 
-# set hostname to register against zabbix
-echo 'setting hostname in ops-zagg-client'
-CONTAINER_HOSTNAME=$(echo CTR-$(/usr/bin/pminfo -f kernel.uname.nodename | /usr/bin/awk -F \"  /value/'{print $2}'))
+# Configure the container
+time ansible-playbook /root/config.yml
 
-sed -i -e  "s/^    name:.*$/    name: $CONTAINER_HOSTNAME/" \
-       -e  "s/^    host:.*$/    host: $ZAGG_SERVER/" \
-       -e  "s/^    pass:.*$/    pass: $ZAGG_PASSWORD/" \
-    /etc/openshift_tools/zagg_client.yaml
-
+# Run the main service of this container
 echo
 echo 'Starting crond'
 echo '---------------'

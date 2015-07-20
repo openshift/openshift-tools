@@ -1,7 +1,6 @@
 ---
 - hosts: localhost
   gather_facts: no
-  connection: local
   vars:
     g_zserver: http://localhost/zabbix/api_jsonrpc.php
     g_zuser: Admin

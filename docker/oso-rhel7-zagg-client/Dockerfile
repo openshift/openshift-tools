@@ -2,21 +2,21 @@ FROM oso-rhel7-ops-base:latest
 
 RUN yum clean metadata && \
     yum install -y python-pip pcp pcp-conf pcp-testsuite \
-        cronie \
         python-requests \
         python-openshift-tools-web \
         python-openshift-tools-monitoring \
         openshift-tools-scripts-monitoring \
         pcp-manager pcp-webapi python-pcp && \
+    yum -y update && \
     yum clean all
 
-ADD pamd.crond /etc/pam.d/crond
-RUN chmod 644 /etc/pam.d/crond
+# Ansible startup configuration playbook
+ADD config.yml /root/config.yml
 
-ADD ops-zagg-client.cron /etc/cron.d/ops-zagg-client
-RUN chmod 644 /etc/cron.d/ops-zagg-client
-
-# Start cron
+# Add the start script and tell the container to run it by default
 ADD start.sh /usr/local/bin/
-RUN chmod 775 /usr/local/bin/start.sh
 CMD /usr/local/bin/start.sh
+
+# Make the container work more consistently in and out of openshift
+# BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
+RUN time chmod -R o+rwX /boot /dev /etc /home /media /mnt /opt /root /run /srv /usr/lib/python*/site-packages/openshift*
