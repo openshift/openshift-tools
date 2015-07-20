@@ -1,0 +1,47 @@
+---
+# These are defaults variables, override using zagg_client_vars.yml vars file
+g_default_zagg_server: zagg-server
+g_default_zagg_user: zagg-user
+g_default_zagg_pass: zagg-password
+g_default_pcp_metrics:
+- hinv.ncpu
+- proc.nprocs
+- kernel.all.pswitch
+- kernel.all.cpu.nice
+- kernel.all.cpu.user
+- kernel.all.cpu.sys
+- kernel.all.cpu.wait.total
+- kernel.all.cpu.irq.hard
+- kernel.all.cpu.steal
+- kernel.all.cpu.irq.soft
+- kernel.all.cpu.idle
+- kernel.all.load
+- kernel.all.uptime
+- kernel.uname.machine
+- kernel.uname.release
+- kernel.uname.version
+- kernel.uname.sysname
+- kernel.uname.nodename
+- kernel.uname.distro
+- kernel.uname.nodename
+- mem.physmem
+- mem.freemem
+- mem.util.bufmem
+- mem.util.cached
+- mem.freemem
+- mem.physmem
+- mem.freemem
+- mem.util.used
+- swap.free
+- swap.used
+- swap.length
+- swap.length
+- swap.free
+- swap.used
+
+g_default_templates:
+- Template Heartbeat # So we can send hearbeats
+- Template OS Linux  # So we can send host related metrics
+
+g_default_hostgroups:
+- Linux servers
