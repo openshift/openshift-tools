@@ -3,14 +3,11 @@
   gather_facts: no
   vars_files:
   - ../vars/template_heartbeat.yml
-  - ../vars/template_master.yml
-  - ../vars/template_node.yml
-  - ../vars/template_host.yml
-  - ../vars/template_router.yml
+  - ../vars/template_os_linux.yml
   vars:
-    g_zserver: http://localhost/zabbix/api_jsonrpc.php
-    g_zuser: Admin
-    g_zpassword: zabbix
+    g_zserver: "http://{{ lookup('env', 'ZABBIX_HOST')}}/zabbix/api_jsonrpc.php"
+    g_zuser: "{{ lookup('env','ZABBIX_USER') }}"
+    g_zpassword: "{{ lookup('env','ZABBIX_PASSWORD') }}"
   roles:
   - ../roles/os_zabbix
   post_tasks:
@@ -37,31 +34,8 @@
   - name: Include Template
     include: create_template.yml
     vars:
-      ctp_template: "{{ g_template_master }}"
+      ctp_template: "{{ g_template_os_linux }}"
       ctp_zserver: "{{ g_zserver }}"
       ctp_zuser: "{{ g_zuser }}"
       ctp_zpassword: "{{ g_zpassword }}"
 
-  - name: Include Template
-    include: create_template.yml
-    vars:
-      ctp_template: "{{ g_template_node }}"
-      ctp_zserver: "{{ g_zserver }}"
-      ctp_zuser: "{{ g_zuser }}"
-      ctp_zpassword: "{{ g_zpassword }}"
-
-  - name: Include Template
-    include: create_template.yml
-    vars:
-      ctp_template: "{{ g_template_host }}"
-      ctp_zserver: "{{ g_zserver }}"
-      ctp_zuser: "{{ g_zuser }}"
-      ctp_zpassword: "{{ g_zpassword }}"
-
-  - name: Include Template
-    include: create_template.yml
-    vars:
-      ctp_template: "{{ g_template_router }}"
-      ctp_zserver: "{{ g_zserver }}"
-      ctp_zuser: "{{ g_zuser }}"
-      ctp_zpassword: "{{ g_zpassword }}"

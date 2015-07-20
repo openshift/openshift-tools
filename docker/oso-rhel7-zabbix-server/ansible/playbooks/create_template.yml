@@ -36,5 +36,6 @@
     params: "{{ item }}"
   with_items: ctp_template.ztriggers
   register: ctp_created_triggers
+  when: ctp_template.ztriggers is defined
 
 - debug: var=ctp_created_triggers
