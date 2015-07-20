@@ -3,7 +3,7 @@
 global $DB;
 
 $DB["TYPE"]             = 'MYSQL';
-$DB["SERVER"]           = 'localhost';
+$DB["SERVER"]           = 'mysql';
 $DB["PORT"]             = '0';
 $DB["DATABASE"]         = 'zabbix';
 $DB["USER"]             = 'zabbix';

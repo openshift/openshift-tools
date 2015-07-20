@@ -11,15 +11,16 @@ RUN yum clean metadata && \
     yum clean all
 
 # Install zabbix from zabbix repo
-RUN yum install -y zabbix-server-mysql zabbix-sender crontabs mariadb && \
+RUN yum install -y zabbix-server-mysql zabbix-agent zabbix-sender crontabs mariadb && \
     yum -y update && \
     yum clean all
 
-EXPOSE 10050
-EXPOSE 10051
+EXPOSE 10050 10051
 
 # Lay down zabbix conf
 ADD zabbix/conf/zabbix_server.conf /etc/zabbix/
+ADD zabbix/conf/zabbix_agentd.conf /etc/zabbix/
+ADD zabbix/conf/zabbix_agent.conf /etc/zabbix/
 
 # WORK AROUND FOR SQL SCRIPTS ARE MISSING
 ADD zabbix/db_create/zdata /usr/share/doc/zabbix-server-mysql-2.4.5/create/
@@ -29,8 +30,16 @@ ADD zabbix/db_create/createdb.sh /root/zabbix/
 ADD zabbix/db_create/create_zabbix.sql /root/zabbix/
 
 # Add crontab for root
-ADD cronroot /var/spool/cron/root
+# Re-enable once we figure out how to run cron inside of openshift.
+#ADD cronroot /var/spool/cron/root
+
+# Add ansible playbooks
+ADD ansible /root/ansible/
 
 # Start mysqld, zabbix, and apache
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
+
+# Make the container work more consistently in and out of openshift
+# BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
+RUN time chmod -R o+rwX /boot /dev /etc /home /media /mnt /opt /root /run /srv /var
