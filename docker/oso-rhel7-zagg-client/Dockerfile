@@ -11,7 +11,7 @@ RUN yum clean metadata && \
     yum clean all
 
 # Ansible startup configuration playbook
-ADD config.yml /root/config.yml
+ADD root/ /root
 
 # Add the start script and tell the container to run it by default
 ADD start.sh /usr/local/bin/

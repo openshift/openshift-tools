@@ -1,29 +1,22 @@
 ---
 - hosts: localhost
   gather_facts: no
+  vars_files:
+  - /root/default_vars.yml
   vars:
-    # This is the default value for g_zagg_client_config, override using zagg_client_vars.yml vars file
     g_zagg_client_config:
       host:
         name: "{{ g_hostname }}"
       zagg:
-        host: zagg-server
-        user: admin
-        pass: zagg-password
+        host: "{{ lookup('env', 'ZAGG_SERVER') | default(g_default_zagg_server, True) }}"
+        user: "{{ lookup('env', 'ZAGG_USER') | default(g_default_zagg_user, True) }}"
+        pass: "{{ lookup('env', 'ZAGG_PASS') | default(g_default_zagg_pass, True) }}"
       pcp:
-        metrics:
-        - kernel.all
-        - swap.free
-        - swap.length
-        - swap.used
+        metrics: "{{ g_default_pcp_metrics }}"
       heartbeat:
-        templates:
-        - Template Heartbeat # So we can send hearbeats
-        - Template OS Linux  # So we can send host related metrics
-        hostgroups:
-        - Linux servers
+        templates: "{{ g_default_templates }}"
+        hostgroups: "{{ g_default_hostgroups }}"
 
-    # This is the default value for g_zagg_client_cron, override using zagg_client_vars.yml vars file
     g_zagg_client_cron:
     - name: run pcp checks every 5 minutes
       minute: "*/5"
@@ -37,7 +30,8 @@
       path: /secrets/zagg_client_vars.yml
     register: g_zagg_client_vars
 
-  - include_vars: /secrets/zagg_client_vars.yml
+  - name: Load variables that will override the defaults
+    include_vars: /secrets/zagg_client_vars.yml
     when: g_zagg_client_vars.stat.exists
 
   - fail: "msg=This playbook requires {{ item }} to be set and not empty."
