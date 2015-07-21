@@ -1,0 +1,516 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: ops-zabbix-monitoring
+objects:
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      name: oso-rhel7-ops-base
+    name: oso-rhel7-ops-base
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: oso-rhel7-ops-base:latest
+    resources: {}
+    source:
+      contextDir: docker/oso-rhel7-ops-base
+      git:
+        uri: https://github.com/openshift/openshift-tools
+      type: Git
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: rhel7:latest
+      type: Docker
+    triggers:
+    - github:
+        secret: omDbv56tz1WfjnJXBd8-
+      type: GitHub
+    - generic:
+        secret: omZTVJ1ypJZG6scTRTXB
+      type: Generic
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      name: oso-rhel7-zabbix-server
+    name: oso-rhel7-zabbix-server
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: oso-rhel7-zabbix-server:latest
+    resources: {}
+    source:
+      contextDir: docker/oso-rhel7-zabbix-server
+      git:
+        uri: https://github.com/openshift/openshift-tools
+      type: Git
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: oso-rhel7-ops-base:latest
+      type: Docker
+    triggers:
+    - github:
+        secret: emr1MvjYjWNkEWUI_q6S
+      type: GitHub
+    - generic:
+        secret: yXX-a_vZDwurwsEHzn4U
+      type: Generic
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      name: oso-rhel7-zabbix-web
+    name: oso-rhel7-zabbix-web
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: oso-rhel7-zabbix-web:latest
+    resources: {}
+    source:
+      contextDir: docker/oso-rhel7-zabbix-web
+      git:
+        uri: https://github.com/openshift/openshift-tools
+      type: Git
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: oso-rhel7-ops-base:latest
+      type: Docker
+    triggers:
+    - github:
+        secret: bxBBfQa-snFN2325yUq4
+      type: GitHub
+    - generic:
+        secret: vAIA7QI9jD3k9DWXbsIi
+      type: Generic
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      name: oso-rhel7-zagg-web
+    name: oso-rhel7-zagg-web
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: oso-rhel7-zagg-web:latest
+    resources: {}
+    source:
+      contextDir: docker/oso-rhel7-zagg-web
+      git:
+        uri: https://github.com/openshift/openshift-tools
+      type: Git
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: oso-rhel7-ops-base:latest
+      type: Docker
+    triggers:
+    - github:
+        secret: kYu3zNQsSXBO55eJ3lAW
+      type: GitHub
+    - generic:
+        secret: NZcPQKFcxQHhLQjMkXoq
+      type: Generic
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      name: oso-rhel7-ops-base
+    name: rhel7
+  spec:
+    dockerImageRepository: library/rhel7:latest
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      name: oso-rhel7-ops-base
+    name: oso-rhel7-ops-base
+  spec:
+    tags:
+    - from:
+        kind: DockerImage
+        name: library/oso-rhel7-ops-base:latest
+      name: latest
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      name: oso-rhel7-zabbix-server
+    name: oso-rhel7-zabbix-server
+  spec: {}
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      name: oso-rhel7-zabbix-web
+    name: oso-rhel7-zabbix-web
+  spec: {}
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      name: oso-rhel7-zagg-web
+    name: oso-rhel7-zagg-web
+  spec: {}
+- apiVersion: v1beta3
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      name: ${DATABASE_SERVICE_NAME}
+    name: ${DATABASE_SERVICE_NAME}
+  spec:
+    replicas: 1
+    selector:
+      name: ${DATABASE_SERVICE_NAME}
+    strategy:
+      resources: {}
+      type: Recreate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: ${DATABASE_SERVICE_NAME}
+      spec:
+        containers:
+        - capabilities: {}
+          env:
+          - name: MYSQL_USER
+            value: ${MYSQL_USER}
+          - name: MYSQL_PASSWORD
+            value: ${MYSQL_PASSWORD}
+          - name: MYSQL_DATABASE
+            value: ${MYSQL_DATABASE}
+          image: mysql
+          imagePullPolicy: IfNotPresent
+          name: mysql
+          ports:
+          - containerPort: 3306
+            protocol: TCP
+          resources: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /var/lib/mysql/data
+            name: ${DATABASE_SERVICE_NAME}-data
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        volumes:
+        - name: ${DATABASE_SERVICE_NAME}-data
+          persistentVolumeClaim:
+            claimName: ${DATABASE_SERVICE_NAME}
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - mysql
+        from:
+          kind: ImageStreamTag
+          name: mysql:latest
+          namespace: openshift
+        lastTriggeredImage: ''
+      type: ImageChange
+    - type: ConfigChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      name: oso-rhel7-zabbix-server
+    name: oso-rhel7-zabbix-server
+  spec:
+    replicas: 1
+    selector:
+      deploymentconfig: oso-rhel7-zabbix-server
+    strategy:
+      resources: {}
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          deploymentconfig: oso-rhel7-zabbix-server
+      spec:
+        containers:
+        - env:
+          - name: MYSQL_USER
+            value: ${MYSQL_USER}
+          - name: MYSQL_PASSWORD
+            value: ${MYSQL_PASSWORD}
+          - name: MYSQL_DATABASE
+            value: ${MYSQL_DATABASE}
+          - name: MYSQL_HOST
+            value: ${DATABASE_SERVICE_NAME}
+          image: monitoring/oso-rhel7-zabbix-server:latest
+          imagePullPolicy: Always
+          name: oso-rhel7-zabbix-server
+          ports:
+          - containerPort: 10050
+            name: tcp-10050
+            protocol: TCP
+          - containerPort: 10051
+            name: tcp-10051
+            protocol: TCP
+          resources: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-rhel7-zabbix-server
+        from:
+          kind: ImageStreamTag
+          name: oso-rhel7-zabbix-server:latest
+      type: ImageChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      name: oso-rhel7-zabbix-web
+    name: oso-rhel7-zabbix-web
+  spec:
+    replicas: 1
+    selector:
+      deploymentconfig: oso-rhel7-zabbix-web
+    strategy:
+      resources: {}
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          deploymentconfig: oso-rhel7-zabbix-web
+      spec:
+        containers:
+        - env:
+          - name: MYSQL_USER
+            value: ${MYSQL_USER}
+          - name: MYSQL_PASSWORD
+            value: ${MYSQL_PASSWORD}
+          - name: MYSQL_DATABASE
+            value: ${MYSQL_DATABASE}
+          - name: MYSQL_HOST
+            value: ${DATABASE_SERVICE_NAME}
+          image: monitoring/oso-rhel7-zabbix-web:latest
+          imagePullPolicy: Always
+          name: oso-rhel7-zabbix-web
+          ports:
+          - containerPort: 80
+            name: tcp-80
+            protocol: TCP
+          - containerPort: 443
+            name: tcp-443
+            protocol: TCP
+          resources: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-rhel7-zabbix-web
+        from:
+          kind: ImageStreamTag
+          name: oso-rhel7-zabbix-web:latest
+      type: ImageChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      name: oso-rhel7-zagg-web
+    name: oso-rhel7-zagg-web
+  spec:
+    replicas: 1
+    selector:
+      deploymentconfig: oso-rhel7-zagg-web
+    strategy:
+      resources: {}
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          deploymentconfig: oso-rhel7-zagg-web
+      spec:
+        containers:
+        - env:
+          - name: ZAGG_SERVER_CONFIG
+            value: '{ "targets": [ { "name": "local cluster zbx server", "type": "zabbix",
+              "trapper_server": "oso-rhel7-zabbix-server", "trapper_port": 10051,
+              "api_url": "http://oso-rhel7-zabbix-web/zabbix/api_jsonrpc.php", "api_user":
+              "Admin", "api_pass": "zabbix", "path": "/var/run/zagg/data/cluster-zbx",
+              } ] }'
+          image: monitoring/oso-rhel7-zagg-web:latest
+          imagePullPolicy: Always
+          name: oso-rhel7-zagg-web
+          resources: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-rhel7-zagg-web
+        from:
+          kind: ImageStreamTag
+          name: oso-rhel7-zagg-web:latest
+      type: ImageChange
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: zabbix-web-route
+  spec:
+    host: oso-rhel7-zabbix-web.kwoodsontest1.opstest.online.openshift.com
+    to:
+      kind: Service
+      name: oso-rhel7-zabbix-web
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: zagg-web-route
+  spec:
+    host: oso-rhel7-zagg-web.kwoodsontest1.opstest.online.openshift.com
+    to:
+      kind: Service
+      name: oso-rhel7-zagg-web
+- apiVersion: v1beta3
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    name: ${DATABASE_SERVICE_NAME}
+  spec:
+    portalIP: ''
+    ports:
+    - name: mysql
+      nodePort: 0
+      port: 3306
+      protocol: TCP
+      targetPort: 3306
+    selector:
+      name: ${DATABASE_SERVICE_NAME}
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: oso-rhel7-zabbix-server
+    name: oso-rhel7-zabbix-server
+  spec:
+    ports:
+    - name: tcp-10050
+      nodePort: 0
+      port: 10050
+      protocol: TCP
+      targetPort: 10050
+    - name: tcp-10051
+      nodePort: 0
+      port: 10051
+      protocol: TCP
+      targetPort: 10051
+    selector:
+      deploymentconfig: oso-rhel7-zabbix-server
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: oso-rhel7-zabbix-web
+    name: oso-rhel7-zabbix-web
+  spec:
+    ports:
+    - name: tcp-80
+      nodePort: 0
+      port: 80
+      protocol: TCP
+      targetPort: 8000
+    - name: tcp-443
+      nodePort: 0
+      port: 443
+      protocol: TCP
+      targetPort: 443
+    selector:
+      deploymentconfig: oso-rhel7-zabbix-web
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: oso-rhel7-zagg-web
+    name: oso-rhel7-zagg-web
+  spec:
+    ports:
+    - name: http
+      nodePort: 0
+      port: 80
+      protocol: TCP
+      targetPort: 8000
+    selector:
+      deploymentconfig: oso-rhel7-zagg-web
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1beta3
+  kind: PersistentVolumeClaim
+  metadata:
+    name: ${DATABASE_SERVICE_NAME}
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${VOLUME_CAPACITY}
+parameters:
+- description: Database service name
+  name: DATABASE_SERVICE_NAME
+  value: mysql
+- description: Username for MySQL user that will be used for accessing the database
+  from: user[A-Z0-9]{3}
+  generate: expression
+  name: MYSQL_USER
+- description: Password for the MySQL user
+  from: '[a-zA-Z0-9]{16}'
+  generate: expression
+  name: MYSQL_PASSWORD
+- description: Database name
+  name: MYSQL_DATABASE
+  value: zabbix
+- description: Volume space available for data, e.g. 512Mi, 2Gi
+  name: VOLUME_CAPACITY
+  value: 5Gi
