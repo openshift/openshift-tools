@@ -33,13 +33,10 @@ ADD zabbix/db_create/create_zabbix.sql /root/zabbix/
 # Re-enable once we figure out how to run cron inside of openshift.
 #ADD cronroot /var/spool/cron/root
 
-# Add ansible playbooks
-ADD ansible /root/ansible/
-
 # Start mysqld, zabbix, and apache
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
 
 # Make the container work more consistently in and out of openshift
 # BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
-RUN time chmod -R o+rwX /boot /dev /etc /home /media /mnt /opt /root /run /srv /var
+RUN chmod -R g+rwX /etc/passwd /etc/zabbix /var/log/ /var/run/
