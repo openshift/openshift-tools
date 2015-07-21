@@ -5,13 +5,15 @@
 
 FROM oso-rhel7-ops-base:latest
 
+EXPOSE 8000
+
 # Lay down the zabbix repository
 RUN yum clean metadata && \
     yum install -y openshift-ops-yum-zabbix && \
     yum clean all
 
 # Install zabbix from zabbix repo
-RUN yum install -y zabbix-web-mysql && \
+RUN yum install -y zabbix-web-mysql mariadb && \
     yum -y update && \
     yum clean all
 
@@ -23,6 +25,9 @@ ADD httpd.conf /etc/httpd/conf/
 
 # Set the timezone in the php.ini file
 RUN sed -r -ie 's/^;(date.timezone).*/\1 = America\/New_York/g' /etc/php.ini
+
+# Fix v3 specific environment
+RUN chmod -R g+rwX /var/run/httpd /etc/httpd /var/log/httpd/ /etc/passwd /etc/zabbix/web /usr/share/zabbix/ /root/
 
 # Start apache
 ADD start.sh /usr/local/bin/
