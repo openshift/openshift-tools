@@ -1,5 +1,7 @@
 FROM rhel7:latest
 
+RUN echo "root:redhat" | chpasswd
+
 # get rid of subscript manager (we use our own mirrors)
 RUN touch /var/run/rhsm ; rpm -evh subscription-manager
 
@@ -37,7 +39,3 @@ RUN chmod 777 /var/run/screen
 # Setup Ansible
 ADD ansible.cfg /etc/ansible/ansible.cfg
 RUN echo -e '[local]\nlocalhost       ansible_connection=local\n' > /etc/ansible/hosts
-
-# Make the container work more consistently in and out of openshift
-# BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
-RUN time chmod -R o+rwX /boot /dev /etc /home /media /mnt /opt /root /run /srv /var
