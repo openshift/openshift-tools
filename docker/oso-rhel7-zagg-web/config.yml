@@ -14,8 +14,8 @@
     file:
       path: "{{ item }}"
       state: directory
-      owner: apache
-      group: apache
+      owner: user
+      group: root
       mode: "755"
     with_items: "{{ zagg_server_config.targets | oo_collect('path') }}"
 

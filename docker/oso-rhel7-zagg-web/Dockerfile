@@ -5,8 +5,6 @@
 
 FROM oso-rhel7-ops-base:latest
 
-RUN echo "root:redhat" | chpasswd
-
 RUN yum clean metadata && \
     yum install -y iproute iputils pylint python-pip \
         python-requests python-django \
@@ -30,8 +28,11 @@ ADD oo_filters.py /usr/share/ansible_plugins/filter_plugins/oo_filters.py
 
 ADD config.yml /root/config.yml
 
-EXPOSE 80
-EXPOSE 443
+EXPOSE 8000 8443
+
+# Temporary fixes until we can run as root
+RUN chmod -R g+rwX /opt/rh/zagg /var/run/httpd /etc/httpd /var/log/httpd /tmp/metrics /etc/passwd /root /var/run/zagg /etc/openshift_tools /etc/ansible
+ADD httpd.conf /etc/httpd/conf/
 
 # Start apache
 ADD start.sh /usr/local/bin/
