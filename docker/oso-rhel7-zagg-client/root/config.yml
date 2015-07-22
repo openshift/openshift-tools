@@ -10,7 +10,7 @@
       zagg:
         host: "{{ lookup('env', 'ZAGG_SERVER') | default(g_default_zagg_server, True) }}"
         user: "{{ lookup('env', 'ZAGG_USER') | default(g_default_zagg_user, True) }}"
-        pass: "{{ lookup('env', 'ZAGG_PASS') | default(g_default_zagg_pass, True) }}"
+        pass: "{{ lookup('env', 'ZAGG_PASSWORD') | default(g_default_zagg_pass, True) }}"
       pcp:
         metrics: "{{ g_default_pcp_metrics }}"
       heartbeat:
