@@ -33,5 +33,5 @@ CMD /usr/local/bin/start.sh
 # Fix v3 specific environment
 # Make the container work more consistently in and out of openshift
 # BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
-RUN chmod -R g+rwX /etc/httpd /etc/passwd /usr/share/zabbix/ /var/run /var/log /etc/zabbix/web && \
-    chgrp -R root /var/run /var/log /etc/zabbix/web 
+RUN chmod -R g+rwX /etc/httpd /etc/passwd /usr/share/zabbix/ /run/ /var/log /etc/zabbix/web && \
+    chgrp -R root /run/ /var/log /etc/zabbix/web 
