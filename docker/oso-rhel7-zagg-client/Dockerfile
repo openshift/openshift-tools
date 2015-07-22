@@ -16,7 +16,3 @@ ADD root/ /root
 # Add the start script and tell the container to run it by default
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
-
-# Make the container work more consistently in and out of openshift
-# BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
-RUN time chmod -R o+rwX /boot /dev /etc /home /media /mnt /opt /root /run /srv /usr/lib/python*/site-packages/openshift*
