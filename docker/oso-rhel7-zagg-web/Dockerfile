@@ -1,5 +1,5 @@
 # Example docker run command
-# docker run -p 10050:10050 -p 10050:10050 -p 80:80 -p 443:443 oso-rhel7-zaio
+# docker run -p 80:80 -p 443:443 oso-rhel7-zagg-web
 # /root/start.sh will then start the mysqldb, zabbix, and httpd services.
 # Default login:password to Zabbix is Admin:zabbix
 
@@ -30,11 +30,13 @@ ADD config.yml /root/config.yml
 
 EXPOSE 8000 8443
 
-# Temporary fixes until we can run as root
-RUN chmod -R g+rwX /opt/rh/zagg /var/run/httpd /etc/httpd /var/log/httpd /tmp/metrics /etc/passwd /root /var/run/zagg /etc/openshift_tools /etc/ansible
-ADD httpd.conf /etc/httpd/conf/
-
 # Start apache
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
 
+# Temporary fixes until we can run as root
+# Make the container work more consistently in and out of openshift
+# BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
+ADD httpd.conf /etc/httpd/conf/
+RUN chmod -R g+rwX /opt/rh/zagg /etc/httpd /tmp/metrics /etc/passwd /etc/openshift_tools /etc/ansible /var/run /var/log &&  \
+    chgrp -R /var/run /var/log
