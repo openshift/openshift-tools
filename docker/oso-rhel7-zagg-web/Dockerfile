@@ -31,7 +31,7 @@ ADD config.yml /root/config.yml
 EXPOSE 8000 8443
 
 # Start apache
-ADD start.sh /usr/local/bin/
+ADD ops-run-in-loop start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
 
 # Temporary fixes until we can run as root
