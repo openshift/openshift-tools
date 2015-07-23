@@ -27,7 +27,7 @@ ADD zabbix/db_create/zdata /usr/share/doc/zabbix-server-mysql-2.4.5/create/
 
 # DB creation
 ADD zabbix/db_create/createdb.sh /root/zabbix/
-ADD zabbix/db_create/create_zabbix.sql /root/zabbix/
+#ADD zabbix/db_create/create_zabbix.sql /root/zabbix/
 
 # Add crontab for root
 # Re-enable once we figure out how to run cron inside of openshift.
