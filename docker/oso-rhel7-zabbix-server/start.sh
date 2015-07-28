@@ -6,6 +6,10 @@ sed -ri -e "s/^DBUser=.*/DBUser=${MYSQL_USER}/g" \
         -e "s/^DBPassword=.*/DBPassword=${MYSQL_PASSWORD}/g" \
         -e "s/^DBHOst=.*/DBHost=${MYSQL_HOST}/g" /etc/zabbix/zabbix_server.conf
 
+while true; do
+  sleep 5
+done
+
 echo
 echo 'Ensure database exists.'
 echo '---------------'

@@ -1,0 +1,184 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: ops-zabbix-monitoring
+objects:
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      name: oso-rhel7-ops-base
+    name: oso-rhel7-ops-base
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: oso-rhel7-ops-base:latest
+    resources: {}
+    source:
+      contextDir: docker/oso-rhel7-ops-base
+      git:
+        uri: https://github.com/openshift/openshift-tools
+      type: Git
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: rhel7:latest
+      type: Docker
+    triggers:
+    - github:
+        secret: omDbv56tz1WfjnJXBd8-
+      type: GitHub
+    - generic:
+        secret: omZTVJ1ypJZG6scTRTXB
+      type: Generic
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      name: oso-rhel7-zagg-web
+    name: oso-rhel7-zagg-web
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: oso-rhel7-zagg-web:latest
+    resources: {}
+    source:
+      contextDir: docker/oso-rhel7-zagg-web
+      git:
+        uri: https://github.com/openshift/openshift-tools
+      type: Git
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: oso-rhel7-ops-base:latest
+      type: Docker
+    triggers:
+    - github:
+        secret: kYu3zNQsSXBO55eJ3lAW
+      type: GitHub
+    - generic:
+        secret: NZcPQKFcxQHhLQjMkXoq
+      type: Generic
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      name: oso-rhel7-ops-base
+    name: rhel7
+  spec:
+    dockerImageRepository: library/rhel7:latest
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      name: oso-rhel7-ops-base
+    name: oso-rhel7-ops-base
+  spec:
+    tags:
+    - from:
+        kind: DockerImage
+        name: library/oso-rhel7-ops-base:latest
+      name: latest
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      name: oso-rhel7-zagg-web
+    name: oso-rhel7-zagg-web
+  spec: {}
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      name: oso-rhel7-zagg-web
+    name: oso-rhel7-zagg-web
+  spec:
+    replicas: 1
+    selector:
+      deploymentconfig: oso-rhel7-zagg-web
+    strategy:
+      resources: {}
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          deploymentconfig: oso-rhel7-zagg-web
+      spec:
+        containers:
+        - env:
+          - name: ZAGG_SERVER_CONFIG
+            value: '{ "targets": [ { "name": "local cluster zbx server", "type": "zabbix",
+              "trapper_server": "${ZABBIX_SERVER}", "trapper_port": 10051,
+              "api_url": "http://${ZABBIX_WEB_URL}/zabbix/api_jsonrpc.php", "api_user":
+              "${ZABBIX_WEB_USER}", "api_pass": "${ZABBIX_WEB_PASSWORD}", "path": "/var/run/zagg/data/cluster-zbx",
+              } ] }'
+          image: monitoring/oso-rhel7-zagg-web:latest
+          imagePullPolicy: Always
+          name: oso-rhel7-zagg-web
+          resources: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-rhel7-zagg-web
+        from:
+          kind: ImageStreamTag
+          name: oso-rhel7-zagg-web:latest
+      type: ImageChange
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: zagg-web-route
+  spec:
+    host: ${ZAGG_WEB_URL}
+    to:
+      kind: Service
+      name: oso-rhel7-zagg-web
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: oso-rhel7-zagg-web
+    name: oso-rhel7-zagg-web
+  spec:
+    ports:
+    - name: http
+      nodePort: 0
+      port: 80
+      protocol: TCP
+      targetPort: 8000
+    selector:
+      deploymentconfig: oso-rhel7-zagg-web
+    sessionAffinity: None
+    type: ClusterIP
+parameters:
+- description: Zabbix server
+  name: ZABBIX_SERVER
+  value: oso-rhel7-zabbix-server
+- description: Zabbix web user
+  name: ZABBIX_WEB_USER
+  value: Admin
+- description: Zabbix web password
+  name: ZABBIX_WEB_PASSWORD
+  value: zabbix
+- description: Zabbix web ui URL
+  name: ZABBIX_WEB_URL
+  value: oso-rhel7-zabbix-web.kwoodsontest2.opstest.online.openshift.com
+- description: Zagg web URL
+  name: ZAGG_WEB_URL
+  value: oso-rhel7-zagg-web.kwoodsontest2.opstest.online.openshift.com

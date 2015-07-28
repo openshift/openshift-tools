@@ -364,9 +364,9 @@ objects:
         - env:
           - name: ZAGG_SERVER_CONFIG
             value: '{ "targets": [ { "name": "local cluster zbx server", "type": "zabbix",
-              "trapper_server": "oso-rhel7-zabbix-server", "trapper_port": 10051,
-              "api_url": "http://oso-rhel7-zabbix-web/zabbix/api_jsonrpc.php", "api_user":
-              "Admin", "api_pass": "zabbix", "path": "/var/run/zagg/data/cluster-zbx",
+              "trapper_server": "${ZABBIX_SERVER}", "trapper_port": 10051,
+              "api_url": "http://${ZABBIX_WEB_URL}/zabbix/api_jsonrpc.php", "api_user":
+              "${ZABBIX_WEB_USER}", "api_pass": "${ZABBIX_WEB_PASSWORD}", "path": "/var/run/zagg/data/cluster-zbx",
               } ] }'
           image: monitoring/oso-rhel7-zagg-web:latest
           imagePullPolicy: Always
@@ -393,7 +393,7 @@ objects:
   metadata:
     name: zabbix-web-route
   spec:
-    host: oso-rhel7-zabbix-web.kwoodsontest1.opstest.online.openshift.com
+    host: ${ZABBIX_WEB_URL}
     to:
       kind: Service
       name: oso-rhel7-zabbix-web
@@ -402,7 +402,7 @@ objects:
   metadata:
     name: zagg-web-route
   spec:
-    host: oso-rhel7-zagg-web.kwoodsontest1.opstest.online.openshift.com
+    host: ${ZAGG_WEB_URL}
     to:
       kind: Service
       name: oso-rhel7-zagg-web
@@ -514,3 +514,19 @@ parameters:
 - description: Volume space available for data, e.g. 512Mi, 2Gi
   name: VOLUME_CAPACITY
   value: 5Gi
+- description: Zabbix web ui URL
+  name: ZABBIX_WEB_URL
+  value: oso-rhel7-zabbix-web
+- description: Zagg web URL
+  name: ZAGG_WEB_URL
+  value: oso-rhel7-zagg-web
+- description: Zabbix server
+  name: ZABBIX_SERVER
+  value: oso-rhel7-zabbix-server
+- description: Zabbix web user
+  name: ZABBIX_WEB_USER
+  value: Admin
+- description: Zabbix web password
+  name: ZABBIX_WEB_PASSWORD
+  value: zabbix
+
