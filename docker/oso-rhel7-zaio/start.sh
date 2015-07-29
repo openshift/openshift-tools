@@ -34,16 +34,6 @@ echo '--------------'
 /sbin/apachectl
 echo
 
-echo 'Cleaning zabbix'
-echo '---------------'
-/usr/bin/ansible-playbook /root/ansible/playbooks/clean_zabbix.yml
-echo
-
-echo 'Populating zabbix'
-echo '-----------------'
-/usr/bin/ansible-playbook /root/ansible/playbooks/setup_zabbix.yml
-echo
-
 echo 'Restarting httpd'
 echo '----------------'
 killall httpd

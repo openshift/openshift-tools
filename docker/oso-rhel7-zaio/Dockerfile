@@ -35,9 +35,6 @@ RUN sed -r -ie 's/^;(date.timezone).*/\1 = America\/New_York/g' /etc/php.ini
 # Zabbix web
 ADD zabbix/conf/zabbix.conf.php /etc/zabbix/web/
 
-# Copy over the ansible bits
-ADD ansible /root/ansible/
-
 # Start mysqld, zabbix, and apache
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
