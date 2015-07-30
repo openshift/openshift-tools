@@ -23,9 +23,13 @@
 """This is a script the processes zagg metrics.
 """
 
-from openshift_tools.monitoring.metricmanager import MetricManager
 from openshift_tools.monitoring.zabbix_metric_processor import ZabbixSender, ZabbixMetricProcessor
+from openshift_tools.monitoring.metricmanager import MetricManager
 from openshift_tools.ansible.simplezabbix import SimpleZabbix
+
+from openshift_tools.monitoring.zagg_metric_processor import ZaggMetricProcessor
+from openshift_tools.monitoring.zagg_common import ZaggConnection
+from openshift_tools.monitoring.zagg_client import ZaggClient
 
 import yaml
 
@@ -51,6 +55,8 @@ class ZaggProcessor(object):
         for target in self.config['targets']:
             if target['type'] == 'zabbix':
                 self.process_zabbix(target)
+            if target['type'] == 'zagg':
+                self.process_zagg(target)
             else:
                 # ERROR: TARGET NOT SUPPORTED!
                 # TODO: add error logging and signaling
@@ -70,12 +76,32 @@ class ZaggProcessor(object):
         zbxapi = SimpleZabbix(
             url=target['api_url'],
             user=target['api_user'],
-            password=target['api_pass'],
+            password=target['api_password'],
         )
 
         zbxsender = ZabbixSender(target['trapper_server'], target['trapper_port'])
 
         zmp = ZabbixMetricProcessor(mm, zbxapi, zbxsender)
+        zmp.process_metrics()
+
+    @staticmethod
+    def process_zagg(target):
+        """Process a Zagg target
+
+        Args:
+            target: the config file portion for this specific target.
+
+        Returns: None
+        """
+
+        mm = MetricManager(target['path'])
+        zagg_conn = ZaggConnection(host=target['host'],
+                                   user=target['user'],
+                                   password=target['password']
+                                  )
+        zc = ZaggClient(zagg_conn)
+
+        zmp = ZaggMetricProcessor(mm, zc)
         zmp.process_metrics()
 
 if __name__ == "__main__":

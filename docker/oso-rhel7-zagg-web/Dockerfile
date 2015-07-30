@@ -8,6 +8,7 @@ FROM oso-rhel7-ops-base:latest
 RUN yum clean metadata && \
     yum install -y iproute iputils pylint python-pip \
         python-requests python-django \
+        python-passlib \
         openshift-tools-web-zagg \
         openshift-tools-scripts-monitoring \
         tree python-django-bash-completion httpd mod_wsgi \

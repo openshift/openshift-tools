@@ -23,7 +23,7 @@ The purpose of this module is to process metrics and send them to Zabbix.
 from openshift_tools.monitoring.metricmanager import UniqueMetric
 from zbxsend import send_to_zabbix
 
-# Reason: disable pylint too-few-public-methods because this class in a simple
+# Reason: disable pylint too-few-public-methods because this class is a simple
 #     helper / wrapper class.
 # Status: permanently disabled
 # pylint: disable=too-few-public-methods
