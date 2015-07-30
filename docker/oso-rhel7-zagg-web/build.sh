@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -t zagg-web .
+docker build $@ -t oso-rhel7-zagg-web .

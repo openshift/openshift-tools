@@ -366,7 +366,7 @@ objects:
             value: '{ "targets": [ { "name": "local cluster zbx server", "type": "zabbix",
               "trapper_server": "${ZABBIX_SERVER}", "trapper_port": 10051,
               "api_url": "http://${ZABBIX_WEB_URL}/zabbix/api_jsonrpc.php", "api_user":
-              "${ZABBIX_WEB_USER}", "api_pass": "${ZABBIX_WEB_PASSWORD}", "path": "/var/run/zagg/data/cluster-zbx",
+              "${ZABBIX_WEB_USER}", "api_password": "${ZABBIX_WEB_PASSWORD}", "path": "/var/run/zagg/data/cluster-zbx",
               } ] }'
           image: monitoring/oso-rhel7-zagg-web:latest
           imagePullPolicy: Always

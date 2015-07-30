@@ -28,7 +28,6 @@ class RestApi(object):
         self.headers = headers
 
         self.base_uri = "http://" + host + "/"
-        self.data = None
 
     @property
     def _auth(self):
@@ -56,6 +55,9 @@ class RestApi(object):
             method=method, url=url, params=params, data=data,
             headers=_headers, timeout=130, verify=False
         )
-        self.data = response.json()
 
-        return (response.status_code, self.data)
+        data = None
+        if response.status_code == 200:
+            data = response.json()
+
+        return (response.status_code, data)
