@@ -2,4 +2,4 @@
 
 
 cd $(dirname $0)
-docker build $@ -t pcp-base .
+time docker build $@ -t pcp-base .
