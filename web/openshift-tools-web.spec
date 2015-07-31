@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Web Services
 Name:          openshift-tools-web
-Version:       0.0.7
+Version:       0.0.8
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -42,6 +42,14 @@ OpenShift Tools Zagg REST API
 %config(noreplace) /etc/httpd/conf.d/*.conf
 
 %changelog
+* Fri Jul 31 2015 Matt Woodson <mwoodson@redhat.com> 0.0.8-1
+- stupid pylint (mwoodson@redhat.com)
+- cleaned up settigns.py for zagg (mwoodson@redhat.com)
+- added error_log output to zagg web (mwoodson@redhat.com)
+- Removed htpasswd as we're now generating it on container startup. Changed
+  build.sh scripts to display the time it took to build the image.
+  (twiest@redhat.com)
+
 * Wed Jul 15 2015 Thomas Wiest <twiest@redhat.com> 0.0.7-1
 - added config file support to zagg-web (twiest@redhat.com)
 
