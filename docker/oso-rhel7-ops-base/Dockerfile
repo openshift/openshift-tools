@@ -19,7 +19,7 @@ ADD pythonrc /root/.pythonrc
 ENV PYTHONSTARTUP=/root/.pythonrc
 
 # setup epel repo
-RUN rpm -ivh https://download.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
+RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 
 # setup yum repos
 ADD setup-yum.sh /usr/local/bin/setup-yum.sh

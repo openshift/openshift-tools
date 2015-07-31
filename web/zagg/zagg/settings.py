@@ -8,8 +8,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
+# the logging is defined in a django dict, which is called later on.
+# the import logging is needed, pylint just doesn't know it is needed
+#pylint: disable=unused-import
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import logging
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
@@ -65,6 +70,22 @@ DATABASES = {
     }
 }
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+        },
+    },
+}
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 
@@ -83,6 +104,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = '/opt/rh/zagg/static'
+
 REST_FRAMEWORK = {
     'PAGE_SIZE': 10
 }
