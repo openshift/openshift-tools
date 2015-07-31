@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.4
+Version:       0.0.5
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -49,6 +49,9 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Fri Jul 31 2015 Thomas Wiest <twiest@redhat.com> 0.0.5-1
+- added zagg to zagg capability to ops-zagg-processor (twiest@redhat.com)
+
 * Thu Jul 23 2015 Thomas Wiest <twiest@redhat.com> 0.0.4-1
 - added ops-zagg-heartbeater.py (twiest@redhat.com)
 
