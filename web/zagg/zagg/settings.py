@@ -1,5 +1,5 @@
-Django settings for zagg project.
 """
+Django settings for zagg project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/1.6/topics/settings/
@@ -8,6 +8,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
+# the logging is defined in a django dict, which is called later on.
+# the import logging is needed, pylint just doesn't know it is needed
+#pylint: disable=unused-import
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import logging
