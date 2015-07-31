@@ -1,5 +1,5 @@
-"""
 Django settings for zagg project.
+"""
 
 For more information on this file, see
 https://docs.djangoproject.com/en/1.6/topics/settings/
@@ -19,14 +19,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'qH{}*.f~o=LQ(E%RCnkO{y.x0s3bcw;0d3RpdzL>KkAR92g2UE'
+SECRET_KEY = 'CHANGEMEPLEASE_50_CHARACTERS_IS_NEEDED_1234567890'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 #DEBUG = True
 DEBUG = False
 
-TEMPLATE_DEBUG = True
-#TEMPLATE_DEBUG = False
+#TEMPLATE_DEBUG = True
+TEMPLATE_DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -106,6 +106,3 @@ STATIC_ROOT = '/opt/rh/zagg/static'
 REST_FRAMEWORK = {
     'PAGE_SIZE': 10
 }
-
-
-
