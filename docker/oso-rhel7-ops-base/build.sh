@@ -6,4 +6,4 @@ cd $(dirname $0)
 # Build ourselves
 echo
 echo "Building oso-rhel7-ops-base..."
-docker build $@ -t oso-rhel7-ops-base -t docker-registry.ops.rhcloud.com/ops/oso-rhel7-ops-base .
+time docker build $@ -t oso-rhel7-ops-base -t docker-registry.ops.rhcloud.com/ops/oso-rhel7-ops-base .

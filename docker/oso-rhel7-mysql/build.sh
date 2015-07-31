@@ -10,5 +10,4 @@ cd $(dirname $0)
 # Build ourselves
 echo
 echo "Building oso-rhel7-mysql..."
-docker build $@ -t oso-rhel7-mysql .
-
+time docker build $@ -t oso-rhel7-mysql .

@@ -9,4 +9,4 @@ cd $(dirname $0)
 # Build ourselves
 echo
 echo "Building oso-rhel7-zagg-client..."
-docker build $@ -t oso-rhel7-zagg-client -t docker-registry.ops.rhcloud.com/ops/oso-rhel7-zagg-client .
+time docker build $@ -t oso-rhel7-zagg-client -t docker-registry.ops.rhcloud.com/ops/oso-rhel7-zagg-client .
