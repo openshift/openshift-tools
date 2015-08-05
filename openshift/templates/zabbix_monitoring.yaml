@@ -368,6 +368,10 @@ objects:
               "api_url": "http://${ZABBIX_WEB_URL}/zabbix/api_jsonrpc.php", "api_user":
               "${ZABBIX_WEB_USER}", "api_password": "${ZABBIX_WEB_PASSWORD}", "path": "/var/run/zagg/data/cluster-zbx",
               } ] }'
+          - name: ZAGG_SERVER_USER
+            value: ${ZAGG_SERVER_USER}
+          - name: ZAGG_SERVER_PASSWORD
+            value: ${ZAGG_SERVER_PASSWORD}
           image: monitoring/oso-rhel7-zagg-web:latest
           imagePullPolicy: Always
           name: oso-rhel7-zagg-web
@@ -513,7 +517,7 @@ parameters:
   value: zabbix
 - description: Volume space available for data, e.g. 512Mi, 2Gi
   name: VOLUME_CAPACITY
-  value: 5Gi
+  value: 100Gi
 - description: Zabbix web ui URL
   name: ZABBIX_WEB_URL
   value: oso-rhel7-zabbix-web
@@ -529,4 +533,11 @@ parameters:
 - description: Zabbix web password
   name: ZABBIX_WEB_PASSWORD
   value: zabbix
-
+- description: Username for Zagg Web user that will be used to access the REST API
+  from: user[A-Z0-9]{3}
+  generate: expression
+  name: ZAGG_SERVER_USER
+- description: Password for the Zagg Web user that will be used to access the REST API
+  from: '[a-zA-Z0-9]{16}'
+  generate: expression
+  name: ZAGG_SERVER_PASSWORD
