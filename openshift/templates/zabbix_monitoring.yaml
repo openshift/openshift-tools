@@ -361,18 +361,7 @@ objects:
           deploymentconfig: oso-rhel7-zagg-web
       spec:
         containers:
-        - env:
-          - name: ZAGG_SERVER_CONFIG
-            value: '{ "targets": [ { "name": "local cluster zbx server", "type": "zabbix",
-              "trapper_server": "${ZABBIX_SERVER}", "trapper_port": 10051,
-              "api_url": "http://${ZABBIX_WEB_URL}/zabbix/api_jsonrpc.php", "api_user":
-              "${ZABBIX_WEB_USER}", "api_password": "${ZABBIX_WEB_PASSWORD}", "path": "/var/run/zagg/data/cluster-zbx",
-              } ] }'
-          - name: ZAGG_SERVER_USER
-            value: ${ZAGG_SERVER_USER}
-          - name: ZAGG_SERVER_PASSWORD
-            value: ${ZAGG_SERVER_PASSWORD}
-          image: monitoring/oso-rhel7-zagg-web:latest
+        - image: monitoring/oso-rhel7-zagg-web:latest
           imagePullPolicy: Always
           name: oso-rhel7-zagg-web
           resources: {}
@@ -380,8 +369,15 @@ objects:
             capabilities: {}
             privileged: false
           terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /secrets
+            name: monitoring-secrets
         dnsPolicy: ClusterFirst
         restartPolicy: Always
+        volumes:
+        - name: monitoring-secrets
+          secret:
+            secretName: monitoring-secrets
     triggers:
     - type: ConfigChange
     - imageChangeParams:
@@ -533,11 +529,3 @@ parameters:
 - description: Zabbix web password
   name: ZABBIX_WEB_PASSWORD
   value: zabbix
-- description: Username for Zagg Web user that will be used to access the REST API
-  from: user[A-Z0-9]{3}
-  generate: expression
-  name: ZAGG_SERVER_USER
-- description: Password for the Zagg Web user that will be used to access the REST API
-  from: '[a-zA-Z0-9]{16}'
-  generate: expression
-  name: ZAGG_SERVER_PASSWORD
