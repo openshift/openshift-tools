@@ -30,12 +30,9 @@ RUN sed -i -e 's/PCP_USER=.*$/PCP_USER=root/' -e 's/PCP_GROUP=.*$/PCP_GROUP=root
 # (dodges warnings from pmcd attempting to connect during startup)
 RUN . /etc/pcp.conf && echo "-A" >> $PCP_PMCDOPTIONS_PATH
 
+#
 # Add in our custom pmdas
 ADD pmdas/ /var/lib/pcp/pmdas/
-ADD install.py /usr/local/bin/
-
-# Install our custom pmdas
-RUN /usr/local/bin/install.py http_ping
 
 #
 # Expose pmcd's main port on the host interfaces.
