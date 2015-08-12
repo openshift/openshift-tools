@@ -24,19 +24,13 @@ g_default_pcp_metrics:
 - kernel.uname.nodename
 - kernel.uname.distro
 - kernel.uname.nodename
-- mem.physmem
 - mem.freemem
+- mem.physmem
 - mem.util.bufmem
 - mem.util.cached
-- mem.freemem
-- mem.physmem
-- mem.freemem
 - mem.util.used
 - swap.free
-- swap.used
 - swap.length
-- swap.length
-- swap.free
 - swap.used
 
 g_default_templates:
