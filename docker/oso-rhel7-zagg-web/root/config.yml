@@ -1,18 +1,27 @@
 ---
 - hosts: localhost
   gather_facts: no
+  vars_files:
+  - /root/default_vars.yml
   vars:
-    # Get the zagg_server_config from an env var. This can be overridden with ansible-playbook -e
-    zagg_server_config: "{{ lookup('env','ZAGG_SERVER_CONFIG') }}"
-    zagg_server_user: "{{ lookup('env','ZAGG_SERVER_USER') }}"
-    zagg_server_password: "{{ lookup('env','ZAGG_SERVER_PASSWORD') }}"
+    g_zagg_server_config: "{{ lookup('env','ZAGG_SERVER_CONFIG') | default(g_default_zagg_server_config, True) }}"
+    g_zagg_server_user: "{{ lookup('env','ZAGG_SERVER_USER') | default(g_default_zagg_server_user, True) }}"
+    g_zagg_server_password: "{{ lookup('env','ZAGG_SERVER_PASSWORD') | default(g_default_zagg_server_password, True) }}"
   pre_tasks:
+  - stat:
+      path: /secrets/zagg-server-vars.yml
+    register: g_zagg_server_vars
+
+  - name: Load variables that will override the defaults
+    include_vars: /secrets/zagg-server-vars.yml
+    when: g_zagg_server_vars.stat.exists
+
   - fail: "msg=This playbook requires {{ item }} to be set."
     when: "{{ item }} is not defined or {{ item }} == ''"
     with_items:
-    - zagg_server_config
-    - zagg_server_user
-    - zagg_server_password
+    - g_zagg_server_config
+    - g_zagg_server_user
+    - g_zagg_server_password
 
   - name: Make sure all of the target's have directories for their metrics
     file:
@@ -21,11 +30,11 @@
       owner: user
       group: root
       mode: "777" # This is on purpose, we have to have the perms totally open here.
-    with_items: "{{ zagg_server_config.targets | oo_collect('path') }}"
+    with_items: "{{ g_zagg_server_config.targets | oo_collect('path') }}"
 
   - name: Generate the zagg_server.yaml config file
     copy:
-      content: "{{ zagg_server_config | to_nice_yaml }}"
+      content: "{{ g_zagg_server_config | to_nice_yaml }}"
       dest: /etc/openshift_tools/zagg_server.yaml
       mode: "644"
 
@@ -49,5 +58,5 @@
   - name: Create htpasswd file
     htpasswd:
       path: /opt/rh/zagg/htpasswd
-      name: "{{ zagg_server_user }}"
-      password: "{{ zagg_server_password }}"
+      name: "{{ g_zagg_server_user }}"
+      password: "{{ g_zagg_server_password }}"

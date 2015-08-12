@@ -27,7 +27,7 @@ ADD zbxapi.py /usr/share/ansible/zbxapi.py
 ADD oo_filters.py /usr/share/ansible_plugins/filter_plugins/oo_filters.py
 # END TODO
 
-ADD config.yml /root/config.yml
+ADD root /root
 
 EXPOSE 8000 8443
 
