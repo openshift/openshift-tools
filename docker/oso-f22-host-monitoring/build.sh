@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo echo -e "\nTesting sudo works...\n"
+
 # We MUST be in the same directory as this script for the build to work properly
 cd $(dirname $0)
 
@@ -7,7 +9,7 @@ cd $(dirname $0)
 if ../pcp-base/build.sh ; then
   # Build ourselves
   echo
-  echo "Building oso-rhel7-zagg-client..."
-  time docker build $@ -t oso-f22-host-monitoring . && \
-  docker tag -f oso-f22-host-monitoring docker-registry.ops.rhcloud.com/ops/oso-f22-host-monitoring
+  echo "Building oso-f22-host-monitoring..."
+  sudo time docker build $@ -t oso-f22-host-monitoring . && \
+  sudo docker tag -f oso-f22-host-monitoring docker-registry.ops.rhcloud.com/ops/oso-f22-host-monitoring
 fi

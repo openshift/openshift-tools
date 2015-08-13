@@ -1,4 +1,6 @@
 #!/bin/bash -e
 
+sudo echo -e "\nTesting sudo works...\n"
+
 cd $(dirname $0)
-time docker build $@ -t oso-rhel7-zaio .
+sudo time docker build $@ -t oso-rhel7-zaio .
