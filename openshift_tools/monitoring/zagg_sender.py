@@ -27,22 +27,70 @@ Examples:
     zs.send_metrics()
 """
 
-from openshift_tools.monitoring.zagg_client import ZaggClient
 from openshift_tools.monitoring import pminfo
 from openshift_tools.monitoring.metricmanager import UniqueMetric
+from openshift_tools.monitoring.zagg_client import ZaggClient
+from openshift_tools.monitoring.zagg_common import ZaggConnection
+import os
+import yaml
+
+class ZaggSenderException(Exception):
+    '''
+        ZabbixSenderException
+        Exists to propagate errors up from the api
+    '''
+    pass
 
 class ZaggSender(object):
     """
     collect and create UniqueMetrics and send them to Zagg
     """
 
-    def __init__(self, host, zagg_connection):
+    def __init__(self, host=None, zagg_connection=None):
         """
         set up the zagg client, pcp_metrics and unique_metrics
         """
-        self.zaggclient = ZaggClient(zagg_connection=zagg_connection)
-        self.host = host
         self.unique_metrics = []
+        self.config = None
+        self.config_file = '/etc/openshift_tools/zagg_client.yaml'
+
+        if not host:
+            host = self.get_default_host()
+
+        if not zagg_connection:
+            zagg_connection = self.get_default_zagg_connecton()
+
+        self.host = host
+        self.zaggclient = ZaggClient(zagg_connection=zagg_connection)
+
+    def parse_config(self):
+        """ parse default config file """
+
+        if not self.config:
+            if not os.path.exists(self.config_file):
+                raise ZaggSenderException(self.config_file + " does not exist.")
+            self.config = yaml.load(file(self.config_file))
+
+    def get_default_host(self):
+        """ get the 'host' value from the config file """
+        self.parse_config()
+
+        return self.config['host']['name']
+
+    def get_default_zagg_connecton(self):
+        """ get the values and create a zagg_connection """
+
+        self.parse_config()
+        zagg_server = self.config['zagg']['host']
+        zagg_user = self.config['zagg']['user']
+        zagg_password = self.config['zagg']['pass']
+
+        zagg_connection = ZaggConnection(host=zagg_server,
+                                         user=zagg_user,
+                                         password=zagg_password,
+                                        )
+
+        return zagg_connection
 
     def add_pcp_metrics(self, pcp_metrics, host=None):
         """
