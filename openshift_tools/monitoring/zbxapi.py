@@ -67,6 +67,7 @@ class ZabbixAPI(object):
         'Configuration': ['export', 'import'],
         'Dhost': ['get'],
         'Dcheck': ['get'],
+        'Discoveryrule': ['copy', 'create', 'delete', 'get', 'isreadable', 'iswritable', 'update'],
         'Drule': ['copy', 'create', 'delete', 'get', 'isreadable', 'iswritable', 'update'],
         'Dservice': ['get'],
         'Event': ['acknowledge', 'get'],
