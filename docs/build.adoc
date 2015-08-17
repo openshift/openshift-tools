@@ -1,14 +1,93 @@
-# openshift-tools RPM Build instructions
+= How to Build RPMs for the openshift-tools GitHub Repo
+:toc: macro
+:toc-title:
+
+toc::[]
+
+
+== Description
 This repository uses tito to make building and tracking revisions easy.
 
 For more information on tito, please see the http://rm-rf.ca/tito[Tito home page]
 
+== One Time Setup
+To build the python-openshift-tools-* and openshift-tools-* rpms, we use http://rm-rf.ca/tito[Tito]
 
-## Build python-openshift-tools-* RPMs
+Tito makes several assumptions that aren't 100% compatible with the github workflow.
+
+.For instance:
+* Tito uses tags to keep track of revisions. You can't create a PR for
+tags in github, so you have to push them directly to the upstream repo.
+* Tito calls the upstream repo `origin`, whereas we call our own fork of
+the upstream repo `origin`. This is very confusing because tito will
+output git commands to run against `origin`.
+
+So, in order to keep everything straight, the recommended setup when using tito is to
+setup a git repo structure specifically for tito, and _only_ use it for
+tito related activities.
+
+=== Create the one time setup
+.Here are the steps to setup the recommended tito structure:
+. Create a place to house the tito setup
++
+[source]
+----
+[user@desktop]$ mkdir -p ~/tito
+----
++
+. Go into the new place:
++
+[source]
+----
+[user@desktop]$ cd ~/tito
+----
+. Clone the openshift-tools repo:
++
+[source]
+----
+[user@desktop]$ git clone git@github.com:openshift/openshift-tools.git
+----
+
+
+=== Test the setup using just tito
+. Change directory into the openshift_tools directory (this is where the spec file is):
++
+[source]
+----
+[user@desktop]$ cd ~/tito/openshift-tools/openshift_tools
+----
++
+. Do a test build using tito:
++
+[source]
+----
+[user@desktop]$ time tito build --test --rpm
+----
++
+. Output should look something like this:
++
+[source]
+----
+Building package [python-openshift-tools-0.0.6-1]
+Wrote: /tmp/tito/python-openshift-tools-git-0.88fc030.tar.gz
+
+[... snip ...]
+
+Successfully built: /tmp/tito/python-openshift-tools-0.0.6-1.git.0.88fc030.el6.src.rpm /tmp/tito/noarch/python-openshift-tools-0.0.6-1.git.0.88fc030.el6.noarch.rpm /tmp/tito/noarch/python-openshift-tools-monitoring-0.0.6-1.git.0.88fc030.el6.noarch.rpm /tmp/tito/noarch/python-openshift-tools-web-0.0.6-1.git.0.88fc030.el6.noarch.rpm
+
+real  0m3.311s
+user  0m1.159s
+sys 0m1.896s
+
+[user@desktop]$
+----
+
+
+== Build python-openshift-tools-* RPMs
 . Change into openshift-tools/openshift_tools directory
 +
 ----
-cd openshift-tools/openshift_tools
+cd ~/tito/openshift-tools/openshift_tools
 ----
 +
 . Get the latest code
@@ -32,12 +111,12 @@ tito build --test --rpm
 .. Tag a new build (bumps version number and adds log entries)
 +
 ----
-# Something like this (copy it from the tito output):
-git push && git push origin package-name-and-new-VERSION
+tito tag
 ----
 +
 ----
-tito tag
+# Something like this (copy it from the tito output):
+git push && git push origin package-name-and-new-VERSION
 ----
 +
 .. Follow the on screen tito instructions to push the tags
@@ -47,11 +126,63 @@ tito tag
 tito build --rpm
 ----
 
-## Build openshift-tools-web-* RPMs
+
+
+
+
+== Build openshift-tools-scripts-* RPMs
+. Change into openshift-tools/scripts directory
++
+----
+cd ~/tito/openshift-tools/scripts
+----
++
+. Get the latest code
++
+----
+git pull
+----
+. Get the latest tags
++
+----
+git fetch --tags
+----
++
+. Build test packages (no tagging needed)
++
+----
+tito build --test --rpm
+----
++
+. OPTIONAL: If a new version of the package is needed, follow these instructions:
+.. Tag a new build (bumps version number and adds log entries)
++
+----
+tito tag
+----
++
+.. Follow the on screen tito instructions to push the tags
++
+----
+# Something like this (copy it from the tito output):
+git push && git push origin package-name-and-new-VERSION
+----
+. Build new packages based on the latest tag information
++
+----
+tito build --rpm
+----
+
+
+
+
+
+
+== Build openshift-tools-web-* RPMs
 . Change into openshift-tools/web directory
 +
 ----
-cd openshift-tools/web
+cd ~/tito/openshift-tools/web
 ----
 +
 . Get the latest code
