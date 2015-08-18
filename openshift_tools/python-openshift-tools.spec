@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.16
+Version:       0.0.17
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -98,6 +98,11 @@ Tools developed to make it easy to work with web technologies.
 
 
 %changelog
+* Tue Aug 18 2015 Matt Woodson <mwoodson@redhat.com> 0.0.17-1
+- added discoveryrule (kwoodson@redhat.com)
+- Merge pull request #20 from jgkennedy/pr (twiest@users.noreply.github.com)
+- Combined the two graphs and refactored some things (jessek@redhat.com)
+
 * Mon Aug 17 2015 Thomas Wiest <twiest@redhat.com> 0.0.16-1
 - updated zagg sender to not read defaults (mwoodson@redhat.com)
 
