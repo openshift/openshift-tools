@@ -1,0 +1,117 @@
+== Writing ZaggClient Checks
+
+This document is intended to be used as a reference to write checks in Openshift V3 using the Zagg interface.
+
+*Note:* This document assumes you are using the https://github.com/openshift/openshift-tools/tree/master/docker/oso-rhel7-zagg-client[oso-rhel7-zagg-client] docker container.  This container includes all the required libraries to communicate with a Zagg server.
+
+==== A Note About ZaggClient Checks
+
+Let's take a quick review and understanding of Zagg and Zabbix to clarify what is meant by 'ZaggClient checks'.
+
+ZaggClient checks are simple gathering of Zabbix items and sending them to the ZaggServer (which eventually sends them to a Zabbix Server).
+
+
+=== Zagg Clients Overview
+
+Currently there are two different methods that can be used to send data to Zagg.
+
+. *ZaggSender python libraries*:  This is the *PREFERRED* way to write checks. ZaggSender is a python interface used to send data to Zagg
+
+. *ops-zagg-client*:  This is a command line tool that can be used to send data to Zagg.
+
+Both of these clients read their default settings from the config file: `/etc/openshift_tools/zagg_client.yaml`.
+
+
+==== ZaggSender - Python API
+
+This is a python API used to create and send data to Zagg.
+
+ZaggSender is maintained in the https://github.com/openshift/openshift-tools/tree/master/openshift_tools/monitoring[openshift-tools] repository.  It is installed via the `python-openshift-tools-monitoring` RPM.
+
+ZaggSender reads it's default settings from the config file: `/etc/openshift_tools/zagg_client.yaml`.
+
+The basic python script would follow the pattern:
+
+.ZaggSender python script basic pattern
+----
+#!/usr/bin/env python
+
+<do stuff, gather info>
+
+zs = ZaggSender()
+zs.add_zabbix_keys({
+                     'item1' : 'value1',
+                     'item2' : 'value2',
+                  })
+zs.send_metrics()
+
+----
+
+Here is an example script of capturing the response code of google.com and sending it to Zagg as Zabbix item "web.google.status":
+
+.ZaggSender Python Example Script
+----
+#!/usr/bin/env python
+
+import urllib
+import yaml
+from openshift_tools.monitoring.zagg_sender import ZaggSender
+
+resp = urllib.urlopen('http://www.google.com')
+google_response = resp.getcode()
+
+zs = ZaggSender()
+zs.add_zabbix_keys({ 'web.google.status' : google_response })
+zs.send_metrics()
+
+----
+
+==== ops-zagg-client
+
+This is a command line tool written in python that can send Zabbix items directly to the zagg server.  This tool is similar to the Zabbix command line tool `zabbix_sender`.  This tool packages up Zabbix items and "ships" them to a Zagg Server.
+
+By default, `ops-zagg-client` reads defaults out of the config file: `/etc/openshift_tools/zagg_client.yaml`. These values can be overridden from the command line.
+
+The command line options were modeled after the `zabbix_sender` command.  By using these relevant options, checks can be created and data can be sent to Zagg:
+
+.ops-zagg-client CLI Options
+----
+  -h, --help            show this help message and exit
+
+Defaults of these values read from /etc/openshift_tools/zagg_client.yaml:
+
+  -s HOST, --host HOST  specify host name to identify as (the name registered in Zabbix)
+  -z ZAGG_SERVER, --zagg-server ZAGG_SERVER  hostname of IP of Zagg server
+  --zagg-user ZAGG_USER  username of the Zagg server
+  --zagg-pass ZAGG_PASS  password of the Zagg server
+  -c CONFIG_FILE, --config-file CONFIG_FILE (alternative config file)
+
+These values are needed for the unique Zabbix items:
+
+  -k KEY, --key KEY     zabbix key
+  -o VALUE, --value VALUE  zabbix value
+
+----
+
+`ops-zagg-client` can be used to write bash scripts.  The basic bash script would follow the pattern:
+
+.ops-zagg-client bash script pattern
+----
+#!/bin/bash
+
+<do checks and gather data>
+
+ops-zagg-client -k sample_key1 -o sample_value1
+ops-zagg-client -k sample_key2 -o sample_value2
+----
+
+Here is an example script of capturing the response code of google.com and sending it to Zagg as Zabbix item "web.google.status":
+
+.ops-zagg-client example script
+----
+#!/bin/bash
+
+GOOGLE_STATUS=$(curl -I http://www.google.com 2>/dev/null | head -n 1 | awk '{print $2}')
+
+ops-zagg-client -k web.google.status -o ${GOOGLE_STATUS}
+----
