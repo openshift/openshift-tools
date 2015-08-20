@@ -6,7 +6,7 @@
   vars:
     g_zagg_client_config:
       host:
-        name: "{{ g_hostname }}"
+        name: "{{ lookup('env', 'ZAGG_CLIENT_HOSTNAME') | default(g_default_zagg_client_hostname, True) }}"
       zagg:
         host: "{{ lookup('env', 'ZAGG_SERVER') | default(g_default_zagg_server, True) }}"
         user: "{{ lookup('env', 'ZAGG_USER') | default(g_default_zagg_user, True) }}"
@@ -38,16 +38,6 @@
     when: "{{ item }} is not defined or not {{ item }}"
     with_items:
     - g_zagg_client_config
-
-  - name: Get hostname information from pminfo
-    command: '/usr/bin/pminfo -f kernel.uname.nodename'
-    changed_when: false
-    register: g_pminfo_hostname_output
-
-  - set_fact:
-      g_hostname: "CTR-{{ g_pminfo_hostname_output.stdout_lines[2][11:-1] }}"
-
-  - debug: var=g_hostname
 
   - debug: var=g_zagg_client_config
 
