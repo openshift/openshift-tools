@@ -1,0 +1,289 @@
+// vim: ft=asciidoc
+
+= How to do local development of openshift-tools monitoring components
+:toc: macro
+:toc-title:
+
+toc::[]
+
+
+== Description
+The purpose of this document is to show how development of openshift-tools monitoring components can be developed locally.
+
+The monitoring components of openshift-tools run inside of containers, so we use containers to develop them as well.
+
+In this document, we're going to focus on the monitoring components, but similar patterns can be used for other components as well.
+
+
+== Prerequisites
+
+=== Packages
+.The following pachages are required:
+. Docker
+
+.Fedora:
+----
+sudo yum -y install docker-io
+----
+
+
+=== Services
+.The following services need to be enabled and started:
+. docker
+
+.Fedora:
+----
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo systemctl status docker
+----
+
+== Locating the container definitions (Dockerfiles)
+All of the containers are located in the openshift-tools git repository under the `docker` subdirectory.
+
+For a full list of containers, please see the repository https://github.com/openshift/openshift-tools/tree/master/docker[here].
+
+== Building the monitoring containers
+The openshift-tools git repository contains a number of docker containers that are part of our monitoring containers.
+
+Each container has a build.sh script that handles building it locally.
+
+*Note: For local development, you don't need to build all containers, just the ones listed below.*
+
+For the containers to build properly, they must be built in a certain order.
+
+.*Recommended build order*:
+. oso-rhel7-ops-base
+. oso-rhel7-zaio
+. oso-rhel7-zagg-web
+. oso-rhel7-zagg-client
+. pcp-base
+. oso-f22-host-monitoring
+
+.Example of building the oso-rhel7-ops-base container (other containers are similar):
+----
+> cd openshift-tools/docker/oso-rhel7-ops-base
+> ./build.sh
+[sudo] password for user: *********
+
+Testing sudo works...
+
+[... snip ...]
+
+Building oso-rhel7-ops-base...
+Sending build context to Docker daemon 41.98 kB
+Sending build context to Docker daemon
+Step 0 : FROM rhel7:latest
+
+[... snip ...]
+
+Removing intermediate container 118a6f8a27a1
+Successfully built 8129dd909ce8
+0.04user 0.03system 1:51.28elapsed 0%CPU (0avgtext+0avgdata 14796maxresident)k
+0inputs+0outputs (0major+757minor)pagefaults 0swaps
+
+[... snip ...]
+
+----
+
+=== Caveats
+
+==== Build time secrets
+Since the containers are built on RHEL, they expect to have yum credentials setup such that they can yum install packages.
+
+The expected directory structure is outlined https://github.com/twiest/openshift-tools/tree/master/docker#setup[here].
+
+The RHEL7 version of docker contains a secrets patch which copies in the contents of the host's directory /etc/pki/entitlements into the container at the location /run/secrets/etc-pki-entitlement. This copy is done in such a way that it does *NOT* become part of the final image (which is great for build time secrets).
+
+Unfortunately Fedora (and other distros) don't have the secrets patch, so we have a workaround in the build script for oso-rhel7-ops-base that copies the contents of that directory into the image. This means that this docker image contains secrets and thus should *NOT* be shared externally. It should *ONLY* be used for local development.
+
+This also means that any containers built from oso-rhel7-ops-base image should also *NOT* be shared, as they contain the same credentials.
+
+==== Build dependencies
+Docker doesn't have container build dependencies, so it is the responsibility of the end user to build the containers in the prescribed order.
+
+==== Stale builds
+Docker doesn't automatically build dependent containers, so it is the responsibility of the end user to re-build containers as they get updated in git. It is very difficult to know if a docker file, or any RPMs that a docker file installs have been updated. So, it is recommended that the end user does rebuilds on a regular basis.
+
+All of the build scripts pass additional options down to docker, so normal docker options work.
+
+It is recommended when doing the first build of a container, to pass the `--no-cache` option so that all layers are re-built. This will ensure the container is fully up to date.
+
+.Example build without using the cache
+----
+> ./build.sh --no-cache
+----
+
+
+
+== Running the monitoring containers locally
+The monitoring containers each include a run.sh script that handles running the container locally. It also handles linking up the containers together, so that they can communicate.
+
+The run.sh scripts run the containers in the foreground. For development purposes, there are a number of advantages.
+
+.Advantages of running containers in the foreground:
+. Can use --rm which cleans up the containers after execution
+. Can see the output from the run
+. Can easily stop the container with ctrl-c
+
+
+*Note: For local development, you don't need to run all containers, just the ones listed below.*
+
+For the containers to link up properly, they must be run in a certain order.
+
+.*Recommended run order*:
+. oso-rhel7-zaio
+. oso-rhel7-zagg-web
+. oso-f22-host-monitoring
+. oso-rhel7-zagg-client
+
+.Example of running the oso-rhel7-zaio container (other containers are similar):
+----
+> cd openshift-tools/docker/oso-rhel7-zaio
+> ./run.sh
+
+Testing sudo works...
+
+Running zaio...
+Preparing the db
+
+[... snip ...]
+
+----
+
+*Note: the container will stay in the foreground (on purpose). This allows you to see the container startup messages and allows you to exit the container by pressing ctrl-c*
+
+== Logging into the ZAIO
+Once the containers are up and running, you can log into the Zaio http://localhost/zabbix[here].
+
+The username is `Admin`.
+The password is `zabbix`.
+
+
+== Setting up the ZAIO
+The ZAIO is a completely default installation of zabbix. It has the default templates, items and triggers loaded. The reason it's completely default is that the ZAIO is used by multiple teams, for multiple projects. Therefore, having a default install makes sense.
+
+The ZAIO is also a completely ephemeral. Meaning that when the ZAIO container is stopped and then re-started, it is back to being a completely default installation of zabbix. This is great for development.
+
+This makes the ZAIO a great resource for local development.
+
+=== Setting up the openshift-tools Ansible Zabbix Modules
+In order to setup the openshift-tools Ansible Zabbix modules, you need to either install the Zabbix Ansible Module package, or setup the python path to point to the openshift_tools python module.
+
+For development purposes, it's almost always preferable to set the python path, as then you're guaranteed to have the latest code.
+
+.Steps to configure the Ansible Zabbix Modules:
+. Change into the openshift-tools git repo
+----
+> cd openshift-tools
+----
+
+. Set the python path to see our openshift_tools python package, as well as the system's site-packages
+----
+> export PYTHONPATH=$(pwd):$(ls /usr/lib/python2*/site-packages/ -d)
+----
+
+. Export the credentials the module should use to login to the zabbix api
+----
+> export ZABBIX_USER=Admin
+> export ZABBIX_PASSWORD=zabbix
+----
+
+
+=== Cleaning out the ZAIO
+For our monitoring development, we really don't need the vast majority of the default templates.
+
+To clean them out, run the clean_zabbix.yml playbook, located in the openshift-ansible git repo https://github.com/openshift/openshift-ansible/blob/master/playbooks/adhoc/zabbix_setup/clean_zabbix.yml[here].
+
+.Example of running the clean_zabbix.yml playbook:
+----
+> cd openshift-ansible/playbooks/adhoc/zabbix_setup/
+> ansible-playbook clean_zabbix.yml
+----
+
+=== Setup the Monitoring templates, items and triggers in the ZAIO
+After cleaning out the default templates, items and triggers from the ZAIO, it is necessary to setup the ZAIO with our latest monitoring templates, items and triggers.
+
+To do this, run the setup_zabbix.yml playbook.
+
+*Note: this playbook is idempotent and can be run multiple times without any new changes being made.*
+
+.Example of running the clean_zabbix.yml playbook:
+----
+> cd openshift-ansible/playbooks/adhoc/zabbix_setup/
+> ansible-playbook setup_zabbix.yml
+----
+
+
+== Container Features
+
+=== /shared
+All of the containers when run locally mount /var/lib/docker/volumes/shared into the container on /shared. This makes it really easy to share data between containers during development.
+
+*Note: /shared is NOT available when run inside of OpenShift because these containers can (and probably do) run on different machines in the cluster. So don't rely on it for container features.*
+
+All of the containers run with the --rm flag, which means that they when they exit, they clean up all of their resources. Therefore, it is recommended that you store any changes made in /shared so that they are persistent.
+
+In fact, the common development pattern is to do a git clone right inside of /shared and develop in git directly and then symlink from the container into the git repo.
+
+== Testing the local setup
+To test the local setup, send a heartbeat from oso-rhel7-zagg-client and make sure it shows up in zabbix.
+
+=== Send a heartbeat from the oso-rhel7-zagg-client container:
+
+.Here are the steps:
+. Enter the oso-rhel7-zagg-client container:
++
+----
+> sudo docker exec -ti oso-rhel7-zagg-client bash
+----
++
+. Inside the container send a heartbeat:
++
+----
+[CTR][root@ ~]$ /usr/bin/ops-zagg-client --send-heartbeat
+----
++
+. Exit the oso-rhel7-zagg-client container:
++
+----
+[CTR][root@ ~]$ exit
+----
+
+=== Force oso-rhel7-zabbix-web to send the heartbeat to zabbix immediately:
+
+.Here are the steps:
+. Enter the oso-rhel7-zagg-web container:
++
+----
+> sudo docker exec -ti oso-rhel7-zagg-web bash
+----
++
+. Inside the container send a heartbeat:
++
+----
+[CTR][root@ ~]$ ops-zagg-processor
+----
++
+. Exit the oso-rhel7-zagg-web container:
++
+----
+[CTR][root@ ~]$ exit
+----
+
+=== Check that the heartbeat was sent to the ZAIO
+
+.Ensure the heartbeat made it to the ZAIO:
+. Check that the host exists in the ZAIO http://localhost/zabbix/hosts.php[here].
+. Check latest data
+.. Go to the latest data page http://localhost/zabbix/latest.php[here].
+.. Click "Show filter"
+.. Click the "Select" button next to "Hosts"
+.. Select your host
+.. Click the "Filter" button
+.. Expand the plus sign next to "- other -"
+.. Look for the "Heartbeat Ping" item and note if the value is set or not.
+.. If the value is set, your local development environment has been successfully setup.
+
+== Conclusion
+Your machine should now be setup for local container development.

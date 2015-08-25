@@ -1,3 +1,5 @@
+// vim: ft=asciidoc
+
 = How to Build RPMs for the openshift-tools GitHub Repo
 :toc: macro
 :toc-title:
