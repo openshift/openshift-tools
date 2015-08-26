@@ -30,6 +30,12 @@ RUN yum clean metadata && \
     yum -y update && \
     yum clean all
 
+# Setup locales.  It comes broken (probably a size issue) by default in the docker image.
+RUN yum -y reinstall glibc-common &&  \
+    yum clean all  && \
+    mv -f /usr/lib/locale/locale-archive /usr/lib/locale/locale-archive.tmpl  && \
+    /usr/sbin/build-locale-archive
+
 # Setup Cron
 ADD pamd.crond /etc/pam.d/crond
 
