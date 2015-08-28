@@ -2,6 +2,7 @@ FROM oso-rhel7-ops-base:latest
 
 RUN yum clean metadata && \
     yum install -y python-pip pcp pcp-conf pcp-testsuite \
+        openshift \
         python-requests \
         python-openshift-tools-web \
         python-openshift-tools-monitoring \
