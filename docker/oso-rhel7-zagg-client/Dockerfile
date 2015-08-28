@@ -13,6 +13,11 @@ RUN yum clean metadata && \
 # Ansible startup configuration playbook
 ADD root/ /root
 
+# FIXME: These are ugly quick hacked together monitoring scripts
+# The need to be removed and replaced by prototype monitoring scripts later on
+ADD monitoring_scripts /usr/local/bin
+RUN chmod +x /usr/local/bin/cron-send*sh
+
 # Add the start script and tell the container to run it by default
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh

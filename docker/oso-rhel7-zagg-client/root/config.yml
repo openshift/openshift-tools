@@ -24,6 +24,9 @@
     - name: run register every 15 minutes
       minute: "*/15"
       job: /usr/bin/ops-zagg-client --send-heartbeat
+    - name: run filesystem space checks every 30 minutes
+      minute: "*/30"
+      job: /usr/local/bin/cron-send-filesystem-metrics.sh
 
   pre_tasks:
   - stat:
