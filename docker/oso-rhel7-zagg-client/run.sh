@@ -1,6 +1,7 @@
 #!/bin/bash
 
 sudo docker run --rm=true -it --name oso-rhel7-zagg-client \
+           --privileged \
            --net=container:oso-f22-host-monitoring \
            -e ZAGG_SERVER=localhost                                             \
            -e ZAGG_USER=admin                                 \
