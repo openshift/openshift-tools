@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# vim: expandtab:tabstop=4:shiftwidth=4
+
 '''
     Quick and dirty create application check for v3
 '''

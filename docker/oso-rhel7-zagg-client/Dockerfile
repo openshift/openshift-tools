@@ -16,7 +16,8 @@ RUN yum clean metadata && \
 ADD root /root
 
 # FIXME: These are ugly quick hacked together monitoring scripts
-# The need to be removed and replaced by prototype monitoring scripts later on
+# They need to be removed and replaced by prototype monitoring scripts later on
+# Or refactored into libs and added to rpms
 ADD monitoring_scripts /usr/local/bin
 RUN chmod +x /usr/local/bin/cron-send*
 
