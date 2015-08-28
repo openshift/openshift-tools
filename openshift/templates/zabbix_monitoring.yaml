@@ -464,7 +464,7 @@ objects:
       nodePort: 0
       port: 443
       protocol: TCP
-      targetPort: 443
+      targetPort: 8000
     selector:
       deploymentconfig: oso-rhel7-zabbix-web
     sessionAffinity: None
@@ -480,6 +480,11 @@ objects:
     - name: http
       nodePort: 0
       port: 80
+      protocol: TCP
+      targetPort: 8000
+    - name: http
+      nodePort: 0
+      port: 443
       protocol: TCP
       targetPort: 8000
     selector:
