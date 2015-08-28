@@ -5,11 +5,6 @@ g_default_zagg_server: localhost:8000
 g_default_zagg_user: admin
 g_default_zagg_pass: password
 g_default_pcp_metrics:
-- filesys.avail
-- filesys.capacity
-- filesys.free
-- filesys.full
-- filesys.used
 - hinv.ncpu
 - kernel.all.cpu.idle
 - kernel.all.cpu.irq.hard
