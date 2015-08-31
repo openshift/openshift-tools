@@ -17,7 +17,7 @@ ADD root/ /root
 # FIXME: These are ugly quick hacked together monitoring scripts
 # The need to be removed and replaced by prototype monitoring scripts later on
 ADD monitoring_scripts /usr/local/bin
-RUN chmod +x /usr/local/bin/cron-send*sh
+RUN chmod +x /usr/local/bin/cron-send*
 
 # Add the start script and tell the container to run it by default
 ADD start.sh /usr/local/bin/

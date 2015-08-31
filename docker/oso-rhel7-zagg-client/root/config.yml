@@ -27,6 +27,9 @@
     - name: run filesystem space checks every 30 minutes
       minute: "*/30"
       job: /usr/local/bin/cron-send-filesystem-metrics.sh
+    - name: run create app every 5 minutes
+      minute: "*/5"
+      job: /usr/local/bin/cron-send-create-app.py
 
   pre_tasks:
   - stat:
