@@ -34,9 +34,5 @@ g_default_pcp_metrics:
 - swap.length
 - swap.used
 
-g_default_templates:
-- Template Heartbeat # So we can send hearbeats
-- Template OS Linux  # So we can send host related metrics
-
 g_default_hostgroups:
 - Linux servers
