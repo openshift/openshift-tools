@@ -1,0 +1,5 @@
+---
+# These are defaults variables, override using zagg_client_vars.yml vars file
+g_default_templates:
+- Template Heartbeat # So we can send hearbeats
+- Template OS Linux  # So we can send host related metrics
