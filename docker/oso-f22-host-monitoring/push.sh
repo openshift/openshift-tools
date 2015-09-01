@@ -5,5 +5,5 @@ if ../pcp-base/push.sh ; then
   # Push ourselves
   echo
   echo "Pushing oso-rhel7-zagg-client..."
-  docker push docker-registry.ops.rhcloud.com/ops/oso-f22-host-monitoring
+  sudo docker push docker-registry.ops.rhcloud.com/ops/oso-f22-host-monitoring
 fi

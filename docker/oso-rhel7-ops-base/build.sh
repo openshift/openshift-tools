@@ -15,9 +15,10 @@ function is_rhel()
 cd $(dirname $0)
 
 
-tmpfile=$(mktemp Dockerfile-XXXXX)
+tmpfile=""
 
 if ! is_rhel ; then
+  tmpfile=$(mktemp Dockerfile-XXXXX)
   echo
   echo "Not rhel, enabling entitlement workaround:"
   echo
