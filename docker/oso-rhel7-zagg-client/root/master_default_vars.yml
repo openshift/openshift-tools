@@ -3,4 +3,5 @@
 g_default_templates:
 - Template Heartbeat # So we can send hearbeats
 - Template OS Linux  # So we can send host related metrics
+- Template Docker # So we can send docker related metrics
 - Template Openshift Master # So we can send master related metrics
