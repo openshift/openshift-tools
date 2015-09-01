@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# vim: expandtab:tabstop=4:shiftwidth=4
-
 '''
     Quick and dirty create application check for v3
 '''
@@ -21,10 +19,10 @@ class OpenShiftOC(object):
     ''' Class to wrap the oc command line tools
     '''
     @staticmethod
-    def get_pod(pod_name, verbose=False):
+    def get_pod(pod_name, proj_name, verbose=False):
         '''return a pod by name
         '''
-        pods = OpenShiftOC.get_pods(verbose=verbose)
+        pods = OpenShiftOC.get_pods(proj_name=proj_name, verbose=verbose)
         regex = re.compile('%s-[0-9]-[a-z0-9]{5}$' % pod_name)
         for pod in pods['items']:
             results = regex.search(pod['metadata']['name'])
@@ -34,19 +32,23 @@ class OpenShiftOC(object):
         return None
 
     @staticmethod
-    def get_pods(pod_name='', verbose=False):
+    def get_pods(pod_name='', proj_name='', verbose=False):
         '''return all pods
         '''
         cmd = ['get', 'pods', '--no-headers', '-o', 'json']
         if pod_name:
             cmd = ['get', 'pods', '--no-headers', pod_name, '-o', 'json']
+
+        if proj_name:
+            cmd.append('-n %s'%proj_name)
+
         return json.loads(OpenShiftOC.oc_cmd(cmd, verbose))
 
     @staticmethod
-    def new_app(path, verbose=False):
+    def new_app(path, proj_name, verbose=False):
         '''run new-app
         '''
-        cmd = ['new-app', path]
+        cmd = ['new-app', path, '-n', proj_name]
         return OpenShiftOC.oc_cmd(cmd, verbose)
 
     @staticmethod
@@ -62,8 +64,14 @@ class OpenShiftOC(object):
     def new_project(name, verbose=False):
         '''create new project
         '''
+        cmd = ['project']
+        results = OpenShiftOC.oc_cmd(cmd, verbose)
+        curr_project = results.split()[2].strip('"')
         cmd = ['new-project', name]
-        return OpenShiftOC.oc_cmd(cmd, verbose)
+        rval = OpenShiftOC.oc_cmd(cmd, verbose)
+        cmd = ['project', curr_project]
+        results = OpenShiftOC.oc_cmd(cmd, verbose)
+        return rval
 
     @staticmethod
     def get_projects(verbose=False):
@@ -118,13 +126,13 @@ def main():
 
     OpenShiftOC.new_project(proj_name, verbose)
 
-    OpenShiftOC.new_app(app, verbose)
+    OpenShiftOC.new_app(app, proj_name, verbose)
 
     create_app = 1
     # Now we wait until the pod comes up
     for _ in range(24):
         time.sleep(5)
-        pod = OpenShiftOC.get_pod('hello-openshift', verbose)
+        pod = OpenShiftOC.get_pod('hello-openshift', proj_name, verbose)
         if pod and pod['status']:
             if verbose:
                 print pod['status']['phase']
@@ -141,6 +149,9 @@ def main():
         if verbose:
             print 'Time: %s' % str(time.time() - start_time)
             print 'fail'
+
+    if proj_name in  OpenShiftOC.get_projects(verbose):
+        OpenShiftOC.delete_project(proj_name, verbose)
 
     zgs = ZaggSender()
     zgs.add_zabbix_keys({'create_app': create_app})
