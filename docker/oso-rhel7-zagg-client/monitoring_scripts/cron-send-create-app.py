@@ -40,7 +40,7 @@ class OpenShiftOC(object):
             cmd = ['get', 'pods', '--no-headers', pod_name, '-o', 'json']
 
         if proj_name:
-            cmd.append('-n %s'%proj_name)
+            cmd.append('-n%s'%proj_name)
 
         return json.loads(OpenShiftOC.oc_cmd(cmd, verbose))
 
