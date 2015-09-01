@@ -1,5 +1,4 @@
 #!/bin/bash -e
 
 
-
-docker run -ti --rm pcp-base bash
+sudo docker run -ti --rm pcp-base bash
