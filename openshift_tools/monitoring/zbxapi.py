@@ -34,7 +34,8 @@ if __name__ == '__main__':
 # Disabling line length for readability
 
 import json
-import httplib2
+import requests
+import httplib
 import copy
 
 class ZabbixAPIError(Exception):
@@ -111,9 +112,9 @@ class ZabbixAPI(object):
             raise ZabbixAPIError('Please specify zabbix server url, username, and password.')
 
         self.verbose = zabbix_connection.verbose
-        self.use_ssl = False
-        if self.server.startswith('https'):
-            self.use_ssl = False
+        if self.verbose:
+            httplib.HTTPSConnection.debuglevel = 1
+            httplib.HTTPConnection.debuglevel = 1
         self.auth = None
 
         for cname, _ in self.classes.items():
@@ -121,15 +122,15 @@ class ZabbixAPI(object):
 
         # pylint: disable=no-member
         # This method does not exist until the metaprogramming executed
-        results = self.user.login(user=self.username, password=self.password)
+        resp, content = self.user.login(user=self.username, password=self.password)
 
-        if results[0]['status'] == '200':
-            if results[1].has_key('result'):
-                self.auth = results[1]['result']
-            elif results[1].has_key('error'):
-                raise ZabbixAPIError("Unable to authenticate with zabbix server. {0} ".format(results[1]['error']))
+        if resp.status_code == 200:
+            if content.has_key('result'):
+                self.auth = content['result']
+            elif content.has_key('error'):
+                raise ZabbixAPIError("Unable to authenticate with zabbix server. {0} ".format(content['error']))
         else:
-            raise ZabbixAPIError("Error in call to zabbix. Http status: {0}.".format(results[0]['status']))
+            raise ZabbixAPIError("Error in call to zabbix. Http status: {0}.".format(resp.status_code))
 
     def perform(self, method, rpc_params):
         '''
@@ -143,15 +144,8 @@ class ZabbixAPI(object):
             id - an arbitrary identifier of the request;
             auth - a user authentication token; since we don't have one yet, it's set to null.
         '''
-        http_method = "POST"
         jsonrpc = "2.0"
         rid = 1
-
-        http = None
-        if self.use_ssl:
-            http = httplib2.Http()
-        else:
-            http = httplib2.Http(disable_ssl_certificate_validation=True,)
 
         headers = {}
         headers["Content-type"] = "application/json"
@@ -170,22 +164,23 @@ class ZabbixAPI(object):
         body = json.dumps(body)
 
         if self.verbose:
-            print body
-            print method
-            print headers
-            httplib2.debuglevel = 1
+            print "BODY:", body
+            print "METHOD:", method
+            print "HEADERS:", headers
 
-        response, content = http.request(self.server, http_method, body, headers)
+        request = requests.Request("POST", self.server, data=body, headers=headers)
+        session = requests.Session()
+        req_prep = session.prepare_request(request)
+        response = session.send(req_prep, verify=(self.server.startswith('https')))
 
-        if response['status'] not in ['200', '201']:
-            raise ZabbixAPIError('Error calling zabbix.  Zabbix returned %s' % response['status'])
+        if response.status_code not in [200, 201]:
+            raise ZabbixAPIError('Error calling zabbix.  Zabbix returned %s' % response.status_code)
 
         if self.verbose:
-            print response
-            print content
+            print "RESPONSE:", response.text
 
         try:
-            content = json.loads(content)
+            content = response.json()
         except ValueError as err:
             content = {"error": err.message}
 
