@@ -36,6 +36,11 @@ RUN yum -y reinstall glibc-common &&  \
     mv -f /usr/lib/locale/locale-archive /usr/lib/locale/locale-archive.tmpl  && \
     /usr/sbin/build-locale-archive
 
+# Python requires the following packages in order to work with SSL and SNI
+RUN yum install python-pyasn1 python-ndg_httpsclient pyOpenSSL &&  \
+    yum clean all  && \
+    /usr/sbin/build-locale-archive
+
 # Setup Cron
 ADD pamd.crond /etc/pam.d/crond
 

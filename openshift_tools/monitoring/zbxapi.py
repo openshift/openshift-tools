@@ -47,15 +47,20 @@ class ZabbixAPIError(Exception):
 
 # Disabling to have DTO
 # pylint: disable=too-few-public-methods
+
+# DTO needs an extra arg
+# pylint: disable=too-many-arguments
+
 class ZabbixConnection(object):
     '''
     Placeholder for connection options
     '''
-    def __init__(self, server, username, password, verbose=False):
+    def __init__(self, server, username, password, ssl_verify=False, verbose=False):
         self.server = server
         self.username = username
         self.password = password
         self.verbose = verbose
+        self.ssl_verify = ssl_verify
 
 class ZabbixAPI(object):
     '''
@@ -112,6 +117,7 @@ class ZabbixAPI(object):
             raise ZabbixAPIError('Please specify zabbix server url, username, and password.')
 
         self.verbose = zabbix_connection.verbose
+        self.ssl_verify = zabbix_connection.ssl_verify
         if self.verbose:
             httplib.HTTPSConnection.debuglevel = 1
             httplib.HTTPConnection.debuglevel = 1
@@ -171,7 +177,7 @@ class ZabbixAPI(object):
         request = requests.Request("POST", self.server, data=body, headers=headers)
         session = requests.Session()
         req_prep = session.prepare_request(request)
-        response = session.send(req_prep, verify=(self.server.startswith('https')))
+        response = session.send(req_prep, verify=self.ssl_verify)
 
         if response.status_code not in [200, 201]:
             raise ZabbixAPIError('Error calling zabbix.  Zabbix returned %s' % response.status_code)

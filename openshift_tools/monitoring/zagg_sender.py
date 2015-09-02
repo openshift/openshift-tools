@@ -84,10 +84,12 @@ class ZaggSender(object):
         zagg_server = self.config['zagg']['host']
         zagg_user = self.config['zagg']['user']
         zagg_password = self.config['zagg']['pass']
+        zagg_ssl_verify = self.config['zagg']['ssl_verify']
 
         zagg_connection = ZaggConnection(host=zagg_server,
                                          user=zagg_user,
                                          password=zagg_password,
+                                         ssl_verify=zagg_ssl_verify,
                                         )
 
         return zagg_connection

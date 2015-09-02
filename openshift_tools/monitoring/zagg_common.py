@@ -11,6 +11,15 @@ Example usage:
 """
 from collections import namedtuple
 
-ZaggConnection = namedtuple("ZaggConnection", ["host", "user", "password"])
+#ZaggConnection = namedtuple("ZaggConnection", ["host", "user", "password", "use_ssl"])
+# pylint: disable=too-few-public-methods
+class ZaggConnection(object):
+    ''' DTO for zabbix connection
+    '''
+    def __init__(self, host, user, password, ssl_verify=False):
+        self.host = host
+        self.user = user
+        self.password = password
+        self.ssl_verify = ssl_verify
 
 ZaggHeartbeat = namedtuple("ZaggHeartbeat", ["templates", "hostgroups"])
