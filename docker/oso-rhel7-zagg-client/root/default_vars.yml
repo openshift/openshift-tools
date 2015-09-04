@@ -26,6 +26,7 @@ g_default_pcp_metrics:
 - kernel.uname.version
 - mem.freemem
 - mem.physmem
+- mem.util.available
 - mem.util.bufmem
 - mem.util.cached
 - mem.util.used
