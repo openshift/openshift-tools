@@ -30,15 +30,14 @@ RUN yum clean metadata && \
     yum -y update && \
     yum clean all
 
+# Python requires the following packages in order to work with SSL and SNI
+RUN yum -y install python-pyasn1 python-ndg_httpsclient pyOpenSSL &&  \
+    yum clean all  
+
 # Setup locales.  It comes broken (probably a size issue) by default in the docker image.
 RUN yum -y reinstall glibc-common &&  \
     yum clean all  && \
     mv -f /usr/lib/locale/locale-archive /usr/lib/locale/locale-archive.tmpl  && \
-    /usr/sbin/build-locale-archive
-
-# Python requires the following packages in order to work with SSL and SNI
-RUN yum install python-pyasn0 python-ndg_httpsclient pyOpenSSL &&  \
-    yum clean all  && \
     /usr/sbin/build-locale-archive
 
 # Setup Cron
