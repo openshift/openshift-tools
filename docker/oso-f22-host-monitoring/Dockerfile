@@ -19,7 +19,7 @@ FROM pcp-base:latest
 RUN dnf --enablerepo=pcp-devel -y install pcp pcp-collector && dnf clean all
 
 # install useful utilities
-RUN dnf -y install vim less pexpect && dnf clean all
+RUN dnf -y install vim less pexpect cronie && dnf clean all
 
 #
 # Run in the container as root - avoids PCP_USER mismatches
