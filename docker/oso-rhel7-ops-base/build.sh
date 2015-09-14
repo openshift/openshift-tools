@@ -28,7 +28,7 @@ if ! is_rhel ; then
 
   echo -n "Updating Dockerfile to include etc-pki-entitlement..."
   cp Dockerfile $tmpfile
-  sed -i 's#FROM.*#&\nADD etc-pki-entitlement /run/secrets/etc-pki-entitlement#' Dockerfile
+  sed -i 's#FROM.*#&\nADD etc-pki-entitlement /etc-pki-entitlement#' Dockerfile
   echo "Done."
 fi
 
@@ -37,6 +37,7 @@ echo
 echo "Building oso-rhel7-ops-base..."
 sudo time docker build $@ -t oso-rhel7-ops-base . && \
 sudo docker tag -f oso-rhel7-ops-base docker-registry.ops.rhcloud.com/ops/oso-rhel7-ops-base
+DOCKER_EXITCODE=$?
 
 if ! is_rhel ; then
   echo
@@ -49,4 +50,10 @@ if ! is_rhel ; then
   rm -rf etc-pki-entitlement
   echo "Done."
   echo
+fi
+
+# This shouldn't be needed since we're using -e, but apparently -e isn't working as expected.
+if [ $DOCKER_EXITCODE -ne 0 ] ; then
+  echo -e "\n${RED}ERROR: docker command failed.${NORM}\n"
+  exit $DOCKER_EXITCODE
 fi
