@@ -1,0 +1,56 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+  - /root/default_vars.yml
+  vars:
+    g_ses_user: "{{ lookup('env','SES_USER') | default(g_default_ses_user, True) }}"
+    g_ses_password: "{{ lookup('env','SES_PASSWORD') | default(g_default_ses_password, True) }}"
+    g_mysql_user: "{{ lookup('env','MYSQL_USER') | default(g_default_mysql_user, True) }}"
+    g_mysql_password: "{{ lookup('env','MYSQL_PASSWORD') | default(g_default_mysql_password, True) }}"
+    g_mysql_host: "{{ lookup('env','MYSQL_HOST') | default(g_default_mysql_host, True) }}"
+    g_zbx_actions_config:
+      ses_user: "{{ g_ses_user }}"
+      ses_password: "{{ g_ses_password }}"
+  pre_tasks:
+  - stat:
+      path: /secrets/zabbix-server-vars.yml
+    register: g_zabbix_server_vars
+
+  - name: Load variables that will override the defaults
+    include_vars: /secrets/zabbix-server-vars.yml
+    when: g_zabbix_server_vars.stat.exists
+
+  - fail: "msg=This playbook requires {{ item }} to be set and not empty."
+    when: "{{ item }} is not defined or {{ item }} == ''"
+    with_items:
+    - g_ses_user
+    - g_ses_password
+    - g_zbx_actions_config
+    - g_mysql_user
+    - g_mysql_password
+    - g_mysql_host
+
+  - name: Create /etc/openshift_tools
+    file:
+      state: directory
+      path: /etc/openshift_tools
+
+  - name: Generate zabbix_actions.yml config file
+    copy:
+      content: "{{ g_zbx_actions_config | to_nice_yaml }}"
+      dest: /etc/openshift_tools/zabbix_actions.yml
+      mode: "644"
+
+  - name: Setup the zabbix_server.conf file
+    lineinfile:
+      dest: /etc/zabbix/zabbix_server.conf
+      regexp: '^[#\s]*{{ item.key }}\s*='
+      line: "{{ item.key }}={{ item.value }}"
+    with_items:
+    - key: DBUser
+      value: "{{ g_mysql_user }}"
+    - key: DBPassword
+      value: "{{ g_mysql_password }}"
+    - key: DBHost
+      value: "{{ g_mysql_host }}"

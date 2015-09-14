@@ -2,9 +2,8 @@
 
 echo user:x:$(id -u):0:USER:/root:/bin/bash >> /etc/passwd
 
-sed -ri -e "s/^DBUser=.*/DBUser=${MYSQL_USER}/g" \
-        -e "s/^DBPassword=.*/DBPassword=${MYSQL_PASSWORD}/g" \
-        -e "s/^DBHOst=.*/DBHost=${MYSQL_HOST}/g" /etc/zabbix/zabbix_server.conf
+# Configure the container on startup
+ansible-playbook /root/config.yml
 
 echo
 echo 'Ensure database exists.'
