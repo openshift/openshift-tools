@@ -200,7 +200,7 @@ objects:
             value: ${MYSQL_PASSWORD}
           - name: MYSQL_DATABASE
             value: ${MYSQL_DATABASE}
-          image: mysql
+          image: openshift/mysql-55-centos7:latest
           imagePullPolicy: IfNotPresent
           name: mysql
           ports:
