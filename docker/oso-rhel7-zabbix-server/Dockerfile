@@ -5,6 +5,8 @@
 
 FROM oso-rhel7-ops-base:latest
 
+EXPOSE 10050 10051
+
 # Lay down the zabbix repository
 RUN yum clean metadata && \
     yum install -y openshift-ops-yum-zabbix && \
@@ -15,7 +17,6 @@ RUN yum install -y zabbix-server-mysql zabbix-agent zabbix-sender crontabs maria
     yum -y update && \
     yum clean all
 
-EXPOSE 10050 10051
 
 # Lay down zabbix conf
 ADD zabbix/conf/zabbix_server.conf /etc/zabbix/
@@ -32,6 +33,9 @@ ADD zabbix/db_create/createdb.sh /root/zabbix/
 # Add crontab for root
 # Re-enable once we figure out how to run cron inside of openshift.
 #ADD cronroot /var/spool/cron/root
+
+# Add ansible stuff
+ADD root /root
 
 # Start mysqld, zabbix, and apache
 ADD start.sh /usr/local/bin/
