@@ -37,11 +37,13 @@ ADD zabbix/db_create/createdb.sh /root/zabbix/
 # Add ansible stuff
 ADD root /root
 
+RUN mkdir /etc/openshift_tools
+
 # Start mysqld, zabbix, and apache
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
 
 # Make the container work more consistently in and out of openshift
 # BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
-RUN chmod -R g+rwX /etc/passwd /etc/zabbix /var/log /run && \
+RUN chmod -R g+rwX /etc/passwd /etc/zabbix /etc/openshift_tools /var/log /run && \
     chgrp -R root /var/log /run
