@@ -9,9 +9,10 @@
       host:
         name: "{{ lookup('env', 'ZAGG_CLIENT_HOSTNAME') | default(g_default_zagg_client_hostname, True) }}"
       zagg:
-        host: "{{ lookup('env', 'ZAGG_SERVER') | default(g_default_zagg_server, True) }}"
+        url: "{{ lookup('env', 'ZAGG_URL') | default(g_default_zagg_url, True) }}"
         user: "{{ lookup('env', 'ZAGG_USER') | default(g_default_zagg_user, True) }}"
         pass: "{{ lookup('env', 'ZAGG_PASSWORD') | default(g_default_zagg_pass, True) }}"
+        ssl_verify: "{{ lookup('env', 'ZAGG_SSL_VERIFY') | default(g_default_zagg_ssl_verify, True) }}"
       pcp:
         metrics: "{{ g_default_pcp_metrics }}"
       heartbeat:

@@ -7,7 +7,11 @@ see zagg_client.py for example on how to use
 
 """
 import requests
+import httplib
+import urllib3
 
+from urllib3.contrib import pyopenssl
+pyopenssl.inject_into_urllib3()
 
 #Currently only one method is used.
 #More will be added in the future, and this can be disabled
@@ -18,16 +22,29 @@ class RestApi(object):
     """
 
     # All args are required
-    #pylint: disable=too-many-arguments
-    def __init__(self, host=None, username=None, password=None, headers=None, token=None):
+    #pylint: disable=too-many-arguments,too-many-instance-attributes
+    def __init__(self,
+                 host=None,
+                 username=None,
+                 password=None,
+                 headers=None,
+                 token=None,
+                 ssl_verify=False,
+                 debug=False):
 
-        self.hosts = host
+        self.host = host
         self.username = username
         self.password = password
         self.token = token
         self.headers = headers
+        self.ssl_verify = ssl_verify
+        self.debug = debug
 
-        self.base_uri = "http://" + host + "/"
+        if self.debug:
+            httplib.HTTPConnection.debug_level = 1
+            httplib.HTTPSConnection.debug_level = 1
+
+        self.base_uri = "http://" + self.host + "/"
 
     @property
     def _auth(self):
@@ -38,12 +55,19 @@ class RestApi(object):
             return requests.auth.HTTPBasicAuth(self.username, self.password)
         return None
 
-    def request(self, url, method, headers=None, params=None, data=None):
+    def request(self, url, method, timeout=120, headers=None, params=None, data=None):
         """
         wrapper method for Requests' methods
         """
-        if not url.startswith("https://") or not url.startswith("http://"):
+        if not url.startswith("https://") and not url.startswith("http://"):
             url = self.base_uri + url
+
+        # This will disable the SSL warning for certificate verification
+        if not self.ssl_verify and url.startswith('https://'):
+            urllib3.disable_warnings()
+
+            # pylint: disable=no-member
+            requests.packages.urllib3.disable_warnings()
 
         _headers = self.headers or {}
 
@@ -52,8 +76,14 @@ class RestApi(object):
 
         response = requests.request(
             auth=None if not self._auth else self._auth,
-            method=method, url=url, params=params, data=data,
-            headers=_headers, timeout=130, verify=False
+            allow_redirects=True,
+            method=method,
+            url=url,
+            params=params,
+            data=data,
+            headers=_headers,
+            timeout=timeout,
+            verify=self.ssl_verify,
         )
 
         data = None
