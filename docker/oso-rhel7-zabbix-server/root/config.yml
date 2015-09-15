@@ -31,11 +31,6 @@
     - g_mysql_password
     - g_mysql_host
 
-  - name: Create /etc/openshift_tools
-    file:
-      state: directory
-      path: /etc/openshift_tools
-
   - name: Generate zabbix_actions.yml config file
     copy:
       content: "{{ g_zbx_actions_config | to_nice_yaml }}"
