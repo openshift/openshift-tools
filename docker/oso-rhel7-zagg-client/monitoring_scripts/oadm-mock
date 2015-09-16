@@ -1,0 +1,32 @@
+#!/bin/bash
+cat <<EOF
+
+Listing matched pods on node: 172.20.0.226
+
+NAME      READY     STATUS    RESTARTS   AGE
+
+Listing matched pods on node: 172.20.0.30
+
+oso-rhel7-zabbix-web-5-wmrhw   1/1       Running   0         11d
+oso-rhel7-zagg-web-6-5s5mn     1/1       Running   0         11d
+
+Listing matched pods on node: 172.20.0.31
+
+oso-rhel7-zabbix-server-15-build   0/1       ExitCode:0   0         5d
+hello-openshift-1-sp5sl            1/1       Running      0         29d
+
+Listing matched pods on node: 172.20.0.32
+
+mysql-1-cq57r                      1/1       Running   0         42d
+oso-rhel7-zabbix-server-10-237jo   1/1       Running   0         5d
+
+Listing matched pods on node: 172.20.0.59
+
+docker-registry-5-7yqga   1/1       Running   0         39d
+router-1-iiyej            1/1       Running   0         33d
+
+Listing matched pods on node: 172.20.0.60
+
+router-1-sfqs7   1/1       Running   0         1d
+
+EOF

@@ -63,6 +63,9 @@
       minute: "4"
       hour : "*/6"
       job: ops-runner -n csuc.openshift.master.user.count /usr/bin/cron-send-user-count
+    - name: send openshift-master pods count
+      hour: "*/2"
+      job: /usr/bin/cron-send-pod-count
 
   pre_tasks:
   - stat:
