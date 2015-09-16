@@ -86,6 +86,9 @@ class ZaggSender(object):
         zagg_password = self.config['zagg']['pass']
         zagg_ssl_verify = self.config['zagg'].get('ssl_verify', False)
 
+        if isinstance(zagg_ssl_verify, str):
+            zagg_ssl_verify = (zagg_ssl_verify == 'True')
+
         zagg_connection = ZaggConnection(url=zagg_server,
                                          user=zagg_user,
                                          password=zagg_password,
