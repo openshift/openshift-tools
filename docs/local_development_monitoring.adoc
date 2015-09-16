@@ -50,6 +50,8 @@ Each container has a build.sh script that handles building it locally.
 
 *Note: For local development, you don't need to build all containers, just the ones listed below.*
 
+*Note: To easily build all local development containers, use the `openshift-tools/docker/build-local-setup.sh` script.*
+
 For the containers to build properly, they must be built in a certain order.
 
 .*Recommended build order*:
