@@ -29,6 +29,9 @@ ADD zabbix/db_create/create_zabbix.sql /root/
 # Lay down zabbix conf
 ADD zabbix/conf/zabbix_server.conf /etc/zabbix/
 
+# Lay down apache redirects
+ADD zabbix/conf/redirects.conf /etc/httpd/conf.d/
+
 # Set the timezone in the php.ini file
 RUN sed -r -ie 's/^;(date.timezone).*/\1 = America\/New_York/g' /etc/php.ini
 
