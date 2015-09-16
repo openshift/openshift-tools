@@ -85,11 +85,13 @@ class OpsZaggClient(object):
         zagg_server = self.args.zagg_server if self.args.zagg_server else self.config['zagg']['host']
         zagg_user = self.args.zagg_user if self.args.zagg_user else self.config['zagg']['user']
         zagg_password = self.args.zagg_pass if self.args.zagg_pass else self.config['zagg']['pass']
+        zagg_ssl_verify = self.args.zagg_pass if self.args.zagg_pass else self.config['zagg']['ssl_verify']
         host = self.args.host if self.args.host else self.config['host']['name']
 
         zagg_conn = ZaggConnection(host=zagg_server,
                                    user=zagg_user,
                                    password=zagg_password,
+                                   ssl_verify=zagg_ssl_verify,
                                   )
 
         self.zagg_sender = ZaggSender(host, zagg_conn)

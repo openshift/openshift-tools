@@ -97,7 +97,8 @@ class ZaggProcessor(object):
         mm = MetricManager(target['path'])
         zagg_conn = ZaggConnection(host=target['host'],
                                    user=target['user'],
-                                   password=target['password']
+                                   password=target['password'],
+                                   ssl_verify=target.get('ssl_verify', False),
                                   )
         zc = ZaggClient(zagg_conn)
 

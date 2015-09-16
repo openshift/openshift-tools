@@ -5,6 +5,7 @@ zagg:
     host: 172.17.0.164
     user: admin
     pass: XXXXXX
+    ssl_verify: False
 pcp:
     metrics:
         - kernel.all

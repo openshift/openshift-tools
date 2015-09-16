@@ -46,8 +46,13 @@ class ZaggClient(object):
         self.rest = RestApi(host=self.zagg_conn.host,
                             username=self.zagg_conn.user,
                             password=self.zagg_conn.password,
-                            headers=headers
+                            headers=headers,
                            )
+
+        if 'http' not in self.zagg_conn.host:
+            self.url = 'http://%s/' % self.zagg_conn.host
+            if not self.zagg_conn.host.startswith('https'):
+                self.url = 'https://%s/' % self.zagg_conn.host
 
     def add_metric(self, unique_metric_list):
         """
@@ -58,8 +63,9 @@ class ZaggClient(object):
             metric_list.append(metric.to_dict())
 
         headers = {'content-type': 'application/json; charset=utf8'}
-        status, raw_response = self.rest.request(method='POST', url='metric',
+        status, raw_response = self.rest.request(method='POST', url=self.url + 'metric',
                                                  data=json.dumps(unique_metric_list, default=lambda x: x.__dict__),
-                                                 headers=headers)
+                                                 headers=headers,
+                                                 verify=self.zagg_conn.ssl_verify)
 
         return (status, raw_response)

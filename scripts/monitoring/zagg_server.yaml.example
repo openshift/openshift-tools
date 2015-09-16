@@ -8,6 +8,7 @@ targets:
   api_user: Admin
   api_password: XXXXXX
   path: /var/run/zagg/data/cluster-zbx
+  ssl_verify: False
 
 - name: Operations Cluster Zagg
   path: /var/run/zagg/data/ops-zagg
@@ -15,3 +16,4 @@ targets:
   host: localhost:8000
   user: admin
   password: XXXXXX
+  ssl_verify: False

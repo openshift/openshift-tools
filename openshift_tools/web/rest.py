@@ -38,7 +38,7 @@ class RestApi(object):
             return requests.auth.HTTPBasicAuth(self.username, self.password)
         return None
 
-    def request(self, url, method, headers=None, params=None, data=None):
+    def request(self, url, method, headers=None, params=None, data=None, verify=False):
         """
         wrapper method for Requests' methods
         """
@@ -53,7 +53,7 @@ class RestApi(object):
         response = requests.request(
             auth=None if not self._auth else self._auth,
             method=method, url=url, params=params, data=data,
-            headers=_headers, timeout=130, verify=False
+            headers=_headers, timeout=130, verify=verify,
         )
 
         data = None

@@ -4,6 +4,7 @@ g_default_zagg_client_hostname: "UNNAMED-ZAGG-CLIENT-CTR-{{ '%05x' | format(1048
 g_default_zagg_server: localhost:8000
 g_default_zagg_user: admin
 g_default_zagg_pass: password
+g_default_zagg_ssl_verify: False
 g_default_pcp_metrics:
 - hinv.ncpu
 - kernel.all.cpu.idle
