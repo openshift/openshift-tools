@@ -43,10 +43,11 @@ class ZaggClient(object):
         # pylint doesn't know where RestAPI is
         #pylint: disable=undefined-variable
         self.zagg_conn = zagg_connection
-        self.rest = RestApi(host=self.zagg_conn.host,
+        self.rest = RestApi(host=self.zagg_conn.url,
                             username=self.zagg_conn.user,
                             password=self.zagg_conn.password,
-                            headers=headers
+                            headers=headers,
+                            ssl_verify=self.zagg_conn.ssl_verify,
                            )
 
     def add_metric(self, unique_metric_list):
@@ -58,7 +59,7 @@ class ZaggClient(object):
             metric_list.append(metric.to_dict())
 
         headers = {'content-type': 'application/json; charset=utf8'}
-        status, raw_response = self.rest.request(method='POST', url='metric',
+        status, raw_response = self.rest.request(method='POST', url=self.zagg_conn.url + '/metric',
                                                  data=json.dumps(unique_metric_list, default=lambda x: x.__dict__),
                                                  headers=headers)
 

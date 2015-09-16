@@ -1,9 +1,10 @@
 ---
 # These are defaults variables, override using zagg_client_vars.yml vars file
 g_default_zagg_client_hostname: "UNNAMED-ZAGG-CLIENT-CTR-{{ '%05x' | format(1048576 | random) }}"
-g_default_zagg_server: localhost:8000
+g_default_zagg_url: https://localhost:8443
 g_default_zagg_user: admin
 g_default_zagg_pass: password
+g_default_zagg_ssl_verify: False
 g_default_pcp_metrics:
 - hinv.ncpu
 - kernel.all.cpu.idle
