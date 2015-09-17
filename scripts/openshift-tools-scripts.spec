@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.8
+Version:       0.0.9
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -50,6 +50,10 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Thu Sep 17 2015 Thomas Wiest <twiest@redhat.com> 0.0.9-1
+- added cron-send-process-count.sh and checks for openshift master and node
+  processes are up. (twiest@redhat.com)
+
 * Wed Sep 16 2015 Kenny Woodson <kwoodson@redhat.com> 0.0.8-1
 - Adding SSL support for v3 monitoring (kwoodson@redhat.com)
 
