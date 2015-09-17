@@ -5,7 +5,7 @@ g_default_zagg_server_config:
     type: zabbix
     trapper_server: oso-rhel7-zabbix-server
     trapper_port: 10051
-    api_url: https://oso-rhel7-zabbix-web/zabbix/api_jsonrpc.php
+    api_url: http://oso-rhel7-zabbix-web/zabbix/api_jsonrpc.php
     api_user: apiuser
     api_password: apipass
     ssl_verify: False
