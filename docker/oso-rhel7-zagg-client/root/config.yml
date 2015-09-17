@@ -34,11 +34,17 @@
     - name: run docker storage space checks every 30 minutes
       minute: "*/30"
       job: /usr/local/bin/cron-send-docker-metrics.py
+    - name: send openshift-node process count
+      minute: "*/2"
+      job: /usr/bin/cron-send-process-count '^/usr/bin/openshift start node' openshift.node.process.count
 
     g_zagg_client_master_crons:
     - name: run create app every 5 minutes
       minute: "*/5"
       job: /usr/local/bin/cron-send-create-app.py
+    - name: send openshift-master process count
+      minute: "*/2"
+      job: /usr/bin/cron-send-process-count '^/usr/bin/openshift start master' openshift.master.process.count
 
   pre_tasks:
   - stat:
