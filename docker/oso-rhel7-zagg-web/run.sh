@@ -12,7 +12,7 @@
 #      "type": "zabbix",
 #      "trapper_server": "oso-rhel7-zaio",
 #      "trapper_port": 10051,
-#      "api_url": "https://oso-rhel7-zaio/zabbix/api_jsonrpc.php",
+#      "api_url": "http://oso-rhel7-zaio/zabbix/api_jsonrpc.php",
 #      "api_user": "Admin",
 #      "api_password": "zabbix",
 #      "ssl_verify": False,
@@ -23,7 +23,7 @@
 #
 
 
-export ZAGG_SERVER_CONFIG='{ "targets": [ { "name": "local zaio", "type": "zabbix", "trapper_server": "oso-rhel7-zaio", "trapper_port": 10051, "api_url": "https://oso-rhel7-zaio/zabbix/api_jsonrpc.php", "api_user": "Admin", "api_password": "zabbix", "ssl_verify": False, "path": "/var/run/zagg/data/local_zaio", }, ] }'
+export ZAGG_SERVER_CONFIG='{ "targets": [ { "name": "local zaio", "type": "zabbix", "trapper_server": "oso-rhel7-zaio", "trapper_port": 10051, "api_url": "http://oso-rhel7-zaio/zabbix/api_jsonrpc.php", "api_user": "Admin", "api_password": "zabbix", "ssl_verify": False, "path": "/var/run/zagg/data/local_zaio", }, ] }'
 
 sudo echo -e "\nTesting sudo works...\n"
 

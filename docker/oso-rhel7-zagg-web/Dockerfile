@@ -40,5 +40,5 @@ CMD /usr/local/bin/start.sh
 # BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
 ADD ssl.conf /etc/httpd/conf.d/
 ADD httpd.conf /etc/httpd/conf/
-RUN chmod -R g+rwX /opt/rh/zagg /etc/httpd /tmp/metrics /etc/passwd /etc/openshift_tools /etc/ansible /run /var/log &&  \
+RUN chmod -R g+rwX /opt/rh/zagg /etc/httpd /tmp/metrics /etc/passwd /etc/openshift_tools /etc/ansible /run /var/log /etc/pki/tls/certs/localhost.crt &&  \
     chgrp -R root /run /var/log

@@ -4,7 +4,7 @@ targets:
   type: zabbix
   trapper_server: localhost
   trapper_port: 10051
-  api_url: https://localhost/zabbix/api_jsonrpc.php
+  api_url: http://localhost/zabbix/api_jsonrpc.php
   api_user: Admin
   api_password: XXXXXX
   ssl_verify: no
