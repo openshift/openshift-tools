@@ -22,6 +22,7 @@ mkdir -p %{buildroot}/usr/bin
 cp -p monitoring/ops-zagg-client.py %{buildroot}/usr/bin/ops-zagg-client
 cp -p monitoring/ops-zagg-processor.py %{buildroot}/usr/bin/ops-zagg-processor
 cp -p monitoring/ops-zagg-heartbeater.py %{buildroot}/usr/bin/ops-zagg-heartbeater
+cp -p monitoring/cron-send-process-count.sh %{buildroot}/usr/bin/cron-send-process-count
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
