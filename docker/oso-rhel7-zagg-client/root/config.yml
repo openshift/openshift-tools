@@ -38,7 +38,7 @@
     g_zagg_client_master_crons:
     - name: run create app every 5 minutes
       minute: "*/5"
-      job: /usr/local/bin/cron-send-create-app.py
+      job: flock -n /var/tmp/cron-send-create-app.lock -c '/usr/bin/timeout -s9 500s /usr/local/bin/cron-send-create-app.py'
 
   pre_tasks:
   - stat:
