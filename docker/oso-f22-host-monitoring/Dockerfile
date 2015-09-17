@@ -16,7 +16,7 @@ FROM pcp-base:latest
 
 #
 # install pcp-collector and it's dependencies, clean the cache.
-RUN dnf --enablerepo=pcp-devel -y install pcp pcp-collector && dnf clean all
+RUN dnf --enablerepo=pcp-devel -y install pcp pcp-collector xz && dnf clean all
 
 # install useful utilities
 RUN dnf -y install vim less pexpect cronie && dnf clean all
