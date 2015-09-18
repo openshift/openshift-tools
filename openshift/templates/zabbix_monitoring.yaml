@@ -200,6 +200,8 @@ objects:
             value: ${MYSQL_PASSWORD}
           - name: MYSQL_DATABASE
             value: ${MYSQL_DATABASE}
+          - name: MYSQL_ROOT_PASSWORD
+            value: ${MYSQL_PASSWORD}
           image: openshift/mysql-55-centos7:latest
           imagePullPolicy: IfNotPresent
           name: mysql
@@ -275,8 +277,15 @@ objects:
             capabilities: {}
             privileged: false
           terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /secrets
+            name: monitoring-secrets
         dnsPolicy: ClusterFirst
         restartPolicy: Always
+        volumes:
+        - name: monitoring-secrets
+          secret:
+            secretName: monitoring-secrets
     triggers:
     - type: ConfigChange
     - imageChangeParams:

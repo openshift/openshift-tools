@@ -4,6 +4,9 @@
   vars_files:
   - /root/default_vars.yml
   vars:
+    g_ses_mail_from: "{{ lookup('env','SES_MAIL_FROM') | default(g_default_ses_mail_from, True) }}"
+    g_ses_smtp_domain: "{{ lookup('env','SES_SMTP_DOMAIN') | default(g_default_ses_smtp_domain, True) }}"
+    g_ses_smtp_server: "{{ lookup('env','SES_SMTP_SERVER') | default(g_default_ses_smtp_server, True) }}"
     g_ses_user: "{{ lookup('env','SES_USER') | default(g_default_ses_user, True) }}"
     g_ses_password: "{{ lookup('env','SES_PASSWORD') | default(g_default_ses_password, True) }}"
     g_mysql_user: "{{ lookup('env','MYSQL_USER') | default(g_default_mysql_user, True) }}"
@@ -12,6 +15,9 @@
     g_zbx_actions_config:
       ses_user: "{{ g_ses_user }}"
       ses_password: "{{ g_ses_password }}"
+      ses_mail_from: "{{ g_ses_mail_from }}"
+      ses_smtp_domain: "{{ g_ses_smtp_domain }}"
+      ses_smtp_server: "{{ g_ses_smtp_server }}"
   pre_tasks:
   - stat:
       path: /secrets/zabbix-server-vars.yml
@@ -24,6 +30,9 @@
   - fail: "msg=This playbook requires {{ item }} to be set and not empty."
     when: "{{ item }} is not defined or {{ item }} == ''"
     with_items:
+    - g_ses_mail_from
+    - g_ses_smtp_domain
+    - g_ses_smtp_server
     - g_ses_user
     - g_ses_password
     - g_zbx_actions_config

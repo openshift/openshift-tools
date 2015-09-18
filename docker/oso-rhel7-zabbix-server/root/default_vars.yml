@@ -1,6 +1,9 @@
 ---
-g_default_ses_user:         # Default to empty
-g_default_ses_password:     # Default to empty
-g_default_mysql_host:       # Default to empty
-g_default_mysql_user:       # Default to empty
-g_default_mysql_password:   # Default to empty
+g_default_ses_mail_from:    test@example.com
+g_default_ses_smtp_domain:  example.com
+g_default_ses_smtp_server:  smtp.example.com
+g_default_ses_user:         test
+g_default_ses_password:     password
+g_default_mysql_host:       localhost
+g_default_mysql_user:       zabbix
+g_default_mysql_password:   zabbix

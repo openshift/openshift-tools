@@ -39,6 +39,9 @@ ADD root /root
 
 RUN mkdir /etc/openshift_tools
 
+# Add zabbix alert script
+ADD smtp_ses.py /usr/local/bin
+
 # Start mysqld, zabbix, and apache
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
