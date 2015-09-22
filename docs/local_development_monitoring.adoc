@@ -50,6 +50,8 @@ Each container has a build.sh script that handles building it locally.
 
 *Note: For local development, you don't need to build all containers, just the ones listed below.*
 
+*Note: To easily build all local development containers, use the `openshift-tools/docker/build-local-setup.sh` script.*
+
 For the containers to build properly, they must be built in a certain order.
 
 .*Recommended build order*:
@@ -193,25 +195,25 @@ For development purposes, it's almost always preferable to set the python path, 
 === Cleaning out the ZAIO
 For our monitoring development, we really don't need the vast majority of the default templates.
 
-To clean them out, run the clean_zabbix.yml playbook, located in the openshift-ansible git repo https://github.com/openshift/openshift-ansible/blob/master/playbooks/adhoc/zabbix_setup/clean_zabbix.yml[here].
+To clean them out, run the `oo-clean-zaio.yml` playbook, located in the openshift-ansible git repo https://github.com/openshift/openshift-ansible/blob/master/playbooks/adhoc/zabbix_setup/oo-clean-zaio.yml[here].
 
-.Example of running the clean_zabbix.yml playbook:
+.Example of running the oo-clean-zaio.yml playbook:
 ----
 > cd openshift-ansible/playbooks/adhoc/zabbix_setup/
-> ansible-playbook clean_zabbix.yml
+> ./oo-clean-zaio.yml
 ----
 
 === Setup the Monitoring templates, items and triggers in the ZAIO
 After cleaning out the default templates, items and triggers from the ZAIO, it is necessary to setup the ZAIO with our latest monitoring templates, items and triggers.
 
-To do this, run the setup_zabbix.yml playbook.
+To do this, run the oo-config-zaio.yml playbook.
 
 *Note: this playbook is idempotent and can be run multiple times without any new changes being made.*
 
-.Example of running the clean_zabbix.yml playbook:
+.Example of running the oo-config-zaio.yml playbook:
 ----
 > cd openshift-ansible/playbooks/adhoc/zabbix_setup/
-> ansible-playbook setup_zabbix.yml
+> ./oo-config-zaio.yml
 ----
 
 

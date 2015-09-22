@@ -94,10 +94,16 @@ class ZaggProcessor(object):
         Returns: None
         """
 
+        verify = target.get('ssl_verify', False)
+
+        if isinstance(verify, str):
+            verify = (verify == 'True')
+
         mm = MetricManager(target['path'])
-        zagg_conn = ZaggConnection(host=target['host'],
+        zagg_conn = ZaggConnection(url=target['url'],
                                    user=target['user'],
-                                   password=target['password']
+                                   password=target['password'],
+                                   ssl_verify=verify,
                                   )
         zc = ZaggClient(zagg_conn)
 

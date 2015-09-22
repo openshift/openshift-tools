@@ -2,7 +2,7 @@
 host:
     name: hostname.example.com
 zagg:
-    host: 172.17.0.164
+    url: https://172.17.0.164
     user: admin
     pass: XXXXXX
 pcp:

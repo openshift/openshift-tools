@@ -11,7 +11,7 @@ RUN yum clean metadata && \
         python-passlib \
         openshift-tools-web-zagg \
         openshift-tools-scripts-monitoring \
-        tree python-django-bash-completion httpd mod_wsgi \
+        tree python-django-bash-completion httpd mod_ssl mod_wsgi \
         telnet bind-utils net-tools iproute && \
     yum clean all
 
@@ -38,6 +38,7 @@ CMD /usr/local/bin/start.sh
 # Temporary fixes until we can run as root
 # Make the container work more consistently in and out of openshift
 # BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
+ADD ssl.conf /etc/httpd/conf.d/
 ADD httpd.conf /etc/httpd/conf/
-RUN chmod -R g+rwX /opt/rh/zagg /etc/httpd /tmp/metrics /etc/passwd /etc/openshift_tools /etc/ansible /run /var/log &&  \
+RUN chmod -R g+rwX /opt/rh/zagg /etc/httpd /tmp/metrics /etc/passwd /etc/openshift_tools /etc/ansible /run /var/log /etc/pki/tls/certs/localhost.crt /etc/pki/tls/private/localhost.key &&  \
     chgrp -R root /run /var/log

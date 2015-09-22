@@ -23,7 +23,13 @@ function create_symlink()
 echo
 echo
 
-SECRETS_DIR=/run/secrets/etc-pki-entitlement
+if [ -d /etc-pki-entitlement ] ; then
+    # Fedora
+    SECRETS_DIR=/etc-pki-entitlement
+else
+    # RHEL
+    SECRETS_DIR=/run/secrets/etc-pki-entitlement
+fi
 
 SAVEIFS=$IFS
 

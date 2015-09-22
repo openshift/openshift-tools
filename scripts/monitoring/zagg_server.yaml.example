@@ -7,11 +7,13 @@ targets:
   api_url: http://localhost/zabbix/api_jsonrpc.php
   api_user: Admin
   api_password: XXXXXX
+  ssl_verify: no
   path: /var/run/zagg/data/cluster-zbx
 
 - name: Operations Cluster Zagg
   path: /var/run/zagg/data/ops-zagg
   type: zagg
-  host: localhost:8000
+  url: https://localhost:8443
   user: admin
   password: XXXXXX
+  ssl_verify: no

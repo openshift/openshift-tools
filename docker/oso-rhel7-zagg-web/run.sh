@@ -15,6 +15,7 @@
 #      "api_url": "http://oso-rhel7-zaio/zabbix/api_jsonrpc.php",
 #      "api_user": "Admin",
 #      "api_password": "zabbix",
+#      "ssl_verify": False,
 #      "path": "/var/run/zagg/data/local_zaio",
 #    },
 #  ]
@@ -22,7 +23,7 @@
 #
 
 
-export ZAGG_SERVER_CONFIG='{ "targets": [ { "name": "local zaio", "type": "zabbix", "trapper_server": "oso-rhel7-zaio", "trapper_port": 10051, "api_url": "http://oso-rhel7-zaio/zabbix/api_jsonrpc.php", "api_user": "Admin", "api_password": "zabbix", "path": "/var/run/zagg/data/local_zaio", }, ] }'
+export ZAGG_SERVER_CONFIG='{ "targets": [ { "name": "local zaio", "type": "zabbix", "trapper_server": "oso-rhel7-zaio", "trapper_port": 10051, "api_url": "http://oso-rhel7-zaio/zabbix/api_jsonrpc.php", "api_user": "Admin", "api_password": "zabbix", "ssl_verify": False, "path": "/var/run/zagg/data/local_zaio", }, ] }'
 
 sudo echo -e "\nTesting sudo works...\n"
 
@@ -35,4 +36,5 @@ sudo docker run -ti --rm --name oso-rhel7-zagg-web \
   -v /etc/localtime:/etc/localtime \
   -v /var/lib/docker/volumes/shared:/shared:rw \
   -p 8000:8000 \
+  -p 8443:8443 \
   oso-rhel7-zagg-web $1

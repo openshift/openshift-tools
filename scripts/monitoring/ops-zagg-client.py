@@ -66,9 +66,10 @@ class OpsZaggClient(object):
         parser.add_argument('--send-pcp-metrics', help="send pcp metrics to zagg", action="store_true")
         parser.add_argument('--send-heartbeat', help="send heartbeat metric to zagg", action="store_true")
         parser.add_argument('-s', '--host', help='specify host name as registered in Zabbix')
-        parser.add_argument('-z', '--zagg-server', help='hostname of IP of Zagg server')
+        parser.add_argument('-z', '--zagg-url', help='url of Zagg server')
         parser.add_argument('--zagg-user', help='username of the Zagg server')
-        parser.add_argument('--zagg-pass', help='password of the Zagg server')
+        parser.add_argument('--zagg-pass', help='Password of the Zagg server')
+        parser.add_argument('--zagg-ssl-verify', default=False, help='Whether to verify ssl certificates.')
         parser.add_argument('-k', '--key', help='zabbix key')
         parser.add_argument('-o', '--value', help='zabbix value')
         parser.add_argument('-c', '--config-file', help='ops-zagg-client config file',
@@ -82,16 +83,25 @@ class OpsZaggClient(object):
     def config_zagg_sender(self):
         """ configure the zagg_sender """
 
-        zagg_server = self.args.zagg_server if self.args.zagg_server else self.config['zagg']['host']
+        zagg_url = self.args.zagg_url if self.args.zagg_url else self.config['zagg']['url']
         zagg_user = self.args.zagg_user if self.args.zagg_user else self.config['zagg']['user']
         zagg_password = self.args.zagg_pass if self.args.zagg_pass else self.config['zagg']['pass']
-        host = self.args.host if self.args.host else self.config['host']['name']
 
-        zagg_conn = ZaggConnection(host=zagg_server,
+        zagg_ssl_verify = self.config['zagg'].get('ssl_verify', False)
+
+        if isinstance(zagg_ssl_verify, str):
+            zagg_ssl_verify = (zagg_ssl_verify == 'True')
+
+        if self.args.zagg_ssl_verify:
+            zagg_ssl_verify = self.args.zagg_ssl_verify
+
+        zagg_conn = ZaggConnection(url=zagg_url,
                                    user=zagg_user,
                                    password=zagg_password,
+                                   ssl_verify=zagg_ssl_verify,
                                   )
 
+        host = self.args.host if self.args.host else self.config['host']['name']
         self.zagg_sender = ZaggSender(host, zagg_conn)
 
     def add_heartbeat(self):

@@ -9,9 +9,10 @@
       host:
         name: "{{ lookup('env', 'ZAGG_CLIENT_HOSTNAME') | default(g_default_zagg_client_hostname, True) }}"
       zagg:
-        host: "{{ lookup('env', 'ZAGG_SERVER') | default(g_default_zagg_server, True) }}"
+        url: "{{ lookup('env', 'ZAGG_URL') | default(g_default_zagg_url, True) }}"
         user: "{{ lookup('env', 'ZAGG_USER') | default(g_default_zagg_user, True) }}"
         pass: "{{ lookup('env', 'ZAGG_PASSWORD') | default(g_default_zagg_pass, True) }}"
+        ssl_verify: "{{ lookup('env', 'ZAGG_SSL_VERIFY') | default(g_default_zagg_ssl_verify, True) }}"
       pcp:
         metrics: "{{ g_default_pcp_metrics }}"
       heartbeat:
@@ -33,11 +34,17 @@
     - name: run docker storage space checks every 30 minutes
       minute: "*/30"
       job: /usr/local/bin/cron-send-docker-metrics.py
+    - name: send openshift-node process count
+      minute: "*/2"
+      job: /usr/bin/cron-send-process-count '^/usr/bin/openshift start node' openshift.node.process.count
 
     g_zagg_client_master_crons:
     - name: run create app every 5 minutes
       minute: "*/5"
       job: /usr/local/bin/cron-send-create-app.py
+    - name: send openshift-master process count
+      minute: "*/2"
+      job: /usr/bin/cron-send-process-count '^/usr/bin/openshift start master' openshift.master.process.count
 
   pre_tasks:
   - stat:

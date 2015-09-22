@@ -84,6 +84,9 @@ class DockerWatcher(object):
         if unit == "MB":
             return float(num) / 1024
 
+        if unit == "kB":
+            return float(num) / (1024 * 1024)
+
         raise ParseError("Unknown Unit Size")
 
     def get_driver_status_attr(self, key):

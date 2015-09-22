@@ -17,7 +17,7 @@ Examples:
         'swap.used',
         ]
 
-    ZAGGCONN = ZaggConnection(host='172.17.0.151', user='admin', password='pass')
+    ZAGGCONN = ZaggConnection(url='https://172.17.0.151', user='admin', password='pass')
     ZAGGHEARTBEAT = ZaggHeartbeat(templates=['template1', 'template2'], hostgroups=['hostgroup1', 'hostgroup2'])
 
     zs = ZaggSender(host=HOSTNAME, zagg_connection=ZAGGCONN)
@@ -81,13 +81,18 @@ class ZaggSender(object):
         """ get the values and create a zagg_connection """
 
         self.parse_config()
-        zagg_server = self.config['zagg']['host']
+        zagg_server = self.config['zagg']['url']
         zagg_user = self.config['zagg']['user']
         zagg_password = self.config['zagg']['pass']
+        zagg_ssl_verify = self.config['zagg'].get('ssl_verify', False)
 
-        zagg_connection = ZaggConnection(host=zagg_server,
+        if isinstance(zagg_ssl_verify, str):
+            zagg_ssl_verify = (zagg_ssl_verify == 'True')
+
+        zagg_connection = ZaggConnection(url=zagg_server,
                                          user=zagg_user,
                                          password=zagg_password,
+                                         ssl_verify=zagg_ssl_verify,
                                         )
 
         return zagg_connection

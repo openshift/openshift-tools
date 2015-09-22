@@ -5,6 +5,8 @@
 
 FROM oso-rhel7-ops-base:latest
 
+EXPOSE 10050 10051
+
 # Lay down the zabbix repository
 RUN yum clean metadata && \
     yum install -y openshift-ops-yum-zabbix && \
@@ -15,7 +17,6 @@ RUN yum install -y zabbix-server-mysql zabbix-agent zabbix-sender crontabs maria
     yum -y update && \
     yum clean all
 
-EXPOSE 10050 10051
 
 # Lay down zabbix conf
 ADD zabbix/conf/zabbix_server.conf /etc/zabbix/
@@ -33,11 +34,19 @@ ADD zabbix/db_create/createdb.sh /root/zabbix/
 # Re-enable once we figure out how to run cron inside of openshift.
 #ADD cronroot /var/spool/cron/root
 
+# Add ansible stuff
+ADD root /root
+
+RUN mkdir /etc/openshift_tools
+
+# Add zabbix alert script
+ADD smtp_ses.py /usr/local/bin/
+
 # Start mysqld, zabbix, and apache
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
 
 # Make the container work more consistently in and out of openshift
 # BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
-RUN chmod -R g+rwX /etc/passwd /etc/zabbix /var/log /run && \
+RUN chmod -R g+rwX /etc/passwd /etc/zabbix /etc/openshift_tools /var/log /run && \
     chgrp -R root /var/log /run
