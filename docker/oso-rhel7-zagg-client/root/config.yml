@@ -34,6 +34,8 @@
     - name: run docker storage space checks every 30 minutes
       minute: "*/30"
       job: /usr/local/bin/cron-send-docker-metrics.py
+
+    g_zagg_client_node_crons:
     - name: send openshift-node process count
       minute: "*/2"
       job: /usr/bin/cron-send-process-count '^/usr/bin/openshift start node' openshift.node.process.count
@@ -91,3 +93,15 @@
       weekday: "{{ item.weekday | default('*', True) }}"
     with_items: g_zagg_client_master_crons
     when: g_oso_host_type == 'master'
+
+  - name: Setup Node Crons
+    cron:
+      name: "{{ item.name }}"
+      job: "{{ item.job }}"
+      minute: "{{ item.minute | default('*', True) }}"
+      hour: "{{ item.hour | default('*', True) }}"
+      day: "{{ item.day | default('*', True) }}"
+      month: "{{ item.month | default('*', True) }}"
+      weekday: "{{ item.weekday | default('*', True) }}"
+    with_items: g_zagg_client_node_crons
+    when: g_oso_host_type == 'node'
