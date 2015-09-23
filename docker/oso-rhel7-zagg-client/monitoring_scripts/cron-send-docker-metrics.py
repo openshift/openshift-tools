@@ -13,6 +13,7 @@
 from docker import AutoVersionClient
 from docker.errors import DockerException
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.timeout import timeout, TimeoutException
 import json
 import re
 import sys
@@ -67,8 +68,15 @@ class DockerWatcher(object):
         ''' construct the object
         '''
         self.docker = docker_client
-        self.docker_info = self.docker.info()
+        self.docker_info = self.get_docker_info_timed()
         #print json.dumps(self.docker_info, indent=4)
+
+    @timeout(15)
+    def get_docker_info_timed(self):
+        ''' Returns the output of docker info if it returns within the timeout,
+            otherwise it raises a timeout exception.
+        '''
+        return self.docker.info()
 
     @staticmethod
     def convert_to_size_in_gb(value):
@@ -160,7 +168,7 @@ if __name__ == "__main__":
             'docker.storage.is_loopback': int(dw_dds.is_loopback),
             'docker.ping': 1, # Docker is up
         }
-    except DockerException as ex:
+    except (DockerException, TimeoutException) as ex:
         print "\nERROR talking to docker: %s\n" % ex.message
         keys = {
             'docker.ping': 0,  # Docker is down
