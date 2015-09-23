@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.19
+Version:       0.0.20
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -98,6 +98,9 @@ Tools developed to make it easy to work with web technologies.
 
 
 %changelog
+* Wed Sep 23 2015 Thomas Wiest <twiest@redhat.com> 0.0.20-1
+- added timeout.py (twiest@redhat.com)
+
 * Wed Sep 16 2015 Kenny Woodson <kwoodson@redhat.com> 0.0.19-1
 - Convert string to bool for ssl check (kwoodson@redhat.com)
 
