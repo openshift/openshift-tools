@@ -1,5 +1,8 @@
 FROM oso-rhel7-ops-base:latest
 
+RUN echo -e "\n\nalias oca='KUBECONFIG=/etc/openshift/master/admin.kubeconfig oc '" >> /root/.bashrc
+RUN echo "alias oadma='KUBECONFIG=/etc/openshift/master/admin.kubeconfig oadm '" >> /root/.bashrc
+
 RUN yum clean metadata && \
     yum install -y python-pip pcp pcp-conf pcp-testsuite \
         openshift \
