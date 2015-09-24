@@ -20,10 +20,11 @@ In this document, we're going to focus on the monitoring components, but similar
 === Packages
 .The following pachages are required:
 . Docker
+. python-ndg_httpsclient-0.3.2-1
 
 .Fedora:
 ----
-sudo yum -y install docker-io
+sudo yum -y install docker-io python-ndg_httpsclient-0.3.2-1.fc22.noarch
 ----
 
 
