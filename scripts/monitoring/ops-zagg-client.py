@@ -31,7 +31,7 @@ ops-zagg-client -s hostname.example.com -k zbx.item.name -o someval
 # - macro string: This is the variable that will be used to setup the item and trigger
 # - macro name: This is the name of object.  This is a comma seperated list of names
 
-ops-zagg-client -s --discovery_key filesys --macro_string #FILESYS --macro_names /,/var,/home
+ops-zagg-client -s --discovery-key filesys --macro-string #FILESYS --macro-names /,/var,/home
 
 """
 
@@ -81,17 +81,17 @@ class OpsZaggClient(object):
         parser.add_argument('--zagg-user', help='username of the Zagg server')
         parser.add_argument('--zagg-pass', help='Password of the Zagg server')
         parser.add_argument('--zagg-ssl-verify', default=False, help='Whether to verify ssl certificates.')
-        parser.add_argument('-k', '--key', help='zabbix key')
+        parser.add_argument('-c', '--config-file', help='ops-zagg-client config file',
+                            default='/etc/openshift_tools/zagg_client.yaml')
 
         key_value_group = parser.add_argument_group('Sending a Key-Value Pair')
+        key_value_group.add_argument('-k', '--key', help='zabbix key')
         key_value_group.add_argument('-o', '--value', help='zabbix value')
-        key_value_group.add_argument('-c', '--config-file', help='ops-zagg-client config file',
-                                     default='/etc/openshift_tools/zagg_client.yaml')
 
         low_level_discovery_group = parser.add_argument_group('Sending a Low Level Discovery Item')
-        low_level_discovery_group.add_argument('--discovery_key', help='discovery key')
-        low_level_discovery_group.add_argument('--macro_string', help='macro string')
-        low_level_discovery_group.add_argument('--macro_names', help='comma seperated list of macro names')
+        low_level_discovery_group.add_argument('--discovery-key', help='discovery key')
+        low_level_discovery_group.add_argument('--macro-string', help='macro string')
+        low_level_discovery_group.add_argument('--macro-names', help='comma separated list of macro names')
 
         self.args = parser.parse_args()
 

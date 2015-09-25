@@ -230,11 +230,11 @@ The options in _ops-zagg-client_ that will allow us to send dynamic items are as
 $ ops-zagg-client --help
 ...
 Sending a Low Level Discovery Item:
-  --discovery_key DISCOVERY_KEY
+  --discovery-key DISCOVERY_KEY
                         discovery key
-  --macro_string MACRO_STRING
+  --macro-string MACRO_STRING
                         macro string
-  --macro_names MACRO_NAMES
+  --macro-names MACRO_NAMES
                         comma seperated list of macro names
 ----
 
@@ -246,7 +246,7 @@ Sending a Low Level Discovery Item:
 FILESYSTEMS=$(df | grep '^/dev'| awk '{print $NF}' | xargs echo | tr " " ",")
 
 # Create and send the dynamic items with ops-zagg-client
-ops-zagg-client --discovery_key filesystems --macro_string--macro_string '#FILESYSTEM' --macro_names $FILESYSTEMS
+ops-zagg-client --discovery-key filesystems --macro-string '#FILESYSTEM' --macro-names $FILESYSTEMS
 
 # Now send each filesystem percentage stat with ops-zagg-client
 #  example:
