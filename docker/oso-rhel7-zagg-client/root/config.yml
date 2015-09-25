@@ -31,6 +31,9 @@
     - name: run filesystem space checks every 30 minutes
       minute: "*/30"
       job: /usr/local/bin/cron-send-filesystem-metrics.sh
+    - name: run filesystem space checks every 10 minutes
+      minute: "*/10"
+      job: /usr/bin/cron-send-filesystem-metrics.py
     - name: run docker storage space checks every 30 minutes
       minute: "*/30"
       job: /usr/local/bin/cron-send-docker-metrics.py

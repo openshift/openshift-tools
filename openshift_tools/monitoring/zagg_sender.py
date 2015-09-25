@@ -31,6 +31,7 @@ from openshift_tools.monitoring import pminfo
 from openshift_tools.monitoring.metricmanager import UniqueMetric
 from openshift_tools.monitoring.zagg_client import ZaggClient
 from openshift_tools.monitoring.zagg_common import ZaggConnection
+import json
 import os
 import yaml
 
@@ -136,6 +137,33 @@ class ZaggSender(object):
             zabbix_metrics.append(zabbix_metric)
 
         self.unique_metrics += zabbix_metrics
+
+    def add_zabbix_dynamic_item(self, discovery_key, macro_string, macro_array, host=None):
+        """
+        This creates a dynamic item prototype that is required
+        for low level discovery rules in Zabbix.
+        This requires:
+        - dicovery key
+        - macro string
+        - macro name
+
+        This will create a zabbix key value pair that looks like:
+
+        disovery_key = "{"data": [
+                          {"{#macro_string}":"macro_array[0]"},
+                          {"{#macro_string}":"macro_array[1]"},
+                        ]}"
+        """
+
+        if not host:
+            host = self.host
+
+        data_array = [{'{%s}' % macro_string : i} for i in macro_array]
+        json_data = json.dumps({'data' : data_array})
+
+        zabbix_dynamic_item = UniqueMetric(host, discovery_key, json_data)
+
+        self.unique_metrics.append(zabbix_dynamic_item)
 
     def send_metrics(self):
         """
