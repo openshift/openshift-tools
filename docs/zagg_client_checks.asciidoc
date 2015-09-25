@@ -145,7 +145,7 @@ zs.add_zabbix_dynamic_item('filesystem', '#FILESYSTEM', filesystem_dict.keys() )
 
 # This will bundle up the dynamic items
 for filesys_name, filesys_percent in filesytem_dict.iteritems():
-    zs.add_zabbix_keys({'%s[%s]' % (#FILESYSTEM, filesys_name): filesys_percent})
+    zs.add_zabbix_keys({'%s[%s]' % ('#FILESYSTEM', filesys_name): filesys_percent})
 
 # Finally, sent them to zabbix
 zs.send_metrics()
