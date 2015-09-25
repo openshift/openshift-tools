@@ -25,6 +25,14 @@ ops-zagg-client --send-heartbeat
 # Send a single metric (generic interface, send any adhoc metrics)
 ops-zagg-client -s hostname.example.com -k zbx.item.name -o someval
 
+# Send a dynamic low level discovery with macros
+# low level dynamic objects require:
+# - discovery key: This is what was setup and defined in Zabbix in the disovery rule
+# - macro string: This is the variable that will be used to setup the item and trigger
+# - macro name: This is the name of object.  This is a comma seperated list of names
+
+ops-zagg-client -s --discovery_key filesys --macro_string #FILESYS --macro_names /,/var,/home
+
 """
 
 import argparse
@@ -58,6 +66,9 @@ class OpsZaggClient(object):
         if self.args.key and self.args.value:
             self.add_zabbix_key()
 
+        if self.args.discovery_key and self.args.macro_string and self.args.macro_names:
+            self.add_zabbix_dynamic_item()
+
         self.zagg_sender.send_metrics()
 
     def parse_args(self):
@@ -71,9 +82,17 @@ class OpsZaggClient(object):
         parser.add_argument('--zagg-pass', help='Password of the Zagg server')
         parser.add_argument('--zagg-ssl-verify', default=False, help='Whether to verify ssl certificates.')
         parser.add_argument('-k', '--key', help='zabbix key')
-        parser.add_argument('-o', '--value', help='zabbix value')
-        parser.add_argument('-c', '--config-file', help='ops-zagg-client config file',
-                            default='/etc/openshift_tools/zagg_client.yaml')
+
+        key_value_group = parser.add_argument_group('Sending a Key-Value Pair')
+        key_value_group.add_argument('-o', '--value', help='zabbix value')
+        key_value_group.add_argument('-c', '--config-file', help='ops-zagg-client config file',
+                                     default='/etc/openshift_tools/zagg_client.yaml')
+
+        low_level_discovery_group = parser.add_argument_group('Sending a Low Level Discovery Item')
+        low_level_discovery_group.add_argument('--discovery_key', help='discovery key')
+        low_level_discovery_group.add_argument('--macro_string', help='macro string')
+        low_level_discovery_group.add_argument('--macro_names', help='comma seperated list of macro names')
+
         self.args = parser.parse_args()
 
     def parse_config(self, config_file):
@@ -118,8 +137,16 @@ class OpsZaggClient(object):
 
     def add_zabbix_key(self):
         """ send zabbix key/value pair to zagg """
+
         self.zagg_sender.add_zabbix_keys({self.args.key : self.args.value})
 
+    def add_zabbix_dynamic_item(self):
+        """ send zabbix low level discovery item to zagg """
+
+        self.zagg_sender.add_zabbix_dynamic_item(self.args.discovery_key,
+                                                 self.args.macro_string,
+                                                 self.args.macro_names.split(','),
+                                                )
 if __name__ == "__main__":
     OZC = OpsZaggClient()
     OZC.run()
