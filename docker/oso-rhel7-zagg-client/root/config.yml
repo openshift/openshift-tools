@@ -45,7 +45,9 @@
     - name: send openshift-master process count
       minute: "*/2"
       job: /usr/bin/cron-send-process-count '^/usr/bin/openshift start master' openshift.master.process.count
-
+    - name: send cluster user running pod total count
+      minute: "*/2"
+      job: ops-runner -n csurpc.openshift.master.user.pod.running.count /usr/bin/cron-send-user-running-pod-count.sh
   pre_tasks:
   - stat:
       path: /secrets/zagg_client_vars.yml
