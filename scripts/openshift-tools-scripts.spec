@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.11
+Version:       0.0.12
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -51,6 +51,9 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Mon Sep 28 2015 Matt Woodson <mwoodson@redhat.com> 0.0.12-1
+- changed underscores to hyphen (mwoodson@redhat.com)
+
 * Fri Sep 25 2015 Matt Woodson <mwoodson@redhat.com> 0.0.11-1
 - fixed the spec file (mwoodson@redhat.com)
 
