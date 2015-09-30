@@ -13,6 +13,7 @@
         user: "{{ lookup('env', 'ZAGG_USER') | default(g_default_zagg_user, True) }}"
         pass: "{{ lookup('env', 'ZAGG_PASSWORD') | default(g_default_zagg_pass, True) }}"
         ssl_verify: "{{ lookup('env', 'ZAGG_SSL_VERIFY') | default(g_default_zagg_ssl_verify, True) }}"
+        verbose: "{{ lookup('env', 'ZAGG_VERBOSE') | default(g_default_zagg_verbose, True) }}"
       pcp:
         metrics: "{{ g_default_pcp_metrics }}"
       heartbeat:
@@ -25,6 +26,9 @@
     - name: run pcp checks every 5 minutes
       minute: "*/5"
       job: /usr/bin/ops-zagg-client --send-pcp
+    - name: run pcp sampler every 5 minutes
+      minute: "*/5"
+      job: /usr/bin/cron-send-pcp-sampled-metrics.py  -m kernel.all.cpu.idle -m kernel.all.cpu.nice -m kernel.all.cpu.steal -m kernel.all.cpu.sys -m kernel.all.cpu.user -m kernel.all.cpu.wait.total
     - name: run register every 15 minutes
       minute: "*/15"
       job: /usr/bin/ops-zagg-client --send-heartbeat
