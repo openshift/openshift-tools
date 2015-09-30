@@ -47,7 +47,7 @@ class ZaggSender(object):
     collect and create UniqueMetrics and send them to Zagg
     """
 
-    def __init__(self, host=None, verbose=False, zagg_connection=None):
+    def __init__(self, host=None, zagg_connection=None, verbose=False):
         """
         set up the zagg client, pcp_metrics and unique_metrics
         """
