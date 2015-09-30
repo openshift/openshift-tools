@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.12
+Version:       0.0.13
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -52,6 +52,9 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Wed Sep 30 2015 Kenny Woodson <kwoodson@redhat.com> 0.0.13-1
+- Adding a pcp metric sampler for cpu stats (kwoodson@redhat.com)
+
 * Mon Sep 28 2015 Matt Woodson <mwoodson@redhat.com> 0.0.12-1
 - changed underscores to hyphen (mwoodson@redhat.com)
 
