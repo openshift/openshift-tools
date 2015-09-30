@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Web Services
 Name:          openshift-tools-web
-Version:       0.0.9
+Version:       0.0.10
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -42,6 +42,9 @@ OpenShift Tools Zagg REST API
 %config(noreplace) /etc/httpd/conf.d/*.conf
 
 %changelog
+* Wed Sep 30 2015 Kenny Woodson <kwoodson@redhat.com> 0.0.10-1
+- 
+
 * Wed Sep 16 2015 Kenny Woodson <kwoodson@redhat.com> 0.0.9-1
 - Adding SNI support for v3 monitoring
 
