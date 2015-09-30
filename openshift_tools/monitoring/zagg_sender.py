@@ -47,13 +47,14 @@ class ZaggSender(object):
     collect and create UniqueMetrics and send them to Zagg
     """
 
-    def __init__(self, host=None, zagg_connection=None):
+    def __init__(self, host=None, verbose=False, zagg_connection=None):
         """
         set up the zagg client, pcp_metrics and unique_metrics
         """
         self.unique_metrics = []
         self.config = None
         self.config_file = '/etc/openshift_tools/zagg_client.yaml'
+        self.verbose = verbose
 
         if not host:
             host = self.get_default_host()
@@ -86,14 +87,21 @@ class ZaggSender(object):
         zagg_user = self.config['zagg']['user']
         zagg_password = self.config['zagg']['pass']
         zagg_ssl_verify = self.config['zagg'].get('ssl_verify', False)
+        zagg_verbose = self.config['zagg'].get('verbose', False)
 
         if isinstance(zagg_ssl_verify, str):
             zagg_ssl_verify = (zagg_ssl_verify == 'True')
+
+        if self.verbose:
+            zagg_verbose = self.verbose
+        elif isinstance(zagg_verbose, str):
+            zagg_verbose = (zagg_verbose == 'True')
 
         zagg_connection = ZaggConnection(url=zagg_server,
                                          user=zagg_user,
                                          password=zagg_password,
                                          ssl_verify=zagg_ssl_verify,
+                                         verbose=zagg_verbose,
                                         )
 
         return zagg_connection

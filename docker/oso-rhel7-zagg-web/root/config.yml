@@ -8,6 +8,7 @@
     g_zagg_server_user: "{{ lookup('env','ZAGG_SERVER_USER') | default(g_default_zagg_server_user, True) }}"
     g_zagg_server_password: "{{ lookup('env','ZAGG_SERVER_PASSWORD') | default(g_default_zagg_server_password, True) }}"
     g_zagg_ssl_verify: "{{ lookup('env','ZAGG_SSL_VERIFY') | default(g_default_zagg_ssl_verify) }}"
+    g_zagg_verbose: "{{ lookup('env','ZAGG_VERBOSE') | default(g_default_zagg_verbose) }}"
   pre_tasks:
   - stat:
       path: /secrets/zagg-server-vars.yml
