@@ -28,7 +28,8 @@
       job: /usr/bin/ops-zagg-client --send-pcp
     - name: run pcp sampler every 5 minutes
       minute: "*/5"
-      job: /usr/bin/cron-send-pcp-sampled-metrics -m kernel.all.cpu.idle -m kernel.all.cpu.nice -m kernel.all.cpu.steal -m kernel.all.cpu.sys -m kernel.all.cpu.user -m kernel.all.cpu.wait.total
+      job: /usr/bin/cron-send-pcp-sampled-metrics -m kernel.all.cpu.idle -m kernel.all.cpu.nice -m kernel.all.cpu.steal -m kernel.all.cpu.sys -m kernel.all.cpu.user -m kernel.all.cpu.wait.total -m kernel.all.cpu.irq.hard -m kernel.all.cpu.irq.soft
+
     - name: run register every 15 minutes
       minute: "*/15"
       job: /usr/bin/ops-zagg-client --send-heartbeat
