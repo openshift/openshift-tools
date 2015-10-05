@@ -5,6 +5,9 @@
   - /root/default_vars.yml
   - /root/{{ g_oso_host_type }}_default_vars.yml
   vars:
+    g_oso_cluster_id: "{{ lookup('env', 'OSO_CLUSTER_ID') }}"
+    g_oso_host_type: "{{ lookup('env', 'OSO_HOST_TYPE') }}"
+
     g_zagg_client_config:
       host:
         name: "{{ lookup('env', 'ZAGG_CLIENT_HOSTNAME') | default(g_default_zagg_client_hostname, True) }}"
@@ -18,9 +21,8 @@
         metrics: "{{ g_default_pcp_metrics }}"
       heartbeat:
         templates: "{{ g_default_templates }}"
-        hostgroups: "{{ g_default_hostgroups }}"
+        hostgroups: "{{ [g_oso_cluster_id] | union(g_default_hostgroups) }}"
 
-    g_oso_host_type: "{{ lookup('env', 'OSO_HOST_TYPE') }}"
 
     g_zagg_client_cron:
     - name: run pcp checks every 5 minutes
@@ -63,11 +65,12 @@
     include_vars: /secrets/zagg_client_vars.yml
     when: g_zagg_client_vars.stat.exists
 
-  - fail: "msg=This playbook requires {{ item }} to be set and not empty."
+  - fail: msg="This playbook requires {{ item }} to be set and not empty."
     when: "{{ item }} is not defined or not {{ item }}"
     with_items:
     - g_zagg_client_config
     - g_oso_host_type
+    - g_oso_cluster_id
 
   - debug: var=g_zagg_client_config
 

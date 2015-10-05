@@ -21,6 +21,9 @@ The purpose of this module is to process metrics and send them to Zabbix.
 """
 
 from openshift_tools.monitoring.metricmanager import UniqueMetric
+# Reason: disable pylint import-error because it does not exist in the buildbot
+# Status: permanently disabled
+# pylint: disable=import-error
 from zbxsend import send_to_zabbix
 
 # Reason: disable pylint too-few-public-methods because this class is a simple
@@ -91,15 +94,27 @@ class ZabbixMetricProcessor(object):
 
         Returns: nothing
         """
+        all_templates = []
+        all_hostgroups = []
+        # Collect all templates and hostgroups so we only process them 1 time.
+        for hb_metric in hb_metrics:
+            all_templates.extend(hb_metric.value['templates'])
+            all_hostgroups.extend(hb_metric.value['hostgroups'])
+
+        # Make sure there is a template entry in zabbix
+        for template in set(all_templates):
+            self.zbxapi.ensure_template_exists(template)
+
+        # Make sure there is a hostgroup entry in zabbix
+        for hostgroup in set(all_hostgroups):
+            self.zbxapi.ensure_hostgroup_exists(hostgroup)
+
         for hb_metric in hb_metrics:
             templates = hb_metric.value['templates']
             hostgroups = hb_metric.value['hostgroups']
 
             # Make sure there is a host entry in zabbix
-            host_res = self.zbxapi.ensure_host_is_present(
-                hb_metric.host,
-                templates,
-                hostgroups)
+            host_res = self.zbxapi.ensure_host_exists(hb_metric.host, templates, hostgroups)
 
             # Actually do the heartbeat now
             hbum = UniqueMetric(hb_metric.host, 'heartbeat.ping', 1)
