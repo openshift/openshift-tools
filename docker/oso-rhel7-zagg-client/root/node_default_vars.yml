@@ -1,7 +1,8 @@
 ---
 # These are defaults variables, override using zagg_client_vars.yml vars file
 g_default_templates:
-- Template Heartbeat # So we can send hearbeats
-- Template OS Linux  # So we can send host related metrics
-- Template Docker # So we can send docker related metrics
-- Template Openshift Node # So we can send node related metrics
+- Template Heartbeat        # So we can send hearbeats
+- Template OS Linux         # So we can send host related metrics
+- Template Docker           # So we can send docker related metrics
+- Template Openshift Node   # So we can send node related metrics
+- Template Operations Tools # So ops-runner works
