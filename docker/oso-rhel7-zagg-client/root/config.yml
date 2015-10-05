@@ -30,9 +30,13 @@
       minute: "*/5"
       job: ops-runner -n cspsm.kernal.all.cpu /usr/bin/cron-send-pcp-sampled-metrics -m kernel.all.cpu.idle -m kernel.all.cpu.nice -m kernel.all.cpu.steal -m kernel.all.cpu.sys -m kernel.all.cpu.user -m kernel.all.cpu.wait.total -m kernel.all.cpu.irq.hard -m kernel.all.cpu.irq.soft
 
-    - name: run register every 15 minutes
-      minute: "*/15"
-      job: ops-runner -n ozc.send.heartbeat /usr/bin/ops-zagg-client --send-heartbeat
+    - name: Do a full heartbeat
+      minute: "10"
+      hour: "*"
+      job: ops-runner -n ozc.send.heartbeat.full /usr/bin/ops-zagg-client --send-heartbeat
+    - name: Do a quick heartbeat
+      minute: "*/5"
+      job: ops-runner -n ozc.send.heartbeat.quick /usr/bin/ops-zagg-client -k heartbeat.ping -o 1
     - name: run filesystem space checks every 30 minutes
       minute: "*/30"
       job: ops-runner -n csfm.filesys.full.old /usr/local/bin/cron-send-filesystem-metrics.sh
