@@ -114,7 +114,7 @@ def main():
     ''' Do the application creation
     '''
     proj_name = 'ops-monitor'
-    app = 'openshift/hello-openshift'
+    app = 'openshift/hello-openshift:v1.0.6'
     verbose = False
 
     if len(sys.argv) > 1 and sys.argv[1] == '-v':

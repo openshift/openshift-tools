@@ -48,6 +48,7 @@ class ZaggClient(object):
                             password=self.zagg_conn.password,
                             headers=headers,
                             ssl_verify=self.zagg_conn.ssl_verify,
+                            debug=self.zagg_conn.verbose,
                            )
 
     def add_metric(self, unique_metric_list):

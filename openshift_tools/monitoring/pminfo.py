@@ -24,6 +24,9 @@ PMInfo Python implementation
 # pylint: disable=import-error
 from pcp import pmapi
 import re
+import os
+import time
+import multiprocessing
 
 class PMInfo(object):
     """ Looks up values from pcp through the pmapi.
@@ -114,6 +117,37 @@ class PMInfo(object):
     def connect(self):
         """ Establish a PMAPI context to archive, host or local, via args """
         self.context = pmapi.pmContext()
+
+def calculate_percent_cpu(start, end, interval):
+    ''' Calculate the percent of cpu utilization from sample1 and sample2.
+        Requires:
+          start
+          end
+          interval
+    '''
+    num_cpu = multiprocessing.cpu_count()
+    jiffy = os.sysconf(os.sysconf_names['SC_CLK_TCK'])
+    return ((end - start) * 100 / (float(jiffy) * interval)) / (num_cpu * 10)
+
+def get_sampled_data(metrics, interval, count=1):
+    '''Recieve a list of metrics, a time interval, and a count.
+       Sample the metrics based on an interval for count number of times.
+    '''
+    if not metrics:
+        return {}
+
+    sampled_results = []
+    for i in range(count):
+        sampled_results.append(get_metrics(metrics))
+        if i == count - 1:
+            break
+        time.sleep(interval)
+
+    results = {}
+    for metric in metrics:
+        results[metric] = [sample[metric] for sample in sampled_results]
+
+    return results
 
 def get_metrics(metrics=None):
     '''Get a list of metrics and query pcp for their values

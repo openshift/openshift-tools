@@ -17,3 +17,4 @@ targets:
   user: admin
   password: XXXXXX
   ssl_verify: no
+  verbose: no
