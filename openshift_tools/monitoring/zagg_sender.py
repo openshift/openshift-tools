@@ -31,6 +31,7 @@ from openshift_tools.monitoring import pminfo
 from openshift_tools.monitoring.metricmanager import UniqueMetric
 from openshift_tools.monitoring.zagg_client import ZaggClient
 from openshift_tools.monitoring.zagg_common import ZaggConnection
+import json
 import os
 import yaml
 
@@ -46,13 +47,14 @@ class ZaggSender(object):
     collect and create UniqueMetrics and send them to Zagg
     """
 
-    def __init__(self, host=None, zagg_connection=None):
+    def __init__(self, host=None, zagg_connection=None, verbose=False):
         """
         set up the zagg client, pcp_metrics and unique_metrics
         """
         self.unique_metrics = []
         self.config = None
         self.config_file = '/etc/openshift_tools/zagg_client.yaml'
+        self.verbose = verbose
 
         if not host:
             host = self.get_default_host()
@@ -85,14 +87,21 @@ class ZaggSender(object):
         zagg_user = self.config['zagg']['user']
         zagg_password = self.config['zagg']['pass']
         zagg_ssl_verify = self.config['zagg'].get('ssl_verify', False)
+        zagg_verbose = self.config['zagg'].get('verbose', False)
 
         if isinstance(zagg_ssl_verify, str):
             zagg_ssl_verify = (zagg_ssl_verify == 'True')
+
+        if self.verbose:
+            zagg_verbose = self.verbose
+        elif isinstance(zagg_verbose, str):
+            zagg_verbose = (zagg_verbose == 'True')
 
         zagg_connection = ZaggConnection(url=zagg_server,
                                          user=zagg_user,
                                          password=zagg_password,
                                          ssl_verify=zagg_ssl_verify,
+                                         verbose=zagg_verbose,
                                         )
 
         return zagg_connection
@@ -136,6 +145,33 @@ class ZaggSender(object):
             zabbix_metrics.append(zabbix_metric)
 
         self.unique_metrics += zabbix_metrics
+
+    def add_zabbix_dynamic_item(self, discovery_key, macro_string, macro_array, host=None):
+        """
+        This creates a dynamic item prototype that is required
+        for low level discovery rules in Zabbix.
+        This requires:
+        - dicovery key
+        - macro string
+        - macro name
+
+        This will create a zabbix key value pair that looks like:
+
+        disovery_key = "{"data": [
+                          {"{#macro_string}":"macro_array[0]"},
+                          {"{#macro_string}":"macro_array[1]"},
+                        ]}"
+        """
+
+        if not host:
+            host = self.host
+
+        data_array = [{'{%s}' % macro_string : i} for i in macro_array]
+        json_data = json.dumps({'data' : data_array})
+
+        zabbix_dynamic_item = UniqueMetric(host, discovery_key, json_data)
+
+        self.unique_metrics.append(zabbix_dynamic_item)
 
     def send_metrics(self):
         """

@@ -23,7 +23,7 @@ RUN mkdir /tmp/metrics && chown apache.apache /tmp/metrics
 
 # TODO: package these!!! (see trello card https://trello.com/c/SJsvV9OQ)
 #       and add that RPM to this container
-ADD zbxapi.py /usr/share/ansible/zbxapi.py
+ADD library/ /usr/share/ansible/
 ADD oo_filters.py /usr/share/ansible_plugins/filter_plugins/oo_filters.py
 # END TODO
 

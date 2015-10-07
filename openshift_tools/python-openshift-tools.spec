@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.19
+Version:       0.0.25
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -98,6 +98,26 @@ Tools developed to make it easy to work with web technologies.
 
 
 %changelog
+* Tue Oct 06 2015 Kenny Woodson <kwoodson@redhat.com> 0.0.25-1
+- Adding support for hostgroups (kwoodson@redhat.com)
+
+* Wed Sep 30 2015 Kenny Woodson <kwoodson@redhat.com> 0.0.24-1
+- Fix to cron name. Also fix to added parameters for zagg_sender
+  (kwoodson@redhat.com)
+
+* Wed Sep 30 2015 Kenny Woodson <kwoodson@redhat.com> 0.0.23-1
+- Adding a pcp metric sampler for cpu stats (kwoodson@redhat.com)
+
+* Mon Sep 28 2015 Matt Woodson <mwoodson@redhat.com> 0.0.22-1
+- 
+
+* Fri Sep 25 2015 Matt Woodson <mwoodson@redhat.com> 0.0.21-1
+- added dynamic prototype support to zagg. added the filsystem checks to use
+  this (mwoodson@redhat.com)
+
+* Wed Sep 23 2015 Thomas Wiest <twiest@redhat.com> 0.0.20-1
+- added timeout.py (twiest@redhat.com)
+
 * Wed Sep 16 2015 Kenny Woodson <kwoodson@redhat.com> 0.0.19-1
 - Convert string to bool for ssl check (kwoodson@redhat.com)
 

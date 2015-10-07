@@ -5,16 +5,9 @@ g_default_zagg_url: https://localhost:8443
 g_default_zagg_user: admin
 g_default_zagg_pass: password
 g_default_zagg_ssl_verify: False
+g_default_zagg_verbose: False
 g_default_pcp_metrics:
 - hinv.ncpu
-- kernel.all.cpu.idle
-- kernel.all.cpu.irq.hard
-- kernel.all.cpu.irq.soft
-- kernel.all.cpu.nice
-- kernel.all.cpu.steal
-- kernel.all.cpu.sys
-- kernel.all.cpu.user
-- kernel.all.cpu.wait.total
 - kernel.all.load
 - kernel.all.pswitch
 - kernel.all.uptime
