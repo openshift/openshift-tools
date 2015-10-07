@@ -59,7 +59,9 @@
     - name: send openshift-master process count
       minute: "*/2"
       job: ops-runner -n cspc.openshift.master.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start master' openshift.master.process.count
-
+    - name: send openshift-master project count every 4 hours
++     hour: "*/4"
++     job: /usr/local/bin/cron-send-project-count.sh
   pre_tasks:
   - stat:
       path: /secrets/zagg_client_vars.yml
