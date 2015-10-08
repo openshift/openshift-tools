@@ -55,20 +55,39 @@ ZaggSender is maintained in the https://github.com/openshift/openshift-tools/tre
 
 ZaggSender reads it's default settings from the config file: `/etc/openshift_tools/zagg_client.yaml`.
 
-The basic python script would follow the pattern:
+The basic (but still passing Pylint) python script would follow the pattern:
 
 .ZaggSender python script basic pattern
 ----
 #!/usr/bin/env python
+'''
+   Command to send some data to Zabbix
+'''
 
-<do stuff, gather info>
+#This is not a module, but pylint thinks it is.  This is a command.
+#pylint: disable=invalid-name
 
-zs = ZaggSender()
-zs.add_zabbix_keys({
+import subprocess
+from openshift_tools.monitoring.zagg_sender import ZaggSender
+
+def main():
+    ''' Get data, send to zabbix
+    '''
+    # this this the command I want to run
+    my_command = "foo"
+    output = subprocess.check_output(my_command, shell=True)
+
+    # we now have all the data we want.  Let's send it to Zagg
+    zs = ZaggSender()
+    zs.add_zabbix_keys({
                      'item1' : 'value1',
                      'item2' : 'value2',
                   })
-zs.send_metrics()
+    zs.send_metrics()
+
+if __name__ == '__main__':
+    main()
+
 
 ----
 
