@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.14
+Version:       0.0.15
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -54,6 +54,9 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Thu Oct 08 2015 Thomas Wiest <twiest@redhat.com> 0.0.15-1
+- Send a count of users to Zabbix (mwhittingham@redhat.com)
+
 * Fri Oct 02 2015 Thomas Wiest <twiest@redhat.com> 0.0.14-1
 - added ops-runner. It sends the exit code of the command to zabbix.
   (twiest@redhat.com)
