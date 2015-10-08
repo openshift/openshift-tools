@@ -27,6 +27,7 @@ cp -p monitoring/cron-send-filesystem-metrics.py %{buildroot}/usr/bin/cron-send-
 cp -p monitoring/cron-send-pcp-sampled-metrics.py %{buildroot}/usr/bin/cron-send-pcp-sampled-metrics
 cp -p monitoring/ops-runner.sh %{buildroot}/usr/bin/ops-runner
 cp -p monitoring/cron-send-user-count.sh %{buildroot}/usr/bin/cron-send-user-count
+cp -p monitoring/cron-send-pod-count.py %{buildroot}/usr/bin/cron-send-pod-count
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
