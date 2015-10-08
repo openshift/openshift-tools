@@ -1,10 +1,6 @@
 #!/bin/bash -e
 
-COUNT=$(KUBECONFIG=/etc/openshift/master/admin.kubeconfig oc get --no-headers users | wc -l)
-if [ ${PIPESTATUS[0]} -ne 0 ] ; then
-  echo "Error: oc command failed"
-  exit 5
-fi
+COUNT=$(KUBECONFIG=/etc/openshift/master/admin.kubeconfig oc get --no-headers users | wc -l ; exit ${PIPESTATUS[0]})
 
 echo
 echo "Number of users : $COUNT"
