@@ -39,9 +39,6 @@
     - name: Do a quick heartbeat
       minute: "*/5"
       job: ops-runner -n ozc.send.heartbeat.quick /usr/bin/ops-zagg-client -k heartbeat.ping -o 1
-    - name: run filesystem space checks every 30 minutes
-      minute: "*/30"
-      job: ops-runner -n csfm.filesys.full.old /usr/local/bin/cron-send-filesystem-metrics.sh
     - name: run filesystem space checks every 10 minutes
       minute: "*/10"
       job: ops-runner -n csfm.filesys.full /usr/bin/cron-send-filesystem-metrics
