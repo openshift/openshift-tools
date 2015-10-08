@@ -48,6 +48,9 @@
     - name: send openshift-node process count
       minute: "*/2"
       job: ops-runner -n cspc.openshift.node.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start node' openshift.node.process.count
+    - name: send ovs status data
+      hour: "*/2"
+      job: ops-runner -n csos.openshift.master.ovs.status /usr/bin/cron-send-ovs-status
 
     g_zagg_client_master_crons:
     - name: run create app every 5 minutes
@@ -63,9 +66,6 @@
     - name: send openshift-master pods count
       hour: "*/2"
       job: ops-runner -n cspodc.openshift.master.pod.count /usr/bin/cron-send-pod-count
-    - name: send ovs status data
-      hour: "*/2"
-      job: ops-runner -n csos.openshift.master.ovs.status /usr/bin/cron-send-ovs-status
 
   pre_tasks:
   - stat:
