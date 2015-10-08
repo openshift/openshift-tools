@@ -1,6 +1,7 @@
-#!/bin/bash
+#!/bin/bash -e
 
-COUNT=$(oca get --no-headers users | wc -l)
+COUNT=$(KUBECONFIG=/etc/openshift/master/admin.kubeconfig oc get --no-headers users | wc -l ; exit ${PIPESTATUS[0]})
+
 echo
 echo "Number of users : $COUNT"
 echo
