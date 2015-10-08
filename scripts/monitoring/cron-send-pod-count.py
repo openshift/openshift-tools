@@ -28,7 +28,7 @@ def main():
 
     # we now have all the data we want.  Let's send it to Zagg
     zs = ZaggSender()
-    zs.add_zabbix_keys({'running_pods_count' : len(running_pods_list)})
+    zs.add_zabbix_keys({'openshift.master.pod.running.count' : len(running_pods_list)})
 
     # Finally, sent them to zabbix
     zs.send_metrics()

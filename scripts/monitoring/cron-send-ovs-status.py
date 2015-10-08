@@ -34,7 +34,7 @@ def get_vswitch_pids():
     # get the output of ps
     ps_output = subprocess.check_output(ovs_ps_cmd, shell=True)
 
-    return len(ps_output.split('\n'))
+    return len(ps_output.strip().split('\n'))
 
 def main():
     ''' Get data and send to zabbix
@@ -43,10 +43,13 @@ def main():
     vswitch_ports_count = get_vswitch_ports()
     vswitch_pids_count = get_vswitch_pids()
 
+    print "Found %s OVS ports" % vswitch_ports_count
+    print "Found %s OVS pids" % vswitch_pids_count
+
     # we now have all the data we want.  Let's send it to Zagg
     zs = ZaggSender()
-    zs.add_zabbix_keys({'vswitch_ports_count' : vswitch_ports_count})
-    zs.add_zabbix_keys({'vswitch_pids_count' : vswitch_pids_count})
+    zs.add_zabbix_keys({'openshift.node.ovs.ports.count' : vswitch_ports_count})
+    zs.add_zabbix_keys({'openshift.node.ovs.pids.count' : vswitch_pids_count})
 
     # Finally, sent them to zabbix
     zs.send_metrics()

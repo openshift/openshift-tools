@@ -12,5 +12,4 @@ sudo docker run --rm=true -it --name oso-rhel7-zagg-client \
            -v /run/pcp:/run/pcp                                                          \
            -v /var/lib/docker/volumes/shared:/shared:rw \
            -v /var/run/docker.sock:/var/run/docker.sock \
-           -v /var/run/openvswitch/db.sock:/var/run/openvswitch/db.sock \
            oso-rhel7-zagg-client $@
