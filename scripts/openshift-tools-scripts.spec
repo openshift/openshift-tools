@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.15
+Version:       0.0.16
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -54,6 +54,11 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Thu Oct 08 2015 Thomas Wiest <twiest@redhat.com> 0.0.16-1
+- Corrected the count script to properly return exit codes
+  (mwhittingham@redhat.com)
+- A few bug fixes (mwhittingham@redhat.com)
+
 * Thu Oct 08 2015 Thomas Wiest <twiest@redhat.com> 0.0.15-1
 - Send a count of users to Zabbix (mwhittingham@redhat.com)
 
