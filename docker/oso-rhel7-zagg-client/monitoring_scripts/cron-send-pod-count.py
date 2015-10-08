@@ -14,8 +14,11 @@ def main():
     ''' Get data from oadm and send to zabbix
     '''
 
+    ## set oadm config
+    oadm_command = "KUBECONFIG=/etc/openshift/master/admin.kubeconfig /usr/bin/oadm"
+
     ## get list of running pods
-    podlist_cmd = "oadma manage-node --list-pods --selector=''"
+    podlist_cmd = oadm_command + " manage-node --list-pods --selector=''"
 
     # get the output of oadm
     output = subprocess.check_output(podlist_cmd, shell=True)
