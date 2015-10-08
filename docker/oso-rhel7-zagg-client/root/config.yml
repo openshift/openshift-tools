@@ -59,6 +59,10 @@
     - name: send openshift-master process count
       minute: "*/2"
       job: ops-runner -n cspc.openshift.master.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start master' openshift.master.process.count
+    - name: send openshift-master user count every 6 hours
+      minute: "4"
+      hour : "*/6"
+      job: ops-runner -n csuc.openshift.master.user.count /usr/local/bin/cron-send-user-count 
 
   pre_tasks:
   - stat:
