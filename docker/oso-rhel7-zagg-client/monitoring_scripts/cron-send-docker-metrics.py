@@ -16,7 +16,6 @@ from openshift_tools.monitoring.zagg_sender import ZaggSender
 from openshift_tools.timeout import timeout, TimeoutException
 import json
 import re
-import sys
 
 class DockerDiskStats(object):
     ''' Class to store docker storage information
@@ -147,7 +146,6 @@ class DockerWatcher(object):
 
 if __name__ == "__main__":
     keys = None
-    exit_code = 0
     zs = ZaggSender()
     try:
         cli = AutoVersionClient(base_url='unix://var/run/docker.sock')
@@ -173,7 +171,6 @@ if __name__ == "__main__":
         keys = {
             'docker.ping': 0,  # Docker is down
         }
-        exit_code = 10
 
     zs.add_zabbix_keys(keys)
 
@@ -181,4 +178,3 @@ if __name__ == "__main__":
     print json.dumps(keys, indent=4)
     zs.send_metrics()
     print "\nDone.\n"
-    sys.exit(exit_code)
