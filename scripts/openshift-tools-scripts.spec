@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.9
+Version:       0.0.17
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -24,6 +24,12 @@ cp -p monitoring/ops-zagg-processor.py %{buildroot}/usr/bin/ops-zagg-processor
 cp -p monitoring/ops-zagg-heartbeater.py %{buildroot}/usr/bin/ops-zagg-heartbeater
 cp -p monitoring/cron-send-process-count.sh %{buildroot}/usr/bin/cron-send-process-count
 cp -p monitoring/cron-send-user-running-pod-count.sh %{buildroot}/usr/bin/cron-send-user-running-pod-count.sh
+cp -p monitoring/cron-send-filesystem-metrics.py %{buildroot}/usr/bin/cron-send-filesystem-metrics
+cp -p monitoring/cron-send-pcp-sampled-metrics.py %{buildroot}/usr/bin/cron-send-pcp-sampled-metrics
+cp -p monitoring/ops-runner.sh %{buildroot}/usr/bin/ops-runner
+cp -p monitoring/cron-send-user-count.sh %{buildroot}/usr/bin/cron-send-user-count
+cp -p monitoring/cron-send-pod-count.py %{buildroot}/usr/bin/cron-send-pod-count
+cp -p monitoring/cron-send-ovs-status.py %{buildroot}/usr/bin/cron-send-ovs-status
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -51,6 +57,37 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Thu Oct 08 2015 Sten Turpin <sten@redhat.com> 0.0.17-1
+- make keys for data being sent match with what was defined in zabbix
+  (sten@redhat.com)
+- added cron-send-ovs-status script + accompanying changes (sten@redhat.com)
+- added http to https redirect (sten@redhat.com)
+
+* Thu Oct 08 2015 Thomas Wiest <twiest@redhat.com> 0.0.16-1
+- Corrected the count script to properly return exit codes
+  (mwhittingham@redhat.com)
+- A few bug fixes (mwhittingham@redhat.com)
+
+* Thu Oct 08 2015 Thomas Wiest <twiest@redhat.com> 0.0.15-1
+- Send a count of users to Zabbix (mwhittingham@redhat.com)
+
+* Fri Oct 02 2015 Thomas Wiest <twiest@redhat.com> 0.0.14-1
+- added ops-runner. It sends the exit code of the command to zabbix.
+  (twiest@redhat.com)
+
+* Wed Sep 30 2015 Kenny Woodson <kwoodson@redhat.com> 0.0.13-1
+- Adding a pcp metric sampler for cpu stats (kwoodson@redhat.com)
+
+* Mon Sep 28 2015 Matt Woodson <mwoodson@redhat.com> 0.0.12-1
+- changed underscores to hyphen (mwoodson@redhat.com)
+
+* Fri Sep 25 2015 Matt Woodson <mwoodson@redhat.com> 0.0.11-1
+- fixed the spec file (mwoodson@redhat.com)
+
+* Fri Sep 25 2015 Matt Woodson <mwoodson@redhat.com> 0.0.10-1
+- added dynamic prototype support to zagg. added the filsystem checks to use
+  this (mwoodson@redhat.com)
+
 * Thu Sep 17 2015 Thomas Wiest <twiest@redhat.com> 0.0.9-1
 - added cron-send-process-count.sh and checks for openshift master and node
   processes are up. (twiest@redhat.com)

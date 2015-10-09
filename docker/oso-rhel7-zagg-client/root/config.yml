@@ -5,6 +5,9 @@
   - /root/default_vars.yml
   - /root/{{ g_oso_host_type }}_default_vars.yml
   vars:
+    g_oso_cluster_id: "{{ lookup('env', 'OSO_CLUSTER_ID') }}"
+    g_oso_host_type: "{{ lookup('env', 'OSO_HOST_TYPE') }}"
+
     g_zagg_client_config:
       host:
         name: "{{ lookup('env', 'ZAGG_CLIENT_HOSTNAME') | default(g_default_zagg_client_hostname, True) }}"
@@ -13,38 +16,56 @@
         user: "{{ lookup('env', 'ZAGG_USER') | default(g_default_zagg_user, True) }}"
         pass: "{{ lookup('env', 'ZAGG_PASSWORD') | default(g_default_zagg_pass, True) }}"
         ssl_verify: "{{ lookup('env', 'ZAGG_SSL_VERIFY') | default(g_default_zagg_ssl_verify, True) }}"
+        verbose: "{{ lookup('env', 'ZAGG_VERBOSE') | default(g_default_zagg_verbose, True) }}"
       pcp:
         metrics: "{{ g_default_pcp_metrics }}"
       heartbeat:
         templates: "{{ g_default_templates }}"
-        hostgroups: "{{ g_default_hostgroups }}"
+        hostgroups: "{{ [g_oso_cluster_id] | union(g_default_hostgroups) }}"
 
-    g_oso_host_type: "{{ lookup('env', 'OSO_HOST_TYPE') }}"
 
     g_zagg_client_cron:
     - name: run pcp checks every 5 minutes
       minute: "*/5"
-      job: /usr/bin/ops-zagg-client --send-pcp
-    - name: run register every 15 minutes
-      minute: "*/15"
-      job: /usr/bin/ops-zagg-client --send-heartbeat
-    - name: run filesystem space checks every 30 minutes
-      minute: "*/30"
-      job: /usr/local/bin/cron-send-filesystem-metrics.sh
-    - name: run docker storage space checks every 30 minutes
-      minute: "*/30"
-      job: /usr/local/bin/cron-send-docker-metrics.py
+      job: ops-runner -n ozc.send.pcp /usr/bin/ops-zagg-client --send-pcp
+    - name: run pcp sampler every 5 minutes
+      minute: "*/5"
+      job: ops-runner -n cspsm.kernal.all.cpu /usr/bin/cron-send-pcp-sampled-metrics -m kernel.all.cpu.idle -m kernel.all.cpu.nice -m kernel.all.cpu.steal -m kernel.all.cpu.sys -m kernel.all.cpu.user -m kernel.all.cpu.wait.total -m kernel.all.cpu.irq.hard -m kernel.all.cpu.irq.soft
+
+    - name: Do a full heartbeat
+      minute: "10"
+      hour: "*"
+      job: ops-runner -n ozc.send.heartbeat.full /usr/bin/ops-zagg-client --send-heartbeat
+    - name: Do a quick heartbeat
+      minute: "*/5"
+      job: ops-runner -n ozc.send.heartbeat.quick /usr/bin/ops-zagg-client -k heartbeat.ping -o 1
+    - name: run filesystem space checks every 10 minutes
+      minute: "*/10"
+      job: ops-runner -n csfm.filesys.full /usr/bin/cron-send-filesystem-metrics
+    - name: run docker storage space checks every 10 minutes
+      minute: "*/10"
+      job: ops-runner -n csdm.docker.storage /usr/local/bin/cron-send-docker-metrics.py
     - name: send openshift-node process count
       minute: "*/2"
-      job: /usr/bin/cron-send-process-count '^/usr/bin/openshift start node' openshift.node.process.count
+      job: ops-runner -n cspc.openshift.node.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start node' openshift.node.process.count
+    - name: send ovs status data
+      hour: "*/2"
+      job: ops-runner -n csos.openshift.master.ovs.status /usr/bin/cron-send-ovs-status
 
     g_zagg_client_master_crons:
     - name: run create app every 5 minutes
       minute: "*/5"
-      job: /usr/local/bin/cron-send-create-app.py
+      job: ops-runner -n csca.create_app /usr/local/bin/cron-send-create-app.py
     - name: send openshift-master process count
       minute: "*/2"
-      job: /usr/bin/cron-send-process-count '^/usr/bin/openshift start master' openshift.master.process.count
+      job: ops-runner -n cspc.openshift.master.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start master' openshift.master.process.count
+    - name: send openshift-master user count every 6 hours
+      minute: "4"
+      hour : "*/6"
+      job: ops-runner -n csuc.openshift.master.user.count /usr/bin/cron-send-user-count
+    - name: send openshift-master pods count
+      hour: "*/2"
+      job: ops-runner -n cspodc.openshift.master.pod.count /usr/bin/cron-send-pod-count
     - name: send cluster user running pod total count
       minute: "*/2"
       job: ops-runner -n csurpc.openshift.master.user.pod.running.count /usr/bin/cron-send-user-running-pod-count.sh
@@ -57,11 +78,12 @@
     include_vars: /secrets/zagg_client_vars.yml
     when: g_zagg_client_vars.stat.exists
 
-  - fail: "msg=This playbook requires {{ item }} to be set and not empty."
+  - fail: msg="This playbook requires {{ item }} to be set and not empty."
     when: "{{ item }} is not defined or not {{ item }}"
     with_items:
     - g_zagg_client_config
     - g_oso_host_type
+    - g_oso_cluster_id
 
   - debug: var=g_zagg_client_config
 

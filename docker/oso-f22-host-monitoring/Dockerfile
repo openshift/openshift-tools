@@ -30,6 +30,9 @@ RUN sed -i -e 's/PCP_USER=.*$/PCP_USER=root/' -e 's/PCP_GROUP=.*$/PCP_GROUP=root
 # (dodges warnings from pmcd attempting to connect during startup)
 RUN . /etc/pcp.conf && echo "-A" >> $PCP_PMCDOPTIONS_PATH
 
+# pmlogger control
+ADD pmlogger_control /etc/pcp/pmlogger/control
+
 #
 # Add in our custom pmdas
 ADD pmdas/ /var/lib/pcp/pmdas/

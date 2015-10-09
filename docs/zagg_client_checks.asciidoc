@@ -10,6 +10,31 @@ Let's take a quick review and understanding of Zagg and Zabbix to clarify what i
 
 ZaggClient checks are simple gathering of Zabbix items and sending them to the ZaggServer (which eventually sends them to a Zabbix Server).
 
+*Note: This document assumes that that the item has already been configured in Zabbix.  These checks will update the items, but will not add them.  Please configure Zabbix appropriately.*
+
+==== Dynamic Zagg/Zabbix Objects
+
+Zagg supports Zabbix dynamic object support.  Explaining the Low Level Discovery rules is out of scope of this document.  Please refer to https://www.zabbix.com/documentation/2.4/manual/discovery/low_level_discovery[Zabbix's documentation] for more information.
+
+This document will show how to add dynamic objects and items, then show how to send data to update those items.
+
+Dynamic objects in Zabbix require 3 things:
+
+* discovery key (defined in Zabbix Template -> Discovery Rule)
+* Macro Identifier - string to identify the Macro (we call this the macro string)
+* Macro Name(s) - string(s) to name an invidual object.
+
+Dynamic objects need to continually be updated in Zabbix.  If they are not, Zabbix will expunge the objects after a defined set of time.
+
+After these are created, we can start creating dynamic items (defined in Zabbix) to monitor.
+
+A real world example.  Let's say that we want to monitor all file systems on the system and how much space they are using.  All systems are not going to have the same file systems, so this is a perfect use case for dynamic objects.
+
+In this example, the discovery key would be "filesystems"
+The Macro Identifier would be "#FILESYSTEMS".  The capatilization and the '#' are Zabbix conventions
+The Macro Names would be the file systems we want to monitor "/", "/var", "/home"
+
+More examples will be shown below on how to write and collect dynamic data.
 
 === Zagg Clients Overview
 
@@ -30,22 +55,43 @@ ZaggSender is maintained in the https://github.com/openshift/openshift-tools/tre
 
 ZaggSender reads it's default settings from the config file: `/etc/openshift_tools/zagg_client.yaml`.
 
-The basic python script would follow the pattern:
+The basic (but still passing Pylint) python script would follow the pattern:
 
 .ZaggSender python script basic pattern
 ----
 #!/usr/bin/env python
+'''
+   Command to send some data to Zabbix
+'''
 
-<do stuff, gather info>
+#This is not a module, but pylint thinks it is.  This is a command.
+#pylint: disable=invalid-name
 
-zs = ZaggSender()
-zs.add_zabbix_keys({
+import subprocess
+from openshift_tools.monitoring.zagg_sender import ZaggSender
+
+def main():
+    ''' Get data, send to zabbix
+    '''
+    # this this the command I want to run
+    my_command = "foo"
+    output = subprocess.check_output(my_command, shell=True)
+
+    # we now have all the data we want.  Let's send it to Zagg
+    zs = ZaggSender()
+    zs.add_zabbix_keys({
                      'item1' : 'value1',
                      'item2' : 'value2',
                   })
-zs.send_metrics()
+    zs.send_metrics()
+
+if __name__ == '__main__':
+    main()
+
 
 ----
+
+===== Zabbix Item/Value pair Example
 
 Here is an example script of capturing the response code of google.com and sending it to Zagg as Zabbix item "web.google.status":
 
@@ -64,6 +110,64 @@ zs = ZaggSender()
 zs.add_zabbix_keys({ 'web.google.status' : google_response })
 zs.send_metrics()
 
+----
+
+===== Python Dynamic Object/item example
+
+Here is an example on how to write a dynamic object that uses the macros strings and macro names.
+
+In this example we will assume that we want to monitor a file system that has this output of 'df -h'
+----
+$ df -h
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda2       219G   62G  158G  29% /
+devtmpfs        9.7G     0  9.7G   0% /dev
+tmpfs           9.8G  8.0K  9.8G   1% /dev/shm
+tmpfs           9.8G  281M  9.5G   3% /run
+tmpfs           9.8G     0  9.8G   0% /sys/fs/cgroup
+/dev/sda1       497M  291M  207M  59% /boot
+/dev/md0         11T  60.1G 40.8G 56% /home
+----
+In this example we want to report on /, /boot, and /home.  The tmpfs drives can be ignored at this time.
+
+* First, in Zabbix we would add a discovery rule under a template.  We would call the key in that discover rule "filesystems"
+* Next, we would add a dynamic item under this newly created discovery rule called "filesystem.percent_full"
+* We will use the Macro string of "#FILESYSTEM"
+
+
+.ZaggSender python dynamic item script example
+----
+#!/usr/bin/evn python
+import subprocess
+from openshift_tools.monitoring.zagg_sender import ZaggSender
+
+df_cmd = "df"
+
+# get the output of df
+output = subprocess.check_output(df_cmd, shell=True)
+
+# this will only collect the filesystems we care about, and strip out the other lines
+filesystem_list = [f for f in output.split('\n') if f.startswith("/dev")]
+
+# we need a dict in the format of {"filesystem1_name" : "% free"}
+filesystem_dict = {}
+for f in filesystem_list:
+    line = f.split()
+    filesystem_dict[line[5]] = line[4].replace("%","")
+
+# we now have all the data we want.  Let's send it to Zagg
+
+zs = ZaggSender()
+
+# This will bundle up the dynamic object
+zs.add_zabbix_dynamic_item('filesystem', '#FILESYSTEM', filesystem_dict.keys() )
+
+# This will bundle up the dynamic items
+for filesys_name, filesys_percent in filesytem_dict.iteritems():
+    zs.add_zabbix_keys({'%s[%s]' % ('#FILESYSTEM', filesys_name): filesys_percent})
+
+# Finally, sent them to zabbix
+zs.send_metrics()
 ----
 
 ==== ops-zagg-client
@@ -93,6 +197,8 @@ These values are needed for the unique Zabbix items:
 
 ----
 
+===== ops-zagg-client item example
+
 `ops-zagg-client` can be used to write bash scripts.  The basic bash script would follow the pattern:
 
 .ops-zagg-client bash script pattern
@@ -114,4 +220,61 @@ Here is an example script of capturing the response code of google.com and sendi
 GOOGLE_STATUS=$(curl -I http://www.google.com 2>/dev/null | head -n 1 | awk '{print $2}')
 
 ops-zagg-client -k web.google.status -o ${GOOGLE_STATUS}
+----
+
+===== ops-zagg-client Dynamic Object and item example
+
+Here is an example on how to write a dynamic object that uses the macros strings and macro names.
+
+In this example we will assume that we want to monitor a file system that has this output of 'df -h'
+----
+$ df -h
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda2       219G   62G  158G  29% /
+devtmpfs        9.7G     0  9.7G   0% /dev
+tmpfs           9.8G  8.0K  9.8G   1% /dev/shm
+tmpfs           9.8G  281M  9.5G   3% /run
+tmpfs           9.8G     0  9.8G   0% /sys/fs/cgroup
+/dev/sda1       497M  291M  207M  59% /boot
+/dev/md0         11T  60.1G 40.8G 56% /home
+----
+In this example we want to report on /, /boot, and /home.  The tmpfs drives can be ignored at this time.
+
+* First, in Zabbix we would add a discovery rule under a template.  We would call the key in that discover rule "filesystems"
+* Next, we would add a dynamic item under this newly created discovery rule called "filesystem.percent_full"
+* We will use the Macro string of "#FILESYSTEM"
+
+The options in _ops-zagg-client_ that will allow us to send dynamic items are as follows:
+----
+$ ops-zagg-client --help
+...
+Sending a Low Level Discovery Item:
+  --discovery-key DISCOVERY_KEY
+                        discovery key
+  --macro-string MACRO_STRING
+                        macro string
+  --macro-names MACRO_NAMES
+                        comma seperated list of macro names
+----
+
+.ops-zagg-client dynamic script example
+----
+#!/bin/bash
+
+# we need a list of file systems in for format of "/filesystem1,/filesystem2,/filesystem3"
+FILESYSTEMS=$(df | grep '^/dev'| awk '{print $NF}' | xargs echo | tr " " ",")
+
+# Create and send the dynamic items with ops-zagg-client
+ops-zagg-client --discovery-key filesystems --macro-string '#FILESYSTEM' --macro-names $FILESYSTEMS
+
+# Now send each filesystem percentage stat with ops-zagg-client
+#  example:
+#  ops-zagg-client -k 'filesystem.percent_full[/]' -o 15
+#  ops-zagg-client -k 'filesystem.percent_full[/home]' -o 50
+#  ops-zagg-client -k 'filesystem.percent_full[/var]' -o 64
+FS=$(df | grep '^/dev'| awk '{print $(NF-1), $NF}'  | tr -d '%' | tr " " ",")
+for f in $FS; do
+    FILESYS=$(echo f | awk '{print $2}')
+    FILESYS_PERCENT=$(echo f | awk '{print $1}')
+    ops-zagg-client -k "filesys.percent_full[$FILESYS]" -o $FILESYS_PERCENT
 ----

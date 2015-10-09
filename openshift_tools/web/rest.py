@@ -7,7 +7,8 @@ see zagg_client.py for example on how to use
 
 """
 import requests
-import httplib
+# pylint: disable=import-error,no-name-in-module
+import requests.packages.urllib3.connectionpool as httplib
 import urllib3
 
 from urllib3.contrib import pyopenssl
@@ -41,8 +42,8 @@ class RestApi(object):
         self.debug = debug
 
         if self.debug:
-            httplib.HTTPConnection.debug_level = 1
-            httplib.HTTPSConnection.debug_level = 1
+            httplib.HTTPConnection.debuglevel = 1
+            httplib.HTTPSConnection.debuglevel = 1
 
         self.base_uri = "http://" + self.host + "/"
 
