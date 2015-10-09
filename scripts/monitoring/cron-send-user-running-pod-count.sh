@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/bin/bash -e
 
 
-COUNT=$(oadm manage-node --list-pods --selector=type=compute | grep Running | wc -l)
+COUNT=$(KUBECONFIG=/etc/openshift/master/admin.kubeconfig oadm manage-node --list-pods --selector=type=compute | grep Running | wc -l  ; exit ${PIPESTATUS[0]})
 echo
 echo "Number of User Running pod account : $COUNT"
 echo
