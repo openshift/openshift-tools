@@ -18,13 +18,14 @@ In this document, we're going to focus on the monitoring components, but similar
 == Prerequisites
 
 === Packages
-.The following pachages are required:
+.The following packages are required:
 . Docker
 . python-ndg_httpsclient-0.3.2-1
+. ansible
 
 .Fedora:
 ----
-sudo yum -y install docker-io python-ndg_httpsclient-0.3.2-1.fc22.noarch
+sudo yum -y install docker-io python-ndg_httpsclient-0.3.2-1.fc22.noarch ansible
 ----
 
 
