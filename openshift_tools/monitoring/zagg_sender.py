@@ -47,7 +47,7 @@ class ZaggSender(object):
     collect and create UniqueMetrics and send them to Zagg
     """
 
-    def __init__(self, host=None, zagg_connection=None, verbose=False):
+    def __init__(self, host=None, zagg_connection=None, verbose=False, debug=False):
         """
         set up the zagg client, pcp_metrics and unique_metrics
         """
@@ -55,6 +55,7 @@ class ZaggSender(object):
         self.config = None
         self.config_file = '/etc/openshift_tools/zagg_client.yaml'
         self.verbose = verbose
+        self.debug = debug
 
         if not host:
             host = self.get_default_host()
@@ -64,6 +65,30 @@ class ZaggSender(object):
 
         self.host = host
         self.zaggclient = ZaggClient(zagg_connection=zagg_connection)
+
+    def print_unique_metrics_key_value(self):
+        """
+        This function prints the key/value pairs the UniqueMetrics that ZaggSender
+        currently has stored
+        """
+
+        print "\nZaggSender Key/Value pairs:"
+        print "=============================="
+        for unique_metric in self.unique_metrics:
+            print("%s:  %s") % (unique_metric.key, unique_metric.value)
+        print "==============================\n"
+
+    def print_unique_metrics(self):
+        """
+        This function prints all of the information of the UniqueMetrics that ZaggSender
+        currently has stored
+        """
+
+        print "\nZaggSender UniqueMetrics:"
+        print "=============================="
+        for unique_metric in self.unique_metrics:
+            print unique_metric
+        print "==============================\n"
 
     def parse_config(self):
         """ parse default config file """
@@ -87,26 +112,26 @@ class ZaggSender(object):
         zagg_user = self.config['zagg']['user']
         zagg_password = self.config['zagg']['pass']
         zagg_ssl_verify = self.config['zagg'].get('ssl_verify', False)
-        zagg_verbose = self.config['zagg'].get('verbose', False)
+        zagg_debug = self.config['zagg'].get('debug', False)
 
         if isinstance(zagg_ssl_verify, str):
             zagg_ssl_verify = (zagg_ssl_verify == 'True')
 
-        if self.verbose:
-            zagg_verbose = self.verbose
-        elif isinstance(zagg_verbose, str):
-            zagg_verbose = (zagg_verbose == 'True')
+        if self.debug:
+            zagg_debug = self.debug
+        elif isinstance(zagg_debug, str):
+            zagg_debug = (zagg_debug == 'True')
 
         zagg_connection = ZaggConnection(url=zagg_server,
                                          user=zagg_user,
                                          password=zagg_password,
                                          ssl_verify=zagg_ssl_verify,
-                                         verbose=zagg_verbose,
+                                         debug=zagg_debug,
                                         )
 
         return zagg_connection
 
-    def add_pcp_metrics(self, pcp_metrics, host=None):
+    def add_pcp_metrics(self, pcp_metrics, pcp_derived_metrics=None, host=None):
         """
         Evaluate a list of metrics from pcp using pminfo
         return list of  UniqueMetrics
@@ -114,7 +139,8 @@ class ZaggSender(object):
         if not host:
             host = self.host
 
-        pcp_metric_dict = pminfo.get_metrics(pcp_metrics)
+        pcp_metric_dict = pminfo.get_metrics(metrics=pcp_metrics,
+                                             derived_metrics=pcp_derived_metrics)
 
         for metric, value in pcp_metric_dict.iteritems():
             new_unique_metric = UniqueMetric(host, metric, value)
@@ -178,5 +204,11 @@ class ZaggSender(object):
         Send list of Unique Metrics to Zagg
         clear self.unique_metrics
         """
+        if self.verbose:
+            self.print_unique_metrics_key_value()
+
+        if self.debug:
+            self.print_unique_metrics()
+
         self.zaggclient.add_metric(self.unique_metrics)
         self.unique_metrics = []

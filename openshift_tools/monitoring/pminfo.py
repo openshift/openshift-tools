@@ -103,6 +103,12 @@ class PMInfo(object):
             else:
                 self.get_children(child_name)
 
+    def register_derived_metric(self, derived_metrics):
+        """ This function registers the derived function name and expression """
+
+        for dmetric, dexpression in derived_metrics.iteritems():
+            self.context.pmRegisterDerived(dmetric, dexpression)
+
     def execute(self, metrics=None):
         """ Using a PMAPI context (could be either host or archive),
             fetch and show all of the values
@@ -149,13 +155,23 @@ def get_sampled_data(metrics, interval, count=1):
 
     return results
 
-def get_metrics(metrics=None):
+def get_metrics(metrics=None, derived_metrics=None):
     '''Get a list of metrics and query pcp for their values
     '''
     try:
         pcp = PMInfo()
         pcp.connect()
+
+        if derived_metrics:
+            pcp.register_derived_metric(derived_metrics)
+
+            if not metrics:
+                metrics = derived_metrics.keys()
+            else:
+                metrics += derived_metrics.keys()
+
         return pcp.execute(metrics)
+
     except pmapi.pmErr as error:
         print error.message()
     except pmapi.pmUsageErr as usage:

@@ -78,10 +78,11 @@ class OpsZaggClient(object):
         parser.add_argument('--send-heartbeat', help="send heartbeat metric to zagg", action="store_true")
         parser.add_argument('-s', '--host', help='specify host name as registered in Zabbix')
         parser.add_argument('-z', '--zagg-url', help='url of Zagg server')
-        parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbose?')
         parser.add_argument('--zagg-user', help='username of the Zagg server')
         parser.add_argument('--zagg-pass', help='Password of the Zagg server')
-        parser.add_argument('--zagg-ssl-verify', default=False, help='Whether to verify ssl certificates.')
+        parser.add_argument('--zagg-ssl-verify', default=None, help='Whether to verify ssl certificates.')
+        parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
+        parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
         parser.add_argument('-c', '--config-file', help='ops-zagg-client config file',
                             default='/etc/openshift_tools/zagg_client.yaml')
 
@@ -106,31 +107,28 @@ class OpsZaggClient(object):
         zagg_url = self.args.zagg_url if self.args.zagg_url else self.config['zagg']['url']
         zagg_user = self.args.zagg_user if self.args.zagg_user else self.config['zagg']['user']
         zagg_password = self.args.zagg_pass if self.args.zagg_pass else self.config['zagg']['pass']
-
-        zagg_ssl_verify = self.config['zagg'].get('ssl_verify', False)
-        zagg_verbose = self.config['zagg'].get('verbose', False)
+        zagg_verbose = self.args.verbose if self.args.verbose else self.config['zagg']['verbose']
+        zagg_debug = self.args.debug if self.args.debug else self.config['zagg']['debug']
+        zagg_ssl_verify = self.args.zagg_ssl_verify if self.args.zagg_ssl_verify else self.config['zagg']['ssl_verify']
+        host = self.args.host if self.args.host else self.config['host']['name']
 
         if isinstance(zagg_verbose, str):
             zagg_verbose = (zagg_verbose == 'True')
 
-        if self.args.verbose:
-            zagg_verbose = self.args.verbose
+        if isinstance(zagg_debug, str):
+            zagg_debug = (zagg_debug == 'True')
 
         if isinstance(zagg_ssl_verify, str):
             zagg_ssl_verify = (zagg_ssl_verify == 'True')
-
-        if self.args.zagg_ssl_verify:
-            zagg_ssl_verify = self.args.zagg_ssl_verify
 
         zagg_conn = ZaggConnection(url=zagg_url,
                                    user=zagg_user,
                                    password=zagg_password,
                                    ssl_verify=zagg_ssl_verify,
-                                   verbose=zagg_verbose,
+                                   debug=zagg_debug,
                                   )
 
-        host = self.args.host if self.args.host else self.config['host']['name']
-        self.zagg_sender = ZaggSender(host, zagg_conn)
+        self.zagg_sender = ZaggSender(host, zagg_conn, zagg_verbose, zagg_debug)
 
     def add_heartbeat(self):
         """ crate a hearbeat metric """

@@ -25,21 +25,43 @@
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 from openshift_tools.monitoring import pminfo
 
-FILESYSTEM_METRIC = ['filesys.full']
+ZS = ZaggSender(verbose=True)
+FILESYS_FULL_METRIC = ['filesys.full']
+FILESYS_INODE_DERIVED_METRICS = {'filesys.inodes.pused' :
+                                 'filesys.usedfiles / (filesys.usedfiles + filesys.freefiles) * 100'
+                                }
+
 DISCOVERY_KEY_FS = 'disc.filesys'
 ITEM_PROTOTYPE_MACRO_FS = '#OSO_FILESYS'
+
 ITEM_PROTOTYPE_KEY_FULL = 'disc.filesys.full'
+ITEM_PROTOTYPE_KEY_INODE = 'disc.filesys.inodes.pused'
 
-FILESYS_METRICS = pminfo.get_metrics(FILESYSTEM_METRIC)
+def filter_out_docker_filesystems(metric_dict, filesystem_filter):
+    """ Simple filter to elimate unnecessary characters in the key name """
+    filtered_dict = {k.replace(filesystem_filter, ''):v
+                     for (k, v) in metric_dict.iteritems()
+                     if 'docker' not in k
+                    }
+    return filtered_dict
 
-FILTERED_FILESYS_METRICS = {k.replace('filesys.full.', ''):v
-                            for (k, v) in FILESYS_METRICS.iteritems()
-                            if 'docker' not in k}
 
-ZS = ZaggSender()
+# Get the disk space
+FILESYS_FULL_METRICS = pminfo.get_metrics(FILESYS_FULL_METRIC)
+
+FILTERED_FILESYS_METRICS = filter_out_docker_filesystems(FILESYS_FULL_METRICS, 'filesys.full.')
+
 ZS.add_zabbix_dynamic_item(DISCOVERY_KEY_FS, ITEM_PROTOTYPE_MACRO_FS, FILTERED_FILESYS_METRICS.keys())
-
 for filesys_name, filesys_full in FILTERED_FILESYS_METRICS.iteritems():
     ZS.add_zabbix_keys({'%s[%s]' % (ITEM_PROTOTYPE_KEY_FULL, filesys_name): filesys_full})
+
+
+# Get filesytem inode metrics
+FILESYS_INODE_METRICS = pminfo.get_metrics(derived_metrics=FILESYS_INODE_DERIVED_METRICS)
+
+FILTERED_FILESYS_INODE_METRICS = filter_out_docker_filesystems(FILESYS_INODE_METRICS, 'filesys.inodes.pused.')
+for filesys_name, filesys_inodes in FILTERED_FILESYS_INODE_METRICS.iteritems():
+    ZS.add_zabbix_keys({'%s[%s]' % (ITEM_PROTOTYPE_KEY_INODE, filesys_name): filesys_inodes})
+
 
 ZS.send_metrics()

@@ -5,6 +5,8 @@ zagg:
     url: https://172.17.0.164
     user: admin
     pass: XXXXXX
+    verbose: False
+    debug: False
 pcp:
     metrics:
         - kernel.all
