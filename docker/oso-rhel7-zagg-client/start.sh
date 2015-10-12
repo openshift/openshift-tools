@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+# interactive shells read .bashrc (which this script doesn't execute as) so force it
+source /root/.bashrc
+
 # Configure the container
 time ansible-playbook /root/config.yml
 
