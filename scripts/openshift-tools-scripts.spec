@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.17
+Version:       0.0.18
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -56,6 +56,9 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Mon Oct 12 2015 Matt Woodson <mwoodson@redhat.com> 0.0.18-1
+- added pcp derived items; added debug and verbose (mwoodson@redhat.com)
+
 * Thu Oct 08 2015 Sten Turpin <sten@redhat.com> 0.0.17-1
 - make keys for data being sent match with what was defined in zabbix
   (sten@redhat.com)
