@@ -6,6 +6,7 @@ g_default_zagg_user: admin
 g_default_zagg_pass: password
 g_default_zagg_ssl_verify: False
 g_default_zagg_verbose: False
+g_default_zagg_debug: False
 g_default_pcp_metrics:
 - hinv.ncpu
 - kernel.all.load

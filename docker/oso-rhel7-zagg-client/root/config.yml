@@ -17,6 +17,7 @@
         pass: "{{ lookup('env', 'ZAGG_PASSWORD') | default(g_default_zagg_pass, True) }}"
         ssl_verify: "{{ lookup('env', 'ZAGG_SSL_VERIFY') | default(g_default_zagg_ssl_verify, True) }}"
         verbose: "{{ lookup('env', 'ZAGG_VERBOSE') | default(g_default_zagg_verbose, True) }}"
+        debug: "{{ lookup('env', 'ZAGG_DEBUG') | default(g_default_zagg_debug, True) }}"
       pcp:
         metrics: "{{ g_default_pcp_metrics }}"
       heartbeat:
