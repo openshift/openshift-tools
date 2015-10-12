@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.25
+Version:       0.0.26
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -98,6 +98,9 @@ Tools developed to make it easy to work with web technologies.
 
 
 %changelog
+* Mon Oct 12 2015 Matt Woodson <mwoodson@redhat.com> 0.0.26-1
+- added pcp derived items; added debug and verbose (mwoodson@redhat.com)
+
 * Tue Oct 06 2015 Kenny Woodson <kwoodson@redhat.com> 0.0.25-1
 - Adding support for hostgroups (kwoodson@redhat.com)
 
