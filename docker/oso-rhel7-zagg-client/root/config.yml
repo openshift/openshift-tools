@@ -52,6 +52,9 @@
     - name: send ovs status data
       hour: "*/2"
       job: ops-runner -n csos.openshift.master.ovs.status /usr/bin/cron-send-ovs-status
+    - name: send etcd status data
+      hour: "*/2"
+      job: ops-runner -n csos.openshift.node.etcd.status /usr/bin/cron-send-etcd-status
 
     g_zagg_client_master_crons:
     - name: run create app every 5 minutes
