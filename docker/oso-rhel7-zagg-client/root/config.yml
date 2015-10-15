@@ -67,6 +67,9 @@
     - name: send openshift-master pods count
       hour: "*/2"
       job: ops-runner -n cspodc.openshift.master.pod.count /usr/bin/cron-send-pod-count
+    - name: send openshift-master project count
+      hour: "*/4"
+      job: ops-runner -n cspc.openshift.master.project.count /usr/bin/cron-send-project-count
 
   pre_tasks:
   - stat:
