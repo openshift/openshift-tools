@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 # setting up the certificate and the key
 CERT=`ls /etc/openshift/node/system*node*.crt`
 KEY=`ls /etc/openshift/node/system*node*.key`
