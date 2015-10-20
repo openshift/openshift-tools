@@ -3,7 +3,7 @@
 sudo docker run --rm=true -it --name oso-rhel7-zagg-client \
            --privileged \
            --pid=host \
-           --net=container:oso-f22-host-monitoring \
+           --net=host \
            -e OSO_CLUSTER_GROUP=localcgrp                              \
            -e OSO_CLUSTER_ID=localcid                                   \
            -e OSO_HOST_TYPE=master      \

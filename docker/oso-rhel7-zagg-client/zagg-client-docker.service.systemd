@@ -31,6 +31,7 @@ ExecStartPre=-/usr/bin/docker rm "zagg-client"
 #           docker-registry.ops.rhcloud.com/ops/zagg-client
 
 ExecStart=/usr/bin/docker run --name zagg-client            \
+           --net=host --pid=host                            \
            -e NAME=zagg-client -e IMAGE=zagg-client         \
            -e ZAGG_SERVER=REPLACE_WITH_ZAGG_URL             \
            -e ZAGG_PASSWORD=REPLACE_WITH_ZAGG_PASSWORD      \
