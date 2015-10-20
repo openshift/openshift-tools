@@ -11,7 +11,7 @@ RUN yum clean metadata && \
     yum clean all
 
 # Install zabbix from zabbix repo
-RUN yum install -y mod_ssl zabbix-server-mysql zabbix-sender zabbix-web-mysql mariadb mariadb-server && \
+RUN yum install -y mod_ssl zabbix-server-mysql zabbix-sender zabbix-agent zabbix-web-mysql mariadb mariadb-server && \
     yum -y update && \
     yum clean all
 
@@ -28,6 +28,8 @@ ADD zabbix/db_create/create_zabbix.sql /root/
 
 # Lay down zabbix conf
 ADD zabbix/conf/zabbix_server.conf /etc/zabbix/
+ADD zabbix/conf/zabbix_agentd.conf /etc/zabbix/
+ADD zabbix/conf/zabbix_agent.conf /etc/zabbix/
 
 # Set the timezone in the php.ini file
 RUN sed -r -ie 's/^;(date.timezone).*/\1 = America\/New_York/g' /etc/php.ini
