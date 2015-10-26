@@ -23,6 +23,12 @@ echo "Done."
 echo
 
 echo
+echo 'Starting zabbix agent'
+echo '---------------'
+/usr/sbin/zabbix_agentd -c /etc/zabbix/zabbix_agentd.conf || :
+echo
+
+echo
 echo 'Starting zabbix'
 echo '---------------'
 /usr/sbin/zabbix_server -c /etc/zabbix/zabbix_server.conf || :
