@@ -4,6 +4,7 @@
   vars_files:
   - /root/default_vars.yml
   vars:
+    g_hostname: "{{ lookup('env','HOSTNAME') | default('oso-rhel7-zabbix-server', True) }}"
     g_ses_mail_from: "{{ lookup('env','SES_MAIL_FROM') | default(g_default_ses_mail_from, True) }}"
     g_ses_smtp_domain: "{{ lookup('env','SES_SMTP_DOMAIN') | default(g_default_ses_smtp_domain, True) }}"
     g_ses_smtp_server: "{{ lookup('env','SES_SMTP_SERVER') | default(g_default_ses_smtp_server, True) }}"
@@ -58,3 +59,22 @@
       value: "{{ g_mysql_password }}"
     - key: DBHost
       value: "{{ g_mysql_host }}"
+
+  - name: Setup the zabbix_agentd.conf file
+    lineinfile:
+      dest: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^[#\s]*{{ item.key }}\s*='
+      line: "{{ item.key }}={{ item.value }}"
+    with_items:
+    - key: Server
+      value: "{{ g_hostname }}"
+
+  - name: Setup the zabbix_agent.conf file
+    lineinfile:
+      dest: /etc/zabbix/zabbix_agent.conf
+      regexp: '^[#\s]*{{ item.key }}\s*='
+      line: "{{ item.key }}={{ item.value }}"
+    with_items:
+    - key: Server
+      value: "{{ g_hostname }}"
+
