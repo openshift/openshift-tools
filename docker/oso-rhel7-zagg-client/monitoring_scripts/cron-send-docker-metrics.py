@@ -16,6 +16,7 @@ from openshift_tools.monitoring.zagg_sender import ZaggSender
 from openshift_tools.timeout import timeout, TimeoutException
 import json
 import re
+import time
 
 class DockerDiskStats(object):
     ''' Class to store docker storage information
@@ -38,6 +39,7 @@ class DockerDiskStats(object):
         self.metadata_space_total = None
         self.metadata_space_percent_available = None
         self.is_loopback = None
+        self.info_elapsed_ms = None
 
     def __repr__(self):
         ''' make it easy to see what's inside of this object
@@ -52,6 +54,7 @@ class DockerDiskStats(object):
                '  metadtata_space_available: %r\n' % self.metadata_space_available + \
                '  metadtata_space_total: %r\n' % self.metadata_space_total + \
                '  metadata_space_percent_available: %r\n' % self.metadata_space_percent_available + \
+               '  info_elapsed_ms: %r\n' % self.info_elapsed_ms + \
                ')'
 
 class ParseError(Exception):
@@ -67,7 +70,9 @@ class DockerWatcher(object):
         ''' construct the object
         '''
         self.docker = docker_client
+        dinfo_start = time.time()
         self.docker_info = self.get_docker_info_timed()
+        self.docker_info["info_elapsed_ms"] = int((time.time() - dinfo_start) * 1000)
         #print json.dumps(self.docker_info, indent=4)
 
     @timeout(15)
@@ -124,6 +129,7 @@ class DockerWatcher(object):
         dds.metadata_space_total = DockerWatcher.convert_to_size_in_gb( \
                                 self.get_driver_status_attr('Metadata Space Total'))
 
+        dds.info_elapsed_ms = self.docker_info["info_elapsed_ms"]
 
         # Determine if docker is using a loopback device
         # FIXME: find a better way than allowing this to throw
@@ -165,6 +171,7 @@ if __name__ == "__main__":
 
             'docker.storage.is_loopback': int(dw_dds.is_loopback),
             'docker.ping': 1, # Docker is up
+            'docker.info_elapsed_ms': dw_dds.info_elapsed_ms
         }
     except (DockerException, TimeoutException) as ex:
         print "\nERROR talking to docker: %s\n" % ex.message
