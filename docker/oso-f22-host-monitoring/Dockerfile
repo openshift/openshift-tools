@@ -38,6 +38,11 @@ ADD pmlogger_control /etc/pcp/pmlogger/control
 ADD pmdas/ /var/lib/pcp/pmdas/
 
 #
+# script to watch health of pmcd
+ADD check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
+ADD container-start.sh /usr/local/bin/start.sh
+
+#
 # Expose pmcd's main port on the host interfaces.
 EXPOSE 44321
 
@@ -59,4 +64,4 @@ LABEL RUN docker run -d --privileged --net=host --pid=host --ipc=host -v /sys:/s
 # and can be overridden by passing additional parameters to docker run.
 ENV PATH /usr/share/pcp/lib:/usr/libexec/pcp/bin:$PATH
 #ENTRYPOINT ["pmcd"]
-CMD ["/usr/share/pcp/lib/pcp", "start"]
+CMD ["/usr/local/bin/start.sh"]
