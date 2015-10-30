@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.18
+Version:       0.0.19
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -57,6 +57,11 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Fri Oct 30 2015 Unknown name 0.0.19-1
+- Update cron-send-project-count.sh (gburges@redhat.com)
+- Update cron-send-project-count.sh (gburges@redhat.com)
+- finally done(?) (gburges@redhat.com)
+
 * Mon Oct 12 2015 Matt Woodson <mwoodson@redhat.com> 0.0.18-1
 - added pcp derived items; added debug and verbose (mwoodson@redhat.com)
 
