@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.20
+Version:       0.0.21
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -58,6 +58,10 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Mon Nov 02 2015 Joel Diaz <jdiaz@redhat.com> 0.0.21-1
+- add scripts to check and report pcp ping state. update zagg-client playbooks
+  to add cron job for checking pcp ping state (jdiaz@redhat.com)
+
 * Mon Nov 02 2015 Unknown name 0.0.20-1
 - 
 
