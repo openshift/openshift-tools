@@ -31,6 +31,7 @@ cp -p monitoring/cron-send-pod-count.py %{buildroot}/usr/bin/cron-send-pod-count
 cp -p monitoring/cron-send-ovs-status.py %{buildroot}/usr/bin/cron-send-ovs-status
 cp -p monitoring/cron-send-project-count.sh %{buildroot}/usr/bin/cron-send-project-count
 cp -p monitoring/cron-send-pcp-ping.sh %{buildroot}/usr/bin/cron-send-pcp-ping
+cp -p monitoring/cron-send-etcd-status.py %{buildroot}/usr/bin/cron-send-etcd-status
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml

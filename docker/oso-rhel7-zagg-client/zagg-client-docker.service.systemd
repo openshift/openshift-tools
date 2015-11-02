@@ -36,6 +36,8 @@ ExecStart=/usr/bin/docker run --name zagg-client            \
            -e ZAGG_SERVER=REPLACE_WITH_ZAGG_URL             \
            -e ZAGG_PASSWORD=REPLACE_WITH_ZAGG_PASSWORD      \
            -v /etc/localtime:/etc/localtime                 \
+           -v /etc/openshift/master/master.etcd-client.crt:/etc/openshift/master/master.etcd-client.crt \
+           -v /etc/openshift/master/master.etcd-client.key:/etc/openshift/master/master.etcd-client.key \
            -v /run/pcp:/run/pcp                             \
            docker-registry.ops.rhcloud.com/ops/zagg-client
 
