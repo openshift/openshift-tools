@@ -26,6 +26,9 @@
 
 
     g_zagg_client_cron:
+    - name: send pcp ping every 5 mintues
+      minute: "*/5"
+      job: ops-runner -n cspp.pcp.ping /usr/bin/cron-send-pcp-ping
     - name: run pcp checks every 5 minutes
       minute: "*/5"
       job: ops-runner -n ozc.send.pcp /usr/bin/ops-zagg-client --send-pcp

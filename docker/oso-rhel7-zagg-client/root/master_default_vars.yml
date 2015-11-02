@@ -7,3 +7,4 @@ g_default_templates:
 - Template Openshift Master # So we can send master related metrics
 - Template Openshift Node   # All masters are also nodes (just unschedulable)
 - Template Operations Tools # So ops-runner works
+- Template Performance Copilot # So we can report PCP metrics
