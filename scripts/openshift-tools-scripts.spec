@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.19
+Version:       0.0.20
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -57,6 +57,9 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Mon Nov 02 2015 Unknown name 0.0.20-1
+- 
+
 * Fri Oct 30 2015 Unknown name 0.0.19-1
 - Update cron-send-project-count.sh (gburges@redhat.com)
 - Update cron-send-project-count.sh (gburges@redhat.com)
