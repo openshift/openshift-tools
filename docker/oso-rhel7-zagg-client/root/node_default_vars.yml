@@ -6,3 +6,4 @@ g_default_templates:
 - Template Docker           # So we can send docker related metrics
 - Template Openshift Node   # So we can send node related metrics
 - Template Operations Tools # So ops-runner works
+- Template Performance Copilot # So we can report PCP metrics
