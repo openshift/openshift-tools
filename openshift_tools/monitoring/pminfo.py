@@ -150,8 +150,8 @@ def get_sampled_data(metrics, interval, count=1):
         time.sleep(interval)
 
     results = {}
-    for metric in metrics:
-        results[metric] = [sample[metric] for sample in sampled_results]
+    for m_key in sampled_results[0]:
+        results[m_key] = [sample[m_key] for sample in sampled_results]
 
     return results
 
