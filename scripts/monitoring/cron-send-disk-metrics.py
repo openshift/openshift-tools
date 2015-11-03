@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-  Command to send dynamic filesystem information to Zagg
+  Command to send dynamic disk information to Zagg
 '''
 # vim: expandtab:tabstop=4:shiftwidth=4
 #
@@ -34,11 +34,11 @@ def parse_args():
 
     return parser.parse_args()
 
-def filter_out_docker_filesystems(metric_dict, filesystem_filter):
+def clean_up_metric_dict(metric_dict, filter_string):
     """ Simple filter to elimate unnecessary characters in the key name """
-    filtered_dict = {k.replace(filesystem_filter, ''):v
+    filtered_dict = {k.replace(filter_string, ''):v
                      for (k, v) in metric_dict.iteritems()
-                     if 'docker' not in k
+                     if not (v[0] == v[1] == 0)
                     }
     return filtered_dict
 
@@ -48,35 +48,22 @@ def main():
     args = parse_args()
     zagg_sender = ZaggSender(verbose=args.verbose, debug=args.debug)
 
-    filesys_full_metric = ['filesys.full']
-    filesys_inode_derived_metrics = {'filesys.inodes.pused' :
-                                     'filesys.usedfiles / (filesys.usedfiles + filesys.freefiles) * 100'
-                                    }
+    discovery_key_disk = 'disc.disk'
+    interval = 3
+    pcp_disk_dev_total = ['disk.dev.total']
+    item_prototype_macro_disk = '#OSO_DISK'
+    item_prototype_key_tps = 'disc.disk.tps'
 
-    discovery_key_fs = 'disc.filesys'
-    item_prototype_macro_fs = '#OSO_FILESYS'
-    item_prototype_key_full = 'disc.filesys.full'
-    item_prototype_key_inode = 'disc.filesys.inodes.pused'
+    disk_totals = pminfo.get_sampled_data(pcp_disk_dev_total, interval, 2)
+    filtered_disk_totals = clean_up_metric_dict(disk_totals, pcp_disk_dev_total[0] + '.')
 
+    # Send over the dynamic items
+    zagg_sender.add_zabbix_dynamic_item(discovery_key_disk, item_prototype_macro_disk, filtered_disk_totals.keys())
 
-
-    # Get the disk space
-    filesys_full_metrics = pminfo.get_metrics(filesys_full_metric)
-
-    filtered_filesys_metrics = filter_out_docker_filesystems(filesys_full_metrics, 'filesys.full.')
-
-    zagg_sender.add_zabbix_dynamic_item(discovery_key_fs, item_prototype_macro_fs, filtered_filesys_metrics.keys())
-    for filesys_name, filesys_full in filtered_filesys_metrics.iteritems():
-        zagg_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_full, filesys_name): filesys_full})
-
-
-    # Get filesytem inode metrics
-    filesys_inode_metrics = pminfo.get_metrics(derived_metrics=filesys_inode_derived_metrics)
-
-    filtered_filesys_inode_metrics = filter_out_docker_filesystems(filesys_inode_metrics, 'filesys.inodes.pused.')
-    for filesys_name, filesys_inodes in filtered_filesys_inode_metrics.iteritems():
-        zagg_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_inode, filesys_name): filesys_inodes})
-
+    # calculate the TPS and add them to the ZaggSender
+    for disk, totals in filtered_disk_totals.iteritems():
+        disk_tps = (totals[1] - totals[0]) / interval
+        zagg_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_tps, disk): disk_tps})
 
     zagg_sender.send_metrics()
 
