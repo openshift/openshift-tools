@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.22
+Version:       0.0.23
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -60,6 +60,9 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Tue Nov 03 2015 Matt Woodson <mwoodson@redhat.com> 0.0.23-1
+- added the disk tps check (mwoodson@redhat.com)
+
 * Tue Nov 03 2015 Marek Mahut <mmahut@redhat.com> 0.0.22-1
 - Adding the cron-send-etcd-status.py tool and its dependencies
   (mmahut@redhat.com)
