@@ -1,4 +1,4 @@
 #!/bin/bash
 
 check-pmcd-status.sh &
-pcp start
+/usr/share/pcp/lib/pmcd start
