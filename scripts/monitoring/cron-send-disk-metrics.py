@@ -21,6 +21,7 @@
 #This is not a module, but pylint thinks it is.  This is a command.
 #pylint: disable=invalid-name
 
+
 import argparse
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 from openshift_tools.monitoring import pminfo
@@ -50,20 +51,39 @@ def main():
 
     discovery_key_disk = 'disc.disk'
     interval = 3
-    pcp_disk_dev_total = ['disk.dev.total']
+    pcp_disk_dev_metrics = ['disk.dev.total', 'disk.dev.avactive']
     item_prototype_macro_disk = '#OSO_DISK'
     item_prototype_key_tps = 'disc.disk.tps'
+    item_prototype_key_putil = 'disc.disk.putil'
 
-    disk_totals = pminfo.get_sampled_data(pcp_disk_dev_total, interval, 2)
-    filtered_disk_totals = clean_up_metric_dict(disk_totals, pcp_disk_dev_total[0] + '.')
+    disk_metrics = pminfo.get_sampled_data(pcp_disk_dev_metrics, interval, 2)
 
-    # Send over the dynamic items
+    pcp_metrics_divided = {}
+    for metric in pcp_disk_dev_metrics:
+        pcp_metrics_divided[metric] = {k: v for k, v in disk_metrics.items() if metric in k}
+
+    # do TPS checks; use disk.dev.total
+    filtered_disk_totals = clean_up_metric_dict(pcp_metrics_divided[pcp_disk_dev_metrics[0]],
+                                                pcp_disk_dev_metrics[0] + '.')
+
+    # Add dynamic items
     zagg_sender.add_zabbix_dynamic_item(discovery_key_disk, item_prototype_macro_disk, filtered_disk_totals.keys())
 
     # calculate the TPS and add them to the ZaggSender
     for disk, totals in filtered_disk_totals.iteritems():
         disk_tps = (totals[1] - totals[0]) / interval
         zagg_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_tps, disk): disk_tps})
+
+    # do % Util checks; use disk.dev.avactive
+    filtered_disk_totals = clean_up_metric_dict(pcp_metrics_divided[pcp_disk_dev_metrics[1]],
+                                                pcp_disk_dev_metrics[1] + '.')
+
+    # calculate the % Util and add them to the ZaggSender
+    for disk, totals in filtered_disk_totals.iteritems():
+        total_active = (float)(totals[1] - totals[0]) / 1000.0
+        putil = 100 * total_active / interval
+
+        zagg_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_putil, disk): putil})
 
     zagg_sender.send_metrics()
 
