@@ -1,4 +1,4 @@
-#!/sbin/bash
+#!/bin/bash
 
 #get the number of projects except which are ours
 projects=$(KUBECONFIG=/etc/openshift/master/admin.kubeconfig oc get projects | egrep -Ev 'NAME|default|openshift|openshift-infra' | wc -l)
