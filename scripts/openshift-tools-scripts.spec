@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.23
+Version:       0.0.24
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -60,6 +60,10 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Wed Nov 04 2015 Marek Mahut <mmahut@redhat.com> 0.0.24-1
+- sbin/bash doesn't exist (mmahut@redhat.com)
+- Make sure cron-send-project-count.sh is executable (mmahut@redhat.com)
+
 * Tue Nov 03 2015 Matt Woodson <mwoodson@redhat.com> 0.0.23-1
 - added the disk tps check (mwoodson@redhat.com)
 
