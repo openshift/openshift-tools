@@ -8,20 +8,31 @@
 
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 import json
+import yaml
 import requests
 
 def main():
     ''' Get data from etcd API
     '''
 
-    API_HOST = 'https://localhost:4001/v2/stats/store'
     SSL_CLIENT_CERT = '/etc/openshift/master/master.etcd-client.crt'
     SSL_CLIENT_KEY = '/etc/openshift/master/master.etcd-client.key'
-    zs = ZaggSender()
+    OPENSHIFT_MASTER_CONFIG = '/etc/openshift/master/master-config.yaml'
 
+    # find out the etcd port
+    with open(OPENSHIFT_MASTER_CONFIG, 'r') as f:
+        config = yaml.load(f)
+
+    API_HOST = config["etcdClientInfo"]["urls"][0]
+
+    # define the store API URL
+    API_URL = API_HOST + "/v2/stats/store"
+
+
+    zs = ZaggSender()
     # Fetch the store statics from API
     try:
-        request = requests.get(API_HOST, cert=(SSL_CLIENT_CERT, SSL_CLIENT_KEY), verify=False)
+        request = requests.get(API_URL, cert=(SSL_CLIENT_CERT, SSL_CLIENT_KEY), verify=False)
         content = json.loads(request.content)
         etcd_ping = 1
 
