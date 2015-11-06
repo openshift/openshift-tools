@@ -7,7 +7,7 @@ do
 	pminfo -f kernel.uname.distro | grep "No PMCD"
 
 	if [ $? -eq 0 ]; then
-		PID=$(pgrep -f "pcp start$")
+		PID=$(pgrep -f "/usr/libexec/pcp/bin/pmpause")
 		kill -9 $PID
 	fi
 done
