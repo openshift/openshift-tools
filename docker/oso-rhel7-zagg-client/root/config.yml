@@ -55,6 +55,10 @@
       minute: "*/2"
       job: ops-runner -n csdim.disk.tps /usr/bin/cron-send-disk-metrics
 
+    - name: run network checks every 3 minutes
+      minute: "*/3"
+      job: ops-runner -n csnm.network.int /usr/bin/cron-send-network-metrics
+
     - name: run docker storage space checks every 10 minutes
       minute: "*/10"
       job: ops-runner -n csdm.docker.storage /usr/local/bin/cron-send-docker-metrics.py
