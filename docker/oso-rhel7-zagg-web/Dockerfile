@@ -15,7 +15,11 @@ RUN yum clean metadata && \
         telnet bind-utils net-tools iproute && \
     yum clean all
 
-RUN pip install djangorestframework && \
+# 11-6-15
+# Need to lock djangorestframework at 3.2.X because
+#  later versions disabled django 1.6 support. Current version
+#  on RHEL 7 is 1.6
+RUN pip install djangorestframework==3.2.5 && \
     pip install markdown && \
     pip install django-filter
 
