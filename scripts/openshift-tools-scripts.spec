@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.26
+Version:       0.0.27
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -61,6 +61,10 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Tue Nov 10 2015 Marek Mahut <mmahut@redhat.com> 0.0.27-1
+- Load the etcd port as it can be different when using external etcd
+  (mmahut@redhat.com)
+
 * Fri Nov 06 2015 Matt Woodson <mwoodson@redhat.com> 0.0.26-1
 - added network checks (mwoodson@redhat.com)
 
