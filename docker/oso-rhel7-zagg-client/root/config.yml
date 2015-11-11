@@ -91,6 +91,10 @@
     - name: send openshift-master etcd status
       minute: "*/2"
       job: ops-runner -n cspc.openshift.master.etcd.status /usr/bin/cron-send-etcd-status
+    - name: send S3 bucket metrics weekly
+      hour: "3"
+      weekday: "3"
+      job: ops-runner -n cssm.aws /usr/bin/cron-send-s3-metrics
 
 
   pre_tasks:
