@@ -29,6 +29,7 @@ cp -p monitoring/ops-runner.sh %{buildroot}/usr/bin/ops-runner
 cp -p monitoring/cron-send-user-count.sh %{buildroot}/usr/bin/cron-send-user-count
 cp -p monitoring/cron-send-pod-count.py %{buildroot}/usr/bin/cron-send-pod-count
 cp -p monitoring/cron-send-ovs-status.py %{buildroot}/usr/bin/cron-send-ovs-status
+cp -p monitoring/cron-send-user-pod-count.sh %{buildroot}/usr/bin/cron-send-user-pod-count
 cp -p monitoring/cron-send-project-count.sh %{buildroot}/usr/bin/cron-send-project-count
 cp -p monitoring/cron-send-pcp-ping.sh %{buildroot}/usr/bin/cron-send-pcp-ping
 cp -p monitoring/cron-send-etcd-status.py %{buildroot}/usr/bin/cron-send-etcd-status
