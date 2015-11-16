@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-  Send Master information to Zagg
+  Send Openshift Master stats and metric checks to Zagg
 '''
 # vim: expandtab:tabstop=4:shiftwidth=4
 #
@@ -22,82 +22,117 @@
 #pylint: disable=invalid-name
 
 import argparse
-#from openshift_tools.monitoring.zagg_sender import ZaggSender
-#from openshift_tools.monitoring import pminfo
-import requests
-
-def parse_args():
-    """ parse the args from the cli """
-
-    parser = argparse.ArgumentParser(description='Network metric sender')
-    parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
-    parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
-
-    return parser.parse_args()
-
-def main():
-    """  Main function to run the check """
-
-    #HEALTHZ_URL = 'https://52.3.113.34/healthz'
-    HEALTHZ_URL = 'https://52.23.178.108/healthz'
-    #API_BASE_URL = 'https://52.3.113.34/api/v1'
-    API_BASE_URL = 'https://52.23.178.108/api/v1'
-    AUTH_TOKEN = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6Im9wcy1tb25pdG9yLXRva2VuLXEwNWVvIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6Im9wcy1tb25pdG9yIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiNWE2MjAwNGMtODg5MC0xMWU1LWE4YmYtMGFlMzZjMTIzZTUxIiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50OmRlZmF1bHQ6b3BzLW1vbml0b3IifQ.cJuZMDJfqwonFdW9Nyfh0thGY0MugLnKWElEdi1oIA7n_Ut2CcHhFg_QofdwlB8hCdrWNVxEb-HZGnYIlSpDF04ocLWwaBU5Fz8NRZkcYUNRW2AKE1MQG0YVwzxQihq8Zgde_ZEIRa75faPTi8Lef1nE6TRKzWtktthTy7z2JapqOevkUFYc2sNQoLm_t-6xbGfYsPOkgdeY1gnD9_BDQXYhN7nx94rmK2OIj60voNlnOOSAxLcJ2538Af7bKYLdTSJ1mFJt-gN9iPy1l6qO81ChE6nDg6Fh0k8K2eNvMMKR-01mygG6cpQ0WoSWV4jmCGY2fAyhEjcYzJ6WLqVioA'
-    AUTH_HEADER = {'Authorization': 'Bearer ' + AUTH_TOKEN}
+from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
+from openshift_tools.monitoring.zagg_sender import ZaggSender
 
 
-    args = parse_args()
+class OpenshiftMasterZaggClient(object):
+    """ Checks for the Openshift Master """
 
-    resp = requests.get(HEALTHZ_URL, verify=False)
-    print resp.text
-    #print resp.json()
+    def __init__(self):
+        self.args = None
+        self.zagg_sender = None
+        self.ora = OpenshiftRestApi()
 
-    resp = requests.get(API_BASE_URL + '/events', headers=AUTH_HEADER, verify=False)
-    print resp.text
-    print resp.json()
-    response_json =  resp.json()
-    print resp.json()['items']
-    print len(resp.json()['items'])
-    print response_json['items']
-    print len(response_json['items'])
+    def run(self):
+        """  Main function to run the check """
 
+        self.parse_args()
+        self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
 
+        if self.args.healthz or self.args.all_checks:
+            self.healthz_check()
 
-#    zagg_sender = ZaggSender(verbose=args.verbose, debug=args.debug)
-#
-#    discovery_key_network = 'disc.network'
-#    pcp_network_dev_metrics = ['network.interface.in.bytes', 'network.interface.out.bytes']
-#    item_proto_macro_network = '#OSO_NET_INTERFACE'
-#    item_proto_key_in_bytes = 'disc.network.in.bytes'
-#    item_proto_key_out_bytes = 'disc.network.out.bytes'
-#
-#    network_metrics = pminfo.get_metrics(pcp_network_dev_metrics)
-#
-#    pcp_metrics_divided = {}
-#    for metric in pcp_network_dev_metrics:
-#        pcp_metrics_divided[metric] = {k: v for k, v in network_metrics.items() if metric in k}
-#
-#    # do Network In; use network.interface.in.bytes
-#    filtered_network_totals = clean_up_metric_dict(pcp_metrics_divided[pcp_network_dev_metrics[0]],
-#                                                   pcp_network_dev_metrics[0] + '.')
-#
-#    # Add dynamic items
-#    zagg_sender.add_zabbix_dynamic_item(discovery_key_network, item_proto_macro_network, filtered_network_totals.keys())
-#
-#    # Report Network IN bytes; them to the ZaggSender
-#    for interface, total in filtered_network_totals.iteritems():
-#        zagg_sender.add_zabbix_keys({'%s[%s]' % (item_proto_key_in_bytes, interface): total})
-#
-#    # Report Network OUT Bytes;  use network.interface.out.bytes
-#    filtered_network_totals = clean_up_metric_dict(pcp_metrics_divided[pcp_network_dev_metrics[1]],
-#                                                   pcp_network_dev_metrics[1] + '.')
-#
-#    # calculate the % Util and add them to the ZaggSender
-#    for interface, total in filtered_network_totals.iteritems():
-#
-#        zagg_sender.add_zabbix_keys({'%s[%s]' % (item_proto_key_out_bytes, interface): total})
-#
-#    zagg_sender.send_metrics()
+        if self.args.project_count or self.args.all_checks:
+            self.project_count()
+
+        if self.args.pod_count or self.args.all_checks:
+            self.pod_count()
+
+        if self.args.user_count or self.args.all_checks:
+            self.user_count()
+
+        self.zagg_sender.send_metrics()
+
+    def parse_args(self):
+        """ parse the args from the cli """
+
+        parser = argparse.ArgumentParser(description='Network metric sender')
+        parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
+        parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
+
+        master_check_group = parser.add_argument_group('Different Checks to Perform')
+        master_check_group.add_argument('--all-checks', action='store_true', default=None,
+                                        help='Do all of the checks')
+
+        master_check_group.add_argument('--healthz', action='store_true', default=None,
+                                        help='Query the Openshift Master API /healthz')
+
+        master_check_group.add_argument('--project-count', action='store_true', default=None,
+                                        help='Query the Openshift Master for Number of Pods')
+
+        master_check_group.add_argument('--pod-count', action='store_true', default=None,
+                                        help='Query the Openshift Master for Number of Running Pods')
+
+        master_check_group.add_argument('--user-count', action='store_true', default=None,
+                                        help='Query the Openshift Master for Number of Users')
+
+        self.args = parser.parse_args()
+
+    def healthz_check(self):
+        """ check the /healthz API call """
+
+        print "\nPerforming /healthz check..."
+
+        response = self.ora.text_get('/healthz')
+        print "healthz check returns: %s " %response
+
+        self.zagg_sender.add_zabbix_keys({'openshift.master.api.healthz' : 'ok' in response})
+
+    def project_count(self):
+        """ check the number of projects in Openshift """
+
+        print "\nPerforming project count check..."
+
+        excluded_names = ['openshift', 'openshift-infra', 'default']
+        response = self.ora.json_get('/oapi/v1/projects')
+
+        project_names = [project['metadata']['name'] for project in response['items']]
+        valid_names = set(project_names) - set(excluded_names)
+
+        print "Project count: %s" % len(valid_names)
+
+        self.zagg_sender.add_zabbix_keys({'openshift.project.counter' : len(valid_names)})
+
+    def pod_count(self):
+        """ check the number of pods in Openshift """
+
+        print "\nPerforming pod count check..."
+
+        response = self.ora.json_get('/api/v1/pods')
+
+        running_pod_count = 0
+        for i in response['items']:
+            if 'containerStatuses' in i['status']:
+                if 'running' in i['status']['containerStatuses'][0]['state']:
+                    running_pod_count += 1
+
+        print "Total pod count: %s" % len(response['items'])
+        print "Running pod count: %s" % running_pod_count
+
+        self.zagg_sender.add_zabbix_keys({'openshift.master.pod.running.count' : running_pod_count,
+                                          'openshift.master.pod.total.count' : len(response['items'])})
+
+    def user_count(self):
+        """ check the number of users in Openshift """
+
+        print "\nPerforming user count check..."
+
+        response = self.ora.json_get('/oapi/v1/users')
+
+        print "Total user count: %s" % len(response['items'])
+        self.zagg_sender.add_zabbix_keys({'openshift.master.user.count' : len(response['items'])})
 
 if __name__ == '__main__':
-    main()
+    OMCZ = OpenshiftMasterZaggClient()
+    OMCZ.run()
