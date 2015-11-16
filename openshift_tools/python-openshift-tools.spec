@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.28
+Version:       0.0.29
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -49,7 +49,7 @@ cp -p web/*.py %{buildroot}%{python_sitelib}/openshift_tools/web
 # ----------------------------------------------------------------------------------
 %package monitoring
 Summary:       OpenShift Tools Monitoring Python Package
-Requires:      python2,python-openshift-tools,python-zbxsend,python-openshift-tools-web,python-pcp
+Requires:      python2,python-openshift-tools,python-zbxsend,python-openshift-tools-web,python-pcp,openshift,python-awscli
 BuildArch:     noarch
 
 %description monitoring
@@ -98,6 +98,9 @@ Tools developed to make it easy to work with web technologies.
 
 
 %changelog
+* Mon Nov 16 2015 Joel Diaz <jdiaz@redhat.com> 0.0.29-1
+- Add scripts to report S3 bucket stats from master nodes (jdiaz@redhat.com)
+
 * Tue Nov 03 2015 Matt Woodson <mwoodson@redhat.com> 0.0.28-1
 - added the disk tps check (mwoodson@redhat.com)
 
