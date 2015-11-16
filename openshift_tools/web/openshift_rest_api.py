@@ -119,20 +119,13 @@ class OpenshiftRestApi(object):
         self.ca_cert_file.flush()
         self.ca_cert = self.ca_cert_file.name
 
-    def text_get(self, api_path):
-        """ Do API query, return response.text """
+    def get(self, api_path, rtype='json'):
+        """ Do API query, return requested type """
 
         response = requests.get(self.api_host + api_path,
                                 cert=(self.user_cert, self.user_key),
                                 verify=self.ca_cert)
 
-        return response.text
-
-    def json_get(self, api_path):
-        """ Do API query, return response.json """
-
-        response = requests.get(self.api_host + api_path,
-                                cert=(self.user_cert, self.user_key),
-                                verify=self.ca_cert)
-
+        if rtype == 'text':
+            return response.text
         return response.json()

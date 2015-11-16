@@ -84,7 +84,7 @@ class OpenshiftMasterZaggClient(object):
 
         print "\nPerforming /healthz check..."
 
-        response = self.ora.text_get('/healthz')
+        response = self.ora.get('/healthz', rtype='text')
         print "healthz check returns: %s " %response
 
         self.zagg_sender.add_zabbix_keys({'openshift.master.api.healthz' : 'ok' in response})
@@ -94,8 +94,8 @@ class OpenshiftMasterZaggClient(object):
 
         print "\nPerforming project count check..."
 
-        excluded_names = ['openshift', 'openshift-infra', 'default']
-        response = self.ora.json_get('/oapi/v1/projects')
+        excluded_names = ['openshift', 'openshift-infra', 'default', 'ops-monitor']
+        response = self.ora.get('/oapi/v1/projects')
 
         project_names = [project['metadata']['name'] for project in response['items']]
         valid_names = set(project_names) - set(excluded_names)
@@ -109,18 +109,30 @@ class OpenshiftMasterZaggClient(object):
 
         print "\nPerforming pod count check..."
 
-        response = self.ora.json_get('/api/v1/pods')
+        response = self.ora.get('/api/v1/pods')
 
+        # Get running pod count
         running_pod_count = 0
         for i in response['items']:
             if 'containerStatuses' in i['status']:
                 if 'running' in i['status']['containerStatuses'][0]['state']:
                     running_pod_count += 1
 
+        # Get running pod count on compute only nodes (non-infra)
+        running_user_pod_count = 0
+        for i in response['items']:
+            if 'containerStatuses' in i['status']:
+                if 'running' in i['status']['containerStatuses'][0]['state']:
+                    if i['spec']['nodeSelector']['type'] == 'compute':
+                        running_user_pod_count += 1
+
+
         print "Total pod count: %s" % len(response['items'])
         print "Running pod count: %s" % running_pod_count
+        print "User Running pod count: %s" % running_user_pod_count
 
         self.zagg_sender.add_zabbix_keys({'openshift.master.pod.running.count' : running_pod_count,
+                                          'openshift.master.pod.user.running.count' : running_user_pod_count,
                                           'openshift.master.pod.total.count' : len(response['items'])})
 
     def user_count(self):
@@ -128,7 +140,7 @@ class OpenshiftMasterZaggClient(object):
 
         print "\nPerforming user count check..."
 
-        response = self.ora.json_get('/oapi/v1/users')
+        response = self.ora.get('/oapi/v1/users')
 
         print "Total user count: %s" % len(response['items'])
         self.zagg_sender.add_zabbix_keys({'openshift.master.user.count' : len(response['items'])})
