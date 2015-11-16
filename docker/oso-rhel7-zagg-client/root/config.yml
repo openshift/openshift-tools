@@ -98,6 +98,10 @@
     - name: send S3 bucket metrics weekly
       hour: "3"
       job: ops-runner -n cssm.aws /usr/bin/cron-send-s3-metrics
+    - name: "Clean old builds and deployments"
+      hour: "1"
+      minute: "0"
+      job: "/usr/bin/oadm prune deployments --keep-complete=2 --keep-younger-than=30m --keep-failed=1 --confirm=true; /usr/bin/oadm prune builds --keep-complete=2 --keep-younger-than=30m --keep-failed=1 --confirm=true &> /dev/null"
 
 
   pre_tasks:
