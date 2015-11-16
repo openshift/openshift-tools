@@ -49,7 +49,7 @@ cp -p web/*.py %{buildroot}%{python_sitelib}/openshift_tools/web
 # ----------------------------------------------------------------------------------
 %package monitoring
 Summary:       OpenShift Tools Monitoring Python Package
-Requires:      python2,python-openshift-tools,python-zbxsend,python-openshift-tools-web,python-pcp
+Requires:      python2,python-openshift-tools,python-zbxsend,python-openshift-tools-web,python-pcp,openshift,python-awscli
 BuildArch:     noarch
 
 %description monitoring
