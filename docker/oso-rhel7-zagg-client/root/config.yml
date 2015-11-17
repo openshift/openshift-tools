@@ -61,7 +61,11 @@
 
     - name: run docker storage space checks every 10 minutes
       minute: "*/10"
-      job: ops-runner -n csdm.docker.storage /usr/local/bin/cron-send-docker-metrics.py
+      job: ops-runner -n csdm.docker.storage /usr/bin/cron-send-docker-metrics
+
+    - name: run docker info timer
+      minute: "*/10"
+      job: ops-runner -n csdt.docker.timer /usr/bin/cron-send-docker-timer
 
     - name: send openshift-node process count
       minute: "*/2"
