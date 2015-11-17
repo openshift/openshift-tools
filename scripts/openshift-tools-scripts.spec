@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.31
+Version:       0.0.32
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -62,6 +62,9 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Tue Nov 17 2015 Matt Woodson <mwoodson@redhat.com> 0.0.32-1
+- fixed the healthz check (mwoodson@redhat.com)
+
 * Tue Nov 17 2015 Matt Woodson <mwoodson@redhat.com> 0.0.31-1
 - changed permissions, fixed a bug of master api check (mwoodson@redhat.com)
 
