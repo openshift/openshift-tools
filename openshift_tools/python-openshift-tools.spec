@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.29
+Version:       0.0.30
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -98,6 +98,11 @@ Tools developed to make it easy to work with web technologies.
 
 
 %changelog
+* Tue Nov 17 2015 Matt Woodson <mwoodson@redhat.com> 0.0.30-1
+- added some updated rest api; added user running pod count
+  (mwoodson@redhat.com)
+- added the openshift rest api, updated master script (mwoodson@redhat.com)
+
 * Mon Nov 16 2015 Joel Diaz <jdiaz@redhat.com> 0.0.29-1
 - Add scripts to report S3 bucket stats from master nodes (jdiaz@redhat.com)
 
