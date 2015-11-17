@@ -87,7 +87,7 @@ class OpenshiftMasterZaggClient(object):
         response = self.ora.get('/healthz', rtype='text')
         print "healthz check returns: %s " %response
 
-        self.zagg_sender.add_zabbix_keys({'openshift.master.api.healthz' : 'ok' in response})
+        self.zagg_sender.add_zabbix_keys({'openshift.master.api.healthz' : str('ok' in response).lower()})
 
     def project_count(self):
         """ check the number of projects in Openshift """
@@ -102,7 +102,7 @@ class OpenshiftMasterZaggClient(object):
 
         print "Project count: %s" % len(valid_names)
 
-        self.zagg_sender.add_zabbix_keys({'openshift.project.counter' : len(valid_names)})
+        self.zagg_sender.add_zabbix_keys({'openshift.project.count' : len(valid_names)})
 
     def pod_count(self):
         """ check the number of pods in Openshift """
