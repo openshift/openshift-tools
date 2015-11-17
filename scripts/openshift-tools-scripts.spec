@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.28
+Version:       0.0.29
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -60,6 +60,15 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Tue Nov 17 2015 Matt Woodson <mwoodson@redhat.com> 0.0.29-1
+- removed old scripts (mwoodson@redhat.com)
+- added some updated rest api; added user running pod count
+  (mwoodson@redhat.com)
+- updated the spec and cron jobs to run the new master api check
+  (mwoodson@redhat.com)
+- added the openshift rest api, updated master script (mwoodson@redhat.com)
+- added master monitoring (mwoodson@redhat.com)
+
 * Mon Nov 16 2015 Joel Diaz <jdiaz@redhat.com> 0.0.28-1
 - Add scripts to report S3 bucket stats from master nodes (jdiaz@redhat.com)
 
