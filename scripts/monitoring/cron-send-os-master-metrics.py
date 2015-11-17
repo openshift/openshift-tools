@@ -123,8 +123,9 @@ class OpenshiftMasterZaggClient(object):
         for i in response['items']:
             if 'containerStatuses' in i['status']:
                 if 'running' in i['status']['containerStatuses'][0]['state']:
-                    if i['spec']['nodeSelector']['type'] == 'compute':
-                        running_user_pod_count += 1
+                    if 'nodeSelector' in i['spec']:
+                        if i['spec']['nodeSelector']['type'] == 'compute':
+                            running_user_pod_count += 1
 
 
         print "Total pod count: %s" % len(response['items'])
