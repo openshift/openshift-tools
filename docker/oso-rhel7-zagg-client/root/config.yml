@@ -75,19 +75,19 @@
     - name: run create app every 5 minutes
       minute: "*/5"
       job: ops-runner -n csca.create_app /usr/local/bin/cron-send-create-app.py
+
     - name: send openshift-master process count
       minute: "*/2"
       job: ops-runner -n cspc.openshift.master.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start master' openshift.master.process.count
-    - name: send openshift-master user count every 6 hours
-      minute: "4"
-      hour : "*/6"
-      job: ops-runner -n csuc.openshift.master.user.count /usr/bin/cron-send-user-count
-    - name: send openshift-master pods count
+
+    - name: send openshift-master counts (user, pod, project) every 2 hours
       hour: "*/2"
-      job: ops-runner -n cspodc.openshift.master.pod.count /usr/bin/cron-send-pod-count
-    - name: send openshift-master project count
-      hour: "*/4"
-      job: ops-runner -n cspc.openshift.master.project.count /usr/bin/cron-send-project-count
+      job: ops-runner -n csosmm.openshift.master.counts /usr/bin/cron-send-os-master-metrics --project-count --pod-count --user-count
+
+    - name: send openshift-master /healthz statu every 4 minutes
+      minute: "*/4"
+      job: ops-runner -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --healthz
+
     - name: send openshift-master etcd status
       minute: "*/2"
       job: ops-runner -n cspc.openshift.master.etcd.status /usr/bin/cron-send-etcd-status
