@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.29
+Version:       0.0.30
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -62,6 +62,9 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Tue Nov 17 2015 Joel Diaz <jdiaz@redhat.com> 0.0.30-1
+- Docker cron timing (jdiaz@redhat.com)
+
 * Tue Nov 17 2015 Matt Woodson <mwoodson@redhat.com> 0.0.29-1
 - removed old scripts (mwoodson@redhat.com)
 - added some updated rest api; added user running pod count
