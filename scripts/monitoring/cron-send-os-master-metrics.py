@@ -24,7 +24,7 @@
 import argparse
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 from openshift_tools.monitoring.zagg_sender import ZaggSender
-
+from prometheus_client.parser import text_string_to_metric_families
 
 class OpenshiftMasterZaggClient(object):
     """ Checks for the Openshift Master """
@@ -52,6 +52,9 @@ class OpenshiftMasterZaggClient(object):
         if self.args.user_count or self.args.all_checks:
             self.user_count()
 
+        if self.args.metrics or self.args.all_checks:
+            self.metric_check()
+
         self.zagg_sender.send_metrics()
 
     def parse_args(self):
@@ -67,6 +70,9 @@ class OpenshiftMasterZaggClient(object):
 
         master_check_group.add_argument('--healthz', action='store_true', default=None,
                                         help='Query the Openshift Master API /healthz')
+
+        master_check_group.add_argument('--metrics', action='store_true', default=None,
+                                        help='Query the Openshift Master Metrics at /metrics')
 
         master_check_group.add_argument('--project-count', action='store_true', default=None,
                                         help='Query the Openshift Master for Number of Pods')
@@ -88,6 +94,37 @@ class OpenshiftMasterZaggClient(object):
         print "healthz check returns: %s " %response
 
         self.zagg_sender.add_zabbix_keys({'openshift.master.api.healthz' : str('ok' in response).lower()})
+
+    def metric_check(self):
+        """ collect certain metrics from the /metrics API call """
+
+        print "\nPerforming /metrics check..."
+        response = self.ora.get('/metrics', rtype='text')
+
+        for metric_type in text_string_to_metric_families(response):
+
+            # Collect the apiserver_request_latencies_summary{resource="pods",verb="LIST",quantiles in /metrics
+            # Collect the apiserver_request_latencies_summary{resource="pods",verb="WATCHLIST",quantiles in /metrics
+            if metric_type.name == 'apiserver_request_latencies_summary':
+                key_str = 'openshift.master.apiserver.latency.summary'
+                for sample in metric_type.samples:
+                    if (sample[1]['resource'] == 'pods'
+                            and sample[1].has_key('quantile')
+                            and 'LIST' in sample[1]['verb']):
+                        curr_key_str = "%s.%s.quantile.%s.%s" % (key_str, sample[1]['resource'],
+                                                                 sample[1]['verb'],
+                                                                 sample[1]['quantile'].split('.')[1])
+
+                        self.zagg_sender.add_zabbix_keys({curr_key_str.lower(): int(sample[2]/1000)})
+
+            # Collect the scheduler_e2e_scheduling_latency_microseconds{quantiles in /metrics
+            if metric_type.name == 'scheduler_e2e_scheduling_latency_microseconds':
+                for sample in metric_type.samples:
+                    if sample[1].has_key('quantile'):
+                        key_str = 'openshift.master.scheduler.e2e.scheduling.latency'
+                        curr_key_str = "%s.quantile.%s" % (key_str, sample[1]['quantile'].split('.')[1])
+
+                        self.zagg_sender.add_zabbix_keys({curr_key_str.lower(): int(sample[2]/1000)})
 
     def project_count(self):
         """ check the number of projects in Openshift """
