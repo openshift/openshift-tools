@@ -90,7 +90,7 @@
 
     - name: send openshift-master /healthz statu every 4 minutes
       minute: "*/4"
-      job: ops-runner -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --healthz
+      job: ops-runner -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --healthz --api-ping --metrics
 
     - name: send openshift-master etcd status
       minute: "*/2"
