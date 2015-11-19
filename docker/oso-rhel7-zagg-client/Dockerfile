@@ -19,6 +19,9 @@ RUN yum clean metadata && \
 # Ansible startup configuration playbook
 ADD root /root
 
+# FIXME: These are vendor libs that need to be packaged and installed via RPM.
+ADD vendor/prometheus_client /usr/lib/python2.7/site-packages/prometheus_client/
+
 # FIXME: These are ugly quick hacked together monitoring scripts
 # They need to be removed and replaced by prototype monitoring scripts later on
 # Or refactored into libs and added to rpms
