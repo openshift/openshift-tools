@@ -24,6 +24,7 @@
 #pylint: disable=broad-except
 
 import argparse
+import math
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 from prometheus_client.parser import text_string_to_metric_families
@@ -146,7 +147,12 @@ class OpenshiftMasterZaggClient(object):
                         curr_key_str = key_str + ".pods.quantile.%s.%s" % (sample[1]['verb'],
                                                                            sample[1]['quantile'].split('.')[1])
 
-                        self.zagg_sender.add_zabbix_keys({curr_key_str.lower(): int(sample[2]/1000)})
+                        if math.isnan(sample[2]):
+                            value = 0
+                        else:
+                            value = sample[2]
+
+                        self.zagg_sender.add_zabbix_keys({curr_key_str.lower(): int(value/1000)})
 
             # Collect the scheduler_e2e_scheduling_latency_microseconds{quantiles in /metrics
             if metric_type.name == 'scheduler_e2e_scheduling_latency_microseconds':
@@ -155,7 +161,12 @@ class OpenshiftMasterZaggClient(object):
                         key_str = 'openshift.master.scheduler.e2e.scheduling.latency'
                         curr_key_str = key_str + ".quantile.%s" % (sample[1]['quantile'].split('.')[1])
 
-                        self.zagg_sender.add_zabbix_keys({curr_key_str.lower(): int(sample[2]/1000)})
+                        if math.isnan(sample[2]):
+                            value = 0
+                        else:
+                            value = sample[2]
+
+                        self.zagg_sender.add_zabbix_keys({curr_key_str.lower(): int(value/1000)})
 
         self.zagg_sender.add_zabbix_keys({'openshift.master.metric.ping' : 1}) #
 
