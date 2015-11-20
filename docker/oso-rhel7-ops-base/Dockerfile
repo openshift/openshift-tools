@@ -26,7 +26,7 @@ ADD setup-yum.sh /usr/local/bin/setup-yum.sh
 RUN /usr/local/bin/setup-yum.sh
 
 RUN yum clean metadata && \
-    yum -y install cronie ansible screen vim procps less ack tar psmisc && \
+    yum -y install cronie ansible vim procps less ack tar psmisc && \
     yum -y update && \
     yum clean all
 
@@ -42,9 +42,6 @@ RUN yum -y reinstall glibc-common &&  \
 
 # Setup Cron
 ADD pamd.crond /etc/pam.d/crond
-
-# Setup Screen
-RUN chmod 777 /var/run/screen
 
 # Setup Ansible
 ADD ansible.cfg /etc/ansible/ansible.cfg
