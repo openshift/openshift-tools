@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.33
+Version:       0.0.34
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -62,6 +62,9 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Fri Nov 20 2015 Matt Woodson <mwoodson@redhat.com> 0.0.34-1
+- added nan check (mwoodson@redhat.com)
+
 * Thu Nov 19 2015 Matt Woodson <mwoodson@redhat.com> 0.0.33-1
 - grouped the checks and wrapped them in try/except (mwoodson@redhat.com)
 - added openshift api ping check to master check script (mwoodson@redhat.com)
