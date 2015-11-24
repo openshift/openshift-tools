@@ -13,20 +13,32 @@
     g_mysql_user: "{{ lookup('env','MYSQL_USER') | default(g_default_mysql_user, True) }}"
     g_mysql_password: "{{ lookup('env','MYSQL_PASSWORD') | default(g_default_mysql_password, True) }}"
     g_mysql_host: "{{ lookup('env','MYSQL_HOST') | default(g_default_mysql_host, True) }}"
+    g_zbx_scriptrunner_user: "{{ lookup('env', 'ZBX_SCRIPTRUNNER_USER') | default(g_default_zbx_scriptrunner_user, True) }}"
+    g_zbx_scriptrunner_bastion_host: "{{ lookup('env', 'ZBX_SCRIPTRUNNER_BASTION_HOST') | default(g_default_zbx_scriptrunner_bastion_host, True) }}"
     g_zbx_actions_config:
       ses_user: "{{ g_ses_user }}"
       ses_password: "{{ g_ses_password }}"
       ses_mail_from: "{{ g_ses_mail_from }}"
       ses_smtp_domain: "{{ g_ses_smtp_domain }}"
       ses_smtp_server: "{{ g_ses_smtp_server }}"
+      zbx_scriptrunner_user: "{{ g_zbx_scriptrunner_user }}"
+      zbx_scriptrunner_bastion_host: "{{ g_zbx_scriptrunner_bastion_host }}"
   pre_tasks:
   - stat:
       path: /secrets/zabbix-server-vars.yml
     register: g_zabbix_server_vars
 
+  - stat:
+      path: "/secrets/{{ g_zbx_actions_config.zbx_scriptrunner_user }}.yml"
+    register: g_zbx_scriptrunner_vars
+
   - name: Load variables that will override the defaults
     include_vars: /secrets/zabbix-server-vars.yml
     when: g_zabbix_server_vars.stat.exists
+
+  - name: Load scriptrunner user's variables
+    include_vars: "/{{ g_zbx_scriptrunner_vars.stat.path }}"
+    when: g_zbx_scriptrunner_vars.stat.exists
 
   - fail: "msg=This playbook requires {{ item }} to be set and not empty."
     when: "{{ item }} is not defined or {{ item }} == ''"
@@ -40,12 +52,25 @@
     - g_mysql_user
     - g_mysql_password
     - g_mysql_host
+    - g_zbx_scriptrunner_user
+    - g_zbx_scriptrunner_bastion_host
 
+  tasks:
   - name: Generate zabbix_actions.yml config file
     copy:
       content: "{{ g_zbx_actions_config | to_nice_yaml }}"
       dest: /etc/openshift_tools/zabbix_actions.yml
       mode: "644"
+
+  - name: Save scriptrunner's ssh key
+    copy:
+      content: >
+        {% set rsa_key = "" %}
+        {%- set key_name = "g_user_" + g_zbx_actions_config.zbx_scriptrunner_user + "_priv_key" %}
+        {%- set rsa_key = hostvars["localhost"][key_name] %}
+        {{- rsa_key -}}
+      dest: /etc/openshift_tools/scriptrunner_id_rsa
+      mode: "400"
 
   - name: Setup the zabbix_server.conf file
     lineinfile:
