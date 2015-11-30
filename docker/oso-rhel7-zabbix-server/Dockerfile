@@ -13,7 +13,8 @@ RUN yum clean metadata && \
     yum clean all
 
 # Install zabbix from zabbix repo
-RUN yum install -y zabbix-server-mysql zabbix-agent zabbix-sender crontabs mariadb && \
+RUN yum install -y zabbix-server-mysql zabbix-agent zabbix-sender crontabs \
+    mariadb openssh-clients && \
     yum -y update && \
     yum clean all
 
