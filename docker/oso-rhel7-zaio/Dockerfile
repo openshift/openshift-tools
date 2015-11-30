@@ -11,7 +11,8 @@ RUN yum clean metadata && \
     yum clean all
 
 # Install zabbix from zabbix repo
-RUN yum install -y mod_ssl zabbix-server-mysql zabbix-sender zabbix-agent zabbix-web-mysql mariadb mariadb-server && \
+RUN yum install -y mod_ssl zabbix-server-mysql zabbix-sender zabbix-agent \
+    zabbix-web-mysql mariadb mariadb-server openssh-clients && \
     yum -y update && \
     yum clean all
 
