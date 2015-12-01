@@ -49,5 +49,6 @@ CMD /usr/local/bin/start.sh
 
 # Make the container work more consistently in and out of openshift
 # BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
+RUN mkdir -p /run/zabbix
 RUN chmod -R g+rwX /etc/passwd /etc/zabbix /etc/openshift_tools /var/log /run && \
     chgrp -R root /var/log /run
