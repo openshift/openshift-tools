@@ -28,16 +28,16 @@
       path: /secrets/zabbix-server-vars.yml
     register: g_zabbix_server_vars
 
-  - stat:
-      path: "/secrets/{{ g_zbx_actions_config.zbx_scriptrunner_user }}.yml"
-    register: g_zbx_scriptrunner_vars
-
   - name: Load variables that will override the defaults
     include_vars: /secrets/zabbix-server-vars.yml
     when: g_zabbix_server_vars.stat.exists
 
+  - stat:
+      path: "/secrets/{{ g_zbx_actions_config.zbx_scriptrunner_user }}.yml"
+    register: g_zbx_scriptrunner_vars
+
   - name: Load scriptrunner user's variables
-    include_vars: "/{{ g_zbx_scriptrunner_vars.stat.path }}"
+    include_vars: "{{ g_zbx_scriptrunner_vars.stat.path }}"
     when: g_zbx_scriptrunner_vars.stat.exists
 
   - fail: "msg=This playbook requires {{ item }} to be set and not empty."
