@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.34
+Version:       0.0.35
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -64,6 +64,9 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Wed Dec 02 2015 Matt Woodson <mwoodson@redhat.com> 0.0.35-1
+- added docker registry cluster check (mwoodson@redhat.com)
+
 * Fri Nov 20 2015 Matt Woodson <mwoodson@redhat.com> 0.0.34-1
 - added nan check (mwoodson@redhat.com)
 
