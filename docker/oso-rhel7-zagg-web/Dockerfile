@@ -40,7 +40,7 @@ ADD ops-run-in-loop start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
 
 # RHEL7.2 Fix for mod_auth_digest writing to /run/httpd/authdigest_shm.pid
-sed -i -e 's/^\(LoadModule auth_digest_module modules\/mod_auth_digest.so\)$/#\1/g' /etc/httpd/conf.modules.d/00-base.conf
+RUN sed -i -e 's/^\(LoadModule auth_digest_module modules\/mod_auth_digest.so\)$/#\1/g' /etc/httpd/conf.modules.d/00-base.conf
 
 # Temporary fixes until we can run as root
 # Make the container work more consistently in and out of openshift
