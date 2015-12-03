@@ -24,6 +24,11 @@ echo '---------------'
 echo
 
 while true; do
-  sleep 5
+  sleep 15
+  pgrep -f "/usr/sbin/zabbix_server -c /etc/zabbix/zabbix_server.conf" &>/dev/null
+  if [ "$?" -eq "1" ]
+    then
+      exit 1
+  fi
 done
 #

@@ -26,6 +26,9 @@ ADD httpd.conf /etc/httpd/conf/
 # Set the timezone in the php.ini file
 RUN sed -r -ie 's/^;(date.timezone).*/\1 = America\/New_York/g' /etc/php.ini
 
+# RHEL7.2 Fix for mod_auth_digest writing to /run/httpd/authdigest_shm.pid
+sed -i -e 's/^\(LoadModule auth_digest_module modules\/mod_auth_digest.so\)$/#\1/g' /etc/httpd/conf.modules.d/00-base.conf
+
 # Start apache
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
