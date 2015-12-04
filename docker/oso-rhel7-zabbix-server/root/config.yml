@@ -72,6 +72,14 @@
       dest: /etc/openshift_tools/scriptrunner_id_rsa
       mode: "400"
 
+  - name: Trust scriptrunner's bastion host
+    copy:
+      content: |
+        Host {{ g_zbx_actions_config.zbx_scriptrunner_bastion_host }}
+          StrictHostKeyChecking no
+      dest: /root/.ssh/config
+      mode: "600"
+
   - name: Setup the zabbix_server.conf file
     lineinfile:
       dest: /etc/zabbix/zabbix_server.conf
