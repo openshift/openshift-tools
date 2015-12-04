@@ -46,6 +46,7 @@ class OpenshiftMasterZaggClient(object):
         try:
             if self.args.healthz or self.args.all_checks:
                 self.healthz_check()
+
         except Exception as ex:
             print "Problem performing healthz check: %s " % ex.message
             self.zagg_sender.add_zabbix_keys({'openshift.master.api.healthz' : 'false'})
@@ -62,6 +63,10 @@ class OpenshiftMasterZaggClient(object):
 
             if self.args.user_count or self.args.all_checks:
                 self.user_count()
+
+            if self.args.pv_count or self.args.all_checks:
+                self.pv_count()
+
         except Exception as ex:
             print "Problem Openshift API checks: %s " % ex.message
             self.zagg_sender.add_zabbix_keys({'openshift.master.api.ping' : 0}) # Openshift API is down
@@ -69,6 +74,7 @@ class OpenshiftMasterZaggClient(object):
         try:
             if self.args.metrics or self.args.all_checks:
                 self.metric_check()
+
         except Exception as ex:
             print "Problem getting Openshift metrics at /metrics: %s " % ex.message
             self.zagg_sender.add_zabbix_keys({'openshift.master.metric.ping' : 0}) # Openshift Metrics are down
@@ -103,6 +109,9 @@ class OpenshiftMasterZaggClient(object):
 
         master_check_group.add_argument('--user-count', action='store_true', default=None,
                                         help='Query the Openshift Master for Number of Users')
+
+        master_check_group.add_argument('--pv-count', action='store_true', default=None,
+                                        help='Query the Openshift Master for number of Persistent Volumes')
 
         self.args = parser.parse_args()
 
@@ -226,6 +235,27 @@ class OpenshiftMasterZaggClient(object):
 
         print "Total user count: %s" % len(response['items'])
         self.zagg_sender.add_zabbix_keys({'openshift.master.user.count' : len(response['items'])})
+
+    def pv_count(self):
+        """ check the number of persistent volumes in Openshift """
+
+        print "\nPerforming user persistent volume count...\n"
+
+        response = self.ora.get('/api/v1/persistentvolumes')
+        pv_types = {'Available': 0,
+                    'Bound': 0,
+                    'Released': 0,
+                    'Failed': 0}
+
+        for item in response['items']:
+            pv_types[item['status']['phase']] += 1
+
+        print "Total Persistent Volume Total count: %s" % len(response['items'])
+        self.zagg_sender.add_zabbix_keys({'openshift.master.pv.total.count' : len(response['items'])})
+
+        for key, value in pv_types.iteritems():
+            print "Total Persistent Volume %s count: %s" % (key, value)
+            self.zagg_sender.add_zabbix_keys({'openshift.master.pv.%s.count' %key.lower() : value})
 
 if __name__ == '__main__':
     OMCZ = OpenshiftMasterZaggClient()
