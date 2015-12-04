@@ -38,6 +38,10 @@ RUN sed -r -ie 's/^;(date.timezone).*/\1 = America\/New_York/g' /etc/php.ini
 # Zabbix web
 ADD zabbix/conf/zabbix.conf.php /etc/zabbix/web/
 
+# Rhel 7.2 update
+ADD httpd.conf /etc/httpd/conf/
+RUN sed -i -e 's/^\(LoadModule auth_digest_module modules\/mod_auth_digest.so\)$/#\1/g' /etc/httpd/conf.modules.d/00-base.conf
+
 # Start mysqld, zabbix, and apache
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
