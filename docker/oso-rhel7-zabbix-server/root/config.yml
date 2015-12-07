@@ -72,6 +72,12 @@
       dest: /etc/openshift_tools/scriptrunner_id_rsa
       mode: "400"
 
+  - name: create ~/.ssh
+    file:
+      path: /root/.ssh
+      mode: "700"
+      state: directory
+
   - name: Trust scriptrunner's bastion host
     copy:
       content: |
