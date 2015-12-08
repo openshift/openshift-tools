@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.36
+Version:       0.0.37
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -64,6 +64,10 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Tue Dec 08 2015 Thomas Wiest <twiest@redhat.com> 0.0.37-1
+- Added chunking and error handling to ops-zagg-processor for zabbix targets.
+  (twiest@redhat.com)
+
 * Fri Dec 04 2015 Matt Woodson <mwoodson@redhat.com> 0.0.36-1
 - added pv counts to the master openshift api check (mwoodson@redhat.com)
 
