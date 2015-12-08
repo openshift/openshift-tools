@@ -53,14 +53,22 @@ class ZaggProcessor(object):
         Returns: None
         """
         for target in self.config['targets']:
+            print
+            print "Sending metrics to target [%s]" % target['name']
+            print
             if target['type'] == 'zabbix':
-                self.process_zabbix(target)
-            if target['type'] == 'zagg':
+                errors = self.process_zabbix(target)
+                # TODO: add zabbix item and trigger for tracking the number of errors
+                print
+                print "Results: %s errors occurred." % len(errors)
+                if errors:
+                    print errors
+            elif target['type'] == 'zagg':
+                # TODO: add error handling for process_zagg like process_zabbix
                 self.process_zagg(target)
             else:
-                # ERROR: TARGET NOT SUPPORTED!
-                # TODO: add error logging and signaling
-                pass
+                print "Error: Target Type Not Supported: %s" % target['type']
+                # TODO: add zabbix item and trigger for tracking this failure
 
     @staticmethod
     def process_zabbix(target):
@@ -81,8 +89,8 @@ class ZaggProcessor(object):
 
         zbxsender = ZabbixSender(target['trapper_server'], target['trapper_port'])
 
-        zmp = ZabbixMetricProcessor(mm, zbxapi, zbxsender)
-        zmp.process_metrics()
+        zmp = ZabbixMetricProcessor(mm, zbxapi, zbxsender, verbose=True)
+        return zmp.process_metrics()
 
     @staticmethod
     def process_zagg(target):
