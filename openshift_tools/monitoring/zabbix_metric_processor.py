@@ -20,6 +20,10 @@
 The purpose of this module is to process metrics and send them to Zabbix.
 """
 
+# This is the size of each chunk that we send to zabbix. We're defaulting to
+# the size that the zabbix sender uses.
+CHUNK_SIZE = 250
+
 from openshift_tools.monitoring.metricmanager import UniqueMetric
 # Reason: disable pylint import-error because it does not exist in the buildbot
 # Status: permanently disabled
@@ -59,7 +63,7 @@ class ZabbixMetricProcessor(object):
     """Processes metrics and sends them to Zabbix Trapper.
     """
 
-    def __init__(self, metric_manager, zbxapi, zbxsender):
+    def __init__(self, metric_manager, zbxapi, zbxsender, verbose=False):
         """Constructs the object
 
         Args:
@@ -70,18 +74,94 @@ class ZabbixMetricProcessor(object):
         self.metric_manager = metric_manager
         self.zbxapi = zbxapi
         self.zbxsender = zbxsender
+        self._verbose = verbose
+
+    # TODO: change this over to use real logging.
+    def _log(self, message):
+        """Prints out the message if verbose is set.
+
+        This is used as a helper so that we don't have to check the verbose flag every time.
+
+        Args:
+            message: the message to log.
+
+        Returns: None
+        """
+        if self._verbose:
+            print message
 
     def process_metrics(self):
-        """Processes all metrics provided by metric_manager"""
+        """Processes all metrics provided by metric_manager
+
+        Args: None
+
+        Returns: a list of errors, if any
+        """
+
         # Read metrics from disk
         all_metrics = self.metric_manager.read_metrics()
 
         # Process heartbeat metrics First (this ordering is important)
         # This ensures a host in zabbix has been created.
-        self._process_heartbeat_metrics(self.metric_manager.filter_heartbeat_metrics(all_metrics))
+        hb_errors = self._process_heartbeat_metrics(self.metric_manager.filter_heartbeat_metrics(all_metrics))
 
         # Now process normal metrics
-        self._process_normal_metrics(self.metric_manager.filter_zbx_metrics(all_metrics))
+        metrics_errors = self._process_normal_metrics(self.metric_manager.filter_zbx_metrics(all_metrics))
+
+        return hb_errors + metrics_errors
+
+    def _handle_templates(self, all_templates):
+        """Handle templates by ensuring they exist.
+
+        This ensures that the passed in templates exist in Zabbix.
+
+        Args:
+            all_templates: a list of templates to ensure exist.
+
+        Returns: a list of errors, if any
+        """
+
+        errors = []
+        try:
+            # Make sure there is a template entry in zabbix
+            for template in set(all_templates):
+                self.zbxapi.ensure_template_exists(template)
+
+        # Reason: disable pylint broad-except because we want to process as much as possible
+        # Status: permanently disabled
+        # pylint: disable=broad-except
+        except Exception as error:
+            self._log("Failed creating templates" % error.message)
+            errors.append(error)
+
+        return errors
+
+    def _handle_hostgroups(self, all_hostgroups):
+        """Handle hostgroups by ensuring they exist.
+
+        This ensures that the passed in hostgroups exist in Zabbix.
+
+        Args:
+            all_hostgroups: a list of hostgroups to ensure exist.
+
+        Returns: a list of errors, if any
+        """
+
+        errors = []
+        try:
+            # Make sure there is a hostgroup entry in zabbix
+            for hostgroup in set(all_hostgroups):
+                self.zbxapi.ensure_hostgroup_exists(hostgroup)
+
+        # Reason: disable pylint broad-except because we want to process as much as possible
+        # Status: permanently disabled
+        # pylint: disable=broad-except
+        except Exception as error:
+            self._log("Failed creating hostgroups" % error.message)
+            errors.append(error)
+
+        return errors
+
 
     def _process_heartbeat_metrics(self, hb_metrics):
         """Processes heartbeat metrics.
@@ -92,42 +172,59 @@ class ZabbixMetricProcessor(object):
         Args:
             hb_metrics: a list of heartbeat metrics to process.
 
-        Returns: nothing
+        Returns: a list of errors, if any
         """
+
+        self._log("\nTotal Heartbeat Metrics to Send: %s\n" % len(hb_metrics))
+
+        errors = []
         all_templates = []
         all_hostgroups = []
+
         # Collect all templates and hostgroups so we only process them 1 time.
         for hb_metric in hb_metrics:
             all_templates.extend(hb_metric.value['templates'])
             all_hostgroups.extend(hb_metric.value['hostgroups'])
 
-        # Make sure there is a template entry in zabbix
-        for template in set(all_templates):
-            self.zbxapi.ensure_template_exists(template)
+        # Handle the Templates
+        errors.extend(self._handle_templates(all_templates))
 
-        # Make sure there is a hostgroup entry in zabbix
-        for hostgroup in set(all_hostgroups):
-            self.zbxapi.ensure_hostgroup_exists(hostgroup)
+        # Handle the Hostgroups
+        errors.extend(self._handle_hostgroups(all_hostgroups))
 
-        for hb_metric in hb_metrics:
-            templates = hb_metric.value['templates']
-            hostgroups = hb_metric.value['hostgroups']
+        for i, hb_metric in enumerate(hb_metrics):
 
-            # Make sure there is a host entry in zabbix
-            host_res = self.zbxapi.ensure_host_exists(hb_metric.host, templates, hostgroups)
+            try:
+                templates = hb_metric.value['templates']
+                hostgroups = hb_metric.value['hostgroups']
 
-            # Actually do the heartbeat now
-            hbum = UniqueMetric(hb_metric.host, 'heartbeat.ping', 1)
-            hb_res = self.zbxsender.send([hbum])
+                # Make sure there is a host entry in zabbix
+                host_res = self.zbxapi.ensure_host_exists(hb_metric.host, templates, hostgroups)
 
-            # Remove the metric if we were able to successfully heartbeat
-            if host_res and hb_res:
-                # We've successfuly sent the heartbeat, so remove it from disk
-                self.metric_manager.remove_metrics(hb_metric)
-            else:
-                # TODO: add logging of the failure, and signal of failure
-                # For now, we'll just leave them on disk and try again
-                pass
+                # Actually do the heartbeat now
+                hbum = UniqueMetric(hb_metric.host, 'heartbeat.ping', 1)
+                hb_res = self.zbxsender.send([hbum])
+
+                # Remove the metric if we were able to successfully heartbeat
+                if host_res and hb_res:
+                    self._log("Sending heartbeat metric %s for host [%s] to Zabbix: success" % \
+                                 (i + 1, hb_metric.host))
+
+                    # We've successfuly sent the heartbeat, so remove it from disk
+                    self.metric_manager.remove_metrics(hb_metric)
+                else:
+                    raise Exception("Error while sending to zabbix")
+
+            # Reason: disable pylint broad-except because we want to process as much as possible
+            # Status: permanently disabled
+            # pylint: disable=broad-except
+            except Exception as error:
+                self._log("Sending heartbeat metric %s for host [%s] to Zabbix: FAILED: %s" % \
+                             (i + 1, hb_metric.host, error.message))
+
+                errors.append(error)
+
+        return errors
 
     def _process_normal_metrics(self, metrics):
         """Processes normal metrics.
@@ -138,15 +235,38 @@ class ZabbixMetricProcessor(object):
         Args:
             metrics: a list of metrics to send to zabbix.
 
-        Returns: nothing
+        Returns: a list of errors, if any
         """
-        if not metrics:
-            return True # we successfully sent 0 metrics to zabbix
 
-        if self.zbxsender.send(metrics):
-            # We've successfuly sent the metrics, so remove them from disk
-            self.metric_manager.remove_metrics(metrics)
-        else:
-            # TODO: add logging of the failure, and signal of failure
-            # For now, we'll just leave them on disk and try again
-            pass
+        self._log("\nTotal Normal Metrics to Send: %s" % len(metrics))
+        self._log("                  Chunk Size: %s\n" % CHUNK_SIZE)
+
+        if not metrics:
+            return [] # we successfully sent 0 metrics to zabbix
+
+        # Accumulate the errors
+        errors = []
+
+        # Send metrics to Zabbix in chunks
+        for i, chunk_ix in enumerate(range(0, len(metrics), CHUNK_SIZE)):
+            chunk = metrics[chunk_ix:(chunk_ix + CHUNK_SIZE)]
+
+            try:
+                if self.zbxsender.send(chunk):
+                    self._log("Sending normal metrics chunk %s to Zabbix (size %s): success" % \
+                                 (i + 1, len(chunk)))
+
+                    # We've successfuly sent the metrics chunk, so remove them from disk
+                    self.metric_manager.remove_metrics(chunk)
+                else:
+                    raise Exception("Error while sending to zabbix")
+
+            # Reason: disable pylint broad-except because we want to process as much as possible
+            # Status: permanently disabled
+            # pylint: disable=broad-except
+            except Exception as error:
+                errors.append(error)
+                self._log("Sending normal metrics chunk %s to Zabbix (size %s): FAILED: %s" % \
+                             (i + 1, len(chunk), error.message))
+
+        return errors
