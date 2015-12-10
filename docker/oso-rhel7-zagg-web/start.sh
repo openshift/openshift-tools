@@ -31,7 +31,7 @@ echo "Done."
 
 # Process and send metrics every minute
 echo -n "Starting metric processing loop... "
-/usr/local/bin/ops-run-in-loop 60 "/usr/bin/flock -n /var/tmp/ops-zagg-processor.lock -c '/usr/bin/timeout -s9 600s /usr/bin/ops-zagg-processor' &> /dev/null" &>> /var/log/ops-zagg-processor.log  &
+/usr/local/bin/ops-run-in-loop 30 "/usr/bin/flock -n /var/tmp/ops-zagg-processor.lock -c '/usr/bin/timeout -s9 600s /usr/bin/ops-zagg-processor' &> /dev/null" &>> /var/log/ops-zagg-processor.log  &
 echo "Done."
 
 
