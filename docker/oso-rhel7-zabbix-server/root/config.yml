@@ -23,6 +23,12 @@
       ses_smtp_server: "{{ g_ses_smtp_server }}"
       zbx_scriptrunner_user: "{{ g_zbx_scriptrunner_user }}"
       zbx_scriptrunner_bastion_host: "{{ g_zbx_scriptrunner_bastion_host }}"
+    g_rsa_key_file: "/etc/openshift_tools/scriptrunner_id_rsa"
+    g_process_event_config:
+      scriptrunner_user: "{{ g_zbx_actions_config.zbx_scriptrunner_user }}"
+      bastion_host: "{{ g_zbx_actions_config.zbx_scriptrunner_bastion_host }}"
+      rsa_key: "{{ g_rsa_key_file }}"
+
   pre_tasks:
   - stat:
       path: /secrets/zabbix-server-vars.yml
@@ -69,7 +75,7 @@
         {%- set key_name = "g_user_" + g_zbx_actions_config.zbx_scriptrunner_user + "_priv_key" %}
         {%- set rsa_key = hostvars["localhost"][key_name] %}
         {{- rsa_key -}}
-      dest: /etc/openshift_tools/scriptrunner_id_rsa
+      dest: "{{ g_rsa_key_file }}"
       mode: "400"
 
   - name: create ~/.ssh
@@ -85,6 +91,12 @@
           StrictHostKeyChecking no
       dest: /root/.ssh/config
       mode: "600"
+
+  - name: Create process-event script config file
+    copy:
+      content: "{{ g_process_event_config | to_nice_yaml }}"
+      dest: /etc/zabbix/ops_zbx_event_processor.yml
+      mode: "0644"
 
   - name: Setup the zabbix_server.conf file
     lineinfile:
