@@ -63,18 +63,24 @@ class ZabbixMetricProcessor(object):
     """Processes metrics and sends them to Zabbix Trapper.
     """
 
-    def __init__(self, metric_manager, zbxapi, zbxsender, verbose=False):
+    # Reason: This is the API I want (stylistic exception)
+    # Status: permanently disabled
+    # pylint: disable=too-many-arguments
+    def __init__(self, metric_manager, zbxapi, zbxsender, hostname, verbose=False):
         """Constructs the object
 
         Args:
             metric_manager: this is where we get the metrics from.
             zbxapi: this is used for heartbeat metrics
             zbxsender: this is used to send the metrics to zabbix
+            hostname: the hostname of the zagg processor (so it can be overridden)
+            verbose: whether this class should output or not.
         """
         self.metric_manager = metric_manager
         self.zbxapi = zbxapi
         self.zbxsender = zbxsender
         self._verbose = verbose
+        self._hostname = hostname
 
     # TODO: change this over to use real logging.
     def _log(self, message):
@@ -103,12 +109,31 @@ class ZabbixMetricProcessor(object):
 
         # Process heartbeat metrics First (this ordering is important)
         # This ensures a host in zabbix has been created.
-        hb_errors = self._process_heartbeat_metrics(self.metric_manager.filter_heartbeat_metrics(all_metrics))
+        hb_metrics = self.metric_manager.filter_heartbeat_metrics(all_metrics)
+        hb_errors = self._process_heartbeat_metrics(hb_metrics)
 
         # Now process normal metrics
-        metrics_errors = self._process_normal_metrics(self.metric_manager.filter_zbx_metrics(all_metrics))
+        zbx_metrics = self.metric_manager.filter_zbx_metrics(all_metrics)
+        metrics_errors = self._process_normal_metrics(zbx_metrics)
 
-        return hb_errors + metrics_errors
+        # We need to know how many errors there were
+        all_errors = hb_errors + metrics_errors
+
+        # Now we need to try to send our zagg processor metrics.
+        zagg_metrics = []
+        zagg_metrics.append(UniqueMetric(self._hostname, 'zagg.server.heartbeat.count',
+                                         len(hb_metrics)))
+        zagg_metrics.append(UniqueMetric(self._hostname, 'zagg.server.metrics.count',
+                                         len(zbx_metrics)))
+        zagg_metrics.append(UniqueMetric(self._hostname, 'zagg.server.processor.errors',
+                                         len(all_errors)))
+
+        # We write them to disk so that we can retry sending this on error
+        self.metric_manager.write_metrics(zagg_metrics)
+
+        zagg_metrics_errors = self._process_normal_metrics(zagg_metrics)
+
+        return all_errors + zagg_metrics_errors
 
     def _handle_templates(self, all_templates):
         """Handle templates by ensuring they exist.

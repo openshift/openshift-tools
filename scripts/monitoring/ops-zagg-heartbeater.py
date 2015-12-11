@@ -53,7 +53,7 @@ class ZaggHeartbeater(object):
             mm = MetricManager(target['path'])
 
             hostname = socket.gethostname()
-            myhb = UniqueMetric.create_heartbeat(hostname, ['Template Heartbeat'], ['Linux servers'])
+            myhb = UniqueMetric.create_heartbeat(hostname, self.config['templates'], self.config['hostgroups'])
 
             print 'Writing heartbeat to %s/%s' % (target['path'], myhb.filename)
             mm.write_metrics(myhb)

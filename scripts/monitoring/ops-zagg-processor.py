@@ -32,6 +32,7 @@ from openshift_tools.monitoring.zagg_common import ZaggConnection
 from openshift_tools.monitoring.zagg_client import ZaggClient
 
 import yaml
+import socket
 
 class ZaggProcessor(object):
     """Processes all targets found in /etc/openshift_tools/zagg_server.yaml
@@ -89,7 +90,8 @@ class ZaggProcessor(object):
 
         zbxsender = ZabbixSender(target['trapper_server'], target['trapper_port'])
 
-        zmp = ZabbixMetricProcessor(mm, zbxapi, zbxsender, verbose=True)
+        hostname = socket.gethostname()
+        zmp = ZabbixMetricProcessor(mm, zbxapi, zbxsender, hostname, verbose=True)
         return zmp.process_metrics()
 
     @staticmethod
