@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.38
+Version:       0.0.39
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -65,6 +65,10 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Mon Dec 14 2015 Matt Woodson <mwoodson@redhat.com> 0.0.39-1
+- added random sleep to heartbeats checks (mwoodson@redhat.com)
+- added random sleep to ops-runner (mwoodson@redhat.com)
+
 * Mon Dec 14 2015 Joel Diaz <jdiaz@redhat.com> 0.0.38-1
 - Changed ops-zagg-processor to send metrics on the number of metrics in the
   queue, heart beats in the queue and the number of errors while processing.
