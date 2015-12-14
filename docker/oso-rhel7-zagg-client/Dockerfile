@@ -1,7 +1,7 @@
 FROM oso-rhel7-ops-base:latest
 
 # Pause indefinitely if asked to do so.
-RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done
+RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 
 RUN echo -e "\n\nalias oca='KUBECONFIG=/etc/openshift/master/admin.kubeconfig oc '" >> /root/.bashrc
 RUN echo "alias oadma='KUBECONFIG=/etc/openshift/master/admin.kubeconfig oadm '" >> /root/.bashrc

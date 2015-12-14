@@ -6,7 +6,7 @@
 FROM oso-rhel7-ops-base:latest
 
 # Pause indefinitely if asked to do so.
-RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done
+RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 
 EXPOSE 10050 10051
 
