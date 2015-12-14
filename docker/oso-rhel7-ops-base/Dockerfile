@@ -1,5 +1,8 @@
 FROM rhel7:latest
 
+# Pause indefinitely if asked to do so.
+RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done
+
 RUN echo "root:redhat" | chpasswd
 
 # get rid of subscript manager (we use our own mirrors)
@@ -26,7 +29,7 @@ ADD setup-yum.sh /usr/local/bin/setup-yum.sh
 RUN /usr/local/bin/setup-yum.sh
 
 RUN yum clean metadata && \
-    yum -y install cronie ansible vim procps less ack tar psmisc && \
+    yum -y install iputils cronie ansible vim procps less ack tar psmisc && \
     yum -y update && \
     yum clean all
 
