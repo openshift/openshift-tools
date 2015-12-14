@@ -12,9 +12,9 @@ RUN yum clean metadata && \
     yum install -y openshift-ops-yum-zabbix && \
     yum clean all
 
-# Install zabbix from zabbix repo
+# Install zabbix (and supporting tools) from zabbix repo
 RUN yum install -y zabbix-server-mysql zabbix-agent zabbix-sender crontabs \
-    mariadb openssh-clients && \
+    mariadb openssh-clients openshift-tools-scripts-monitoring && \
     yum -y update && \
     yum clean all
 
