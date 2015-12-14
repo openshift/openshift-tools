@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.37
+Version:       0.0.38
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -65,6 +65,13 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Mon Dec 14 2015 Joel Diaz <jdiaz@redhat.com> 0.0.38-1
+- Changed ops-zagg-processor to send metrics on the number of metrics in the
+  queue, heart beats in the queue and the number of errors while processing.
+  (twiest@redhat.com)
+- Add script to be called from zabbix custom script actions and lay down config
+  file for it during playbook run (jdiaz@redhat.com)
+
 * Tue Dec 08 2015 Thomas Wiest <twiest@redhat.com> 0.0.37-1
 - Added chunking and error handling to ops-zagg-processor for zabbix targets.
   (twiest@redhat.com)
