@@ -33,6 +33,7 @@ fi
 
 NAME=""
 COMMAND=""
+SLEEP=""
 
 while getopts ":n:c:s:h" opt; do
   case $opt in
@@ -70,7 +71,7 @@ test $# -gt 0 -a ! -z "$COMMAND" && die "ERROR: Too many commands given"
 
 # If we need to sleep, let's random sleep
 if [ ! -z "$SLEEP" ] ; then
-   sleep $[ ( $RANDOM % $SLEEP )  + 1 ]s
+   sleep $(( $RANDOM % $SLEEP  + 1 ))s
 fi
 
 # So that this script doesn't die if the passed in command returns a non-zero exit code
