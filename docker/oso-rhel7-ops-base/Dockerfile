@@ -1,7 +1,7 @@
 FROM rhel7:latest
 
 # Pause indefinitely if asked to do so.
-RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done
+RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 
 RUN echo "root:redhat" | chpasswd
 
