@@ -36,6 +36,7 @@ cp -p monitoring/cron-send-os-master-metrics.py %{buildroot}/usr/bin/cron-send-o
 cp -p monitoring/cron-send-docker-metrics.py %{buildroot}/usr/bin/cron-send-docker-metrics
 cp -p monitoring/cron-send-docker-metrics.py %{buildroot}/usr/bin/cron-send-docker-timer
 cp -p monitoring/cron-send-registry-checks.py %{buildroot}/usr/bin/cron-send-registry-checks
+cp -p monitoring/ops-zbx-event-processor.py %{buildroot}/usr/bin/ops-zbx-event-processor
 
 
 mkdir -p %{buildroot}/etc/openshift_tools
