@@ -6,10 +6,14 @@ function print_usage() {
   echo
   echo "  -n NAME     Name identifier for this command."
   echo "  -c          Command to run. This is mainly used when shell is embedded in the command."
+  echo "  -s          Sleep time, random. Insert a random sleep between 1 and X number of seconds."
   echo
   echo "Examples:"
   echo "  Everything after the options will be run as the command."
   echo "    $(basename $0) -n example.command /bin/cp /etc/issue /tmp/issue"
+  echo
+  echo "  Insert random sleep between 1 and 100 seconds of the previous example."
+  echo "    $(basename $0) -s 100 -n example.command /bin/cp /etc/issue /tmp/issue"
   echo
   echo "  Alternatively, -c can be used to embed shell code in the command:"
   echo "    $(basename $0) -n example.command -c 'for i in {1..100}; do echo $i; done'"
@@ -30,13 +34,16 @@ fi
 NAME=""
 COMMAND=""
 
-while getopts ":n:c:h" opt; do
+while getopts ":n:c:s:h" opt; do
   case $opt in
     n)
       NAME=$OPTARG
       ;;
     c)
       COMMAND=$OPTARG
+      ;;
+    s)
+      SLEEP=$OPTARG
       ;;
     h)
       print_usage
@@ -60,6 +67,11 @@ test $# -eq 0 -a -z "$COMMAND" && die "ERROR: No command given"
 
 # Make sure only 1 command was passed, one way or another
 test $# -gt 0 -a ! -z "$COMMAND" && die "ERROR: Too many commands given"
+
+# If we need to sleep, let's random sleep
+if [ ! -z "$SLEEP" ] ; then
+   sleep $[ ( $RANDOM % $SLEEP )  + 1 ]s
+fi
 
 # So that this script doesn't die if the passed in command returns a non-zero exit code
 set +e
