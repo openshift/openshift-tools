@@ -41,7 +41,7 @@ ADD zabbix/db_create/createdb.sh /root/zabbix/
 # Add ansible stuff
 ADD root /root
 
-RUN mkdir /etc/openshift_tools
+RUN mkdir -p /etc/openshift_tools
 
 # Add zabbix alert script
 ADD smtp_ses.py /usr/lib/zabbix/alertscripts/
