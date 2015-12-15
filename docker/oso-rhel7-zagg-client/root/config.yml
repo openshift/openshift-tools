@@ -67,6 +67,10 @@
       minute: "*/10"
       job: ops-runner -n csdt.docker.timer /usr/bin/cron-send-docker-timer
 
+    - name: run docker dns test
+      minute: "*/5"
+      job: ops-runner -n csddr.docker.dns.resolution /usr/bin/cron-send-docker-dns-resolution
+
     - name: send openshift-node process count
       minute: "*/2"
       job: ops-runner -n cspc.openshift.node.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start node' openshift.node.process.count
