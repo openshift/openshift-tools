@@ -20,7 +20,8 @@ OpenShift Tools Scripts
 # openshift-tools-scripts-monitoring install
 mkdir -p %{buildroot}/usr/bin
 cp -p monitoring/ops-zagg-client.py %{buildroot}/usr/bin/ops-zagg-client
-cp -p monitoring/ops-zagg-processor.py %{buildroot}/usr/bin/ops-zagg-processor
+cp -p monitoring/ops-zagg-metric-processor.py %{buildroot}/usr/bin/ops-zagg-metric-processor
+cp -p monitoring/ops-zagg-heartbeat-processor.py %{buildroot}/usr/bin/ops-zagg-heartbeat-processor
 cp -p monitoring/ops-zagg-heartbeater.py %{buildroot}/usr/bin/ops-zagg-heartbeater
 cp -p monitoring/cron-send-process-count.sh %{buildroot}/usr/bin/cron-send-process-count
 cp -p monitoring/cron-send-filesystem-metrics.py %{buildroot}/usr/bin/cron-send-filesystem-metrics

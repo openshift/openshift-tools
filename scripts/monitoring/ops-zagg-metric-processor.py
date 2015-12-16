@@ -92,7 +92,7 @@ class ZaggProcessor(object):
 
         hostname = socket.gethostname()
         zmp = ZabbixMetricProcessor(mm, zbxapi, zbxsender, hostname, verbose=True)
-        return zmp.process_metrics()
+        return zmp.process_zbx_metrics()
 
     @staticmethod
     def process_zagg(target):
