@@ -24,7 +24,7 @@
         templates: "{{ g_default_templates }}"
         hostgroups: "{{ [g_oso_cluster_id] | union(g_default_hostgroups) }}"
 
-
+    # Generic Linux Checks
     g_zagg_client_cron:
     - name: send pcp ping every 5 mintues
       minute: "*/5"
@@ -59,6 +59,7 @@
       minute: "*/3"
       job: ops-runner -n csnm.network.int /usr/bin/cron-send-network-metrics
 
+    # We might want to break docker checks out at some point.
     - name: run docker storage space checks every 10 minutes
       minute: "*/10"
       job: ops-runner -n csdm.docker.storage /usr/bin/cron-send-docker-metrics
@@ -71,6 +72,8 @@
       minute: "*/5"
       job: ops-runner -n csddr.docker.dns.resolution /usr/bin/cron-send-docker-dns-resolution
 
+    # Openshift node checks
+    g_zagg_client_node_crons:
     - name: send openshift-node process count
       minute: "*/2"
       job: ops-runner -n cspc.openshift.node.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start node' openshift.node.process.count
@@ -79,6 +82,7 @@
       hour: "*/2"
       job: ops-runner -n csos.openshift.master.ovs.status /usr/bin/cron-send-ovs-status
 
+    # Openshift Master checks
     g_zagg_client_master_crons:
     - name: run create app every 5 minutes
       minute: "*/5"
@@ -147,6 +151,18 @@
       month: "{{ item.month | default('*', True) }}"
       weekday: "{{ item.weekday | default('*', True) }}"
     with_items: g_zagg_client_cron
+
+  - name: Setup Openshift Node Crons
+    cron:
+      name: "{{ item.name }}"
+      job: "{{ item.job }}"
+      minute: "{{ item.minute | default('*', True) }}"
+      hour: "{{ item.hour | default('*', True) }}"
+      day: "{{ item.day | default('*', True) }}"
+      month: "{{ item.month | default('*', True) }}"
+      weekday: "{{ item.weekday | default('*', True) }}"
+    with_items: g_zagg_client_node_crons
+    when: g_oso_host_type == 'master' or g_oso_host_type == 'node'
 
   - name: Setup Master Crons
     cron:
