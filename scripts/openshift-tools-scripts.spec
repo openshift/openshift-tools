@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.40
+Version:       0.0.41
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -66,6 +66,10 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Wed Dec 16 2015 Joel Diaz <jdiaz@redhat.com> 0.0.41-1
+- change to using oso-rhel7-zagg-client container and hit redhat.com instead of
+  google.com (jdiaz@redhat.com)
+
 * Tue Dec 15 2015 Joel Diaz <jdiaz@redhat.com> 0.0.40-1
 - script to test and report DNS query results within container
   (jdiaz@redhat.com)
