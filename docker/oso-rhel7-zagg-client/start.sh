@@ -25,5 +25,5 @@ time ansible-playbook /root/config.yml
 echo
 echo 'Starting crond'
 echo '---------------'
-exec /usr/sbin/crond -n
+exec /usr/sbin/crond -n -m off
 echo
