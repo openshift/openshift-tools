@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.34
+Version:       0.0.35
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -98,6 +98,10 @@ Tools developed to make it easy to work with web technologies.
 
 
 %changelog
+* Wed Dec 16 2015 Thomas Wiest <twiest@redhat.com> 0.0.35-1
+- Split ops-zagg-processor.py into ops-zagg-metric-processor.py and ops-zagg-
+  heartbeat-processor.py. (twiest@redhat.com)
+
 * Mon Dec 14 2015 Joel Diaz <jdiaz@redhat.com> 0.0.34-1
 - Changed ops-zagg-processor to send metrics on the number of metrics in the
   queue, heart beats in the queue and the number of errors while processing.
