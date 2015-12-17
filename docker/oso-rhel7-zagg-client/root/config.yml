@@ -72,6 +72,10 @@
       minute: "*/5"
       job: ops-runner -n csddr.docker.dns.resolution /usr/bin/cron-send-docker-dns-resolution
 
+    - name: run docker dns test on existing containers
+      minute: "*/5"
+      job: flock -n /var/tmp/cron-send-docker-existing-dns-resolution.lock -c "ops-runner -n csdedr.docker.existing.dns.resolution /usr/bin/cron-send-docker-existing-dns-resolution"
+
     # Openshift node checks
     g_zagg_client_node_crons:
     - name: send openshift-node process count
