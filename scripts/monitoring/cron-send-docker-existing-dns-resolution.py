@@ -12,6 +12,7 @@
 
 from docker import AutoVersionClient
 from docker.errors import APIError
+from requests.exceptions import ConnectionError
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 
 ZBX_KEY = "docker.container.existing.dns.resolution.failed"
@@ -22,6 +23,7 @@ if __name__ == "__main__":
     bad_dns_count = 0
 
     for ctr in cli.containers():
+        print "Container: " + ctr['Image']
         try:
             exec_id = cli.exec_create(container=ctr['Id'], cmd="getent hosts redhat.com")
             results = cli.exec_start(exec_id=exec_id)
@@ -30,11 +32,15 @@ if __name__ == "__main__":
             # could race from getting a container list and the container exiting
             # before we can exec on it, so just ignore exited containers
             continue
+        except ConnectionError:
+            # exec_start timeout ('getent' command took too long)
+            print "command timed out"
+            bad_dns_count += 1
+            continue
 
         if exit_code == CMD_NOT_FOUND:
             continue
 
-        print "Container: " + ctr['Image']
         print results
         print "Exit Code: " + str(exit_code) + "\n"
 
