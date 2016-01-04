@@ -18,7 +18,7 @@ ZBX_KEY = "docker.container.existing.dns.resolution.failed"
 CMD_NOT_FOUND = -1
 
 if __name__ == "__main__":
-    cli = AutoVersionClient(base_url='unix://var/run/docker.sock')
+    cli = AutoVersionClient(base_url='unix://var/run/docker.sock', timeout=120)
     bad_dns_count = 0
 
     for ctr in cli.containers():
