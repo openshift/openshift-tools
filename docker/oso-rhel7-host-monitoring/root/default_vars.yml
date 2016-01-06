@@ -1,0 +1,34 @@
+---
+# These are defaults variables, override using host_monitoring_vars.yml vars file
+g_default_zagg_client_hostname: "UNNAMED-ZAGG-CLIENT-CTR-{{ lookup('env', 'container_uuid') }}"
+g_default_zagg_url: https://localhost:8443
+g_default_zagg_user: admin
+g_default_zagg_pass: password
+g_default_zagg_ssl_verify: False
+g_default_zagg_verbose: False
+g_default_zagg_debug: False
+g_default_pcp_metrics:
+- hinv.ncpu
+- kernel.all.load
+- kernel.all.pswitch
+- kernel.all.uptime
+- kernel.uname.distro
+- kernel.uname.machine
+- kernel.uname.nodename
+- kernel.uname.nodename
+- kernel.uname.release
+- kernel.uname.sysname
+- kernel.uname.version
+- mem.freemem
+- mem.physmem
+- mem.util.available
+- mem.util.bufmem
+- mem.util.cached
+- mem.util.used
+- proc.nprocs
+- swap.free
+- swap.length
+- swap.used
+
+g_default_hostgroups:
+- Linux servers
