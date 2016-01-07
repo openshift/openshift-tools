@@ -26,4 +26,3 @@ echo
 echo 'Starting crond'
 echo '---------------'
 exec /usr/sbin/crond -n -m off
-echo
