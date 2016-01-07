@@ -29,5 +29,5 @@ check-pmcd-status.sh &
 echo
 echo 'Starting crond'
 echo '---------------'
-/usr/sbin/crond -n -m off
+exec /usr/sbin/crond -n -m off
 
