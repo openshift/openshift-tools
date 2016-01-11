@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.45
+Version:       0.0.46
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -68,6 +68,10 @@ OpenShift Tools Monitoring Scripts
 /var/run/zagg/data/
 
 %changelog
+* Mon Jan 11 2016 Matt Woodson <mwoodson@redhat.com> 0.0.46-1
+- changed the dns resolution check's docker container to reference
+  (mwoodson@redhat.com)
+
 * Mon Jan 04 2016 Joel Diaz <jdiaz@redhat.com> 0.0.45-1
 - have seen getent take up to 80 sec to complete raise timeout to allow it to
   finish (jdiaz@redhat.com)
