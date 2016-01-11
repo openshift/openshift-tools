@@ -17,7 +17,7 @@ ZBX_KEY = "docker.container.dns.resolution"
 
 if __name__ == "__main__":
     cli = AutoVersionClient(base_url='unix://var/run/docker.sock')
-    container = cli.create_container(image='docker-registry.ops.rhcloud.com/ops/oso-rhel7-zagg-client',
+    container = cli.create_container(image='docker-registry.ops.rhcloud.com/ops/oso-rhel7-host-monitoring',
                                      command='getent hosts redhat.com')
     cli.start(container=container.get('Id'))
     exit_code = cli.wait(container)
