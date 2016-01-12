@@ -60,9 +60,7 @@ For the containers to build properly, they must be built in a certain order.
 . oso-rhel7-ops-base
 . oso-rhel7-zaio
 . oso-rhel7-zagg-web
-. oso-rhel7-zagg-client
-. pcp-base
-. oso-f22-host-monitoring
+. oso-rhel7-host-monitoring
 
 .Example of building the oso-rhel7-ops-base container (other containers are similar):
 ----
@@ -138,8 +136,7 @@ For the containers to link up properly, they must be run in a certain order.
 .*Recommended run order*:
 . oso-rhel7-zaio
 . oso-rhel7-zagg-web
-. oso-f22-host-monitoring
-. oso-rhel7-zagg-client
+. oso-rhel7-host-monitoring
 
 .Example of running the oso-rhel7-zaio container (other containers are similar):
 ----
@@ -231,15 +228,15 @@ All of the containers run with the --rm flag, which means that they when they ex
 In fact, the common development pattern is to do a git clone right inside of /shared and develop in git directly and then symlink from the container into the git repo.
 
 == Testing the local setup
-To test the local setup, send a heartbeat from oso-rhel7-zagg-client and make sure it shows up in zabbix.
+To test the local setup, send a heartbeat from oso-rhel7-host-monitoring and make sure it shows up in zabbix.
 
-=== Send a heartbeat from the oso-rhel7-zagg-client container:
+=== Send a heartbeat from the oso-rhel7-host-monitoring container:
 
 .Here are the steps:
-. Enter the oso-rhel7-zagg-client container:
+. Enter the oso-rhel7-host-monitoring container:
 +
 ----
-> sudo docker exec -ti oso-rhel7-zagg-client bash
+> sudo docker exec -ti oso-rhel7-host-monitoring bash
 ----
 +
 . Inside the container send a heartbeat:
@@ -248,7 +245,7 @@ To test the local setup, send a heartbeat from oso-rhel7-zagg-client and make su
 [CTR][root@ ~]$ /usr/bin/ops-zagg-client --send-heartbeat
 ----
 +
-. Exit the oso-rhel7-zagg-client container:
+. Exit the oso-rhel7-host-monitoring container:
 +
 ----
 [CTR][root@ ~]$ exit
