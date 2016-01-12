@@ -31,23 +31,6 @@ echo " --------------------"
 echo
 echo
 echo " -----------------------"
-echo "| ${BLUE}oso-rhel7-zagg-client${NORM} |"
+echo "| ${BLUE}oso-rhel7-host-monitoring${NORM} |"
 echo " -----------------------"
-./oso-rhel7-zagg-client/build.sh $@
-
-echo
-echo
-echo " ----------"
-echo "| ${BLUE}pcp-base${NORM} |"
-echo " ----------"
-echo
-./pcp-base/build.sh $@
-
-echo
-echo
-echo " -------------------------"
-echo "| ${BLUE}oso-f22-host-monitoring${NORM} |"
-echo " -------------------------"
-echo
-./oso-f22-host-monitoring/build.sh $@
-
+./oso-rhel7-host-monitoring/build.sh $@

@@ -44,13 +44,11 @@ All containers in this directory expect a secrets directory to be setup with a s
 
 ----
 openshift-tools/docker
-├── oso-f22-host-monitoring      # A superprivileged container that runs on the host system (builds on the pcp-base container)
+├── oso-rhel7-host-monitoring    # A superprivileged container that runs on the host system (includes pcp and zagg client)
 ├── oso-rhel7-ops-base           # Base RHEL7 container that the other RHEL7 containers are based on
 ├── oso-rhel7-zabbix-server      # Zabbix server container (doesn't include web, db, etc)
 ├── oso-rhel7-zabbix-web         # Zabbix webui container
-├── oso-rhel7-zagg-client        # Connects to host monitoring container and sends data to zagg-web
 ├── oso-rhel7-zagg-web           # Exposes REST interface, collects metrics and sends them to zabbix (or another zagg)
 ├── oso-rhel7-zaio               # Zabbix All In One container (zabbix server, webui and db)
-├── pcp-base                     # Base container provided by PCP team
 ----
 

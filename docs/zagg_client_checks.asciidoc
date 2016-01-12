@@ -2,7 +2,7 @@
 
 This document is intended to be used as a reference to write checks in Openshift V3 using the Zagg interface.
 
-*Note:* This document assumes you are using the https://github.com/openshift/openshift-tools/tree/master/docker/oso-rhel7-zagg-client[oso-rhel7-zagg-client] docker container.  This container includes all the required libraries to communicate with a Zagg server.
+*Note:* This document assumes you are using the https://github.com/openshift/openshift-tools/tree/master/docker/oso-rhel7-host-monitoring[oso-rhel7-host-monitoring] docker container.  This container includes all the required libraries to communicate with a Zagg server.
 
 ==== A Note About ZaggClient Checks
 
