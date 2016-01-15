@@ -48,24 +48,136 @@ cp -p monitoring/zagg_server.yaml.example %{buildroot}/etc/openshift_tools/zagg_
 
 mkdir -p %{buildroot}/var/run/zagg/data
 
-
 # ----------------------------------------------------------------------------------
-# openshift-tools-scripts-monitoring subpackage
+# openshift-tools-scripts-monitoring-pcp subpackage
 # ----------------------------------------------------------------------------------
-%package monitoring
-Summary:       OpenShift Tools Monitoring Scripts
-Requires:      python2,python-openshift-tools-monitoring,python-openshift-tools-ansible
+%package monitoring-pcp
+Summary:       OpenShift Tools PCP Monitoring Scripts
+Requires:      python2,openshift-tools-scripts-monitoring-zagg-client,python-openshift-tools-monitoring-zagg,python-openshift-tools-monitoring-pcp,python-openshift-tools-monitoring,python-docker-py
 BuildRequires: python2-devel
 BuildArch:     noarch
 
-%description monitoring
-OpenShift Tools Monitoring Scripts
+%description monitoring-pcp
+OpenShift Tools PCP Monitoring Scripts
 
-%files monitoring
-/usr/bin/*
-%config(noreplace)/etc/openshift_tools/*.yaml
-/var/run/zagg/
-/var/run/zagg/data/
+%files monitoring-pcp
+/usr/bin/cron-send-process-count
+/usr/bin/cron-send-filesystem-metrics
+/usr/bin/cron-send-pcp-sampled-metrics
+/usr/bin/cron-send-pcp-ping
+/usr/bin/cron-send-disk-metrics
+/usr/bin/cron-send-network-metrics
+
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-monitoring-docker subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-docker
+Summary:       OpenShift Tools Docker Monitoring Scripts
+Requires:      python2,python-openshift-tools-monitoring-zagg,python-openshift-tools-monitoring-docker,python-openshift-tools-monitoring,python-docker-py
+BuildRequires: python2-devel
+BuildArch:     noarch
+
+%description monitoring-docker
+OpenShift Tools Docker Monitoring Scripts
+
+%files monitoring-docker
+/usr/bin/cron-send-docker-metrics
+/usr/bin/cron-send-docker-timer
+/usr/bin/cron-send-docker-dns-resolution
+/usr/bin/cron-send-docker-existing-dns-resolution
+
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-monitoring-zagg-client subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-zagg-client
+Summary:       OpenShift Tools Zagg Client Monitoring Scripts
+Requires:      python2,python-openshift-tools-monitoring-zagg,python-openshift-tools-ansible
+BuildRequires: python2-devel
+BuildArch:     noarch
+
+%description monitoring-zagg-client
+OpenShift Tools Zagg Client Monitoring Scripts
+
+%files monitoring-zagg-client
+/usr/bin/ops-zagg-client
+/usr/bin/ops-runner
+%config(noreplace)/etc/openshift_tools/zagg_client.yaml
+
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-monitoring-zagg-server subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-zagg-server
+Summary:       OpenShift Tools Zagg Server Monitoring Scripts
+Requires:      python2,python-openshift-tools-monitoring-zagg,python-openshift-tools-ansible
+Requires:      python2,python-openshift-tools-monitoring-openshift,python-openshift-tools-monitoring-zagg,python-openshift-tools-ansible
+BuildRequires: python2-devel
+BuildArch:     noarch
+
+%description monitoring-zagg-server
+OpenShift Tools Zagg Server Monitoring Scripts
+
+%files monitoring-zagg-server
+/usr/bin/ops-zagg-metric-processor
+/usr/bin/ops-zagg-heartbeat-processor
+/usr/bin/ops-zagg-heartbeater
+/var/run/zagg/data
+%config(noreplace)/etc/openshift_tools/zagg_server.yaml
+
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-monitoring-aws subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-aws
+Summary:       OpenShift Tools AWS Monitoring Scripts
+Requires:      python2,python-openshift-tools-monitoring-aws,python-openshift-tools-monitoring-openshift,python-openshift-tools-monitoring-zagg
+BuildRequires: python2-devel
+BuildArch:     noarch
+
+%description monitoring-aws
+OpenShift Tools AWS Monitoring Scripts
+
+%files monitoring-aws
+/usr/bin/cron-send-s3-metrics
+
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-monitoring-openshift subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-openshift
+Summary:       OpenShift Tools Openshift Product Scripts
+Requires:      python2,python-openshift-tools-monitoring-openshift,python-openshift-tools-monitoring-zagg,openvswitch
+BuildRequires: python2-devel
+BuildArch:     noarch
+
+%description monitoring-openshift
+OpenShift Tools Openshift Product Scripts
+
+%files monitoring-openshift
+/usr/bin/cron-send-ovs-status
+/usr/bin/cron-send-etcd-status
+/usr/bin/cron-send-os-master-metrics
+/usr/bin/cron-send-registry-checks
+
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-monitoring-zabbix-heal subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-zabbix-heal
+Summary:       OpenShift Tools Zabbix Auto Heal Scripts
+Requires:      python2
+BuildRequires: python2-devel
+BuildArch:     noarch
+
+%description monitoring-zabbix-heal
+OpenShift Tools Zabbix Auto Heal Scripts
+
+%files monitoring-zabbix-heal
+/usr/bin/ops-zbx-event-processor
+
+
 
 %changelog
 * Mon Jan 11 2016 Matt Woodson <mwoodson@redhat.com> 0.0.46-1
