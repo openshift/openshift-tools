@@ -31,9 +31,19 @@ RUN yum clean metadata && \
     yum install -y python-pip pcp pcp-conf pcp-testsuite \
         openshift \
         python-requests \
+        python-openshift-tools \
+        python-openshift-tools-monitoring-pcp \
+        python-openshift-tools-monitoring-docker \
+        python-openshift-tools-monitoring-zagg \
+        python-openshift-tools-monitoring-openshift \
+        python-openshift-tools-ansible \
         python-openshift-tools-web \
-        python-openshift-tools-monitoring \
-        openshift-tools-scripts-monitoring \
+        openshift-tools-scripts \
+        openshift-tools-scripts-monitoring-pcp \
+        openshift-tools-scripts-monitoring-docker \
+        openshift-tools-scripts-monitoring-zagg-client \
+        openshift-tools-scripts-monitoring-aws \
+        openshift-tools-scripts-monitoring-openshift \
         pcp-manager pcp-webapi python-pcp \
         openvswitch \
         docker-python && \
