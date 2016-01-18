@@ -51,7 +51,7 @@ Both of these clients read their default settings from the config file: `/etc/op
 
 This is a python API used to create and send data to Zagg.
 
-ZaggSender is maintained in the https://github.com/openshift/openshift-tools/tree/master/openshift_tools/monitoring[openshift-tools] repository.  It is installed via the `python-openshift-tools-monitoring` RPM.
+ZaggSender is maintained in the https://github.com/openshift/openshift-tools/tree/master/openshift_tools/monitoring[openshift-tools] repository.  It is installed via the `python-openshift-tools-monitoring-zagg` RPM.
 
 ZaggSender reads it's default settings from the config file: `/etc/openshift_tools/zagg_client.yaml`.
 
