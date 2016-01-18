@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.48
+Version:       0.0.49
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -179,6 +179,10 @@ OpenShift Tools Zabbix Auto Heal Scripts
 
 
 %changelog
+* Mon Jan 18 2016 Matt Woodson <mwoodson@redhat.com> 0.0.49-1
+- removed python-openshift-tools-ansible as a dependency for ops-zagg-client
+  (mwoodson@redhat.com)
+
 * Mon Jan 18 2016 Matt Woodson <mwoodson@redhat.com> 0.0.48-1
 - removed some old rpm references (mwoodson@redhat.com)
 
