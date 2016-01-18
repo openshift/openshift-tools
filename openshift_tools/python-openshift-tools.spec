@@ -92,10 +92,23 @@ Zagg Python libraries developed for monitoring OpenShift.
 %{python_sitelib}/openshift_tools/monitoring/metricmanager.py[co]
 %{python_sitelib}/openshift_tools/monitoring/zagg*.py
 %{python_sitelib}/openshift_tools/monitoring/zagg*.py[co]
-%{python_sitelib}/openshift_tools/monitoring/zbxapi.py
-%{python_sitelib}/openshift_tools/monitoring/zbxapi.py[co]
 %{python_sitelib}/openshift_tools/monitoring/zabbix_metric_processor.py
 %{python_sitelib}/openshift_tools/monitoring/zabbix_metric_processor.py[co]
+
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-monitoring-zabbix subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-zabbix
+Summary:       OpenShift Tools Zagg Python Libraries Package
+Requires:      python2,python-openshift-tools
+BuildArch:     noarch
+
+%description monitoring-zabbix
+Zagg Python libraries developed for monitoring OpenShift.
+
+%files monitoring-zabbix
+%{python_sitelib}/openshift_tools/monitoring/zbxapi.py
+%{python_sitelib}/openshift_tools/monitoring/zbxapi.py[co]
 
 
 # ----------------------------------------------------------------------------------

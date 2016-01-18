@@ -14,6 +14,7 @@ RUN yum clean metadata && \
         python-passlib \
         openshift-tools-web-zagg \
         python-openshift-tools-monitoring-zagg \
+        python-openshift-tools-monitoring-zabbix \
         openshift-tools-scripts-monitoring-zagg-server \
         tree python-django-bash-completion httpd mod_ssl mod_wsgi \
         telnet bind-utils net-tools iproute && \
