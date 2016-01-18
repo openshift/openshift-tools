@@ -17,7 +17,7 @@ RUN yum clean metadata && \
 
 # Install zabbix (and supporting tools) from zabbix repo
 RUN yum install -y zabbix-server-mysql zabbix-agent zabbix-sender crontabs \
-    mariadb openssh-clients openshift-tools-scripts-monitoring && \
+    mariadb openssh-clients openshift-tools-scripts-monitoring-zabbix-heal && \
     yum -y update && \
     yum clean all
 

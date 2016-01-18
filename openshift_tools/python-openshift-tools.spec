@@ -38,27 +38,109 @@ cp -p web/*.py %{buildroot}%{python_sitelib}/openshift_tools/web
 # openshift_tools files
 %files
 %dir %{python_sitelib}/openshift_tools
+%dir %{python_sitelib}/openshift_tools/monitoring
+%{python_sitelib}/openshift_tools/monitoring/__init*
 %{python_sitelib}/openshift_tools/*.py
 %{python_sitelib}/openshift_tools/*.py[co]
 
 
-
-
 # ----------------------------------------------------------------------------------
-# python-openshift-tools-monitoring subpackage
+# python-openshift-tools-monitoring-pcp subpackage
 # ----------------------------------------------------------------------------------
-%package monitoring
-Summary:       OpenShift Tools Monitoring Python Package
-Requires:      python2,python-openshift-tools,python-zbxsend,python-openshift-tools-web,python-pcp,atomic-openshift,python-awscli
+%package monitoring-pcp
+Summary:       OpenShift Tools PCP Python Library Package
+Requires:      python2,python-openshift-tools,python-pcp
 BuildArch:     noarch
 
-%description monitoring
-Tools developed for monitoring OpenShift.
+%description monitoring-pcp
+PCP Python libraries developed for monitoring OpenShift.
 
-%files monitoring
-%dir %{python_sitelib}/openshift_tools/monitoring
-%{python_sitelib}/openshift_tools/monitoring/*.py
-%{python_sitelib}/openshift_tools/monitoring/*.py[co]
+%files monitoring-pcp
+%{python_sitelib}/openshift_tools/monitoring/pminfo*.py
+%{python_sitelib}/openshift_tools/monitoring/pminfo*.py[co]
+
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-monitoring-docker subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-docker
+Summary:       OpenShift Tools Docker Python Libraries Package
+Requires:      python2,python-openshift-tools,python-pcp
+BuildArch:     noarch
+
+%description monitoring-docker
+Docker Python libraries developed for monitoring OpenShift.
+
+%files monitoring-docker
+%{python_sitelib}/openshift_tools/monitoring/dockerutil.py
+%{python_sitelib}/openshift_tools/monitoring/dockerutil.py[co]
+
+
+
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-monitoring-zagg subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-zagg
+Summary:       OpenShift Tools Zagg Python Libraries Package
+Requires:      python2,python-openshift-tools,python-openshift-tools-web,python-zbxsend
+BuildArch:     noarch
+
+%description monitoring-zagg
+Zagg Python libraries developed for monitoring OpenShift.
+
+%files monitoring-zagg
+%{python_sitelib}/openshift_tools/monitoring/metricmanager.py
+%{python_sitelib}/openshift_tools/monitoring/metricmanager.py[co]
+%{python_sitelib}/openshift_tools/monitoring/zagg*.py
+%{python_sitelib}/openshift_tools/monitoring/zagg*.py[co]
+%{python_sitelib}/openshift_tools/monitoring/zabbix_metric_processor.py
+%{python_sitelib}/openshift_tools/monitoring/zabbix_metric_processor.py[co]
+
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-monitoring-zabbix subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-zabbix
+Summary:       OpenShift Tools Zagg Python Libraries Package
+Requires:      python2,python-openshift-tools
+BuildArch:     noarch
+
+%description monitoring-zabbix
+Zagg Python libraries developed for monitoring OpenShift.
+
+%files monitoring-zabbix
+%{python_sitelib}/openshift_tools/monitoring/zbxapi.py
+%{python_sitelib}/openshift_tools/monitoring/zbxapi.py[co]
+
+
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-monitoring-aws subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-aws
+Summary:       OpenShift Tools AWS Python Libraries Package
+Requires:      python2,python-openshift-tools,python-awscli
+BuildArch:     noarch
+
+%description monitoring-aws
+AWS Python libraries developed for monitoring OpenShift.
+
+%files monitoring-aws
+%{python_sitelib}/openshift_tools/monitoring/awsutil.py
+%{python_sitelib}/openshift_tools/monitoring/awsutil.py[co]
+
+
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-monitoring-openshift subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-openshift
+Summary:       OpenShift Tools Openshift Python Libraries Package
+Requires:      python2,python-openshift-tools,atomic-openshift
+BuildArch:     noarch
+
+%description monitoring-openshift
+Openshift Python libraries developed for monitoring OpenShift.
+
+%files monitoring-openshift
+%{python_sitelib}/openshift_tools/monitoring/ocutil.py
+%{python_sitelib}/openshift_tools/monitoring/ocutil.py[co]
 
 
 # ----------------------------------------------------------------------------------
