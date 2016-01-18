@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.46
+Version:       0.0.47
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -180,6 +180,9 @@ OpenShift Tools Zabbix Auto Heal Scripts
 
 
 %changelog
+* Mon Jan 18 2016 Matt Woodson <mwoodson@redhat.com> 0.0.47-1
+- sepearated openshift-tools rpms into subpackages (mwoodson@redhat.com)
+
 * Mon Jan 11 2016 Matt Woodson <mwoodson@redhat.com> 0.0.46-1
 - changed the dns resolution check's docker container to reference
   (mwoodson@redhat.com)
