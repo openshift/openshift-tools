@@ -53,7 +53,7 @@ mkdir -p %{buildroot}/var/run/zagg/data
 # ----------------------------------------------------------------------------------
 %package monitoring-pcp
 Summary:       OpenShift Tools PCP Monitoring Scripts
-Requires:      python2,openshift-tools-scripts-monitoring-zagg-client,python-openshift-tools-monitoring-zagg,python-openshift-tools-monitoring-pcp,python-openshift-tools-monitoring,python-docker-py
+Requires:      python2,openshift-tools-scripts-monitoring-zagg-client,python-openshift-tools-monitoring-zagg,python-openshift-tools-monitoring-pcp,python-docker-py
 BuildRequires: python2-devel
 BuildArch:     noarch
 
@@ -74,7 +74,7 @@ OpenShift Tools PCP Monitoring Scripts
 # ----------------------------------------------------------------------------------
 %package monitoring-docker
 Summary:       OpenShift Tools Docker Monitoring Scripts
-Requires:      python2,python-openshift-tools-monitoring-zagg,python-openshift-tools-monitoring-docker,python-openshift-tools-monitoring,python-docker-py
+Requires:      python2,python-openshift-tools-monitoring-zagg,python-openshift-tools-monitoring-docker,python-docker-py
 BuildRequires: python2-devel
 BuildArch:     noarch
 
@@ -111,7 +111,6 @@ OpenShift Tools Zagg Client Monitoring Scripts
 # ----------------------------------------------------------------------------------
 %package monitoring-zagg-server
 Summary:       OpenShift Tools Zagg Server Monitoring Scripts
-Requires:      python2,python-openshift-tools-monitoring-zagg,python-openshift-tools-ansible
 Requires:      python2,python-openshift-tools-monitoring-openshift,python-openshift-tools-monitoring-zagg,python-openshift-tools-ansible
 BuildRequires: python2-devel
 BuildArch:     noarch
