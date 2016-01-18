@@ -93,7 +93,7 @@ OpenShift Tools Docker Monitoring Scripts
 # ----------------------------------------------------------------------------------
 %package monitoring-zagg-client
 Summary:       OpenShift Tools Zagg Client Monitoring Scripts
-Requires:      python2,python-openshift-tools-monitoring-zagg,python-openshift-tools-ansible
+Requires:      python2,python-openshift-tools-monitoring-zagg
 BuildRequires: python2-devel
 BuildArch:     noarch
 
