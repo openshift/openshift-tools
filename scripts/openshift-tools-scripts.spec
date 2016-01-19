@@ -20,6 +20,7 @@ OpenShift Tools Scripts
 # openshift-tools-scripts-monitoring install
 mkdir -p %{buildroot}/usr/bin
 cp -p monitoring/ops-zagg-client.py %{buildroot}/usr/bin/ops-zagg-client
+cp -p monitoring/ops-zagg-pcp-client.py %{buildroot}/usr/bin/ops-zagg-pcp-client
 cp -p monitoring/ops-zagg-metric-processor.py %{buildroot}/usr/bin/ops-zagg-metric-processor
 cp -p monitoring/ops-zagg-heartbeat-processor.py %{buildroot}/usr/bin/ops-zagg-heartbeat-processor
 cp -p monitoring/ops-zagg-heartbeater.py %{buildroot}/usr/bin/ops-zagg-heartbeater
@@ -61,12 +62,12 @@ BuildArch:     noarch
 OpenShift Tools PCP Monitoring Scripts
 
 %files monitoring-pcp
-/usr/bin/cron-send-process-count
 /usr/bin/cron-send-filesystem-metrics
 /usr/bin/cron-send-pcp-sampled-metrics
 /usr/bin/cron-send-pcp-ping
 /usr/bin/cron-send-disk-metrics
 /usr/bin/cron-send-network-metrics
+/usr/bin/ops-zagg-pcp-client
 
 
 # ----------------------------------------------------------------------------------
@@ -101,8 +102,9 @@ BuildArch:     noarch
 OpenShift Tools Zagg Client Monitoring Scripts
 
 %files monitoring-zagg-client
-/usr/bin/ops-zagg-client
+/usr/bin/cron-send-process-count
 /usr/bin/ops-runner
+/usr/bin/ops-zagg-client
 %config(noreplace)/etc/openshift_tools/zagg_client.yaml
 
 

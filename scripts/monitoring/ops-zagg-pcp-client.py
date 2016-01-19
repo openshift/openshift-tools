@@ -3,46 +3,41 @@
 #This is not a module, but pylint thinks it is.  This is a command.
 #pylint: disable=invalid-name
 """
-ops-zagg-client: Script that sends metrics to zagg.
+ops-zagg-pcp-client: Script that sends pcp metrics to zagg.
 
-This script will send metrics to Zagg.  This script will send:
+By default this script reads /etc/openshift_tools/zagg_client.yaml and sends
+the pcp metrics defined in the "pcp" section.  It will also use this config file for
+information (name of zagg server, hostname of server) needed to send to zagg.
+These settings can be overridden from the cli.
 
-heartbeat (registration information)
-single zabbix keys.
+For more info use:
 
-By default this script reads /etc/openshift_tools/zagg_client.yaml
-for information needed to send to zagg.  Some of the settings can be overridden
-from the cli.
+ops-zagg-pcp-client --help
+
 
 Examples
-# Send a heartbeat (looks in a config file for specifics)
-ops-zagg-client --send-heartbeat
+# Send pcp metrics (looks in a config file to know exactly which metrics to query and send)
+ops-zagg-pcp-client
 
-# Send a single metric (generic interface, send any adhoc metrics)
-ops-zagg-client -s hostname.example.com -k zbx.item.name -o someval
-
-# Send a dynamic low level discovery with macros
-# low level dynamic objects require:
-# - discovery key: This is what was setup and defined in Zabbix in the disovery rule
-# - macro string: This is the variable that will be used to setup the item and trigger
-# - macro name: This is the name of object.  This is a comma seperated list of names
-
-ops-zagg-client -s --discovery-key filesys --macro-string #FILESYS --macro-names /,/var,/home
+# Send additional pcp metrics from the command line:
+ops-zagg-pcp-client -m  pcp.metric1,pcp.metric2,pcp.metric3
 
 """
 
 import argparse
+from openshift_tools.monitoring import pminfo
 from openshift_tools.monitoring.zagg_sender import ZaggSender
-from openshift_tools.monitoring.zagg_common import ZaggConnection, ZaggHeartbeat
+from openshift_tools.monitoring.zagg_common import ZaggConnection
 import yaml
 
-class OpsZaggClient(object):
+class OpsZaggPCPClient(object):
     """ class to send data to zagg """
 
     def __init__(self):
         self.zagg_sender = None
         self.args = None
         self.config = None
+        self.pcp_metrics = []
         self.heartbeat = None
 
     def run(self):
@@ -52,21 +47,18 @@ class OpsZaggClient(object):
         self.parse_config(self.args.config_file)
         self.config_zagg_sender()
 
-        if self.args.send_heartbeat:
-            self.add_heartbeat()
+        if self.args.metrics:
+            self.add_metrics()
 
-        if self.args.key and self.args.value:
-            self.add_zabbix_key()
-
-        if self.args.discovery_key and self.args.macro_string and self.args.macro_names:
-            self.add_zabbix_dynamic_item()
+        self.add_metrics_from_config()
 
         self.zagg_sender.send_metrics()
 
     def parse_args(self):
         """ parse the args from the cli """
-        parser = argparse.ArgumentParser(description='Zagg metric sender')
-        parser.add_argument('--send-heartbeat', help="send heartbeat metric to zagg", action="store_true")
+        parser = argparse.ArgumentParser(description='Zagg PCP metric sender')
+        parser.add_argument('--send-pcp-metrics', help="send pcp metrics to zagg", action="store_true")
+        parser.add_argument('-m', '--metrics', help="send PCP metrics to zagg")
         parser.add_argument('-s', '--host', help='specify host name as registered in Zabbix')
         parser.add_argument('-z', '--zagg-url', help='url of Zagg server')
         parser.add_argument('--zagg-user', help='username of the Zagg server')
@@ -76,15 +68,6 @@ class OpsZaggClient(object):
         parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
         parser.add_argument('-c', '--config-file', help='ops-zagg-client config file',
                             default='/etc/openshift_tools/zagg_client.yaml')
-
-        key_value_group = parser.add_argument_group('Sending a Key-Value Pair')
-        key_value_group.add_argument('-k', '--key', help='zabbix key')
-        key_value_group.add_argument('-o', '--value', help='zabbix value')
-
-        low_level_discovery_group = parser.add_argument_group('Sending a Low Level Discovery Item')
-        low_level_discovery_group.add_argument('--discovery-key', help='discovery key')
-        low_level_discovery_group.add_argument('--macro-string', help='macro string')
-        low_level_discovery_group.add_argument('--macro-names', help='comma separated list of macro names')
 
         self.args = parser.parse_args()
 
@@ -121,25 +104,25 @@ class OpsZaggClient(object):
 
         self.zagg_sender = ZaggSender(host, zagg_conn, zagg_verbose, zagg_debug)
 
-    def add_heartbeat(self):
-        """ crate a hearbeat metric """
-        heartbeat = ZaggHeartbeat(templates=self.config['heartbeat']['templates'],
-                                  hostgroups=self.config['heartbeat']['hostgroups'],
-                                 )
-        self.zagg_sender.add_heartbeat(heartbeat)
+    def add_metrics_from_config(self):
+        """ collect pcp metrics from a config file. Add to send to ZaggSender """
 
-    def add_zabbix_key(self):
-        """ send zabbix key/value pair to zagg """
+        self.add_pcp_to_zagg_sender(self.config['pcp']['metrics'])
 
-        self.zagg_sender.add_zabbix_keys({self.args.key : self.args.value})
+    def add_metrics(self):
+        """ collect pcp metrics to send to ZaggSender """
 
-    def add_zabbix_dynamic_item(self):
-        """ send zabbix low level discovery item to zagg """
+        metric_list = self.args.metrics.split(',')
 
-        self.zagg_sender.add_zabbix_dynamic_item(self.args.discovery_key,
-                                                 self.args.macro_string,
-                                                 self.args.macro_names.split(','),
-                                                )
+        self.add_pcp_to_zagg_sender(metric_list)
+
+    def add_pcp_to_zagg_sender(self, pcp_metrics):
+        """ something pcp yada yada """
+
+        pcp_metric_dict = pminfo.get_metrics(metrics=pcp_metrics, derived_metrics=None)
+
+        self.zagg_sender.add_zabbix_keys(pcp_metric_dict)
+
 if __name__ == "__main__":
-    OZC = OpsZaggClient()
-    OZC.run()
+    OZPC = OpsZaggPCPClient()
+    OZPC.run()
