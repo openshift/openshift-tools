@@ -32,7 +32,7 @@
 
     - name: run pcp checks every 5 minutes
       minute: "*/5"
-      job: ops-runner -n ozc.send.pcp /usr/bin/ops-zagg-client --send-pcp
+      job: ops-runner -n ozpc.send.pcp /usr/bin/ops-zagg-pcp-client
 
     - name: run pcp sampler every 5 minutes
       minute: "*/5"
