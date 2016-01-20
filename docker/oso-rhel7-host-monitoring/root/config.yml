@@ -6,6 +6,7 @@
   - /root/{{ g_oso_host_type }}_default_vars.yml
   vars:
     g_oso_cluster_id: "{{ lookup('env', 'OSO_CLUSTER_ID') }}"
+    g_oso_environment: "{{ lookup('env', 'OSO_ENVIRONMENT') }}"
     g_oso_host_type: "{{ lookup('env', 'OSO_HOST_TYPE') }}"
 
     g_zagg_client_config:
@@ -22,7 +23,9 @@
         metrics: "{{ g_default_pcp_metrics }}"
       heartbeat:
         templates: "{{ g_default_templates }}"
-        hostgroups: "{{ [g_oso_cluster_id] | union(g_default_hostgroups) }}"
+        hostgroups:
+        - "{{ g_oso_cluster_id }}"
+        - "{{ g_oso_environment }}"
 
     # Generic Linux Checks
     g_zagg_client_cron:
