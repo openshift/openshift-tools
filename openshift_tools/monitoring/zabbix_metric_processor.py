@@ -203,7 +203,7 @@ class ZabbixMetricProcessor(object):
         # Status: permanently disabled
         # pylint: disable=broad-except
         except Exception as error:
-            self._log("Failed creating hostgroups" % error.message)
+            self._log("Failed creating hostgroups: %s" % error.message)
             errors.append(error)
 
         return errors
