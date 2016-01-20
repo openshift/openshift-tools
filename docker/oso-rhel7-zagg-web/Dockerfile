@@ -24,9 +24,12 @@ RUN yum clean metadata && \
 # Need to lock djangorestframework at 3.2.X because
 #  later versions disabled django 1.6 support. Current version
 #  on RHEL 7 is 1.6
+# 1-20-16
+# Need to lock django-filter to 0.11.0 otherwise we see logs of errors.
+# See changelog: https://github.com/alex/django-filter/blob/develop/CHANGES.rst
 RUN pip install djangorestframework==3.2.5 && \
     pip install markdown && \
-    pip install django-filter
+    pip install django-filter==0.11.0
 
 RUN mkdir /tmp/metrics && chown apache.apache /tmp/metrics
 
