@@ -29,6 +29,3 @@ g_default_pcp_metrics:
 - swap.free
 - swap.length
 - swap.used
-
-g_default_hostgroups:
-- Linux servers
