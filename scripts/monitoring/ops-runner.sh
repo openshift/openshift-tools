@@ -1,5 +1,11 @@
 #!/bin/bash -e
 
+function cleanup() {
+  [ -e "$TEMP_FILE" ] && rm $TEMP_FILE
+}
+
+trap cleanup EXIT
+
 function print_usage() {
   echo
   echo "Usage: $(basename $0) [OPTION]... [COMMAND]"
@@ -20,8 +26,18 @@ function print_usage() {
   echo
 }
 
+function log() {
+  # Mmm DD hh:mm:ss
+  DATE=$(date +"%b %d %H:%M:%S")
+  HOST=$(hostname)
+
+  # Replace newlines with '~' so we can do a single-line log entry
+  NO_NEWLINES=$(echo "$1" | tr '\n' '~')
+  printf "%s %s %s: %s\n" "$DATE" "$HOST" "$NAME" "$NO_NEWLINES" >> /var/log/ops-runner.log
+}
+
 function die() {
-  echo "$1"
+  echo "$1" >&2
   exit 10
 }
 
@@ -74,21 +90,31 @@ if [ ! -z "$SLEEP" ] ; then
    sleep $(( $RANDOM % $SLEEP  + 1 ))s
 fi
 
+TEMP_FILE=$(mktemp ops-runner-${NAME}-XXXXXXXXXX)
 # So that this script doesn't die if the passed in command returns a non-zero exit code
 set +e
 if [ ! -z "$COMMAND" ] ; then
-  bash -c "$COMMAND"
-  EXITCODE=$?
+  bash -c "$COMMAND" | tee $TEMP_FILE
+  EXITCODE=${PIPESTATUS[0]}
 else
   # Joel approved, much more secure than eval, and has less quoting issues.
   # DO NOT CHANGE THIS TO EVAL!!!
-  "$@"
-  EXITCODE=$?
+  "$@" | tee $TEMP_FILE
+  EXITCODE=${PIPESTATUS[0]}
 fi
 set -e
+
+if [ "$EXITCODE" -ne "0" ] ; then
+  log "`echo \"Exit code: ${EXITCODE}\" | cat $TEMP_FILE -`"
+fi
+
+echo "Exit code: ${EXITCODE}"
 
 # Create our dynamic item for this command
 ops-zagg-client --discovery-key disc.ops.runner --macro-string '#OSO_COMMAND' --macro-names "$NAME"
 
 # Send the data
 ops-zagg-client -k "disc.ops.runner.command.exitcode[$NAME]" -o $EXITCODE
+
+# Exit with same code as what was just run
+exit ${EXITCODE}
