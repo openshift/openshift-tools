@@ -3,8 +3,6 @@ FROM rhel7:latest
 # Pause indefinitely if asked to do so.
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 
-RUN echo "root:redhat" | chpasswd
-
 # get rid of subscript manager (we use our own mirrors)
 RUN touch /var/run/rhsm ; rpm -evh subscription-manager
 
