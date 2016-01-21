@@ -177,7 +177,7 @@ class ZabbixMetricProcessor(object):
         # Status: permanently disabled
         # pylint: disable=broad-except
         except Exception as error:
-            self._log("Failed creating templates" % error.message)
+            self._log("Failed creating templates: %s" % error.message)
             errors.append(error)
 
         return errors
