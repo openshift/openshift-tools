@@ -79,10 +79,12 @@ class OpenshiftRestApi(object):
                  user_key=None,
                  ca_cert=None,
                  kubeconfig='/etc/openshift/master/admin.kubeconfig',
-                 headers=None):
+                 headers=None,
+                 verify_ssl=False):
 
         self.api_host = host
         self.headers = headers
+        self.verify_ssl = verify_ssl
 
         if None in (user_cert, user_key, ca_cert):
             self.kubeconfig = kubeconfig
@@ -122,9 +124,14 @@ class OpenshiftRestApi(object):
     def get(self, api_path, rtype='json'):
         """ Do API query, return requested type """
 
+        ssl_verify = self.verify_ssl
+        if ssl_verify:
+            ssl_verify = self.ca_cert
+
+
         response = requests.get(self.api_host + api_path,
                                 cert=(self.user_cert, self.user_key),
-                                verify=self.ca_cert)
+                                verify=ssl_verify)
 
         if rtype == 'text':
             return response.text
