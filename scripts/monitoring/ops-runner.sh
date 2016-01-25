@@ -13,6 +13,7 @@ function print_usage() {
   echo "  -n NAME     Name identifier for this command."
   echo "  -c          Command to run. This is mainly used when shell is embedded in the command."
   echo "  -s          Sleep time, random. Insert a random sleep between 1 and X number of seconds."
+  echo "  -f          Flock the command so that only one can run at a time (good for cron jobs)."
   echo
   echo "Examples:"
   echo "  Everything after the options will be run as the command."
@@ -50,17 +51,22 @@ fi
 NAME=""
 COMMAND=""
 SLEEP=""
+FLOCK=""
 
-while getopts ":n:c:s:h" opt; do
+while getopts ":n:c:s:fh" opt; do
   case $opt in
     n)
-      NAME=$OPTARG
+      # Make sure name conforms to our standards
+      NAME="$(echo -n ${OPTARG} | tr -c '[:alnum:].' '_')"
       ;;
     c)
       COMMAND=$OPTARG
       ;;
     s)
       SLEEP=$OPTARG
+      ;;
+    f)
+      FLOCK="true"
       ;;
     h)
       print_usage
@@ -90,23 +96,34 @@ if [ ! -z "$SLEEP" ] ; then
    sleep $(( $RANDOM % $SLEEP  + 1 ))s
 fi
 
+FLOCK_FILE="/var/tmp/${NAME}.lock"
+
+if [ -n "$FLOCK" ] && lsof "$FLOCK_FILE" &> /dev/null; then
+  die "ERROR: this process is already running."
+fi
+
 TEMP_FILE=$(mktemp ops-runner-${NAME}-XXXXXXXXXX)
 # So that this script doesn't die if the passed in command returns a non-zero exit code
 set +e
 if [ ! -z "$COMMAND" ] ; then
+  if [ -n "$FLOCK" ]; then
+    COMMAND="flock -n '$FLOCK_FILE' -c '${COMMAND}'"
+  fi
+
   bash -c "$COMMAND" | tee $TEMP_FILE
   EXITCODE=${PIPESTATUS[0]}
 else
+  TMPCMD=($@)
+  if [ -n "$FLOCK" ]; then
+    TMPCMD=("flock" "-n" "$FLOCK_FILE" "-c" "${TMPCMD[*]}")
+  fi
+
   # Joel approved, much more secure than eval, and has less quoting issues.
   # DO NOT CHANGE THIS TO EVAL!!!
-  "$@" | tee $TEMP_FILE
+  "${TMPCMD[@]}" | tee $TEMP_FILE
   EXITCODE=${PIPESTATUS[0]}
 fi
 set -e
-
-if [ "$EXITCODE" -ne "0" ] ; then
-  log "`echo \"Exit code: ${EXITCODE}\" | cat $TEMP_FILE -`"
-fi
 
 echo "Exit code: ${EXITCODE}"
 
@@ -115,6 +132,13 @@ ops-zagg-client --discovery-key disc.ops.runner --macro-string '#OSO_COMMAND' --
 
 # Send the data
 ops-zagg-client -k "disc.ops.runner.command.exitcode[$NAME]" -o $EXITCODE
+
+
+# This needs to be as close to the end of the script as possible,
+# just incase logging fails. See this card for more details: https://trello.com/c/Y0NWmU0N
+if [ "$EXITCODE" -ne "0" ] ; then
+  log "`echo \"Exit code: ${EXITCODE}\" | cat $TEMP_FILE -`"
+fi
 
 # Exit with same code as what was just run
 exit ${EXITCODE}
