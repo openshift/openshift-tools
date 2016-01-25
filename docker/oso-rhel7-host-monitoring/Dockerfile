@@ -62,6 +62,9 @@ ADD vendor/prometheus_client /usr/lib/python2.7/site-packages/prometheus_client/
 ADD monitoring_scripts /usr/local/bin
 RUN chmod +x /usr/local/bin/cron-send*
 
+# Create ops-runner.log file with proper permissions
+RUN touch /var/log/ops-runner.log && chmod 664 /var/log/ops-runner.log
+
 # Add the start script and tell the container to run it by default
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
