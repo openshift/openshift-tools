@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+LOG_FILE="/var/log/ops-runner.log"
+
 function cleanup() {
   [ -e "$TEMP_FILE" ] && rm $TEMP_FILE
 }
@@ -34,7 +36,12 @@ function log() {
 
   # Replace newlines with '~' so we can do a single-line log entry
   NO_NEWLINES=$(echo "$1" | tr '\n' '~')
-  printf "%s %s %s: %s\n" "$DATE" "$HOST" "$NAME" "$NO_NEWLINES" >> /var/log/ops-runner.log
+
+  if [ -e $LOG_FILE -a -w $LOG_FILE ] ; then
+    printf "%s %s %s: %s\n" "$DATE" "$HOST" "$NAME" "$NO_NEWLINES" >> $LOG_FILE
+  else
+    logger -t "$NAME" "$NO_NEWLINES"
+  fi
 }
 
 function die() {
@@ -102,7 +109,7 @@ if [ -n "$FLOCK" ] && lsof "$FLOCK_FILE" &> /dev/null; then
   die "ERROR: this process is already running."
 fi
 
-TEMP_FILE=$(mktemp ops-runner-${NAME}-XXXXXXXXXX)
+TEMP_FILE=$(mktemp --tmpdir ops-runner-${NAME}-XXXXXXXXXX)
 # So that this script doesn't die if the passed in command returns a non-zero exit code
 set +e
 if [ ! -z "$COMMAND" ] ; then
