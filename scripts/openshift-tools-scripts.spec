@@ -41,6 +41,7 @@ cp -p monitoring/cron-send-docker-dns-resolution.py %{buildroot}/usr/bin/cron-se
 cp -p monitoring/cron-send-docker-existing-dns-resolution.py %{buildroot}/usr/bin/cron-send-docker-existing-dns-resolution
 cp -p monitoring/cron-send-registry-checks.py %{buildroot}/usr/bin/cron-send-registry-checks
 cp -p monitoring/ops-zbx-event-processor.py %{buildroot}/usr/bin/ops-zbx-event-processor
+cp -p monitoring/cron-send-os-skydns-checks.py %{buildroot}/usr/bin/cron-send-os-skydns-checks
 
 
 mkdir -p %{buildroot}/etc/openshift_tools
@@ -149,7 +150,7 @@ OpenShift Tools AWS Monitoring Scripts
 # ----------------------------------------------------------------------------------
 %package monitoring-openshift
 Summary:       OpenShift Tools Openshift Product Scripts
-Requires:      python2,python-openshift-tools-monitoring-openshift,python-openshift-tools-monitoring-zagg,openvswitch
+Requires:      python2,python-openshift-tools-monitoring-openshift,python-openshift-tools-monitoring-zagg,openvswitch,python-dns
 BuildRequires: python2-devel
 BuildArch:     noarch
 
@@ -160,6 +161,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-ovs-status
 /usr/bin/cron-send-etcd-status
 /usr/bin/cron-send-os-master-metrics
+/usr/bin/cron-send-os-skydns-checks
 /usr/bin/cron-send-registry-checks
 
 
