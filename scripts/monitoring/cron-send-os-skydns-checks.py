@@ -48,7 +48,8 @@
 #pylint: disable=import-error
 
 import argparse
-import dns
+from dns import resolver
+from dns import exception as dns_exception
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 import socket
@@ -138,7 +139,7 @@ class OpenshiftSkyDNSZaggClient(object):
 
         print "\nPerforming DNS queries against SkyDNS...\n"
 
-        dns_resolver = dns.resolver.Resolver(configure=False)
+        dns_resolver = resolver.Resolver(configure=False)
         dns_resolver.nameservers.append(self.dns_host)
 
         # Set dns_check to 1 (good) by default
@@ -149,7 +150,7 @@ class OpenshiftSkyDNSZaggClient(object):
 
             try:
                 dns_answer = dns_resolver.query(name_to_resolve, 'A')
-            except dns.exception.DNSException as e:
+            except dns_exception.DNSException as e:
                 print "Failed DNS lookup of %s. Error: %s" % (name_to_resolve, e)
                 print "\nTroubleshoot command: dig @%s %s A\n" % (self.dns_host, name_to_resolve)
                 dns_check = 0
