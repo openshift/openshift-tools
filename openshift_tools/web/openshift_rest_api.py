@@ -65,6 +65,7 @@ import base64
 import requests
 import yaml
 import tempfile
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 class OpenshiftRestApi(object):
     """
@@ -85,6 +86,7 @@ class OpenshiftRestApi(object):
         self.api_host = host
         self.headers = headers
         self.verify_ssl = verify_ssl
+
 
         if None in (user_cert, user_key, ca_cert):
             self.kubeconfig = kubeconfig
@@ -127,7 +129,8 @@ class OpenshiftRestApi(object):
         ssl_verify = self.verify_ssl
         if ssl_verify:
             ssl_verify = self.ca_cert
-
+        else:
+            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
         response = requests.get(self.api_host + api_path,
                                 cert=(self.user_cert, self.user_key),
