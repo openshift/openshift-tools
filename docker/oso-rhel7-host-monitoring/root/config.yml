@@ -103,9 +103,13 @@
       hour: "*/2"
       job: ops-runner -n csosmm.openshift.master.counts /usr/bin/cron-send-os-master-metrics --project-count --pod-count --user-count --pv-count
 
-    - name: send openshift-master /healthz statu every 4 minutes
+    - name: send openshift-master /healthz status every 4 minutes
       minute: "*/4"
       job: ops-runner -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --healthz --api-ping --metrics
+
+    - name: send openshift-master SkyDNS status every 4 minutes
+      minute: "*/4"
+      job: ops-runner -s 50 -n csosms.openshift.master.skydns /usr/bin/cron-send-os-skydns-checks
 
     - name: send openshift-master etcd status
       minute: "*/2"
