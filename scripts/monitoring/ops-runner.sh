@@ -120,10 +120,21 @@ if [ ! -z "$COMMAND" ] ; then
   bash -c "$COMMAND" | tee $TEMP_FILE
   EXITCODE=${PIPESTATUS[0]}
 else
-  TMPCMD=($@)
+  TMPCMD=()
   if [ -n "$FLOCK" ]; then
-    TMPCMD=("flock" "-n" "$FLOCK_FILE" "-c" "${TMPCMD[*]}")
+    TMPCMD=("flock" "-n" "$FLOCK_FILE")
   fi
+
+  CMD_LEN=${#TMPCMD[@]}
+  for i in "$@" ; do
+    pattern=" "
+    if [[ $i =~ $pattern ]] ; then
+      TMPCMD[$CMD_LEN]="$i"
+    else
+      TMPCMD[$CMD_LEN]=$i
+    fi
+    let CMD_LEN=CMD_LEN+1
+  done
 
   # Joel approved, much more secure than eval, and has less quoting issues.
   # DO NOT CHANGE THIS TO EVAL!!!
