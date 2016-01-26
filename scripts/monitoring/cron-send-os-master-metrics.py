@@ -35,7 +35,7 @@ class OpenshiftMasterZaggClient(object):
     def __init__(self):
         self.args = None
         self.zagg_sender = None
-        self.ora = OpenshiftRestApi()
+        self.ora = OpenshiftRestApi(verify_ssl=False)
 
     def run(self):
         """  Main function to run the check """
