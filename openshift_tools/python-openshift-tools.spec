@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.39
+Version:       0.0.40
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -180,6 +180,9 @@ Tools developed to make it easy to work with web technologies.
 
 
 %changelog
+* Tue Jan 26 2016 Matt Woodson <mwoodson@redhat.com> 0.0.40-1
+- Adding support for master ha checks (kwoodson@redhat.com)
+
 * Thu Jan 21 2016 Thomas Wiest <twiest@redhat.com> 0.0.39-1
 - fixed another bug in zabbix_metric_processor.py (twiest@redhat.com)
 
