@@ -44,6 +44,7 @@ RUN yum clean metadata && \
         openshift-tools-scripts-monitoring-zagg-client \
         openshift-tools-scripts-monitoring-aws \
         openshift-tools-scripts-monitoring-openshift \
+        openshift-tools-scripts-monitoring-autoheal \
         pcp-manager pcp-webapi python-pcp \
         openvswitch \
         docker-python && \
