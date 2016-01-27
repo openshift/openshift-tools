@@ -56,7 +56,7 @@ mkdir -p %{buildroot}/var/run/zagg/data
 # ----------------------------------------------------------------------------------
 %package monitoring-autoheal
 Summary:       OpenShift Tools Monitoring Autoheal Scripts
-Requires:      python2,openshift-tools-scripts-monitoring-zagg
+Requires:      python2,python-openshift-tools-monitoring-zagg,openvswitch
 BuildArch:     noarch
 
 %description monitoring-autoheal
