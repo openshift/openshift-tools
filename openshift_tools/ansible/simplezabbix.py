@@ -240,7 +240,8 @@ class SimpleZabbix(object):
                     return True
            # If its a dict, does the result have hostids?
             if isinstance(result['contacted'][self.raw.pattern]['results'], dict):
-                if result['contacted'][self.raw.pattern]['results'].has_key('hostids'):
+                if result['contacted'][self.raw.pattern]['results'].has_key('hostids') or \
+                   result['contacted'][self.raw.pattern]['results'].has_key('hostid'):
                     return True
 
 
@@ -276,7 +277,8 @@ class SimpleZabbix(object):
                     return True
            # If its a dict, does the result have groupids?
             if isinstance(result['contacted'][self.raw.pattern]['results'], dict):
-                if result['contacted'][self.raw.pattern]['results'].has_key('groupid'):
+                if result['contacted'][self.raw.pattern]['results'].has_key('groupid') or \
+                   result['contacted'][self.raw.pattern]['results'].has_key('groupids'):
                     return True
 
 
@@ -312,7 +314,8 @@ class SimpleZabbix(object):
                     return True
            # If its a dict, does the result have templateids?
             if isinstance(result['contacted'][self.raw.pattern]['results'], dict):
-                if result['contacted'][self.raw.pattern]['results'].has_key('templateids'):
+                if result['contacted'][self.raw.pattern]['results'].has_key('templateids') or \
+                   result['contacted'][self.raw.pattern]['results'].has_key('templateid'):
                     return True
 
         return False # something went wrong
