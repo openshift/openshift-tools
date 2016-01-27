@@ -27,7 +27,7 @@ cp -p monitoring/ops-zagg-heartbeater.py %{buildroot}/usr/bin/ops-zagg-heartbeat
 cp -p monitoring/cron-send-process-count.sh %{buildroot}/usr/bin/cron-send-process-count
 cp -p monitoring/cron-send-filesystem-metrics.py %{buildroot}/usr/bin/cron-send-filesystem-metrics
 cp -p monitoring/cron-send-pcp-sampled-metrics.py %{buildroot}/usr/bin/cron-send-pcp-sampled-metrics
-cp -p monitoring/ops-runner.sh %{buildroot}/usr/bin/ops-runner
+cp -p monitoring/ops-runner.py %{buildroot}/usr/bin/ops-runner
 cp -p monitoring/cron-send-ovs-status.py %{buildroot}/usr/bin/cron-send-ovs-status
 cp -p monitoring/cron-send-pcp-ping.sh %{buildroot}/usr/bin/cron-send-pcp-ping
 cp -p monitoring/cron-send-etcd-status.py %{buildroot}/usr/bin/cron-send-etcd-status
