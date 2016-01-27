@@ -42,6 +42,7 @@ cp -p monitoring/cron-send-docker-existing-dns-resolution.py %{buildroot}/usr/bi
 cp -p monitoring/cron-send-registry-checks.py %{buildroot}/usr/bin/cron-send-registry-checks
 cp -p monitoring/ops-zbx-event-processor.py %{buildroot}/usr/bin/ops-zbx-event-processor
 cp -p monitoring/cron-send-os-skydns-checks.py %{buildroot}/usr/bin/cron-send-os-skydns-checks
+cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
 
 
 mkdir -p %{buildroot}/etc/openshift_tools
@@ -49,6 +50,20 @@ cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_
 cp -p monitoring/zagg_server.yaml.example %{buildroot}/etc/openshift_tools/zagg_server.yaml
 
 mkdir -p %{buildroot}/var/run/zagg/data
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-monitoring-autoheal subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-autoheal
+Summary:       OpenShift Tools Monitoring Autoheal Scripts
+Requires:      python2,openshift-tools-scripts-monitoring-zagg
+BuildArch:     noarch
+
+%description monitoring-autoheal
+OpenShift Tools Monitoring Autoheal Scripts
+
+%files monitoring-autoheal
+/usr/bin/cron-fix-ovs-rules
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-pcp subpackage
