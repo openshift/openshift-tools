@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.58
+Version:       0.0.59
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -198,6 +198,9 @@ OpenShift Tools Zabbix Auto Heal Scripts
 
 
 %changelog
+* Wed Jan 27 2016 Joel Diaz <jdiaz@redhat.com> 0.0.59-1
+- fix typo RPM dependency (jdiaz@redhat.com)
+
 * Wed Jan 27 2016 Joel Diaz <jdiaz@redhat.com> 0.0.58-1
 - add script (and new RPM) to detect and remove stray OVS rules/flows
   (jdiaz@redhat.com)
