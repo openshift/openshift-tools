@@ -99,12 +99,12 @@
     - name: send openshift-master process count
       minute: "*/2"
       job: ops-runner -n cspc.openshift.master.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start master controllers' openshift.master.process.count
-      when: g_oso_master_ha
+      condition: "{{ g_oso_master_ha|bool }}"
 
     - name: send openshift-master process count
       minute: "*/2"
       job: ops-runner -n cspc.openshift.master.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start master' openshift.master.process.count
-      when: not g_oso_master_ha
+      condition: "{{ not g_oso_master_ha|bool }}"
 
     - name: send openshift-master counts (user, pod, project) every 2 hours
       hour: "*/2"
@@ -191,5 +191,5 @@
       day: "{{ item.day | default('*', True) }}"
       month: "{{ item.month | default('*', True) }}"
       weekday: "{{ item.weekday | default('*', True) }}"
+    when: "{{ g_oso_host_type == 'master' and (item.condition|default(True,True)) }}"
     with_items: g_zagg_client_master_crons
-    when: g_oso_host_type == 'master'

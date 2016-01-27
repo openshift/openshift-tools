@@ -19,6 +19,7 @@ sudo docker run --rm=true -it --name oso-rhel7-host-monitoring \
            -e OSO_CLUSTER_ID=localcid                       \
            -e OSO_HOST_TYPE=master                          \
            -e OSO_SUB_HOST_TYPE=default                     \
+           -e OSO_MASTER_HA=True                            \
            -v /etc/localtime:/etc/localtime:ro              \
            -v /sys:/sys:ro                                  \
            -v /sys/fs/selinux                               \
