@@ -131,18 +131,20 @@ class OpsRunner(object):
 
                 log_output.write('\n')
 
-    def report_to_zabbix(self, disc_key, disc_macro, key, value):
+    def report_to_zabbix(self, disc_key, disc_macro, item_proto_key, value):
         """ Sends the commands exit code to zabbix. """
         zs = ZaggSender()
 
-        self.verbose_print("Sending metric to zabbix - %s[%s]: %s" % (key, self.args.name, value))
 
         # Add the dynamic item
-        #zs.add_zabbix_dynamic_item('disc.ops.runner', '#OSO_COMMAND', self.args.name)
-        zs.add_zabbix_dynamic_item(disc_key, disc_macro, [key])
+        self.verbose_print("Adding the dynamic item to Zabbix - %s, %s, [%s]" % \
+                           (disc_key, disc_macro, self.args.name))
+        zs.add_zabbix_dynamic_item(disc_key, disc_macro, [self.args.name])
 
         # Send the value for the dynamic item
-        zs.add_zabbix_keys({'%s[%s]' % (key, self.args.name): value})
+        self.verbose_print("Sending metric to Zabbix - %s[%s]: %s" % \
+                           (item_proto_key, self.args.name, value))
+        zs.add_zabbix_keys({'%s[%s]' % (item_proto_key, self.args.name): value})
 
         # Actually send them
         zs.send_metrics()
