@@ -7,8 +7,10 @@ sudo echo -e "\nTesting sudo works...\n"
 
 function is_rhel()
 {
-  grep -qi 'Red Hat Enterprise Linux' /etc/redhat-release
-  return $?
+  RHEL=$(grep -qi 'Red Hat Enterprise Linux' /etc/redhat-release)
+  CSB=$(hostname -f | grep csb)
+  let is_rhel=${RHEL}+${CSB}
+  return $is_rhel
 }
 
 # We MUST be in the same directory as this script for the build to work properly
