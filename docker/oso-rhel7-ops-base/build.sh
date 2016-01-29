@@ -7,8 +7,8 @@ sudo echo -e "\nTesting sudo works...\n"
 
 function is_rhel()
 {
-  RHEL=$(grep -qi 'Red Hat Enterprise Linux' /etc/redhat-release)
-  CSB=$(hostname -f | grep csb)
+  RHEL=$(grep -qi 'Red Hat Enterprise Linux' /etc/redhat-release; echo $?)
+  CSB=$(hostname -f | grep csb; echo $?)
   let is_rhel=${RHEL}+${CSB}
   return $is_rhel
 }
