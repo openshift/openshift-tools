@@ -1,8 +1,8 @@
 #!/usr/bin/env python
+# vim: expandtab:tabstop=4:shiftwidth=4
 '''
   Send Openshift Master stats and metric checks to Zagg
 '''
-# vim: expandtab:tabstop=4:shiftwidth=4
 #
 #   Copyright 2015 Red Hat Inc.
 #
@@ -22,12 +22,15 @@
 #pylint: disable=invalid-name
 # Accepting general Exceptions
 #pylint: disable=broad-except
+# Ignore import errors for buildbot check
+#pylint: disable=import-error
 
 import argparse
 import math
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 from prometheus_client.parser import text_string_to_metric_families
+import yaml
 
 class OpenshiftMasterZaggClient(object):
     """ Checks for the Openshift Master """
@@ -35,7 +38,9 @@ class OpenshiftMasterZaggClient(object):
     def __init__(self):
         self.args = None
         self.zagg_sender = None
-        self.ora = OpenshiftRestApi(verify_ssl=False)
+        self.ora = None
+        self.zabbix_api_key = None
+        self.zabbix_healthz_key = None
 
     def run(self):
         """  Main function to run the check """
@@ -43,13 +48,29 @@ class OpenshiftMasterZaggClient(object):
         self.parse_args()
         self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
 
+        if self.args.local:
+            self.ora = OpenshiftRestApi()
+            self.args.api_ping = True
+            self.args.healthz = True
+            self.zabbix_api_key = 'openshift.master.local.api.ping'
+            self.zabbix_healthz_key = 'openshift.master.local.api.healthz'
+        else:
+            master_cfg_from_yaml = []
+            with open('/etc/openshift/master/master-config.yaml', 'r') as yml:
+                master_cfg_from_yaml = yaml.load(yml)
+            self.ora = OpenshiftRestApi(host=master_cfg_from_yaml['assetConfig']['masterPublicURL'],
+                                        verify_ssl=True)
+
+            self.zabbix_api_key = 'openshift.master.api.ping'
+            self.zabbix_healthz_key = 'openshift.master.api.healthz'
+
         try:
             if self.args.healthz or self.args.all_checks:
                 self.healthz_check()
 
         except Exception as ex:
             print "Problem performing healthz check: %s " % ex.message
-            self.zagg_sender.add_zabbix_keys({'openshift.master.api.healthz' : 'false'})
+            self.zagg_sender.add_zabbix_keys({self.zabbix_healthz_key: 'false'})
 
         try:
             if self.args.api_ping or self.args.all_checks:
@@ -69,7 +90,7 @@ class OpenshiftMasterZaggClient(object):
 
         except Exception as ex:
             print "Problem Openshift API checks: %s " % ex.message
-            self.zagg_sender.add_zabbix_keys({'openshift.master.api.ping' : 0}) # Openshift API is down
+            self.zagg_sender.add_zabbix_keys({self.zabbix_api_key: 0}) # Openshift API is down
 
         try:
             if self.args.metrics or self.args.all_checks:
@@ -87,6 +108,8 @@ class OpenshiftMasterZaggClient(object):
         parser = argparse.ArgumentParser(description='Network metric sender')
         parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
         parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
+        parser.add_argument('-l', '--local', action='store_true', default=False,
+                            help='Run local checks against the local API (https://127.0.0.1)')
 
         master_check_group = parser.add_argument_group('Different Checks to Perform')
         master_check_group.add_argument('--all-checks', action='store_true', default=None,
@@ -124,7 +147,7 @@ class OpenshiftMasterZaggClient(object):
         print "\nOpenshift API ping is alive"
         print "Number of nodes in the Openshift cluster: %s" % len(response['items'])
 
-        self.zagg_sender.add_zabbix_keys({'openshift.master.api.ping' : 1,
+        self.zagg_sender.add_zabbix_keys({self.zabbix_api_key: 1,
                                           'openshift.master.node.count': len(response['items'])})
 
     def healthz_check(self):
@@ -135,7 +158,7 @@ class OpenshiftMasterZaggClient(object):
         response = self.ora.get('/healthz', rtype='text')
         print "healthz check returns: %s " %response
 
-        self.zagg_sender.add_zabbix_keys({'openshift.master.api.healthz' : str('ok' in response).lower()})
+        self.zagg_sender.add_zabbix_keys({self.zabbix_healthz_key: str('ok' in response).lower()})
 
     def metric_check(self):
         """ collect certain metrics from the /metrics API call """
