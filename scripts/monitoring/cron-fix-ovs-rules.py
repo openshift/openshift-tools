@@ -11,12 +11,17 @@ import re
 import subprocess
 from subprocess import CalledProcessError
 
+# Reason: disable pylint import-error because our libs aren't loaded on jenkins.
+# Status: temporary until we start testing in a container where our stuff is installed.
+# pylint: disable=import-error
+from openshift_tools.monitoring.zagg_sender import ZaggSender
+
 class OVS(object):
     ''' Class to hold details of finding and removing bad OVS rules '''
 
     def __init__(self):
         # Sanity check to make sure our dependencies are met
-        CMD = ["ovs-ofctl", "--version"]
+        CMD = ["ovs-vsctl", "show"]
         try:
             subprocess.check_call(CMD)
         except (OSError, CalledProcessError):
@@ -26,8 +31,11 @@ class OVS(object):
         self.ports = None
         self.rules = None
 
-    def get_port_list(self):
-        ''' Returns of active/good ports '''
+    def get_port_list(self, force_refresh=False):
+        ''' Returns list of active/good ports '''
+        if force_refresh:
+            self.ports = None
+
         if self.ports:
             return self.ports
 
@@ -43,10 +51,13 @@ class OVS(object):
 
         return self.ports
 
-    def get_rule_list(self):
+    def get_rule_list(self, force_refresh=False):
         ''' Returns list of active rules we would care about. We care
             about the case where the assigned cookie is equal to the
             output port '''
+        if force_refresh:
+            self.rules = None
+
         if self.rules:
             return self.rules
 
@@ -80,6 +91,19 @@ class OVS(object):
 
         return self.rules
 
+    def find_bad_rules(self):
+        ''' Return list of rules that reference non-existent ports '''
+        # Make sure we're working with rules and ports set
+        self.get_rule_list()
+        self.get_port_list()
+
+        bad_rules = []
+        for rule in self.rules:
+            if rule not in self.ports:
+                bad_rules.append(rule)
+
+        return bad_rules
+
     def remove_rules(self, rule_list):
         ''' Remove a list of rules '''
         cmd = ["ovs-ofctl", "-O", "OpenFlow13", "del-flows", "br0"]
@@ -93,20 +117,33 @@ class OVS(object):
         # Since rule list has changed, force it to regenerate next time
         self.rules = None
 
+ZBX_KEY = "openshift.node.ovs.stray.rules"
+
 if __name__ == "__main__":
     ovs_fixer = OVS()
+    zgs = ZaggSender()
 
     # Dev says rules before ports since OpenShift will set up ports, then rules
-    rules = ovs_fixer.get_rule_list()
-    ports = ovs_fixer.get_port_list()
+    ovs_fixer.get_rule_list()
+    ovs_ports = ovs_fixer.get_port_list()
 
-    bad_rules = []
-    for rule in rules:
-        if rule not in ports:
-            bad_rules.append(rule)
+    ovs_bad_rules = ovs_fixer.find_bad_rules()
 
-    print "Good ports: {0}".format(str(ports))
-    print "Bad rules: {0}".format(str(bad_rules))
+    # Report bad/stray rules count before removing
+    zgs.add_zabbix_keys({ZBX_KEY: len(ovs_bad_rules)})
+    zgs.send_metrics()
 
-    ovs_fixer.remove_rules(bad_rules)
-    print "Removed"
+    print "Good ports: {0}".format(str(ovs_ports))
+    print "Bad rules: {0}".format(str(ovs_bad_rules))
+
+    ovs_fixer.remove_rules(ovs_bad_rules)
+
+    # Refresh list of rules after the removals
+    ovs_fixer.get_rule_list(force_refresh=True)
+
+    ovs_bad_rules = ovs_fixer.find_bad_rules()
+    print "Bad rules after removals: {0}".format(str(ovs_bad_rules))
+
+    # Report new bad/stray rule count after removal
+    zgs.add_zabbix_keys({ZBX_KEY: len(ovs_bad_rules)})
+    zgs.send_metrics()
