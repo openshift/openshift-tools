@@ -5,8 +5,8 @@
   - /root/default_vars.yml
   - /root/{{ g_oso_host_type }}_default_vars.yml
   vars:
-    g_oso_cluster_id: "{{ lookup('env', 'OSO_CLUSTER_ID') }}"
-    g_oso_environment: "{{ lookup('env', 'OSO_ENVIRONMENT') }}"
+    g_oso_cluster_id: "{{ lookup('env', 'OSO_CLUSTER_ID') | default('undefcid', True) }}"
+    g_oso_environment: "{{ lookup('env', 'OSO_ENVIRONMENT') | default('undefenv', True) }}"
     g_oso_host_type: "{{ lookup('env', 'OSO_HOST_TYPE') }}"
     g_oso_master_ha: "{{ lookup('env', 'OSO_MASTER_HA') | default(g_default_openshift_master_ha, True) }}"
 
