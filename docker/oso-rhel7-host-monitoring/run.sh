@@ -17,6 +17,7 @@ sudo docker run --rm=true -it --name oso-rhel7-host-monitoring \
            --ipc=host                                       \
            -e OSO_CLUSTER_GROUP=localcgrp                   \
            -e OSO_CLUSTER_ID=localcid                       \
+           -e OSO_ENVIRONMENT=localprod                     \
            -e OSO_HOST_TYPE=master                          \
            -e OSO_SUB_HOST_TYPE=default                     \
            -e OSO_MASTER_HA=True                            \
