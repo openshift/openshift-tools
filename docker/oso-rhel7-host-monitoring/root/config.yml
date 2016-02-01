@@ -91,6 +91,10 @@
       minute: "0"
       job: ops-runner -n csos.openshift.master.ovs.status /usr/bin/cron-send-ovs-status
 
+    - name: fix and report on stray OVS rules
+      minute: "*/5"
+      job: ops-runner -f -n cfor.openshift.node.ovs.stray.rules /usr/bin/cron-fix-ovs-rules
+
     # Openshift Master checks
     g_zagg_client_master_crons:
     - name: run create app every 5 minutes
