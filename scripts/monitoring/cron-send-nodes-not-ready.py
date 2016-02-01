@@ -28,9 +28,11 @@ def main():
     ''' Get data and send to zabbix
     '''
 
-    nodes_not_schedulable = [n for n in nodes_output.split('\n') if "SchedulingDisabled " in n]
+    nodes_output = get_node_status()
 
-    nodes_not_ready = [n for n in nodes_output.split('\n') if "NotReady" in n]
+    nodes_not_schedulable = [n for n in nodes_output if "SchedulingDisabled " in n]
+
+    nodes_not_ready = [n for n in nodes_output if "NotReady" in n]
 
     print "Found %s nodes not schedulable"  % len(nodes_not_schedulable)
     print "Found %s nodes not ready" % len(nodes_not_ready)
