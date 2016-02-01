@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.61
+Version:       0.0.62
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -198,6 +198,10 @@ OpenShift Tools Zabbix Auto Heal Scripts
 
 
 %changelog
+* Mon Feb 01 2016 Matt Woodson <mwoodson@redhat.com> 0.0.62-1
+- change master check to look for cluster api url; added master local check as
+  well (mwoodson@redhat.com)
+
 * Thu Jan 28 2016 Thomas Wiest <twiest@redhat.com> 0.0.61-1
 - fixed bug in ops-runner when sending items to zabbix. (twiest@redhat.com)
 
