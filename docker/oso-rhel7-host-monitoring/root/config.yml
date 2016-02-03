@@ -124,6 +124,10 @@
       minute: "*/5"
       job: ops-runner -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --local
 
+    - name: send openshift-master nodes not ready status every 5 minutes
+      minute: "*/5"
+      job: ops-runner -n csosmm.openshift.master.nodes_not_ready /usr/bin/cron-send-os-master-metrics --nodes-not-ready
+
     - name: send openshift-master SkyDNS status every 4 minutes
       minute: "*/4"
       job: ops-runner -s 50 -n csosms.openshift.master.skydns /usr/bin/cron-send-os-skydns-checks
