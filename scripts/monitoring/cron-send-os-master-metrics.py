@@ -257,11 +257,13 @@ class OpenshiftMasterZaggClient(object):
             pv_types[item['status']['phase']] += 1
 
         print "Total Persistent Volume Total count: %s" % len(response['items'])
-        self.zagg_sender.add_zabbix_keys({'openshift.master.pv.total.count' : len(response['items'])})
+        self.zagg_sender.add_zabbix_keys(
+            {'openshift.master.pv.total.count' : len(response['items'])})
 
         for key, value in pv_types.iteritems():
             print "Total Persistent Volume %s count: %s" % (key, value)
-            self.zagg_sender.add_zabbix_keys({'openshift.master.pv.%s.count' %key.lower() : value})
+            self.zagg_sender.add_zabbix_keys(
+                {'openshift.master.pv.%s.count' %key.lower() : value})
 
     def nodes_not_ready(self):
         """ check the number of nodes in the cluster that are not ready"""
@@ -273,22 +275,24 @@ class OpenshiftMasterZaggClient(object):
         nodes_not_schedulable = []
 
         for n in response['items']:
-          if "unschedulable" in n['spec']:
-            nodes_not_schedulable.append(n)
+            if "unschedulable" in n['spec']:
+                nodes_not_schedulable.append(n)
 
         nodes_not_ready = []
 
         for n in response['items']:
-          if n['status']['conditions'][0]['reason'] != "KubeletReady":
-            nodes_not_ready.append(n)
+            if n['status']['conditions'][0]['reason'] != "KubeletReady":
+                nodes_not_ready.append(n)
 
         print "Count of nodes not schedulable: %s" % len(nodes_not_schedulable)
         print "Count of nodes not ready: %s" % len(nodes_not_ready)
 
-        self.zagg_sender.add_zabbix_keys({'openshift.master.nodesnotready.count' : len(nodes_not_ready)})
+        self.zagg_sender.add_zabbix_keys(
+            {'openshift.master.nodesnotready.count' : len(nodes_not_ready)})
 
-        self.zagg_sender.add_zabbix_keys({'openshift.master.nodesnotschedulable.count' : len(nodes_not_schedulable)})
- 
+        self.zagg_sender.add_zabbix_keys(
+            {'openshift.master.nodesnotschedulable.count' : len(nodes_not_schedulable)})
+
 if __name__ == '__main__':
     OMCZ = OpenshiftMasterZaggClient()
     OMCZ.run()
