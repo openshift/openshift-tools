@@ -88,6 +88,9 @@ class OpenshiftMasterZaggClient(object):
             if self.args.pv_count or self.args.all_checks:
                 self.pv_count()
 
+            if self.args.nodes_not_ready or self.args.all_checks:
+                self.nodes_not_ready()
+
         except Exception as ex:
             print "Problem Openshift API checks: %s " % ex.message
             self.zagg_sender.add_zabbix_keys({self.zabbix_api_key: 0}) # Openshift API is down
@@ -135,6 +138,9 @@ class OpenshiftMasterZaggClient(object):
 
         master_check_group.add_argument('--pv-count', action='store_true', default=None,
                                         help='Query the Openshift Master for number of Persistent Volumes')
+
+        master_check_group.add_argument('--nodes-not-ready', action='store_true', default=None,
+                                        help='Query the Openshift Master for number of nodes not in Ready state')
 
         self.args = parser.parse_args()
 
@@ -274,11 +280,41 @@ class OpenshiftMasterZaggClient(object):
             pv_types[item['status']['phase']] += 1
 
         print "Total Persistent Volume Total count: %s" % len(response['items'])
-        self.zagg_sender.add_zabbix_keys({'openshift.master.pv.total.count' : len(response['items'])})
+        self.zagg_sender.add_zabbix_keys(
+            {'openshift.master.pv.total.count' : len(response['items'])})
 
         for key, value in pv_types.iteritems():
             print "Total Persistent Volume %s count: %s" % (key, value)
-            self.zagg_sender.add_zabbix_keys({'openshift.master.pv.%s.count' %key.lower() : value})
+            self.zagg_sender.add_zabbix_keys(
+                {'openshift.master.pv.%s.count' %key.lower() : value})
+
+    def nodes_not_ready(self):
+        """ check the number of nodes in the cluster that are not ready"""
+
+        print "\nPerforming nodes not ready check..."
+
+        response = self.ora.get('/api/v1/nodes')
+
+        nodes_not_schedulable = []
+
+        for n in response['items']:
+            if "unschedulable" in n['spec']:
+                nodes_not_schedulable.append(n)
+
+        nodes_not_ready = []
+
+        for n in response['items']:
+            if n['status']['conditions'][0]['reason'] != "KubeletReady":
+                nodes_not_ready.append(n)
+
+        print "Count of nodes not schedulable: %s" % len(nodes_not_schedulable)
+        print "Count of nodes not ready: %s" % len(nodes_not_ready)
+
+        self.zagg_sender.add_zabbix_keys(
+            {'openshift.master.nodesnotready.count' : len(nodes_not_ready)})
+
+        self.zagg_sender.add_zabbix_keys(
+            {'openshift.master.nodesnotschedulable.count' : len(nodes_not_schedulable)})
 
 if __name__ == '__main__':
     OMCZ = OpenshiftMasterZaggClient()
