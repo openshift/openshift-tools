@@ -93,7 +93,7 @@ class OpenShiftOC(object):
         if verbose:
             print ' '.join(cmds)
         proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
-                                env={'KUBECONFIG': '/etc/openshift/master/admin.kubeconfig'})
+                                env={'KUBECONFIG': '/etc/origin/master/admin.kubeconfig'})
         proc.wait()
         if proc.returncode == 0:
             output = proc.stdout.read()
