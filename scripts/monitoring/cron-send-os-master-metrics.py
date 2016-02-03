@@ -214,7 +214,7 @@ class OpenshiftMasterZaggClient(object):
         print "\nPerforming project count check..."
 
         excluded_names = ['openshift', 'openshift-infra', 'default', 'ops-monitor']
-        response = self.ora.get('/api/v1/projects')
+        response = self.ora.get('/oapi/v1/projects')
 
         project_names = [project['metadata']['name'] for project in response['items']]
         valid_names = set(project_names) - set(excluded_names)
