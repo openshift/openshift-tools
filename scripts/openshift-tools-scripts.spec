@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.63
+Version:       0.0.64
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -198,6 +198,10 @@ OpenShift Tools Zabbix Auto Heal Scripts
 
 
 %changelog
+* Thu Feb 04 2016 Sten Turpin <sten@redhat.com> 0.0.64-1
+- registry no longer sends {} (sten@redhat.com)
+- renamed /etc/openshift to /etc/origin (sten@redhat.com)
+- new master check for hosts not ready
 * Mon Feb 01 2016 Joel Diaz <jdiaz@redhat.com> 0.0.63-1
 - report stray OVS rules found before and after cleanup (jdiaz@redhat.com)
 
