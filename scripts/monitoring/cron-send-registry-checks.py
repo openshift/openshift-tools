@@ -22,6 +22,8 @@
 #pylint: disable=invalid-name
 # Accepting general Exceptions
 #pylint: disable=broad-except
+# oso modules won't be available to pylint in Jenkins
+#pylint: disable=import-error
 
 import argparse
 from openshift_tools.monitoring.zagg_sender import ZaggSender
@@ -85,27 +87,27 @@ class OpenshiftDockerRegigtryChecker(object):
 
     def registry_health_check(self):
         """
-            Check the registry's /healthz URL
+            Check the registry's / URL
 
-            Currently, in v3.0.2.0, http://registry.url/healthz works. The '/healthz' is
+            In v3.0.2.0, http://registry.url/healthz worked. The '/healthz' was
               something added by openshift to the docker registry. This should return a http status
               code of 200 and text of {} (empty json).
 
-            In future versions of the docker registry, '/' should work and return a 200 to
+            In 3.1.1 and on, '/' should work and return a 200 to
               indicate that the registry is up and running. Please see the following url for
               more info.  Look under load balancer health checks:
             https://github.com/docker/distribution/blob/master/docs/deploying.md#running-a-domain-registry
         """
 
 
-        docker_registry_url = "%s://%s:%s/healthz" %(self.docker_protocol, self.docker_host, self.docker_port)
+        docker_registry_url = "%s://%s:%s/" %(self.docker_protocol, self.docker_host, self.docker_port)
 
-        print "\nPerforming registry /healthz check on URL: %s\n" % docker_registry_url
+        print "\nPerforming registry check on URL: %s\n" % docker_registry_url
 
         response = requests.get(docker_registry_url, verify=False)
 
         rval = '0'
-        if response.status_code == 200 and response.text.startswith('{}'):
+        if response.status_code == 200:
             rval = '1'
 
         self.zagg_sender.add_zabbix_keys({'openshift.master.registry.healthz' : rval})
