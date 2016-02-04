@@ -24,8 +24,8 @@ ENV PATH /usr/share/pcp/lib:/usr/libexec/pcp/bin:$PATH
 ADD check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
 ##################
 
-RUN echo -e "\n\nalias oca='KUBECONFIG=/etc/openshift/master/admin.kubeconfig oc '" >> /root/.bashrc
-RUN echo "alias oadma='KUBECONFIG=/etc/openshift/master/admin.kubeconfig oadm '" >> /root/.bashrc
+RUN echo -e "\n\nalias oca='KUBECONFIG=/etc/origin/master/admin.kubeconfig oc '" >> /root/.bashrc
+RUN echo "alias oadma='KUBECONFIG=/etc/origin/master/admin.kubeconfig oadm '" >> /root/.bashrc
 
 RUN yum clean metadata && \
     yum install -y python-pip pcp pcp-conf pcp-testsuite \

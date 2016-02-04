@@ -15,9 +15,9 @@ def main():
     ''' Get data from etcd API
     '''
 
-    SSL_CLIENT_CERT = '/etc/openshift/master/master.etcd-client.crt'
-    SSL_CLIENT_KEY = '/etc/openshift/master/master.etcd-client.key'
-    OPENSHIFT_MASTER_CONFIG = '/etc/openshift/master/master-config.yaml'
+    SSL_CLIENT_CERT = '/etc/origin/master/master.etcd-client.crt'
+    SSL_CLIENT_KEY = '/etc/origin/master/master.etcd-client.key'
+    OPENSHIFT_MASTER_CONFIG = '/etc/origin/master/master-config.yaml'
 
     # find out the etcd port
     with open(OPENSHIFT_MASTER_CONFIG, 'r') as f:

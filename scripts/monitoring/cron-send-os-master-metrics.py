@@ -22,8 +22,6 @@
 #pylint: disable=invalid-name
 # Accepting general Exceptions
 #pylint: disable=broad-except
-# Ignore import errors for buildbot check
-#pylint: disable=import-error
 # pylint is flagging this code as being too complex. Refactor it soon! https://trello.com/c/Isne8Dcz
 #pylint: disable=too-many-branches
 
@@ -58,7 +56,7 @@ class OpenshiftMasterZaggClient(object):
             self.zabbix_healthz_key = 'openshift.master.local.api.healthz'
         else:
             master_cfg_from_yaml = []
-            with open('/etc/openshift/master/master-config.yaml', 'r') as yml:
+            with open('/etc/origin/master/master-config.yaml', 'r') as yml:
                 master_cfg_from_yaml = yaml.load(yml)
             self.ora = OpenshiftRestApi(host=master_cfg_from_yaml['assetConfig']['masterPublicURL'],
                                         verify_ssl=True)

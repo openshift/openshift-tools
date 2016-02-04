@@ -51,7 +51,7 @@ class OCUtil(object):
 
         results = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                    env={'PATH': os.environ["PATH"],
-                                        'KUBECONFIG': '/etc/openshift/master/admin.kubeconfig'})
+                                        'KUBECONFIG': '/etc/origin/master/admin.kubeconfig'})
         results.wait()
         if results.returncode != 0:
             raise Exception("Non-zero exit on command: {}".format(str(cmd)))

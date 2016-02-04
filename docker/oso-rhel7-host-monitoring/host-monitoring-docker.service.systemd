@@ -44,9 +44,9 @@ ExecStart=/usr/bin/docker run --name host-monitoring            \
            -v /run:/run                                     \
            -v /var/log:/var/log                             \
            -v /var/lib/docker/volumes/shared:/shared:rw     \
-           -v /etc/openshift/master/master.etcd-client.crt:/etc/openshift/master/master.etcd-client.crt \
-           -v /etc/openshift/master/master.etcd-client.key:/etc/openshift/master/master.etcd-client.key \
-           -v /etc/openshift/master/master-config.yaml:/etc/openshift/master/master-config.yaml \
+           -v /etc/origin/master/master.etcd-client.crt:/etc/origin/master/master.etcd-client.crt \
+           -v /etc/origin/master/master.etcd-client.key:/etc/origin/master/master.etcd-client.key \
+           -v /etc/origin/master/master-config.yaml:/etc/origin/master/master-config.yaml \
            docker-registry.ops.rhcloud.com/ops/host-monitoring
 
 
