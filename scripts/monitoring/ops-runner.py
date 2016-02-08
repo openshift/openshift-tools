@@ -109,7 +109,8 @@ class OpsRunner(object):
                 self.log_output(exit_code)
             else:
                 self.verbose_print("Non-zero exit code, writing output to logger.")
-                self.run_cmd_with_output(['/usr/bin/logger', '-t', NAME, '-f',
+                self.run_cmd_with_output(['/usr/bin/logger', '-t',
+                                          NAME + ' ' + self.args.name, '-f',
                                           self.tmp_file_handle.name], log=False)
 
         sys.exit(exit_code)
@@ -121,7 +122,7 @@ class OpsRunner(object):
         hostname = socket.gethostname()
 
         with open(OPS_RUNNER_LOG_FILE, 'a') as log_output:
-            log_output.write("%s %s %s: Exit code [%s]:~" % (date_str, hostname, NAME, exit_code))
+            log_output.write("%s %s %s %s: Exit code [%s]:~" % (date_str, hostname, NAME, self.args.name, exit_code))
 
             with open(self.tmp_file_handle.name, 'r') as tmp_input:
                 for line in tmp_input:
