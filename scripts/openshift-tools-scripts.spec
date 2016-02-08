@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.65
+Version:       0.0.66
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -214,6 +214,9 @@ OpenShift Tools Zabbix Auto Heal Scripts
 
 
 %changelog
+* Mon Feb 08 2016 Joel Diaz <jdiaz@redhat.com> 0.0.66-1
+- fix bad variable name (jdiaz@redhat.com)
+
 * Mon Feb 08 2016 Joel Diaz <jdiaz@redhat.com> 0.0.65-1
 - add missing bits to spec (jdiaz@redhat.com)
 - 2nd attempt remote healing tool (jdiaz@redhat.com)
