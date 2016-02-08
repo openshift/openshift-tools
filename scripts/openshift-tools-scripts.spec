@@ -65,7 +65,7 @@ BuildArch:     noarch
 OpenShift Tools Monitoring Remoteheal Scripts
 
 %files monitoring-remoteheal
-/usr/bin/remote-heal
+/usr/bin/remote-healer
 %config(noreplace)/etc/openshift_tools/remote_healer.conf
 
 # ----------------------------------------------------------------------------------
