@@ -170,6 +170,18 @@
       dest: /etc/openshift_tools/zagg_client.yaml
       mode: "644"
 
+  - name: Check whether /etc/origin exists
+    stat:
+      path: /etc/origin
+    register: etc_origin
+
+  - name: Create /etc/origin -> /etc/openshift link if needed
+    file:
+      state: link
+      src: /etc/openshift
+      dest: /etc/origin
+    when: etc_origin.stat.exists == False
+
   - name: Setup Cron
     cron:
       name: "{{ item.name }}"
