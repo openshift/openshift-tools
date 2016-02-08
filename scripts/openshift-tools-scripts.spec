@@ -43,13 +43,23 @@ cp -p monitoring/cron-send-registry-checks.py %{buildroot}/usr/bin/cron-send-reg
 cp -p monitoring/ops-zbx-event-processor.py %{buildroot}/usr/bin/ops-zbx-event-processor
 cp -p monitoring/cron-send-os-skydns-checks.py %{buildroot}/usr/bin/cron-send-os-skydns-checks
 cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
+cp -p remote-heal/remote-healer.py ${buildroot}/usr/bin/remote-healer
 
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
 cp -p monitoring/zagg_server.yaml.example %{buildroot}/etc/openshift_tools/zagg_server.yaml
+cp -p remote-heal/remote_heal.conf.example %{buildroot}/etc/openshift_tools/remote_heal.conf
 
 mkdir -p %{buildroot}/var/run/zagg/data
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-monitoring-remoteheal subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-remoteheal
+Summary:       OpenShift Tools Monitoring Remote Heal Scripts
+Requires:      python2,openshift-ansible-bin
+BuildArch:     noarch
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-autoheal subpackage
