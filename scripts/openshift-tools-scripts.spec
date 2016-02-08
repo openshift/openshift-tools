@@ -61,6 +61,12 @@ Summary:       OpenShift Tools Monitoring Remote Heal Scripts
 Requires:      python2,openshift-ansible-bin
 BuildArch:     noarch
 
+%description monitoring-remoteheal
+OpenShift Tools Monitoring Remoteheal Scripts
+
+%files monitoring-remoteheal
+/usr/bin/remote-heal
+
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-autoheal subpackage
 # ----------------------------------------------------------------------------------
