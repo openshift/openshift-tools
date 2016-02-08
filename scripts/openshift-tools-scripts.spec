@@ -49,7 +49,7 @@ cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
 cp -p monitoring/zagg_server.yaml.example %{buildroot}/etc/openshift_tools/zagg_server.yaml
-cp -p remote-heal/remote_heal.conf.example %{buildroot}/etc/openshift_tools/remote_heal.conf
+cp -p remote-heal/remote_healer.conf.example %{buildroot}/etc/openshift_tools/remote_healer.conf
 
 mkdir -p %{buildroot}/var/run/zagg/data
 
@@ -66,6 +66,7 @@ OpenShift Tools Monitoring Remoteheal Scripts
 
 %files monitoring-remoteheal
 /usr/bin/remote-heal
+%config(noreplace)/etc/openshift_tools/remote_healer.conf
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-autoheal subpackage
