@@ -43,7 +43,7 @@ cp -p monitoring/cron-send-registry-checks.py %{buildroot}/usr/bin/cron-send-reg
 cp -p monitoring/ops-zbx-event-processor.py %{buildroot}/usr/bin/ops-zbx-event-processor
 cp -p monitoring/cron-send-os-skydns-checks.py %{buildroot}/usr/bin/cron-send-os-skydns-checks
 cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
-cp -p remote-heal/remote-healer.py ${buildroot}/usr/bin/remote-healer
+cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
 
 
 mkdir -p %{buildroot}/etc/openshift_tools
