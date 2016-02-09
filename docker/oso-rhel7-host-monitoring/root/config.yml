@@ -180,7 +180,7 @@
       state: link
       src: /etc/openshift
       dest: /etc/origin
-    when: etc_origin.stat.exists == False
+    when: etc_origin.stat.exists == False and g_oso_host_type == 'master'
 
   - name: Setup Cron
     cron:
