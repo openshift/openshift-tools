@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.69
+Version:       0.0.70
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -217,6 +217,9 @@ OpenShift Tools Zabbix Auto Heal Scripts
 
 
 %changelog
+* Tue Feb 09 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.70-1
+- Adding file to list of file in rpm (kwoodson@redhat.com)
+
 * Tue Feb 09 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.69-1
 - App create updates for multi-master (kwoodson@redhat.com)
 
