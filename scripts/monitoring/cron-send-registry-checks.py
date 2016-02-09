@@ -38,7 +38,7 @@ class OpenshiftDockerRegigtryChecker(object):
         self.zagg_sender = None
         self.ora = OpenshiftRestApi()
 
-        self.docker_host = None
+        self.docker_hosts = []
         self.docker_port = None
         self.docker_protocol = 'http'
 
@@ -53,7 +53,7 @@ class OpenshiftDockerRegigtryChecker(object):
             self.registry_health_check()
         except Exception as ex:
             print "Problem performing registry check: %s " % ex.message
-            self.zagg_sender.add_zabbix_keys({'openshift.master.registry.healthz' : 0})
+            self.zagg_sender.add_zabbix_keys({'openshift.master.registry.healthy_pct' : 0})
 
         self.zagg_sender.send_metrics()
 
@@ -72,12 +72,14 @@ class OpenshiftDockerRegigtryChecker(object):
             inside of kubernetes.
         """
 
-        print "\nFinding the Docker Registry via Openshift API calls..."
+        print "\nFinding the Docker Registry pods via Openshift API calls..."
 
-        response = self.ora.get('/api/v1/namespaces/default/services/docker-registry')
+        response = self.ora.get('/api/v1/namespaces/default/endpoints/docker-registry')
 
-        self.docker_host = response['spec']['clusterIP']
-        self.docker_port = str(response['spec']['ports'][0]['port'])
+        self.docker_port = str(response['subsets'][0]['ports'][0]['port'])
+        self.docker_hosts = []
+        for address in response['subsets'][0]['addresses']:
+            self.docker_hosts.append(address['ip'])
 
         response = self.ora.get('/oapi/v1/namespaces/default/deploymentconfigs/docker-registry')
 
@@ -99,18 +101,36 @@ class OpenshiftDockerRegigtryChecker(object):
             https://github.com/docker/distribution/blob/master/docs/deploying.md#running-a-domain-registry
         """
 
+        healthy_registries = 0
 
-        docker_registry_url = "%s://%s:%s/" %(self.docker_protocol, self.docker_host, self.docker_port)
+        for host in self.docker_hosts:
+            docker_registry_url = "%s://%s:%s/" %(self.docker_protocol, host, self.docker_port)
 
-        print "\nPerforming registry check on URL: %s\n" % docker_registry_url
+            print "\nPerforming registry check on URL: %s\n" % docker_registry_url
 
-        response = requests.get(docker_registry_url, verify=False)
+            response = requests.get(docker_registry_url, verify=False)
 
-        rval = '0'
-        if response.status_code == 200:
-            rval = '1'
+            if response.status_code == 200:
+                healthy_registries += 1
 
-        self.zagg_sender.add_zabbix_keys({'openshift.master.registry.healthz' : rval})
+            if response.status_code == 404:
+                docker_registry_url = "%s://%s:%s/healthz" %(self.docker_protocol, host, self.docker_port)
+
+                print "\nPerforming registry check on URL: %s\n" % docker_registry_url
+
+                response = requests.get(docker_registry_url, verify=False)
+
+                if response.status_code == 200 and response.text.startswith('{}'):
+                    healthy_registries += 1
+
+        healthy_pct = 0
+
+        if len(self.docker_hosts) > 0:
+            healthy_pct = (healthy_registries / len(self.docker_hosts) *100)
+
+        print "\n%s of %s registries are healthy\n" %(healthy_registries, len(self.docker_hosts))
+
+        self.zagg_sender.add_zabbix_keys({'openshift.master.registry.healthy_pct' : healthy_pct})
 
 if __name__ == '__main__':
     ODRC = OpenshiftDockerRegigtryChecker()
