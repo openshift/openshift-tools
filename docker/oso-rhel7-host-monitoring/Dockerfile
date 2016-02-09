@@ -57,12 +57,6 @@ ADD root /root
 # FIXME: These are vendor libs that need to be packaged and installed via RPM.
 ADD vendor/prometheus_client /usr/lib/python2.7/site-packages/prometheus_client/
 
-# FIXME: These are ugly quick hacked together monitoring scripts
-# They need to be removed and replaced by prototype monitoring scripts later on
-# Or refactored into libs and added to rpms
-ADD monitoring_scripts /usr/local/bin
-RUN chmod +x /usr/local/bin/cron-send*
-
 # Create ops-runner.log file with proper permissions
 RUN touch /var/log/ops-runner.log && chmod 664 /var/log/ops-runner.log
 
