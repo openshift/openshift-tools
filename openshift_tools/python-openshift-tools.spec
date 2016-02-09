@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.42
+Version:       0.0.43
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -180,6 +180,9 @@ Tools developed to make it easy to work with web technologies.
 
 
 %changelog
+* Tue Feb 09 2016 Sten Turpin <sten@redhat.com> 0.0.43-1
+- renamed /etc/openshift to /etc/origin (sten@redhat.com)
+
 * Wed Jan 27 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.42-1
 - Updating for latest changes to update hosts (kwoodson@redhat.com)
 
