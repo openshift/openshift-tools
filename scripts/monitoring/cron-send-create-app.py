@@ -13,6 +13,12 @@ import time
 import re
 import urllib
 import sys
+import os
+
+# Our jenkins server does not include these rpms.
+# In the future we might move this to a container where these
+# libs might exist
+#pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 
 class OpenShiftOC(object):
@@ -113,7 +119,7 @@ def curl(ip_addr, port):
 def main():
     ''' Do the application creation
     '''
-    proj_name = 'ops-monitor'
+    proj_name = 'ops-monitor-' + os.environ['ZAGG_CLIENT_HOSTNAME']
     app = 'openshift/hello-openshift:v1.0.6'
     verbose = False
 
@@ -154,7 +160,7 @@ def main():
         OpenShiftOC.delete_project(proj_name, verbose)
 
     zgs = ZaggSender()
-    zgs.add_zabbix_keys({'create_app': create_app})
+    zgs.add_zabbix_keys({'openshift.master.app.create': create_app})
     zgs.send_metrics()
 
 

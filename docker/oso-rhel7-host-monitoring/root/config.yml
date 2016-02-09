@@ -99,7 +99,7 @@
     g_zagg_client_master_crons:
     - name: run create app every 5 minutes
       minute: "*/5"
-      job: ops-runner -n csca.create_app /usr/local/bin/cron-send-create-app.py
+      job: ops-runner -n csca.openshift.master.app.create /usr/bin/cron-send-create-app
 
     - name: send openshift-master process count
       minute: "*/2"
