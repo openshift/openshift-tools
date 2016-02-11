@@ -132,7 +132,7 @@
       job: ops-runner -n cspc.openshift.master.etcd.status /usr/bin/cron-send-etcd-status
 
     - name: send cluster docker registry checks
-      minute: "*/5"
+      minute: "*/2"
       job: ops-runner -n csrc.openshift.master.registry.checks /usr/bin/cron-send-registry-checks
 
     - name: send S3 bucket metrics weekly
