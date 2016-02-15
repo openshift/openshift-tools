@@ -162,6 +162,10 @@ class RemoteHealer(object):
                                 'systemctl start oso-rhel7-host-monitoring')
             self.run_cmd(cmd)
 
+            # Run reporting to quiet down trigger
+            cmd = self.ossh_cmd(self._args.host,
+                                'docker exec oso-rhe7-host-monitoring /usr/bin/cron-send-ovs-stats')
+
         else:
             logging.info("No healing action defined for trigger: " + self._args.trigger)
 
