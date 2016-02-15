@@ -45,7 +45,7 @@ cp -p monitoring/cron-send-os-skydns-checks.py %{buildroot}/usr/bin/cron-send-os
 cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
 cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
-
+cp -p cloud/ec2_copy_ami_to_regions.py %{buildroot}/usr/bin/ec2_copy_ami_to_regions
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -198,7 +198,6 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-os-skydns-checks
 /usr/bin/cron-send-registry-checks
 
-
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
 # ----------------------------------------------------------------------------------
@@ -214,6 +213,20 @@ OpenShift Tools Zabbix Auto Heal Scripts
 %files monitoring-zabbix-heal
 /usr/bin/ops-zbx-event-processor
 
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-cloud subpackage
+# ----------------------------------------------------------------------------------
+%package cloud
+Summary:       OpenShift Tools Cloud tools
+Requires:      python2,python-boto
+BuildRequires: python2-devel
+BuildArch:     noarch
+
+%description cloud
+OpenShift Tools Cloud Tools
+
+%files cloud
+/usr/bin/ec2_copy_ami_to_regions
 
 
 %changelog
