@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.71
+Version:       0.0.72
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -230,6 +230,10 @@ OpenShift Tools Cloud Tools
 
 
 %changelog
+* Mon Feb 15 2016 Matt Woodson <mwoodson@redhat.com> 0.0.72-1
+- added ec2_copy_ami_to_regions.py; added the cloud rpm (mwoodson@redhat.com)
+- add ops-runner id name to logged output (jdiaz@redhat.com)
+
 * Tue Feb 09 2016 Sten Turpin <sten@redhat.com> 0.0.71-1
 - registry check now works on old + new registry, and checks all available
   registries (sten@redhat.com)
