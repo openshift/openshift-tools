@@ -45,7 +45,7 @@ cp -p monitoring/cron-send-os-skydns-checks.py %{buildroot}/usr/bin/cron-send-os
 cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
 cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
-cp -p cloud/ec2_copy_ami_to_regions.py %{buildroot}/usr/bin/ec2_copy_ami_to_regions
+cp -p cloud/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -226,7 +226,7 @@ BuildArch:     noarch
 OpenShift Tools Cloud Tools
 
 %files cloud
-/usr/bin/ec2_copy_ami_to_regions
+/usr/bin/ops-ec2-copy-ami-to-all-regions
 
 
 %changelog

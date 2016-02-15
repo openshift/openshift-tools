@@ -26,6 +26,8 @@
  # copy ami-id to all regions (ami-12345678 is in us-west-1)
  ec2_copy_ami_to_regions.py ami-12345678 us-west-1
 """
+# Ignoring module name
+# pylint: disable=invalid-name
 
 import boto.ec2
 import sys
