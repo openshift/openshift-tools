@@ -138,7 +138,7 @@ class RemoteHealer(object):
         # appropriate action.
         # Be sure to have review by Joel Smith when making changes.
         #
-        if re.search("^OVS may not be running on", self._args.trigger):
+        if re.search(r'^\[HEAL\] OVS may not be running on', self._args.trigger):
             logging.info("Restarting OVS on " + self._args.host)
 
             # Stop OpenShift/docker
