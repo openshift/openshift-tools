@@ -94,6 +94,10 @@
       minute: "*/5"
       job: ops-runner -f -n cfor.openshift.node.ovs.stray.rules /usr/bin/cron-fix-ovs-rules
 
+    - name: send cluster docker registry checks
+      minute: "*/2"
+      job: ops-runner -f -n csrc.openshift.node.registry.checks /usr/bin/cron-send-registry-checks
+
     # Openshift Master checks
     g_zagg_client_master_crons:
     - name: run create app every 5 minutes
@@ -130,10 +134,6 @@
     - name: send openshift-master etcd status
       minute: "*/2"
       job: ops-runner -n cspc.openshift.master.etcd.status /usr/bin/cron-send-etcd-status
-
-    - name: send cluster docker registry checks
-      minute: "*/2"
-      job: ops-runner -n csrc.openshift.master.registry.checks /usr/bin/cron-send-registry-checks
 
     - name: send S3 bucket metrics weekly
       hour: "3"
