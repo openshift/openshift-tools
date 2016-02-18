@@ -42,6 +42,7 @@ class OpenshiftDockerRegigtryChecker(object):
 
         self.docker_hosts = []
         self.docker_port = None
+        # Assume secure registry
         self.docker_protocol = 'https'
         self.docker_service_ip = None
         self.kubeconfig = None
@@ -115,8 +116,7 @@ class OpenshiftDockerRegigtryChecker(object):
         for address in endpoints['subsets'][0]['addresses']:
             self.docker_hosts.append(address['ip'])
 
-    @staticmethod
-    def healthy_registry(url):
+    def healthy_registry(self, ip_addr, port, secure=True):
         ''' Test a specific registry URL
             In v3.0.2.0, http://registry.url/healthz worked. The '/healthz' was
               something added by openshift to the docker registry. This should return a http status
@@ -128,6 +128,11 @@ class OpenshiftDockerRegigtryChecker(object):
             https://github.com/docker/distribution/blob/master/docs/deploying.md#running-a-domain-registry
         '''
 
+        proto = self.docker_protocol
+        if not secure:
+            proto = 'http'
+        url = '{}://{}:{}/'.format(proto, ip_addr, port)
+
         try:
             print "Performing Docker Registry check on URL: {}".format(url)
             response = urllib2.urlopen(url, timeout=20)
@@ -136,18 +141,21 @@ class OpenshiftDockerRegigtryChecker(object):
                 return True
         except urllib2.URLError:
             print "Received error accessing URL: {}".format(url)
+        except socket.timeout:
+            print "Timed out accessing URL: {}".format(url)
 
+        # Try with /healthz
         try:
             url = url + 'healthz'
             print "Performing Docker Registry check on URL: {}".format(url)
             response = urllib2.urlopen(url, timeout=20)
 
-            if response.getcode() == 200 and response.readline().startswith('{}'):
+            if response.getcode() == 200:
                 return True
         except urllib2.URLError:
             print "Received error access URL: {}".format(url)
         except socket.timeout:
-            print "Timed out accessind URL: {}".format(url)
+            print "Timed out accessing URL: {}".format(url)
 
         # We tried regular and 'healthz' URLs. Registry inaccessible.
         return False
@@ -155,11 +163,11 @@ class OpenshiftDockerRegigtryChecker(object):
     def registry_service_check(self):
         ''' Test and report on health of Docker Registry service '''
 
-        docker_svc_url = "%s://%s:%s/" %(self.docker_protocol,
-                                         self.docker_service_ip, self.docker_port)
-        print "\nPerforming service check on URL: %s\n" % docker_svc_url
         status = '0'
-        if self.healthy_registry(docker_svc_url):
+        if self.healthy_registry(self.docker_service_ip, self.docker_port):
+            status = '1'
+        elif self.healthy_registry(self.docker_service_ip, self.docker_port,
+                                   secure=False):
             status = '1'
 
         print "\nDocker Registry service status: {}".format(status)
@@ -175,8 +183,9 @@ class OpenshiftDockerRegigtryChecker(object):
         healthy_registries = 0
 
         for host in self.docker_hosts:
-            docker_registry_url = "%s://%s:%s/" %(self.docker_protocol, host, self.docker_port)
-            if self.healthy_registry(docker_registry_url):
+            if self.healthy_registry(host, self.docker_port):
+                healthy_registries += 1
+            elif self.healthy_registry(host, self.docker_port, secure=False):
                 healthy_registries += 1
 
         healthy_pct = 0
@@ -184,8 +193,8 @@ class OpenshiftDockerRegigtryChecker(object):
         if len(self.docker_hosts) > 0:
             healthy_pct = (healthy_registries / len(self.docker_hosts) *100)
 
-        print "\n%s of %s registries PODs are healthy\n" %(healthy_registries,
-                                                           len(self.docker_hosts))
+        print "\n%s of %s registry PODs are healthy\n" %(healthy_registries,
+                                                         len(self.docker_hosts))
 
         self.zagg_sender.add_zabbix_keys({'openshift.node.registry-pods.healthy_pct' : healthy_pct})
 
