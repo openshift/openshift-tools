@@ -78,7 +78,6 @@ class OpenshiftDockerRegigtryChecker(object):
             self.get_registry_endpoints(oc_yaml)
         except Exception as ex:
             print "Problem retreiving registry IPs: %s " % ex.message
-            self.zagg_sender.add_zabbix_keys({'openshift.master.registry.healthy_pct' : 0})
 
         self.registry_service_check()
         self.registry_health_check()
@@ -112,7 +111,6 @@ class OpenshiftDockerRegigtryChecker(object):
         endpoints = yaml.safe_load(endpoint_yaml)
         self.docker_port = str(endpoints['subsets'][0]['ports'][0]['port'])
 
-        self.docker_hosts = []
         for address in endpoints['subsets'][0]['addresses']:
             self.docker_hosts.append(address['ip'])
 
@@ -164,11 +162,14 @@ class OpenshiftDockerRegigtryChecker(object):
         ''' Test and report on health of Docker Registry service '''
 
         status = '0'
-        if self.healthy_registry(self.docker_service_ip, self.docker_port):
-            status = '1'
-        elif self.healthy_registry(self.docker_service_ip, self.docker_port,
-                                   secure=False):
-            status = '1'
+
+        # Skip if we failed to fetch a valid service IP
+        if self.docker_service_ip != None:
+            if self.healthy_registry(self.docker_service_ip, self.docker_port):
+                status = '1'
+            elif self.healthy_registry(self.docker_service_ip, self.docker_port,
+                                       secure=False):
+                status = '1'
 
         print "\nDocker Registry service status: {}".format(status)
 
@@ -177,8 +178,7 @@ class OpenshiftDockerRegigtryChecker(object):
     def registry_health_check(self):
         """
             Check the registry's / URL
-
-       """
+        """
 
         healthy_registries = 0
 
