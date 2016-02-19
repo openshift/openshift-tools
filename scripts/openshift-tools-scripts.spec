@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.77
+Version:       0.0.78
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -230,6 +230,11 @@ OpenShift Tools Cloud Tools
 
 
 %changelog
+* Fri Feb 19 2016 Matt Woodson <mwoodson@redhat.com> 0.0.78-1
+- changed the url to look for the api for master api check
+  (mwoodson@redhat.com)
+- fix up the error/exception handing path (jdiaz@redhat.com)
+
 * Thu Feb 18 2016 Joel Diaz <jdiaz@redhat.com> 0.0.77-1
 - deal with secure and non-secure registries (jdiaz@redhat.com)
 
