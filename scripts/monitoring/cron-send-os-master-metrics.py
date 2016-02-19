@@ -24,6 +24,8 @@
 #pylint: disable=broad-except
 # pylint is flagging this code as being too complex. Refactor it soon! https://trello.com/c/Isne8Dcz
 #pylint: disable=too-many-branches
+# pylint is flagging import errors, as the bot doesn't know out openshift-tools libs
+#pylint: disable=import-error
 
 import argparse
 import math
@@ -58,7 +60,7 @@ class OpenshiftMasterZaggClient(object):
             master_cfg_from_yaml = []
             with open('/etc/origin/master/master-config.yaml', 'r') as yml:
                 master_cfg_from_yaml = yaml.load(yml)
-            self.ora = OpenshiftRestApi(host=master_cfg_from_yaml['assetConfig']['masterPublicURL'],
+            self.ora = OpenshiftRestApi(host=master_cfg_from_yaml['oauthConfig']['masterURL'],
                                         verify_ssl=True)
 
             self.zabbix_api_key = 'openshift.master.api.ping'
