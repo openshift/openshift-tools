@@ -18,19 +18,18 @@ OpenShift Tools Web Services
 %install
 
 # zagg install
-mkdir -p %{buildroot}/opt/rh/zagg
-cp -ap zagg %{buildroot}/opt/rh/
+mkdir -p %{buildroot}/var/www/zagg
+cp -ap zagg %{buildroot}/var/www/
 
 mkdir -p %{buildroot}/etc/httpd/conf.d/
 cp -p zagg-httpd.conf %{buildroot}/etc/httpd/conf.d/
-
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-web-zagg subpackage
 # ----------------------------------------------------------------------------------
 %package zagg
 Summary:       OpenShift Tools Zagg REST API Package
-Requires:      python2,python-django,httpd
+Requires:      python2,python-flask,httpd,python-openshift-tools-monitoring-zagg
 BuildRequires: python2-devel
 BuildArch:     noarch
 
@@ -38,8 +37,8 @@ BuildArch:     noarch
 OpenShift Tools Zagg REST API
 
 %files zagg
-/opt/rh/zagg/
-%config(noreplace) /etc/httpd/conf.d/*.conf
+/var/www/zagg
+%config(noreplace) /etc/httpd/conf.d/zagg-httpd.conf
 
 %changelog
 * Wed Jan 27 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.11-1

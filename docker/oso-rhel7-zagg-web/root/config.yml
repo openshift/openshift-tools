@@ -46,19 +46,8 @@
       regexp: '^\s*#*\s*library\s*='
       line: 'library        = /usr/share/ansible/'
 
-  - name: Generate Django Key
-    command: python -c "import random, string; print ''.join([random.SystemRandom().choice('{}{}{}'.format(string.ascii_letters, string.digits, '!#$%()*+,-.:;<=>?@[]^_{|}~')) for i in range(50)])"
-    changed_when: false
-    register: django_secret
-
-  - name: Set the Django secret key
-    lineinfile:
-      dest: /opt/rh/zagg/zagg/settings.py
-      regexp: '^[#\s]*SECRET_KEY\s*='
-      line: "SECRET_KEY = '{{ django_secret.stdout }}'"
-
   - name: Create htpasswd file
     htpasswd:
-      path: /opt/rh/zagg/htpasswd
+      path: /var/www/zagg/htpasswd
       name: "{{ g_zagg_server_user }}"
       password: "{{ g_zagg_server_password }}"
