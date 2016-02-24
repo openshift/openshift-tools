@@ -26,7 +26,7 @@ for dfile in  $(/usr/bin/git diff --name-only "$oldrev" "$newrev" --diff-filter=
     fi
   done
 
-  if [ $skip_file == false ] && file $dfile | grep -q -i python; then
+  if [ $skip_file == false ] && file -b $dfile | grep -q -i python; then
     files_to_test+=("$dfile")
   fi
 done
