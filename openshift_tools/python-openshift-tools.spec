@@ -100,7 +100,7 @@ Zagg Python libraries developed for monitoring OpenShift.
 # ----------------------------------------------------------------------------------
 %package monitoring-zabbix
 Summary:       OpenShift Tools Zagg Python Libraries Package
-Requires:      python2,python-openshift-tools
+Requires:      python2,python-openshift-tools,python-requests
 BuildArch:     noarch
 
 %description monitoring-zabbix
