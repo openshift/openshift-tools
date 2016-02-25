@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Web Services
 Name:          openshift-tools-web
-Version:       0.0.11
+Version:       0.0.13
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -41,6 +41,20 @@ OpenShift Tools Zagg REST API
 %config(noreplace) /etc/httpd/conf.d/zagg-httpd.conf
 
 %changelog
+* Thu Feb 25 2016 Joel Diaz <jdiaz@redhat.com> 0.0.13-1
+- move from django zagg to flask (with apache mpm-worker) (jdiaz@redhat.com)
+- Revert "Automatic commit of package [openshift-tools-web] release
+  [0.0.12-1]." (sten@redhat.com)
+- Automatic commit of package [openshift-tools-web] release [0.0.12-1].
+  (sten@redhat.com)
+
+* Thu Feb 25 2016 Joel Diaz <jdiaz@redhat.com>
+- move from django zagg to flask (with apache mpm-worker) (jdiaz@redhat.com)
+- Revert "Automatic commit of package [openshift-tools-web] release
+  [0.0.12-1]." (sten@redhat.com)
+- Automatic commit of package [openshift-tools-web] release [0.0.12-1].
+  (sten@redhat.com)
+
 * Wed Jan 27 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.11-1
 - Revert "Automatic commit of package [openshift-tools-web] release
   [0.0.11-1]." (gburges@use-ctl1.ops.rhcloud.com)
