@@ -34,6 +34,8 @@ class OpenShiftOC(object):
         for pod in pods['items']:
             results = regex.search(pod['metadata']['name'])
             if results:
+                if verbose:
+                    print 'find normal pod'
                 return pod
 
         return None
@@ -47,7 +49,10 @@ class OpenShiftOC(object):
         regex = re.compile('%s-[0-9]-build' % pod_name)
         for pod in pods['items']:
             results = regex.search(pod['metadata']['name'])
+            
             if results:
+                if verbose:
+                    print 'find build pod'
                 return pod
 
         return None
@@ -107,6 +112,17 @@ class OpenShiftOC(object):
         return results
 
     @staticmethod
+    def get_route(proj_name='', verbose=False):
+        '''return all the route
+        '''
+        cmd = ['get', 'route', '--no-headers', '-o', 'json']
+     
+        if proj_name:
+            cmd.append('-n%s'%proj_name)
+
+        return json.loads(OpenShiftOC.oc_cmd(cmd, verbose))
+
+    @staticmethod
     def oc_cmd(cmd, verbose=False):
         '''Base command for oc
         '''
@@ -130,7 +146,7 @@ class OpenShiftOC(object):
 def curl(ip_addr, port):
     ''' Open an http connection to the url and read
     '''
-    return urllib.urlopen('http://%s:%s' % (ip_addr, port)).read()
+    return urllib.urlopen('http://%s:%s' % (ip_addr, port)).code
 
 def main():
     ''' Do the application creation
@@ -151,30 +167,53 @@ def main():
     OpenShiftOC.new_app(app, proj_name, verbose)
     #1 is error
     create_app = 1
+    BuildTime = 0
     # Now we wait until the pod comes up
     for _ in range(24):
-        time.sleep(15)
+        time.sleep(10)
         #checking the building pod 
         buildPod=OpenShiftOC.get_build_pod(app,proj_name,verbose)
         if buildPod and buildPod['status']:
             if verbose:
-               print buildPod['status']['phase']
+               print 'buildPod Name: %s' % buildPod['metadata']['name']
+               print 'buildPod status: %s' % buildPod['status']['phase']
 
         #checking the status of buildpod if it is error
-        if buildPod and buildPod['status']['phase'] == 'Error':
+        if buildPod and buildPod['status']['phase'] == 'Failed':
             print 'fail'
             break
-
-        pod = OpenShiftOC.get_pod(app, proj_name, verbose)
-        if pod and pod['status']:
+        if buildPod and buildPod['status']['phase'] == 'Succeeded':
+            BuildTime = time.time() - start_time
             if verbose:
-                print pod['status']['phase']
-        if pod and pod['status']['phase'] == 'Running' and pod['status'].has_key('podIP'):
-            if verbose:
-                print 'success'
-                print 'Time: %s' % str(time.time() - start_time)
-            create_app = 0
-            break
+		    print 'finish build'
+		    print buildPod['metadata']['name']
+		    print 'BuildTime: %s' % str(time.time() - start_time)
+            for i in range(24):
+                    time.sleep(5)
+		    pod = OpenShiftOC.get_pod(app, proj_name, verbose)
+		    if pod and pod['status']:
+			if verbose:
+                            print 'Normal Pod Name: %s' % pod['metadata']['name']
+			    print 'Normal Pod status: %s' % pod['status']['phase']
+		    if pod and pod['status']['phase'] == 'Running' and pod['status'].has_key('podIP'):
+			    #start check http status
+			myroute = OpenShiftOC.get_route(proj_name,verbose)
+			if myroute :
+			     #print myroute["items"][0]["spec"]["host"]
+			     hostip = myroute["items"][0]["spec"]["host"]
+			     httpstatus = curl(hostip,80)
+                             if verbose:
+                                 print 'The route is : %s' % myroute["items"][0]["spec"]["host"]
+                                 print 'The httpstatus of route is : %s' % httpstatus
+			     if httpstatus == 200: 
+				 if verbose:
+				     print 'success'
+				     print 'Time: %s' % str(time.time() - start_time)
+				     print 'BuildTime: %s' % BuildTime
+				 create_app = 0
+				 break
+            if create_app == 0:
+                 break
 
     else:
         if verbose:
