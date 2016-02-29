@@ -51,6 +51,9 @@ RUN yum clean metadata && \
     yum -y update && \
     yum clean all
 
+ADD urllib3-connectionpool-patch /root
+RUN yum install -y patch && yum clean all && cd /usr/lib/python2.7/site-packages/ && patch -p1 < /root/urllib3-connectionpool-patch
+
 # Ansible startup configuration playbook
 ADD root /root
 

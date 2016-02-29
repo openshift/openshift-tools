@@ -9,6 +9,7 @@ see zagg_client.py for example on how to use
 import requests
 # pylint: disable=import-error,no-name-in-module
 import requests.packages.urllib3.connectionpool as httplib
+import time
 import urllib3
 
 from urllib3.contrib import pyopenssl
@@ -56,7 +57,8 @@ class RestApi(object):
             return requests.auth.HTTPBasicAuth(self.username, self.password)
         return None
 
-    def request(self, url, method, timeout=120, headers=None, params=None, data=None):
+    def request(self, url, method, timeout=120, headers=None, params=None,
+                data=None, retries=0):
         """
         wrapper method for Requests' methods
         """
@@ -75,20 +77,33 @@ class RestApi(object):
         if headers:
             _headers.update(headers)
 
-        response = requests.request(
-            auth=None if not self._auth else self._auth,
-            allow_redirects=True,
-            method=method,
-            url=url,
-            params=params,
-            data=data,
-            headers=_headers,
-            timeout=timeout,
-            verify=self.ssl_verify,
-        )
+        attempts = retries + 1
+        while attempts > 0:
+            try:
+                response = requests.request(
+                    auth=None if not self._auth else self._auth,
+                    allow_redirects=True,
+                    method=method,
+                    url=url,
+                    params=params,
+                    data=data,
+                    headers=_headers,
+                    timeout=timeout,
+                    verify=self.ssl_verify,
+                )
+                data = None
+                if response.status_code == 200:
+                    data = response.json()
 
-        data = None
-        if response.status_code == 200:
-            data = response.json()
+                return (response.status_code, data)
 
-        return (response.status_code, data)
+            # Reason: disable pylint bare-except because we are retrying on any and all exceptions
+            # Status: permanent unless we start catching only certain types of errors
+            # pylint: disable=bare-except
+            except:
+                print "Timed out: {}".format(url)
+                attempts -= 1
+                if attempts == 0:
+                    raise
+                else:
+                    time.sleep(1)
