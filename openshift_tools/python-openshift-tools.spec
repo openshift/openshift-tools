@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.45
+Version:       0.0.46
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -180,6 +180,9 @@ Tools developed to make it easy to work with web technologies.
 
 
 %changelog
+* Mon Feb 29 2016 Joel Diaz <jdiaz@redhat.com> 0.0.46-1
+- add retry logic and set zagg_client to 2 retries (jdiaz@redhat.com)
+
 * Wed Feb 24 2016 Joel Diaz <jdiaz@redhat.com> 0.0.45-1
 - zbxapi import requests. list RPM dependency (jdiaz@redhat.com)
 
