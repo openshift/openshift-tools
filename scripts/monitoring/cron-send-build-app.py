@@ -168,6 +168,7 @@ def main():
     #1 is error
     create_app = 1
     BuildTime = 0
+    CreateTime = 0 
     # Now we wait until the pod comes up
     for _ in range(24):
         time.sleep(10)
@@ -206,9 +207,10 @@ def main():
                                  print 'The route is : %s' % myroute["items"][0]["spec"]["host"]
                                  print 'The httpstatus of route is : %s' % httpstatus
 			     if httpstatus == 200: 
+                                 CreateTime = time.time() - start_time
 				 if verbose:
 				     print 'success'
-				     print 'Time: %s' % str(time.time() - start_time)
+				     print 'Time: %s' % CreateTime
 				     print 'BuildTime: %s' % BuildTime
 				 create_app = 0
 				 break
@@ -224,7 +226,9 @@ def main():
         OpenShiftOC.delete_project(proj_name, verbose)
 
     zgs = ZaggSender()
-    zgs.add_zabbix_keys({'openshift.master.app.build.create': create_app})
+    zgs.add_zabbix_keys({'openshift.master.app.build.create': create_app}) 
+    zgs.add_zabbix_keys({'openshift.master.app.create.time': CreateTime})
+    zgs.add_zabbix_keys({'openshift.master.app.build.time': BuildTime})
     zgs.send_metrics()
 
 
