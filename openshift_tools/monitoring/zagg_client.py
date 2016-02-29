@@ -62,6 +62,6 @@ class ZaggClient(object):
         headers = {'content-type': 'application/json; charset=utf8'}
         status, raw_response = self.rest.request(method='POST', url=self.zagg_conn.url + '/metric',
                                                  data=json.dumps(unique_metric_list, default=lambda x: x.__dict__),
-                                                 headers=headers)
+                                                 headers=headers, retries=2)
 
         return (status, raw_response)
