@@ -27,12 +27,12 @@
 
   - name: Make sure all of the target's have directories for their metrics
     file:
-      path: "{{ item }}"
+      path: "{{ item.path }}"
       state: directory
       owner: user
       group: root
       mode: "777" # This is on purpose, we have to have the perms totally open here.
-    with_items: "{{ g_zagg_server_config.targets | oo_collect('path') }}"
+    with_items: "{{ g_zagg_server_config.targets }}"
 
   - name: Generate the zagg_server.yaml config file
     copy:
