@@ -168,8 +168,6 @@ def main():
     '''
     proj_name = 'ops-monitor-appbuild' + os.environ['ZAGG_CLIENT_HOSTNAME']
     app = 'nodejs-example'
-    verbose = False
-
     verbose = True
 
     start_time = time.time()
