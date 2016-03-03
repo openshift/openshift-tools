@@ -145,6 +145,23 @@ def curl(ip_addr, port):
     '''
     return urllib.urlopen('http://%s:%s' % (ip_addr, port)).code
 
+def check_route(app, proj_name='', verbose=False):
+    ''' after the pod been deployed ,check the route if get 200
+    '''
+    pod = OpenShiftOC.get_pod(app, proj_name, verbose)
+    create_app_func = 1
+    if pod and pod['status']['phase'] == 'Running' and pod['status'].has_key('podIP'):
+        myroute = OpenShiftOC.get_route(proj_name, verbose)
+        if myroute:
+            hostip = myroute["items"][0]["spec"]["host"]
+            httpstatus = curl(hostip, 80)
+            if verbose:
+                print 'The route is : %s' % myroute["items"][0]["spec"]["host"]
+                print 'The httpstatus of route is : %s' % httpstatus
+            if httpstatus == 200:
+                create_app_func = 0
+    return create_app_func
+
 def main():
     ''' Do the application creation
     '''
@@ -171,47 +188,23 @@ def main():
         time.sleep(10)
         #checking the building pod
         buildPod = OpenShiftOC.get_build_pod(app, proj_name, verbose)
-        if buildPod and buildPod['status']:
-            if verbose:
-                print 'buildPod Name: %s' % buildPod['metadata']['name']
-                print 'buildPod status: %s' % buildPod['status']['phase']
-        #checking the status of buildpod if it is error
         if buildPod and buildPod['status']['phase'] == 'Failed':
             print 'fail'
             break
         if buildPod and buildPod['status']['phase'] == 'Succeeded':
             BuildTime = time.time() - start_time
-            if verbose:
-                print 'finish build'
-                print buildPod['metadata']['name']
-                print 'BuildTime: %s' % str(time.time() - start_time)
             for i in range(24):
                 time.sleep(5)
                 if verbose:
                     print 'start finding the pod %s' % i
-                pod = OpenShiftOC.get_pod(app, proj_name, verbose)
-                if pod and pod['status']:
+                create_app = check_route(app, proj_name, verbose)
+                if create_app == 0:
+                    CreateTime = time.time() - start_time
                     if verbose:
-                        print 'Normal Pod Name: %s' % pod['metadata']['name']
-                        print 'Normal Pod status: %s' % pod['status']['phase']
-                if pod and pod['status']['phase'] == 'Running' and pod['status'].has_key('podIP'):
-                #start check http status
-                    myroute = OpenShiftOC.get_route(proj_name, verbose)
-                    if myroute:
-                         #print myroute["items"][0]["spec"]["host"]
-                        hostip = myroute["items"][0]["spec"]["host"]
-                        httpstatus = curl(hostip, 80)
-                        if verbose:
-                            print 'The route is : %s' % myroute["items"][0]["spec"]["host"]
-                            print 'The httpstatus of route is : %s' % httpstatus
-                        if httpstatus == 200:
-                            CreateTime = time.time() - start_time
-                            if verbose:
-                                print 'success'
-                                print 'Time: %s' % CreateTime
-                                print 'BuildTime: %s' % BuildTime
-                            create_app = 0
-                            break
+                        print 'success'
+                        print 'Time: %s' % CreateTime
+                        print 'BuildTime: %s' % BuildTime
+                    break
             if create_app == 0:
                 break
     else:
