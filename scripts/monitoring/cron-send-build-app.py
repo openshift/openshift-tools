@@ -205,7 +205,6 @@ def main():
                 break
     else:
         BuildTime = time.time() - start_time
-        print 'Time: %s' % str(time.time() - start_time)
         print 'BuildTime: %s' % BuildTime
         print 'fail'
     if proj_name in  OpenShiftOC.get_projects(verbose):
