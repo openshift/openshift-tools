@@ -187,6 +187,8 @@ def main():
                 print 'BuildTime: %s' % str(time.time() - start_time)
             for i in range(24):
                 time.sleep(5)
+                if verbose:
+                    print 'start finding the pod %s' % i
                 pod = OpenShiftOC.get_pod(app, proj_name, verbose)
                 if pod and pod['status']:
                     if verbose:
