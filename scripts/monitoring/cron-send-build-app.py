@@ -7,7 +7,6 @@
 # to be different than the class name
 # pylint: disable=invalid-name
 # the to-many-branches
-# pylint: disable=too-many-branches
 
 import subprocess
 import json
@@ -171,8 +170,7 @@ def main():
     app = 'nodejs-example'
     verbose = False
 
-    if len(sys.argv) > 1 and sys.argv[1] == '-v':
-        verbose = True
+    verbose = True
 
     start_time = time.time()
     if proj_name in  OpenShiftOC.get_projects(verbose):
@@ -197,15 +195,12 @@ def main():
             BuildTime = time.time() - start_time
             for i in range(24):
                 time.sleep(5)
-                if verbose:
-                    print 'start finding the pod %s' % i
                 create_app = check_route(app, proj_name, verbose)
                 if create_app == 0:
                     CreateTime = time.time() - start_time
-                    if verbose:
-                        print 'success'
-                        print 'Time: %s' % CreateTime
-                        print 'BuildTime: %s' % BuildTime
+                    print 'success'
+                    print 'Time: %s' % CreateTime
+                    print 'BuildTime: %s' % BuildTime
                     break
             if create_app == 0:
                 break
