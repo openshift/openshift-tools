@@ -166,7 +166,7 @@ Tools developed for ansible OpenShift.
 # ----------------------------------------------------------------------------------
 %package web
 Summary:       OpenShift Tools Web Python Package
-Requires:      python2,python-openshift-tools
+Requires:      python2,python-openshift-tools,python-requests
 BuildArch:     noarch
 
 %description web
