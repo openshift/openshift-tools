@@ -13,7 +13,7 @@ import json
 import time
 import re
 import urllib
-import sys
+#import sys
 import os
 
 # Our jenkins server does not include these rpms.
@@ -193,7 +193,7 @@ def main():
             break
         if buildPod and buildPod['status']['phase'] == 'Succeeded':
             BuildTime = time.time() - start_time
-            for i in range(24):
+            for _ in range(24):
                 time.sleep(5)
                 create_app = check_route(app, proj_name, verbose)
                 if create_app == 0:
