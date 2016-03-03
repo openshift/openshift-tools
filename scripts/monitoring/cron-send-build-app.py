@@ -49,7 +49,6 @@ class OpenShiftOC(object):
         regex = re.compile('%s-[0-9]-build' % pod_name)
         for pod in pods['items']:
             results = regex.search(pod['metadata']['name'])
-            
             if results:
                 if verbose:
                     print 'find build pod'
@@ -116,10 +115,8 @@ class OpenShiftOC(object):
         '''return all the route
         '''
         cmd = ['get', 'route', '--no-headers', '-o', 'json']
-     
         if proj_name:
             cmd.append('-n%s'%proj_name)
-
         return json.loads(OpenShiftOC.oc_cmd(cmd, verbose))
 
     @staticmethod
@@ -168,17 +165,16 @@ def main():
     #1 is error
     create_app = 1
     BuildTime = 0
-    CreateTime = 0 
+    CreateTime = 0
     # Now we wait until the pod comes up
     for _ in range(24):
         time.sleep(10)
-        #checking the building pod 
-        buildPod=OpenShiftOC.get_build_pod(app,proj_name,verbose)
+        #checking the building pod
+        buildPod = OpenShiftOC.get_build_pod(app, proj_name, verbose)
         if buildPod and buildPod['status']:
             if verbose:
-               print 'buildPod Name: %s' % buildPod['metadata']['name']
-               print 'buildPod status: %s' % buildPod['status']['phase']
-
+                print 'buildPod Name: %s' % buildPod['metadata']['name']
+                print 'buildPod status: %s' % buildPod['status']['phase']
         #checking the status of buildpod if it is error
         if buildPod and buildPod['status']['phase'] == 'Failed':
             print 'fail'
@@ -186,47 +182,45 @@ def main():
         if buildPod and buildPod['status']['phase'] == 'Succeeded':
             BuildTime = time.time() - start_time
             if verbose:
-            print 'finish build'
-            print buildPod['metadata']['name']
-            print 'BuildTime: %s' % str(time.time() - start_time)
+                print 'finish build'
+                print buildPod['metadata']['name']
+                print 'BuildTime: %s' % str(time.time() - start_time)
             for i in range(24):
-                    time.sleep(5)
-            pod = OpenShiftOC.get_pod(app, proj_name, verbose)
-            if pod and pod['status']:
-            if verbose:
-                print 'Normal Pod Name: %s' % pod['metadata']['name']
-                print 'Normal Pod status: %s' % pod['status']['phase']
-            if pod and pod['status']['phase'] == 'Running' and pod['status'].has_key('podIP'):
+                time.sleep(5)
+                pod = OpenShiftOC.get_pod(app, proj_name, verbose)
+                if pod and pod['status']:
+                    if verbose:
+                        print 'Normal Pod Name: %s' % pod['metadata']['name']
+                        print 'Normal Pod status: %s' % pod['status']['phase']
+                if pod and pod['status']['phase'] == 'Running' and pod['status'].has_key('podIP'):
                 #start check http status
-            myroute = OpenShiftOC.get_route(proj_name,verbose)
-            if myroute :
-                 #print myroute["items"][0]["spec"]["host"]
-                 hostip = myroute["items"][0]["spec"]["host"]
-                 httpstatus = curl(hostip,80)
-                             if verbose:
-                                 print 'The route is : %s' % myroute["items"][0]["spec"]["host"]
-                                 print 'The httpstatus of route is : %s' % httpstatus
-                 if httpstatus == 200: 
-                                 CreateTime = time.time() - start_time
-                 if verbose:
-                     print 'success'
-                     print 'Time: %s' % CreateTime
-                     print 'BuildTime: %s' % BuildTime
-                 create_app = 0
-                 break
+                    myroute = OpenShiftOC.get_route(proj_name, verbose)
+                    if myroute:
+                         #print myroute["items"][0]["spec"]["host"]
+                        hostip = myroute["items"][0]["spec"]["host"]
+                        httpstatus = curl(hostip, 80)
+                        if verbose:
+                            print 'The route is : %s' % myroute["items"][0]["spec"]["host"]
+                            print 'The httpstatus of route is : %s' % httpstatus
+                        if httpstatus == 200:
+                            CreateTime = time.time() - start_time
+                            if verbose:
+                                print 'success'
+                                print 'Time: %s' % CreateTime
+                                print 'BuildTime: %s' % BuildTime
+                            create_app = 0
+                            break
             if create_app == 0:
-                 break
-
+                break
     else:
         if verbose:
             print 'Time: %s' % str(time.time() - start_time)
             print 'fail'
-
     if proj_name in  OpenShiftOC.get_projects(verbose):
         OpenShiftOC.delete_project(proj_name, verbose)
 
     zgs = ZaggSender()
-    zgs.add_zabbix_keys({'openshift.master.app.build.create': create_app}) 
+    zgs.add_zabbix_keys({'openshift.master.app.build.create': create_app})
     zgs.add_zabbix_keys({'openshift.master.app.create.time': CreateTime})
     zgs.add_zabbix_keys({'openshift.master.app.build.time': BuildTime})
     zgs.send_metrics()
