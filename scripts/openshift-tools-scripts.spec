@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.78
+Version:       0.0.79
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -231,6 +231,29 @@ OpenShift Tools Cloud Tools
 
 
 %changelog
+* Thu Mar 03 2016 Unknown name 0.0.79-1
+- remove some useless var (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix another bug (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix some faile bug (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix the build time of fail (zhizhang@zhizhang-laptop-nay.redhat.com)
+- add buildtime when build error (zhizhang@zhizhang-laptop-nay.redhat.com)
+- remove the verbose (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix some verbose (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix unused i (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix too-many-branch (zhizhang@zhizhang-laptop-nay.redhat.com)
+- delete some space after # (zhizhang@zhizhang-laptop-nay.redhat.com)
+- disable pylint=too-many-branches (zhizhang@zhizhang-laptop-nay.redhat.com)
+- add more function try to solve the oo many branches (zhizhang@zhizhang-
+  laptop-nay.redhat.com)
+- fix the Unused variable (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix Tab (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix python Tab and space problem (zhizhang@zhizhang-laptop-nay.redhat.com)
+- send both the app create time and build time to zabbix (zhizhang@zhizhang-
+  laptop-nay.redhat.com)
+- fix some bugs of checking (zhizhang@zhizhang-laptop-nay.redhat.com)
+- checking app create on master with a build process (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+
 * Fri Feb 19 2016 Matt Woodson <mwoodson@redhat.com> 0.0.78-1
 - changed the url to look for the api for master api check
   (mwoodson@redhat.com)
