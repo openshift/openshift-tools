@@ -187,6 +187,7 @@ def main():
         #checking the building pod
         buildPod = OpenShiftOC.get_build_pod(app, proj_name, verbose)
         if buildPod and buildPod['status']['phase'] == 'Failed':
+            CreateTime = time.time() - start_time
             print 'fail'
             break
         if buildPod and buildPod['status']['phase'] == 'Succeeded':
