@@ -203,9 +203,8 @@ def main():
             if create_app == 0:
                 break
     else:
-        if verbose:
-            print 'Time: %s' % str(time.time() - start_time)
-            print 'fail'
+        print 'Time: %s' % str(time.time() - start_time)
+        print 'fail'
     if proj_name in  OpenShiftOC.get_projects(verbose):
         OpenShiftOC.delete_project(proj_name, verbose)
 
