@@ -12,8 +12,8 @@ RUN yum clean metadata && \
     yum install -y iproute iputils pylint \
         python-passlib \
         python-openshift-tools-monitoring-zagg \
-        python-openshift-tools-monitoring-zabbix \
         openshift-tools-web-zagg \
+        python-openshift-tools-zbxapi \
         openshift-tools-scripts-monitoring-zagg-server \
         tree python-django-bash-completion httpd mod_ssl mod_wsgi \
         telnet bind-utils net-tools iproute && \

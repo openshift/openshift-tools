@@ -34,6 +34,10 @@ cp -p ansible/*.py %{buildroot}%{python_sitelib}/openshift_tools/ansible
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/web
 cp -p web/*.py %{buildroot}%{python_sitelib}/openshift_tools/web
 
+# openshift_tools/zbxapi install
+mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/zbxapi
+cp -p zbxapi/*.py %{buildroot}%{python_sitelib}/openshift_tools/zbxapi
+
 
 # openshift_tools files
 %files
@@ -94,22 +98,6 @@ Zagg Python libraries developed for monitoring OpenShift.
 %{python_sitelib}/openshift_tools/monitoring/zagg*.py[co]
 %{python_sitelib}/openshift_tools/monitoring/zabbix_metric_processor.py
 %{python_sitelib}/openshift_tools/monitoring/zabbix_metric_processor.py[co]
-
-# ----------------------------------------------------------------------------------
-# python-openshift-tools-monitoring-zabbix subpackage
-# ----------------------------------------------------------------------------------
-%package monitoring-zabbix
-Summary:       OpenShift Tools Zagg Python Libraries Package
-Requires:      python2,python-openshift-tools,python-requests
-BuildArch:     noarch
-
-%description monitoring-zabbix
-Zagg Python libraries developed for monitoring OpenShift.
-
-%files monitoring-zabbix
-%{python_sitelib}/openshift_tools/monitoring/zbxapi.py
-%{python_sitelib}/openshift_tools/monitoring/zbxapi.py[co]
-
 
 # ----------------------------------------------------------------------------------
 # python-openshift-tools-monitoring-aws subpackage
@@ -177,6 +165,23 @@ Tools developed to make it easy to work with web technologies.
 %dir %{python_sitelib}/openshift_tools/web
 %{python_sitelib}/openshift_tools/web/*.py
 %{python_sitelib}/openshift_tools/web/*.py[co]
+
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-zbxapi subpackage
+# ----------------------------------------------------------------------------------
+%package zbxapi
+Summary:       OpenShift Tools Zbxapi Python Package
+Requires:      python2
+BuildArch:     noarch
+
+%description zbxapi
+Thin API wrapper to communicate with a Zabbix server
+
+# openshift_tools/zbxapi files
+%files zbxapi
+%dir %{python_sitelib}/openshift_tools/zbxapi
+%{python_sitelib}/openshift_tools/zbxapi/*.py
+%{python_sitelib}/openshift_tools/zbxapi/*.py[co]
 
 
 %changelog
