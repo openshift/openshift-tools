@@ -6,6 +6,8 @@
 # Adding the ignore because it does not like the naming of the script
 # to be different than the class name
 # pylint: disable=invalid-name
+# the to-many-branches 
+# pylint: disable=too-many-branches
 
 import subprocess
 import json
