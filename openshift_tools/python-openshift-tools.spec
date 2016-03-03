@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.48
+Version:       0.0.49
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -185,6 +185,9 @@ Thin API wrapper to communicate with a Zabbix server
 
 
 %changelog
+* Thu Mar 03 2016 Joel Diaz <jdiaz@redhat.com> 0.0.49-1
+- split zbxapi into its own subpackage (jdiaz@redhat.com)
+
 * Thu Mar 03 2016 Joel Diaz <jdiaz@redhat.com> 0.0.48-1
 - python-openshift-tools-web package imports python-requests (jdiaz@redhat.com)
 
