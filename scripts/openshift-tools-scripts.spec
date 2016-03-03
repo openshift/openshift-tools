@@ -196,6 +196,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-etcd-status
 /usr/bin/cron-send-os-master-metrics
 /usr/bin/cron-send-create-app
+/usr/bin/cron-send-build-app
 /usr/bin/cron-send-os-skydns-checks
 /usr/bin/cron-send-registry-checks
 
