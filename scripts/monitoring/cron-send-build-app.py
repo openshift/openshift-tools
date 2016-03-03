@@ -188,6 +188,7 @@ def main():
         buildPod = OpenShiftOC.get_build_pod(app, proj_name, verbose)
         if buildPod and buildPod['status']['phase'] == 'Failed':
             print 'fail'
+            BuildTime = time.time() - start_time
             break
         if buildPod and buildPod['status']['phase'] == 'Succeeded':
             BuildTime = time.time() - start_time
@@ -204,6 +205,7 @@ def main():
                 break
     else:
         print 'Time: %s' % str(time.time() - start_time)
+        print 'BuildTime: %s' % BuildTime
         print 'fail'
     if proj_name in  OpenShiftOC.get_projects(verbose):
         OpenShiftOC.delete_project(proj_name, verbose)
