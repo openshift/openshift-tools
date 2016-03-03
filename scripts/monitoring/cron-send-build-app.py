@@ -186,34 +186,34 @@ def main():
         if buildPod and buildPod['status']['phase'] == 'Succeeded':
             BuildTime = time.time() - start_time
             if verbose:
-		    print 'finish build'
-		    print buildPod['metadata']['name']
-		    print 'BuildTime: %s' % str(time.time() - start_time)
+            print 'finish build'
+            print buildPod['metadata']['name']
+            print 'BuildTime: %s' % str(time.time() - start_time)
             for i in range(24):
                     time.sleep(5)
-		    pod = OpenShiftOC.get_pod(app, proj_name, verbose)
-		    if pod and pod['status']:
-			if verbose:
-                            print 'Normal Pod Name: %s' % pod['metadata']['name']
-			    print 'Normal Pod status: %s' % pod['status']['phase']
-		    if pod and pod['status']['phase'] == 'Running' and pod['status'].has_key('podIP'):
-			    #start check http status
-			myroute = OpenShiftOC.get_route(proj_name,verbose)
-			if myroute :
-			     #print myroute["items"][0]["spec"]["host"]
-			     hostip = myroute["items"][0]["spec"]["host"]
-			     httpstatus = curl(hostip,80)
+            pod = OpenShiftOC.get_pod(app, proj_name, verbose)
+            if pod and pod['status']:
+            if verbose:
+                print 'Normal Pod Name: %s' % pod['metadata']['name']
+                print 'Normal Pod status: %s' % pod['status']['phase']
+            if pod and pod['status']['phase'] == 'Running' and pod['status'].has_key('podIP'):
+                #start check http status
+            myroute = OpenShiftOC.get_route(proj_name,verbose)
+            if myroute :
+                 #print myroute["items"][0]["spec"]["host"]
+                 hostip = myroute["items"][0]["spec"]["host"]
+                 httpstatus = curl(hostip,80)
                              if verbose:
                                  print 'The route is : %s' % myroute["items"][0]["spec"]["host"]
                                  print 'The httpstatus of route is : %s' % httpstatus
-			     if httpstatus == 200: 
+                 if httpstatus == 200: 
                                  CreateTime = time.time() - start_time
-				 if verbose:
-				     print 'success'
-				     print 'Time: %s' % CreateTime
-				     print 'BuildTime: %s' % BuildTime
-				 create_app = 0
-				 break
+                 if verbose:
+                     print 'success'
+                     print 'Time: %s' % CreateTime
+                     print 'BuildTime: %s' % BuildTime
+                 create_app = 0
+                 break
             if create_app == 0:
                  break
 
