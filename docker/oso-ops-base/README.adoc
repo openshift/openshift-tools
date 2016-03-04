@@ -1,4 +1,4 @@
-= oso-rhel7-ops-base Docker Container
+= oso-ops-base Docker Container
 
 The purpose of this container is to be a base container for other OpenShift Operations containers.
 
@@ -17,7 +17,7 @@ To build this container, simply execute the build script.
 .Example:
 [source,bash]
 ----
-./build.sh
+./[rhel7|centos7]/build.sh
 ----
 
 == Run
@@ -27,5 +27,5 @@ To run this container, simply execute the run script.
 .Example:
 [source,bash]
 ----
-./run.sh
+./[rhel7|centos7]/run.sh
 ----
