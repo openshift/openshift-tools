@@ -29,11 +29,6 @@ RUN yum clean metadata && \
 
 RUN mkdir /tmp/metrics && chown apache.apache /tmp/metrics
 
-# TODO: package these!!! (see trello card https://trello.com/c/SJsvV9OQ)
-#       and add that RPM to this container
-ADD library/ /usr/share/ansible/
-# END TODO
-
 ADD root /root
 
 EXPOSE 8000 8443
