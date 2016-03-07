@@ -137,7 +137,7 @@ Openshift Python libraries developed for monitoring OpenShift.
 %package ansible
 Summary:       OpenShift Tools Ansible Python Package
 # TODO: once the zbxapi ansible module is packaged, add it here as a dep
-Requires:      python2,python-openshift-tools,python-zbxsend,ansible
+Requires:      python2,python-openshift-tools,python-zbxsend,ansible,openshift-ansible-zabbix
 BuildArch:     noarch
 
 %description ansible
