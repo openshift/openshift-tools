@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.49
+Version:       0.0.50
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -185,6 +185,11 @@ Thin API wrapper to communicate with a Zabbix server
 
 
 %changelog
+* Mon Mar 07 2016 Joel Diaz <jdiaz@redhat.com> 0.0.50-1
+- python-openshift-tools-ansible needs to pull in openshift-ansible-zabbix this
+  allows removal of the embedded libzabbix in the Dockerfile for zagg-web
+  container (jdiaz@redhat.com)
+
 * Thu Mar 03 2016 Joel Diaz <jdiaz@redhat.com> 0.0.49-1
 - split zbxapi into its own subpackage (jdiaz@redhat.com)
 
