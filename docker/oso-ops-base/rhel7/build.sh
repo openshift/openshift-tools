@@ -1,9 +1,20 @@
 #!/bin/bash -e
+#     ___ ___ _  _ ___ ___    _ _____ ___ ___         
+#    / __| __| \| | __| _ \  /_\_   _| __|   \        
+#   | (_ | _|| .` | _||   / / _ \| | | _|| |) |       
+#    \___|___|_|\_|___|_|_\/_/_\_\_|_|___|___/_ _____ 
+#   |   \ / _ \  | \| |/ _ \_   _| | __|   \_ _|_   _|
+#   | |) | (_) | | .` | (_) || |   | _|| |) | |  | |  
+#   |___/ \___/  |_|\_|\___/ |_|   |___|___/___| |_|  
+# 
 
 RED="$(echo -e '\033[1;31m')"
 NORM="$(echo -e '\033[0m')"
 
 sudo echo -e "\nTesting sudo works...\n"
+
+# We MUST be in the same directory as this script for the build to work properly
+cd $(dirname $0)
 
 function is_rhel()
 {
@@ -11,25 +22,21 @@ function is_rhel()
   return $?
 }
 
-# We MUST be in the same directory as this script for the build to work properly
-cd $(dirname $0)
-
-
 tmpfile=""
 
 if ! is_rhel ; then
-  tmpfile=$(mktemp Dockerfile-XXXXX)
-  echo
-  echo "Not rhel, enabling entitlement workaround:"
-  echo
-  echo "Downloading etc-pki-entitlement. ${RED}DO NOT CHECK THIS IN!!!${NORM}"
-  scp -r tower.ops.rhcloud.com:/etc/pki/entitlement etc-pki-entitlement
-  echo
+    tmpfile=$(mktemp Dockerfile-XXXXX)
+    echo
+    echo "Not rhel, enabling entitlement workaround:"
+    echo
+    echo "Downloading etc-pki-entitlement. ${RED}DO NOT CHECK THIS IN!!!${NORM}"
+    scp -r tower.ops.rhcloud.com:/etc/pki/entitlement etc-pki-entitlement
+    echo
 
-  echo -n "Updating Dockerfile to include etc-pki-entitlement..."
-  cp Dockerfile $tmpfile
-  sed -i 's#FROM.*#&\nADD etc-pki-entitlement /etc-pki-entitlement#' Dockerfile
-  echo "Done."
+    echo -n "Updating Dockerfile to include etc-pki-entitlement..."
+    cp Dockerfile $tmpfile
+    sed -i 's#FROM.*#&\nADD etc-pki-entitlement /etc-pki-entitlement#' Dockerfile
+    echo "Done."
 fi
 
 # Build ourselves
