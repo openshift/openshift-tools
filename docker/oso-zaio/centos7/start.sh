@@ -12,6 +12,11 @@ if [ "$OO_PAUSE_ON_START" = "true" ] ; then
 fi
 
 echo
+echo 'Running Ansible playbook'
+echo '------------------------'
+ansible-playbook /root/config.yml
+
+echo
 echo 'Preparing the db'
 echo '----------------'
 /usr/libexec/mariadb-prepare-db-dir
