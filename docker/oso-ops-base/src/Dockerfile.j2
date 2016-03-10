@@ -15,6 +15,9 @@ RUN touch /var/run/rhsm ; rpm -evh subscription-manager
 # setup yum repos
 ADD setup-yum.sh /usr/local/bin/setup-yum.sh
 RUN /usr/local/bin/setup-yum.sh
+{% elif base_os == "centos7" %}
+ADD copr-openshift-tools.repo /etc/yum.repos.d/
+ADD copr-openshift-ansible.repo /etc/yum.repos.d/
 {% endif %}
 
 # creature comforts (make it feel like a normal linux environment)
