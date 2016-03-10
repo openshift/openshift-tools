@@ -5,7 +5,8 @@ Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
 Source0:       %{name}-%{version}.tar.gz
-Requires:      python2
+# python-2.7.5-34 adds native SNI support
+Requires:      python2 >= 2.7.5-34
 BuildRequires: python2-devel
 BuildArch:     noarch
 
