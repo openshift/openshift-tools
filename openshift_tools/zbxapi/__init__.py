@@ -40,9 +40,6 @@ import requests
 import httplib
 import copy
 
-from urllib3.contrib import pyopenssl
-pyopenssl.inject_into_urllib3()
-
 class ZabbixAPIError(Exception):
     '''
         ZabbixAPIError
