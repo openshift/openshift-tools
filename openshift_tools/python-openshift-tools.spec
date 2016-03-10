@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.51
+Version:       0.0.52
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -186,6 +186,11 @@ Thin API wrapper to communicate with a Zabbix server
 
 
 %changelog
+* Thu Mar 10 2016 Joel Diaz <jdiaz@redhat.com> 0.0.52-1
+- specify minimum python version so we are guaranteed SNI support
+  (jdiaz@redhat.com)
+- use base python from RHEL for SNI support (jdiaz@redhat.com)
+
 * Thu Mar 10 2016 Joel Diaz <jdiaz@redhat.com> 0.0.51-1
 - use base python from RHEL for SNI support (jdiaz@redhat.com)
 
