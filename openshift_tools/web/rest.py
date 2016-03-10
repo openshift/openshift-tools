@@ -12,9 +12,6 @@ import requests.packages.urllib3.connectionpool as httplib
 import time
 import urllib3
 
-from urllib3.contrib import pyopenssl
-pyopenssl.inject_into_urllib3()
-
 #Currently only one method is used.
 #More will be added in the future, and this can be disabled
 #pylint: disable=too-few-public-methods
