@@ -1,17 +1,24 @@
+{{ generated_header }}
 # Example docker run command
 # docker run -p 10050:10050 -p 10051:10051 -p 80:80 -p 443:443 oso-rhel7-zaio
 # /usr/local/bin/start.sh will then start the mysqldb, zabbix, and httpd services.
 # Default login:password to Zabbix is Admin:zabbix
 
-FROM oso-rhel7-ops-base:latest
+FROM oso-{{ base_os }}-ops-base:latest
+
+ENV ZAIO_HOSTNAME oso-{{ base_os }}-zaio
 
 # Pause indefinitely if asked to do so.
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 
+{% if base_os == "rhel7" %}
 # Lay down the zabbix repository
 RUN yum clean metadata && \
     yum install -y openshift-ops-yum-zabbix && \
     yum clean all
+{% elif base_os == "centos7" %}
+ADD zabbix.repo /etc/yum.repos.d/
+{% endif %}
 
 # Install zabbix (and supporting tools) from zabbix repo
 RUN yum install -y mod_ssl zabbix-server-mysql zabbix-sender zabbix-agent \
@@ -19,6 +26,7 @@ RUN yum install -y mod_ssl zabbix-server-mysql zabbix-sender zabbix-agent \
     yum -y update && \
     yum clean all
 
+ADD root/ /root/
 # WORK AROUND FOR SQL SCRIPTS ARE MISSING
 ADD zabbix/db_create/zdata /usr/share/doc/zabbix-server-mysql-2.4.5/create/
 
