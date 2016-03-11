@@ -14,8 +14,6 @@
 
 FROM oso-centos7-ops-base:latest
 
-ENV ZAIO_HOSTNAME oso-centos7-zaio
-
 # Pause indefinitely if asked to do so.
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 
