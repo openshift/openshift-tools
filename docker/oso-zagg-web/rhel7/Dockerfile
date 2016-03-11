@@ -1,3 +1,12 @@
+#     ___ ___ _  _ ___ ___    _ _____ ___ ___         
+#    / __| __| \| | __| _ \  /_\_   _| __|   \        
+#   | (_ | _|| .` | _||   / / _ \| | | _|| |) |       
+#    \___|___|_|\_|___|_|_\/_/_\_\_|_|___|___/_ _____ 
+#   |   \ / _ \  | \| |/ _ \_   _| | __|   \_ _|_   _|
+#   | |) | (_) | | .` | (_) || |   | _|| |) | |  | |  
+#   |___/ \___/  |_|\_|\___/ |_|   |___|___/___| |_|  
+# 
+
 # Example docker run command
 # docker run -p 80:80 -p 443:443 oso-rhel7-zagg-web
 # /root/start.sh will then start the mysqldb, zabbix, and httpd services.
@@ -42,6 +51,9 @@ ADD 00-mpm.conf /etc/httpd/conf.modules.d/
 
 # RHEL7.2 Fix for mod_auth_digest writing to /run/httpd/authdigest_shm.pid
 RUN sed -i -e 's/^\(LoadModule auth_digest_module modules\/mod_auth_digest.so\)$/#\1/g' /etc/httpd/conf.modules.d/00-base.conf
+
+# Set default zabbix-server host
+RUN sed -i -e 's/^g_default_zabbix_server.*/g_default_zabbix_server: oso-rhel7-zaio/g' /root/default_vars.yml
 
 # Temporary fixes until we can run as root
 # Make the container work more consistently in and out of openshift
