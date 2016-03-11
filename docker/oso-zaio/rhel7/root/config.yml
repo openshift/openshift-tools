@@ -4,20 +4,7 @@
   vars_files:
   - /root/default_vars.yml
   vars:
-    g_zaio_hostname: "{{ lookup('env', 'ZAIO_HOSTNAME') | default(g_default_zaio_hostname, True) }}"
 
   tasks:
-  - fail: "msg=This playbook requires {{ item }} to be set."
-    when: "{{ item }} is not defined or {{ item }} == ''"
-    with_items:
-    - g_zaio_hostname
-
-  - name: Set zabbix config vars
-    lineinfile:
-      dest: /etc/zabbix/zabbix_agentd.conf
-      regexp: "^{{ item }}=.*"
-      line: "{{ item }}={{ g_zaio_hostname }}"
-    with_items:
-      - Server
-      - ServerActive
-      - Hostname
+  - name: Placeholder task
+    debug: msg="This task does nothing"
