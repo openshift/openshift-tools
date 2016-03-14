@@ -148,7 +148,7 @@ OpenShift Tools Zagg Client Monitoring Scripts
 # ----------------------------------------------------------------------------------
 %package monitoring-zagg-server
 Summary:       OpenShift Tools Zagg Server Monitoring Scripts
-Requires:      python2,python-openshift-tools-monitoring-openshift,python-openshift-tools-monitoring-zagg,python-openshift-tools-ansible
+Requires:      python2,python-openshift-tools-monitoring-zagg,python-openshift-tools-ansible
 BuildRequires: python2-devel
 BuildArch:     noarch
 
