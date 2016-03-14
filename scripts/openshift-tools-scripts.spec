@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.80
+Version:       0.0.81
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -232,6 +232,9 @@ OpenShift Tools Cloud Tools
 
 
 %changelog
+* Mon Mar 14 2016 Joel Diaz <jdiaz@redhat.com> 0.0.81-1
+- zagg-server doesn't need monitoring-openshift (jdiaz@redhat.com)
+
 * Thu Mar 03 2016 Unknown name 0.0.80-1
 - add the cron-send-build-app to the list (zhizhang@zhizhang-laptop-
   nay.redhat.com)
