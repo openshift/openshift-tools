@@ -16,17 +16,9 @@ RUN yum clean metadata && \
         openshift-tools-web-zagg \
         python-openshift-tools-zbxapi \
         openshift-tools-scripts-monitoring-zagg-server \
-        tree python-django-bash-completion httpd mod_ssl mod_wsgi \
+        tree httpd mod_ssl mod_wsgi \
         telnet bind-utils net-tools iproute && \
     yum clean all
-
-# 11-6-15
-# Need to lock djangorestframework at 3.2.X because
-#  later versions disabled django 1.6 support. Current version
-#  on RHEL 7 is 1.6
-# 1-20-16
-# Need to lock django-filter to 0.11.0 otherwise we see logs of errors.
-# See changelog: https://github.com/alex/django-filter/blob/develop/CHANGES.rst
 
 RUN mkdir /tmp/metrics && chown apache.apache /tmp/metrics
 
