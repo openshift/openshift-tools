@@ -1,0 +1,21 @@
+---
+g_default_zabbix_server: default-zabbix
+g_default_zagg_server_config:
+  targets:
+  - name: local zaio
+    type: zabbix
+    trapper_server: "{{ g_default_zabbix_server }}"
+    trapper_port: 10051
+    api_url: http://{{ g_default_zabbix_server }}/zabbix/api_jsonrpc.php
+    api_user: Admin
+    api_password: zabbix
+    ssl_verify: False
+    path: /var/run/zagg/data/local_zaio
+  templates:
+  - Template Heartbeat
+  - Template Zagg Server
+  hostgroups:
+  - Linux servers
+
+g_default_zagg_server_user: zagg-user
+g_default_zagg_server_password: zagg-password
