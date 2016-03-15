@@ -15,7 +15,7 @@ if ! grep -qi 'Red Hat Enterprise Linux' /etc/redhat-release ; then
 fi
 
 # Make sure base is pushed with the latest changes since we depend on it.
-if ../oso-rhel7-ops-base/push.sh ; then
+if ../../oso-ops-base/rhel7/push.sh ; then
   # Push ourselves
   echo
   echo "Pushing oso-rhel7-host-monitoring..."

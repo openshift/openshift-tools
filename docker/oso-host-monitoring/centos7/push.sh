@@ -11,7 +11,7 @@
 
 
 # Make sure base is pushed with the latest changes since we depend on it.
-if ../oso-centos7-ops-base/push.sh ; then
+if ../../oso-ops-base/centos7/push.sh ; then
   # Push ourselves
   echo
   echo "Pushing oso-centos7-host-monitoring..."
