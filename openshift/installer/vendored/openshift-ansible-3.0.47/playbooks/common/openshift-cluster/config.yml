@@ -1,0 +1,14 @@
+---
+- include: evaluate_groups.yml
+
+- include: validate_hostnames.yml
+
+- include: ../openshift-docker/config.yml
+
+- include: ../openshift-etcd/config.yml
+
+- include: ../openshift-nfs/config.yml
+
+- include: ../openshift-master/config.yml
+
+- include: ../openshift-node/config.yml

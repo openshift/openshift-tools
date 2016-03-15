@@ -1,0 +1,9 @@
+---
+vrs_config: /etc/default/openvswitch
+vsp_openshift_dir: /usr/share/vsp-openshift
+vsp_openshift_yaml: "{{ vsp_openshift_dir }}/vsp-openshift.yaml"
+client_cert: "{{ vsp_openshift_dir }}/nuage.crt"
+client_key: "{{ vsp_openshift_dir }}/nuage.key"
+ca_cert: "{{ vsp_openshift_dir }}/ca.crt"
+api_server: "{{ openshift_node_master_api_url }}"
+docker_bridge: "docker0"
