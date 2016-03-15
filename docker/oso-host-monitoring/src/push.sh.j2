@@ -9,7 +9,7 @@ fi
 {% endif %}
 
 # Make sure base is pushed with the latest changes since we depend on it.
-if ../oso-{{ base_os }}-ops-base/push.sh ; then
+if ../../oso-ops-base/{{ base_os }}/push.sh ; then
   # Push ourselves
   echo
   echo "Pushing oso-{{ base_os }}-host-monitoring..."
