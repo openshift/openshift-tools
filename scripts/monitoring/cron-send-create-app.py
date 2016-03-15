@@ -12,7 +12,6 @@ import json
 import time
 import re
 import urllib
-import sys
 import os
 
 # Our jenkins server does not include these rpms.
@@ -22,14 +21,17 @@ import os
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 
 class OpenShiftOC(object):
-    ''' Class to wrap the oc command line tools
-    '''
-    @staticmethod
-    def get_pod(pod_name, proj_name, verbose=False):
-        '''return a pod by name
-        '''
-        pods = OpenShiftOC.get_pods(proj_name=proj_name, verbose=verbose)
-        regex = re.compile('%s-[0-9]-[a-z0-9]{5}$' % pod_name)
+    ''' Class to wrap the oc command line tools '''
+    def __init__(self, namespace, pod_name, verbose=False):
+        ''' Constructor for OpenShiftOC '''
+        self.namespace = namespace
+        self.pod_name = pod_name
+        self.verbose = verbose
+
+    def get_pod(self):
+        '''return a pod by name '''
+        pods = self.get_pods()
+        regex = re.compile('%s-[0-9]-[a-z0-9]{5}$' % self.pod_name)
         for pod in pods['items']:
             results = regex.search(pod['metadata']['name'])
             if results:
@@ -37,75 +39,71 @@ class OpenShiftOC(object):
 
         return None
 
-    @staticmethod
-    def get_pods(pod_name='', proj_name='', verbose=False):
-        '''return all pods
-        '''
-        cmd = ['get', 'pods', '--no-headers', '-o', 'json']
-        if pod_name:
-            cmd = ['get', 'pods', '--no-headers', pod_name, '-o', 'json']
+    def get_pods(self):
+        '''return all pods '''
+        cmd = ['get', 'pods', '--no-headers', '-o', 'json', '-n', self.namespace]
+        results = self.oc_cmd(cmd)
 
-        if proj_name:
-            cmd.append('-n%s'%proj_name)
+        return json.loads(results)
 
-        return json.loads(OpenShiftOC.oc_cmd(cmd, verbose))
+    def new_app(self, path):
+        '''run new-app '''
+        cmd = ['new-app', path, '-n', self.namespace]
+        return self.oc_cmd(cmd)
 
-    @staticmethod
-    def new_app(path, proj_name, verbose=False):
-        '''run new-app
-        '''
-        cmd = ['new-app', path, '-n', proj_name]
-        return OpenShiftOC.oc_cmd(cmd, verbose)
-
-    @staticmethod
-    def delete_project(name, verbose=False):
-        '''delete project
-        '''
-        cmd = ['delete', 'project', name]
-        results = OpenShiftOC.oc_cmd(cmd, verbose)
+    def delete_project(self):
+        '''delete project '''
+        cmd = ['delete', 'project', self.namespace]
+        results = self.oc_cmd(cmd)
         time.sleep(5)
         return results
 
-    @staticmethod
-    def new_project(name, verbose=False):
-        '''create new project
-        '''
+    def new_project(self):
+        '''create new project '''
         cmd = ['project']
-        results = OpenShiftOC.oc_cmd(cmd, verbose)
+        results = self.oc_cmd(cmd)
         curr_project = results.split()[2].strip('"')
-        cmd = ['new-project', name]
-        rval = OpenShiftOC.oc_cmd(cmd, verbose)
+        cmd = ['new-project', self.namespace]
+        rval = self.oc_cmd(cmd)
         cmd = ['project', curr_project]
-        results = OpenShiftOC.oc_cmd(cmd, verbose)
+        results = self.oc_cmd(cmd)
         return rval
 
-    @staticmethod
-    def get_projects(verbose=False):
-        '''get all projects
-        '''
+    def get_logs(self):
+        '''get all events'''
+        pod = self.get_pod()
+        if pod:
+            return self.oc_cmd(['logs', pod['metadata']['name'], '-n', self.namespace])
+
+        return 'Could not get logs for pod.  Could not determine pod name.'
+
+    def get_events(self):
+        '''get all events'''
+        return self.oc_cmd(['get', 'events', '-n', self.namespace])
+
+
+    def get_projects(self):
+        '''get all projects '''
         cmd = ['get', 'projects', '--no-headers']
-        results = [proj.split()[0] for proj in OpenShiftOC.oc_cmd(cmd).split('\n') if proj and len(proj) > 0]
-        if verbose:
-            print results
+        results = [proj.split()[0] for proj in self.oc_cmd(cmd).split('\n') if proj and len(proj) > 0]
 
         return results
 
-    @staticmethod
-    def oc_cmd(cmd, verbose=False):
-        '''Base command for oc
-        '''
+    def oc_cmd(self, cmd):
+        '''Base command for oc '''
         cmds = ['/usr/bin/oc']
         cmds.extend(cmd)
-        if verbose:
-            print ' '.join(cmds)
+        print ' '.join(cmds)
         proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
                                 env={'KUBECONFIG': '/etc/origin/master/admin.kubeconfig'})
         proc.wait()
         if proc.returncode == 0:
             output = proc.stdout.read()
-            if verbose:
+            if self.verbose:
+                print "Stdout:"
                 print output
-                print
+                print "Stderr:"
+                print proc.stderr.read()
             return output
 
         return "Error: %s.  Return: %s" % (proc.returncode, proc.stderr.read())
@@ -119,45 +117,52 @@ def curl(ip_addr, port):
 def main():
     ''' Do the application creation
     '''
-    proj_name = 'ops-monitor-' + os.environ['ZAGG_CLIENT_HOSTNAME']
+    print '################################################################################'
+    print '  Starting App Create'
+    print '################################################################################'
+    namespace = 'ops-monitor-' + os.environ['ZAGG_CLIENT_HOSTNAME']
+    oocmd = OpenShiftOC(namespace, 'hello-openshift', verbose=False)
     app = 'openshift/hello-openshift:v1.0.6'
-    verbose = False
-
-    if len(sys.argv) > 1 and sys.argv[1] == '-v':
-        verbose = True
 
     start_time = time.time()
-    if proj_name in  OpenShiftOC.get_projects(verbose):
-        OpenShiftOC.delete_project(proj_name, verbose)
+    if namespace in  oocmd.get_projects():
+        oocmd.delete_project()
 
-    OpenShiftOC.new_project(proj_name, verbose)
+    oocmd.new_project()
 
-    OpenShiftOC.new_app(app, proj_name, verbose)
+    oocmd.new_app(app)
 
     create_app = 1
+    pod = None
     # Now we wait until the pod comes up
     for _ in range(24):
         time.sleep(5)
-        pod = OpenShiftOC.get_pod('hello-openshift', proj_name, verbose)
+        pod = oocmd.get_pod()
         if pod and pod['status']:
-            if verbose:
-                print pod['status']['phase']
+            print 'Polling Pod status: %s' % pod['status']['phase']
         if pod and pod['status']['phase'] == 'Running' and pod['status'].has_key('podIP'):
             #c_results = curl(pod['status']['podIP'], '8080')
             #if c_results == 'Hello OpenShift!\n':
-            if verbose:
-                print 'success'
-                print 'Time: %s' % str(time.time() - start_time)
+            print 'Finished.'
+            print 'State: Success'
+            print 'Time: %s' % str(time.time() - start_time)
             create_app = 0
             break
 
     else:
-        if verbose:
-            print 'Time: %s' % str(time.time() - start_time)
-            print 'fail'
+        print 'Finished.'
+        print 'State: Fail'
+        print 'Time: %s' % str(time.time() - start_time)
+        print 'Fetching Events:'
+        oocmd.verbose = True
+        print oocmd.get_events()
+        print 'Fetching Logs:'
+        print oocmd.get_logs()
+        print 'Fetching Pod:'
+        print pod
 
-    if proj_name in  OpenShiftOC.get_projects(verbose):
-        OpenShiftOC.delete_project(proj_name, verbose)
+    if namespace in oocmd.get_projects():
+        oocmd.delete_project()
 
     zgs = ZaggSender()
     zgs.add_zabbix_keys({'openshift.master.app.create': create_app})
