@@ -121,7 +121,9 @@ AWS Python libraries developed for monitoring OpenShift.
 # ----------------------------------------------------------------------------------
 %package monitoring-openshift
 Summary:       OpenShift Tools Openshift Python Libraries Package
-Requires:      python2,python-openshift-tools,atomic-openshift
+# Requiring on /usr/bin/oadm (atomic-openshift or upstream origin
+# and /usr/bin/oc (atomic-openshift-clients or upstream origin-clients)
+Requires:      python2,python-openshift-tools,/usr/bin/oadm,/usr/bin/oc
 BuildArch:     noarch
 
 %description monitoring-openshift
