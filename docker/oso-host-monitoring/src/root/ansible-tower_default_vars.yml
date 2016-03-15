@@ -1,0 +1,9 @@
+---
+# These are defaults variables, override using host_monitoring_vars.yml vars file
+g_default_templates:
+- Template Heartbeat           # So we can send hearbeats
+- Template OS Linux            # So we can send host related metrics
+- Template Docker              # So we can send docker related metrics
+- Template Performance Copilot # So we can report PCP metrics
+- Template Operations Tools    # So ops-runner works
+- Template Config Loop         # So we can send config loop related metrics

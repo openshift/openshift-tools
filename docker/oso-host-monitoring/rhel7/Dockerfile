@@ -1,4 +1,13 @@
 FROM oso-rhel7-ops-base:latest
+#     ___ ___ _  _ ___ ___    _ _____ ___ ___         
+#    / __| __| \| | __| _ \  /_\_   _| __|   \        
+#   | (_ | _|| .` | _||   / / _ \| | | _|| |) |       
+#    \___|___|_|\_|___|_|_\/_/_\_\_|_|___|___/_ _____ 
+#   |   \ / _ \  | \| |/ _ \_   _| | __|   \_ _|_   _|
+#   | |) | (_) | | .` | (_) || |   | _|| |) | |  | |  
+#   |___/ \___/  |_|\_|\___/ |_|   |___|___/___| |_|  
+# 
+
 
 # Pause indefinitely if asked to do so.
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
@@ -27,9 +36,9 @@ ADD check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
 RUN echo -e "\n\nalias oca='KUBECONFIG=/etc/origin/master/admin.kubeconfig oc '" >> /root/.bashrc
 RUN echo "alias oadma='KUBECONFIG=/etc/origin/master/admin.kubeconfig oadm '" >> /root/.bashrc
 
+
 RUN yum clean metadata && \
     yum install -y python-pip pcp pcp-conf pcp-testsuite \
-        openshift \
         python-requests \
         python-openshift-tools \
         python-openshift-tools-monitoring-pcp \
