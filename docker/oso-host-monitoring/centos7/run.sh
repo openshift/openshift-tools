@@ -1,4 +1,13 @@
 #!/bin/bash
+#     ___ ___ _  _ ___ ___    _ _____ ___ ___         
+#    / __| __| \| | __| _ \  /_\_   _| __|   \        
+#   | (_ | _|| .` | _||   / / _ \| | | _|| |) |       
+#    \___|___|_|\_|___|_|_\/_/_\_\_|_|___|___/_ _____ 
+#   |   \ / _ \  | \| |/ _ \_   _| | __|   \_ _|_   _|
+#   | |) | (_) | | .` | (_) || |   | _|| |) | |  | |  
+#   |___/ \___/  |_|\_|\___/ |_|   |___|___/___| |_|  
+# 
+
 
 # mwoodson note 1-7-16:
 # pcp recommends mounting /run in their Dockerfile
@@ -10,7 +19,7 @@
 #   cron but using systemd timers
 #           -v /run:/run                                     \
 
-sudo docker run --rm=true -it --name oso-rhel7-host-monitoring \
+sudo docker run --rm=true -it --name oso-centos7-host-monitoring \
            --privileged                                     \
            --pid=host                                       \
            --net=host                                       \
@@ -27,4 +36,4 @@ sudo docker run --rm=true -it --name oso-rhel7-host-monitoring \
            -v /var/lib/docker:/var/lib/docker:ro            \
            -v /var/lib/docker/volumes/shared:/shared:rw     \
            -v /var/run/docker.sock:/var/run/docker.sock     \
-           oso-rhel7-host-monitoring $@
+           oso-centos7-host-monitoring $@
