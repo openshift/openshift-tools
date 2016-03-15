@@ -130,6 +130,8 @@ Openshift Python libraries developed for monitoring OpenShift.
 %files monitoring-openshift
 %{python_sitelib}/openshift_tools/monitoring/ocutil.py
 %{python_sitelib}/openshift_tools/monitoring/ocutil.py[co]
+%{python_sitelib}/openshift_tools/monitoring/oadmutil.py
+%{python_sitelib}/openshift_tools/monitoring/oadmutil.py[co]
 
 
 # ----------------------------------------------------------------------------------
