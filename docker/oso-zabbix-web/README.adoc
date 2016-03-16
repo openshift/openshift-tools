@@ -1,4 +1,4 @@
-= oso-rhel7-zabbix-web Docker Container
+= Zabbix web Docker container
 
 This container runs the zabbix web ui.
 
@@ -14,7 +14,7 @@ To build this container, simply execute the build script.
 .Example:
 [source,bash]
 ----
-./build.sh
+./[rhel7|centos7]/build.sh
 ----
 
 == Run
@@ -24,5 +24,5 @@ To run this container, simply execute the run script.
 .Example:
 [source,bash]
 ----
-./run.sh
+./[rhel7|centos7]/run.sh
 ----
