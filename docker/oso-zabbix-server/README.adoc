@@ -1,4 +1,4 @@
-= oso-rhel7-zaio Docker Container
+= Zabbix server Docker Container
 
 This container is a zabbix server.
 
@@ -14,15 +14,18 @@ To build this container, simply execute the build script.
 .Example:
 [source,bash]
 ----
-./build.sh
+./[rhel7|centos7]/build.sh
 ----
 
 == Run
 
 To run this container, simply execute the run script.
+You should provide the needed environment variables
+(ie. mysql server user, pass, etc) or providing them
+through /secrets/*.yml as needed by /root/config.yml.
 
 .Example:
 [source,bash]
 ----
-./run.sh
+./[rhel7|centos7]/run.sh
 ----

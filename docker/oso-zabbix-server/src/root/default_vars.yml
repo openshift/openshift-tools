@@ -1,0 +1,18 @@
+---
+g_default_hostname:         default-zabbix-server-hostname
+g_default_ses_mail_from:    test@example.com
+g_default_ses_smtp_domain:  example.com
+g_default_ses_smtp_server:  smtp.example.com
+g_default_ses_user:         test
+g_default_ses_password:     password
+g_default_mysql_host:       localhost
+g_default_mysql_user:       zabbix
+g_default_mysql_password:   zabbix
+g_default_zbx_scriptrunner_user: scriptuser
+g_default_user_scriptuser_priv_key: |-
+  -----BEGIN RSA PRIVATE KEY-----
+  !!! Pass in the RSA key for the user who will connect to the
+  !!! bastion host for remote heals in via a secrets mount at
+  !!! /secrets/<scriptrunner user name>.yml
+  -----END RSA PRIVATE KEY-----
+g_default_zbx_scriptrunner_bastion_host: bastion.example.com
