@@ -4,7 +4,7 @@
   vars_files:
   - /root/default_vars.yml
   vars:
-    g_hostname: "{{ lookup('env','HOSTNAME') | default('oso-rhel7-zabbix-server', True) }}"
+    g_hostname: "{{ lookup('env','HOSTNAME') | default(g_default_hostname, True) }}"
     g_ses_mail_from: "{{ lookup('env','SES_MAIL_FROM') | default(g_default_ses_mail_from, True) }}"
     g_ses_smtp_domain: "{{ lookup('env','SES_SMTP_DOMAIN') | default(g_default_ses_smtp_domain, True) }}"
     g_ses_smtp_server: "{{ lookup('env','SES_SMTP_SERVER') | default(g_default_ses_smtp_server, True) }}"
@@ -41,6 +41,10 @@
   - stat:
       path: "/secrets/{{ g_zbx_actions_config.zbx_scriptrunner_user }}.yml"
     register: g_zbx_scriptrunner_vars
+
+  - name: Set default scriptrunner's RSA key
+    set_fact:
+     g_user_scriptuser_priv_key: "{{ g_default_user_scriptuser_priv_key }}"
 
   - name: Load scriptrunner user's variables
     include_vars: "{{ g_zbx_scriptrunner_vars.stat.path }}"
