@@ -1,19 +1,24 @@
+{{ generated_header }}
 # Example docker run command
-# docker run -ti --net=host --name web --rm=true oso-rhel7-zabbix-web
+# docker run -ti --net=host --name web --rm=true oso-{{ base_os }}-zabbix-web
 # /root/start.sh will then start the httpd.
 # Default login:password to Zabbix is Admin:zabbix
 
-FROM oso-rhel7-ops-base:latest
+FROM oso-{{ base_os }}-ops-base:latest
 
 # Pause indefinitely if asked to do so.
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 
 EXPOSE 8000
 
+{% if base_os == "rhel7" %}
 # Lay down the zabbix repository
 RUN yum clean metadata && \
     yum install -y openshift-ops-yum-zabbix && \
     yum clean all
+{% elif base_os == "centos7" %}
+ADD zabbix.repo /etc/yum.repos.d/
+{% endif %}
 
 # Install zabbix from zabbix repo
 RUN yum install -y zabbix-web-mysql mariadb && \

@@ -1,0 +1,6 @@
+#!/bin/bash -e
+{{ generated_header }}
+
+echo -n "Running oso-{{ base_os }}-zabbix-web... "
+sudo docker run -ti --net=host --rm=true --name zabbix-web oso-{{ base_os }}-zabbix-web
+echo "Done."
