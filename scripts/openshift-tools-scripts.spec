@@ -47,6 +47,7 @@ cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-a
 cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
 cp -p cloud/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
 cp -p monitoring/cron-send-build-app.py %{buildroot}/usr/bin/cron-send-build-app
+cp -p monitoring/cron-send-pvspace-sum.py %{buildroot}/usr/bin/cron-send-pvspace-sum
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -197,6 +198,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-os-master-metrics
 /usr/bin/cron-send-create-app
 /usr/bin/cron-send-build-app
+/usr/bin/cron-send-pvspace-sum
 /usr/bin/cron-send-os-skydns-checks
 /usr/bin/cron-send-registry-checks
 

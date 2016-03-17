@@ -107,6 +107,10 @@
     - name: run create app with build process every 30 minutes
       minute: "*/30"
       job: "export ZAGG_CLIENT_HOSTNAME={{ g_zagg_client_config.host.name }}; ops-runner -f -s 15 -n csca.openshift.master.app.build.create /usr/bin/cron-send-build-app"
+    
+    - name: run pv space sum check every 5 minutes
+      minute: "*/5"
+      job: "export ZAGG_CLIENT_HOSTNAME={{ g_zagg_client_config.host.name }}; ops-runner -f -s 15 -n csca.openshift.master.pv.space.sum /usr/bin/cron-send-pvspace-sum"
 
     - name: send openshift-master process count
       minute: "*/2"
