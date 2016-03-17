@@ -21,5 +21,5 @@ cd $(dirname $0)
   echo
   echo "Building oso-centos7-host-monitoring..."
   sudo time docker build $@ -t oso-centos7-host-monitoring . && \
-  sudo docker tag -f oso-centos7-host-monitoring openshift-tools/oso-centos7-host-monitoring:latest
+  sudo docker tag -f oso-centos7-host-monitoring openshifttools/oso-centos7-host-monitoring:latest
 #fi

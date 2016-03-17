@@ -1,4 +1,4 @@
-FROM oso-centos7-ops-base:latest
+FROM openshifttools/oso-centos7-ops-base:latest
 #     ___ ___ _  _ ___ ___    _ _____ ___ ___         
 #    / __| __| \| | __| _ \  /_\_   _| __|   \        
 #   | (_ | _|| .` | _||   / / _ \| | | _|| |) |       
