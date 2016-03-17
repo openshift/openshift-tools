@@ -17,6 +17,6 @@ cd $(dirname $0)
   sudo docker tag -f oso-rhel7-host-monitoring docker-registry.ops.rhcloud.com/ops/oso-rhel7-host-monitoring
 {% elif base_os == "centos7" %}
   sudo time docker build $@ -t oso-centos7-host-monitoring . && \
-  sudo docker tag -f oso-centos7-host-monitoring openshift-tools/oso-centos7-host-monitoring:latest
+  sudo docker tag -f oso-centos7-host-monitoring openshifttools/oso-centos7-host-monitoring:latest
 {% endif %}
 #fi

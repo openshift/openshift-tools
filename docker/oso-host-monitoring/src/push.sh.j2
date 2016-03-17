@@ -16,6 +16,7 @@ if ../../oso-ops-base/{{ base_os }}/push.sh ; then
 {% if base_os == "rhel7" %}
   sudo docker push docker-registry.ops.rhcloud.com/ops/oso-rhel7-host-monitoring
 {% elif base_os == "centos7" %}
-  sudo docker push openshift-tools/oso-centos7-host-monitoring
+  echo "Ensure you have successfully authenticated against docker with a 'docker login'"
+  sudo docker push openshifttools/oso-centos7-host-monitoring
 {% endif %}
 fi
