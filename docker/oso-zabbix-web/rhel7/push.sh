@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 #     ___ ___ _  _ ___ ___    _ _____ ___ ___         
 #    / __| __| \| | __| _ \  /_\_   _| __|   \        
 #   | (_ | _|| .` | _||   / / _ \| | | _|| |) |       
@@ -9,8 +9,11 @@
 # 
 
 
-sudo echo -e "\nTesting sudo works...\n"
+if ! grep -qi 'Red Hat Enterprise Linux' /etc/redhat-release ; then
+  echo "ERROR: We only allow pushing from a RHEL machine because it allows secrets volumes."
+  exit 1
+fi
 
-cd $(dirname $0)
-sudo time docker build -t oso-centos7-zabbix-web . && \
-sudo docker tag -f oso-centos7-zabbix-web openshifttools/oso-centos7-zabbix-web:latest
+echo
+echo "Pushing oso-rhel7-ops-base..."
+echo "oso-rhel7-zabbix-web isn't pushed to any Docker repository"

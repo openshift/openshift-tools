@@ -4,7 +4,11 @@
 # /root/start.sh will then start the httpd.
 # Default login:password to Zabbix is Admin:zabbix
 
-FROM oso-{{ base_os }}-ops-base:latest
+{% if base_os == "rhel7" %}
+FROM oso-rhel7-ops-base:latest
+{% elif base_os == "centos7" %}
+FROM openshifttools/oso-centos7-ops-base:latest
+{% endif %}
 
 # Pause indefinitely if asked to do so.
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
