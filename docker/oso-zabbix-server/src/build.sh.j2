@@ -4,4 +4,9 @@
 sudo echo -e "\nTesting sudo works...\n"
 
 cd $(dirname $0)
-sudo time docker build -t oso-{{ base_os }}-zabbix-server .
+{% if base_os == "rhel7" %}
+sudo time docker build -t oso-rhel7-zabbix-server .
+{% elif base_os == "centos7" %}
+sudo time docker build -t oso-centos7-zabbix-server . && \
+sudo docker tag -f oso-centos7-zabbix-server openshifttools/oso-centos7-zabbix-server:latest
+{% endif %}
