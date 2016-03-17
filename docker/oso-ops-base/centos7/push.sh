@@ -11,6 +11,6 @@
 
 
 echo
-echo "Ensure you have successfully authenticated against docker with a 'docker login'"
 echo "Pushing oso-centos7-ops-base..."
+echo "Ensure you have successfully authenticated against docker with a 'docker login'"
 sudo docker push openshifttools/oso-centos7-ops-base
