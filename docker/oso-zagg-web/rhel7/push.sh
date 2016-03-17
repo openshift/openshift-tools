@@ -9,8 +9,10 @@
 # 
 
 
-sudo echo -e "\nTesting sudo works...\n"
+if ! grep -qi 'Red Hat Enterprise Linux' /etc/redhat-release ; then
+  echo "ERROR: We only allow pushing from a RHEL machine because it allows secrets volumes."
+  exit 1
+fi
 
-cd $(dirname $0)
-sudo time docker build $@ -t oso-centos7-zagg-web . && \
-sudo docker tag -f oso-centos7-zagg-web openshifttools/oso-centos7-zagg-web:latest
+echo
+echo "oso-rhel7-zagg-web isn't pushed to any Docker repository"

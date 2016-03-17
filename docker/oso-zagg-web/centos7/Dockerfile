@@ -12,7 +12,7 @@
 # /root/start.sh will then start the mysqldb, zabbix, and httpd services.
 # Default login:password to Zabbix is Admin:zabbix
 
-FROM oso-centos7-ops-base:latest
+FROM openshifttools/oso-centos7-ops-base:latest
 
 # Pause indefinitely if asked to do so.
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
