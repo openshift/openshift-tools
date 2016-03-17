@@ -9,8 +9,8 @@
 # 
 
 
-sudo echo -e "\nTesting sudo works...\n"
 
-cd $(dirname $0)
-sudo time docker build $@ -t oso-centos7-zagg-web . && \
-sudo docker tag -f oso-centos7-zagg-web openshifttools/oso-centos7-zagg-web:latest
+echo
+echo "Pushing oso-centos7-ops-base..."
+echo "Ensure you have successfully authenticated against docker with a 'docker login'"
+sudo docker push openshifttools/oso-centos7-zagg-web
