@@ -15,5 +15,5 @@ if ! grep -qi 'Red Hat Enterprise Linux' /etc/redhat-release ; then
 fi
 
 echo
-echo "Pushing oso-rhel7-ops-base..."
+echo "Pushing oso-rhel7-zabbix-server..."
 echo "oso-rhel7-zabbix-server isn't pushed to any Docker repository"

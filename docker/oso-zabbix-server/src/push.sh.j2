@@ -9,7 +9,7 @@ fi
 {% endif %}
 
 echo
-echo "Pushing oso-{{ base_os }}-ops-base..."
+echo "Pushing oso-{{ base_os }}-zabbix-server..."
 {% if base_os == "rhel7" %}
 echo "oso-rhel7-zabbix-server isn't pushed to any Docker repository"
 {% elif base_os == "centos7" %}
