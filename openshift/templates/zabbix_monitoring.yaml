@@ -188,11 +188,6 @@ objects:
     name: rhel7
   spec:
     dockerImageRepository: registry.access.redhat.com/library/rhel7
-    tags:
-    - from:
-        kind: DockerImage
-        name: registry.access.redhat.com/library/rhel7:latest
-      name: latest
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
