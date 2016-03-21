@@ -23,7 +23,7 @@ def oc_cmd(cmd):
     '''Base command for oc
     '''
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
-                            env={'KUBECONFIG': '/etc/origin/master/admin.kubeconfig'},shell=True)
+                            env={'KUBECONFIG': '/etc/origin/master/admin.kubeconfig'}, shell=True)
     proc.wait()
     if proc.returncode == 0:
         output = proc.stdout.read()
