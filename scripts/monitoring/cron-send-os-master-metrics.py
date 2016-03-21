@@ -306,8 +306,9 @@ class OpenshiftMasterZaggClient(object):
         nodes_not_ready = []
 
         for n in response['items']:
-            if n['status']['conditions'][0]['reason'] != "KubeletReady":
-                nodes_not_ready.append(n)
+            for cond in n['status']['conditions']:
+                if cond['reason'] == "KubletReady" and cond['status'] != "true":
+                    nodes_not_ready.append(n)
 
         print "Count of nodes not schedulable: %s" % len(nodes_not_schedulable)
         print "Count of nodes not ready: %s" % len(nodes_not_ready)
