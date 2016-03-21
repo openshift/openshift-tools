@@ -187,7 +187,7 @@ objects:
       name: oso-rhel7-ops-base
     name: rhel7
   spec:
-    dockerImageRepository: library/rhel7
+    dockerImageRepository: registry.access.redhat.com/library/rhel7
     tags:
     - from:
         kind: DockerImage
@@ -440,7 +440,7 @@ objects:
 - apiVersion: v1
   kind: Route
   metadata:
-    name: zabbix-web-sll-route
+    name: zabbix-web-ssl-route
   spec:
     host: ${ZABBIX_WEB_URL}
     tls:
@@ -567,8 +567,6 @@ objects:
     resources:
       requests:
         storage: ${VOLUME_CAPACITY}
-kind: List
-metadata: {}
 parameters:
 - description: Database service name
   name: DATABASE_SERVICE_NAME

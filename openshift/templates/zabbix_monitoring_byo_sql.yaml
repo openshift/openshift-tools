@@ -187,7 +187,7 @@ objects:
       name: oso-rhel7-ops-base
     name: rhel7
   spec:
-    dockerImageRepository: library/rhel7
+    dockerImageRepository: registry.access.redhat.com/library/rhel7
     tags:
     - from:
         kind: DockerImage
@@ -479,6 +479,3 @@ objects:
       deploymentconfig: oso-rhel7-zagg-web
     sessionAffinity: None
     type: ClusterIP
-kind: List
-metadata: {}
-
