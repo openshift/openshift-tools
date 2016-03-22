@@ -58,7 +58,6 @@ def get_pv_capacity_availble():
     '''Get all the capacity avalible
     '''
     pvinfo = get_pv()
-    #pv_capacity_availble = sum([int(z['spec']['capacity']['storage'].replace('Gi', '')) for z in pvinfo['items'] if z['status']['phase'] == 'Available'])
     pv_capacity_availble = 0
     for z in pvinfo['items']:
         if z['status']['phase'] == 'Available':
