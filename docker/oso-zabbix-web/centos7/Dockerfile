@@ -26,6 +26,8 @@ RUN yum install -y zabbix-web-mysql mariadb && \
     yum -y update && \
     yum clean all
 
+ADD root/ /root/
+
 ## WORK AROUND FOR PHP ZABBIX CONF MISSING
 ADD zabbix.conf.php /etc/zabbix/web/
 
