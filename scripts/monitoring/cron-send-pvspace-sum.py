@@ -10,10 +10,10 @@
 
 import subprocess
 import json
-import time
-import re
-import urllib
-import os
+#import time
+#import re
+#import urllib
+#import os
 
 # Our jenkins server does not include these rpms.
 # In the future we might move this to a container where these
@@ -39,7 +39,7 @@ def oc_cmd(cmd):
 def get_pv():
     '''Get pv info
     '''
-    cmd = ['get', 'pv', '--no-headers','-o', 'json']
+    cmd = ['get', 'pv', '--no-headers', '-o', 'json']
     results = oc_cmd(cmd)
     return json.loads(results)
 
@@ -47,12 +47,23 @@ def get_pv_capacity_total():
     '''Get all the capacity of the total
     '''
     pvinfo = get_pv()
-    pv_capacity_total = sum([int(z['spec']['capacity']['storage'].replace('Gi', '')) for z in pvinfo['items']])
+    #pv_capacity_total = sum([int(z['spec']['capacity']['storage'].replace('Gi', '')) for z in pvinfo['items']])
+    pv_capacity_total = 0
+    for z in pvinfo['items']:
+        ca = z['spec']['capacity']['storage']
+        pv_capacity_total = pv_capacity_total + int(ca.replace('Gi', ''))
     return pv_capacity_total
 
 def get_pv_capacity_availble():
+    '''Get all the capacity avalible
+    '''
     pvinfo = get_pv()
-    pv_capacity_availble = sum([int(z['spec']['capacity']['storage'].replace('Gi', '')) for z in pvinfo['items'] if z['status']['phase'] == 'Available'])
+    #pv_capacity_availble = sum([int(z['spec']['capacity']['storage'].replace('Gi', '')) for z in pvinfo['items'] if z['status']['phase'] == 'Available'])
+    pv_capacity_availble = 0
+    for z in pvinfo['items']:
+        if z['status']['phase'] == 'Available':
+            ca = z['spec']['capacity']['storage']
+            pv_capacity_availble = pv_capacity_availble + int(ca.replace('Gi', ''))
     return pv_capacity_availble
 def main():
     ''' get the pvspace sum
