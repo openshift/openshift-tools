@@ -11,7 +11,7 @@ $DB["PASSWORD"]         = getenv("MYSQL_PASSWORD");
 // Schema name. Used for IBM DB2 and PostgreSQL.
 $DB["SCHEMA"]           = '';
 
-$ZBX_SERVER             = 'oso-rhel7-zabbix-server';
+$ZBX_SERVER             = 'default-zabbix-server';
 $ZBX_SERVER_PORT        = '10051';
 $ZBX_SERVER_NAME        = '';
 

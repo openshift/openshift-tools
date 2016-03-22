@@ -10,5 +10,5 @@
 
 
 echo -n "Running oso-centos7-zabbix-web... "
-sudo docker run -ti --net=host --rm=true --name zabbix-web oso-centos7-zabbix-web
+sudo docker run -ti --net=host --rm=true -e 'ZABBIX_SERVER_HOSTNAME=oso-cent7-zabbix-server' --name zabbix-web oso-centos7-zabbix-web $@
 echo "Done."

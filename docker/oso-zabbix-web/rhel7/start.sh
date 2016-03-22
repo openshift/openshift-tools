@@ -14,6 +14,9 @@ fi
 
 echo user:x:$(id -u):0:USER:/root:/bin/bash >> /etc/passwd
 
+echo "Running config playbook"
+ansible-playbook /root/config.yml
+
 echo
 echo 'start httpd'
 echo '---------------'
