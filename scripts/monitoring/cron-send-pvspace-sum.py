@@ -9,8 +9,11 @@
 # the to-many-branches
 
 import subprocess
-#import sys
-#import os
+import json
+import time
+import re
+import urllib
+import os
 
 # Our jenkins server does not include these rpms.
 # In the future we might move this to a container where these
@@ -22,24 +25,47 @@ from openshift_tools.monitoring.zagg_sender import ZaggSender
 def oc_cmd(cmd):
     '''Base command for oc
     '''
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
-                            env={'KUBECONFIG': '/etc/origin/master/admin.kubeconfig'}, shell=True)
+    cmds = ['/usr/bin/oc']
+    cmds.extend(cmd)
+    print ' '.join(cmds)
+    proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
+                                env={'KUBECONFIG': '/etc/origin/master/admin.kubeconfig'})
     proc.wait()
     if proc.returncode == 0:
         output = proc.stdout.read()
         return output
 
     return "Error: %s.  Return: %s" % (proc.returncode, proc.stderr.read())
+def get_pv():
+    '''Get pv info
+    '''
+    cmd = ['get', 'pv', '--no-headers','-o', 'json']
+    results = oc_cmd(cmd)
+    return json.loads(results)
 
+def get_pv_capacity_total():
+    '''Get all the capacity of the total
+    '''
+    pvinfo = get_pv()
+    pv_capacity_total = sum([int(z['spec']['capacity']['storage'].replace('Gi', '')) for z in pvinfo['items']])
+    return pv_capacity_total
 
+def get_pv_capacity_availble():
+    pvinfo = get_pv()
+    pv_capacity_availble = sum([int(z['spec']['capacity']['storage'].replace('Gi', '')) for z in pvinfo['items'] if z['status']['phase'] == 'Available'])
+    return pv_capacity_availble
 def main():
     ''' get the pvspace sum
     '''
-
-    sum_pv = oc_cmd("oc get pv |awk '{print $3}'|sed 's/Gi//g'|awk '{s+=$1} END {print s}'")
-    print 'the total of pv space is : %s' % sum_pv
+    pv_capacity_total = 0
+    pv_capacity_availble = 0
+    pv_capacity_total = get_pv_capacity_total()
+    pv_capacity_availble = get_pv_capacity_availble()
+    print 'the total of pv space is : %s' % pv_capacity_total
+    print 'the Available of pv space is : %s' % pv_capacity_availble
     zgs = ZaggSender()
-    zgs.add_zabbix_keys({'openshift.master.pv.space.total': sum_pv})
+    zgs.add_zabbix_keys({'openshift.master.pv.space.total': pv_capacity_total})
+    zgs.add_zabbix_keys({'openshift.master.pv.space.availble': pv_capacity_availble})
     zgs.send_metrics()
 
 
