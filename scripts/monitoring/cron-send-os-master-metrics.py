@@ -283,10 +283,10 @@ class OpenshiftMasterZaggClient(object):
                     'Failed': 0}
 
         # Dynamic items variables
-        discovery_key_pv = 'disc.pv' 
-        item_prototype_macro_pv =  '#OSO_PV'
-        item_prototype_key_count =  'disc.pv.count'
-        item_prototype_key_available =  'disc.pv.available'
+        discovery_key_pv = 'disc.pv'
+        item_prototype_macro_pv = '#OSO_PV'
+        item_prototype_key_count = 'disc.pv.count'
+        item_prototype_key_available = 'disc.pv.available'
         dynamic_pv_count = defaultdict(int)
         dynamic_pv_available = defaultdict(int)
   
@@ -330,8 +330,8 @@ class OpenshiftMasterZaggClient(object):
             print "Total Persistent Volume %s count: %s" % (size, count)
             print "Total Persistent Volume available %s count: %s" % (size, dynamic_pv_available[size])
 
-            self.zagg_sender.add_zabbix_keys({ "%s[%s]" %( item_prototype_key_count, size) : count,
-                                               "%s[%s]" %( item_prototype_key_available, size) : dynamic_pv_available[size]})
+            self.zagg_sender.add_zabbix_keys({ "%s[%s]" %(item_prototype_key_count, size) : count,
+                                               "%s[%s]" %(item_prototype_key_available, size) : dynamic_pv_available[size]})
 
 
 
