@@ -295,14 +295,14 @@ class OpenshiftMasterZaggClient(object):
             ca = z['spec']['capacity']['storage']
             pv_capacity_total = pv_capacity_total + int(ca.replace('Gi', ''))
         print 'pv_capacity_total: %s' % pv_capacity_total
-        pv_capacity_availble = 0
+        pv_capacity_available = 0
         for z in response['items']:
             if z['status']['phase'] == 'Available':
                 ca = z['spec']['capacity']['storage']
-                pv_capacity_availble = pv_capacity_availble + int(ca.replace('Gi', ''))
-        print 'pv_capacity_availble: %s' % pv_capacity_availble
+                pv_capacity_available = pv_capacity_available + int(ca.replace('Gi', ''))
+        print 'pv_capacity_available: %s' % pv_capacity_available
         self.zagg_sender.add_zabbix_keys({'openshift.master.pv.space.total': pv_capacity_total})
-        self.zagg_sender.add_zabbix_keys({'openshift.master.pv.space.availble': pv_capacity_availble})
+        self.zagg_sender.add_zabbix_keys({'openshift.master.pv.space.available': pv_capacity_available})
         pv_count_info = {}
         for z in response['items']:
             key = z['spec']['capacity']['storage'].replace('Gi', '')
