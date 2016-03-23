@@ -87,8 +87,8 @@ class OpenshiftMasterZaggClient(object):
             if self.args.user_count or self.args.all_checks:
                 self.user_count()
 
-            if self.args.pv_count or self.args.all_checks:
-                self.pv_count()
+            if self.args.pv_info or self.args.all_checks:
+                self.pv_info()
 
             if self.args.nodes_not_ready or self.args.all_checks:
                 self.nodes_not_ready()
@@ -138,8 +138,8 @@ class OpenshiftMasterZaggClient(object):
         master_check_group.add_argument('--user-count', action='store_true', default=None,
                                         help='Query the Openshift Master for Number of Users')
 
-        master_check_group.add_argument('--pv-count', action='store_true', default=None,
-                                        help='Query the Openshift Master for number of Persistent Volumes')
+        master_check_group.add_argument('--pv-info', action='store_true', default=None,
+                                        help='Query the Openshift Master for Persistent Volumes Info')
 
         master_check_group.add_argument('--nodes-not-ready', action='store_true', default=None,
                                         help='Query the Openshift Master for number of nodes not in Ready state')
@@ -267,8 +267,8 @@ class OpenshiftMasterZaggClient(object):
         print "Total user count: %s" % len(response['items'])
         self.zagg_sender.add_zabbix_keys({'openshift.master.user.count' : len(response['items'])})
 
-    def pv_count(self):
-        """ check the number of persistent volumes in Openshift """
+    def pv_info(self):
+        """ Gather info about the persistent volumes in Openshift """
 
         print "\nPerforming user persistent volume count...\n"
 
@@ -289,6 +289,53 @@ class OpenshiftMasterZaggClient(object):
             print "Total Persistent Volume %s count: %s" % (key, value)
             self.zagg_sender.add_zabbix_keys(
                 {'openshift.master.pv.%s.count' %key.lower() : value})
+        #get info for the capacity
+        pv_capacity_total = 0
+        for z in response['items']:
+            ca = z['spec']['capacity']['storage']
+            pv_capacity_total = pv_capacity_total + int(ca.replace('Gi', ''))
+        print 'pv_capacity_total: %s' % pv_capacity_total
+        pv_capacity_availble = 0
+        for z in response['items']:
+            if z['status']['phase'] == 'Available':
+                ca = z['spec']['capacity']['storage']
+                pv_capacity_availble = pv_capacity_availble + int(ca.replace('Gi', ''))
+        print 'pv_capacity_availble: %s' % pv_capacity_availble
+        self.zagg_sender.add_zabbix_keys({'openshift.master.pv.space.total': pv_capacity_total})
+        self.zagg_sender.add_zabbix_keys({'openshift.master.pv.space.availble': pv_capacity_availble})
+        #for dynamic count 
+        pv_count_info={}
+        for z in response['items']:
+            #pv_count_info[int(z['spec']['capacity']['storage'].replace('Gi', ''))] = pv_count_info[int(z['spec']['capacity']['storage'].replace('Gi', ''))] + 1
+            key = z['spec']['capacity']['storage'].replace('Gi', '')
+            #print pv_count_info[key]
+            if pv_count_info.has_key(key):
+                pv_count_info[key] = pv_count_info[key] +1
+            else:
+                pv_count_info[key] = 1
+        #print 'done the info collect'
+        #print pv_count_info
+        for key in pv_count_info:
+            print 'pv_count_info[%s]:' % key,pv_count_info[key]
+            value = pv_count_info[key]
+            self.zagg_sender.add_zabbix_keys({'disc.pv.count[%s]'%key:value})
+        #for dynamic count avalible
+        pv_count_info_available={}
+        for z in response['items']:
+            #pv_count_info[int(z['spec']['capacity']['storage'].replace('Gi', ''))] = pv_count_info[int(z['spec']['capacity']['storage'].replace('Gi', ''))] + 1
+            key = z['spec']['capacity']['storage'].replace('Gi', '')
+            #print pv_count_info[key]
+            if z['status']['phase'] == 'Available':
+                if pv_count_info_available.has_key(key):
+                    pv_count_info_available[key] = pv_count_info_available[key] +1
+                else:
+                    pv_count_info_available[key] = 1
+        for key in pv_count_info_available:
+            print 'pv_count_info_available[%s]:' % key,pv_count_info_available[key]
+            value = pv_count_info_available[key]
+            self.zagg_sender.add_zabbix_keys({'disc.pv.count.available[%s]'%key:value})
+
+
 
     def nodes_not_ready(self):
         """ check the number of nodes in the cluster that are not ready"""
