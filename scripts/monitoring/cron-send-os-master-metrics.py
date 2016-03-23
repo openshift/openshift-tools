@@ -28,6 +28,7 @@
 #pylint: disable=import-error
 
 import argparse
+from collections import defaultdict
 import math
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 from openshift_tools.monitoring.zagg_sender import ZaggSender
@@ -273,64 +274,92 @@ class OpenshiftMasterZaggClient(object):
         print "\nPerforming user persistent volume count...\n"
 
         response = self.ora.get('/api/v1/persistentvolumes')
+
+        pv_capacity_total = 0
+        pv_capacity_available = 0
         pv_types = {'Available': 0,
                     'Bound': 0,
                     'Released': 0,
                     'Failed': 0}
 
+        # Dynamic items variables
+        discovery_key_pv = 'disc.pv' 
+        item_prototype_macro_pv =  '#OSO_PV'
+        item_prototype_key_count =  'disc.pv.count'
+        item_prototype_key_available =  'disc.pv.available'
+        dynamic_pv_count = defaultdict(int)
+        dynamic_pv_available = defaultdict(int)
+  
         for item in response['items']:
+            # gather dynamic pv counts 
+            dynamic_pv_count[item['spec']['capacity']['storage']] += 1
+
+            #get count of each pv type available
             pv_types[item['status']['phase']] += 1
 
+            #get info for the capacity and capacity available
+            capacity = item['spec']['capacity']['storage']
+            if item['status']['phase'] == 'Available':
+                # get total available capacity
+                pv_capacity_available = pv_capacity_available + int(capacity.replace('Gi', ''))
+
+                # gather dynamic pv available counts 
+                dynamic_pv_available[item['spec']['capacity']['storage']] += 1
+
+            pv_capacity_total = pv_capacity_total + int(capacity.replace('Gi', ''))
+
         print "Total Persistent Volume Total count: %s" % len(response['items'])
+        print 'Total Persistent Volume Capacity: %s' % pv_capacity_total
+        print 'Total Persisten Volume Available Capacity: %s' % pv_capacity_available
+
         self.zagg_sender.add_zabbix_keys(
-            {'openshift.master.pv.total.count' : len(response['items'])})
+            {'openshift.master.pv.total.count' : len(response['items']),
+             'openshift.master.pv.space.total': pv_capacity_total,
+            'openshift.master.pv.space.available': pv_capacity_available})
 
         for key, value in pv_types.iteritems():
             print "Total Persistent Volume %s count: %s" % (key, value)
             self.zagg_sender.add_zabbix_keys(
                 {'openshift.master.pv.%s.count' %key.lower() : value})
-        #get info for the capacity
-        pv_capacity_total = 0
-        for z in response['items']:
-            ca = z['spec']['capacity']['storage']
-            pv_capacity_total = pv_capacity_total + int(ca.replace('Gi', ''))
-        print 'pv_capacity_total: %s' % pv_capacity_total
-        pv_capacity_available = 0
-        for z in response['items']:
-            if z['status']['phase'] == 'Available':
-                ca = z['spec']['capacity']['storage']
-                pv_capacity_available = pv_capacity_available + int(ca.replace('Gi', ''))
-        print 'pv_capacity_available: %s' % pv_capacity_available
-        self.zagg_sender.add_zabbix_keys({'openshift.master.pv.space.total': pv_capacity_total})
-        self.zagg_sender.add_zabbix_keys({'openshift.master.pv.space.available': pv_capacity_available})
-        pv_count_info = {}
-        for z in response['items']:
-            key = z['spec']['capacity']['storage'].replace('Gi', '')
-            #print pv_count_info[key]
-            if pv_count_info.has_key(key):
-                pv_count_info[key] = pv_count_info[key] +1
-            else:
-                pv_count_info[key] = 1
-        #print 'done the info collect'
-        #print pv_count_info
-        for key in pv_count_info:
-            print 'pv_count_info[%s]:' % key, pv_count_info[key]
-            value = pv_count_info[key]
-            self.zagg_sender.add_zabbix_keys({'disc.pv.count[%s]'%key:value})
-        #for dynamic count avalible
-        pv_count_info_available = {}
-        for z in response['items']:
-            key = z['spec']['capacity']['storage'].replace('Gi', '')
-            #print pv_count_info[key]
-            if z['status']['phase'] == 'Available':
-                if pv_count_info_available.has_key(key):
-                    pv_count_info_available[key] = pv_count_info_available[key] +1
-                else:
-                    pv_count_info_available[key] = 1
-        for key in pv_count_info_available:
-            print 'pv_count_info_available[%s]:' % key, pv_count_info_available[key]
-            value = pv_count_info_available[key]
-            self.zagg_sender.add_zabbix_keys({'disc.pv.count.available[%s]'%key:value})
+
+        # Add dynamic items
+        self.zagg_sender.add_zabbix_dynamic_item(discovery_key_pv, item_prototype_macro_pv, dynamic_pv_count.keys())
+
+        for size, count in dynamic_pv_count.iteritems():
+            print
+            print "Total Persistent Volume %s count: %s" % (size, count)
+            print "Total Persistent Volume available %s count: %s" % (size, dynamic_pv_available[size])
+
+            self.zagg_sender.add_zabbix_keys({ "%s[%s]" %( item_prototype_key_count, size) : count,
+                                               "%s[%s]" %( item_prototype_key_available, size) : dynamic_pv_available[size]})
+
+#        pv_count_info = {}
+#        for z in response['items']:
+#            key = z['spec']['capacity']['storage'].replace('Gi', '')
+#            #print pv_count_info[key]
+#            if pv_count_info.has_key(key):
+#                pv_count_info[key] = pv_count_info[key] +1
+#            else:
+#                pv_count_info[key] = 1
+#        #print 'done the info collect'
+#        #print pv_count_info
+#        for key in pv_count_info:
+#            print 'pv_count_info[%s]:' % key, pv_count_info[key]
+#            value = pv_count_info[key]
+#        #for dynamic count avalible
+#        pv_count_info_available = {}
+#        for z in response['items']:
+#            key = z['spec']['capacity']['storage'].replace('Gi', '')
+#            #print pv_count_info[key]
+#            if z['status']['phase'] == 'Available':
+#                if pv_count_info_available.has_key(key):
+#                    pv_count_info_available[key] = pv_count_info_available[key] +1
+#                else:
+#                    pv_count_info_available[key] = 1
+#        for key in pv_count_info_available:
+#            print 'pv_count_info_available[%s]:' % key, pv_count_info_available[key]
+#            value = pv_count_info_available[key]
+#            self.zagg_sender.add_zabbix_keys({'disc.pv.count.available[%s]'%key:value})
 
 
 
