@@ -3,18 +3,7 @@
   gather_facts: no
   vars_files:
   - /root/default_vars.yml
-  vars:
-    g_zabbix_server_hostname: "{{ lookup('env','ZABBIX_SERVER_HOSTNAME') | default(g_default_zabbix_server_hostname, True) }}"
-
-  pre_tasks:
-  - fail: "msg=This playbook requires {{ item }} to be set and not empty."
-    when: "{{ item }} is not defined or {{ item }} == ''"
-    with_items:
-    - g_zabbix_server_hostname
-
   tasks:
-  - name: Set zabbix server name for web config
-    lineinfile:
-      dest: /etc/zabbix/web/zabbix.conf.php
-      regexp: '^\$ZBX_SERVER\s*='
-      line: "$ZBX_SERVER = '{{ g_zabbix_server_hostname }}';"
+  - name: placeholder playbook
+    debug:
+      msg: "Just a placeholder for future ansible playbook steps to run on startup"
