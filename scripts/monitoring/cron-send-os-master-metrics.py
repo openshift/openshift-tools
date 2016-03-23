@@ -315,7 +315,7 @@ class OpenshiftMasterZaggClient(object):
         self.zagg_sender.add_zabbix_keys(
             {'openshift.master.pv.total.count' : len(response['items']),
              'openshift.master.pv.space.total': pv_capacity_total,
-            'openshift.master.pv.space.available': pv_capacity_available})
+             'openshift.master.pv.space.available': pv_capacity_available})
 
         for key, value in pv_types.iteritems():
             print "Total Persistent Volume %s count: %s" % (key, value)
@@ -330,7 +330,7 @@ class OpenshiftMasterZaggClient(object):
             print "Total Persistent Volume %s count: %s" % (size, count)
             print "Total Persistent Volume available %s count: %s" % (size, dynamic_pv_available[size])
 
-            self.zagg_sender.add_zabbix_keys({ "%s[%s]" %(item_prototype_key_count, size) : count,
+            self.zagg_sender.add_zabbix_keys({"%s[%s]" %(item_prototype_key_count, size) : count,
                                                "%s[%s]" %(item_prototype_key_available, size) : dynamic_pv_available[size]})
 
 
