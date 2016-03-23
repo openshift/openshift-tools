@@ -303,8 +303,7 @@ class OpenshiftMasterZaggClient(object):
         print 'pv_capacity_availble: %s' % pv_capacity_availble
         self.zagg_sender.add_zabbix_keys({'openshift.master.pv.space.total': pv_capacity_total})
         self.zagg_sender.add_zabbix_keys({'openshift.master.pv.space.availble': pv_capacity_availble})
-        #for dynamic count 
-        pv_count_info={}
+        pv_count_info = {}
         for z in response['items']:
             #pv_count_info[int(z['spec']['capacity']['storage'].replace('Gi', ''))] = pv_count_info[int(z['spec']['capacity']['storage'].replace('Gi', ''))] + 1
             key = z['spec']['capacity']['storage'].replace('Gi', '')
@@ -316,11 +315,11 @@ class OpenshiftMasterZaggClient(object):
         #print 'done the info collect'
         #print pv_count_info
         for key in pv_count_info:
-            print 'pv_count_info[%s]:' % key,pv_count_info[key]
+            print 'pv_count_info[%s]:' % key, pv_count_info[key]
             value = pv_count_info[key]
             self.zagg_sender.add_zabbix_keys({'disc.pv.count[%s]'%key:value})
         #for dynamic count avalible
-        pv_count_info_available={}
+        pv_count_info_available = {}
         for z in response['items']:
             #pv_count_info[int(z['spec']['capacity']['storage'].replace('Gi', ''))] = pv_count_info[int(z['spec']['capacity']['storage'].replace('Gi', ''))] + 1
             key = z['spec']['capacity']['storage'].replace('Gi', '')
@@ -331,7 +330,7 @@ class OpenshiftMasterZaggClient(object):
                 else:
                     pv_count_info_available[key] = 1
         for key in pv_count_info_available:
-            print 'pv_count_info_available[%s]:' % key,pv_count_info_available[key]
+            print 'pv_count_info_available[%s]:' % key, pv_count_info_available[key]
             value = pv_count_info_available[key]
             self.zagg_sender.add_zabbix_keys({'disc.pv.count.available[%s]'%key:value})
 
