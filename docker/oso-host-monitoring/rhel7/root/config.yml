@@ -121,7 +121,7 @@
     - name: send openshift-master counts (user, pod, project) every 2 hours
       hour: "*/2"
       minute: "0"
-      job: ops-runner -f -s 15 -n csosmm.openshift.master.counts /usr/bin/cron-send-os-master-metrics --project-count --pod-count --user-count --pv-count
+      job: ops-runner -f -s 15 -n csosmm.openshift.master.counts /usr/bin/cron-send-os-master-metrics --project-count --pod-count --user-count --pv-info
 
     - name: send openshift-master /healthz status every 4 minutes
       minute: "*/4"
