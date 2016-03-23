@@ -333,33 +333,6 @@ class OpenshiftMasterZaggClient(object):
             self.zagg_sender.add_zabbix_keys({ "%s[%s]" %( item_prototype_key_count, size) : count,
                                                "%s[%s]" %( item_prototype_key_available, size) : dynamic_pv_available[size]})
 
-#        pv_count_info = {}
-#        for z in response['items']:
-#            key = z['spec']['capacity']['storage'].replace('Gi', '')
-#            #print pv_count_info[key]
-#            if pv_count_info.has_key(key):
-#                pv_count_info[key] = pv_count_info[key] +1
-#            else:
-#                pv_count_info[key] = 1
-#        #print 'done the info collect'
-#        #print pv_count_info
-#        for key in pv_count_info:
-#            print 'pv_count_info[%s]:' % key, pv_count_info[key]
-#            value = pv_count_info[key]
-#        #for dynamic count avalible
-#        pv_count_info_available = {}
-#        for z in response['items']:
-#            key = z['spec']['capacity']['storage'].replace('Gi', '')
-#            #print pv_count_info[key]
-#            if z['status']['phase'] == 'Available':
-#                if pv_count_info_available.has_key(key):
-#                    pv_count_info_available[key] = pv_count_info_available[key] +1
-#                else:
-#                    pv_count_info_available[key] = 1
-#        for key in pv_count_info_available:
-#            print 'pv_count_info_available[%s]:' % key, pv_count_info_available[key]
-#            value = pv_count_info_available[key]
-#            self.zagg_sender.add_zabbix_keys({'disc.pv.count.available[%s]'%key:value})
 
 
 
