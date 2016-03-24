@@ -26,8 +26,10 @@
 #pylint: disable=too-many-branches
 # pylint is flagging import errors, as the bot doesn't know out openshift-tools libs
 #pylint: disable=import-error
+#pylint: disable=line-too-long
 
 import argparse
+from collections import defaultdict
 import math
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 from openshift_tools.monitoring.zagg_sender import ZaggSender
@@ -87,8 +89,8 @@ class OpenshiftMasterZaggClient(object):
             if self.args.user_count or self.args.all_checks:
                 self.user_count()
 
-            if self.args.pv_count or self.args.all_checks:
-                self.pv_count()
+            if self.args.pv_info or self.args.all_checks:
+                self.pv_info()
 
             if self.args.nodes_not_ready or self.args.all_checks:
                 self.nodes_not_ready()
@@ -138,8 +140,8 @@ class OpenshiftMasterZaggClient(object):
         master_check_group.add_argument('--user-count', action='store_true', default=None,
                                         help='Query the Openshift Master for Number of Users')
 
-        master_check_group.add_argument('--pv-count', action='store_true', default=None,
-                                        help='Query the Openshift Master for number of Persistent Volumes')
+        master_check_group.add_argument('--pv-info', action='store_true', default=None,
+                                        help='Query the Openshift Master for Persistent Volumes Info')
 
         master_check_group.add_argument('--nodes-not-ready', action='store_true', default=None,
                                         help='Query the Openshift Master for number of nodes not in Ready state')
@@ -267,28 +269,73 @@ class OpenshiftMasterZaggClient(object):
         print "Total user count: %s" % len(response['items'])
         self.zagg_sender.add_zabbix_keys({'openshift.master.user.count' : len(response['items'])})
 
-    def pv_count(self):
-        """ check the number of persistent volumes in Openshift """
+    def pv_info(self):
+        """ Gather info about the persistent volumes in Openshift """
 
         print "\nPerforming user persistent volume count...\n"
 
         response = self.ora.get('/api/v1/persistentvolumes')
+
+        pv_capacity_total = 0
+        pv_capacity_available = 0
         pv_types = {'Available': 0,
                     'Bound': 0,
                     'Released': 0,
                     'Failed': 0}
 
+        # Dynamic items variables
+        discovery_key_pv = 'disc.pv'
+        item_prototype_macro_pv = '#OSO_PV'
+        item_prototype_key_count = 'disc.pv.count'
+        item_prototype_key_available = 'disc.pv.available'
+        dynamic_pv_count = defaultdict(int)
+        dynamic_pv_available = defaultdict(int)
+
         for item in response['items']:
+            # gather dynamic pv counts
+            dynamic_pv_count[item['spec']['capacity']['storage']] += 1
+
+            #get count of each pv type available
             pv_types[item['status']['phase']] += 1
 
+            #get info for the capacity and capacity available
+            capacity = item['spec']['capacity']['storage']
+            if item['status']['phase'] == 'Available':
+                # get total available capacity
+                pv_capacity_available = pv_capacity_available + int(capacity.replace('Gi', ''))
+
+                # gather dynamic pv available counts
+                dynamic_pv_available[item['spec']['capacity']['storage']] += 1
+
+            pv_capacity_total = pv_capacity_total + int(capacity.replace('Gi', ''))
+
         print "Total Persistent Volume Total count: %s" % len(response['items'])
+        print 'Total Persistent Volume Capacity: %s' % pv_capacity_total
+        print 'Total Persisten Volume Available Capacity: %s' % pv_capacity_available
+
         self.zagg_sender.add_zabbix_keys(
-            {'openshift.master.pv.total.count' : len(response['items'])})
+            {'openshift.master.pv.total.count' : len(response['items']),
+             'openshift.master.pv.space.total': pv_capacity_total,
+             'openshift.master.pv.space.available': pv_capacity_available})
 
         for key, value in pv_types.iteritems():
             print "Total Persistent Volume %s count: %s" % (key, value)
             self.zagg_sender.add_zabbix_keys(
                 {'openshift.master.pv.%s.count' %key.lower() : value})
+
+        # Add dynamic items
+        self.zagg_sender.add_zabbix_dynamic_item(discovery_key_pv, item_prototype_macro_pv, dynamic_pv_count.keys())
+
+        for size, count in dynamic_pv_count.iteritems():
+            print
+            print "Total Persistent Volume %s count: %s" % (size, count)
+            print "Total Persistent Volume available %s count: %s" % (size, dynamic_pv_available[size])
+
+            self.zagg_sender.add_zabbix_keys({"%s[%s]" %(item_prototype_key_count, size) : count,
+                                              "%s[%s]" %(item_prototype_key_available, size) : dynamic_pv_available[size]})
+
+
+
 
     def nodes_not_ready(self):
         """ check the number of nodes in the cluster that are not ready"""
