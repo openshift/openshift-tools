@@ -4,191 +4,6 @@ metadata:
   name: ops-zabbix-monitoring-byo-sql
 objects:
 - apiVersion: v1
-  kind: BuildConfig
-  metadata:
-    labels:
-      name: oso-centos7-ops-base
-    name: oso-centos7-ops-base
-  spec:
-    output:
-      to:
-        kind: ImageStreamTag
-        name: oso-centos7-ops-base:latest
-    resources: {}
-    source:
-      contextDir: docker/oso-ops-base/centos7
-      git:
-        uri: https://github.com/openshift/openshift-tools
-      type: Git
-    strategy:
-      dockerStrategy:
-        env:
-        - name: OO_PAUSE_ON_BUILD
-          value: 'false'
-        from:
-          kind: ImageStreamTag
-          name: centos:centos7
-        noCache: true
-      type: Docker
-    triggers:
-    - github:
-        secret: omDbv56tz1WfjnJXBd8-
-      type: GitHub
-    - generic:
-        secret: omZTVJ1ypJZG6scTRTXB
-      type: Generic
-    - imageChange: {}
-      type: ImageChange
-- apiVersion: v1
-  kind: BuildConfig
-  metadata:
-    labels:
-      name: oso-cent7-zabbix-server
-    name: oso-cent7-zabbix-server
-  spec:
-    output:
-      to:
-        kind: ImageStreamTag
-        name: oso-cent7-zabbix-server:latest
-    resources: {}
-    source:
-      contextDir: docker/oso-zabbix-server/centos7
-      git:
-        uri: https://github.com/openshift/openshift-tools
-      type: Git
-    strategy:
-      dockerStrategy:
-        env:
-        - name: OO_PAUSE_ON_BUILD
-          value: 'false'
-        from:
-          kind: ImageStreamTag
-          name: oso-centos7-ops-base:latest
-        noCache: true
-      type: Docker
-    triggers:
-    - github:
-        secret: emr1MvjYjWNkEWUI_q6S
-      type: GitHub
-    - generic:
-        secret: yXX-a_vZDwurwsEHzn4U
-      type: Generic
-    - imageChange: {}
-      type: ImageChange
-- apiVersion: v1
-  kind: BuildConfig
-  metadata:
-    labels:
-      name: oso-centos7-zabbix-web
-    name: oso-centos7-zabbix-web
-  spec:
-    output:
-      to:
-        kind: ImageStreamTag
-        name: oso-centos7-zabbix-web:latest
-    resources: {}
-    source:
-      contextDir: docker/oso-zabbix-web/centos7
-      git:
-        uri: https://github.com/openshift/openshift-tools
-      type: Git
-    strategy:
-      dockerStrategy:
-        env:
-        - name: OO_PAUSE_ON_BUILD
-          value: 'false'
-        from:
-          kind: ImageStreamTag
-          name: oso-centos7-ops-base:latest
-        noCache: true
-      type: Docker
-    triggers:
-    - github:
-        secret: bxBBfQa-snFN2325yUq4
-      type: GitHub
-    - generic:
-        secret: vAIA7QI9jD3k9DWXbsIi
-      type: Generic
-    - imageChange: {}
-      type: ImageChange
-- apiVersion: v1
-  kind: BuildConfig
-  metadata:
-    labels:
-      name: oso-centos7-zagg-web
-    name: oso-centos7-zagg-web
-  spec:
-    output:
-      to:
-        kind: ImageStreamTag
-        name: oso-centos7-zagg-web:latest
-    resources: {}
-    source:
-      contextDir: docker/oso-zagg-web/centos7
-      git:
-        uri: https://github.com/openshift/openshift-tools
-      type: Git
-    strategy:
-      dockerStrategy:
-        env:
-        - name: OO_PAUSE_ON_BUILD
-          value: 'false'
-        from:
-          kind: ImageStreamTag
-          name: oso-centos7-ops-base:latest
-        noCache: true
-      type: Docker
-    triggers:
-    - github:
-        secret: kYu3zNQsSXBO55eJ3lAW
-      type: GitHub
-    - generic:
-        secret: NZcPQKFcxQHhLQjMkXoq
-      type: Generic
-    - imageChange: {}
-      type: ImageChange
-- apiVersion: v1
-  kind: ImageStream
-  metadata:
-    labels:
-      name: oso-centos7-ops-base
-    name: oso-centos7-ops-base
-  spec:
-    tags:
-    - from:
-        kind: DockerImage
-        name: library/oso-centos7-ops-base:latest
-      name: latest
-- apiVersion: v1
-  kind: ImageStream
-  metadata:
-    labels:
-      name: oso-cent7-zabbix-server
-    name: oso-cent7-zabbix-server
-  spec: {}
-- apiVersion: v1
-  kind: ImageStream
-  metadata:
-    labels:
-      name: oso-centos7-zabbix-web
-    name: oso-centos7-zabbix-web
-  spec: {}
-- apiVersion: v1
-  kind: ImageStream
-  metadata:
-    labels:
-      name: oso-centos7-zagg-web
-    name: oso-centos7-zagg-web
-  spec: {}
-- apiVersion: v1
-  kind: ImageStream
-  metadata:
-    labels:
-      name: oso-centos7-ops-base
-    name: centos
-  spec:
-    dockerImageRepository: docker.io/centos
-- apiVersion: v1
   kind: DeploymentConfig
   metadata:
     labels:
@@ -197,14 +12,14 @@ objects:
   spec:
     replicas: 1
     selector:
-      deploymentconfig: oso-cent7-zabbix-server
+      name: oso-cent7-zabbix-server
     strategy:
       resources: {}
       type: Recreate
     template:
       metadata:
         labels:
-          deploymentconfig: oso-cent7-zabbix-server
+          name: oso-cent7-zabbix-server
       spec:
         containers:
         - env:
@@ -218,7 +33,7 @@ objects:
             value: ${MYSQL_DATABASE}
           - name: MYSQL_HOST
             value: ${MYSQL_HOST}
-          image: monitoring/oso-cent7-zabbix-server:latest
+          image: openshifttools/oso-centos7-zabbix-server:latest
           imagePullPolicy: Always
           name: oso-cent7-zabbix-server
           ports:
@@ -263,7 +78,7 @@ objects:
   spec:
     replicas: 1
     selector:
-      deploymentconfig: oso-centos7-zabbix-web
+      name: oso-centos7-zabbix-web
     strategy:
       resources: {}
       rollingParams:
@@ -276,7 +91,7 @@ objects:
     template:
       metadata:
         labels:
-          deploymentconfig: oso-centos7-zabbix-web
+          name: oso-centos7-zabbix-web
       spec:
         containers:
         - env:
@@ -290,7 +105,7 @@ objects:
             value: ${MYSQL_HOST}
           - name: ZABBIX_SERVER_HOSTNAME
             value: ${ZABBIX_SERVER}
-          image: monitoring/oso-centos7-zabbix-web:latest
+          image: openshifttools/oso-centos7-zabbix-web:latest
           imagePullPolicy: Always
           name: oso-centos7-zabbix-web
           ports:
@@ -328,7 +143,7 @@ objects:
   spec:
     replicas: 5
     selector:
-      deploymentconfig: oso-centos7-zagg-web
+      name: oso-centos7-zagg-web
     strategy:
       resources: {}
       rollingParams:
@@ -341,10 +156,10 @@ objects:
     template:
       metadata:
         labels:
-          deploymentconfig: oso-centos7-zagg-web
+          name: oso-centos7-zagg-web
       spec:
         containers:
-        - image: monitoring/oso-centos7-zagg-web:latest
+        - image: openshifttools/oso-centos7-zagg-web:latest
           imagePullPolicy: Always
           name: oso-centos7-zagg-web
           resources: {}
