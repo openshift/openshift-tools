@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.82
+Version:       0.0.83
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -232,6 +232,22 @@ OpenShift Tools Cloud Tools
 
 
 %changelog
+* Thu Mar 24 2016 Unknown name 0.0.83-1
+- disable line-too-long on line 384 (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix pylint space (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix some pylint last (zhizhang@redhat.com)
+- fix some pylint 2 (zhizhang@redhat.com)
+- fix some pylint (zhizhang@redhat.com)
+- delete some useless code (zhizhang@redhat.com)
+- fix some dynamic error (zhizhang@redhat.com)
+- fix some typo (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix line too long (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix some pylint space problem (zhizhang@zhizhang-laptop-nay.redhat.com)
+- add two item pv.capacity total and available capacity andd dynamic pv.count
+  (zhizhang@zhizhang-laptop-nay.redhat.com)
+- also fail if there's no ready status (sten@redhat.com)
+- loop over conditions instead of checking only the first (sten@redhat.com)
+
 * Tue Mar 15 2016 Joel Diaz <jdiaz@redhat.com> 0.0.82-1
 - Adding verbosity to simple app create (kwoodson@redhat.com)
 
