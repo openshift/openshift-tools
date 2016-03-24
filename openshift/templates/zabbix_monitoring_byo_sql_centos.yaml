@@ -7,16 +7,16 @@ objects:
   kind: BuildConfig
   metadata:
     labels:
-      name: oso-rhel7-ops-base
-    name: oso-rhel7-ops-base
+      name: oso-centos7-ops-base
+    name: oso-centos7-ops-base
   spec:
     output:
       to:
         kind: ImageStreamTag
-        name: oso-rhel7-ops-base:latest
+        name: oso-centos7-ops-base:latest
     resources: {}
     source:
-      contextDir: docker/oso-ops-base/rhel7
+      contextDir: docker/oso-ops-base/centos7
       git:
         uri: https://github.com/openshift/openshift-tools
       type: Git
@@ -27,7 +27,7 @@ objects:
           value: 'false'
         from:
           kind: ImageStreamTag
-          name: rhel7:7.2-35
+          name: centos:centos7
         noCache: true
       type: Docker
     triggers:
@@ -43,16 +43,16 @@ objects:
   kind: BuildConfig
   metadata:
     labels:
-      name: oso-rhel7-zabbix-server
-    name: oso-rhel7-zabbix-server
+      name: oso-cent7-zabbix-server
+    name: oso-cent7-zabbix-server
   spec:
     output:
       to:
         kind: ImageStreamTag
-        name: oso-rhel7-zabbix-server:latest
+        name: oso-cent7-zabbix-server:latest
     resources: {}
     source:
-      contextDir: docker/oso-zabbix-server/rhel7
+      contextDir: docker/oso-zabbix-server/centos7
       git:
         uri: https://github.com/openshift/openshift-tools
       type: Git
@@ -63,7 +63,7 @@ objects:
           value: 'false'
         from:
           kind: ImageStreamTag
-          name: oso-rhel7-ops-base:latest
+          name: oso-centos7-ops-base:latest
         noCache: true
       type: Docker
     triggers:
@@ -79,16 +79,16 @@ objects:
   kind: BuildConfig
   metadata:
     labels:
-      name: oso-rhel7-zabbix-web
-    name: oso-rhel7-zabbix-web
+      name: oso-centos7-zabbix-web
+    name: oso-centos7-zabbix-web
   spec:
     output:
       to:
         kind: ImageStreamTag
-        name: oso-rhel7-zabbix-web:latest
+        name: oso-centos7-zabbix-web:latest
     resources: {}
     source:
-      contextDir: docker/oso-zabbix-web/rhel7
+      contextDir: docker/oso-zabbix-web/centos7
       git:
         uri: https://github.com/openshift/openshift-tools
       type: Git
@@ -99,7 +99,7 @@ objects:
           value: 'false'
         from:
           kind: ImageStreamTag
-          name: oso-rhel7-ops-base:latest
+          name: oso-centos7-ops-base:latest
         noCache: true
       type: Docker
     triggers:
@@ -115,16 +115,16 @@ objects:
   kind: BuildConfig
   metadata:
     labels:
-      name: oso-rhel7-zagg-web
-    name: oso-rhel7-zagg-web
+      name: oso-centos7-zagg-web
+    name: oso-centos7-zagg-web
   spec:
     output:
       to:
         kind: ImageStreamTag
-        name: oso-rhel7-zagg-web:latest
+        name: oso-centos7-zagg-web:latest
     resources: {}
     source:
-      contextDir: docker/oso-zagg-web/rhel7
+      contextDir: docker/oso-zagg-web/centos7
       git:
         uri: https://github.com/openshift/openshift-tools
       type: Git
@@ -135,7 +135,7 @@ objects:
           value: 'false'
         from:
           kind: ImageStreamTag
-          name: oso-rhel7-ops-base:latest
+          name: oso-centos7-ops-base:latest
         noCache: true
       type: Docker
     triggers:
@@ -151,60 +151,60 @@ objects:
   kind: ImageStream
   metadata:
     labels:
-      name: oso-rhel7-ops-base
-    name: oso-rhel7-ops-base
+      name: oso-centos7-ops-base
+    name: oso-centos7-ops-base
   spec:
     tags:
     - from:
         kind: DockerImage
-        name: library/oso-rhel7-ops-base:latest
+        name: library/oso-centos7-ops-base:latest
       name: latest
 - apiVersion: v1
   kind: ImageStream
   metadata:
     labels:
-      name: oso-rhel7-zabbix-server
-    name: oso-rhel7-zabbix-server
+      name: oso-cent7-zabbix-server
+    name: oso-cent7-zabbix-server
   spec: {}
 - apiVersion: v1
   kind: ImageStream
   metadata:
     labels:
-      name: oso-rhel7-zabbix-web
-    name: oso-rhel7-zabbix-web
+      name: oso-centos7-zabbix-web
+    name: oso-centos7-zabbix-web
   spec: {}
 - apiVersion: v1
   kind: ImageStream
   metadata:
     labels:
-      name: oso-rhel7-zagg-web
-    name: oso-rhel7-zagg-web
+      name: oso-centos7-zagg-web
+    name: oso-centos7-zagg-web
   spec: {}
 - apiVersion: v1
   kind: ImageStream
   metadata:
     labels:
-      name: oso-rhel7-ops-base
-    name: rhel7
+      name: oso-centos7-ops-base
+    name: centos
   spec:
-    dockerImageRepository: registry.access.redhat.com/library/rhel7
+    dockerImageRepository: docker.io/centos
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
     labels:
-      name: oso-rhel7-zabbix-server
-    name: oso-rhel7-zabbix-server
+      name: oso-cent7-zabbix-server
+    name: oso-cent7-zabbix-server
   spec:
     replicas: 1
     selector:
-      deploymentconfig: oso-rhel7-zabbix-server
+      deploymentconfig: oso-cent7-zabbix-server
     strategy:
       resources: {}
       type: Recreate
     template:
       metadata:
         labels:
-          deploymentconfig: oso-rhel7-zabbix-server
+          deploymentconfig: oso-cent7-zabbix-server
       spec:
         containers:
         - env:
@@ -218,9 +218,9 @@ objects:
             value: ${MYSQL_DATABASE}
           - name: MYSQL_HOST
             value: ${MYSQL_HOST}
-          image: monitoring/oso-rhel7-zabbix-server:latest
+          image: monitoring/oso-cent7-zabbix-server:latest
           imagePullPolicy: Always
-          name: oso-rhel7-zabbix-server
+          name: oso-cent7-zabbix-server
           ports:
           - containerPort: 10050
             name: tcp-10050
@@ -249,21 +249,21 @@ objects:
     - imageChangeParams:
         automatic: true
         containerNames:
-        - oso-rhel7-zabbix-server
+        - oso-cent7-zabbix-server
         from:
           kind: ImageStreamTag
-          name: oso-rhel7-zabbix-server:latest
+          name: oso-cent7-zabbix-server:latest
       type: ImageChange
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
     labels:
-      name: oso-rhel7-zabbix-web
-    name: oso-rhel7-zabbix-web
+      name: oso-centos7-zabbix-web
+    name: oso-centos7-zabbix-web
   spec:
     replicas: 1
     selector:
-      deploymentconfig: oso-rhel7-zabbix-web
+      deploymentconfig: oso-centos7-zabbix-web
     strategy:
       resources: {}
       rollingParams:
@@ -276,7 +276,7 @@ objects:
     template:
       metadata:
         labels:
-          deploymentconfig: oso-rhel7-zabbix-web
+          deploymentconfig: oso-centos7-zabbix-web
       spec:
         containers:
         - env:
@@ -290,9 +290,9 @@ objects:
             value: ${MYSQL_HOST}
           - name: ZABBIX_SERVER_HOSTNAME
             value: ${ZABBIX_SERVER}
-          image: monitoring/oso-rhel7-zabbix-web:latest
+          image: monitoring/oso-centos7-zabbix-web:latest
           imagePullPolicy: Always
-          name: oso-rhel7-zabbix-web
+          name: oso-centos7-zabbix-web
           ports:
           - containerPort: 80
             name: tcp-80
@@ -314,21 +314,21 @@ objects:
     - imageChangeParams:
         automatic: true
         containerNames:
-        - oso-rhel7-zabbix-web
+        - oso-centos7-zabbix-web
         from:
           kind: ImageStreamTag
-          name: oso-rhel7-zabbix-web:latest
+          name: oso-centos7-zabbix-web:latest
       type: ImageChange
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
     labels:
-      name: oso-rhel7-zagg-web
-    name: oso-rhel7-zagg-web
+      name: oso-centos7-zagg-web
+    name: oso-centos7-zagg-web
   spec:
     replicas: 5
     selector:
-      deploymentconfig: oso-rhel7-zagg-web
+      deploymentconfig: oso-centos7-zagg-web
     strategy:
       resources: {}
       rollingParams:
@@ -341,12 +341,12 @@ objects:
     template:
       metadata:
         labels:
-          deploymentconfig: oso-rhel7-zagg-web
+          deploymentconfig: oso-centos7-zagg-web
       spec:
         containers:
-        - image: monitoring/oso-rhel7-zagg-web:latest
+        - image: monitoring/oso-centos7-zagg-web:latest
           imagePullPolicy: Always
-          name: oso-rhel7-zagg-web
+          name: oso-centos7-zagg-web
           resources: {}
           securityContext:
             capabilities: {}
@@ -368,10 +368,10 @@ objects:
     - imageChangeParams:
         automatic: true
         containerNames:
-        - oso-rhel7-zagg-web
+        - oso-centos7-zagg-web
         from:
           kind: ImageStreamTag
-          name: oso-rhel7-zagg-web:latest
+          name: oso-centos7-zagg-web:latest
       type: ImageChange
 - apiVersion: v1
   kind: Route
@@ -392,7 +392,7 @@ objects:
       termination: edge
     to:
       kind: Service
-      name: oso-rhel7-zabbix-web
+      name: oso-centos7-zabbix-web
 - apiVersion: v1
   kind: Route
   metadata:
@@ -412,13 +412,13 @@ objects:
       termination: edge
     to:
       kind: Service
-      name: oso-rhel7-zagg-web
+      name: oso-centos7-zagg-web
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
-      name: oso-rhel7-zabbix-server
-    name: oso-rhel7-zabbix-server
+      name: oso-cent7-zabbix-server
+    name: oso-cent7-zabbix-server
   spec:
     clusterIP: ''
     ports:
@@ -431,15 +431,15 @@ objects:
       protocol: TCP
       targetPort: 10051
     selector:
-      deploymentconfig: oso-rhel7-zabbix-server
+      deploymentconfig: oso-cent7-zabbix-server
     sessionAffinity: None
     type: ClusterIP
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
-      name: oso-rhel7-zabbix-web
-    name: oso-rhel7-zabbix-web
+      name: oso-centos7-zabbix-web
+    name: oso-centos7-zabbix-web
   spec:
     clusterIP: ''
     ports:
@@ -452,15 +452,15 @@ objects:
       protocol: TCP
       targetPort: 8000
     selector:
-      deploymentconfig: oso-rhel7-zabbix-web
+      deploymentconfig: oso-centos7-zabbix-web
     sessionAffinity: None
     type: ClusterIP
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
-      name: oso-rhel7-zagg-web
-    name: oso-rhel7-zagg-web
+      name: oso-centos7-zagg-web
+    name: oso-centos7-zagg-web
   spec:
     clusterIP: ''
     ports:
@@ -473,7 +473,7 @@ objects:
       protocol: TCP
       targetPort: 8000
     selector:
-      deploymentconfig: oso-rhel7-zagg-web
+      deploymentconfig: oso-centos7-zagg-web
     sessionAffinity: None
     type: ClusterIP
 parameters:
