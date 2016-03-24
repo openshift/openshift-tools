@@ -26,6 +26,7 @@
 #pylint: disable=too-many-branches
 # pylint is flagging import errors, as the bot doesn't know out openshift-tools libs
 #pylint: disable=import-error
+#pylint: disable=line-too-long
 
 import argparse
 from collections import defaultdict
