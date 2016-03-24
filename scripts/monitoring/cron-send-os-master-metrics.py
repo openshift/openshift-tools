@@ -289,9 +289,9 @@ class OpenshiftMasterZaggClient(object):
         item_prototype_key_available = 'disc.pv.available'
         dynamic_pv_count = defaultdict(int)
         dynamic_pv_available = defaultdict(int)
-  
+
         for item in response['items']:
-            # gather dynamic pv counts 
+            # gather dynamic pv counts
             dynamic_pv_count[item['spec']['capacity']['storage']] += 1
 
             #get count of each pv type available
@@ -303,7 +303,7 @@ class OpenshiftMasterZaggClient(object):
                 # get total available capacity
                 pv_capacity_available = pv_capacity_available + int(capacity.replace('Gi', ''))
 
-                # gather dynamic pv available counts 
+                # gather dynamic pv available counts
                 dynamic_pv_available[item['spec']['capacity']['storage']] += 1
 
             pv_capacity_total = pv_capacity_total + int(capacity.replace('Gi', ''))
