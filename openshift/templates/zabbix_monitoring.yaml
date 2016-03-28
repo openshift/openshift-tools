@@ -349,6 +349,8 @@ objects:
             value: ${MYSQL_DATABASE}
           - name: MYSQL_HOST
             value: ${DATABASE_SERVICE_NAME}
+          - name: ZABBIX_SERVER_HOSTNAME
+            value: ${ZABBIX_SERVER}
           image: monitoring/oso-rhel7-zabbix-web:latest
           imagePullPolicy: Always
           name: oso-rhel7-zabbix-web
