@@ -491,13 +491,13 @@ parameters:
   value: dns.to.mysql.host
 - description: Zabbix web ui URL
   name: ZABBIX_WEB_URL
-  value: oso-centos7-zabbix-web
+  value: oso-rhel7-zabbix-web
 - description: Zagg web URL
   name: ZAGG_WEB_URL
-  value: oso-centos7-zagg-web
+  value: oso-rhel7-zagg-web
 - description: Zabbix server
   name: ZABBIX_SERVER
-  value: oso-cent7-zabbix-server
+  value: oso-rhel7-zabbix-server
 - description: Zabbix web user
   name: ZABBIX_WEB_USER
   value: Admin
