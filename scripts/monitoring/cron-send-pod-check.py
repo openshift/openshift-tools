@@ -26,7 +26,6 @@
 #pylint: disable=import-error
 
 import argparse
-import os
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 import yaml

@@ -26,7 +26,6 @@
 #pylint: disable=import-error
 
 import argparse
-import os
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 import yaml
@@ -38,6 +37,7 @@ class OpenshiftWebServiceChecker(object):
 
     def __init__(self):
         self.args = None
+        self.arg = None
         self.ora = None
         self.zagg_sender = None
         self.service_ip = None
@@ -56,7 +56,7 @@ class OpenshiftWebServiceChecker(object):
 
         except Exception as ex:
             print "Problem retreiving data: %s " % ex.message
-        
+
         self.zagg_sender.add_zabbix_keys({
             "openshift.webservice.{}.status".format(self.args.pod) : status})
 
@@ -86,8 +86,8 @@ class OpenshiftWebServiceChecker(object):
                     for port in service["spec"]["ports"]:
                         if port["name"] == self.arg.portname:
                             self.service_port = port["port"]
-                else: 
-                    self.service_port=service["spec"]["ports"][0]["port"]
+                else:
+                    self.service_port = service["spec"]["ports"][0]["port"]
             else:
                 pass
 
@@ -96,14 +96,14 @@ class OpenshiftWebServiceChecker(object):
 
         print "\nChecking web service\n"
 
-        if self.args.insecure: 
+        if self.args.insecure:
             proto = 'http'
-        else: 
+        else:
             proto = 'https'
 
         url = '{}://{}:{}/{}'.format(
-            proto, 
-            self.service_ip, 
+            proto,
+            self.service_ip,
             self.service_port,
             self.args.url,
         )
@@ -112,8 +112,8 @@ class OpenshiftWebServiceChecker(object):
             print "Performing check on URL: {}".format(url)
             response = urllib2.urlopen(url, timeout=30)
 
-            if str(response.getcode()) == self.args.status: 
-                if self.args.content == None \ 
+            if str(response.getcode()) == self.args.status:
+                if self.args.content == None \
                     or self.args.content in response.read():
                     return True
 
