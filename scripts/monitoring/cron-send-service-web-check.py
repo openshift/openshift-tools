@@ -37,7 +37,6 @@ class OpenshiftWebServiceChecker(object):
 
     def __init__(self):
         self.args = None
-        self.arg = None
         self.ora = None
         self.zagg_sender = None
         self.service_ip = None
@@ -84,7 +83,7 @@ class OpenshiftWebServiceChecker(object):
                 self.service_ip = service["spec"]["clusterIP"]
                 if self.args.portname != None:
                     for port in service["spec"]["ports"]:
-                        if port["name"] == self.arg.portname:
+                        if port["name"] == self.args.portname:
                             self.service_port = port["port"]
                 else:
                     self.service_port = service["spec"]["ports"][0]["port"]
