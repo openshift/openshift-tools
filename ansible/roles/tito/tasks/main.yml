@@ -1,0 +1,2 @@
+---
+- action: "{{ ansible_pkg_mgr }} name=tito state=present"
