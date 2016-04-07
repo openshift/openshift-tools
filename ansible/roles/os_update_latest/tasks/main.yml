@@ -1,0 +1,3 @@
+---
+- name: Update all packages
+  action: "{{ ansible_pkg_mgr }} name=* state=latest"
