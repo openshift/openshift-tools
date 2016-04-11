@@ -41,3 +41,6 @@ Python library for interacting with Zabbix with Ansible.
 %{_datadir}/ansible/zabbix
 
 %changelog
+* Mon Apr 11 2016 Joel Diaz <jdiaz@redhat.com> 0.0.1-1
+- new package built with tito
+
