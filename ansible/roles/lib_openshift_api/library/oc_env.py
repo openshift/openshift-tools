@@ -514,287 +514,207 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
-import time
+# pylint: disable=too-many-instance-attributes
+class OCEnv(OpenShiftCLI):
+    ''' Class to wrap the oc command line tools '''
 
-class RouterConfig(object):
-    ''' RouterConfig is a DTO for the router.  '''
-    def __init__(self, rname, kubeconfig, router_options):
-        self.name = rname
+    container_path = {"pod": "spec#containers[0]#env",
+                      "dc":  "spec#template#spec#containers[0]#env",
+                      "rc":  "spec#template#spec#containers[0]#env",
+                     }
+
+    # pylint allows 5. we need 6
+    # pylint: disable=too-many-arguments
+    def __init__(self,
+                 namespace,
+                 kind,
+                 env_vars,
+                 resource_name=None,
+                 list_all=False,
+                 kubeconfig='/etc/origin/master/admin.kubeconfig',
+                 verbose=False):
+        ''' Constructor for OpenshiftOC '''
+        super(OCEnv, self).__init__(namespace, kubeconfig)
+        self.kind = kind
+        self.name = resource_name
+        self.namespace = namespace
+        self.list_all = list_all
+        self.env_vars = env_vars
         self.kubeconfig = kubeconfig
-        self._router_options = router_options
+        self.verbose = verbose
+        self._yed = None
 
     @property
-    def router_options(self):
-        ''' return router options '''
-        return self._router_options
+    def yed(self):
+        ''' property function for yed var'''
+        if not self._yed:
+            self.get()
+        return self._yed
 
-    def to_option_list(self):
-        ''' return all options as a string'''
-        return RouterConfig.stringify(self.router_options)
+    @yed.setter
+    def yed(self, data):
+        ''' setter function for yed var'''
+        self._yed = data
 
-    @staticmethod
-    def stringify(options):
-        ''' return hash as list of key value pairs '''
-        rval = []
-        for key, data in options.items():
-            if data['include'] and data['value']:
-                rval.append('--%s=%s' % (key.replace('_', '-'), data['value']))
+    # pylint: disable=no-member
+    def add_value(self, key, value):
+        ''' add key, value pair to env array '''
+        env = self.yed.get(OCEnv.container_path[self.kind])
+        if env:
+            env.append({'name': key, 'value': value})
+        else:
+            self.yed.put(OCEnv.container_path[self.kind], {'name': key, 'value': value})
 
-        return rval
+    def value_exists(self, key, value):
+        ''' return whether a key, value  pair exists '''
+        results = self.yed.get(OCEnv.container_path[self.kind]) or []
+        if not results:
+            return False
 
-class Router(OpenShiftCLI):
-    ''' Class to wrap the oc command line tools '''
-    def __init__(self,
-                 router_config,
-                 verbose=False):
-        ''' Constructor for OpenshiftOC
+        for result in results:
+            if result['name'] == key and result['value'] == value:
+                return True
 
-           a router consists of 3 or more parts
-           - dc/router
-           - svc/router
-           - endpoint/router
-        '''
-        super(Router, self).__init__('default', router_config.kubeconfig, verbose)
-        self.rconfig = router_config
-        self.verbose = verbose
-        self.router_parts = [{'kind': 'dc', 'name': self.rconfig.name},
-                             {'kind': 'svc', 'name': self.rconfig.name},
-                             #{'kind': 'endpoints', 'name': self.rconfig.name},
-                            ]
-    def get(self, filter_kind=None):
-        ''' return the self.router_parts '''
-        rparts = self.router_parts
-        parts = []
-        if filter_kind:
-            rparts = [part for part in self.router_parts if filter_kind == part['kind']]
+        return False
 
-        for part in rparts:
-            parts.append(self._get(part['kind'], rname=part['name']))
+    def key_exists(self, key):
+        ''' return whether a key, value  pair exists '''
+        results = self.yed.get(OCEnv.container_path[self.kind]) or []
+        if not results:
+            return False
 
-        return parts
+        for result in results:
+            if result['name'] == key:
+                return True
 
-    def exists(self):
-        '''return a deploymentconfig by name '''
-        parts = self.get()
-        for part in parts:
-            if part['returncode'] != 0:
-                return False
+        return False
 
-        return True
+
+    def get(self):
+        '''return a environment variables '''
+        env = self._get(self.kind, self.name)
+        if env['returncode'] == 0:
+            self.yed = Yedit(content=env['results'][0])
+            env['results'] = self.yed.get(OCEnv.container_path[self.kind]) or []
+        return env
 
     def delete(self):
         '''return all pods '''
-        parts = []
-        for part in self.router_parts:
-            parts.append(self._delete(part['kind'], part['name']))
+        env = self.get()
+        if env['returncode'] != 0:
+            return env
 
-        return parts
+        modified = False
+        env_vars_array = self.yed.get(OCEnv.container_path[self.kind]) or []
+        for key in self.env_vars.keys():
+            idx = None
+            for env_idx, env_var in enumerate(env_vars_array):
+                if env_var['name'] == key:
+                    idx = env_idx
+                    break
 
-    def create(self, dryrun=False, output=False, output_type='json'):
-        '''Create a deploymentconfig '''
-        # We need to create the pem file
-        router_pem = '/tmp/router.pem'
-        with open(router_pem, 'w') as rfd:
-            rfd.write(open(self.rconfig.router_options['cert_file']['value']).read())
-            rfd.write(open(self.rconfig.router_options['key_file']['value']).read())
+            if idx:
+                modified = True
+                del env_vars_array[idx]
 
-        atexit.register(Utils.cleanup, [router_pem])
-        self.rconfig.router_options['default_cert']['value'] = router_pem
 
-        options = self.rconfig.to_option_list()
+        #yed.put(OCEnv.container_path[self.kind], env_vars_array)
+        if modified:
+            return self._replace_content(self.kind, self.name, {OCEnv.container_path[self.kind]: env_vars_array})
+        return {'returncode': 0, 'changed': False}
 
-        cmd = ['router']
-        cmd.extend(options)
-        if dryrun:
-            cmd.extend(['--dry-run=True', '-o', 'json'])
 
-        results = self.openshift_cmd(cmd, oadm=True, output=output, output_type=output_type)
+    # pylint: disable=too-many-function-args
+    def put(self):
+        '''place env vars into dc '''
+        for update_key, update_value in self.env_vars.items():
+            for var in self.yed.get(OCEnv.container_path[self.kind]):
+                if update_key == var['name']:
+                    var['value'] = update_value
+                    break
+            else:
+                self.add_value(update_key, update_value)
 
-        return results
+        return self._replace_content(self.kind, self.name, self.yed.yaml_dict)
 
-    def update(self):
-        '''run update for the router.  This performs a delete and then create '''
-        parts = self.delete()
-        if any([part['returncode'] != 0 for part in parts]):
-            return parts
-
-        # Ugly built in sleep here.
-        time.sleep(15)
-
-        return self.create()
-
-    def needs_update(self, verbose=False):
-        ''' check to see if we need to update '''
-        dc_inmem = self.get(filter_kind='dc')[0]
-        if dc_inmem['returncode'] != 0:
-            return dc_inmem
-
-        user_dc = self.create(dryrun=True, output=True, output_type='raw')
-        if user_dc['returncode'] != 0:
-            return user_dc
-
-        # Since the output from oadm_router is returned as raw
-        # we need to parse it.  The first line is the stats_password
-        user_dc_results = user_dc['results'].split('\n')
-        # stats_password = user_dc_results[0]
-
-        # Load the string back into json and get the newly created dc
-        user_dc = json.loads('\n'.join(user_dc_results[1:]))['items'][0]
-
-        # Router needs some exceptions.
-        # We do not want to check the autogenerated password for stats admin
-        if not self.rconfig.router_options['stats_password']['value']:
-            for idx, env_var in enumerate(user_dc['spec']['template']['spec']['containers'][0]['env']):
-                if env_var['name'] == 'STATS_PASSWORD':
-                    env_var['value'] = \
-                      dc_inmem['results'][0]['spec']['template']['spec']['containers'][0]['env'][idx]['value']
-
-        # dry-run doesn't add the protocol to the ports section.  We will manually do that.
-        for idx, port in enumerate(user_dc['spec']['template']['spec']['containers'][0]['ports']):
-            if not port.has_key('protocol'):
-                port['protocol'] = 'TCP'
-
-        # These are different when generating
-        skip = ['dnsPolicy',
-                'terminationGracePeriodSeconds',
-                'restartPolicy', 'timeoutSeconds',
-                'livenessProbe', 'readinessProbe',
-                'terminationMessagePath',
-                'rollingParams',
-               ]
-
-        return not Utils.check_def_equal(user_dc, dc_inmem['results'][0], skip_keys=skip, debug=verbose)
 
 def main():
     '''
-    ansible oc module for secrets
+    ansible oc module for services
     '''
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', type='str',
-                       choices=['present', 'absent']),
-            debug=dict(default=False, type='bool'),
-            namespace=dict(default='default', type='str'),
-            name=dict(default='router', type='str'),
-
             kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
-            credentials=dict(default='/etc/origin/master/openshift-router.kubeconfig', type='str'),
-            cert_file=dict(default=None, type='str'),
-            key_file=dict(default=None, type='str'),
-            image=dict(default=None, type='str'), #'openshift3/ose-${component}:${version}'
-            latest_image=dict(default=False, type='bool'),
-            labels=dict(default=None, type='list'),
-            ports=dict(default=['80:80', '443:443'], type='list'),
-            replicas=dict(default=1, type='int'),
-            selector=dict(default=None, type='str'),
-            service_account=dict(default='router', type='str'),
-            router_type=dict(default='haproxy-router', type='str'),
-            host_network=dict(default=True, type='bool'),
-            # external host options
-            external_host=dict(default=None, type='str'),
-            external_host_vserver=dict(default=None, type='str'),
-            external_host_insecure=dict(default=False, type='bool'),
-            external_host_partition_path=dict(default=None, type='str'),
-            external_host_username=dict(default=None, type='str'),
-            external_host_password=dict(default=None, type='str'),
-            external_host_private_key=dict(default=None, type='str'),
-            # Metrics
-            expose_metrics=dict(default=False, type='bool'),
-            metrics_image=dict(default=None, type='str'),
-            # Stats
-            stats_user=dict(default=None, type='str'),
-            stats_password=dict(default=None, type='str'),
-            stats_port=dict(default=1936, type='int'),
-
+            state=dict(default='present', type='str',
+                       choices=['present', 'absent', 'list']),
+            debug=dict(default=False, type='bool'),
+            kind=dict(default='rc', choices=['dc', 'rc', 'pods'], type='str'),
+            namespace=dict(default='default', type='str'),
+            name=dict(default=None, required=True, type='str'),
+            env_vars=dict(default=None, type='dict'),
+            list_all=dict(default=False, type='bool'),
         ),
-        mutually_exclusive=[["router_type", "images"]],
+        mutually_exclusive=[["content", "files"]],
 
         supports_check_mode=True,
     )
-
-    rconfig = RouterConfig(module.params['name'],
-                           module.params['kubeconfig'],
-                           {'credentials': {'value': module.params['credentials'], 'include': True},
-                            'default_cert': {'value': None, 'include': True},
-                            'cert_file': {'value': module.params['cert_file'], 'include': False},
-                            'key_file': {'value': module.params['key_file'], 'include': False},
-                            'image': {'value': module.params['image'], 'include': True},
-                            'latest_image': {'value': module.params['latest_image'], 'include': True},
-                            'labels': {'value': module.params['labels'], 'include': True},
-                            'ports': {'value': ','.join(module.params['ports']), 'include': True},
-                            'replicas': {'value': module.params['replicas'], 'include': True},
-                            'selector': {'value': module.params['selector'], 'include': True},
-                            'service_account': {'value': module.params['service_account'], 'include': True},
-                            'router_type': {'value': module.params['router_type'], 'include': False},
-                            'host_network': {'value': module.params['host_network'], 'include': True},
-                            'external_host': {'value': module.params['external_host'], 'include': True},
-                            'external_host_vserver': {'value': module.params['external_host_vserver'],
-                                                      'include': True},
-                            'external_host_insecure': {'value': module.params['external_host_insecure'],
-                                                       'include': True},
-                            'external_host_partition_path': {'value': module.params['external_host_partition_path'],
-                                                             'include': True},
-                            'external_host_username': {'value': module.params['external_host_username'],
-                                                       'include': True},
-                            'external_host_password': {'value': module.params['external_host_password'],
-                                                       'include': True},
-                            'external_host_private_key': {'value': module.params['external_host_private_key'],
-                                                          'include': True},
-                            'expose_metrics': {'value': module.params['expose_metrics'], 'include': True},
-                            'metrics_image': {'value': module.params['metrics_image'], 'include': True},
-                            'stats_user': {'value': module.params['stats_user'], 'include': True},
-                            'stats_password': {'value': module.params['stats_password'], 'include': True},
-                            'stats_port': {'value': module.params['stats_port'], 'include': True},
-                           })
-
-
-    ocrouter = Router(rconfig)
+    ocenv = OCEnv(module.params['namespace'],
+                  module.params['kind'],
+                  module.params['env_vars'],
+                  resource_name=module.params['name'],
+                  list_all=module.params['list_all'],
+                  kubeconfig=module.params['kubeconfig'],
+                  verbose=module.params['debug'])
 
     state = module.params['state']
+
+    api_rval = ocenv.get()
+
+    #####
+    # Get
+    #####
+    if state == 'list':
+        module.exit_json(changed=False, results=api_rval['results'], state="list")
 
     ########
     # Delete
     ########
     if state == 'absent':
-        if not ocrouter.exists():
-            module.exit_json(changed=False, state="absent")
+        for key in module.params.get('env_vars', {}).keys():
+            if ocenv.key_exists(key):
 
-        if module.check_mode:
-            module.exit_json(change=False, msg='Would have performed a delete.')
-
-        api_rval = ocrouter.delete()
-        module.exit_json(changed=True, results=api_rval, state="absent")
-
+                if module.check_mode:
+                    module.exit_json(change=False, msg='Would have performed a delete.')
+                api_rval = ocenv.delete()
+                module.exit_json(changed=True, results=api_rval, state="absent")
+        module.exit_json(changed=False, state="absent")
 
     if state == 'present':
         ########
         # Create
         ########
-        if not ocrouter.exists():
+        for key, value in module.params.get('env_vars', {}).items():
+            if not ocenv.value_exists(key, value):
 
-            if module.check_mode:
-                module.exit_json(change=False, msg='Would have performed a create.')
+                if module.check_mode:
+                    module.exit_json(change=False, msg='Would have performed a create.')
+                # Create it here
+                api_rval = ocenv.put()
 
-            api_rval = ocrouter.create()
+                if api_rval['returncode'] != 0:
+                    module.fail_json(msg=api_rval)
 
-            module.exit_json(changed=True, results=api_rval, state="present")
+                # return the created object
+                api_rval = ocenv.get()
 
-        ########
-        # Update
-        ########
-        if not ocrouter.needs_update():
-            module.exit_json(changed=False, state="present")
+                if api_rval['returncode'] != 0:
+                    module.fail_json(msg=api_rval)
 
-        if module.check_mode:
-            module.exit_json(change=False, msg='Would have performed an update.')
+                module.exit_json(changed=True, results=api_rval, state="present")
 
-        api_rval = ocrouter.update()
 
-        if api_rval['returncode'] != 0:
-            module.fail_json(msg=api_rval)
-
-        module.exit_json(changed=True, results=api_rval, state="present")
+        module.exit_json(changed=False, results=api_rval, state="present")
 
     module.exit_json(failed=True,
                      changed=False,
@@ -804,4 +724,5 @@ def main():
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
 from ansible.module_utils.basic import *
+
 main()
