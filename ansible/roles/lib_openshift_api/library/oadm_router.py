@@ -156,7 +156,7 @@ class OpenShiftCLI(object):
 class Utils(object):
     ''' utilities for openshiftcli modules '''
     @staticmethod
-    def create_file(rname, data, ftype=None):
+    def create_file(rname, data, ftype='yaml'):
         ''' create a file in tmp with name and contents'''
         path = os.path.join('/tmp', rname)
         with open(path, 'w') as fds:
@@ -173,15 +173,16 @@ class Utils(object):
         return path
 
     @staticmethod
-    def create_files_from_contents(data):
+    def create_files_from_contents(content, content_type=None):
         '''Turn an array of dict: filename, content into a files array'''
-        files = []
+        if isinstance(content, list):
+            files = []
+            for item in content:
+                files.append(Utils.create_file(item['path'], item['data'], ftype=content_type))
+            return files
 
-        for sfile in data:
-            path = Utils.create_file(sfile['path'], sfile['content'])
-            files.append(path)
+        return Utils.create_file(content['path'], content['data'])
 
-        return files
 
     @staticmethod
     def cleanup(files):
@@ -577,10 +578,10 @@ class Router(OpenShiftCLI):
         '''return a deploymentconfig by name '''
         parts = self.get()
         for part in parts:
-            if part['returncode'] != 0:
-                return False
+            if part['returncode'] == 0:
+                return True
 
-        return True
+        return False
 
     def delete(self):
         '''return all pods '''
@@ -608,15 +609,20 @@ class Router(OpenShiftCLI):
         if dryrun:
             cmd.extend(['--dry-run=True', '-o', 'json'])
 
-        results = self.openshift_cmd(cmd, oadm=True, output=output, output_type=output_type)
-
-        return results
+        return self.openshift_cmd(cmd, oadm=True, output=output, output_type=output_type)
 
     def update(self):
         '''run update for the router.  This performs a delete and then create '''
         parts = self.delete()
-        if any([part['returncode'] != 0 for part in parts]):
-            return parts
+        for part in parts:
+            if part['returncode'] != 0:
+                if part.has_key('stderr') and 'not found' in part['stderr']:
+                    # the object is not there, continue
+                    continue
+
+                # something went wrong
+                return parts
+
 
         # Ugly built in sleep here.
         time.sleep(15)
