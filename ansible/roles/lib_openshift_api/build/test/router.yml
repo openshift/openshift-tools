@@ -29,6 +29,7 @@
       selector: type=infra
       cert_file: /etc/origin/master/named_certificates/12ab.mwoodson.openshiftapps.com.crt
       key_file: /etc/origin/master/named_certificates/12ab.mwoodson.openshiftapps.com.key
+#images: 'registry.qe.openshift.com/openshift3/ose-haproxy-router:v3.1.1.910'
     register: routerout
 
   - debug: var=routerout
