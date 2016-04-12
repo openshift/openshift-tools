@@ -17,7 +17,7 @@ def main():
             credentials=dict(default='/etc/origin/master/openshift-router.kubeconfig', type='str'),
             cert_file=dict(default=None, type='str'),
             key_file=dict(default=None, type='str'),
-            image=dict(default=None, type='str'), #'openshift3/ose-${component}:${version}'
+            images=dict(default=None, type='str'), #'openshift3/ose-${component}:${version}'
             latest_image=dict(default=False, type='bool'),
             labels=dict(default=None, type='list'),
             ports=dict(default=['80:80', '443:443'], type='list'),
@@ -54,7 +54,7 @@ def main():
                             'default_cert': {'value': None, 'include': True},
                             'cert_file': {'value': module.params['cert_file'], 'include': False},
                             'key_file': {'value': module.params['key_file'], 'include': False},
-                            'image': {'value': module.params['image'], 'include': True},
+                            'images': {'value': module.params['images'], 'include': True},
                             'latest_image': {'value': module.params['latest_image'], 'include': True},
                             'labels': {'value': module.params['labels'], 'include': True},
                             'ports': {'value': ','.join(module.params['ports']), 'include': True},
