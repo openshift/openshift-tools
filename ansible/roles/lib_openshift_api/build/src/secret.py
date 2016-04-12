@@ -23,10 +23,10 @@ class Secret(OpenShiftCLI):
         '''delete a secret by name'''
         return self._delete('secrets', self.name)
 
-    def create(self, files=None, contents=None):
+    def create(self, files=None, contents=None, content_type=None):
         '''Create a secret '''
         if not files:
-            files = Utils.create_files_from_contents(contents)
+            files = Utils.create_files_from_contents(contents, content_type=content_type)
 
         secrets = ["%s=%s" % (os.path.basename(sfile), sfile) for sfile in files]
         cmd = ['-n%s' % self.namespace, 'secrets', 'new', self.name]

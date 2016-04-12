@@ -156,7 +156,7 @@ class OpenShiftCLI(object):
 class Utils(object):
     ''' utilities for openshiftcli modules '''
     @staticmethod
-    def create_file(rname, data, ftype=None):
+    def create_file(rname, data, ftype='yaml'):
         ''' create a file in tmp with name and contents'''
         path = os.path.join('/tmp', rname)
         with open(path, 'w') as fds:
@@ -173,15 +173,16 @@ class Utils(object):
         return path
 
     @staticmethod
-    def create_files_from_contents(data):
+    def create_files_from_contents(content, content_type=None):
         '''Turn an array of dict: filename, content into a files array'''
-        files = []
+        if isinstance(content, list):
+            files = []
+            for item in content:
+                files.append(Utils.create_file(item['path'], item['data'], ftype=content_type))
+            return files
 
-        for sfile in data:
-            path = Utils.create_file(sfile['path'], sfile['content'])
-            files.append(path)
+        return Utils.create_file(content['path'], content['data'])
 
-        return files
 
     @staticmethod
     def cleanup(files):

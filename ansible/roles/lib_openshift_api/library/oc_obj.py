@@ -156,7 +156,7 @@ class OpenShiftCLI(object):
 class Utils(object):
     ''' utilities for openshiftcli modules '''
     @staticmethod
-    def create_file(rname, data, ftype=None):
+    def create_file(rname, data, ftype='yaml'):
         ''' create a file in tmp with name and contents'''
         path = os.path.join('/tmp', rname)
         with open(path, 'w') as fds:
@@ -173,15 +173,16 @@ class Utils(object):
         return path
 
     @staticmethod
-    def create_files_from_contents(data):
+    def create_files_from_contents(content, content_type=None):
         '''Turn an array of dict: filename, content into a files array'''
-        files = []
+        if isinstance(content, list):
+            files = []
+            for item in content:
+                files.append(Utils.create_file(item['path'], item['data'], ftype=content_type))
+            return files
 
-        for sfile in data:
-            path = Utils.create_file(sfile['path'], sfile['content'])
-            files.append(path)
+        return Utils.create_file(content['path'], content['data'])
 
-        return files
 
     @staticmethod
     def cleanup(files):
@@ -558,6 +559,9 @@ class OCObject(OpenShiftCLI):
         if files:
             return self._replace(files[0], force)
 
+        if content and content.has_key('data'):
+            content = content['data']
+
         return self.update_content(content, force)
 
     def update_content(self, content, force=False):
@@ -574,21 +578,13 @@ class OCObject(OpenShiftCLI):
         data = None
         if files:
             data = Utils.get_resource_file(files[0], content_type)
-
-            # if equal then no need.  So not equal is True
-            return not Utils.check_def_equal(data, objects['results'][0], skip_keys=None, debug=False)
+        elif content and content.has_key('data'):
+            data = content['data']
         else:
             data = content
 
-            for key, value in data.items():
-                if key == 'metadata':
-                    continue
-                if not objects['results'][0].has_key(key):
-                    return True
-                if value != objects['results'][0][key]:
-                    return True
-
-        return False
+            # if equal then no need.  So not equal is True
+        return not Utils.check_def_equal(data, objects['results'][0], skip_keys=None, debug=False)
 
 
 # pylint: disable=too-many-branches
@@ -608,16 +604,33 @@ def main():
             files=dict(default=None, type='list'),
             kind=dict(required=True,
                       type='str',
-                      choices=['dc', 'deploymentconfig',
-                               'svc', 'service',
+                      choices=['dc', 'deploymentconfigs',
+                               'buildconfigs', 'bc',
+                               'secrets',
+                               'svc', 'services',
                                'scc', 'securitycontextconstraints',
                                'ns', 'namespace', 'project', 'projects',
-                               'is', 'imagestream',
-                               'istag', 'imagestreamtag',
-                               'bc', 'buildconfig',
+                               'is', 'imagestreams',
+                               'istag', 'imagestreamtags',
+                               'imagestreamimages', 'isimage',
+                               'bc', 'buildconfigs',
                                'routes',
-                               'node',
-                               'secret',
+                               'builds'
+                               'nodes', 'no',
+                               'pods', 'po',
+                               'replicationcontrollers', 'rc',
+                               'daemonsets', 'ds',
+                               'events', 'ev',
+                               'persistentvolumes', 'pv',
+                               'persistentvolumeclaims', 'pvc',
+                               'policies',
+                               'rolebindings',
+                               'limitranges', 'limits',
+                               'resourcequotas', 'quota',
+                               'users',
+                               'groups',
+                               'componentstatuses', 'cs',
+                               'endpoints', 'ep'
                               ]),
             delete_after=dict(default=False, type='bool'),
             content=dict(default=None, type='dict'),
