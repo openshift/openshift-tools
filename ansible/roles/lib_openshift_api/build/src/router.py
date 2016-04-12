@@ -63,10 +63,10 @@ class Router(OpenShiftCLI):
         '''return a deploymentconfig by name '''
         parts = self.get()
         for part in parts:
-            if part['returncode'] != 0:
-                return False
+            if part['returncode'] == 0:
+                return True
 
-        return True
+        return False
 
     def delete(self):
         '''return all pods '''
@@ -94,15 +94,20 @@ class Router(OpenShiftCLI):
         if dryrun:
             cmd.extend(['--dry-run=True', '-o', 'json'])
 
-        results = self.openshift_cmd(cmd, oadm=True, output=output, output_type=output_type)
-
-        return results
+        return self.openshift_cmd(cmd, oadm=True, output=output, output_type=output_type)
 
     def update(self):
         '''run update for the router.  This performs a delete and then create '''
         parts = self.delete()
-        if any([part['returncode'] != 0 for part in parts]):
-            return parts
+        for part in parts:
+            if part['returncode'] != 0:
+                if part.has_key('stderr') and 'not found' in part['stderr']:
+                    # the object is not there, continue
+                    continue
+
+                # something went wrong
+                return parts
+
 
         # Ugly built in sleep here.
         time.sleep(15)
