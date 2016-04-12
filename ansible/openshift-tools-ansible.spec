@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.1
+Version:        0.0.2
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -91,6 +91,10 @@ Python library for interacting with Zabbix with Ansible.
 %{_datadir}/ansible/zabbix
 
 %changelog
+* Tue Apr 12 2016 Joel Diaz <jdiaz@redhat.com> 0.0.2-1
+- copy filters, inventory, docs and test from openshift-ansible
+  (jdiaz@redhat.com)
+
 * Mon Apr 11 2016 Joel Diaz <jdiaz@redhat.com> 0.0.1-1
 - new package built with tito
 
