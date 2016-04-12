@@ -44,14 +44,14 @@ class OpenShiftCLI(object):
         for key, value in content.items():
             changes.append(yed.put(key, value))
 
-        if any([not change[0] for change in changes]):
-            return {'returncode': 0, 'updated': False}
+        if any([change[0] for change in changes]):
+            yed.write()
 
-        yed.write()
+            atexit.register(Utils.cleanup, [fname])
 
-        atexit.register(Utils.cleanup, [fname])
+            return self._replace(fname, force)
 
-        return self._replace(fname, force)
+        return {'returncode': 0, 'updated': False}
 
     def _replace(self, fname, force=False):
         '''return all pods '''
@@ -75,7 +75,7 @@ class OpenShiftCLI(object):
             cmd.append(rname)
 
         rval = self.openshift_cmd(cmd, output=True)
-
+#
         # Ensure results are retuned in an array
         if rval.has_key('items'):
             rval['results'] = rval['items']

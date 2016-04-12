@@ -514,287 +514,173 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
-import time
+class OCSecretAdd(OpenShiftCLI):
+    ''' Class to wrap the oc command line tools '''
 
-class RouterConfig(object):
-    ''' RouterConfig is a DTO for the router.  '''
-    def __init__(self, rname, kubeconfig, router_options):
-        self.name = rname
+    kind = 'sa'
+    # pylint allows 5. we need 6
+    # pylint: disable=too-many-arguments
+    def __init__(self,
+                 secrets,
+                 service_account,
+                 namespace,
+                 kubeconfig='/etc/origin/master/admin.kubeconfig',
+                 verbose=False):
+        ''' Constructor for OpenshiftOC '''
+        super(OCSecretAdd, self).__init__(namespace, kubeconfig)
+        self.secrets = secrets
+        self.service_account = service_account
+        self.namespace = namespace
         self.kubeconfig = kubeconfig
-        self._router_options = router_options
+        self.verbose = verbose
+        self._yed = None
 
     @property
-    def router_options(self):
-        ''' return router options '''
-        return self._router_options
+    def yed(self):
+        ''' Property for the yed var '''
+        if not self._yed:
+            self.get()
+        return self._yed
 
-    def to_option_list(self):
-        ''' return all options as a string'''
-        return RouterConfig.stringify(self.router_options)
+    @yed.setter
+    def yed(self, data):
+        ''' setter for the yed var '''
+        self._yed = data
 
-    @staticmethod
-    def stringify(options):
-        ''' return hash as list of key value pairs '''
-        rval = []
-        for key, data in options.items():
-            if data['include'] and data['value']:
-                rval.append('--%s=%s' % (key.replace('_', '-'), data['value']))
+    def exists(self, in_secret):
+        ''' return whether a key, value  pair exists '''
+        secrets = self.yed.get('secrets')
+        if not secrets:
+            return False
 
-        return rval
+        for secret in secrets:
+            if secret['name'] == in_secret:
+                return True
 
-class Router(OpenShiftCLI):
-    ''' Class to wrap the oc command line tools '''
-    def __init__(self,
-                 router_config,
-                 verbose=False):
-        ''' Constructor for OpenshiftOC
+        return False
 
-           a router consists of 3 or more parts
-           - dc/router
-           - svc/router
-           - endpoint/router
-        '''
-        super(Router, self).__init__('default', router_config.kubeconfig, verbose)
-        self.rconfig = router_config
-        self.verbose = verbose
-        self.router_parts = [{'kind': 'dc', 'name': self.rconfig.name},
-                             {'kind': 'svc', 'name': self.rconfig.name},
-                             #{'kind': 'endpoints', 'name': self.rconfig.name},
-                            ]
-    def get(self, filter_kind=None):
-        ''' return the self.router_parts '''
-        rparts = self.router_parts
-        parts = []
-        if filter_kind:
-            rparts = [part for part in self.router_parts if filter_kind == part['kind']]
-
-        for part in rparts:
-            parts.append(self._get(part['kind'], rname=part['name']))
-
-        return parts
-
-    def exists(self):
-        '''return a deploymentconfig by name '''
-        parts = self.get()
-        for part in parts:
-            if part['returncode'] != 0:
-                return False
-
-        return True
+    def get(self):
+        '''return a environment variables '''
+        env = self._get(OCSecretAdd.kind, self.service_account)
+        if env['returncode'] == 0:
+            self.yed = Yedit(content=env['results'][0])
+            env['results'] = self.yed.get('secrets')
+        return env
 
     def delete(self):
         '''return all pods '''
-        parts = []
-        for part in self.router_parts:
-            parts.append(self._delete(part['kind'], part['name']))
+        service_account = self.get()
+        if service_account['returncode'] != 0:
+            return service_account
 
-        return parts
+        modified = False
+        existing_secrets = self.yed.get('secrets') or []
+        for rem_secret in self.secrets:
+            for sec_idx, secret in enumerate(existing_secrets):
+                idx = None
+                if secret['name'] == rem_secret:
+                    idx = sec_idx
+                    break
 
-    def create(self, dryrun=False, output=False, output_type='json'):
-        '''Create a deploymentconfig '''
-        # We need to create the pem file
-        router_pem = '/tmp/router.pem'
-        with open(router_pem, 'w') as rfd:
-            rfd.write(open(self.rconfig.router_options['cert_file']['value']).read())
-            rfd.write(open(self.rconfig.router_options['key_file']['value']).read())
+            if idx:
+                modified = True
+                del existing_secrets[idx]
 
-        atexit.register(Utils.cleanup, [router_pem])
-        self.rconfig.router_options['default_cert']['value'] = router_pem
+        if modified:
+            return self._replace_content(OCSecretAdd.kind, self.service_account, self.yed.yaml_dict)
 
-        options = self.rconfig.to_option_list()
+        return {'returncode': 0, 'changed': False}
 
-        cmd = ['router']
-        cmd.extend(options)
-        if dryrun:
-            cmd.extend(['--dry-run=True', '-o', 'json'])
+    def put(self):
+        '''place env vars into dc '''
+        modified = False
+        existing_secrets = self.yed.get('secrets') or []
+        for add_secret in self.secrets:
+            if not self.exists(add_secret):
+                modified = True
+                existing_secrets.append({'name': add_secret})
 
-        results = self.openshift_cmd(cmd, oadm=True, output=output, output_type=output_type)
+        if modified:
+            return self._replace_content(OCSecretAdd.kind, self.service_account, self.yed.yaml_dict)
 
-        return results
+        return {'returncode': 0, 'changed': False}
 
-    def update(self):
-        '''run update for the router.  This performs a delete and then create '''
-        parts = self.delete()
-        if any([part['returncode'] != 0 for part in parts]):
-            return parts
-
-        # Ugly built in sleep here.
-        time.sleep(15)
-
-        return self.create()
-
-    def needs_update(self, verbose=False):
-        ''' check to see if we need to update '''
-        dc_inmem = self.get(filter_kind='dc')[0]
-        if dc_inmem['returncode'] != 0:
-            return dc_inmem
-
-        user_dc = self.create(dryrun=True, output=True, output_type='raw')
-        if user_dc['returncode'] != 0:
-            return user_dc
-
-        # Since the output from oadm_router is returned as raw
-        # we need to parse it.  The first line is the stats_password
-        user_dc_results = user_dc['results'].split('\n')
-        # stats_password = user_dc_results[0]
-
-        # Load the string back into json and get the newly created dc
-        user_dc = json.loads('\n'.join(user_dc_results[1:]))['items'][0]
-
-        # Router needs some exceptions.
-        # We do not want to check the autogenerated password for stats admin
-        if not self.rconfig.router_options['stats_password']['value']:
-            for idx, env_var in enumerate(user_dc['spec']['template']['spec']['containers'][0]['env']):
-                if env_var['name'] == 'STATS_PASSWORD':
-                    env_var['value'] = \
-                      dc_inmem['results'][0]['spec']['template']['spec']['containers'][0]['env'][idx]['value']
-
-        # dry-run doesn't add the protocol to the ports section.  We will manually do that.
-        for idx, port in enumerate(user_dc['spec']['template']['spec']['containers'][0]['ports']):
-            if not port.has_key('protocol'):
-                port['protocol'] = 'TCP'
-
-        # These are different when generating
-        skip = ['dnsPolicy',
-                'terminationGracePeriodSeconds',
-                'restartPolicy', 'timeoutSeconds',
-                'livenessProbe', 'readinessProbe',
-                'terminationMessagePath',
-                'rollingParams',
-               ]
-
-        return not Utils.check_def_equal(user_dc, dc_inmem['results'][0], skip_keys=skip, debug=verbose)
 
 def main():
     '''
-    ansible oc module for secrets
+    ansible oc module for services
     '''
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', type='str',
-                       choices=['present', 'absent']),
-            debug=dict(default=False, type='bool'),
-            namespace=dict(default='default', type='str'),
-            name=dict(default='router', type='str'),
-
             kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
-            credentials=dict(default='/etc/origin/master/openshift-router.kubeconfig', type='str'),
-            cert_file=dict(default=None, type='str'),
-            key_file=dict(default=None, type='str'),
-            image=dict(default=None, type='str'), #'openshift3/ose-${component}:${version}'
-            latest_image=dict(default=False, type='bool'),
-            labels=dict(default=None, type='list'),
-            ports=dict(default=['80:80', '443:443'], type='list'),
-            replicas=dict(default=1, type='int'),
-            selector=dict(default=None, type='str'),
-            service_account=dict(default='router', type='str'),
-            router_type=dict(default='haproxy-router', type='str'),
-            host_network=dict(default=True, type='bool'),
-            # external host options
-            external_host=dict(default=None, type='str'),
-            external_host_vserver=dict(default=None, type='str'),
-            external_host_insecure=dict(default=False, type='bool'),
-            external_host_partition_path=dict(default=None, type='str'),
-            external_host_username=dict(default=None, type='str'),
-            external_host_password=dict(default=None, type='str'),
-            external_host_private_key=dict(default=None, type='str'),
-            # Metrics
-            expose_metrics=dict(default=False, type='bool'),
-            metrics_image=dict(default=None, type='str'),
-            # Stats
-            stats_user=dict(default=None, type='str'),
-            stats_password=dict(default=None, type='str'),
-            stats_port=dict(default=1936, type='int'),
-
+            state=dict(default='present', type='str',
+                       choices=['present', 'absent', 'list']),
+            debug=dict(default=False, type='bool'),
+            kind=dict(default='rc', choices=['dc', 'rc', 'pods'], type='str'),
+            namespace=dict(default='default', type='str'),
+            secrets=dict(default=None, type='list'),
+            service_account=dict(default=None, type='str'),
         ),
-        mutually_exclusive=[["router_type", "images"]],
-
         supports_check_mode=True,
     )
-
-    rconfig = RouterConfig(module.params['name'],
-                           module.params['kubeconfig'],
-                           {'credentials': {'value': module.params['credentials'], 'include': True},
-                            'default_cert': {'value': None, 'include': True},
-                            'cert_file': {'value': module.params['cert_file'], 'include': False},
-                            'key_file': {'value': module.params['key_file'], 'include': False},
-                            'image': {'value': module.params['image'], 'include': True},
-                            'latest_image': {'value': module.params['latest_image'], 'include': True},
-                            'labels': {'value': module.params['labels'], 'include': True},
-                            'ports': {'value': ','.join(module.params['ports']), 'include': True},
-                            'replicas': {'value': module.params['replicas'], 'include': True},
-                            'selector': {'value': module.params['selector'], 'include': True},
-                            'service_account': {'value': module.params['service_account'], 'include': True},
-                            'router_type': {'value': module.params['router_type'], 'include': False},
-                            'host_network': {'value': module.params['host_network'], 'include': True},
-                            'external_host': {'value': module.params['external_host'], 'include': True},
-                            'external_host_vserver': {'value': module.params['external_host_vserver'],
-                                                      'include': True},
-                            'external_host_insecure': {'value': module.params['external_host_insecure'],
-                                                       'include': True},
-                            'external_host_partition_path': {'value': module.params['external_host_partition_path'],
-                                                             'include': True},
-                            'external_host_username': {'value': module.params['external_host_username'],
-                                                       'include': True},
-                            'external_host_password': {'value': module.params['external_host_password'],
-                                                       'include': True},
-                            'external_host_private_key': {'value': module.params['external_host_private_key'],
-                                                          'include': True},
-                            'expose_metrics': {'value': module.params['expose_metrics'], 'include': True},
-                            'metrics_image': {'value': module.params['metrics_image'], 'include': True},
-                            'stats_user': {'value': module.params['stats_user'], 'include': True},
-                            'stats_password': {'value': module.params['stats_password'], 'include': True},
-                            'stats_port': {'value': module.params['stats_port'], 'include': True},
-                           })
-
-
-    ocrouter = Router(rconfig)
+    oc_secret_add = OCSecretAdd(module.params['secrets'],
+                                module.params['service_account'],
+                                module.params['namespace'],
+                                kubeconfig=module.params['kubeconfig'],
+                                verbose=module.params['debug'])
 
     state = module.params['state']
+
+    api_rval = oc_secret_add.get()
+
+    #####
+    # Get
+    #####
+    if state == 'list':
+        module.exit_json(changed=False, results=api_rval['results'], state="list")
 
     ########
     # Delete
     ########
     if state == 'absent':
-        if not ocrouter.exists():
-            module.exit_json(changed=False, state="absent")
+        for secret in module.params.get('secrets', []):
+            if oc_secret_add.exists(secret):
 
-        if module.check_mode:
-            module.exit_json(change=False, msg='Would have performed a delete.')
+                if module.check_mode:
+                    module.exit_json(change=False, msg='Would have performed a delete.')
 
-        api_rval = ocrouter.delete()
-        module.exit_json(changed=True, results=api_rval, state="absent")
+                api_rval = oc_secret_add.delete()
 
+                module.exit_json(changed=True, results=api_rval, state="absent")
+        module.exit_json(changed=False, state="absent")
 
     if state == 'present':
         ########
         # Create
         ########
-        if not ocrouter.exists():
+        for secret in module.params.get('secrets', []):
+            if not oc_secret_add.exists(secret):
 
-            if module.check_mode:
-                module.exit_json(change=False, msg='Would have performed a create.')
+                if module.check_mode:
+                    module.exit_json(change=False, msg='Would have performed a create.')
 
-            api_rval = ocrouter.create()
+                # Create it here
+                api_rval = oc_secret_add.put()
 
-            module.exit_json(changed=True, results=api_rval, state="present")
+                if api_rval['returncode'] != 0:
+                    module.fail_json(msg=api_rval)
 
-        ########
-        # Update
-        ########
-        if not ocrouter.needs_update():
-            module.exit_json(changed=False, state="present")
+                # return the created object
+                api_rval = oc_secret_add.get()
 
-        if module.check_mode:
-            module.exit_json(change=False, msg='Would have performed an update.')
+                if api_rval['returncode'] != 0:
+                    module.fail_json(msg=api_rval)
 
-        api_rval = ocrouter.update()
+                module.exit_json(changed=True, results=api_rval, state="present")
 
-        if api_rval['returncode'] != 0:
-            module.fail_json(msg=api_rval)
 
-        module.exit_json(changed=True, results=api_rval, state="present")
+        module.exit_json(changed=False, results=api_rval, state="present")
 
     module.exit_json(failed=True,
                      changed=False,
@@ -804,4 +690,5 @@ def main():
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
 from ansible.module_utils.basic import *
+
 main()
