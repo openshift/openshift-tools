@@ -1,0 +1,7 @@
+---
+# tasks file for epel_repository
+
+- name: Install EPEL Repo RPM
+  action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
+  with_items:
+  - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
