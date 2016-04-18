@@ -68,7 +68,7 @@ cp -p inventory-clients/openshift_tools.conf.example %{buildroot}/etc/openshift_
 # ----------------------------------------------------------------------------------
 %package inventory-clients
 Summary:       OpenShift Tools Inventory Clients
-Requires:      python2,python-openshift-tools-ansible-inventory-clients
+Requires:      python2,python-openshift-tools-inventory-clients
 BuildArch:     noarch
 
 %description inventory-clients
@@ -88,7 +88,7 @@ OpenShift Tools Clients for interacting with hosts/inventory
 # ----------------------------------------------------------------------------------
 %package monitoring-remoteheal
 Summary:       OpenShift Tools Monitoring Remote Heal Scripts
-Requires:      python2,openshift-ansible-bin
+Requires:      python2,openshift-tools-scripts-inventory-clients
 BuildArch:     noarch
 
 %description monitoring-remoteheal
