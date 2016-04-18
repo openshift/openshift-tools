@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  author: OpenShift Ops
+  description:  Install and configure openshift-tools-scripts-inventory-clients
+  company: Red Hat, Inc
+  license: ASL 2.0
+  min_ansible_version: 1.2
+dependencies: []
