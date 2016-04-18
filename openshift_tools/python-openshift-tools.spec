@@ -64,7 +64,7 @@ ln -s %{_datadir}/ansible/inventory/gce %{buildroot}%{python_sitelib}/openshift_
 # ----------------------------------------------------------------------------------
 %package inventory-clients
 Summary:       OpenShift Tools Python libs for inventory clients
-Requires:      python2,openshift-tools-ansible-inventory-aws,openshift-tools-ansible-inventory-gce
+Requires:      python2,openshift-tools-ansible-inventory-aws,openshift-tools-ansible-inventory-gce,python-openshift-tools
 BuildArch:     noarch
 
 %description inventory-clients
