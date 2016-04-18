@@ -55,6 +55,34 @@ cp -p remote-heal/remote_healer.conf.example %{buildroot}/etc/openshift_tools/re
 
 mkdir -p %{buildroot}/var/run/zagg/data
 
+# openshift-tools-scripts-inventory-clients install
+mkdir -p %{buildroot}%{_bindir}
+mkdir -p %{buildroot}/etc/bash_completion.d
+mkdir -p %{buildroot}/etc/openshift_tools
+cp -p inventory-clients/{ohi,opscp,opssh,oscp,ossh} %{buildroot}%{_bindir}
+cp -p inventory-clients/ossh_bash_completion %{buildroot}/etc/bash_completion.d
+cp -p inventory-clients/openshift_tools.conf.example %{buildroot}/etc/openshift_tools/openshift_tools.conf
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-inventory-clients subpackage
+# ----------------------------------------------------------------------------------
+%package inventory-clients
+Summary:       OpenShift Tools Inventory Clients
+Requires:      python2,python-openshift-tools-ansible-inventory-clients
+BuildArch:     noarch
+
+%description inventory-clients
+OpenShift Tools Clients for interacting with hosts/inventory
+
+%files inventory-clients
+%{_bindir}/ohi
+%{_bindir}/opscp
+%{_bindir}/opssh
+%{_bindir}/oscp
+%{_bindir}/ossh
+/etc/bash_completion.d/*
+%config(noreplace)/etc/openshift_tools/openshift_tools.conf
+
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-remoteheal subpackage
 # ----------------------------------------------------------------------------------

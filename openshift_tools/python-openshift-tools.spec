@@ -39,6 +39,17 @@ cp -p web/*.py %{buildroot}%{python_sitelib}/openshift_tools/web
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/zbxapi
 cp -p zbxapi/*.py %{buildroot}%{python_sitelib}/openshift_tools/zbxapi
 
+# openshift_tools/inventory_clients install
+mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients
+cp -pP inventory_clients/* %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients
+# symlinks work within git repo, but we need to fix them when installing the RPM
+rm %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients/multi_inventory.py
+rm %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients/aws
+rm %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients/gce
+ln -s %{_datadir}/ansible/inventory/multi_inventory.py %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients/multi_inventory.py
+ln -s %{_datadir}/ansible/inventory/aws %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients/aws
+ln -s %{_datadir}/ansible/inventory/gce %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients/gce
+
 
 # openshift_tools files
 %files
@@ -47,6 +58,20 @@ cp -p zbxapi/*.py %{buildroot}%{python_sitelib}/openshift_tools/zbxapi
 %{python_sitelib}/openshift_tools/monitoring/__init*
 %{python_sitelib}/openshift_tools/*.py
 %{python_sitelib}/openshift_tools/*.py[co]
+
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-inventory-clients subpackage
+# ----------------------------------------------------------------------------------
+%package inventory-clients
+Summary:       OpenShift Tools Python libs for inventory clients
+Requires:      python2,openshift-tools-ansible-inventory-aws,openshift-tools-ansible-inventory-gce
+BuildArch:     noarch
+
+%description inventory-clients
+OpenShift Tools Python libraries for inventory clients
+
+%files inventory-clients
+%{python_sitelib}/openshift_tools/inventory_clients/*
 
 
 # ----------------------------------------------------------------------------------
