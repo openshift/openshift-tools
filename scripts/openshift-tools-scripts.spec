@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.83
+Version:       0.0.84
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -260,6 +260,13 @@ OpenShift Tools Cloud Tools
 
 
 %changelog
+* Mon Apr 18 2016 Joel Diaz <jdiaz@redhat.com> 0.0.84-1
+- copy host/inventory tools from openshift-ansible/bin and generate equivalent
+  RPMs clean up pylint (jdiaz@redhat.com)
+- found + fixed a typo (sten@redhat.com)
+- fixed pylint errors (sten@redhat.com)
+- add pod and web service checks (sten@redhat.com)
+
 * Thu Mar 24 2016 Unknown name 0.0.83-1
 - disable line-too-long on line 384 (zhizhang@zhizhang-laptop-nay.redhat.com)
 - fix pylint space (zhizhang@zhizhang-laptop-nay.redhat.com)
