@@ -13,6 +13,8 @@ import sys
 import os
 import ConfigParser
 
+# openshift-tools python libs not installed on jenkins instance
+# pylint: disable=import-error
 from openshift_tools.inventory_clients import awsutil
 from openshift_tools.inventory_clients import utils
 from openshift_tools.inventory_clients.awsutil import ArgumentError

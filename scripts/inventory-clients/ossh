@@ -8,6 +8,8 @@ import sys
 import os
 import ConfigParser
 
+# openshift-tools python RPMs not installed on jenkins instance
+# pylint: disable=import-error
 from openshift_tools.inventory_clients import awsutil
 
 CONFIG_MAIN_SECTION = 'main'
