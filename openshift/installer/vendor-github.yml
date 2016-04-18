@@ -39,6 +39,8 @@
       path: "{{ vendored_dir }}/{{ item }}"
     with_items:
     - .git
+    - .gitignore
+    - .tito
     - ansible.cfg.example
     - ansible-profile
     - bin
