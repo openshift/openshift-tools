@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.83
+Version:       0.0.86
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -55,12 +55,40 @@ cp -p remote-heal/remote_healer.conf.example %{buildroot}/etc/openshift_tools/re
 
 mkdir -p %{buildroot}/var/run/zagg/data
 
+# openshift-tools-scripts-inventory-clients install
+mkdir -p %{buildroot}%{_bindir}
+mkdir -p %{buildroot}/etc/bash_completion.d
+mkdir -p %{buildroot}/etc/openshift_tools
+cp -p inventory-clients/{ohi,opscp,opssh,oscp,ossh} %{buildroot}%{_bindir}
+cp -p inventory-clients/ossh_bash_completion %{buildroot}/etc/bash_completion.d
+cp -p inventory-clients/openshift_tools.conf.example %{buildroot}/etc/openshift_tools/openshift_tools.conf
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-inventory-clients subpackage
+# ----------------------------------------------------------------------------------
+%package inventory-clients
+Summary:       OpenShift Tools Inventory Clients
+Requires:      python2,python-openshift-tools-inventory-clients
+BuildArch:     noarch
+
+%description inventory-clients
+OpenShift Tools Clients for interacting with hosts/inventory
+
+%files inventory-clients
+%{_bindir}/ohi
+%{_bindir}/opscp
+%{_bindir}/opssh
+%{_bindir}/oscp
+%{_bindir}/ossh
+/etc/bash_completion.d/*
+%config(noreplace)/etc/openshift_tools/openshift_tools.conf
+
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-remoteheal subpackage
 # ----------------------------------------------------------------------------------
 %package monitoring-remoteheal
 Summary:       OpenShift Tools Monitoring Remote Heal Scripts
-Requires:      python2,openshift-ansible-bin
+Requires:      python2,openshift-tools-scripts-inventory-clients
 BuildArch:     noarch
 
 %description monitoring-remoteheal
@@ -232,6 +260,21 @@ OpenShift Tools Cloud Tools
 
 
 %changelog
+* Mon Apr 18 2016 Joel Diaz <jdiaz@redhat.com> 0.0.86-1
+- chmod +x for all the executable files in scripts-inventory-clients RPM and
+  pylint fixes (jdiaz@redhat.com)
+
+* Mon Apr 18 2016 Joel Diaz <jdiaz@redhat.com> 0.0.85-1
+- fix dependency name, and switch to not depend on openshift-ansible*
+  (jdiaz@redhat.com)
+
+* Mon Apr 18 2016 Joel Diaz <jdiaz@redhat.com> 0.0.84-1
+- copy host/inventory tools from openshift-ansible/bin and generate equivalent
+  RPMs clean up pylint (jdiaz@redhat.com)
+- found + fixed a typo (sten@redhat.com)
+- fixed pylint errors (sten@redhat.com)
+- add pod and web service checks (sten@redhat.com)
+
 * Thu Mar 24 2016 Unknown name 0.0.83-1
 - disable line-too-long on line 384 (zhizhang@zhizhang-laptop-nay.redhat.com)
 - fix pylint space (zhizhang@zhizhang-laptop-nay.redhat.com)

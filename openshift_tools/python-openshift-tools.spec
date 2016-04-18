@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.53
+Version:       0.0.55
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -39,6 +39,17 @@ cp -p web/*.py %{buildroot}%{python_sitelib}/openshift_tools/web
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/zbxapi
 cp -p zbxapi/*.py %{buildroot}%{python_sitelib}/openshift_tools/zbxapi
 
+# openshift_tools/inventory_clients install
+mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients
+cp -pP inventory_clients/* %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients
+# symlinks work within git repo, but we need to fix them when installing the RPM
+rm %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients/multi_inventory.py
+rm %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients/aws
+rm %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients/gce
+ln -s %{_datadir}/ansible/inventory/multi_inventory.py %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients/multi_inventory.py
+ln -s %{_datadir}/ansible/inventory/aws %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients/aws
+ln -s %{_datadir}/ansible/inventory/gce %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients/gce
+
 
 # openshift_tools files
 %files
@@ -47,6 +58,20 @@ cp -p zbxapi/*.py %{buildroot}%{python_sitelib}/openshift_tools/zbxapi
 %{python_sitelib}/openshift_tools/monitoring/__init*
 %{python_sitelib}/openshift_tools/*.py
 %{python_sitelib}/openshift_tools/*.py[co]
+
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-inventory-clients subpackage
+# ----------------------------------------------------------------------------------
+%package inventory-clients
+Summary:       OpenShift Tools Python libs for inventory clients
+Requires:      python2,openshift-tools-ansible-inventory-aws,openshift-tools-ansible-inventory-gce
+BuildArch:     noarch
+
+%description inventory-clients
+OpenShift Tools Python libraries for inventory clients
+
+%files inventory-clients
+%{python_sitelib}/openshift_tools/inventory_clients/*
 
 
 # ----------------------------------------------------------------------------------
@@ -142,7 +167,7 @@ Openshift Python libraries developed for monitoring OpenShift.
 %package ansible
 Summary:       OpenShift Tools Ansible Python Package
 # TODO: once the zbxapi ansible module is packaged, add it here as a dep
-Requires:      python2,python-openshift-tools,python-zbxsend,ansible,openshift-ansible-zabbix
+Requires:      python2,python-openshift-tools,python-zbxsend,ansible,openshift-tools-ansible-zabbix
 BuildArch:     noarch
 
 %description ansible
@@ -190,6 +215,13 @@ Thin API wrapper to communicate with a Zabbix server
 
 
 %changelog
+* Mon Apr 18 2016 Joel Diaz <jdiaz@redhat.com> 0.0.55-1
+- copy host/inventory tools from openshift-ansible/bin and generate equivalent
+  RPMs clean up pylint (jdiaz@redhat.com)
+
+* Tue Apr 12 2016 Joel Diaz <jdiaz@redhat.com> 0.0.54-1
+- depend on new openshift-tools-ansible-zabbix RPM (jdiaz@redhat.com)
+
 * Tue Mar 15 2016 Joel Diaz <jdiaz@redhat.com> 0.0.53-1
 - change deps to binary path requirements (jdiaz@redhat.com)
 - add skeleton oadm utility (jdiaz@redhat.com)

@@ -27,12 +27,12 @@ yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
 
 # pylint: disable=too-few-public-methods
 class OpenShiftCLI(object):
-    ''' Class to wrap the oc command line tools '''
+    ''' Class to wrap the command line tools '''
     def __init__(self,
                  namespace,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
                  verbose=False):
-        ''' Constructor for OpenshiftOC '''
+        ''' Constructor for OpenshiftCLI '''
         self.namespace = namespace
         self.verbose = verbose
         self.kubeconfig = kubeconfig
@@ -51,29 +51,29 @@ class OpenShiftCLI(object):
         for key, value in content.items():
             changes.append(yed.put(key, value))
 
-        if any([not change[0] for change in changes]):
-            return {'returncode': 0, 'updated': False}
+        if any([change[0] for change in changes]):
+            yed.write()
 
-        yed.write()
+            atexit.register(Utils.cleanup, [fname])
 
-        atexit.register(Utils.cleanup, [fname])
+            return self._replace(fname, force)
 
-        return self._replace(fname, force)
+        return {'returncode': 0, 'updated': False}
 
     def _replace(self, fname, force=False):
         '''return all pods '''
         cmd = ['-n', self.namespace, 'replace', '-f', fname]
         if force:
             cmd.append('--force')
-        return self.oc_cmd(cmd)
+        return self.openshift_cmd(cmd)
 
     def _create(self, fname):
         '''return all pods '''
-        return self.oc_cmd(['create', '-f', fname, '-n', self.namespace])
+        return self.openshift_cmd(['create', '-f', fname, '-n', self.namespace])
 
     def _delete(self, resource, rname):
         '''return all pods '''
-        return self.oc_cmd(['delete', resource, rname, '-n', self.namespace])
+        return self.openshift_cmd(['delete', resource, rname, '-n', self.namespace])
 
     def _get(self, resource, rname=None):
         '''return a secret by name '''
@@ -81,8 +81,8 @@ class OpenShiftCLI(object):
         if rname:
             cmd.append(rname)
 
-        rval = self.oc_cmd(cmd, output=True)
-
+        rval = self.openshift_cmd(cmd, output=True)
+#
         # Ensure results are retuned in an array
         if rval.has_key('items'):
             rval['results'] = rval['items']
@@ -91,10 +91,15 @@ class OpenShiftCLI(object):
 
         return rval
 
-    def oc_cmd(self, cmd, output=False):
+    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json'):
         '''Base command for oc '''
         #cmds = ['/usr/bin/oc', '--config', self.kubeconfig]
-        cmds = ['/usr/bin/oc']
+        cmds = []
+        if oadm:
+            cmds = ['/usr/bin/oadm']
+        else:
+            cmds = ['/usr/bin/oc']
+
         cmds.extend(cmd)
 
         rval = {}
@@ -112,18 +117,21 @@ class OpenShiftCLI(object):
         proc.wait()
         stdout = proc.stdout.read()
         stderr = proc.stderr.read()
-
         rval = {"returncode": proc.returncode,
                 "results": results,
+                "cmd": ' '.join(cmds),
                }
 
         if proc.returncode == 0:
             if output:
-                try:
-                    rval['results'] = json.loads(stdout)
-                except ValueError as err:
-                    if "No JSON object could be decoded" in err.message:
-                        err = err.message
+                if output_type == 'json':
+                    try:
+                        rval['results'] = json.loads(stdout)
+                    except ValueError as err:
+                        if "No JSON object could be decoded" in err.message:
+                            err = err.message
+                elif output_type == 'raw':
+                    rval['results'] = stdout
 
             if self.verbose:
                 print stdout
@@ -148,7 +156,7 @@ class OpenShiftCLI(object):
 class Utils(object):
     ''' utilities for openshiftcli modules '''
     @staticmethod
-    def create_file(rname, data, ftype=None):
+    def create_file(rname, data, ftype='yaml'):
         ''' create a file in tmp with name and contents'''
         path = os.path.join('/tmp', rname)
         with open(path, 'w') as fds:
@@ -165,15 +173,16 @@ class Utils(object):
         return path
 
     @staticmethod
-    def create_files_from_contents(data):
+    def create_files_from_contents(content, content_type=None):
         '''Turn an array of dict: filename, content into a files array'''
-        files = []
+        if isinstance(content, list):
+            files = []
+            for item in content:
+                files.append(Utils.create_file(item['path'], item['data'], ftype=content_type))
+            return files
 
-        for sfile in data:
-            path = Utils.create_file(sfile['path'], sfile['content'])
-            files.append(path)
+        return Utils.create_file(content['path'], content['data'])
 
-        return files
 
     @staticmethod
     def cleanup(files):
@@ -226,11 +235,13 @@ class Utils(object):
     # Disabling too-many-branches.  This is a yaml dictionary comparison function
     # pylint: disable=too-many-branches,too-many-return-statements
     @staticmethod
-    def check_def_equal(user_def, result_def, debug=False):
+    def check_def_equal(user_def, result_def, skip_keys=None, debug=False):
         ''' Given a user defined definition, compare it with the results given back by our query.  '''
 
         # Currently these values are autogenerated and we do not need to check them
         skip = ['metadata', 'status']
+        if skip_keys:
+            skip.extend(skip_keys)
 
         for key, value in result_def.items():
             if key in skip:
@@ -239,11 +250,27 @@ class Utils(object):
             # Both are lists
             if isinstance(value, list):
                 if not isinstance(user_def[key], list):
+                    if debug:
+                        print 'user_def[key] is not a list'
                     return False
 
-                # lists should be identical
-                if value != user_def[key]:
-                    return False
+                for values in zip(user_def[key], value):
+                    if isinstance(values[0], dict) and isinstance(values[1], dict):
+                        if debug:
+                            print 'sending list - list'
+                            print type(values[0])
+                            print type(values[1])
+                        result = Utils.check_def_equal(values[0], values[1], skip_keys=skip_keys, debug=debug)
+                        if not result:
+                            print 'list compare returned false'
+                            return False
+
+                    elif value != user_def[key]:
+                        if debug:
+                            print 'value should be identical'
+                            print value
+                            print user_def[key]
+                        return False
 
             # recurse on a dictionary
             elif isinstance(value, dict):
@@ -262,10 +289,11 @@ class Utils(object):
                         print "keys are not equal in dict"
                     return False
 
-                result = Utils.check_def_equal(user_def[key], value, debug=debug)
+                result = Utils.check_def_equal(user_def[key], value, skip_keys=skip_keys, debug=debug)
                 if not result:
                     if debug:
                         print "dict returned false"
+                        print result
                     return False
 
             # Verify each key, value pair is the same
@@ -510,16 +538,16 @@ class Secret(OpenShiftCLI):
         '''delete a secret by name'''
         return self._delete('secrets', self.name)
 
-    def create(self, files=None, contents=None):
+    def create(self, files=None, contents=None, content_type=None):
         '''Create a secret '''
         if not files:
-            files = Utils.create_files_from_contents(contents)
+            files = Utils.create_files_from_contents(contents, content_type=content_type)
 
         secrets = ["%s=%s" % (os.path.basename(sfile), sfile) for sfile in files]
         cmd = ['-n%s' % self.namespace, 'secrets', 'new', self.name]
         cmd.extend(secrets)
 
-        return self.oc_cmd(cmd)
+        return self.openshift_cmd(cmd)
 
     def update(self, files, force=False):
         '''run update secret
@@ -550,7 +578,7 @@ class Secret(OpenShiftCLI):
         cmd = ['-ojson', '-n%s' % self.namespace, 'secrets', 'new', self.name]
         cmd.extend(secrets)
 
-        return self.oc_cmd(cmd, output=True)
+        return self.openshift_cmd(cmd, output=True)
 
 
 
@@ -571,6 +599,7 @@ def main():
             files=dict(default=None, type='list'),
             delete_after=dict(default=False, type='bool'),
             contents=dict(default=None, type='list'),
+            content_type=dict(default='raw', choices=['yaml', 'json', 'raw'], type='str'),
             force=dict(default=False, type='bool'),
         ),
         mutually_exclusive=[["contents", "files"]],

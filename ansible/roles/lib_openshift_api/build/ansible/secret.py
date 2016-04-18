@@ -17,6 +17,7 @@ def main():
             files=dict(default=None, type='list'),
             delete_after=dict(default=False, type='bool'),
             contents=dict(default=None, type='list'),
+            content_type=dict(default='raw', choices=['yaml', 'json', 'raw'], type='str'),
             force=dict(default=False, type='bool'),
         ),
         mutually_exclusive=[["contents", "files"]],

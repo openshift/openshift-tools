@@ -44,6 +44,9 @@ class OCObject(OpenShiftCLI):
         if files:
             return self._replace(files[0], force)
 
+        if content and content.has_key('data'):
+            content = content['data']
+
         return self.update_content(content, force)
 
     def update_content(self, content, force=False):
@@ -60,19 +63,11 @@ class OCObject(OpenShiftCLI):
         data = None
         if files:
             data = Utils.get_resource_file(files[0], content_type)
-
-            # if equal then no need.  So not equal is True
-            return not Utils.check_def_equal(data, objects['results'][0], True)
+        elif content and content.has_key('data'):
+            data = content['data']
         else:
             data = content
 
-            for key, value in data.items():
-                if key == 'metadata':
-                    continue
-                if not objects['results'][0].has_key(key):
-                    return True
-                if value != objects['results'][0][key]:
-                    return True
-
-        return False
+            # if equal then no need.  So not equal is True
+        return not Utils.check_def_equal(data, objects['results'][0], skip_keys=None, debug=False)
 

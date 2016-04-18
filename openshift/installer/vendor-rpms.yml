@@ -42,7 +42,7 @@
     args:
       chdir: "{{ vendored_dir }}"
     with_fileglob:
-    - "{{ rpm_directory }}/openshift-ansible-*-{{ installer_version }}-*.rpm"
+    - "{{ rpm_directory }}/openshift-ansible-*-{{ installer_version }}*.rpm"
 
   - name: Fix up the extracted contents into a normal ansible layout
     command: "mv {{ item | quote }} {{ vendored_dir }}"
