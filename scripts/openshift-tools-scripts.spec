@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.84
+Version:       0.0.85
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -260,6 +260,10 @@ OpenShift Tools Cloud Tools
 
 
 %changelog
+* Mon Apr 18 2016 Joel Diaz <jdiaz@redhat.com> 0.0.85-1
+- fix dependency name, and switch to not depend on openshift-ansible*
+  (jdiaz@redhat.com)
+
 * Mon Apr 18 2016 Joel Diaz <jdiaz@redhat.com> 0.0.84-1
 - copy host/inventory tools from openshift-ansible/bin and generate equivalent
   RPMs clean up pylint (jdiaz@redhat.com)
