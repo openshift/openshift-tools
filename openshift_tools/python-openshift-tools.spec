@@ -5,8 +5,7 @@ Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
 Source0:       %{name}-%{version}.tar.gz
-# python-2.7.5-34 adds native SNI support
-Requires:      python2 >= 2.7.5-34
+Requires:      python2
 BuildRequires: python2-devel
 BuildArch:     noarch
 
@@ -184,7 +183,9 @@ Tools developed for ansible OpenShift.
 # ----------------------------------------------------------------------------------
 %package web
 Summary:       OpenShift Tools Web Python Package
-Requires:      python2,python-openshift-tools,python-requests
+# python-2.7.5-34 adds native SNI support
+Requires:      python2 >= 2.7.5-34
+Requires:      python-openshift-tools,python-requests
 BuildArch:     noarch
 
 %description web
