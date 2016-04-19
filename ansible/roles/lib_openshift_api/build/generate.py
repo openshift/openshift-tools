@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-  Generate the openshift-ansible/roles/lib_openshift_cli/library/ modules.
+  Generate the openshift-tools/ansible/roles/lib_openshift_cli/library/ modules.
 '''
 
 import os
