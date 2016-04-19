@@ -42,7 +42,7 @@ def main():
             if oc_secret_add.exists(secret):
 
                 if module.check_mode:
-                    module.exit_json(change=False, msg='Would have performed a delete.')
+                    module.exit_json(changed=False, msg='Would have performed a delete.')
 
                 api_rval = oc_secret_add.delete()
 
@@ -57,7 +57,7 @@ def main():
             if not oc_secret_add.exists(secret):
 
                 if module.check_mode:
-                    module.exit_json(change=False, msg='Would have performed a create.')
+                    module.exit_json(changed=False, msg='Would have performed a create.')
 
                 # Create it here
                 api_rval = oc_secret_add.put()

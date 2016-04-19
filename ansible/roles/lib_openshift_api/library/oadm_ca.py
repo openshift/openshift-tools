@@ -556,558 +556,142 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
-class Volume(object):
+import OpenSSL.crypto as crypto
+
+class CertificateAuthorityConfig(OpenShiftCLIConfig):
+    ''' CertificateAuthorityConfig is a DTO for the oadm ca command '''
+    def __init__(self, cmd, kubeconfig, verbose, ca_options):
+        super(CertificateAuthorityConfig, self).__init__('ca', 'default', kubeconfig, ca_options)
+        self.cmd = cmd
+        self.kubeconfig = kubeconfig
+        self.verbose = verbose
+        self._ca = ca_options
+
+class CertificateAuthority(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
-    volume_mounts_path = {"pod": "spec#containers[0]#volumeMounts",
-                          "dc":  "spec#template#spec#containers[0]#volumeMounts",
-                          "rc":  "spec#template#spec#containers[0]#volumeMounts",
-                         }
-    volumes_path = {"pod": "spec#volumes",
-                    "dc":  "spec#template#spec#volumes",
-                    "rc":  "spec#template#spec#volumes",
-                   }
+    def __init__(self,
+                 config,
+                 verbose=False):
+        ''' Constructor for oadm ca '''
+        super(CertificateAuthority, self).__init__('default', config.kubeconfig, verbose)
+        self.config = config
+        self.verbose = verbose
 
-    @staticmethod
-    def create_volume_structure(volume_info):
-        ''' return a properly structured volume '''
-        volume_mount = None
-        volume = {'name': volume_info['name']}
-        if volume_info['type'] == 'secret':
-            volume['secret'] = {}
-            volume[volume_info['type']] = {'secretName': volume_info['secret_name']}
-            volume_mount = {'mountPath': volume_info['path'],
-                            'name': volume_info['name']}
-        elif volume_info['type'] == 'emptydir':
-            volume['emptyDir'] = {}
-            volume_mount = {'mountPath': volume_info['path'],
-                            'name': volume_info['name']}
-        elif volume_info['type'] == 'pvc':
-            volume['persistentVolumeClaim'] = {}
-            volume['persistentVolumeClaim']['claimName'] = volume_info['claimName']
-            volume['persistentVolumeClaim']['claimSize'] = volume_info['claimSize']
-        elif volume_info['type'] == 'hostpath':
-            volume['hostPath'] = {}
-            volume['hostPath']['path'] = volume_info['path']
+    def get(self):
+        '''get the current cert file
 
-        return (volume, volume_mount)
-
-class DeploymentConfig(Yedit):
-    ''' Class to wrap the oc command line tools '''
-    default_deployment_config = '''
-apiVersion: v1
-kind: DeploymentConfig
-metadata:
-  name: default_dc
-  namespace: default
-spec:
-  replicas: 0
-  selector:
-    default_dc: default_dc
-  strategy:
-    resources: {}
-    rollingParams:
-      intervalSeconds: 1
-      maxSurge: 0
-      maxUnavailable: 25%
-      timeoutSeconds: 600
-      updatePercent: -25
-      updatePeriodSeconds: 1
-    type: Rolling
-  template:
-    metadata:
-    spec:
-      containers:
-      - env:
-        - name: default
-          value: default
-        image: default
-        imagePullPolicy: IfNotPresent
-        name: default_dc
-        ports:
-        - containerPort: 8000
-          hostPort: 8000
-          protocol: TCP
-          name: default_port
-        resources: {}
-        terminationMessagePath: /dev/termination-log
-      dnsPolicy: ClusterFirst
-      hostNetwork: true
-      nodeSelector:
-        type: compute
-      restartPolicy: Always
-      securityContext: {}
-      serviceAccount: default
-      serviceAccountName: default
-      terminationGracePeriodSeconds: 30
-  triggers:
-  - type: ConfigChange
-'''
-
-    env_path = "spec#template#spec#containers[0]#env"
-    volumes_path = "spec#template#spec#volumes"
-    container_path = "spec#template#spec#containers"
-    volume_mounts_path = "spec#template#spec#containers[0]#volumeMounts"
-
-    def __init__(self, content=None):
-        ''' Constructor for OpenshiftOC '''
-        if not content:
-            content = DeploymentConfig.default_deployment_config
-
-        super(DeploymentConfig, self).__init__(content=content)
-
-    # pylint: disable=no-member
-    def add_env_value(self, key, value):
-        ''' add key, value pair to env array '''
-        rval = False
-        env = self.get_env_vars()
-        if env:
-            env.append({'name': key, 'value': value})
-            rval = True
-        else:
-            result = self.put(DeploymentConfig.env_path, {'name': key, 'value': value})
-            rval = result[0]
-
-        return rval
-
-    def exists_env_value(self, key, value):
-        ''' return whether a key, value  pair exists '''
-        results = self.get_env_vars()
-        if not results:
-            return False
-
-        for result in results:
-            if result['name'] == key and result['value'] == value:
-                return True
-
-        return False
-
-    def exists_env_key(self, key):
-        ''' return whether a key, value  pair exists '''
-        results = self.get_env_vars()
-        if not results:
-            return False
-
-        for result in results:
-            if result['name'] == key:
-                return True
-
-        return False
-
-    def get_env_vars(self):
-        '''return a environment variables '''
-        return self.get(DeploymentConfig.env_path) or []
-
-    def delete_env_var(self, keys):
-        '''delete a list of keys '''
-        if not isinstance(keys, list):
-            keys = [keys]
-
-        env_vars_array = self.get_env_vars()
-        modified = False
-        idx = None
-        for key in keys:
-            for env_idx, env_var in enumerate(env_vars_array):
-                if env_var['name'] == key:
-                    idx = env_idx
-                    break
-
-            if idx:
-                modified = True
-                del env_vars_array[idx]
-
-        if modified:
-            return True
-
-        return False
-
-    def update_env_var(self, key, value):
-        '''place an env in the env var list'''
-
-        env_vars_array = self.get_env_vars()
-        idx = None
-        for env_idx, env_var in enumerate(env_vars_array):
-            if env_var['name'] == key:
-                idx = env_idx
-                break
-
-        if idx:
-            env_vars_array[idx][key] = value
-        else:
-            self.add_env_value(key, value)
-
-        return True
-
-    def exists_volume_mount(self, volume_mount):
-        ''' return whether a volume mount exists '''
-        exist_volume_mounts = self.get_volume_mounts()
-
-        if not exist_volume_mounts:
-            return False
-
-        volume_mount_found = False
-        for exist_volume_mount in exist_volume_mounts:
-            if exist_volume_mount['name'] == volume_mount['name']:
-                volume_mount_found = True
-                break
-
-        return volume_mount_found
-
-    def exists_volume(self, volume):
-        ''' return whether a volume exists '''
-        exist_volumes = self.get_volumes()
-
-        volume_found = False
-        for exist_volume in exist_volumes:
-            if exist_volume['name'] == volume['name']:
-                volume_found = True
-                break
-
-        return volume_found
-
-    def find_volume_by_name(self, volume, mounts=False):
-        ''' return the index of a volume '''
-        volumes = []
-        if mounts:
-            volumes = self.get_volume_mounts()
-        else:
-            volumes = self.get_volumes()
-        for exist_volume in volumes:
-            if exist_volume['name'] == volume['name']:
-                return exist_volume
+           If a file exists by the same name in the specified location then the cert exists
+        '''
+        cert = self.config.config_options['cert']['value']
+        if cert and os.path.exists(cert):
+            return open(cert).read()
 
         return None
 
-    def get_volume_mounts(self):
-        '''return volume mount information '''
-        return self.get_volumes(mounts=True)
+    def create(self):
+        '''Create a deploymentconfig '''
+        options = self.config.to_option_list()
 
-    def get_volumes(self, mounts=False):
-        '''return volume mount information '''
-        if mounts:
-            return self.get(DeploymentConfig.volume_mounts_path) or []
+        cmd = ['ca']
+        cmd.append(self.config.cmd)
+        cmd.extend(options)
 
-        return self.get(DeploymentConfig.volumes_path) or []
-
-    def delete_volume_by_name(self, volume):
-        '''delete a volume '''
-        modified = False
-        exist_volume_mounts = self.get_volume_mounts()
-        exist_volumes = self.get_volumes()
-        del_idx = None
-        for idx, exist_volume in enumerate(exist_volumes):
-            if exist_volume.has_key('name') and exist_volume['name'] == volume['name']:
-                del_idx = idx
-                break
-
-        if del_idx != None:
-            del exist_volumes[del_idx]
-            modified = True
-
-        del_idx = None
-        for idx, exist_volume_mount in enumerate(exist_volume_mounts):
-            if exist_volume_mount.has_key('name') and exist_volume_mount['name'] == volume['name']:
-                del_idx = idx
-                break
-
-        if del_idx != None:
-            del exist_volume_mounts[idx]
-            modified = True
-
-        return modified
-
-    def add_volume_mount(self, volume_mount):
-        ''' add a volume or volume mount to the proper location '''
-        exist_volume_mounts = self.get_volume_mounts()
-
-        if not exist_volume_mounts and volume_mount:
-            self.put(DeploymentConfig.volume_mounts_path, [volume_mount])
-        else:
-            exist_volume_mounts.append(volume_mount)
-
-    def add_volume(self, volume):
-        ''' add a volume or volume mount to the proper location '''
-        exist_volumes = self.get_volumes()
-        if not volume:
-            return
-
-        if not exist_volumes:
-            self.put(DeploymentConfig.volumes_path, [volume])
-        else:
-            exist_volumes.append(volume)
-
-    def update_volume(self, volume):
-        '''place an env in the env var list'''
-        exist_volumes = self.get_volumes()
-
-        if not volume:
-            return False
-
-        # update the volume
-        update_idx = None
-        for idx, exist_vol in enumerate(exist_volumes):
-            if exist_vol['name'] == volume['name']:
-                update_idx = idx
-                break
-
-        if update_idx != None:
-            exist_volumes[update_idx] = volume
-        else:
-            self.add_volume(volume)
-
-        return True
-
-    def update_volume_mount(self, volume_mount):
-        '''place an env in the env var list'''
-        modified = False
-
-        exist_volume_mounts = self.get_volume_mounts()
-
-        if not volume_mount:
-            return False
-
-        # update the volume mount
-        for exist_vol_mount in exist_volume_mounts:
-            if exist_vol_mount['name'] == volume_mount['name']:
-                if exist_vol_mount.has_key('mountPath') and \
-                   str(exist_vol_mount['mountPath']) != str(volume_mount['mountPath']):
-                    exist_vol_mount['mountPath'] = volume_mount['mountPath']
-                    modified = True
-                break
-
-        if not modified:
-            self.add_volume_mount(volume_mount)
-            modified = True
-
-        return modified
-
-    def needs_update_volume(self, volume, volume_mount):
-        ''' verify a volume update is needed '''
-        exist_volume = self.find_volume_by_name(volume)
-        exist_volume_mount = self.find_volume_by_name(volume, mounts=True)
-        results = []
-        results.append(exist_volume['name'] == volume['name'])
-
-        if volume.has_key('secret'):
-            results.append(exist_volume.has_key('secret'))
-            results.append(exist_volume['secret']['secretName'] == volume['secret']['secretName'])
-            results.append(exist_volume_mount['name'] == volume_mount['name'])
-            results.append(exist_volume_mount['mountPath'] == volume_mount['mountPath'])
-
-        elif volume.has_key('emptydir'):
-            results.append(exist_volume_mount['name'] == volume['name'])
-            results.append(exist_volume_mount['mountPath'] == volume_mount['mountPath'])
-
-        elif volume.has_key('persistentVolumeClaim'):
-            pvc = 'persistentVolumeClaim'
-            results.append(exist_volume.has_key(pvc))
-            results.append(exist_volume[pvc]['claimName'] == volume[pvc]['claimName'])
-
-            if volume[pvc].has_key('claimSize'):
-                results.append(exist_volume[pvc]['claimSize'] == volume[pvc]['claimSize'])
-
-        elif volume.has_key('hostpath'):
-            results.append(exist_volume.has_key('hostPath'))
-            results.append(exist_volume['hostPath']['path'] == volume_mount['mountPath'])
-
-        return not all(results)
-
-# pylint: disable=too-many-instance-attributes
-class OCVolume(OpenShiftCLI):
-    ''' Class to wrap the oc command line tools '''
-    volume_mounts_path = {"pod": "spec#containers[0]#volumeMounts",
-                          "dc":  "spec#template#spec#containers[0]#volumeMounts",
-                          "rc":  "spec#template#spec#containers[0]#volumeMounts",
-                         }
-    volumes_path = {"pod": "spec#volumes",
-                    "dc":  "spec#template#spec#volumes",
-                    "rc":  "spec#template#spec#volumes",
-                   }
-
-    # pylint allows 5
-    # pylint: disable=too-many-arguments
-    def __init__(self,
-                 kind,
-                 resource_name,
-                 namespace,
-                 vol_name,
-                 mount_path,
-                 mount_type,
-                 secret_name,
-                 claim_size,
-                 claim_name,
-                 kubeconfig='/etc/origin/master/admin.kubeconfig',
-                 verbose=False):
-        ''' Constructor for OCVolume '''
-        super(OCVolume, self).__init__(namespace, kubeconfig)
-        self.kind = kind
-        self.volume_info = {'name': vol_name,
-                            'secret_name': secret_name,
-                            'path': mount_path,
-                            'type': mount_type,
-                            'claimSize': claim_size,
-                            'claimName': claim_name}
-        self.volume, self.volume_mount = Volume.create_volume_structure(self.volume_info)
-        self.name = resource_name
-        self.namespace = namespace
-        self.kubeconfig = kubeconfig
-        self.verbose = verbose
-        self._resource = None
-
-    @property
-    def resource(self):
-        ''' property function for resource var '''
-        if not self._resource:
-            self.get()
-        return self._resource
-
-    @resource.setter
-    def resource(self, data):
-        ''' setter function for resource var '''
-        self._resource = data
+        return self.openshift_cmd(cmd, oadm=True)
 
     def exists(self):
-        ''' return whether a volume exists '''
-        volume_mount_found = False
-        volume_found = self.resource.exists_volume(self.volume)
-        if not self.volume_mount and volume_found:
-            return True
+        ''' check whether the certificate exists and has the clusterIP '''
 
-        if self.volume_mount:
-            volume_mount_found = self.resource.exists_volume_mount(self.volume_mount)
+        cert_path = self.config.config_options['cert']['value']
+        if not os.path.exists(cert_path):
+            return False
 
-        if volume_found and self.volume_mount and volume_mount_found:
-            return True
+        cert = crypto.load_certificate(crypto.FILETYPE_PEM, open(cert_path).read())
+        for var in self.config.config_options['hostnames']['value'].split(','):
+            if var in cert.get_subject().CN:
+                return True
 
         return False
 
-    def get(self):
-        '''return volume information '''
-        vol = self._get(self.kind, self.name)
-        if vol['returncode'] == 0:
-            if self.kind == 'dc':
-                self.resource = DeploymentConfig(content=vol['results'][0])
-                vol['results'] = self.resource.get_volumes()
-
-        return vol
-
-    def delete(self):
-        '''return all pods '''
-        self.resource.delete_volume_by_name(self.volume)
-        return self._replace_content(self.kind, self.name, self.resource.yaml_dict)
-
-    def put(self):
-        '''place env vars into dc '''
-        self.resource.update_volume(self.volume)
-        self.resource.get_volumes()
-        self.resource.update_volume_mount(self.volume_mount)
-        return self._replace_content(self.kind, self.name, self.resource.yaml_dict)
-
-    def needs_update(self):
-        ''' verify an update is needed '''
-        return self.resource.needs_update_volume(self.volume, self.volume_mount)
-
 def main():
     '''
-    ansible oc module for services
+    ansible oadm module for ca
     '''
 
     module = AnsibleModule(
         argument_spec=dict(
-            kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
             state=dict(default='present', type='str',
-                       choices=['present', 'absent', 'list']),
+                       choices=['present']),
             debug=dict(default=False, type='bool'),
-            kind=dict(default='dc', choices=['dc', 'rc', 'pods'], type='str'),
-            namespace=dict(default='default', type='str'),
-            vol_name=dict(default=None, type='str'),
-            name=dict(default=None, type='str'),
-            mount_type=dict(default=None,
-                            choices=['emptydir', 'hostpath', 'secret', 'pvc'],
-                            type='str'),
-            mount_path=dict(default=None, type='str'),
-            # secrets require a name
-            secret_name=dict(default=None, type='str'),
-            # pvc requires a size
-            claim_size=dict(default=None, type='str'),
-            claim_name=dict(default=None, type='str'),
+            kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
+            cmd=dict(default=None, require=True, type='str'),
+
+            # oadm ca create-master-certs [options]
+            cert_dir=dict(default=None, type='str'),
+            hostnames=dict(default=[], type='list'),
+            master=dict(default=None, type='str'),
+            public_master=dict(default=None, type='str'),
+            overwrite=dict(default=False, type='bool'),
+            signer_name=dict(default=None, type='str'),
+
+            # oadm ca create-key-pair [options]
+            private_key=dict(default=None, type='str'),
+            public_key=dict(default=None, type='str'),
+
+            # oadm ca create-server-cert [options]
+            cert=dict(default=None, type='str'),
+            key=dict(default=None, type='str'),
+            signer_cert=dict(default=None, type='str'),
+            signer_key=dict(default=None, type='str'),
+            signer_serial=dict(default=None, type='str'),
+
+            # name
+            # oadm ca create-signer-cert [options]
+
         ),
         supports_check_mode=True,
     )
-    oc_volume = OCVolume(module.params['kind'],
-                         module.params['name'],
-                         module.params['namespace'],
-                         module.params['vol_name'],
-                         module.params['mount_path'],
-                         module.params['mount_type'],
-                         # secrets
-                         module.params['secret_name'],
-                         # pvc
-                         module.params['claim_size'],
-                         module.params['claim_name'],
-                         kubeconfig=module.params['kubeconfig'],
-                         verbose=module.params['debug'])
+
+    # pylint: disable=line-too-long
+    config = CertificateAuthorityConfig(module.params['cmd'],
+                                        module.params['kubeconfig'],
+                                        module.params['debug'],
+                                        {'cert_dir':      {'value': module.params['cert_dir'], 'include': True},
+                                         'cert':          {'value': module.params['cert'], 'include': True},
+                                         'hostnames':     {'value': ','.join(module.params['hostnames']), 'include': True},
+                                         'master':        {'value': module.params['master'], 'include': True},
+                                         'public_master': {'value': module.params['public_master'], 'include': True},
+                                         'overwrite':     {'value': module.params['overwrite'], 'include': True},
+                                         'signer_name':   {'value': module.params['signer_name'], 'include': True},
+                                         'private_key':   {'value': module.params['private_key'], 'include': True},
+                                         'public_key':    {'value': module.params['public_key'], 'include': True},
+                                         'key':           {'value': module.params['key'], 'include': True},
+                                         'signer_cert':   {'value': module.params['signer_cert'], 'include': True},
+                                         'signer_key':    {'value': module.params['signer_key'], 'include': True},
+                                         'signer_serial': {'value': module.params['signer_serial'], 'include': True},
+                                        })
+
+
+    oadm_ca = CertificateAuthority(config)
 
     state = module.params['state']
-
-    api_rval = oc_volume.get()
-
-    #####
-    # Get
-    #####
-    if state == 'list':
-        module.exit_json(changed=False, results=api_rval['results'], state="list")
-
-    ########
-    # Delete
-    ########
-    if state == 'absent':
-        if oc_volume.exists():
-
-            if module.check_mode:
-                module.exit_json(changed=False, msg='Would have performed a delete.')
-
-            api_rval = oc_volume.delete()
-
-            module.exit_json(changed=True, results=api_rval, state="absent")
-        module.exit_json(changed=False, state="absent")
 
     if state == 'present':
         ########
         # Create
         ########
-        if not oc_volume.exists():
+        if not oadm_ca.exists() or module.params['overwrite']:
 
             if module.check_mode:
-                module.exit_json(changed=False, msg='Would have performed a create.')
+                module.exit_json(changed=False, msg="Would have created the certificate.", state="present")
 
-            # Create it here
-            api_rval = oc_volume.put()
-
-            # return the created object
-            api_rval = oc_volume.get()
-
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
+            api_rval = oadm_ca.create()
 
             module.exit_json(changed=True, results=api_rval, state="present")
 
         ########
-        # Update
+        # Exists
         ########
-        if oc_volume.needs_update():
-            api_rval = oc_volume.put()
-
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
-
-            # return the created object
-            api_rval = oc_volume.get()
-
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
-
-            module.exit_json(changed=True, results=api_rval, state="present")
-
+        api_rval = oadm_ca.get()
         module.exit_json(changed=False, results=api_rval, state="present")
 
     module.exit_json(failed=True,
@@ -1118,5 +702,4 @@ def main():
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
 from ansible.module_utils.basic import *
-
 main()

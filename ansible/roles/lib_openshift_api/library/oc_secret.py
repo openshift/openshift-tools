@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python # pylint: disable=too-many-lines
 #     ___ ___ _  _ ___ ___    _ _____ ___ ___
 #    / __| __| \| | __| _ \  /_\_   _| __|   \
 #   | (_ | _|| .` | _||   / / _ \| | | _|| |) |
@@ -9,6 +9,7 @@
 '''
    OpenShiftCLI class that wraps the oc commands in a subprocess
 '''
+# pylint: disable=too-many-lines
 
 import atexit
 import json
@@ -66,6 +67,16 @@ class OpenShiftCLI(object):
         if force:
             cmd.append('--force')
         return self.openshift_cmd(cmd)
+
+    def _create_from_content(self, rname, content):
+        '''return all pods '''
+        fname = '/tmp/%s' % rname
+        yed = Yedit(fname, content=content)
+        yed.write()
+
+        atexit.register(Utils.cleanup, [fname])
+
+        return self._create(fname)
 
     def _create(self, fname):
         '''return all pods '''
@@ -274,9 +285,13 @@ class Utils(object):
 
             # recurse on a dictionary
             elif isinstance(value, dict):
+                if not user_def.has_key(key):
+                    if debug:
+                        print "user_def does not have key [%s]" % key
+                    return False
                 if not isinstance(user_def[key], dict):
                     if debug:
-                        print "dict returned false not instance of dict"
+                        print "dict returned false: not instance of dict"
                     return False
 
                 # before passing ensure keys match
@@ -306,6 +321,32 @@ class Utils(object):
                     return False
 
         return True
+
+class OpenShiftCLIConfig(object):
+    '''Generic Config'''
+    def __init__(self, rname, namespace, kubeconfig, options):
+        self.kubeconfig = kubeconfig
+        self.name = rname
+        self.namespace = namespace
+        self._options = options
+
+    @property
+    def config_options(self):
+        ''' return config options '''
+        return self._options
+
+    def to_option_list(self):
+        '''return all options as a string'''
+        return self.stringify()
+
+    def stringify(self):
+        ''' return the options hash as cli params in a string '''
+        rval = []
+        for key, data in self.config_options.items():
+            if data['include'] and data['value']:
+                rval.append('--%s=%s' % (key.replace('_', '-'), data['value']))
+
+        return rval
 
 class YeditException(Exception):
     ''' Exception class for Yedit '''
@@ -631,7 +672,7 @@ def main():
             module.exit_json(changed=False, state="absent")
 
         if module.check_mode:
-            module.exit_json(change=False, msg='Would have performed a delete.')
+            module.exit_json(changed=False, msg='Would have performed a delete.')
 
         api_rval = occmd.delete()
         module.exit_json(changed=True, results=api_rval, state="absent")
@@ -651,7 +692,7 @@ def main():
         if not Utils.exists(api_rval['results'], module.params['name']):
 
             if module.check_mode:
-                module.exit_json(change=False, msg='Would have performed a create.')
+                module.exit_json(changed=False, msg='Would have performed a create.')
 
             api_rval = occmd.create(module.params['files'], module.params['contents'])
 
@@ -678,7 +719,7 @@ def main():
             module.exit_json(changed=False, results=secret['results'], state="present")
 
         if module.check_mode:
-            module.exit_json(change=False, msg='Would have performed an update.')
+            module.exit_json(changed=False, msg='Would have performed an update.')
 
         api_rval = occmd.update(files, force=module.params['force'])
 

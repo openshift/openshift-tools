@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python # pylint: disable=too-many-lines
 #     ___ ___ _  _ ___ ___    _ _____ ___ ___
 #    / __| __| \| | __| _ \  /_\_   _| __|   \
 #   | (_ | _|| .` | _||   / / _ \| | | _|| |) |
@@ -9,6 +9,7 @@
 '''
    OpenShiftCLI class that wraps the oc commands in a subprocess
 '''
+# pylint: disable=too-many-lines
 
 import atexit
 import json
@@ -66,6 +67,16 @@ class OpenShiftCLI(object):
         if force:
             cmd.append('--force')
         return self.openshift_cmd(cmd)
+
+    def _create_from_content(self, rname, content):
+        '''return all pods '''
+        fname = '/tmp/%s' % rname
+        yed = Yedit(fname, content=content)
+        yed.write()
+
+        atexit.register(Utils.cleanup, [fname])
+
+        return self._create(fname)
 
     def _create(self, fname):
         '''return all pods '''
@@ -274,9 +285,13 @@ class Utils(object):
 
             # recurse on a dictionary
             elif isinstance(value, dict):
+                if not user_def.has_key(key):
+                    if debug:
+                        print "user_def does not have key [%s]" % key
+                    return False
                 if not isinstance(user_def[key], dict):
                     if debug:
-                        print "dict returned false not instance of dict"
+                        print "dict returned false: not instance of dict"
                     return False
 
                 # before passing ensure keys match
@@ -306,6 +321,32 @@ class Utils(object):
                     return False
 
         return True
+
+class OpenShiftCLIConfig(object):
+    '''Generic Config'''
+    def __init__(self, rname, namespace, kubeconfig, options):
+        self.kubeconfig = kubeconfig
+        self.name = rname
+        self.namespace = namespace
+        self._options = options
+
+    @property
+    def config_options(self):
+        ''' return config options '''
+        return self._options
+
+    def to_option_list(self):
+        '''return all options as a string'''
+        return self.stringify()
+
+    def stringify(self):
+        ''' return the options hash as cli params in a string '''
+        rval = []
+        for key, data in self.config_options.items():
+            if data['include'] and data['value']:
+                rval.append('--%s=%s' % (key.replace('_', '-'), data['value']))
+
+        return rval
 
 class YeditException(Exception):
     ''' Exception class for Yedit '''
@@ -515,33 +556,455 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
-import time
+# pylint: disable=too-many-instance-attributes
+class ServiceConfig(object):
+    ''' Handle service options '''
+    # pylint: disable=too-many-arguments
+    def __init__(self,
+                 sname,
+                 namespace,
+                 ports,
+                 selector=None,
+                 labels=None,
+                 cluster_ip=None,
+                 portal_ip=None,
+                 session_affinity=None,
+                 service_type=None):
+        ''' constructor for handling service options '''
+        self.name = sname
+        self.namespace = namespace
+        self.ports = ports
+        self.selector = selector
+        self.labels = labels
+        self.cluster_ip = cluster_ip
+        self.portal_ip = portal_ip
+        self.session_affinity = session_affinity
+        self.service_type = service_type
+        self.data = {}
 
-class RouterConfig(object):
-    ''' RouterConfig is a DTO for the router.  '''
-    def __init__(self, rname, kubeconfig, router_options):
-        self.name = rname
-        self.kubeconfig = kubeconfig
-        self._router_options = router_options
+        self.create_dict()
 
-    @property
-    def router_options(self):
-        ''' return router options '''
-        return self._router_options
+    def create_dict(self):
+        ''' return a service as a dict '''
+        self.data['apiVersion'] = 'v1'
+        self.data['kind'] = 'Service'
+        self.data['metadata'] = {}
+        self.data['metadata']['name'] = self.name
+        self.data['metadata']['namespace'] = self.namespace
+        if self.labels:
+            for lab, lab_value  in self.labels.items():
+                self.data['metadata'][lab] = lab_value
+        self.data['spec'] = {}
 
-    def to_option_list(self):
-        ''' return all options as a string'''
-        return RouterConfig.stringify(self.router_options)
+        if self.ports:
+            self.data['spec']['ports'] = self.ports
+        else:
+            self.data['spec']['ports'] = []
 
-    @staticmethod
-    def stringify(options):
-        ''' return hash as list of key value pairs '''
-        rval = []
-        for key, data in options.items():
-            if data['include'] and data['value']:
-                rval.append('--%s=%s' % (key.replace('_', '-'), data['value']))
+        if self.selector:
+            self.data['spec']['selector'] = self.selector
+
+        self.data['spec']['sessionAffinity'] = self.session_affinity or 'None'
+
+        if self.cluster_ip:
+            self.data['spec']['clusterIP'] = self.cluster_ip
+
+        if self.portal_ip:
+            self.data['spec']['portalIP'] = self.portal_ip
+
+        if self.service_type:
+            self.data['spec']['type'] = self.service_type
+
+# pylint: disable=too-many-instance-attributes
+class Service(Yedit):
+    ''' Class to wrap the oc command line tools '''
+    port_path = "spec#ports"
+    kind = 'Service'
+
+    def __init__(self, content):
+        '''Service constructor'''
+        super(Service, self).__init__(content=content)
+
+    def get_ports(self):
+        ''' get a list of ports '''
+        return self.get(Service.port_path) or []
+
+    def add_ports(self, inc_ports):
+        ''' add a port object to the ports list '''
+        if not isinstance(inc_ports, list):
+            inc_ports = [inc_ports]
+
+        ports = self.get_ports()
+        if not ports:
+            self.put(Service.port_path, inc_ports)
+        else:
+            ports.extend(inc_ports)
+
+        return True
+
+    def find_ports(self, inc_port):
+        ''' find a specific port '''
+        for port in self.get_ports():
+            if port['port'] == inc_port['port']:
+                return port
+
+        return None
+
+    def delete_ports(self, inc_ports):
+        ''' remove a port from a service '''
+        if not isinstance(inc_ports, list):
+            inc_ports = [inc_ports]
+
+        ports = self.get(Service.port_path) or []
+
+        if not ports:
+            return True
+
+        removed = False
+        for inc_port in inc_ports:
+            port = self.find_ports(inc_port)
+            if port:
+                ports.remove(port)
+                removed = True
+
+        return removed
+
+    def add_cluster_ip(self, sip):
+        '''add cluster ip'''
+        self.put('spec#clusterIP', sip)
+
+    def add_portal_ip(self, pip):
+        '''add cluster ip'''
+        self.put('spec#portalIP', pip)
+
+
+
+class DeploymentConfig(Yedit):
+    ''' Class to wrap the oc command line tools '''
+    default_deployment_config = '''
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: default_dc
+  namespace: default
+spec:
+  replicas: 0
+  selector:
+    default_dc: default_dc
+  strategy:
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 0
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePercent: -25
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+    spec:
+      containers:
+      - env:
+        - name: default
+          value: default
+        image: default
+        imagePullPolicy: IfNotPresent
+        name: default_dc
+        ports:
+        - containerPort: 8000
+          hostPort: 8000
+          protocol: TCP
+          name: default_port
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      nodeSelector:
+        type: compute
+      restartPolicy: Always
+      securityContext: {}
+      serviceAccount: default
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 30
+  triggers:
+  - type: ConfigChange
+'''
+
+    env_path = "spec#template#spec#containers[0]#env"
+    volumes_path = "spec#template#spec#volumes"
+    container_path = "spec#template#spec#containers"
+    volume_mounts_path = "spec#template#spec#containers[0]#volumeMounts"
+
+    def __init__(self, content=None):
+        ''' Constructor for OpenshiftOC '''
+        if not content:
+            content = DeploymentConfig.default_deployment_config
+
+        super(DeploymentConfig, self).__init__(content=content)
+
+    # pylint: disable=no-member
+    def add_env_value(self, key, value):
+        ''' add key, value pair to env array '''
+        rval = False
+        env = self.get_env_vars()
+        if env:
+            env.append({'name': key, 'value': value})
+            rval = True
+        else:
+            result = self.put(DeploymentConfig.env_path, {'name': key, 'value': value})
+            rval = result[0]
 
         return rval
+
+    def exists_env_value(self, key, value):
+        ''' return whether a key, value  pair exists '''
+        results = self.get_env_vars()
+        if not results:
+            return False
+
+        for result in results:
+            if result['name'] == key and result['value'] == value:
+                return True
+
+        return False
+
+    def exists_env_key(self, key):
+        ''' return whether a key, value  pair exists '''
+        results = self.get_env_vars()
+        if not results:
+            return False
+
+        for result in results:
+            if result['name'] == key:
+                return True
+
+        return False
+
+    def get_env_vars(self):
+        '''return a environment variables '''
+        return self.get(DeploymentConfig.env_path) or []
+
+    def delete_env_var(self, keys):
+        '''delete a list of keys '''
+        if not isinstance(keys, list):
+            keys = [keys]
+
+        env_vars_array = self.get_env_vars()
+        modified = False
+        idx = None
+        for key in keys:
+            for env_idx, env_var in enumerate(env_vars_array):
+                if env_var['name'] == key:
+                    idx = env_idx
+                    break
+
+            if idx:
+                modified = True
+                del env_vars_array[idx]
+
+        if modified:
+            return True
+
+        return False
+
+    def update_env_var(self, key, value):
+        '''place an env in the env var list'''
+
+        env_vars_array = self.get_env_vars()
+        idx = None
+        for env_idx, env_var in enumerate(env_vars_array):
+            if env_var['name'] == key:
+                idx = env_idx
+                break
+
+        if idx:
+            env_vars_array[idx][key] = value
+        else:
+            self.add_env_value(key, value)
+
+        return True
+
+    def exists_volume_mount(self, volume_mount):
+        ''' return whether a volume mount exists '''
+        exist_volume_mounts = self.get_volume_mounts()
+
+        if not exist_volume_mounts:
+            return False
+
+        volume_mount_found = False
+        for exist_volume_mount in exist_volume_mounts:
+            if exist_volume_mount['name'] == volume_mount['name']:
+                volume_mount_found = True
+                break
+
+        return volume_mount_found
+
+    def exists_volume(self, volume):
+        ''' return whether a volume exists '''
+        exist_volumes = self.get_volumes()
+
+        volume_found = False
+        for exist_volume in exist_volumes:
+            if exist_volume['name'] == volume['name']:
+                volume_found = True
+                break
+
+        return volume_found
+
+    def find_volume_by_name(self, volume, mounts=False):
+        ''' return the index of a volume '''
+        volumes = []
+        if mounts:
+            volumes = self.get_volume_mounts()
+        else:
+            volumes = self.get_volumes()
+        for exist_volume in volumes:
+            if exist_volume['name'] == volume['name']:
+                return exist_volume
+
+        return None
+
+    def get_volume_mounts(self):
+        '''return volume mount information '''
+        return self.get_volumes(mounts=True)
+
+    def get_volumes(self, mounts=False):
+        '''return volume mount information '''
+        if mounts:
+            return self.get(DeploymentConfig.volume_mounts_path) or []
+
+        return self.get(DeploymentConfig.volumes_path) or []
+
+    def delete_volume_by_name(self, volume):
+        '''delete a volume '''
+        modified = False
+        exist_volume_mounts = self.get_volume_mounts()
+        exist_volumes = self.get_volumes()
+        del_idx = None
+        for idx, exist_volume in enumerate(exist_volumes):
+            if exist_volume.has_key('name') and exist_volume['name'] == volume['name']:
+                del_idx = idx
+                break
+
+        if del_idx != None:
+            del exist_volumes[del_idx]
+            modified = True
+
+        del_idx = None
+        for idx, exist_volume_mount in enumerate(exist_volume_mounts):
+            if exist_volume_mount.has_key('name') and exist_volume_mount['name'] == volume['name']:
+                del_idx = idx
+                break
+
+        if del_idx != None:
+            del exist_volume_mounts[idx]
+            modified = True
+
+        return modified
+
+    def add_volume_mount(self, volume_mount):
+        ''' add a volume or volume mount to the proper location '''
+        exist_volume_mounts = self.get_volume_mounts()
+
+        if not exist_volume_mounts and volume_mount:
+            self.put(DeploymentConfig.volume_mounts_path, [volume_mount])
+        else:
+            exist_volume_mounts.append(volume_mount)
+
+    def add_volume(self, volume):
+        ''' add a volume or volume mount to the proper location '''
+        exist_volumes = self.get_volumes()
+        if not volume:
+            return
+
+        if not exist_volumes:
+            self.put(DeploymentConfig.volumes_path, [volume])
+        else:
+            exist_volumes.append(volume)
+
+    def update_volume(self, volume):
+        '''place an env in the env var list'''
+        exist_volumes = self.get_volumes()
+
+        if not volume:
+            return False
+
+        # update the volume
+        update_idx = None
+        for idx, exist_vol in enumerate(exist_volumes):
+            if exist_vol['name'] == volume['name']:
+                update_idx = idx
+                break
+
+        if update_idx != None:
+            exist_volumes[update_idx] = volume
+        else:
+            self.add_volume(volume)
+
+        return True
+
+    def update_volume_mount(self, volume_mount):
+        '''place an env in the env var list'''
+        modified = False
+
+        exist_volume_mounts = self.get_volume_mounts()
+
+        if not volume_mount:
+            return False
+
+        # update the volume mount
+        for exist_vol_mount in exist_volume_mounts:
+            if exist_vol_mount['name'] == volume_mount['name']:
+                if exist_vol_mount.has_key('mountPath') and \
+                   str(exist_vol_mount['mountPath']) != str(volume_mount['mountPath']):
+                    exist_vol_mount['mountPath'] = volume_mount['mountPath']
+                    modified = True
+                break
+
+        if not modified:
+            self.add_volume_mount(volume_mount)
+            modified = True
+
+        return modified
+
+    def needs_update_volume(self, volume, volume_mount):
+        ''' verify a volume update is needed '''
+        exist_volume = self.find_volume_by_name(volume)
+        exist_volume_mount = self.find_volume_by_name(volume, mounts=True)
+        results = []
+        results.append(exist_volume['name'] == volume['name'])
+
+        if volume.has_key('secret'):
+            results.append(exist_volume.has_key('secret'))
+            results.append(exist_volume['secret']['secretName'] == volume['secret']['secretName'])
+            results.append(exist_volume_mount['name'] == volume_mount['name'])
+            results.append(exist_volume_mount['mountPath'] == volume_mount['mountPath'])
+
+        elif volume.has_key('emptydir'):
+            results.append(exist_volume_mount['name'] == volume['name'])
+            results.append(exist_volume_mount['mountPath'] == volume_mount['mountPath'])
+
+        elif volume.has_key('persistentVolumeClaim'):
+            pvc = 'persistentVolumeClaim'
+            results.append(exist_volume.has_key(pvc))
+            results.append(exist_volume[pvc]['claimName'] == volume[pvc]['claimName'])
+
+            if volume[pvc].has_key('claimSize'):
+                results.append(exist_volume[pvc]['claimSize'] == volume[pvc]['claimSize'])
+
+        elif volume.has_key('hostpath'):
+            results.append(exist_volume.has_key('hostPath'))
+            results.append(exist_volume['hostPath']['path'] == volume_mount['mountPath'])
+
+        return not all(results)
+
+import time
+
+class RouterConfig(OpenShiftCLIConfig):
+    ''' RouterConfig is a DTO for the router.  '''
+    def __init__(self, rname, namespace, kubeconfig, router_options):
+        super(RouterConfig, self).__init__(rname, namespace, kubeconfig, router_options)
 
 class Router(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
@@ -556,30 +1019,55 @@ class Router(OpenShiftCLI):
            - endpoint/router
         '''
         super(Router, self).__init__('default', router_config.kubeconfig, verbose)
-        self.rconfig = router_config
+        self.config = router_config
         self.verbose = verbose
-        self.router_parts = [{'kind': 'dc', 'name': self.rconfig.name},
-                             {'kind': 'svc', 'name': self.rconfig.name},
-                             #{'kind': 'endpoints', 'name': self.rconfig.name},
+        self.router_parts = [{'kind': 'dc', 'name': self.config.name},
+                             {'kind': 'svc', 'name': self.config.name},
+                             #{'kind': 'endpoints', 'name': self.config.name},
                             ]
-    def get(self, filter_kind=None):
+
+        self.dconfig = None
+        self.svc = None
+        self.get()
+
+    @property
+    def deploymentconfig(self):
+        ''' property deploymentconfig'''
+        return self.dconfig
+
+    @deploymentconfig.setter
+    def deploymentconfig(self, config):
+        ''' setter for property deploymentconfig '''
+        self.dconfig = config
+
+    @property
+    def service(self):
+        ''' property service '''
+        return self.svc
+
+    @service.setter
+    def service(self, config):
+        ''' setter for property service '''
+        self.svc = config
+
+
+    def get(self):
         ''' return the self.router_parts '''
-        rparts = self.router_parts
-        parts = []
-        if filter_kind:
-            rparts = [part for part in self.router_parts if filter_kind == part['kind']]
+        self.service = None
+        self.deploymentconfig = None
+        for part in self.router_parts:
+            result = self._get(part['kind'], rname=part['name'])
+            if result['returncode'] == 0 and part['kind'] == 'dc':
+                self.deploymentconfig = DeploymentConfig(result['results'][0])
+            elif result['returncode'] == 0 and part['kind'] == 'svc':
+                self.service = Yedit(content=result['results'][0])
 
-        for part in rparts:
-            parts.append(self._get(part['kind'], rname=part['name']))
-
-        return parts
+        return (self.deploymentconfig, self.service)
 
     def exists(self):
-        '''return a deploymentconfig by name '''
-        parts = self.get()
-        for part in parts:
-            if part['returncode'] == 0:
-                return True
+        '''return a whether svc or dc exists '''
+        if self.deploymentconfig or self.service:
+            return True
 
         return False
 
@@ -596,15 +1084,15 @@ class Router(OpenShiftCLI):
         # We need to create the pem file
         router_pem = '/tmp/router.pem'
         with open(router_pem, 'w') as rfd:
-            rfd.write(open(self.rconfig.router_options['cert_file']['value']).read())
-            rfd.write(open(self.rconfig.router_options['key_file']['value']).read())
+            rfd.write(open(self.config.config_options['cert_file']['value']).read())
+            rfd.write(open(self.config.config_options['key_file']['value']).read())
 
         atexit.register(Utils.cleanup, [router_pem])
-        self.rconfig.router_options['default_cert']['value'] = router_pem
+        self.config.config_options['default_cert']['value'] = router_pem
 
-        options = self.rconfig.to_option_list()
+        options = self.config.to_option_list()
 
-        cmd = ['router']
+        cmd = ['router', '-n', self.config.namespace]
         cmd.extend(options)
         if dryrun:
             cmd.extend(['--dry-run=True', '-o', 'json'])
@@ -631,9 +1119,8 @@ class Router(OpenShiftCLI):
 
     def needs_update(self, verbose=False):
         ''' check to see if we need to update '''
-        dc_inmem = self.get(filter_kind='dc')[0]
-        if dc_inmem['returncode'] != 0:
-            return dc_inmem
+        if not self.deploymentconfig or not self.service:
+            return True
 
         user_dc = self.create(dryrun=True, output=True, output_type='raw')
         if user_dc['returncode'] != 0:
@@ -645,18 +1132,18 @@ class Router(OpenShiftCLI):
         # stats_password = user_dc_results[0]
 
         # Load the string back into json and get the newly created dc
-        user_dc = json.loads('\n'.join(user_dc_results[1:]))['items'][0]
+        user_dc = DeploymentConfig(content=json.loads('\n'.join(user_dc_results[1:]))['items'][0])
 
         # Router needs some exceptions.
         # We do not want to check the autogenerated password for stats admin
-        if not self.rconfig.router_options['stats_password']['value']:
-            for idx, env_var in enumerate(user_dc['spec']['template']['spec']['containers'][0]['env']):
+        if not self.config.config_options['stats_password']['value']:
+            for idx, env_var in enumerate(user_dc.get('spec#template#spec#containers[0]#env') or []):
                 if env_var['name'] == 'STATS_PASSWORD':
                     env_var['value'] = \
-                      dc_inmem['results'][0]['spec']['template']['spec']['containers'][0]['env'][idx]['value']
+                      self.deploymentconfig.get('spec#template#spec#containers[0]#env[%s]#value' % idx)
 
         # dry-run doesn't add the protocol to the ports section.  We will manually do that.
-        for idx, port in enumerate(user_dc['spec']['template']['spec']['containers'][0]['ports']):
+        for idx, port in enumerate(user_dc.get('spec#template#spec#containers[0]#ports') or []):
             if not port.has_key('protocol'):
                 port['protocol'] = 'TCP'
 
@@ -669,7 +1156,10 @@ class Router(OpenShiftCLI):
                 'rollingParams',
                ]
 
-        return not Utils.check_def_equal(user_dc, dc_inmem['results'][0], skip_keys=skip, debug=verbose)
+        return not Utils.check_def_equal(user_dc.yaml_dict,
+                                         self.deploymentconfig.yaml_dict,
+                                         skip_keys=skip,
+                                         debug=verbose)
 
 def main():
     '''
@@ -720,6 +1210,7 @@ def main():
     )
 
     rconfig = RouterConfig(module.params['name'],
+                           module.params['namespace'],
                            module.params['kubeconfig'],
                            {'credentials': {'value': module.params['credentials'], 'include': True},
                             'default_cert': {'value': None, 'include': True},
@@ -767,7 +1258,7 @@ def main():
             module.exit_json(changed=False, state="absent")
 
         if module.check_mode:
-            module.exit_json(change=False, msg='Would have performed a delete.')
+            module.exit_json(changed=False, msg='Would have performed a delete.')
 
         api_rval = ocrouter.delete()
         module.exit_json(changed=True, results=api_rval, state="absent")
@@ -780,7 +1271,7 @@ def main():
         if not ocrouter.exists():
 
             if module.check_mode:
-                module.exit_json(change=False, msg='Would have performed a create.')
+                module.exit_json(changed=False, msg='Would have performed a create.')
 
             api_rval = ocrouter.create()
 
@@ -793,7 +1284,7 @@ def main():
             module.exit_json(changed=False, state="present")
 
         if module.check_mode:
-            module.exit_json(change=False, msg='Would have performed an update.')
+            module.exit_json(changed=False, msg='Would have performed an update.')
 
         api_rval = ocrouter.update()
 

@@ -44,10 +44,10 @@ def main():
     ########
     if state == 'absent':
         for key in module.params.get('env_vars', {}).keys():
-            if ocenv.key_exists(key):
+            if ocenv.resource.exists_env_key(key):
 
                 if module.check_mode:
-                    module.exit_json(change=False, msg='Would have performed a delete.')
+                    module.exit_json(changed=False, msg='Would have performed a delete.')
                 api_rval = ocenv.delete()
                 module.exit_json(changed=True, results=api_rval, state="absent")
         module.exit_json(changed=False, state="absent")
@@ -60,7 +60,7 @@ def main():
             if not ocenv.value_exists(key, value):
 
                 if module.check_mode:
-                    module.exit_json(change=False, msg='Would have performed a create.')
+                    module.exit_json(changed=False, msg='Would have performed a create.')
                 # Create it here
                 api_rval = ocenv.put()
 
