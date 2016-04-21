@@ -7,7 +7,7 @@ URL:            https://github.com/openshift/openshift-tools
 Source0:        %{name}-%{version}.tar.gz
 BuildArch:      noarch
 
-Requires:      ansible >= 1.9.4
+Requires:      ansible1.9 >= 1.9.4
 Requires:      python2
 
 %description
