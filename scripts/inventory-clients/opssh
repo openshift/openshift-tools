@@ -48,7 +48,7 @@ fi
 
 # See if ohi is installed
 if ! which ohi &>/dev/null ; then
-  echo "ERROR: can't find ohi (OpenShift Host Inventory) on your system, please either install the openshift-ansible-bin package, or add openshift-ansible/bin to your path."
+  echo "ERROR: can't find ohi (OpenShift Host Inventory) on your system, please either install the openshift-tools-scripts-inventory-clients package, or add openshift-tools/scripts/inventory-clients to your path."
 
   exit 10
 fi

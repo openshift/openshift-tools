@@ -194,11 +194,11 @@ For development purposes, it's almost always preferable to set the python path, 
 === Cleaning out the ZAIO
 For our monitoring development, we really don't need the vast majority of the default templates.
 
-To clean them out, run the `oo-clean-zaio.yml` playbook, located in the openshift-ansible git repo https://github.com/openshift/openshift-ansible/blob/master/playbooks/adhoc/zabbix_setup/oo-clean-zaio.yml[here].
+To clean them out, run the `oo-clean-zaio.yml` playbook, located in the openshift-tools git repo https://github.com/openshift/openshift-tools/blob/prod/ansible/playbooks/adhoc/zabbix_setup/oo-clean-zaio.yml[here].
 
 .Example of running the oo-clean-zaio.yml playbook:
 ----
-> cd openshift-ansible/playbooks/adhoc/zabbix_setup/
+> cd openshift-tools/ansible/playbooks/adhoc/zabbix_setup/
 > ./oo-clean-zaio.yml
 ----
 
@@ -211,7 +211,7 @@ To do this, run the oo-config-zaio.yml playbook.
 
 .Example of running the oo-config-zaio.yml playbook:
 ----
-> cd openshift-ansible/playbooks/adhoc/zabbix_setup/
+> cd openshift-tools/ansible/playbooks/adhoc/zabbix_setup/
 > ./oo-config-zaio.yml
 ----
 
