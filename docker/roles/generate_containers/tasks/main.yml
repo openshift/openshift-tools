@@ -27,13 +27,13 @@
     src: "{{ item.stat.path }}"
     dest: "{{ item.stat.path | regex_replace('.j2', '') }}"
     mode: "{{ item.stat.mode }}"
-  with_items: stat_templates.results
+  with_items: "{{ stat_templates.results }}"
 
 - name: Remove templates
   file:
     path: "{{ item.stat.path }}"
     state: absent
-  with_items: stat_templates.results
+  with_items: "{{ stat_templates.results }}"
 
 - name: Insert auto-generated readme
   copy:
