@@ -24,21 +24,42 @@
 
 import os
 import shlex
+import atexit
+import shutil
+import string
+import random
 import subprocess
+
+# pylint: disable=bare-except
+def cleanup_file(inc_file):
+    ''' clean up '''
+    try:
+        os.unlink(inc_file)
+    except:
+        pass
 
 class OadmUtil(object):
     ''' Wrapper for interfacing with OpenShift 'oadm' utility '''
 
-    def __init__(self, namespace='default', config_file='/etc/origin/master/admin.kubeconfig', verbose=False):
+    def __init__(self, namespace='default', config_file='/tmp/admin.kubeconfig', verbose=False):
         '''
         Take initial values for running 'oadm'
         Ensure to set non-default namespace if that is what is desired
         '''
-
         self.namespace = namespace
         self.config_file = config_file
-
         self.verbose = verbose
+        self.copy_kubeconfig()
+
+    def copy_kubeconfig(self):
+        ''' make a copy of the kubeconfig '''
+
+        file_name = os.path.join('/tmp',
+                                 ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7)))
+        shutil.copy(self.config_file, file_name)
+        atexit.register(cleanup_file, file_name)
+
+        self.config_file = file_name
 
     def _run_cmd(self, cmd):
         ''' Actually execute the command '''
@@ -63,3 +84,4 @@ class OadmUtil(object):
         version_output = self._run_cmd(version_cmd)
 
         return version_output
+
