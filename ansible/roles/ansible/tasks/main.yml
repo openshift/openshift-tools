@@ -2,7 +2,7 @@
 # Install ansible client
 
 - name: Install Ansible
-  action: "{{ ansible_pkg_mgr }} name=ansible state=present"
+  action: "{{ ansible_pkg_mgr }} name=ansible1.9 state=present"
   when: not openshift.common.is_containerized | bool
 
 - include: config.yml

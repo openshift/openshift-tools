@@ -6,7 +6,7 @@
   - python-pip
   - unzip
   - python-psphere
-  - ansible
+  - ansible1.9
   - telnet
   - ack
   - pylint
