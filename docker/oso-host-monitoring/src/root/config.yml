@@ -222,7 +222,7 @@
     with_items: g_zagg_client_master_crons
 
   - name: copy kubeconfig to tmp
-    file:
+    copy:
       src: /etc/origin/master/admin.kubeconfig
-      path: /tmp/admin.kubeconfig
+      dest: /tmp/admin.kubeconfig
       mode: '0770'
