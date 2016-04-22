@@ -50,7 +50,7 @@ class OpenshiftDockerRegigtryChecker(object):
     def get_kubeconfig(self):
         ''' Find kubeconfig to use for OCUtil '''
         # Default master kubeconfig
-        kubeconfig = '/etc/origin/master/admin.kubeconfig'
+        kubeconfig = '/tmp/admin.kubeconfig'
         non_master_kube_dir = '/etc/origin/node'
 
         if os.path.isdir(non_master_kube_dir):

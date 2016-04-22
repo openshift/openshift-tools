@@ -24,32 +24,55 @@
 
 import os
 import shlex
+import atexit
+import shutil
+import string
+import random
 import subprocess
+
+# pylint: disable=bare-except
+def cleanup_file(inc_file):
+    ''' clean up '''
+    try:
+        os.unlink(inc_file)
+    except:
+        pass
 
 class OCUtil(object):
     ''' Wrapper for interfacing with OpenShift 'oc' utility '''
 
-    def __init__(self, namespace='default', config_file='/etc/origin/master/admin.kubeconfig', verbose=False):
+    def __init__(self, namespace='default', config_file='/tmp/admin.kubeconfig', verbose=False):
         '''
         Take initial values for running 'oc'
         Ensure to set non-default namespace if that is what is desired
         '''
-
         self.namespace = namespace
         self.config_file = config_file
-
         self.verbose = verbose
+        self.copy_kubeconfig()
+
+    def copy_kubeconfig(self):
+        ''' make a copy of the kubeconfig '''
+
+        file_name = os.path.join('/tmp',
+                                 ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7)))
+        shutil.copy(self.config_file, file_name)
+        atexit.register(cleanup_file, file_name)
+
+        self.config_file = file_name
 
     def _run_cmd(self, cmd):
         ''' Actually execute the command '''
 
-        cmd = cmd + ' --config ' + self.config_file
+        cmd += ' --config ' + self.config_file
         cmd = shlex.split(cmd)
         if self.verbose:
             print "Running command: {}".format(str(cmd))
 
         results = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
                                    env={'PATH': os.environ["PATH"]})
+
         results.wait()
         if results.returncode != 0:
             raise Exception("Non-zero exit on command: {}".format(str(cmd)))
@@ -80,3 +103,4 @@ class OCUtil(object):
         service_yaml = self._run_cmd(service_cmd)
 
         return service_yaml
+
