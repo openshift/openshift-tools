@@ -121,7 +121,7 @@
     - name: send openshift-master counts (user, pod, project) every 2 hours
       hour: "*/2"
       minute: "0"
-      job: ops-runner -f -s 15 -n csosmm.openshift.master.counts /usr/bin/cron-send-os-master-metrics --project-count --pod-count --user-count --pv-info
+      job: ops-runner -f -s 15 -n csosmm.openshift.master.counts /usr/bin/cron-send-os-master-metrics --project-count --pod-count --user-count --pv-count
 
     - name: send openshift-master /healthz status every 4 minutes
       minute: "*/4"
@@ -147,7 +147,7 @@
     - name: "Clean old builds and deployments"
       hour: "1"
       minute: "0"
-      job: "/usr/bin/oadm prune deployments --keep-complete=2 --keep-younger-than=30m --keep-failed=1 --confirm=true; /usr/bin/oadm prune builds --keep-complete=2 --keep-younger-than=30m --keep-failed=1 --confirm=true &> /dev/null"
+      job: "/usr/bin/oadm prune deployments --keep-complete=2 --keep-younger-than=30m --keep-failed=1 --confirm=true --config=/etc/origin/master/admin.kubeconfig &>> /var/log/prune_deployments.log; /usr/bin/oadm prune builds --keep-complete=2 --keep-younger-than=30m --keep-failed=1 --confirm=true  --config=/etc/origin/master/admin.kubeconfig &>> /var/log/prune_builds.log"
 
   pre_tasks:
   - stat:
@@ -220,3 +220,9 @@
       weekday: "{{ item.weekday | default('*', True) }}"
     when: "{{ g_oso_host_type == 'master' and (item.condition|default(True,True)) }}"
     with_items: g_zagg_client_master_crons
+
+  - name: copy kubeconfig to tmp
+    file:
+      src: /etc/origin/master/admin.kubeconfig
+      path: /tmp/admin.kubeconfig
+      mode: '0770'
