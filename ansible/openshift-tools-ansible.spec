@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.3
+Version:        0.0.4
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -91,6 +91,10 @@ Python library for interacting with Zabbix with Ansible.
 %{_datadir}/ansible/zabbix
 
 %changelog
+* Fri Apr 22 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.4-1
+- Kubeconfig fix (kwoodson@redhat.com)
+- Refactor. Adding registry helpers.  Adding registry (kwoodson@redhat.com)
+
 * Thu Apr 21 2016 Joel Diaz <jdiaz@redhat.com> 0.0.3-1
 - depend on ansible1.9 RPM from EPEL (jdiaz@redhat.com)
 
