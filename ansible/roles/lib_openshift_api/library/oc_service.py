@@ -556,455 +556,206 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
-class Volume(object):
-    ''' Class to wrap the oc command line tools '''
-    volume_mounts_path = {"pod": "spec#containers[0]#volumeMounts",
-                          "dc":  "spec#template#spec#containers[0]#volumeMounts",
-                          "rc":  "spec#template#spec#containers[0]#volumeMounts",
-                         }
-    volumes_path = {"pod": "spec#volumes",
-                    "dc":  "spec#template#spec#volumes",
-                    "rc":  "spec#template#spec#volumes",
-                   }
+# pylint: disable=too-many-instance-attributes
+class ServiceConfig(object):
+    ''' Handle service options '''
+    # pylint: disable=too-many-arguments
+    def __init__(self,
+                 sname,
+                 namespace,
+                 ports,
+                 selector=None,
+                 labels=None,
+                 cluster_ip=None,
+                 portal_ip=None,
+                 session_affinity=None,
+                 service_type=None):
+        ''' constructor for handling service options '''
+        self.name = sname
+        self.namespace = namespace
+        self.ports = ports
+        self.selector = selector
+        self.labels = labels
+        self.cluster_ip = cluster_ip
+        self.portal_ip = portal_ip
+        self.session_affinity = session_affinity
+        self.service_type = service_type
+        self.data = {}
 
-    @staticmethod
-    def create_volume_structure(volume_info):
-        ''' return a properly structured volume '''
-        volume_mount = None
-        volume = {'name': volume_info['name']}
-        if volume_info['type'] == 'secret':
-            volume['secret'] = {}
-            volume[volume_info['type']] = {'secretName': volume_info['secret_name']}
-            volume_mount = {'mountPath': volume_info['path'],
-                            'name': volume_info['name']}
-        elif volume_info['type'] == 'emptydir':
-            volume['emptyDir'] = {}
-            volume_mount = {'mountPath': volume_info['path'],
-                            'name': volume_info['name']}
-        elif volume_info['type'] == 'pvc':
-            volume['persistentVolumeClaim'] = {}
-            volume['persistentVolumeClaim']['claimName'] = volume_info['claimName']
-            volume['persistentVolumeClaim']['claimSize'] = volume_info['claimSize']
-        elif volume_info['type'] == 'hostpath':
-            volume['hostPath'] = {}
-            volume['hostPath']['path'] = volume_info['path']
+        self.create_dict()
 
-        return (volume, volume_mount)
+    def create_dict(self):
+        ''' return a service as a dict '''
+        self.data['apiVersion'] = 'v1'
+        self.data['kind'] = 'Service'
+        self.data['metadata'] = {}
+        self.data['metadata']['name'] = self.name
+        self.data['metadata']['namespace'] = self.namespace
+        if self.labels:
+            for lab, lab_value  in self.labels.items():
+                self.data['metadata'][lab] = lab_value
+        self.data['spec'] = {}
 
-class DeploymentConfig(Yedit):
-    ''' Class to wrap the oc command line tools '''
-    default_deployment_config = '''
-apiVersion: v1
-kind: DeploymentConfig
-metadata:
-  name: default_dc
-  namespace: default
-spec:
-  replicas: 0
-  selector:
-    default_dc: default_dc
-  strategy:
-    resources: {}
-    rollingParams:
-      intervalSeconds: 1
-      maxSurge: 0
-      maxUnavailable: 25%
-      timeoutSeconds: 600
-      updatePercent: -25
-      updatePeriodSeconds: 1
-    type: Rolling
-  template:
-    metadata:
-    spec:
-      containers:
-      - env:
-        - name: default
-          value: default
-        image: default
-        imagePullPolicy: IfNotPresent
-        name: default_dc
-        ports:
-        - containerPort: 8000
-          hostPort: 8000
-          protocol: TCP
-          name: default_port
-        resources: {}
-        terminationMessagePath: /dev/termination-log
-      dnsPolicy: ClusterFirst
-      hostNetwork: true
-      nodeSelector:
-        type: compute
-      restartPolicy: Always
-      securityContext: {}
-      serviceAccount: default
-      serviceAccountName: default
-      terminationGracePeriodSeconds: 30
-  triggers:
-  - type: ConfigChange
-'''
-
-    env_path = "spec#template#spec#containers[0]#env"
-    volumes_path = "spec#template#spec#volumes"
-    container_path = "spec#template#spec#containers"
-    volume_mounts_path = "spec#template#spec#containers[0]#volumeMounts"
-
-    def __init__(self, content=None):
-        ''' Constructor for OpenshiftOC '''
-        if not content:
-            content = DeploymentConfig.default_deployment_config
-
-        super(DeploymentConfig, self).__init__(content=content)
-
-    # pylint: disable=no-member
-    def add_env_value(self, key, value):
-        ''' add key, value pair to env array '''
-        rval = False
-        env = self.get_env_vars()
-        if env:
-            env.append({'name': key, 'value': value})
-            rval = True
+        if self.ports:
+            self.data['spec']['ports'] = self.ports
         else:
-            result = self.put(DeploymentConfig.env_path, {'name': key, 'value': value})
-            rval = result[0]
+            self.data['spec']['ports'] = []
 
-        return rval
+        if self.selector:
+            self.data['spec']['selector'] = self.selector
 
-    def exists_env_value(self, key, value):
-        ''' return whether a key, value  pair exists '''
-        results = self.get_env_vars()
-        if not results:
-            return False
+        self.data['spec']['sessionAffinity'] = self.session_affinity or 'None'
 
-        for result in results:
-            if result['name'] == key and result['value'] == value:
-                return True
+        if self.cluster_ip:
+            self.data['spec']['clusterIP'] = self.cluster_ip
 
-        return False
+        if self.portal_ip:
+            self.data['spec']['portalIP'] = self.portal_ip
 
-    def exists_env_key(self, key):
-        ''' return whether a key, value  pair exists '''
-        results = self.get_env_vars()
-        if not results:
-            return False
+        if self.service_type:
+            self.data['spec']['type'] = self.service_type
 
-        for result in results:
-            if result['name'] == key:
-                return True
+# pylint: disable=too-many-instance-attributes
+class Service(Yedit):
+    ''' Class to wrap the oc command line tools '''
+    port_path = "spec#ports"
+    kind = 'Service'
 
-        return False
+    def __init__(self, content):
+        '''Service constructor'''
+        super(Service, self).__init__(content=content)
 
-    def get_env_vars(self):
-        '''return a environment variables '''
-        return self.get(DeploymentConfig.env_path) or []
+    def get_ports(self):
+        ''' get a list of ports '''
+        return self.get(Service.port_path) or []
 
-    def delete_env_var(self, keys):
-        '''delete a list of keys '''
-        if not isinstance(keys, list):
-            keys = [keys]
+    def add_ports(self, inc_ports):
+        ''' add a port object to the ports list '''
+        if not isinstance(inc_ports, list):
+            inc_ports = [inc_ports]
 
-        env_vars_array = self.get_env_vars()
-        modified = False
-        idx = None
-        for key in keys:
-            for env_idx, env_var in enumerate(env_vars_array):
-                if env_var['name'] == key:
-                    idx = env_idx
-                    break
-
-            if idx:
-                modified = True
-                del env_vars_array[idx]
-
-        if modified:
-            return True
-
-        return False
-
-    def update_env_var(self, key, value):
-        '''place an env in the env var list'''
-
-        env_vars_array = self.get_env_vars()
-        idx = None
-        for env_idx, env_var in enumerate(env_vars_array):
-            if env_var['name'] == key:
-                idx = env_idx
-                break
-
-        if idx:
-            env_vars_array[idx][key] = value
+        ports = self.get_ports()
+        if not ports:
+            self.put(Service.port_path, inc_ports)
         else:
-            self.add_env_value(key, value)
+            ports.extend(inc_ports)
 
         return True
 
-    def exists_volume_mount(self, volume_mount):
-        ''' return whether a volume mount exists '''
-        exist_volume_mounts = self.get_volume_mounts()
-
-        if not exist_volume_mounts:
-            return False
-
-        volume_mount_found = False
-        for exist_volume_mount in exist_volume_mounts:
-            if exist_volume_mount['name'] == volume_mount['name']:
-                volume_mount_found = True
-                break
-
-        return volume_mount_found
-
-    def exists_volume(self, volume):
-        ''' return whether a volume exists '''
-        exist_volumes = self.get_volumes()
-
-        volume_found = False
-        for exist_volume in exist_volumes:
-            if exist_volume['name'] == volume['name']:
-                volume_found = True
-                break
-
-        return volume_found
-
-    def find_volume_by_name(self, volume, mounts=False):
-        ''' return the index of a volume '''
-        volumes = []
-        if mounts:
-            volumes = self.get_volume_mounts()
-        else:
-            volumes = self.get_volumes()
-        for exist_volume in volumes:
-            if exist_volume['name'] == volume['name']:
-                return exist_volume
+    def find_ports(self, inc_port):
+        ''' find a specific port '''
+        for port in self.get_ports():
+            if port['port'] == inc_port['port']:
+                return port
 
         return None
 
-    def get_volume_mounts(self):
-        '''return volume mount information '''
-        return self.get_volumes(mounts=True)
+    def delete_ports(self, inc_ports):
+        ''' remove a port from a service '''
+        if not isinstance(inc_ports, list):
+            inc_ports = [inc_ports]
 
-    def get_volumes(self, mounts=False):
-        '''return volume mount information '''
-        if mounts:
-            return self.get(DeploymentConfig.volume_mounts_path) or []
+        ports = self.get(Service.port_path) or []
 
-        return self.get(DeploymentConfig.volumes_path) or []
+        if not ports:
+            return True
 
-    def delete_volume_by_name(self, volume):
-        '''delete a volume '''
-        modified = False
-        exist_volume_mounts = self.get_volume_mounts()
-        exist_volumes = self.get_volumes()
-        del_idx = None
-        for idx, exist_volume in enumerate(exist_volumes):
-            if exist_volume.has_key('name') and exist_volume['name'] == volume['name']:
-                del_idx = idx
-                break
+        removed = False
+        for inc_port in inc_ports:
+            port = self.find_ports(inc_port)
+            if port:
+                ports.remove(port)
+                removed = True
 
-        if del_idx != None:
-            del exist_volumes[del_idx]
-            modified = True
+        return removed
 
-        del_idx = None
-        for idx, exist_volume_mount in enumerate(exist_volume_mounts):
-            if exist_volume_mount.has_key('name') and exist_volume_mount['name'] == volume['name']:
-                del_idx = idx
-                break
+    def add_cluster_ip(self, sip):
+        '''add cluster ip'''
+        self.put('spec#clusterIP', sip)
 
-        if del_idx != None:
-            del exist_volume_mounts[idx]
-            modified = True
+    def add_portal_ip(self, pip):
+        '''add cluster ip'''
+        self.put('spec#portalIP', pip)
 
-        return modified
 
-    def add_volume_mount(self, volume_mount):
-        ''' add a volume or volume mount to the proper location '''
-        exist_volume_mounts = self.get_volume_mounts()
-
-        if not exist_volume_mounts and volume_mount:
-            self.put(DeploymentConfig.volume_mounts_path, [volume_mount])
-        else:
-            exist_volume_mounts.append(volume_mount)
-
-    def add_volume(self, volume):
-        ''' add a volume or volume mount to the proper location '''
-        exist_volumes = self.get_volumes()
-        if not volume:
-            return
-
-        if not exist_volumes:
-            self.put(DeploymentConfig.volumes_path, [volume])
-        else:
-            exist_volumes.append(volume)
-
-    def update_volume(self, volume):
-        '''place an env in the env var list'''
-        exist_volumes = self.get_volumes()
-
-        if not volume:
-            return False
-
-        # update the volume
-        update_idx = None
-        for idx, exist_vol in enumerate(exist_volumes):
-            if exist_vol['name'] == volume['name']:
-                update_idx = idx
-                break
-
-        if update_idx != None:
-            exist_volumes[update_idx] = volume
-        else:
-            self.add_volume(volume)
-
-        return True
-
-    def update_volume_mount(self, volume_mount):
-        '''place an env in the env var list'''
-        modified = False
-
-        exist_volume_mounts = self.get_volume_mounts()
-
-        if not volume_mount:
-            return False
-
-        # update the volume mount
-        for exist_vol_mount in exist_volume_mounts:
-            if exist_vol_mount['name'] == volume_mount['name']:
-                if exist_vol_mount.has_key('mountPath') and \
-                   str(exist_vol_mount['mountPath']) != str(volume_mount['mountPath']):
-                    exist_vol_mount['mountPath'] = volume_mount['mountPath']
-                    modified = True
-                break
-
-        if not modified:
-            self.add_volume_mount(volume_mount)
-            modified = True
-
-        return modified
-
-    def needs_update_volume(self, volume, volume_mount):
-        ''' verify a volume update is needed '''
-        exist_volume = self.find_volume_by_name(volume)
-        exist_volume_mount = self.find_volume_by_name(volume, mounts=True)
-        results = []
-        results.append(exist_volume['name'] == volume['name'])
-
-        if volume.has_key('secret'):
-            results.append(exist_volume.has_key('secret'))
-            results.append(exist_volume['secret']['secretName'] == volume['secret']['secretName'])
-            results.append(exist_volume_mount['name'] == volume_mount['name'])
-            results.append(exist_volume_mount['mountPath'] == volume_mount['mountPath'])
-
-        elif volume.has_key('emptydir'):
-            results.append(exist_volume_mount['name'] == volume['name'])
-            results.append(exist_volume_mount['mountPath'] == volume_mount['mountPath'])
-
-        elif volume.has_key('persistentVolumeClaim'):
-            pvc = 'persistentVolumeClaim'
-            results.append(exist_volume.has_key(pvc))
-            results.append(exist_volume[pvc]['claimName'] == volume[pvc]['claimName'])
-
-            if volume[pvc].has_key('claimSize'):
-                results.append(exist_volume[pvc]['claimSize'] == volume[pvc]['claimSize'])
-
-        elif volume.has_key('hostpath'):
-            results.append(exist_volume.has_key('hostPath'))
-            results.append(exist_volume['hostPath']['path'] == volume_mount['mountPath'])
-
-        return not all(results)
 
 # pylint: disable=too-many-instance-attributes
-class OCVolume(OpenShiftCLI):
+class OCService(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
-    volume_mounts_path = {"pod": "spec#containers[0]#volumeMounts",
-                          "dc":  "spec#template#spec#containers[0]#volumeMounts",
-                          "rc":  "spec#template#spec#containers[0]#volumeMounts",
-                         }
-    volumes_path = {"pod": "spec#volumes",
-                    "dc":  "spec#template#spec#volumes",
-                    "rc":  "spec#template#spec#volumes",
-                   }
+    kind = 'Service'
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
     def __init__(self,
-                 kind,
-                 resource_name,
+                 sname,
                  namespace,
-                 vol_name,
-                 mount_path,
-                 mount_type,
-                 secret_name,
-                 claim_size,
-                 claim_name,
+                 labels,
+                 selector,
+                 cluster_ip,
+                 portal_ip,
+                 ports,
+                 session_affinity,
+                 service_type,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
                  verbose=False):
         ''' Constructor for OCVolume '''
-        super(OCVolume, self).__init__(namespace, kubeconfig)
-        self.kind = kind
-        self.volume_info = {'name': vol_name,
-                            'secret_name': secret_name,
-                            'path': mount_path,
-                            'type': mount_type,
-                            'claimSize': claim_size,
-                            'claimName': claim_name}
-        self.volume, self.volume_mount = Volume.create_volume_structure(self.volume_info)
-        self.name = resource_name
+        super(OCService, self).__init__(namespace, kubeconfig)
         self.namespace = namespace
-        self.kubeconfig = kubeconfig
-        self.verbose = verbose
-        self._resource = None
+        self.config = ServiceConfig(sname, namespace, ports, selector, labels,
+                                    cluster_ip, portal_ip, session_affinity, service_type)
+        self.user_svc = Service(content=self.config.data)
+        self.svc = None
 
     @property
-    def resource(self):
-        ''' property function for resource var '''
-        if not self._resource:
+    def service(self):
+        ''' property function service'''
+        if not self.svc:
             self.get()
-        return self._resource
+        return self.svc
 
-    @resource.setter
-    def resource(self, data):
-        ''' setter function for resource var '''
-        self._resource = data
+    @service.setter
+    def service(self, data):
+        ''' setter function for yedit var '''
+        self.svc = data
 
     def exists(self):
         ''' return whether a volume exists '''
-        volume_mount_found = False
-        volume_found = self.resource.exists_volume(self.volume)
-        if not self.volume_mount and volume_found:
-            return True
-
-        if self.volume_mount:
-            volume_mount_found = self.resource.exists_volume_mount(self.volume_mount)
-
-        if volume_found and self.volume_mount and volume_mount_found:
+        if self.service:
             return True
 
         return False
 
     def get(self):
         '''return volume information '''
-        vol = self._get(self.kind, self.name)
-        if vol['returncode'] == 0:
-            if self.kind == 'dc':
-                self.resource = DeploymentConfig(content=vol['results'][0])
-                vol['results'] = self.resource.get_volumes()
+        result = self._get(self.kind, self.config.name)
+        if result['returncode'] == 0:
+            self.service = Service(content=result['results'][0])
+            result['clusterip'] = self.service.get('spec#clusterIP')
 
-        return vol
+        return result
 
     def delete(self):
-        '''return all pods '''
-        self.resource.delete_volume_by_name(self.volume)
-        return self._replace_content(self.kind, self.name, self.resource.yaml_dict)
+        '''delete the object'''
+        return self._delete(self.kind, self.config.name)
 
-    def put(self):
-        '''place env vars into dc '''
-        self.resource.update_volume(self.volume)
-        self.resource.get_volumes()
-        self.resource.update_volume_mount(self.volume_mount)
-        return self._replace_content(self.kind, self.name, self.resource.yaml_dict)
+    def create(self):
+        '''create a service '''
+        return self._create_from_content(self.config.name, self.user_svc.yaml_dict)
+
+    def update(self):
+        '''create a service '''
+        # Need to copy over the portalIP and the serviceIP settings
+
+        self.user_svc.add_cluster_ip(self.service.get('spec#clusterIP'))
+        self.user_svc.add_portal_ip(self.service.get('spec#portalIP'))
+        return self._replace_content(self.kind, self.config.name, self.user_svc.yaml_dict)
 
     def needs_update(self):
         ''' verify an update is needed '''
-        return self.resource.needs_update_volume(self.volume, self.volume_mount)
+        skip = ['clusterIP', 'portalIP']
+        return not Utils.check_def_equal(self.user_svc.yaml_dict, self.service.yaml_dict, skip_keys=skip, debug=True)
+
+
 
 def main():
     '''
@@ -1017,74 +768,70 @@ def main():
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             debug=dict(default=False, type='bool'),
-            kind=dict(default='dc', choices=['dc', 'rc', 'pods'], type='str'),
             namespace=dict(default='default', type='str'),
-            vol_name=dict(default=None, type='str'),
             name=dict(default=None, type='str'),
-            mount_type=dict(default=None,
-                            choices=['emptydir', 'hostpath', 'secret', 'pvc'],
-                            type='str'),
-            mount_path=dict(default=None, type='str'),
-            # secrets require a name
-            secret_name=dict(default=None, type='str'),
-            # pvc requires a size
-            claim_size=dict(default=None, type='str'),
-            claim_name=dict(default=None, type='str'),
+            labels=dict(default=None, type='dict'),
+            selector=dict(default=None, type='dict'),
+            clusterip=dict(default=None, type='str'),
+            portalip=dict(default=None, type='str'),
+            ports=dict(default=None, type='list'),
+            session_affinity=dict(default='None', type='str'),
+            service_type=dict(default='ClusterIP', type='str'),
         ),
         supports_check_mode=True,
     )
-    oc_volume = OCVolume(module.params['kind'],
-                         module.params['name'],
-                         module.params['namespace'],
-                         module.params['vol_name'],
-                         module.params['mount_path'],
-                         module.params['mount_type'],
-                         # secrets
-                         module.params['secret_name'],
-                         # pvc
-                         module.params['claim_size'],
-                         module.params['claim_name'],
-                         kubeconfig=module.params['kubeconfig'],
-                         verbose=module.params['debug'])
+    oc_svc = OCService(module.params['name'],
+                       module.params['namespace'],
+                       module.params['labels'],
+                       module.params['selector'],
+                       module.params['clusterip'],
+                       module.params['portalip'],
+                       module.params['ports'],
+                       module.params['session_affinity'],
+                       module.params['service_type'])
 
     state = module.params['state']
 
-    api_rval = oc_volume.get()
+    api_rval = oc_svc.get()
 
     #####
     # Get
     #####
     if state == 'list':
-        module.exit_json(changed=False, results=api_rval['results'], state="list")
+        module.exit_json(changed=False, results=api_rval, state="list")
 
     ########
     # Delete
     ########
     if state == 'absent':
-        if oc_volume.exists():
+        if oc_svc.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a delete.')
 
-            api_rval = oc_volume.delete()
+            api_rval = oc_svc.delete()
 
             module.exit_json(changed=True, results=api_rval, state="absent")
+
         module.exit_json(changed=False, state="absent")
 
     if state == 'present':
         ########
         # Create
         ########
-        if not oc_volume.exists():
+        if not oc_svc.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a create.')
 
             # Create it here
-            api_rval = oc_volume.put()
+            api_rval = oc_svc.create()
+
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
 
             # return the created object
-            api_rval = oc_volume.get()
+            api_rval = oc_svc.get()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
@@ -1094,14 +841,14 @@ def main():
         ########
         # Update
         ########
-        if oc_volume.needs_update():
-            api_rval = oc_volume.put()
+        if oc_svc.needs_update():
+            api_rval = oc_svc.update()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
 
             # return the created object
-            api_rval = oc_volume.get()
+            api_rval = oc_svc.get()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)

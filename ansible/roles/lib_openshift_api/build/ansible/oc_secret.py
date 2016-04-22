@@ -49,7 +49,7 @@ def main():
             module.exit_json(changed=False, state="absent")
 
         if module.check_mode:
-            module.exit_json(change=False, msg='Would have performed a delete.')
+            module.exit_json(changed=False, msg='Would have performed a delete.')
 
         api_rval = occmd.delete()
         module.exit_json(changed=True, results=api_rval, state="absent")
@@ -69,7 +69,7 @@ def main():
         if not Utils.exists(api_rval['results'], module.params['name']):
 
             if module.check_mode:
-                module.exit_json(change=False, msg='Would have performed a create.')
+                module.exit_json(changed=False, msg='Would have performed a create.')
 
             api_rval = occmd.create(module.params['files'], module.params['contents'])
 
@@ -96,7 +96,7 @@ def main():
             module.exit_json(changed=False, results=secret['results'], state="present")
 
         if module.check_mode:
-            module.exit_json(change=False, msg='Would have performed an update.')
+            module.exit_json(changed=False, msg='Would have performed an update.')
 
         api_rval = occmd.update(files, force=module.params['force'])
 

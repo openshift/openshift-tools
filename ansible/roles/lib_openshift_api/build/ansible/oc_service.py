@@ -11,74 +11,70 @@ def main():
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             debug=dict(default=False, type='bool'),
-            kind=dict(default='dc', choices=['dc', 'rc', 'pods'], type='str'),
             namespace=dict(default='default', type='str'),
-            vol_name=dict(default=None, type='str'),
             name=dict(default=None, type='str'),
-            mount_type=dict(default=None,
-                            choices=['emptydir', 'hostpath', 'secret', 'pvc'],
-                            type='str'),
-            mount_path=dict(default=None, type='str'),
-            # secrets require a name
-            secret_name=dict(default=None, type='str'),
-            # pvc requires a size
-            claim_size=dict(default=None, type='str'),
-            claim_name=dict(default=None, type='str'),
+            labels=dict(default=None, type='dict'),
+            selector=dict(default=None, type='dict'),
+            clusterip=dict(default=None, type='str'),
+            portalip=dict(default=None, type='str'),
+            ports=dict(default=None, type='list'),
+            session_affinity=dict(default='None', type='str'),
+            service_type=dict(default='ClusterIP', type='str'),
         ),
         supports_check_mode=True,
     )
-    oc_volume = OCVolume(module.params['kind'],
-                         module.params['name'],
-                         module.params['namespace'],
-                         module.params['vol_name'],
-                         module.params['mount_path'],
-                         module.params['mount_type'],
-                         # secrets
-                         module.params['secret_name'],
-                         # pvc
-                         module.params['claim_size'],
-                         module.params['claim_name'],
-                         kubeconfig=module.params['kubeconfig'],
-                         verbose=module.params['debug'])
+    oc_svc = OCService(module.params['name'],
+                       module.params['namespace'],
+                       module.params['labels'],
+                       module.params['selector'],
+                       module.params['clusterip'],
+                       module.params['portalip'],
+                       module.params['ports'],
+                       module.params['session_affinity'],
+                       module.params['service_type'])
 
     state = module.params['state']
 
-    api_rval = oc_volume.get()
+    api_rval = oc_svc.get()
 
     #####
     # Get
     #####
     if state == 'list':
-        module.exit_json(changed=False, results=api_rval['results'], state="list")
+        module.exit_json(changed=False, results=api_rval, state="list")
 
     ########
     # Delete
     ########
     if state == 'absent':
-        if oc_volume.exists():
+        if oc_svc.exists():
 
             if module.check_mode:
-                module.exit_json(change=False, msg='Would have performed a delete.')
+                module.exit_json(changed=False, msg='Would have performed a delete.')
 
-            api_rval = oc_volume.delete()
+            api_rval = oc_svc.delete()
 
             module.exit_json(changed=True, results=api_rval, state="absent")
+
         module.exit_json(changed=False, state="absent")
 
     if state == 'present':
         ########
         # Create
         ########
-        if not oc_volume.exists():
+        if not oc_svc.exists():
 
             if module.check_mode:
-                module.exit_json(change=False, msg='Would have performed a create.')
+                module.exit_json(changed=False, msg='Would have performed a create.')
 
             # Create it here
-            api_rval = oc_volume.put()
+            api_rval = oc_svc.create()
+
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
 
             # return the created object
-            api_rval = oc_volume.get()
+            api_rval = oc_svc.get()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
@@ -88,14 +84,14 @@ def main():
         ########
         # Update
         ########
-        if oc_volume.needs_update():
-            api_rval = oc_volume.put(overwrite=True)
+        if oc_svc.needs_update():
+            api_rval = oc_svc.update()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
 
             # return the created object
-            api_rval = oc_volume.get()
+            api_rval = oc_svc.get()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)

@@ -49,6 +49,7 @@ def main():
     )
 
     rconfig = RouterConfig(module.params['name'],
+                           module.params['namespace'],
                            module.params['kubeconfig'],
                            {'credentials': {'value': module.params['credentials'], 'include': True},
                             'default_cert': {'value': None, 'include': True},
@@ -96,7 +97,7 @@ def main():
             module.exit_json(changed=False, state="absent")
 
         if module.check_mode:
-            module.exit_json(change=False, msg='Would have performed a delete.')
+            module.exit_json(changed=False, msg='Would have performed a delete.')
 
         api_rval = ocrouter.delete()
         module.exit_json(changed=True, results=api_rval, state="absent")
@@ -109,7 +110,7 @@ def main():
         if not ocrouter.exists():
 
             if module.check_mode:
-                module.exit_json(change=False, msg='Would have performed a create.')
+                module.exit_json(changed=False, msg='Would have performed a create.')
 
             api_rval = ocrouter.create()
 
@@ -122,7 +123,7 @@ def main():
             module.exit_json(changed=False, state="present")
 
         if module.check_mode:
-            module.exit_json(change=False, msg='Would have performed an update.')
+            module.exit_json(changed=False, msg='Would have performed an update.')
 
         api_rval = ocrouter.update()
 

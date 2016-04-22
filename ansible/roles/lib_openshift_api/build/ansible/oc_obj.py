@@ -79,7 +79,7 @@ def main():
             module.exit_json(changed=False, state="absent")
 
         if module.check_mode:
-            module.exit_json(change=False, msg='Would have performed a delete.')
+            module.exit_json(changed=False, msg='Would have performed a delete.')
 
         api_rval = ocobj.delete()
         module.exit_json(changed=True, results=api_rval, state="absent")
@@ -91,7 +91,7 @@ def main():
         if not Utils.exists(api_rval['results'], module.params['name']):
 
             if module.check_mode:
-                module.exit_json(change=False, msg='Would have performed a create.')
+                module.exit_json(changed=False, msg='Would have performed a create.')
 
             # Create it here
             api_rval = ocobj.create(module.params['files'], module.params['content'])
@@ -126,7 +126,7 @@ def main():
             module.exit_json(changed=False, results=api_rval['results'][0], state="present")
 
         if module.check_mode:
-            module.exit_json(change=False, msg='Would have performed an update.')
+            module.exit_json(changed=False, msg='Would have performed an update.')
 
         api_rval = ocobj.update(module.params['files'],
                                 module.params['content'],
