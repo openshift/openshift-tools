@@ -13,6 +13,10 @@ import time
 import re
 import urllib
 import os
+import atexit
+import shutil
+import string
+import random
 
 # Our jenkins server does not include these rpms.
 # In the future we might move this to a container where these
@@ -20,13 +24,31 @@ import os
 #pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 
+# pylint: disable=bare-except
+def cleanup_file(inc_file):
+    ''' clean up '''
+    try:
+        os.unlink(inc_file)
+    except:
+        pass
+
+def copy_kubeconfig(config):
+    ''' make a copy of the kubeconfig '''
+    file_name = os.path.join('/tmp',
+                             ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7)))
+    shutil.copy(config, file_name)
+    atexit.register(cleanup_file, file_name)
+
+    return file_name
+
 class OpenShiftOC(object):
     ''' Class to wrap the oc command line tools '''
-    def __init__(self, namespace, pod_name, verbose=False):
+    def __init__(self, namespace, pod_name, kubeconfig, verbose=False):
         ''' Constructor for OpenShiftOC '''
         self.namespace = namespace
         self.pod_name = pod_name
         self.verbose = verbose
+        self.kubeconfig = kubeconfig
 
     def get_pod(self):
         '''return a pod by name '''
@@ -95,7 +117,7 @@ class OpenShiftOC(object):
         cmds.extend(cmd)
         print ' '.join(cmds)
         proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
-                                env={'KUBECONFIG': '/etc/origin/master/admin.kubeconfig'})
+                                env={'KUBECONFIG': self.kubeconfig})
         proc.wait()
         if proc.returncode == 0:
             output = proc.stdout.read()
@@ -120,8 +142,9 @@ def main():
     print '################################################################################'
     print '  Starting App Create'
     print '################################################################################'
+    kubeconfig = copy_kubeconfig('/tmp/admin.kubeconfig')
     namespace = 'ops-monitor-' + os.environ['ZAGG_CLIENT_HOSTNAME']
-    oocmd = OpenShiftOC(namespace, 'hello-openshift', verbose=False)
+    oocmd = OpenShiftOC(namespace, 'hello-openshift', kubeconfig, verbose=False)
     app = 'openshift/hello-openshift:v1.0.6'
 
     start_time = time.time()
@@ -171,4 +194,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
