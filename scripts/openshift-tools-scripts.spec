@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.86
+Version:       0.0.87
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -260,6 +260,10 @@ OpenShift Tools Cloud Tools
 
 
 %changelog
+* Fri Apr 22 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.87-1
+- Kubeconfig fix (kwoodson@redhat.com)
+- fix up references to openshift-ansible repo (jdiaz@redhat.com)
+
 * Mon Apr 18 2016 Joel Diaz <jdiaz@redhat.com> 0.0.86-1
 - chmod +x for all the executable files in scripts-inventory-clients RPM and
   pylint fixes (jdiaz@redhat.com)
