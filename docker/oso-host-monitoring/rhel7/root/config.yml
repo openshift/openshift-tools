@@ -147,7 +147,7 @@
     - name: "Clean old builds and deployments"
       hour: "1"
       minute: "0"
-      job: "/usr/bin/oadm prune deployments --keep-complete=2 --keep-younger-than=30m --keep-failed=1 --confirm=true; /usr/bin/oadm prune builds --keep-complete=2 --keep-younger-than=30m --keep-failed=1 --confirm=true &> /dev/null"
+      job: "/usr/bin/oadm prune deployments --keep-complete=2 --keep-younger-than=30m --keep-failed=1 --confirm=true --config=/etc/origin/master/admin.kubeconfig &>> /var/log/prune_deployments.log; /usr/bin/oadm prune builds --keep-complete=2 --keep-younger-than=30m --keep-failed=1 --confirm=true  --config=/etc/origin/master/admin.kubeconfig &>> /var/log/prune_builds.log"
 
   pre_tasks:
   - stat:
