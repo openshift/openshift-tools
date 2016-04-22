@@ -2,31 +2,10 @@
 
 import time
 
-class RouterConfig(object):
+class RouterConfig(OpenShiftCLIConfig):
     ''' RouterConfig is a DTO for the router.  '''
-    def __init__(self, rname, kubeconfig, router_options):
-        self.name = rname
-        self.kubeconfig = kubeconfig
-        self._router_options = router_options
-
-    @property
-    def router_options(self):
-        ''' return router options '''
-        return self._router_options
-
-    def to_option_list(self):
-        ''' return all options as a string'''
-        return RouterConfig.stringify(self.router_options)
-
-    @staticmethod
-    def stringify(options):
-        ''' return hash as list of key value pairs '''
-        rval = []
-        for key, data in options.items():
-            if data['include'] and data['value']:
-                rval.append('--%s=%s' % (key.replace('_', '-'), data['value']))
-
-        return rval
+    def __init__(self, rname, namespace, kubeconfig, router_options):
+        super(RouterConfig, self).__init__(rname, namespace, kubeconfig, router_options)
 
 class Router(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
@@ -41,30 +20,55 @@ class Router(OpenShiftCLI):
            - endpoint/router
         '''
         super(Router, self).__init__('default', router_config.kubeconfig, verbose)
-        self.rconfig = router_config
+        self.config = router_config
         self.verbose = verbose
-        self.router_parts = [{'kind': 'dc', 'name': self.rconfig.name},
-                             {'kind': 'svc', 'name': self.rconfig.name},
-                             #{'kind': 'endpoints', 'name': self.rconfig.name},
+        self.router_parts = [{'kind': 'dc', 'name': self.config.name},
+                             {'kind': 'svc', 'name': self.config.name},
+                             #{'kind': 'endpoints', 'name': self.config.name},
                             ]
-    def get(self, filter_kind=None):
+
+        self.dconfig = None
+        self.svc = None
+        self.get()
+
+    @property
+    def deploymentconfig(self):
+        ''' property deploymentconfig'''
+        return self.dconfig
+
+    @deploymentconfig.setter
+    def deploymentconfig(self, config):
+        ''' setter for property deploymentconfig '''
+        self.dconfig = config
+
+    @property
+    def service(self):
+        ''' property service '''
+        return self.svc
+
+    @service.setter
+    def service(self, config):
+        ''' setter for property service '''
+        self.svc = config
+
+
+    def get(self):
         ''' return the self.router_parts '''
-        rparts = self.router_parts
-        parts = []
-        if filter_kind:
-            rparts = [part for part in self.router_parts if filter_kind == part['kind']]
+        self.service = None
+        self.deploymentconfig = None
+        for part in self.router_parts:
+            result = self._get(part['kind'], rname=part['name'])
+            if result['returncode'] == 0 and part['kind'] == 'dc':
+                self.deploymentconfig = DeploymentConfig(result['results'][0])
+            elif result['returncode'] == 0 and part['kind'] == 'svc':
+                self.service = Yedit(content=result['results'][0])
 
-        for part in rparts:
-            parts.append(self._get(part['kind'], rname=part['name']))
-
-        return parts
+        return (self.deploymentconfig, self.service)
 
     def exists(self):
-        '''return a deploymentconfig by name '''
-        parts = self.get()
-        for part in parts:
-            if part['returncode'] == 0:
-                return True
+        '''return a whether svc or dc exists '''
+        if self.deploymentconfig or self.service:
+            return True
 
         return False
 
@@ -81,15 +85,15 @@ class Router(OpenShiftCLI):
         # We need to create the pem file
         router_pem = '/tmp/router.pem'
         with open(router_pem, 'w') as rfd:
-            rfd.write(open(self.rconfig.router_options['cert_file']['value']).read())
-            rfd.write(open(self.rconfig.router_options['key_file']['value']).read())
+            rfd.write(open(self.config.config_options['cert_file']['value']).read())
+            rfd.write(open(self.config.config_options['key_file']['value']).read())
 
         atexit.register(Utils.cleanup, [router_pem])
-        self.rconfig.router_options['default_cert']['value'] = router_pem
+        self.config.config_options['default_cert']['value'] = router_pem
 
-        options = self.rconfig.to_option_list()
+        options = self.config.to_option_list()
 
-        cmd = ['router']
+        cmd = ['router', '-n', self.config.namespace]
         cmd.extend(options)
         if dryrun:
             cmd.extend(['--dry-run=True', '-o', 'json'])
@@ -116,9 +120,8 @@ class Router(OpenShiftCLI):
 
     def needs_update(self, verbose=False):
         ''' check to see if we need to update '''
-        dc_inmem = self.get(filter_kind='dc')[0]
-        if dc_inmem['returncode'] != 0:
-            return dc_inmem
+        if not self.deploymentconfig or not self.service:
+            return True
 
         user_dc = self.create(dryrun=True, output=True, output_type='raw')
         if user_dc['returncode'] != 0:
@@ -130,18 +133,18 @@ class Router(OpenShiftCLI):
         # stats_password = user_dc_results[0]
 
         # Load the string back into json and get the newly created dc
-        user_dc = json.loads('\n'.join(user_dc_results[1:]))['items'][0]
+        user_dc = DeploymentConfig(content=json.loads('\n'.join(user_dc_results[1:]))['items'][0])
 
         # Router needs some exceptions.
         # We do not want to check the autogenerated password for stats admin
-        if not self.rconfig.router_options['stats_password']['value']:
-            for idx, env_var in enumerate(user_dc['spec']['template']['spec']['containers'][0]['env']):
+        if not self.config.config_options['stats_password']['value']:
+            for idx, env_var in enumerate(user_dc.get('spec#template#spec#containers[0]#env') or []):
                 if env_var['name'] == 'STATS_PASSWORD':
                     env_var['value'] = \
-                      dc_inmem['results'][0]['spec']['template']['spec']['containers'][0]['env'][idx]['value']
+                      self.deploymentconfig.get('spec#template#spec#containers[0]#env[%s]#value' % idx)
 
         # dry-run doesn't add the protocol to the ports section.  We will manually do that.
-        for idx, port in enumerate(user_dc['spec']['template']['spec']['containers'][0]['ports']):
+        for idx, port in enumerate(user_dc.get('spec#template#spec#containers[0]#ports') or []):
             if not port.has_key('protocol'):
                 port['protocol'] = 'TCP'
 
@@ -154,4 +157,7 @@ class Router(OpenShiftCLI):
                 'rollingParams',
                ]
 
-        return not Utils.check_def_equal(user_dc, dc_inmem['results'][0], skip_keys=skip, debug=verbose)
+        return not Utils.check_def_equal(user_dc.yaml_dict,
+                                         self.deploymentconfig.yaml_dict,
+                                         skip_keys=skip,
+                                         debug=verbose)
