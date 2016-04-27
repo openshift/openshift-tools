@@ -557,29 +557,29 @@ class Yedit(object):
         return (False, self.yaml_dict)
 
 # pylint: disable=too-many-instance-attributes
-class ServiceConfig(object):
-    ''' Handle service options '''
+class RouteConfig(object):
+    ''' Handle route options '''
     # pylint: disable=too-many-arguments
     def __init__(self,
                  sname,
                  namespace,
-                 ports,
-                 selector=None,
-                 labels=None,
-                 cluster_ip=None,
-                 portal_ip=None,
-                 session_affinity=None,
-                 service_type=None):
-        ''' constructor for handling service options '''
+                 kubeconfig,
+                 cacert=None,
+                 cert=None,
+                 cert_key=None,
+                 host=None,
+                 tls_termination=None,
+                 service_name=None):
+        ''' constructor for handling route options '''
+        self.kubeconfig = kubeconfig
         self.name = sname
         self.namespace = namespace
-        self.ports = ports
-        self.selector = selector
-        self.labels = labels
-        self.cluster_ip = cluster_ip
-        self.portal_ip = portal_ip
-        self.session_affinity = session_affinity
-        self.service_type = service_type
+        self.host = host
+        self.tls_termination = tls_termination
+        self.cacert = cacert
+        self.cert = cert
+        self.cert_key = cert_key
+        self.service_name = service_name
         self.data = {}
 
         self.create_dict()
@@ -587,140 +587,89 @@ class ServiceConfig(object):
     def create_dict(self):
         ''' return a service as a dict '''
         self.data['apiVersion'] = 'v1'
-        self.data['kind'] = 'Service'
+        self.data['kind'] = 'Route'
         self.data['metadata'] = {}
         self.data['metadata']['name'] = self.name
         self.data['metadata']['namespace'] = self.namespace
-        if self.labels:
-            for lab, lab_value  in self.labels.items():
-                self.data['metadata'][lab] = lab_value
         self.data['spec'] = {}
 
-        if self.ports:
-            self.data['spec']['ports'] = self.ports
-        else:
-            self.data['spec']['ports'] = []
+        self.data['spec']['host'] = self.host
 
-        if self.selector:
-            self.data['spec']['selector'] = self.selector
+        if self.tls_termination:
+            self.data['spec']['tls'] = {}
 
-        self.data['spec']['sessionAffinity'] = self.session_affinity or 'None'
+            self.data['spec']['tls']['key'] = self.cert_key
+            self.data['spec']['tls']['caCertificate'] = self.cacert
+            self.data['spec']['tls']['certificate'] = self.cert
+            self.data['spec']['tls']['termination'] = self.tls_termination
 
-        if self.cluster_ip:
-            self.data['spec']['clusterIP'] = self.cluster_ip
-
-        if self.portal_ip:
-            self.data['spec']['portalIP'] = self.portal_ip
-
-        if self.service_type:
-            self.data['spec']['type'] = self.service_type
+        self.data['spec']['to'] = {'kind': 'Service', 'name': self.service_name}
 
 # pylint: disable=too-many-instance-attributes
-class Service(Yedit):
+class Route(Yedit):
     ''' Class to wrap the oc command line tools '''
-    port_path = "spec#ports"
-    kind = 'Service'
+    service_path = "spec#to#name"
+    cert_path = "spec#tls#certificate"
+    cacert_path = "spec#tls#caCertificate"
+    termination_path = "spec#tls#termination"
+    key_path = "spec#tls#key"
+    kind = 'route'
 
     def __init__(self, content):
-        '''Service constructor'''
-        super(Service, self).__init__(content=content)
+        '''Route constructor'''
+        super(Route, self).__init__(content=content)
 
-    def get_ports(self):
-        ''' get a list of ports '''
-        return self.get(Service.port_path) or []
+    def get_cert(self):
+        ''' return cert '''
+        return self.get(Route.cert_path)
 
-    def add_ports(self, inc_ports):
-        ''' add a port object to the ports list '''
-        if not isinstance(inc_ports, list):
-            inc_ports = [inc_ports]
+    def get_cert_key(self):
+        ''' return cert key '''
+        return self.get(Route.key_path)
 
-        ports = self.get_ports()
-        if not ports:
-            self.put(Service.port_path, inc_ports)
-        else:
-            ports.extend(inc_ports)
+    def get_cacert(self):
+        ''' return cacert '''
+        return self.get(Route.cacert_path)
 
-        return True
+    def get_service(self):
+        ''' return service name '''
+        return self.get(Route.service_path)
 
-    def find_ports(self, inc_port):
-        ''' find a specific port '''
-        for port in self.get_ports():
-            if port['port'] == inc_port['port']:
-                return port
-
-        return None
-
-    def delete_ports(self, inc_ports):
-        ''' remove a port from a service '''
-        if not isinstance(inc_ports, list):
-            inc_ports = [inc_ports]
-
-        ports = self.get(Service.port_path) or []
-
-        if not ports:
-            return True
-
-        removed = False
-        for inc_port in inc_ports:
-            port = self.find_ports(inc_port)
-            if port:
-                ports.remove(port)
-                removed = True
-
-        return removed
-
-    def add_cluster_ip(self, sip):
-        '''add cluster ip'''
-        self.put('spec#clusterIP', sip)
-
-    def add_portal_ip(self, pip):
-        '''add cluster ip'''
-        self.put('spec#portalIP', pip)
-
-
+    def get_termination(self):
+        ''' return tls termination'''
+        return self.get(Route.termination_path)
 
 # pylint: disable=too-many-instance-attributes
-class OCService(OpenShiftCLI):
+class OCRoute(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
-    kind = 'service'
+    kind = 'route'
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
     def __init__(self,
-                 sname,
-                 namespace,
-                 labels,
-                 selector,
-                 cluster_ip,
-                 portal_ip,
-                 ports,
-                 session_affinity,
-                 service_type,
-                 kubeconfig='/etc/origin/master/admin.kubeconfig',
+                 config,
                  verbose=False):
         ''' Constructor for OCVolume '''
-        super(OCService, self).__init__(namespace, kubeconfig)
-        self.namespace = namespace
-        self.config = ServiceConfig(sname, namespace, ports, selector, labels,
-                                    cluster_ip, portal_ip, session_affinity, service_type)
-        self.user_svc = Service(content=self.config.data)
-        self.svc = None
+        super(OCRoute, self).__init__(config.namespace, config.kubeconfig)
+        self.config = config
+        self.namespace = config.namespace
+        self._route = None
 
     @property
-    def service(self):
+    def route(self):
         ''' property function service'''
-        if not self.svc:
+        if not self._route:
             self.get()
-        return self.svc
+        return self._route
 
-    @service.setter
-    def service(self, data):
+    @route.setter
+    def route(self, data):
         ''' setter function for yedit var '''
-        self.svc = data
+        self._route = data
 
     def exists(self):
         ''' return whether a volume exists '''
-        if self.service:
+        if self.route:
             return True
 
         return False
@@ -729,8 +678,7 @@ class OCService(OpenShiftCLI):
         '''return volume information '''
         result = self._get(self.kind, self.config.name)
         if result['returncode'] == 0:
-            self.service = Service(content=result['results'][0])
-            result['clusterip'] = self.service.get('spec#clusterIP')
+            self.route = Route(content=result['results'][0])
 
         return result
 
@@ -739,27 +687,23 @@ class OCService(OpenShiftCLI):
         return self._delete(self.kind, self.config.name)
 
     def create(self):
-        '''create a service '''
-        return self._create_from_content(self.config.name, self.user_svc.yaml_dict)
+        '''create the object'''
+        return self._create_from_content(self.config.name, self.config.data)
 
     def update(self):
-        '''create a service '''
-        # Need to copy over the portalIP and the serviceIP settings
-
-        self.user_svc.add_cluster_ip(self.service.get('spec#clusterIP'))
-        self.user_svc.add_portal_ip(self.service.get('spec#portalIP'))
-        return self._replace_content(self.kind, self.config.name, self.user_svc.yaml_dict)
+        '''update the object'''
+        # need to update the tls information and the service name
+        return self._replace_content(self.kind, self.config.name, self.config.data)
 
     def needs_update(self):
         ''' verify an update is needed '''
-        skip = ['clusterIP', 'portalIP']
-        return not Utils.check_def_equal(self.user_svc.yaml_dict, self.service.yaml_dict, skip_keys=skip, debug=True)
-
+        skip = []
+        return not Utils.check_def_equal(self.config.data, self.route.yaml_dict, skip_keys=skip, debug=True)
 
 
 def main():
     '''
-    ansible oc module for services
+    ansible oc module for route
     '''
 
     module = AnsibleModule(
@@ -768,70 +712,69 @@ def main():
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             debug=dict(default=False, type='bool'),
-            namespace=dict(default='default', type='str'),
-            name=dict(default=None, type='str'),
-            labels=dict(default=None, type='dict'),
-            selector=dict(default=None, type='dict'),
-            clusterip=dict(default=None, type='str'),
-            portalip=dict(default=None, type='str'),
-            ports=dict(default=None, type='list'),
-            session_affinity=dict(default='None', type='str'),
-            service_type=dict(default='ClusterIP', type='str'),
+            name=dict(default=None, required=True, type='str'),
+            namespace=dict(default=None, required=True, type='str'),
+            tls_termination=dict(default=None, type='str'),
+            cacert=dict(default=None, type='str'),
+            cert=dict(default=None, type='str'),
+            cert_key=dict(default=None, type='str'),
+            service_name=dict(default=None, type='str'),
+            host=dict(default=None, type='str'),
         ),
         supports_check_mode=True,
     )
-    oc_svc = OCService(module.params['name'],
-                       module.params['namespace'],
-                       module.params['labels'],
-                       module.params['selector'],
-                       module.params['clusterip'],
-                       module.params['portalip'],
-                       module.params['ports'],
-                       module.params['session_affinity'],
-                       module.params['service_type'])
+
+    rconfig = RouteConfig(module.params['name'],
+                          module.params['namespace'],
+                          module.params['kubeconfig'],
+                          module.params['cacert'],
+                          module.params['cert'],
+                          module.params['cert_key'],
+                          module.params['host'],
+                          module.params['tls_termination'],
+                          module.params['service_name'],
+                         )
+    oc_route = OCRoute(rconfig,
+                       verbose=module.params['debug'])
 
     state = module.params['state']
 
-    api_rval = oc_svc.get()
+    api_rval = oc_route.get()
 
     #####
     # Get
     #####
     if state == 'list':
-        module.exit_json(changed=False, results=api_rval, state="list")
+        module.exit_json(changed=False, results=api_rval['results'], state="list")
 
     ########
     # Delete
     ########
     if state == 'absent':
-        if oc_svc.exists():
+        if oc_route.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a delete.')
 
-            api_rval = oc_svc.delete()
+            api_rval = oc_route.delete()
 
             module.exit_json(changed=True, results=api_rval, state="absent")
-
         module.exit_json(changed=False, state="absent")
 
     if state == 'present':
         ########
         # Create
         ########
-        if not oc_svc.exists():
+        if not oc_route.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a create.')
 
             # Create it here
-            api_rval = oc_svc.create()
-
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
+            api_rval = oc_route.create()
 
             # return the created object
-            api_rval = oc_svc.get()
+            api_rval = oc_route.get()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
@@ -841,14 +784,14 @@ def main():
         ########
         # Update
         ########
-        if oc_svc.needs_update():
-            api_rval = oc_svc.update()
+        if oc_route.needs_update():
+            api_rval = oc_route.update()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
 
             # return the created object
-            api_rval = oc_svc.get()
+            api_rval = oc_route.get()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
