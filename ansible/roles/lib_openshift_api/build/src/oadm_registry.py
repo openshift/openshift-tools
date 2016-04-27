@@ -27,6 +27,7 @@ class Registry(OpenShiftCLI):
         '''
         super(Registry, self).__init__('default', registry_config.kubeconfig, verbose)
         self.svc_ip = None
+        self.portal_ip = None
         self.config = registry_config
         self.verbose = verbose
         self.registry_parts = [{'kind': 'dc', 'name': self.config.name},
@@ -89,6 +90,10 @@ class Registry(OpenShiftCLI):
         ''' setter method for registry_prep attribute '''
         self.__registry_prep = data
 
+    def force_registry_prep(self):
+        '''force a registry prep'''
+        self.registry_prep = None
+
     def get(self):
         ''' return the self.registry_parts '''
         self.deploymentconfig = None
@@ -111,10 +116,12 @@ class Registry(OpenShiftCLI):
 
         return False
 
-    def delete(self):
+    def delete(self, complete=True):
         '''return all pods '''
         parts = []
         for part in self.registry_parts:
+            if not complete and part['kind'] == 'svc':
+                continue
             parts.append(self._delete(part['kind'], part['name']))
 
         return parts
@@ -141,22 +148,24 @@ class Registry(OpenShiftCLI):
             if res['kind'] == 'DeploymentConfig':
                 deploymentconfig = DeploymentConfig(res)
             elif res['kind'] == 'Service':
-                service = res
+                service = Service(res)
 
         # Verify we got a service and a deploymentconfig
         if not service or not deploymentconfig:
             return results
 
         # results will need to get parsed here and modifications added
-        deploymentconfig = self.add_modifications(deploymentconfig)
+        deploymentconfig = DeploymentConfig(self.add_modifications(deploymentconfig))
 
         # modify service ip
         if self.svc_ip:
             service.put('spec#clusterIP', self.svc_ip)
+        if self.portal_ip:
+            service.put('spec#portalIP', self.portal_ip)
 
         # need to create the service and the deploymentconfig
-        service_file = Utils.create_file('service', service)
-        deployment_file = Utils.create_file('deploymentconfig', deploymentconfig)
+        service_file = Utils.create_file('service', service.yaml_dict)
+        deployment_file = Utils.create_file('deploymentconfig', deploymentconfig.yaml_dict)
 
         return {"service": service, "service_file": service_file,
                 "deployment": deploymentconfig, "deployment_file": deployment_file}
@@ -179,13 +188,18 @@ class Registry(OpenShiftCLI):
     def update(self):
         '''run update for the registry.  This performs a delete and then create '''
         # Store the current service IP
+        self.force_registry_prep()
+
         self.get()
-        if self.deploymentconfig:
-            svcip = self.deploymentconfig.get('spec#clusterIP')
+        if self.service:
+            svcip = self.service.get('spec#clusterIP')
             if svcip:
                 self.svc_ip = svcip
+            portip = self.service.get('spec#portalIP')
+            if portip:
+                self.portal_ip = portip
 
-        parts = self.delete()
+        parts = self.delete(complete=False)
         for part in parts:
             if part['returncode'] != 0:
                 if part.has_key('stderr') and 'not found' in part['stderr']:
@@ -198,8 +212,8 @@ class Registry(OpenShiftCLI):
         #time.sleep(10)
 
         results = []
-        for config_file in ['deployment_file', 'service_file']:
-            results.append(self._create(self.registry_prep[config_file]))
+        results.append(self._create(self.registry_prep['deployment_file']))
+        results.append(self._replace(self.registry_prep['service_file']))
 
         # Clean up returned results
         rval = 0
@@ -245,7 +259,7 @@ class Registry(OpenShiftCLI):
             return True
 
         exclude_list = ['clusterIP', 'portalIP', 'type', 'protocol']
-        if not Utils.check_def_equal(self.registry_prep['service'],
+        if not Utils.check_def_equal(self.registry_prep['service'].yaml_dict,
                                      self.service.yaml_dict,
                                      exclude_list,
                                      verbose):
@@ -263,7 +277,7 @@ class Registry(OpenShiftCLI):
                         'type', #strategy: {'type': 'rolling'}
                        ]
 
-        if not Utils.check_def_equal(self.registry_prep['deployment'],
+        if not Utils.check_def_equal(self.registry_prep['deployment'].yaml_dict,
                                      self.deploymentconfig.yaml_dict,
                                      exclude_list,
                                      verbose):
