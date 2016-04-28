@@ -8,9 +8,10 @@ class RouteConfig(object):
                  sname,
                  namespace,
                  kubeconfig,
+                 destcacert=None,
                  cacert=None,
                  cert=None,
-                 cert_key=None,
+                 key=None,
                  host=None,
                  tls_termination=None,
                  service_name=None):
@@ -20,9 +21,10 @@ class RouteConfig(object):
         self.namespace = namespace
         self.host = host
         self.tls_termination = tls_termination
+        self.destcacert = destcacert
         self.cacert = cacert
         self.cert = cert
-        self.cert_key = cert_key
+        self.key = key
         self.service_name = service_name
         self.data = {}
 
@@ -42,7 +44,9 @@ class RouteConfig(object):
         if self.tls_termination:
             self.data['spec']['tls'] = {}
 
-            self.data['spec']['tls']['key'] = self.cert_key
+            if self.tls_termination == 'reencrypt':
+                self.data['spec']['tls']['destinationCACertificate'] = self.destcacert
+            self.data['spec']['tls']['key'] = self.key
             self.data['spec']['tls']['caCertificate'] = self.cacert
             self.data['spec']['tls']['certificate'] = self.cert
             self.data['spec']['tls']['termination'] = self.tls_termination
@@ -52,9 +56,11 @@ class RouteConfig(object):
 # pylint: disable=too-many-instance-attributes
 class Route(Yedit):
     ''' Class to wrap the oc command line tools '''
+    host_path = "spec#host"
     service_path = "spec#to#name"
     cert_path = "spec#tls#certificate"
     cacert_path = "spec#tls#caCertificate"
+    destcacert_path = "spec#tls#destinationCACertificate"
     termination_path = "spec#tls#termination"
     key_path = "spec#tls#key"
     kind = 'route'
@@ -63,12 +69,16 @@ class Route(Yedit):
         '''Route constructor'''
         super(Route, self).__init__(content=content)
 
+    def get_destcacert(self):
+        ''' return cert '''
+        return self.get(Route.destcacert_path)
+
     def get_cert(self):
         ''' return cert '''
         return self.get(Route.cert_path)
 
-    def get_cert_key(self):
-        ''' return cert key '''
+    def get_key(self):
+        ''' return key '''
         return self.get(Route.key_path)
 
     def get_cacert(self):
@@ -82,3 +92,7 @@ class Route(Yedit):
     def get_termination(self):
         ''' return tls termination'''
         return self.get(Route.termination_path)
+
+    def get_host(self):
+        ''' return host '''
+        return self.get(Route.host_path)
