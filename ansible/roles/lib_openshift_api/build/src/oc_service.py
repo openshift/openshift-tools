@@ -3,7 +3,7 @@
 # pylint: disable=too-many-instance-attributes
 class OCService(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
-    kind = 'Service'
+    kind = 'service'
 
     # pylint allows 5
     # pylint: disable=too-many-arguments

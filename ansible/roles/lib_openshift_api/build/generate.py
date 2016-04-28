@@ -77,6 +77,18 @@ FILES = {'oc_obj.py': ['lib/base.py',
                         'src/oadm_certificate_authority.py',
                         'ansible/oadm_certificate_authority.py',
                        ],
+         'oadm_project.py': ['lib/base.py',
+                             '../../lib_yaml_editor/build/src/yedit.py',
+                             'lib/project.py',
+                             'src/oadm_project.py',
+                             'ansible/oadm_project.py',
+                            ],
+         'oc_route.py': ['lib/base.py',
+                         '../../lib_yaml_editor/build/src/yedit.py',
+                         'lib/route.py',
+                         'src/oc_route.py',
+                         'ansible/oc_route.py',
+                        ],
         }
 
 
