@@ -144,6 +144,10 @@
       minute: "0"
       job: ops-runner -f -s 90 -n cssm.aws /usr/bin/cron-send-s3-metrics
 
+    - name: send kubeconfig parser check
+      minute: "*/5"
+      job: ops-runner -f -s 30 -n cskc.openshift.master.kubeconfig.status /usr/bin/cron-send-check-kubeconfig 
+
     - name: "Clean old builds and deployments"
       hour: "1"
       minute: "0"
