@@ -557,180 +557,130 @@ class Yedit(object):
         return (False, self.yaml_dict)
 
 # pylint: disable=too-many-instance-attributes
-class ServiceConfig(object):
-    ''' Handle service options '''
-    # pylint: disable=too-many-arguments
-    def __init__(self,
-                 sname,
-                 namespace,
-                 ports,
-                 selector=None,
-                 labels=None,
-                 cluster_ip=None,
-                 portal_ip=None,
-                 session_affinity=None,
-                 service_type=None):
-        ''' constructor for handling service options '''
-        self.name = sname
-        self.namespace = namespace
-        self.ports = ports
-        self.selector = selector
-        self.labels = labels
-        self.cluster_ip = cluster_ip
-        self.portal_ip = portal_ip
-        self.session_affinity = session_affinity
-        self.service_type = service_type
-        self.data = {}
+class ProjectConfig(OpenShiftCLIConfig):
+    ''' project config object '''
+    def __init__(self, rname, namespace, kubeconfig, project_options):
+        super(ProjectConfig, self).__init__(rname, rname, kubeconfig, project_options)
 
-        self.create_dict()
-
-    def create_dict(self):
-        ''' return a service as a dict '''
-        self.data['apiVersion'] = 'v1'
-        self.data['kind'] = 'Service'
-        self.data['metadata'] = {}
-        self.data['metadata']['name'] = self.name
-        self.data['metadata']['namespace'] = self.namespace
-        if self.labels:
-            for lab, lab_value  in self.labels.items():
-                self.data['metadata'][lab] = lab_value
-        self.data['spec'] = {}
-
-        if self.ports:
-            self.data['spec']['ports'] = self.ports
-        else:
-            self.data['spec']['ports'] = []
-
-        if self.selector:
-            self.data['spec']['selector'] = self.selector
-
-        self.data['spec']['sessionAffinity'] = self.session_affinity or 'None'
-
-        if self.cluster_ip:
-            self.data['spec']['clusterIP'] = self.cluster_ip
-
-        if self.portal_ip:
-            self.data['spec']['portalIP'] = self.portal_ip
-
-        if self.service_type:
-            self.data['spec']['type'] = self.service_type
-
-# pylint: disable=too-many-instance-attributes
-class Service(Yedit):
+class Project(Yedit):
     ''' Class to wrap the oc command line tools '''
-    port_path = "spec#ports"
+    annotations_path = "metadata#annotations"
     kind = 'Service'
+    annotation_prefix = 'openshift.io/'
 
     def __init__(self, content):
         '''Service constructor'''
-        super(Service, self).__init__(content=content)
+        super(Project, self).__init__(content=content)
 
-    def get_ports(self):
+    def get_annotations(self):
         ''' get a list of ports '''
-        return self.get(Service.port_path) or []
+        return self.get(Project.annotations_path) or {}
 
-    def add_ports(self, inc_ports):
+    def add_annotations(self, inc_annos):
         ''' add a port object to the ports list '''
-        if not isinstance(inc_ports, list):
-            inc_ports = [inc_ports]
+        if not isinstance(inc_annos, list):
+            inc_annos = [inc_annos]
 
-        ports = self.get_ports()
-        if not ports:
-            self.put(Service.port_path, inc_ports)
+        annos = self.get_annotations()
+        if not annos:
+            self.put(Project.annotations_path, inc_annos)
         else:
-            ports.extend(inc_ports)
+            for anno in inc_annos:
+                for key, value in anno.items():
+                    annos[key] = value
 
         return True
 
-    def find_ports(self, inc_port):
+    def find_annotation(self, key):
         ''' find a specific port '''
-        for port in self.get_ports():
-            if port['port'] == inc_port['port']:
-                return port
+        annotations = self.get_annotations()
+        for anno in annotations:
+            if Project.annotation_prefix + key == anno:
+                return annotations[anno]
 
         return None
 
-    def delete_ports(self, inc_ports):
-        ''' remove a port from a service '''
-        if not isinstance(inc_ports, list):
-            inc_ports = [inc_ports]
+    def delete_annotation(self, inc_anno_keys):
+        ''' remove an annotation from a project'''
+        if not isinstance(inc_anno_keys, list):
+            inc_anno_keys = [inc_anno_keys]
 
-        ports = self.get(Service.port_path) or []
+        annos = self.get(Project.annotations_path) or {}
 
-        if not ports:
+        if not annos:
             return True
 
         removed = False
-        for inc_port in inc_ports:
-            port = self.find_ports(inc_port)
-            if port:
-                ports.remove(port)
+        for inc_anno in inc_anno_keys:
+            anno = self.find_annotation(inc_anno)
+            if anno:
+                del annos[Project.annotation_prefix + anno]
                 removed = True
 
         return removed
 
-    def add_cluster_ip(self, sip):
-        '''add cluster ip'''
-        self.put('spec#clusterIP', sip)
+    def update_annotation(self, key, value):
+        ''' remove an annotation from a project'''
+        annos = self.get(Project.annotations_path) or {}
 
-    def add_portal_ip(self, pip):
-        '''add cluster ip'''
-        self.put('spec#portalIP', pip)
+        if not annos:
+            return True
 
+        updated = False
+        anno = self.find_annotation(key)
+        if anno:
+            annos[Project.annotation_prefix + key] = value
+            updated = True
 
+        else:
+            self.add_annotations({Project.annotation_prefix + key: value})
+
+        return updated
 
 # pylint: disable=too-many-instance-attributes
-class OCService(OpenShiftCLI):
+class OadmProject(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
-    kind = 'service'
+    kind = 'project'
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
     def __init__(self,
-                 sname,
-                 namespace,
-                 labels,
-                 selector,
-                 cluster_ip,
-                 portal_ip,
-                 ports,
-                 session_affinity,
-                 service_type,
-                 kubeconfig='/etc/origin/master/admin.kubeconfig',
+                 config,
                  verbose=False):
         ''' Constructor for OCVolume '''
-        super(OCService, self).__init__(namespace, kubeconfig)
-        self.namespace = namespace
-        self.config = ServiceConfig(sname, namespace, ports, selector, labels,
-                                    cluster_ip, portal_ip, session_affinity, service_type)
-        self.user_svc = Service(content=self.config.data)
-        self.svc = None
+        super(OadmProject, self).__init__(config.name, config.kubeconfig)
+        self.config = config
+        self._project = None
 
     @property
-    def service(self):
-        ''' property function service'''
-        if not self.svc:
+    def project(self):
+        ''' property function project'''
+        if not self._project:
             self.get()
-        return self.svc
+        return self._project
 
-    @service.setter
-    def service(self, data):
+    @project.setter
+    def project(self, data):
         ''' setter function for yedit var '''
-        self.svc = data
+        self._project = data
 
     def exists(self):
-        ''' return whether a volume exists '''
-        if self.service:
+        ''' return whether a project exists '''
+        if self.project:
             return True
 
         return False
 
     def get(self):
-        '''return volume information '''
-        result = self._get(self.kind, self.config.name)
+        '''return project '''
+        result = self.openshift_cmd(['get', self.kind, self.config.name, '-o', 'json'], output=True, output_type='raw')
+
         if result['returncode'] == 0:
-            self.service = Service(content=result['results'][0])
-            result['clusterip'] = self.service.get('spec#clusterIP')
+            self.project = Project(content=json.loads(result['results']))
+            result['results'] = self.project.yaml_dict
+
+        elif 'namespaces "%s" not found' % self.config.name in result['stderr']:
+            result = {'results': [], 'returncode': 0}
 
         return result
 
@@ -739,27 +689,41 @@ class OCService(OpenShiftCLI):
         return self._delete(self.kind, self.config.name)
 
     def create(self):
-        '''create a service '''
-        return self._create_from_content(self.config.name, self.user_svc.yaml_dict)
+        '''create a project '''
+        cmd = ['new-project', self.config.name]
+        cmd.extend(self.config.to_option_list())
+
+        return self.openshift_cmd(cmd, oadm=True)
 
     def update(self):
-        '''create a service '''
-        # Need to copy over the portalIP and the serviceIP settings
+        '''update a project '''
 
-        self.user_svc.add_cluster_ip(self.service.get('spec#clusterIP'))
-        self.user_svc.add_portal_ip(self.service.get('spec#portalIP'))
-        return self._replace_content(self.kind, self.config.name, self.user_svc.yaml_dict)
+        self.project.update_annotation('display-name', self.config.config_options['display_name']['value'])
+        self.project.update_annotation('description', self.config.config_options['description']['value'])
+        self.project.update_annotation('node-selector', self.config.config_options['node_selector']['value'])
+        return self._replace_content(self.kind, self.config.namespace, self.project.yaml_dict)
 
     def needs_update(self):
         ''' verify an update is needed '''
-        skip = ['clusterIP', 'portalIP']
-        return not Utils.check_def_equal(self.user_svc.yaml_dict, self.service.yaml_dict, skip_keys=skip, debug=True)
+        result = self.project.find_annotation("display-name")
+        if result != self.config.config_options['display_name']['value']:
+            return True
 
+        result = self.project.find_annotation("desription")
+        if result != self.config.config_options['description']['value']:
+            return True
+
+        result = self.project.find_annotation("node-selector")
+        if result != self.config.config_options['node_selector']['value']:
+            return True
+
+        # Check rolebindings and policybindings
+        return False
 
 
 def main():
     '''
-    ansible oc module for services
+    ansible oc module for project
     '''
 
     module = AnsibleModule(
@@ -768,70 +732,66 @@ def main():
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             debug=dict(default=False, type='bool'),
-            namespace=dict(default='default', type='str'),
-            name=dict(default=None, type='str'),
-            labels=dict(default=None, type='dict'),
-            selector=dict(default=None, type='dict'),
-            clusterip=dict(default=None, type='str'),
-            portalip=dict(default=None, type='str'),
-            ports=dict(default=None, type='list'),
-            session_affinity=dict(default='None', type='str'),
-            service_type=dict(default='ClusterIP', type='str'),
+            name=dict(default=None, require=True, type='str'),
+            display_name=dict(default=None, type='str'),
+            node_selector=dict(default=None, type='str'),
+            description=dict(default=None, type='str'),
+            admin=dict(default=None, type='str'),
+            admin_role=dict(default=None, type='str'),
         ),
         supports_check_mode=True,
     )
-    oc_svc = OCService(module.params['name'],
-                       module.params['namespace'],
-                       module.params['labels'],
-                       module.params['selector'],
-                       module.params['clusterip'],
-                       module.params['portalip'],
-                       module.params['ports'],
-                       module.params['session_affinity'],
-                       module.params['service_type'])
+
+    pconfig = ProjectConfig(module.params['name'],
+                            module.params['name'],
+                            module.params['kubeconfig'],
+                            {'admin': {'value': module.params['admin'], 'include': True},
+                             'admin_role': {'value': module.params['admin_role'], 'include': True},
+                             'description': {'value': module.params['description'], 'include': True},
+                             'display_name': {'value': module.params['display_name'], 'include': True},
+                             'node_selector': {'value': module.params['node_selector'], 'include': True},
+                            })
+    oadm_project = OadmProject(pconfig,
+                               verbose=module.params['debug'])
 
     state = module.params['state']
 
-    api_rval = oc_svc.get()
+    api_rval = oadm_project.get()
 
     #####
     # Get
     #####
     if state == 'list':
-        module.exit_json(changed=False, results=api_rval, state="list")
+        module.exit_json(changed=False, results=api_rval['results'], state="list")
 
     ########
     # Delete
     ########
     if state == 'absent':
-        if oc_svc.exists():
+        if oadm_project.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a delete.')
 
-            api_rval = oc_svc.delete()
+            api_rval = oadm_project.delete()
 
             module.exit_json(changed=True, results=api_rval, state="absent")
-
         module.exit_json(changed=False, state="absent")
 
     if state == 'present':
         ########
         # Create
         ########
-        if not oc_svc.exists():
+        if not oadm_project.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a create.')
 
             # Create it here
-            api_rval = oc_svc.create()
-
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
+            api_rval = oadm_project.create()
 
             # return the created object
-            api_rval = oc_svc.get()
+            api_rval = oadm_project.get()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
@@ -841,14 +801,14 @@ def main():
         ########
         # Update
         ########
-        if oc_svc.needs_update():
-            api_rval = oc_svc.update()
+        if oadm_project.needs_update():
+            api_rval = oadm_project.update()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
 
             # return the created object
-            api_rval = oc_svc.get()
+            api_rval = oadm_project.get()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
