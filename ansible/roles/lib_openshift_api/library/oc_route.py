@@ -564,9 +564,10 @@ class RouteConfig(object):
                  sname,
                  namespace,
                  kubeconfig,
+                 destcacert=None,
                  cacert=None,
                  cert=None,
-                 cert_key=None,
+                 key=None,
                  host=None,
                  tls_termination=None,
                  service_name=None):
@@ -576,9 +577,10 @@ class RouteConfig(object):
         self.namespace = namespace
         self.host = host
         self.tls_termination = tls_termination
+        self.destcacert = destcacert
         self.cacert = cacert
         self.cert = cert
-        self.cert_key = cert_key
+        self.key = key
         self.service_name = service_name
         self.data = {}
 
@@ -598,7 +600,9 @@ class RouteConfig(object):
         if self.tls_termination:
             self.data['spec']['tls'] = {}
 
-            self.data['spec']['tls']['key'] = self.cert_key
+            if self.tls_termination == 'reencrypt':
+                self.data['spec']['tls']['destinationCACertificate'] = self.destcacert
+            self.data['spec']['tls']['key'] = self.key
             self.data['spec']['tls']['caCertificate'] = self.cacert
             self.data['spec']['tls']['certificate'] = self.cert
             self.data['spec']['tls']['termination'] = self.tls_termination
@@ -608,9 +612,11 @@ class RouteConfig(object):
 # pylint: disable=too-many-instance-attributes
 class Route(Yedit):
     ''' Class to wrap the oc command line tools '''
+    host_path = "spec#host"
     service_path = "spec#to#name"
     cert_path = "spec#tls#certificate"
     cacert_path = "spec#tls#caCertificate"
+    destcacert_path = "spec#tls#destinationCACertificate"
     termination_path = "spec#tls#termination"
     key_path = "spec#tls#key"
     kind = 'route'
@@ -619,12 +625,16 @@ class Route(Yedit):
         '''Route constructor'''
         super(Route, self).__init__(content=content)
 
+    def get_destcacert(self):
+        ''' return cert '''
+        return self.get(Route.destcacert_path)
+
     def get_cert(self):
         ''' return cert '''
         return self.get(Route.cert_path)
 
-    def get_cert_key(self):
-        ''' return cert key '''
+    def get_key(self):
+        ''' return key '''
         return self.get(Route.key_path)
 
     def get_cacert(self):
@@ -638,6 +648,10 @@ class Route(Yedit):
     def get_termination(self):
         ''' return tls termination'''
         return self.get(Route.termination_path)
+
+    def get_host(self):
+        ''' return host '''
+        return self.get(Route.host_path)
 
 # pylint: disable=too-many-instance-attributes
 class OCRoute(OpenShiftCLI):
@@ -679,6 +693,9 @@ class OCRoute(OpenShiftCLI):
         result = self._get(self.kind, self.config.name)
         if result['returncode'] == 0:
             self.route = Route(content=result['results'][0])
+        elif 'routes \"%s\" not found' % self.config.name in result['stderr']:
+            result['returncode'] = 0
+            result['results'] = [{}]
 
         return result
 
@@ -701,6 +718,20 @@ class OCRoute(OpenShiftCLI):
         return not Utils.check_def_equal(self.config.data, self.route.yaml_dict, skip_keys=skip, debug=True)
 
 
+def get_cert_data(path, content):
+    '''get the data for a particular value'''
+    if not path and not content:
+        return None
+
+    rval = None
+    if path and os.path.exists(path) and os.access(path, os.R_OK):
+        rval = open(path).read()
+    elif content:
+        rval = content
+
+    return rval
+
+#pylint: disable=too-many-branches
 def main():
     '''
     ansible oc module for route
@@ -715,21 +746,58 @@ def main():
             name=dict(default=None, required=True, type='str'),
             namespace=dict(default=None, required=True, type='str'),
             tls_termination=dict(default=None, type='str'),
-            cacert=dict(default=None, type='str'),
-            cert=dict(default=None, type='str'),
-            cert_key=dict(default=None, type='str'),
+            dest_cacert_path=dict(default=None, type='str'),
+            cacert_path=dict(default=None, type='str'),
+            cert_path=dict(default=None, type='str'),
+            key_path=dict(default=None, type='str'),
+            dest_cacert_content=dict(default=None, type='str'),
+            cacert_content=dict(default=None, type='str'),
+            cert_content=dict(default=None, type='str'),
+            key_content=dict(default=None, type='str'),
             service_name=dict(default=None, type='str'),
             host=dict(default=None, type='str'),
         ),
+        mutually_exclusive=[('dest_cacert_path', 'dest_cacert_content'),
+                            ('cacert_path', 'cacert_content'),
+                            ('cert_path', 'cert_content'),
+                            ('key_path', 'key_content'),
+                           ],
         supports_check_mode=True,
     )
+    files = {'destcacert': {'path': module.params['dest_cacert_path'],
+                            'content': module.params['dest_cacert_content'],
+                            'value': None,
+                           },
+             'cacert':  {'path': module.params['cacert_path'],
+                         'content': module.params['cacert_content'],
+                         'value': None,
+                        },
+             'cert':  {'path': module.params['cert_path'],
+                       'content': module.params['cert_content'],
+                       'value': None,
+                      },
+             'key':  {'path': module.params['key_path'],
+                      'content': module.params['key_content'],
+                      'value': None,
+                     },
+            }
+    if module.params['tls_termination']:
+        for key, option in files.items():
+            if key == 'destcacert' and module.params['tls_termination'] != 'reencrypt':
+                continue
+
+            option['value'] = get_cert_data(option['path'], option['content'])
+
+            if not option['value']:
+                module.fail_json(msg='Verify that you pass a value for %s' % key)
 
     rconfig = RouteConfig(module.params['name'],
                           module.params['namespace'],
                           module.params['kubeconfig'],
-                          module.params['cacert'],
-                          module.params['cert'],
-                          module.params['cert_key'],
+                          files['destcacert']['value'],
+                          files['cacert']['value'],
+                          files['cert']['value'],
+                          files['key']['value'],
                           module.params['host'],
                           module.params['tls_termination'],
                           module.params['service_name'],
@@ -772,6 +840,9 @@ def main():
 
             # Create it here
             api_rval = oc_route.create()
+
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
 
             # return the created object
             api_rval = oc_route.get()

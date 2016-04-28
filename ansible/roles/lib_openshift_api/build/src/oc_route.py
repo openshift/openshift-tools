@@ -40,6 +40,9 @@ class OCRoute(OpenShiftCLI):
         result = self._get(self.kind, self.config.name)
         if result['returncode'] == 0:
             self.route = Route(content=result['results'][0])
+        elif 'routes \"%s\" not found' % self.config.name in result['stderr']:
+            result['returncode'] = 0
+            result['results'] = [{}]
 
         return result
 
