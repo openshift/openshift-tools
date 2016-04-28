@@ -48,6 +48,7 @@ RUN yum clean metadata && \
         python-openshift-tools-ansible \
         python-openshift-tools-web \
         openshift-tools-scripts \
+        openshift-tools-scripts-cloud \
         openshift-tools-scripts-monitoring-pcp \
         openshift-tools-scripts-monitoring-docker \
         openshift-tools-scripts-monitoring-zagg-client \
