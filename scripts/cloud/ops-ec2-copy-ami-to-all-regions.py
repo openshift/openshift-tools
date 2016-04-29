@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# vim: expandtab:tabstop=4:shiftwidth=4
+
 """
  This is a simple script to copy an EC2 AMI to all regions.
  It will then print out the region and the ami id in that region.

@@ -13,7 +13,6 @@ FROM centos:centos7
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 
 ADD copr-openshift-tools.repo /etc/yum.repos.d/
-ADD copr-openshift-ansible.repo /etc/yum.repos.d/
 
 # creature comforts (make it feel like a normal linux environment)
 ENV LANG en_US.UTF-8
@@ -33,7 +32,7 @@ RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.
 
 RUN yum clean metadata && \
     yum -y update && \
-    yum -y install iputils cronie ansible vim procps less ack tar psmisc && \
+    yum -y install iputils cronie ansible1.9 vim procps less ack tar psmisc && \
     yum clean all
 
 # Setup locales.  It comes broken (probably a size issue) by default in the docker image.

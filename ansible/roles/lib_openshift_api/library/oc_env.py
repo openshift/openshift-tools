@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python # pylint: disable=too-many-lines
 #     ___ ___ _  _ ___ ___    _ _____ ___ ___
 #    / __| __| \| | __| _ \  /_\_   _| __|   \
 #   | (_ | _|| .` | _||   / / _ \| | | _|| |) |
@@ -9,6 +9,7 @@
 '''
    OpenShiftCLI class that wraps the oc commands in a subprocess
 '''
+# pylint: disable=too-many-lines
 
 import atexit
 import json
@@ -66,6 +67,16 @@ class OpenShiftCLI(object):
         if force:
             cmd.append('--force')
         return self.openshift_cmd(cmd)
+
+    def _create_from_content(self, rname, content):
+        '''return all pods '''
+        fname = '/tmp/%s' % rname
+        yed = Yedit(fname, content=content)
+        yed.write()
+
+        atexit.register(Utils.cleanup, [fname])
+
+        return self._create(fname)
 
     def _create(self, fname):
         '''return all pods '''
@@ -274,9 +285,13 @@ class Utils(object):
 
             # recurse on a dictionary
             elif isinstance(value, dict):
+                if not user_def.has_key(key):
+                    if debug:
+                        print "user_def does not have key [%s]" % key
+                    return False
                 if not isinstance(user_def[key], dict):
                     if debug:
-                        print "dict returned false not instance of dict"
+                        print "dict returned false: not instance of dict"
                     return False
 
                 # before passing ensure keys match
@@ -306,6 +321,32 @@ class Utils(object):
                     return False
 
         return True
+
+class OpenShiftCLIConfig(object):
+    '''Generic Config'''
+    def __init__(self, rname, namespace, kubeconfig, options):
+        self.kubeconfig = kubeconfig
+        self.name = rname
+        self.namespace = namespace
+        self._options = options
+
+    @property
+    def config_options(self):
+        ''' return config options '''
+        return self._options
+
+    def to_option_list(self):
+        '''return all options as a string'''
+        return self.stringify()
+
+    def stringify(self):
+        ''' return the options hash as cli params in a string '''
+        rval = []
+        for key, data in self.config_options.items():
+            if data['include'] and data['value']:
+                rval.append('--%s=%s' % (key.replace('_', '-'), data['value']))
+
+        return rval
 
 class YeditException(Exception):
     ''' Exception class for Yedit '''
@@ -515,6 +556,326 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
+class DeploymentConfig(Yedit):
+    ''' Class to wrap the oc command line tools '''
+    default_deployment_config = '''
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: default_dc
+  namespace: default
+spec:
+  replicas: 0
+  selector:
+    default_dc: default_dc
+  strategy:
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 0
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePercent: -25
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+    spec:
+      containers:
+      - env:
+        - name: default
+          value: default
+        image: default
+        imagePullPolicy: IfNotPresent
+        name: default_dc
+        ports:
+        - containerPort: 8000
+          hostPort: 8000
+          protocol: TCP
+          name: default_port
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      nodeSelector:
+        type: compute
+      restartPolicy: Always
+      securityContext: {}
+      serviceAccount: default
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 30
+  triggers:
+  - type: ConfigChange
+'''
+
+    env_path = "spec#template#spec#containers[0]#env"
+    volumes_path = "spec#template#spec#volumes"
+    container_path = "spec#template#spec#containers"
+    volume_mounts_path = "spec#template#spec#containers[0]#volumeMounts"
+
+    def __init__(self, content=None):
+        ''' Constructor for OpenshiftOC '''
+        if not content:
+            content = DeploymentConfig.default_deployment_config
+
+        super(DeploymentConfig, self).__init__(content=content)
+
+    # pylint: disable=no-member
+    def add_env_value(self, key, value):
+        ''' add key, value pair to env array '''
+        rval = False
+        env = self.get_env_vars()
+        if env:
+            env.append({'name': key, 'value': value})
+            rval = True
+        else:
+            result = self.put(DeploymentConfig.env_path, {'name': key, 'value': value})
+            rval = result[0]
+
+        return rval
+
+    def exists_env_value(self, key, value):
+        ''' return whether a key, value  pair exists '''
+        results = self.get_env_vars()
+        if not results:
+            return False
+
+        for result in results:
+            if result['name'] == key and result['value'] == value:
+                return True
+
+        return False
+
+    def exists_env_key(self, key):
+        ''' return whether a key, value  pair exists '''
+        results = self.get_env_vars()
+        if not results:
+            return False
+
+        for result in results:
+            if result['name'] == key:
+                return True
+
+        return False
+
+    def get_env_vars(self):
+        '''return a environment variables '''
+        return self.get(DeploymentConfig.env_path) or []
+
+    def delete_env_var(self, keys):
+        '''delete a list of keys '''
+        if not isinstance(keys, list):
+            keys = [keys]
+
+        env_vars_array = self.get_env_vars()
+        modified = False
+        idx = None
+        for key in keys:
+            for env_idx, env_var in enumerate(env_vars_array):
+                if env_var['name'] == key:
+                    idx = env_idx
+                    break
+
+            if idx:
+                modified = True
+                del env_vars_array[idx]
+
+        if modified:
+            return True
+
+        return False
+
+    def update_env_var(self, key, value):
+        '''place an env in the env var list'''
+
+        env_vars_array = self.get_env_vars()
+        idx = None
+        for env_idx, env_var in enumerate(env_vars_array):
+            if env_var['name'] == key:
+                idx = env_idx
+                break
+
+        if idx:
+            env_vars_array[idx][key] = value
+        else:
+            self.add_env_value(key, value)
+
+        return True
+
+    def exists_volume_mount(self, volume_mount):
+        ''' return whether a volume mount exists '''
+        exist_volume_mounts = self.get_volume_mounts()
+
+        if not exist_volume_mounts:
+            return False
+
+        volume_mount_found = False
+        for exist_volume_mount in exist_volume_mounts:
+            if exist_volume_mount['name'] == volume_mount['name']:
+                volume_mount_found = True
+                break
+
+        return volume_mount_found
+
+    def exists_volume(self, volume):
+        ''' return whether a volume exists '''
+        exist_volumes = self.get_volumes()
+
+        volume_found = False
+        for exist_volume in exist_volumes:
+            if exist_volume['name'] == volume['name']:
+                volume_found = True
+                break
+
+        return volume_found
+
+    def find_volume_by_name(self, volume, mounts=False):
+        ''' return the index of a volume '''
+        volumes = []
+        if mounts:
+            volumes = self.get_volume_mounts()
+        else:
+            volumes = self.get_volumes()
+        for exist_volume in volumes:
+            if exist_volume['name'] == volume['name']:
+                return exist_volume
+
+        return None
+
+    def get_volume_mounts(self):
+        '''return volume mount information '''
+        return self.get_volumes(mounts=True)
+
+    def get_volumes(self, mounts=False):
+        '''return volume mount information '''
+        if mounts:
+            return self.get(DeploymentConfig.volume_mounts_path) or []
+
+        return self.get(DeploymentConfig.volumes_path) or []
+
+    def delete_volume_by_name(self, volume):
+        '''delete a volume '''
+        modified = False
+        exist_volume_mounts = self.get_volume_mounts()
+        exist_volumes = self.get_volumes()
+        del_idx = None
+        for idx, exist_volume in enumerate(exist_volumes):
+            if exist_volume.has_key('name') and exist_volume['name'] == volume['name']:
+                del_idx = idx
+                break
+
+        if del_idx != None:
+            del exist_volumes[del_idx]
+            modified = True
+
+        del_idx = None
+        for idx, exist_volume_mount in enumerate(exist_volume_mounts):
+            if exist_volume_mount.has_key('name') and exist_volume_mount['name'] == volume['name']:
+                del_idx = idx
+                break
+
+        if del_idx != None:
+            del exist_volume_mounts[idx]
+            modified = True
+
+        return modified
+
+    def add_volume_mount(self, volume_mount):
+        ''' add a volume or volume mount to the proper location '''
+        exist_volume_mounts = self.get_volume_mounts()
+
+        if not exist_volume_mounts and volume_mount:
+            self.put(DeploymentConfig.volume_mounts_path, [volume_mount])
+        else:
+            exist_volume_mounts.append(volume_mount)
+
+    def add_volume(self, volume):
+        ''' add a volume or volume mount to the proper location '''
+        exist_volumes = self.get_volumes()
+        if not volume:
+            return
+
+        if not exist_volumes:
+            self.put(DeploymentConfig.volumes_path, [volume])
+        else:
+            exist_volumes.append(volume)
+
+    def update_volume(self, volume):
+        '''place an env in the env var list'''
+        exist_volumes = self.get_volumes()
+
+        if not volume:
+            return False
+
+        # update the volume
+        update_idx = None
+        for idx, exist_vol in enumerate(exist_volumes):
+            if exist_vol['name'] == volume['name']:
+                update_idx = idx
+                break
+
+        if update_idx != None:
+            exist_volumes[update_idx] = volume
+        else:
+            self.add_volume(volume)
+
+        return True
+
+    def update_volume_mount(self, volume_mount):
+        '''place an env in the env var list'''
+        modified = False
+
+        exist_volume_mounts = self.get_volume_mounts()
+
+        if not volume_mount:
+            return False
+
+        # update the volume mount
+        for exist_vol_mount in exist_volume_mounts:
+            if exist_vol_mount['name'] == volume_mount['name']:
+                if exist_vol_mount.has_key('mountPath') and \
+                   str(exist_vol_mount['mountPath']) != str(volume_mount['mountPath']):
+                    exist_vol_mount['mountPath'] = volume_mount['mountPath']
+                    modified = True
+                break
+
+        if not modified:
+            self.add_volume_mount(volume_mount)
+            modified = True
+
+        return modified
+
+    def needs_update_volume(self, volume, volume_mount):
+        ''' verify a volume update is needed '''
+        exist_volume = self.find_volume_by_name(volume)
+        exist_volume_mount = self.find_volume_by_name(volume, mounts=True)
+        results = []
+        results.append(exist_volume['name'] == volume['name'])
+
+        if volume.has_key('secret'):
+            results.append(exist_volume.has_key('secret'))
+            results.append(exist_volume['secret']['secretName'] == volume['secret']['secretName'])
+            results.append(exist_volume_mount['name'] == volume_mount['name'])
+            results.append(exist_volume_mount['mountPath'] == volume_mount['mountPath'])
+
+        elif volume.has_key('emptydir'):
+            results.append(exist_volume_mount['name'] == volume['name'])
+            results.append(exist_volume_mount['mountPath'] == volume_mount['mountPath'])
+
+        elif volume.has_key('persistentVolumeClaim'):
+            pvc = 'persistentVolumeClaim'
+            results.append(exist_volume.has_key(pvc))
+            results.append(exist_volume[pvc]['claimName'] == volume[pvc]['claimName'])
+
+            if volume[pvc].has_key('claimSize'):
+                results.append(exist_volume[pvc]['claimSize'] == volume[pvc]['claimSize'])
+
+        elif volume.has_key('hostpath'):
+            results.append(exist_volume.has_key('hostPath'))
+            results.append(exist_volume['hostPath']['path'] == volume_mount['mountPath'])
+
+        return not all(results)
+
 # pylint: disable=too-many-instance-attributes
 class OCEnv(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
@@ -543,100 +904,52 @@ class OCEnv(OpenShiftCLI):
         self.env_vars = env_vars
         self.kubeconfig = kubeconfig
         self.verbose = verbose
-        self._yed = None
+        self._resource = None
 
     @property
-    def yed(self):
-        ''' property function for yed var'''
-        if not self._yed:
+    def resource(self):
+        ''' property function for resource var'''
+        if not self._resource:
             self.get()
-        return self._yed
+        return self._resource
 
-    @yed.setter
-    def yed(self, data):
-        ''' setter function for yed var'''
-        self._yed = data
-
-    # pylint: disable=no-member
-    def add_value(self, key, value):
-        ''' add key, value pair to env array '''
-        env = self.yed.get(OCEnv.container_path[self.kind])
-        if env:
-            env.append({'name': key, 'value': value})
-        else:
-            self.yed.put(OCEnv.container_path[self.kind], {'name': key, 'value': value})
+    @resource.setter
+    def resource(self, data):
+        ''' setter function for resource var'''
+        self._resource = data
 
     def value_exists(self, key, value):
         ''' return whether a key, value  pair exists '''
-        results = self.yed.get(OCEnv.container_path[self.kind]) or []
-        if not results:
-            return False
-
-        for result in results:
-            if result['name'] == key and result['value'] == value:
-                return True
-
-        return False
+        return self.resource.exists_env_value(key, value)
 
     def key_exists(self, key):
         ''' return whether a key, value  pair exists '''
-        results = self.yed.get(OCEnv.container_path[self.kind]) or []
-        if not results:
-            return False
-
-        for result in results:
-            if result['name'] == key:
-                return True
-
-        return False
-
+        return self.resource.exists_env_key(key)
 
     def get(self):
         '''return a environment variables '''
-        env = self._get(self.kind, self.name)
-        if env['returncode'] == 0:
-            self.yed = Yedit(content=env['results'][0])
-            env['results'] = self.yed.get(OCEnv.container_path[self.kind]) or []
-        return env
+        result = self._get(self.kind, self.name)
+        if result['returncode'] == 0:
+            if self.kind == 'dc':
+                self.resource = DeploymentConfig(content=result['results'][0])
+                result['results'] = self.resource.get(OCEnv.container_path[self.kind]) or []
+        return result
 
     def delete(self):
         '''return all pods '''
-        env = self.get()
-        if env['returncode'] != 0:
-            return env
-
-        modified = False
-        env_vars_array = self.yed.get(OCEnv.container_path[self.kind]) or []
-        for key in self.env_vars.keys():
-            idx = None
-            for env_idx, env_var in enumerate(env_vars_array):
-                if env_var['name'] == key:
-                    idx = env_idx
-                    break
-
-            if idx:
-                modified = True
-                del env_vars_array[idx]
-
-
         #yed.put(OCEnv.container_path[self.kind], env_vars_array)
-        if modified:
-            return self._replace_content(self.kind, self.name, {OCEnv.container_path[self.kind]: env_vars_array})
-        return {'returncode': 0, 'changed': False}
+        if self.resource.delete_env_var(self.env_vars.keys()):
+            return self._replace_content(self.kind, self.name, self.resource.yaml_dict)
 
+        return {'returncode': 0, 'changed': False}
 
     # pylint: disable=too-many-function-args
     def put(self):
         '''place env vars into dc '''
         for update_key, update_value in self.env_vars.items():
-            for var in self.yed.get(OCEnv.container_path[self.kind]):
-                if update_key == var['name']:
-                    var['value'] = update_value
-                    break
-            else:
-                self.add_value(update_key, update_value)
+            self.resource.update_env_var(update_key, update_value)
 
-        return self._replace_content(self.kind, self.name, self.yed.yaml_dict)
+        return self._replace_content(self.kind, self.name, self.resource.yaml_dict)
 
 
 def main():
@@ -683,10 +996,10 @@ def main():
     ########
     if state == 'absent':
         for key in module.params.get('env_vars', {}).keys():
-            if ocenv.key_exists(key):
+            if ocenv.resource.exists_env_key(key):
 
                 if module.check_mode:
-                    module.exit_json(change=False, msg='Would have performed a delete.')
+                    module.exit_json(changed=False, msg='Would have performed a delete.')
                 api_rval = ocenv.delete()
                 module.exit_json(changed=True, results=api_rval, state="absent")
         module.exit_json(changed=False, state="absent")
@@ -699,7 +1012,7 @@ def main():
             if not ocenv.value_exists(key, value):
 
                 if module.check_mode:
-                    module.exit_json(change=False, msg='Would have performed a create.')
+                    module.exit_json(changed=False, msg='Would have performed a create.')
                 # Create it here
                 api_rval = ocenv.put()
 

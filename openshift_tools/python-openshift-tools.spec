@@ -1,12 +1,11 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.55
+Version:       0.0.59
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
 Source0:       %{name}-%{version}.tar.gz
-# python-2.7.5-34 adds native SNI support
-Requires:      python2 >= 2.7.5-34
+Requires:      python2
 BuildRequires: python2-devel
 BuildArch:     noarch
 
@@ -64,7 +63,7 @@ ln -s %{_datadir}/ansible/inventory/gce %{buildroot}%{python_sitelib}/openshift_
 # ----------------------------------------------------------------------------------
 %package inventory-clients
 Summary:       OpenShift Tools Python libs for inventory clients
-Requires:      python2,openshift-tools-ansible-inventory-aws,openshift-tools-ansible-inventory-gce
+Requires:      python2,openshift-tools-ansible-inventory-aws,openshift-tools-ansible-inventory-gce,python-openshift-tools
 BuildArch:     noarch
 
 %description inventory-clients
@@ -167,7 +166,7 @@ Openshift Python libraries developed for monitoring OpenShift.
 %package ansible
 Summary:       OpenShift Tools Ansible Python Package
 # TODO: once the zbxapi ansible module is packaged, add it here as a dep
-Requires:      python2,python-openshift-tools,python-zbxsend,ansible,openshift-tools-ansible-zabbix
+Requires:      python2,python-openshift-tools,python-zbxsend,ansible1.9,openshift-tools-ansible-zabbix
 BuildArch:     noarch
 
 %description ansible
@@ -184,7 +183,9 @@ Tools developed for ansible OpenShift.
 # ----------------------------------------------------------------------------------
 %package web
 Summary:       OpenShift Tools Web Python Package
-Requires:      python2,python-openshift-tools,python-requests
+# python-2.7.5-34 adds native SNI support
+Requires:      python2 >= 2.7.5-34
+Requires:      python-openshift-tools,python-requests
 BuildArch:     noarch
 
 %description web
@@ -215,6 +216,19 @@ Thin API wrapper to communicate with a Zabbix server
 
 
 %changelog
+* Fri Apr 22 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.59-1
+- Kubeconfig fix (kwoodson@redhat.com)
+
+* Thu Apr 21 2016 Joel Diaz <jdiaz@redhat.com> 0.0.58-1
+- depend on ansible1.9 RPM from EPEL (jdiaz@redhat.com)
+
+* Tue Apr 19 2016 Joel Diaz <jdiaz@redhat.com> 0.0.57-1
+- push python-2.7.5-34 (SNI) dep into python-openshift-tools-web only
+  (jdiaz@redhat.com)
+
+* Tue Apr 19 2016 Joel Diaz <jdiaz@redhat.com> 0.0.56-1
+- depend on base python-openshift-tools (for __init__.py) (jdiaz@redhat.com)
+
 * Mon Apr 18 2016 Joel Diaz <jdiaz@redhat.com> 0.0.55-1
 - copy host/inventory tools from openshift-ansible/bin and generate equivalent
   RPMs clean up pylint (jdiaz@redhat.com)

@@ -33,8 +33,8 @@ ENV PATH /usr/share/pcp/lib:/usr/libexec/pcp/bin:$PATH
 ADD check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
 ##################
 
-RUN echo -e "\n\nalias oca='KUBECONFIG=/etc/origin/master/admin.kubeconfig oc '" >> /root/.bashrc
-RUN echo "alias oadma='KUBECONFIG=/etc/origin/master/admin.kubeconfig oadm '" >> /root/.bashrc
+RUN echo -e "\n\nalias oca='KUBECONFIG=/tmp/admin.kubeconfig oc '" >> /root/.bashrc
+RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oadm '" >> /root/.bashrc
 
 # Need to manually install the RPMs, since yum will get confused
 # when resolving dependencies for /usr/bin/oc and /usr/bin/oadm
@@ -54,6 +54,7 @@ RUN yum clean metadata && \
         python-openshift-tools-ansible \
         python-openshift-tools-web \
         openshift-tools-scripts \
+        openshift-tools-scripts-cloud \
         openshift-tools-scripts-monitoring-pcp \
         openshift-tools-scripts-monitoring-docker \
         openshift-tools-scripts-monitoring-zagg-client \
