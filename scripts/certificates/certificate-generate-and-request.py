@@ -59,7 +59,7 @@ class OpenshiftCertificateRequester(object):
             key = open(self.config["keyfile"], "r").read()
         else:
             key = crypto.PKey()
-            key.generate_key(crypto.TYPE_RSA, self.config["keylength"] )
+            key.generate_key(crypto.TYPE_RSA, self.config["keylength"])
             open(self.config["keyfile"], "w").write(
                 crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
             f = open(self.config["keyfile"], "w")
@@ -114,12 +114,12 @@ class OpenshiftCertificateRequester(object):
         authstring = self.args.accountnumber + ":" + self.args.apikey
         authstring = base64.b64encode(authstring)
         content_type = 'application/vnd.digicert.rest-v1+json'
-        api_headers = { 
+        api_headers = {
             "Authorization": "Basic " + authstring,
             "Content-Type": content_type,
         }
 
-        if self.args.debug: 
+        if self.args.debug:
             import httplib as http_client
             http_client.HTTPConnection.debuglevel = 1
             import logging
@@ -139,17 +139,18 @@ class OpenshiftCertificateRequester(object):
 
         parser = argparse.ArgumentParser(description='OpenShift Cert Generator')
         parser.add_argument('-f', '--configfile', required=True, help='Config file to read')
-        parser.add_argument('-u', '--digicert_api_url', help='API url to access Digicert', default='https://api.digicert.com/')
+        parser.add_argument('-u', '--digicert_api_url', help='API url to access Digicert', \
+          default='https://api.digicert.com/')
         parser.add_argument('-a', '--apikey', help='Digicert api key')
         parser.add_argument('-n', '--accountnumber', help='Digicert account number')
         parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
         parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
-        
+
         self.args = parser.parse_args()
 
     def parse_config(self):
         """ parse config file for additional info needed to generate the cert """
-        
+
         configfile = open(self.args.configfile, 'r')
         config = yaml.load(configfile)
         self.config = config
