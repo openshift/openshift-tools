@@ -17,10 +17,6 @@
     name: docker
     state: started
 
-- name: extend the vg
-  command: lvextend -l 90%VG /dev/docker_vg/docker-pool
-  register: lvextend_output
-
 - name: docker info
   command: docker info
   register: dockerinfo
