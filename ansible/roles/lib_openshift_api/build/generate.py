@@ -96,6 +96,11 @@ FILES = {'oc_obj.py': ['lib/base.py',
                                   'src/oc_serviceaccount.py',
                                   'ansible/oc_serviceaccount.py',
                                  ],
+         'oc_label.py': ['lib/base.py',
+                         '../../lib_yaml_editor/build/src/yedit.py',
+                         'src/oc_label.py',
+                         'ansible/oc_label.py',
+                        ],
         }
 
 
