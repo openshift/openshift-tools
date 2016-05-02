@@ -29,6 +29,7 @@ def main():
             env_vars=dict(default=None, type='dict'),
             volume_mounts=dict(default=None, type='list'),
             edits=dict(default=None, type='dict'),
+            force=dict(default=False, type='bool'),
         ),
         mutually_exclusive=[["registry_type", "images"]],
 
@@ -93,7 +94,7 @@ def main():
         ########
         # Update
         ########
-        if not ocregistry.needs_update():
+        if not module.params['force'] and not ocregistry.needs_update():
             module.exit_json(changed=False, state="present")
 
         if module.check_mode:
