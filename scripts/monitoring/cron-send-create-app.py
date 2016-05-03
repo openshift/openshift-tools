@@ -86,7 +86,7 @@ class OpenShiftOC(object):
         results = self.oc_cmd(cmd)
         curr_project = results.split()[2].strip('"')
         cmd = ['new-project', self.namespace]
-        rval = self.oc_cmd(cmd)
+        rval = self.oadm_cmd(cmd)
         cmd = ['project', curr_project]
         results = self.oc_cmd(cmd)
         return rval
@@ -114,6 +114,25 @@ class OpenShiftOC(object):
     def oc_cmd(self, cmd):
         '''Base command for oc '''
         cmds = ['/usr/bin/oc']
+        cmds.extend(cmd)
+        print ' '.join(cmds)
+        proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
+                                env={'KUBECONFIG': self.kubeconfig})
+        proc.wait()
+        if proc.returncode == 0:
+            output = proc.stdout.read()
+            if self.verbose:
+                print "Stdout:"
+                print output
+                print "Stderr:"
+                print proc.stderr.read()
+            return output
+
+        return "Error: %s.  Return: %s" % (proc.returncode, proc.stderr.read())
+
+    def oadm_cmd(self, cmd):
+        '''Base command for oadm '''
+        cmds = ['/usr/bin/oadm']
         cmds.extend(cmd)
         print ' '.join(cmds)
         proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
