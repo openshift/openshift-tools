@@ -19,6 +19,10 @@ def timestamp_constructor(_, node):
     return str(node.value)
 yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
 
+class OpenShiftCLIError(Exception):
+    '''Exception class for openshiftcli'''
+    pass
+
 # pylint: disable=too-few-public-methods
 class OpenShiftCLI(object):
     ''' Class to wrap the command line tools '''
@@ -112,9 +116,16 @@ class OpenShiftCLI(object):
 
         return rval
 
+    def _get_version(self):
+        ''' return the version of openshift '''
+        results = self.openshift_cmd(['version'], output=True, output_type='raw')
+        if results['returncode'] == 0:
+            return results['stdout'].split('\n')[0].strip()
+
+        raise OpenShiftCLIError('Problem detecting openshift version.')
+
     def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json'):
         '''Base command for oc '''
-        #cmds = ['/usr/bin/oc', '--config', self.kubeconfig]
         cmds = []
         if oadm:
             cmds = ['/usr/bin/oadm']
@@ -157,7 +168,6 @@ class OpenShiftCLI(object):
             if self.verbose:
                 print stdout
                 print stderr
-                print
 
             if err:
                 rval.update({"err": err,
@@ -254,7 +264,7 @@ class Utils(object):
         return contents
 
     # Disabling too-many-branches.  This is a yaml dictionary comparison function
-    # pylint: disable=too-many-branches,too-many-return-statements
+    # pylint: disable=too-many-branches,too-many-return-statements,too-many-statements
     @staticmethod
     def check_def_equal(user_def, result_def, skip_keys=None, debug=False):
         ''' Given a user defined definition, compare it with the results given back by our query.  '''
@@ -270,10 +280,25 @@ class Utils(object):
 
             # Both are lists
             if isinstance(value, list):
+                if not user_def.has_key(key):
+                    if debug:
+                        print 'User data does not have key [%s]' % key
+                        print 'User data: %s' % user_def
+                    return False
+
                 if not isinstance(user_def[key], list):
                     if debug:
                         print 'user_def[key] is not a list'
                     return False
+
+                if len(user_def[key]) != len(value):
+                    if debug:
+                        print "List lengths are not equal."
+                        print "key=[%s]: user_def[%s] != value[%s]" % (key, len(user_def[key]), len(value))
+                        print "user_def: %s" % user_def[key]
+                        print "value: %s" % value
+                    return False
+
 
                 for values in zip(user_def[key], value):
                     if isinstance(values[0], dict) and isinstance(values[1], dict):
@@ -309,9 +334,9 @@ class Utils(object):
                 user_values = set(user_def[key].keys()) - set(skip)
                 if api_values != user_values:
                     if debug:
+                        print "keys are not equal in dict"
                         print api_values
                         print user_values
-                        print "keys are not equal in dict"
                     return False
 
                 result = Utils.check_def_equal(user_def[key], value, skip_keys=skip_keys, debug=debug)
@@ -326,6 +351,7 @@ class Utils(object):
                 if not user_def.has_key(key) or value != user_def[key]:
                     if debug:
                         print "value not equal; user_def does not have key"
+                        print key
                         print value
                         print user_def[key]
                     return False

@@ -1,7 +1,5 @@
 # pylint: skip-file
 
-import OpenSSL.crypto as crypto
-
 class CertificateAuthorityConfig(OpenShiftCLIConfig):
     ''' CertificateAuthorityConfig is a DTO for the oadm ca command '''
     def __init__(self, cmd, kubeconfig, verbose, ca_options):
@@ -49,9 +47,13 @@ class CertificateAuthority(OpenShiftCLI):
         if not os.path.exists(cert_path):
             return False
 
-        cert = crypto.load_certificate(crypto.FILETYPE_PEM, open(cert_path).read())
-        for var in self.config.config_options['hostnames']['value'].split(','):
-            if var in cert.get_subject().CN:
-                return True
+        proc = subprocess.Popen(['openssl', 'x509', '-noout', '-subject', '-in', cert_path],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc.wait()
+        if proc.returncode == 0:
+            cn_results = proc.stdout.read()
+            for var in self.config.config_options['hostnames']['value'].split(','):
+                if var in cn_results:
+                    return True
 
         return False

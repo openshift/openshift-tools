@@ -14,7 +14,6 @@ def main():
             name=dict(default='router', type='str'),
 
             kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
-            credentials=dict(default='/etc/origin/master/openshift-router.kubeconfig', type='str'),
             cert_file=dict(default=None, type='str'),
             key_file=dict(default=None, type='str'),
             images=dict(default=None, type='str'), #'openshift3/ose-${component}:${version}'
@@ -52,8 +51,7 @@ def main():
     rconfig = RouterConfig(module.params['name'],
                            module.params['namespace'],
                            module.params['kubeconfig'],
-                           {'credentials': {'value': module.params['credentials'], 'include': True},
-                            'default_cert': {'value': None, 'include': True},
+                           {'default_cert': {'value': None, 'include': True},
                             'cert_file': {'value': module.params['cert_file'], 'include': False},
                             'key_file': {'value': module.params['key_file'], 'include': False},
                             'images': {'value': module.params['images'], 'include': True},
