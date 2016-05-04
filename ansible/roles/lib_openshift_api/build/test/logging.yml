@@ -1,0 +1,189 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: "oo_clusterid_opstest:&oo_master_primary"
+  gather_facts: no
+  user: root
+  vars:
+    clusterid: opstest
+    es_cluster_size: 3
+
+  tasks:
+  - name: create project
+    oadm_project:
+      name: logging
+      node_selector: type=infra
+      display_name: logging
+    register: projectout
+  - debug: var=projectout
+
+  - name: create secret
+    oc_secret:
+      namespace: logging
+      name: logging-deployer
+      contents:
+      - path: none
+        data: /dev/null
+    register: secretout
+  - debug: var=secretout
+
+  - name: create serviceaccount
+    oc_serviceaccount:
+      name: logging-deployer
+      namespace: logging
+      secrets:
+      - logging-deployer
+    register: saout
+  - debug: var=saout
+
+  - name: present role to user
+    oadm_policy_user:
+      namespace: logging
+      user: system:serviceaccount:logging:logging-deployer
+      resource_kind: role
+      resource_name: edit
+    register: policyout
+  - debug: var=policyout
+
+  - name: present scc to user
+    oadm_policy_user:
+      namespace: logging
+      user: system:serviceaccount:logging:aggregated-logging-fluentd
+      resource_kind: scc
+      resource_name: privileged
+    register: policyout
+  - debug: var=policyout
+
+  - name: present cluster-role to user
+    oadm_policy_user:
+      namespace: logging
+      user: system:serviceaccount:logging:aggregated-logging-fluentd
+      resource_kind: cluster-role
+      resource_name: cluster-reader
+    register: policyout
+  - debug: var=policyout
+
+  - name: copy logging deployer template into place
+    template:
+      dest: /tmp/logging-template.yml
+      src: files/logging-deployer.yaml.j2
+
+  - name: copy logging-support-template into place
+    template:
+      dest: /tmp/support.yml
+      src: files/support.yaml.j2
+
+  - name: create logging deployer template
+    oc_obj:
+      state: present
+      namespace: logging
+      name: logging-deployer-template
+      kind: template
+      files:
+      - /tmp/logging-template.yml
+    register: templateout
+  - debug: var=templateout
+
+  - name: create template
+    oc_process:
+      namespace: logging
+      template_name: logging-deployer-template
+    register: processout
+  - debug: var=processout
+
+  # wait 2 minutes for deployer pod to complete
+  - name: wait until logging deployer pod has completed
+    oc_obj:
+      state: list
+      namespace: logging
+      kind: pods
+    register: podout
+    until: podout.results.results[0]['items'][0].status.phase == 'Succeeded'
+    retries: 24
+    delay: 5
+
+  - name: get deployer pod status
+    oc_obj:
+      state: list
+      namespace: logging
+      kind: pods
+    register: podout
+
+  - fail:
+      msg: logging deployer failed to complete setup
+    when: podout.results.results[0]['items'][0].status.phase != 'Succeeded'
+
+  - name: get deployer pod status
+    oc_obj:
+      state: list
+      namespace: logging
+      kind: pods
+    register: podout
+
+  - name: fetch the elastic search dc's with selector
+    oc_obj:
+      state: list
+      namespace: logging
+      kind: dc
+      selector: logging-infra=elasticsearch
+    register: dcout
+  - debug: var=dcout
+
+  - name: attach storage volumes to instances
+    oc_volume:
+      namespace: logging
+      kind: dc
+      name: "{{ item['metadata']['name'] }}"
+      mount_type: pvc
+      claim_name: "{{ item['metadata']['name'] }}"
+      claim_size: 20G
+      vol_name: elasticsearch-storage
+    with_items: dcout.results.results[0]['items']
+    register: volumeout
+  - debug: var=volumeout
+
+  - name: attach storage volumes to instances
+    oc_pvc:
+      namespace: logging
+      name: "{{ item['metadata']['name'] }}"
+      access_modes:
+      - ReadWriteOnce
+      volume_capacity: 20G
+    with_items: dcout.results.results[0]['items']
+    register: pvcout
+  - debug: var=pvcout
+
+  - name: fix dc nodeSelector on elastic search dc
+    oc_edit:
+      name: "{{ item['metadata']['name'] }}"
+      namespace: logging
+      kind: dc
+      content:
+        spec#template#spec#nodeSelector:
+          type: infra
+    with_items: dcout.results.results[0]['items']
+    register: editout
+  - debug: var=editout
+
+  - name: create template
+    oc_process:
+      namespace: logging
+      template_name: logging-support-template
+    register: processout
+  - debug: var=processout
+
+  - name:
+    oc_edit:
+      name: logging
+      kind: project
+      namespace: logging
+      content:
+        metadata#annotations#openshift.io/node-selector: ''
+    register: editout
+  - debug: var=editout
+
+# oc process logging-deployer-template -n openshift -v
+# KIBANA_HOSTNAME=kibana.<clusterid>.openshift.com,
+# ES_CLUSTER_SIZE=3,
+# PUBLIC_MASTER_URL=https://api.<clusterid>.openshift.com,
+# MASTER_URL=https://internal.api.<clusterid>.openshift.com | oc create -f -
+#

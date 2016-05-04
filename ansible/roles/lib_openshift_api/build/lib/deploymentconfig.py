@@ -1,5 +1,6 @@
 # pylint: skip-file
 
+# pylint: disable=too-many-public-methods
 class DeploymentConfig(Yedit):
     ''' Class to wrap the oc command line tools '''
     default_deployment_config = '''
@@ -302,17 +303,18 @@ spec:
             results.append(exist_volume_mount['name'] == volume_mount['name'])
             results.append(exist_volume_mount['mountPath'] == volume_mount['mountPath'])
 
-        elif volume.has_key('emptydir'):
+        elif volume.has_key('emptyDir'):
             results.append(exist_volume_mount['name'] == volume['name'])
             results.append(exist_volume_mount['mountPath'] == volume_mount['mountPath'])
 
         elif volume.has_key('persistentVolumeClaim'):
             pvc = 'persistentVolumeClaim'
             results.append(exist_volume.has_key(pvc))
-            results.append(exist_volume[pvc]['claimName'] == volume[pvc]['claimName'])
+            if results[-1]:
+                results.append(exist_volume[pvc]['claimName'] == volume[pvc]['claimName'])
 
-            if volume[pvc].has_key('claimSize'):
-                results.append(exist_volume[pvc]['claimSize'] == volume[pvc]['claimSize'])
+                if volume[pvc].has_key('claimSize'):
+                    results.append(exist_volume[pvc]['claimSize'] == volume[pvc]['claimSize'])
 
         elif volume.has_key('hostpath'):
             results.append(exist_volume.has_key('hostPath'))

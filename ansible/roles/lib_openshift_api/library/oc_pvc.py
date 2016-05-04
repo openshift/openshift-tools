@@ -629,170 +629,269 @@ class Yedit(object):
             return (True, self.yaml_dict)
 
         return (False, self.yaml_dict)
-# vim: expandtab:tabstop=4:shiftwidth=4
-# pylint: skip-file
 
 # pylint: disable=too-many-instance-attributes
-class OCLabel(OpenShiftCLI):
+class PersistentVolumeClaimConfig(object):
+    ''' Handle pvc options '''
+    # pylint: disable=too-many-arguments
+    def __init__(self,
+                 sname,
+                 namespace,
+                 kubeconfig,
+                 access_modes=None,
+                 vol_capacity='1G'):
+        ''' constructor for handling pvc options '''
+        self.kubeconfig = kubeconfig
+        self.name = sname
+        self.namespace = namespace
+        self.access_modes = access_modes
+        self.vol_capacity = vol_capacity
+        self.data = {}
+
+        self.create_dict()
+
+    def create_dict(self):
+        ''' return a service as a dict '''
+        # version
+        self.data['apiVersion'] = 'v1'
+        # kind
+        self.data['kind'] = 'PersistentVolumeClaim'
+        # metadata
+        self.data['metadata'] = {}
+        self.data['metadata']['name'] = self.name
+        # spec
+        self.data['spec'] = {}
+        self.data['spec']['accessModes'] = ['ReadWriteOnce']
+        if self.access_modes:
+            self.data['spec']['accessModes'] = self.access_modes
+
+        # storage capacity
+        self.data['spec']['resources'] = {}
+        self.data['spec']['resources']['requests'] = {}
+        self.data['spec']['resources']['requests']['storage'] = self.vol_capacity
+
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
+class PersistentVolumeClaim(Yedit):
     ''' Class to wrap the oc command line tools '''
+    access_modes_path = "spec#accessModes"
+    volume_capacity_path = "spec#requests#storage"
+    volume_name_path = "spec#volumeName"
+    bound_path = "status#phase"
+    kind = 'PersistentVolumeClaim'
+
+    def __init__(self, content):
+        '''RoleBinding constructor'''
+        super(PersistentVolumeClaim, self).__init__(content=content)
+        self._access_modes = None
+        self._volume_capacity = None
+        self._volume_name = None
+
+    @property
+    def volume_name(self):
+        ''' volume_name property '''
+        if self._volume_name == None:
+            self._volume_name = self.get_volume_name()
+        return self._volume_name
+
+    @volume_name.setter
+    def volume_name(self, data):
+        ''' volume_name property setter'''
+        self._volume_name = data
+
+    @property
+    def access_modes(self):
+        ''' access_modes property '''
+        if self._access_modes == None:
+            self._access_modes = self.get_access_modes()
+        return self._access_modes
+
+    @access_modes.setter
+    def access_modes(self, data):
+        ''' access_modes property setter'''
+        self._access_modes = data
+
+    @property
+    def volume_capacity(self):
+        ''' volume_capacity property '''
+        if self._volume_capacity == None:
+            self._volume_capacity = self.get_volume_capacity()
+        return self._volume_capacity
+
+    @volume_capacity.setter
+    def volume_capacity(self, data):
+        ''' volume_capacity property setter'''
+        self._volume_capacity = data
+
+    def get_access_modes(self):
+        '''get access_modes'''
+        return self.get(PersistentVolumeClaim.access_modes_path) or []
+
+    def get_volume_capacity(self):
+        '''get volume_capacity'''
+        return self.get(PersistentVolumeClaim.volume_capacity_path) or []
+
+    def get_volume_name(self):
+        '''get volume_name'''
+        return self.get(PersistentVolumeClaim.volume_name_path) or []
+
+    def is_bound(self):
+        '''return whether volume is bound'''
+        return self.get(PersistentVolumeClaim.bound_path) or []
+
+    #### ADD #####
+    def add_access_mode(self, inc_mode):
+        ''' add an access_mode'''
+        if self.access_modes:
+            self.access_modes.append(inc_mode)
+        else:
+            self.put(PersistentVolumeClaim.access_modes_path, [inc_mode])
+
+        return True
+
+    #### /ADD #####
+
+    #### Remove #####
+    def remove_access_mode(self, inc_mode):
+        ''' remove an access_mode'''
+        try:
+            self.access_modes.remove(inc_mode)
+        except ValueError as _:
+            return False
+
+        return True
+
+    #### /REMOVE #####
+
+    #### UPDATE #####
+    def update_access_mode(self, inc_mode):
+        ''' update an access_mode'''
+        try:
+            index = self.access_modes.index(inc_mode)
+        except ValueError as _:
+            return self.add_access_mode(inc_mode)
+
+        self.access_modes[index] = inc_mode
+
+        return True
+
+    #### /UPDATE #####
+
+    #### FIND ####
+    def find_access_mode(self, inc_mode):
+        ''' find a user '''
+        index = None
+        try:
+            index = self.access_modes.index(inc_mode)
+        except ValueError as _:
+            return index
+
+        return index
+
+# pylint: disable=too-many-instance-attributes
+class OCPVC(OpenShiftCLI):
+    ''' Class to wrap the oc command line tools '''
+    kind = 'pvc'
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
     def __init__(self,
-                 name,
-                 namespace,
-                 kind,
-		 kubeconfig,
-                 labels=None,
+                 config,
                  verbose=False):
-        ''' Constructor for OCLabel '''
-        super(OCLabel, self).__init__(namespace, kubeconfig)
-        self.name = name
-        self.namespace = namespace
-        self.kind = kind
-        self.kubeconfig = kubeconfig
-        self.labels = labels
+        ''' Constructor for OCVolume '''
+        super(OCPVC, self).__init__(config.namespace, config.kubeconfig)
+        self.config = config
+        self.namespace = config.namespace
+        self._pvc = None
 
-    def all_user_labels_exist(self):
-        ''' return whether all the labels already exist '''
-        current_labels = self.get()['results'][0]
+    @property
+    def pvc(self):
+        ''' property function pvc'''
+        if not self._pvc:
+            self.get()
+        return self._pvc
 
-        for label in self.labels:
-            if label['key'] not in current_labels or \
-               label['value'] != current_labels[label['key']]:
-                return False
+    @pvc.setter
+    def pvc(self, data):
+        ''' setter function for yedit var '''
+        self._pvc = data
 
-        return True
+    def bound(self):
+        '''return whether the pvc is bound'''
+        if self.pvc.get_volume_name():
+            return True
 
-    def get_user_keys(self):
-        ''' go through list of user key:values and return all keys '''
-        user_keys = []
-        for label in self.labels:
-            user_keys.append(label['key'])
-        return user_keys
-
-    def get_extra_current_labels(self):
-        ''' return list of labels that are currently stored, but aren't
-            int user-provided list '''
-        extra_labels = []
-        current_labels = self.get()['results'][0]
-        user_label_keys = self.get_user_keys()
-
-        for current_key in current_labels.keys():
-            if current_key not in user_label_keys:
-                extra_labels.append(current_key)
-
-        return extra_labels
-                
-    def extra_current_labels(self):
-        ''' return whether there are labels currently stored that user 
-            hasn't directly provided '''
-        extra_labels = self.get_extra_current_labels()
-
-        if len(extra_labels) > 0:
-                return True
-        else:
-            return False
- 
-    def any_label_exists(self):
-        ''' return whether any single label already exists '''
-        current_labels = self.get()['results'][0]
-        for label in self.labels:
-            if label['key'] in current_labels:
-                return True
         return False
-            
+
+    def exists(self):
+        ''' return whether a pvc exists '''
+        if self.pvc:
+            return True
+
+        return False
+
     def get(self):
-        '''return label information '''
-
-        result = self._get(self.kind, self.name)
-        if 'labels' in result['results'][0]['metadata']:
-
-            label_list = result['results'][0]['metadata']['labels']
-            result['results'][0] = label_list
-        else:
-            result['results'][0] = {}
+        '''return pvc information '''
+        result = self._get(self.kind, self.config.name)
+        if result['returncode'] == 0:
+            self.pvc = PersistentVolumeClaim(content=result['results'][0])
+        elif '\"%s\" not found' % self.config.name in result['stderr']:
+            result['returncode'] = 0
+            result['results'] = [{}]
 
         return result
 
-    def replace(self):
-        ''' replace currently stored labels with user provided labels '''
-        cmd = self.cmd_template()
-
-        # First delete any extra labels
-        extra_labels = self.get_extra_current_labels()
-        if len(extra_labels) > 0:
-            for label in extra_labels:
-                cmd.append("{}-".format(label))
-
-        # Now add/modify the user-provided label list
-        if len(self.labels) > 0:
-            for label in self.labels:
-                cmd.append("{}={}".format(label['key'], label['value']))
-
-        # --overwrite for the case where we are updating existing labels
-        cmd.append("--overwrite")
-        return self.openshift_cmd(cmd)
-
-    def cmd_template(self):
-        ''' boilerplate oc command for modifying lables on this object '''
-        cmd = ["-n", self.namespace, "--config", self.kubeconfig, "label", "node",
-               self.name]
-        return cmd
-
-    def add(self):
-        ''' add labels '''
-        cmd = self.cmd_template()
-
-        for label in self.labels:
-            cmd.append("{}={}".format(label['key'], label['value']))
-
-        cmd.append("--overwrite")
-
-        return self.openshift_cmd(cmd)
-
     def delete(self):
-        '''delete the labels'''
-        cmd = self.cmd_template()
-        for label in self.labels:
-            cmd.append("{}-".format(label['key']))
+        '''delete the object'''
+        return self._delete(self.kind, self.config.name)
 
-        return self.openshift_cmd(cmd)
-# vim: expandtab:tabstop=4:shiftwidth=4
-# pylint: skip-file
+    def create(self):
+        '''create the object'''
+        return self._create_from_content(self.config.name, self.config.data)
+
+    def update(self):
+        '''update the object'''
+        # need to update the tls information and the service name
+        return self._replace_content(self.kind, self.config.name, self.config.data)
+
+    def needs_update(self):
+        ''' verify an update is needed '''
+        if self.pvc.get_volume_name() or self.pvc.is_bound():
+            return False
+
+        skip = []
+        return not Utils.check_def_equal(self.config.data, self.pvc.yaml_dict, skip_keys=skip, debug=True)
 
 #pylint: disable=too-many-branches
 def main():
     '''
-    ansible oc module for labels
+    ansible oc module for pvc
     '''
 
     module = AnsibleModule(
         argument_spec=dict(
             kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
             state=dict(default='present', type='str',
-                       choices=['present', 'absent', 'list', 'add']),
+                       choices=['present', 'absent', 'list']),
             debug=dict(default=False, type='bool'),
-            kind=dict(default='node', type='str',
-                          choices=['node', 'pod']),
             name=dict(default=None, required=True, type='str'),
             namespace=dict(default=None, required=True, type='str'),
-            labels=dict(default=None, type='list'),
-            host=dict(default=None, type='str'),
+            volume_capacity=dict(default='1G', type='str'),
+            access_modes=dict(default=None, type='list'),
         ),
         supports_check_mode=True,
     )
 
-    oc_label = OCLabel(module.params['name'],
-                       module.params['namespace'],
-                       module.params['kind'],
-                       module.params['kubeconfig'],
-                       module.params['labels'],
-                       verbose=module.params['debug'])
+    pconfig = PersistentVolumeClaimConfig(module.params['name'],
+                                          module.params['namespace'],
+                                          module.params['kubeconfig'],
+                                          module.params['access_modes'],
+                                          module.params['volume_capacity'],
+                                         )
+    oc_pvc = OCPVC(pconfig, verbose=module.params['debug'])
 
     state = module.params['state']
 
-    api_rval = oc_label.get()
+    api_rval = oc_pvc.get()
 
     #####
     # Get
@@ -800,59 +899,58 @@ def main():
     if state == 'list':
         module.exit_json(changed=False, results=api_rval['results'], state="list")
 
-    #######
-    # Add
-    #######
-    if state == 'add':
-        if not oc_label.all_user_labels_exist():
-            if module.check_mode:
-                module.exit_json(changed=False, msg='Would have performed an addition.')
-            api_rval = oc_label.add()
-
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
-
-            module.exit_json(changed=True, results=api_rval, state="add")
-
-        module.exit_json(changed=False, state="add")
-
     ########
     # Delete
     ########
     if state == 'absent':
-        if oc_label.any_label_exists():
+        if oc_pvc.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a delete.')
 
-            api_rval = oc_label.delete()
-
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
+            api_rval = oc_pvc.delete()
 
             module.exit_json(changed=True, results=api_rval, state="absent")
-
         module.exit_json(changed=False, state="absent")
 
     if state == 'present':
         ########
-        # Update
+        # Create
         ########
-        # if all the labels passed in don't already exist
-        # or if there are currently stored labels that haven't
-        # been passed in
-        if not oc_label.all_user_labels_exist() or \
-           oc_label.extra_current_labels():
-            if module.check_mode:
-                module.exit_json(changed=False, msg='Would have made changes.')
+        if not oc_pvc.exists():
 
-            api_rval = oc_label.replace()
+            if module.check_mode:
+                module.exit_json(changed=False, msg='Would have performed a create.')
+
+            # Create it here
+            api_rval = oc_pvc.create()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
 
             # return the created object
-            api_rval = oc_label.get()
+            api_rval = oc_pvc.get()
+
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
+
+            module.exit_json(changed=True, results=api_rval, state="present")
+
+        ########
+        # Update
+        ########
+        if oc_pvc.pvc.is_bound() or oc_pvc.pvc.get_volume_name():
+            api_rval['msg'] = '##### - This volume is currently bound.  Will not update - ####'
+            module.exit_json(changed=False, results=api_rval, state="present")
+
+        if oc_pvc.needs_update():
+            api_rval = oc_pvc.update()
+
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
+
+            # return the created object
+            api_rval = oc_pvc.get()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)

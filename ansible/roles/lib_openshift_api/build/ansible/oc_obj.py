@@ -44,10 +44,15 @@ def main():
                                'groups',
                                'componentstatuses', 'cs',
                                'endpoints', 'ep'
+                               'role',
+                               'policybinding',
+                               'clusterbinding',
+                               'template',
                               ]),
             delete_after=dict(default=False, type='bool'),
             content=dict(default=None, type='dict'),
             force=dict(default=False, type='bool'),
+            selector=dict(default=None, type='str'),
         ),
         mutually_exclusive=[["content", "files"]],
 
@@ -56,6 +61,7 @@ def main():
     ocobj = OCObject(module.params['kind'],
                      module.params['namespace'],
                      module.params['name'],
+                     module.params['selector'],
                      kubeconfig=module.params['kubeconfig'],
                      verbose=module.params['debug'])
 
@@ -67,7 +73,7 @@ def main():
     # Get
     #####
     if state == 'list':
-        module.exit_json(changed=False, results=api_rval['results'], state="list")
+        module.exit_json(changed=False, results=api_rval, state="list")
 
     if not module.params['name']:
         module.fail_json(msg='Please specify a name when state is absent|present.')

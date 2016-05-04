@@ -53,7 +53,7 @@ class RouteConfig(object):
 
         self.data['spec']['to'] = {'kind': 'Service', 'name': self.service_name}
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
 class Route(Yedit):
     ''' Class to wrap the oc command line tools '''
     host_path = "spec#host"

@@ -259,7 +259,7 @@ class Yedit(object):
         if entry == None or not isinstance(entry, list):
             return (False, self.yaml_dict)
 
-        #pylint: disable=no-member
+        #pylint: disable=no-member,maybe-no-member
         entry.append(value)
 
         return (True, self.yaml_dict)
