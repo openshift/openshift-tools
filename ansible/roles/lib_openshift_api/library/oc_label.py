@@ -555,233 +555,170 @@ class Yedit(object):
             return (True, self.yaml_dict)
 
         return (False, self.yaml_dict)
+# vim: expandtab:tabstop=4:shiftwidth=4
+# pylint: skip-file
 
-class OCSecretAdd(OpenShiftCLI):
+# pylint: disable=too-many-instance-attributes
+class OCLabel(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
-    kind = 'sa'
-    # pylint allows 5. we need 6
+    # pylint allows 5
     # pylint: disable=too-many-arguments
     def __init__(self,
-                 config,
+                 name,
+                 namespace,
+                 kind,
+		 kubeconfig,
+                 labels=None,
                  verbose=False):
-        ''' Constructor for OpenshiftOC '''
-        super(OCSecretAdd, self).__init__(config.namespace, config.kubeconfig)
-        self.config = config
-        self.verbose = verbose
-        self._service_account = None
+        ''' Constructor for OCLabel '''
+        super(OCLabel, self).__init__(namespace, kubeconfig)
+        self.name = name
+        self.namespace = namespace
+        self.kind = kind
+        self.kubeconfig = kubeconfig
+        self.labels = labels
 
-    @property
-    def service_account(self):
-        ''' Property for the yed var '''
-        if not self._service_account:
-            self.get()
-        return self._service_account
+    def all_user_labels_exist(self):
+        ''' return whether all the labels already exist '''
+        current_labels = self.get()['results'][0]
 
-    @service_account.setter
-    def service_account(self, data):
-        ''' setter for the yed var '''
-        self._service_account = data
+        for label in self.labels:
+            if label['key'] not in current_labels or \
+               label['value'] != current_labels[label['key']]:
+                return False
 
-    def exists(self, in_secret):
-        ''' return whether a key, value  pair exists '''
-        result = self.service_account.find_secret(in_secret)
-        if not result:
-            return False
         return True
 
+    def get_user_keys(self):
+        ''' go through list of user key:values and return all keys '''
+        user_keys = []
+        for label in self.labels:
+            user_keys.append(label['key'])
+        return user_keys
+
+    def get_extra_current_labels(self):
+        ''' return list of labels that are currently stored, but aren't
+            int user-provided list '''
+        extra_labels = []
+        current_labels = self.get()['results'][0]
+        user_label_keys = self.get_user_keys()
+
+        for current_key in current_labels.keys():
+            if current_key not in user_label_keys:
+                extra_labels.append(current_key)
+
+        return extra_labels
+                
+    def extra_current_labels(self):
+        ''' return whether there are labels currently stored that user 
+            hasn't directly provided '''
+        extra_labels = self.get_extra_current_labels()
+
+        if len(extra_labels) > 0:
+                return True
+        else:
+            return False
+ 
+    def any_label_exists(self):
+        ''' return whether any single label already exists '''
+        current_labels = self.get()['results'][0]
+        for label in self.labels:
+            if label['key'] in current_labels:
+                return True
+        return False
+            
     def get(self):
-        '''return a environment variables '''
-        env = self._get(OCSecretAdd.kind, self.config.name)
-        if env['returncode'] == 0:
-            self.service_account = ServiceAccount(content=env['results'][0])
-            env['results'] = self.service_account.get('secrets')
-        return env
+        '''return label information '''
+
+        result = self._get(self.kind, self.name)
+        if 'labels' in result['results'][0]['metadata']:
+
+            label_list = result['results'][0]['metadata']['labels']
+            result['results'][0] = label_list
+        else:
+            result['results'][0] = {}
+
+        return result
+
+    def replace(self):
+        ''' replace currently stored labels with user provided labels '''
+        cmd = self.cmd_template()
+
+        # First delete any extra labels
+        extra_labels = self.get_extra_current_labels()
+        if len(extra_labels) > 0:
+            for label in extra_labels:
+                cmd.append("{}-".format(label))
+
+        # Now add/modify the user-provided label list
+        if len(self.labels) > 0:
+            for label in self.labels:
+                cmd.append("{}={}".format(label['key'], label['value']))
+
+        # --overwrite for the case where we are updating existing labels
+        cmd.append("--overwrite")
+        return self.openshift_cmd(cmd)
+
+    def cmd_template(self):
+        ''' boilerplate oc command for modifying lables on this object '''
+        cmd = ["-n", self.namespace, "--config", self.kubeconfig, "label", "node",
+               self.name]
+        return cmd
+
+    def add(self):
+        ''' add labels '''
+        cmd = self.cmd_template()
+
+        for label in self.labels:
+            cmd.append("{}={}".format(label['key'], label['value']))
+
+        cmd.append("--overwrite")
+
+        return self.openshift_cmd(cmd)
 
     def delete(self):
-        '''delete secrets '''
+        '''delete the labels'''
+        cmd = self.cmd_template()
+        for label in self.labels:
+            cmd.append("{}-".format(label['key']))
 
-        modified = []
-        for rem_secret in self.service_account.secrets:
-            modified.append(self.service_account.delete_secret(rem_secret))
+        return self.openshift_cmd(cmd)
+# vim: expandtab:tabstop=4:shiftwidth=4
+# pylint: skip-file
 
-        if any(modified):
-            return self._replace_content(OCSecretAdd.kind, self.config.name, self.service_account.yaml_dict)
-
-        return {'returncode': 0, 'changed': False}
-
-    def put(self):
-        '''place secrets into sa '''
-        modified = False
-        for add_secret in self.config.secrets:
-            if not self.service_account.find_secret(add_secret):
-                self.service_account.add_secret(add_secret)
-                modified = True
-
-        if modified:
-            return self._replace_content(OCSecretAdd.kind, self.config.name, self.service_account.yaml_dict)
-
-        return {'returncode': 0, 'changed': False}
-
-
-class ServiceAccountConfig(object):
-    '''Service account config class
-
-       This class stores the options and returns a default service account
-    '''
-
-    # pylint: disable=too-many-arguments
-    def __init__(self, sname, namespace, kubeconfig, secrets=None, image_pull_secrets=None):
-        self.name = sname
-        self.kubeconfig = kubeconfig
-        self.namespace = namespace
-        self.secrets = secrets or []
-        self.image_pull_secrets = image_pull_secrets or []
-        self.data = {}
-        self.create_dict()
-
-    def create_dict(self):
-        ''' return a properly structured volume '''
-        self.data['apiVersion'] = 'v1'
-        self.data['kind'] = 'ServiceAccount'
-        self.data['metadata'] = {}
-        self.data['metadata']['name'] = self.name
-        self.data['metadata']['namespace'] = self.namespace
-
-        self.data['secrets'] = []
-        if self.secrets:
-            for sec in self.secrets:
-                self.data['secrets'].append({"name": sec})
-
-        self.data['imagePullSecrets'] = []
-        if self.image_pull_secrets:
-            for sec in self.image_pull_secrets:
-                self.data['imagePullSecrets'].append({"name": sec})
-
-class ServiceAccount(Yedit):
-    ''' Class to wrap the oc command line tools '''
-    image_pull_secrets_path = "imagePullSecrets"
-    secrets_path = "secrets"
-
-    def __init__(self, content):
-        '''ServiceAccount constructor'''
-        super(ServiceAccount, self).__init__(content=content)
-        self._secrets = None
-        self._image_pull_secrets = None
-
-    @property
-    def image_pull_secrets(self):
-        ''' property for image_pull_secrets '''
-        if self._image_pull_secrets == None:
-            self._image_pull_secrets = self.get(ServiceAccount.image_pull_secrets_path) or []
-        return self._image_pull_secrets
-
-    @image_pull_secrets.setter
-    def image_pull_secrets(self, secrets):
-        ''' property for secrets '''
-        self._image_pull_secrets = secrets
-
-    @property
-    def secrets(self):
-        ''' property for secrets '''
-        print "Getting secrets property"
-        if not self._secrets:
-            self._secrets = self.get(ServiceAccount.secrets_path) or []
-        return self._secrets
-
-    @secrets.setter
-    def secrets(self, secrets):
-        ''' property for secrets '''
-        self._secrets = secrets
-
-    def delete_secret(self, inc_secret):
-        ''' remove a secret '''
-        remove_idx = None
-        for idx, sec in enumerate(self.secrets):
-            if sec['name'] == inc_secret:
-                remove_idx = idx
-                break
-
-        if remove_idx:
-            del self.secrets[remove_idx]
-            return True
-
-        return False
-
-    def delete_image_pull_secret(self, inc_secret):
-        ''' remove a image_pull_secret '''
-        remove_idx = None
-        for idx, sec in enumerate(self.image_pull_secrets):
-            if sec['name'] == inc_secret:
-                remove_idx = idx
-                break
-
-        if remove_idx:
-            del self.image_pull_secrets[remove_idx]
-            return True
-
-        return False
-
-    def find_secret(self, inc_secret):
-        '''find secret'''
-        for secret in self.secrets:
-            if secret['name'] == inc_secret:
-                return secret
-
-        return None
-
-    def find_image_pull_secret(self, inc_secret):
-        '''find secret'''
-        for secret in self.image_pull_secrets:
-            if secret['name'] == inc_secret:
-                return secret
-
-        return None
-
-    def add_secret(self, inc_secret):
-        '''add secret'''
-        if self.secrets:
-            self.secrets.append({"name": inc_secret})
-        else:
-            self.put(ServiceAccount.secrets_path, [{"name": inc_secret}])
-
-    def add_image_pull_secret(self, inc_secret):
-        '''add image_pull_secret'''
-        if self.image_pull_secrets:
-            self.image_pull_secrets.append({"name": inc_secret})
-        else:
-            self.put(ServiceAccount.image_pull_secrets_path, [{"name": inc_secret}])
-
+#pylint: disable=too-many-branches
 def main():
     '''
-    ansible oc module for services
+    ansible oc module for labels
     '''
 
     module = AnsibleModule(
         argument_spec=dict(
             kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
             state=dict(default='present', type='str',
-                       choices=['present', 'absent', 'list']),
+                       choices=['present', 'absent', 'list', 'add']),
             debug=dict(default=False, type='bool'),
-            kind=dict(default='rc', choices=['dc', 'rc', 'pods'], type='str'),
-            namespace=dict(default='default', type='str'),
-            secrets=dict(default=None, type='list'),
-            service_account=dict(default=None, type='str'),
+            kind=dict(default='node', type='str',
+                          choices=['node', 'pod']),
+            name=dict(default=None, required=True, type='str'),
+            namespace=dict(default=None, required=True, type='str'),
+            labels=dict(default=None, type='list'),
+            host=dict(default=None, type='str'),
         ),
         supports_check_mode=True,
     )
-    sconfig = ServiceAccountConfig(module.params['service_account'],
-                                   module.params['namespace'],
-                                   module.params['kubeconfig'],
-                                   module.params['secrets'],
-                                   None)
 
-    oc_secret_add = OCSecretAdd(sconfig,
-                                verbose=module.params['debug'])
+    oc_label = OCLabel(module.params['name'],
+                       module.params['namespace'],
+                       module.params['kind'],
+                       module.params['kubeconfig'],
+                       module.params['labels'],
+                       verbose=module.params['debug'])
 
     state = module.params['state']
 
-    api_rval = oc_secret_add.get()
+    api_rval = oc_label.get()
 
     #####
     # Get
@@ -789,45 +726,64 @@ def main():
     if state == 'list':
         module.exit_json(changed=False, results=api_rval['results'], state="list")
 
+    #######
+    # Add
+    #######
+    if state == 'add':
+        if not oc_label.all_user_labels_exist():
+            if module.check_mode:
+                module.exit_json(changed=False, msg='Would have performed an addition.')
+            api_rval = oc_label.add()
+
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
+
+            module.exit_json(changed=True, results=api_rval, state="add")
+
+        module.exit_json(changed=False, state="add")
+
     ########
     # Delete
     ########
     if state == 'absent':
-        for secret in module.params.get('secrets', []):
-            if oc_secret_add.exists(secret):
+        if oc_label.any_label_exists():
 
-                if module.check_mode:
-                    module.exit_json(changed=False, msg='Would have performed a delete.')
+            if module.check_mode:
+                module.exit_json(changed=False, msg='Would have performed a delete.')
 
-                api_rval = oc_secret_add.delete()
+            api_rval = oc_label.delete()
 
-                module.exit_json(changed=True, results=api_rval, state="absent")
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
+
+            module.exit_json(changed=True, results=api_rval, state="absent")
+
         module.exit_json(changed=False, state="absent")
 
     if state == 'present':
         ########
-        # Create
+        # Update
         ########
-        for secret in module.params.get('secrets', []):
-            if not oc_secret_add.exists(secret):
+        # if all the labels passed in don't already exist
+        # or if there are currently stored labels that haven't
+        # been passed in
+        if not oc_label.all_user_labels_exist() or \
+           oc_label.extra_current_labels():
+            if module.check_mode:
+                module.exit_json(changed=False, msg='Would have made changes.')
 
-                if module.check_mode:
-                    module.exit_json(changed=False, msg='Would have performed a create.')
+            api_rval = oc_label.replace()
 
-                # Create it here
-                api_rval = oc_secret_add.put()
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
 
-                if api_rval['returncode'] != 0:
-                    module.fail_json(msg=api_rval)
+            # return the created object
+            api_rval = oc_label.get()
 
-                # return the created object
-                api_rval = oc_secret_add.get()
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
 
-                if api_rval['returncode'] != 0:
-                    module.fail_json(msg=api_rval)
-
-                module.exit_json(changed=True, results=api_rval, state="present")
-
+            module.exit_json(changed=True, results=api_rval, state="present")
 
         module.exit_json(changed=False, results=api_rval, state="present")
 

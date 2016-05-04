@@ -18,10 +18,13 @@ def main():
         ),
         supports_check_mode=True,
     )
-    oc_secret_add = OCSecretAdd(module.params['secrets'],
-                                module.params['service_account'],
-                                module.params['namespace'],
-                                kubeconfig=module.params['kubeconfig'],
+    sconfig = ServiceAccountConfig(module.params['service_account'],
+                                   module.params['namespace'],
+                                   module.params['kubeconfig'],
+                                   module.params['secrets'],
+                                   None)
+
+    oc_secret_add = OCSecretAdd(sconfig,
                                 verbose=module.params['debug'])
 
     state = module.params['state']

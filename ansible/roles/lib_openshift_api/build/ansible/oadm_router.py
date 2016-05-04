@@ -41,7 +41,8 @@ def main():
             stats_user=dict(default=None, type='str'),
             stats_password=dict(default=None, type='str'),
             stats_port=dict(default=1936, type='int'),
-
+            # extra
+            cacert_file=dict(default=None, type='str'),
         ),
         mutually_exclusive=[["router_type", "images"]],
 
@@ -82,6 +83,8 @@ def main():
                             'stats_user': {'value': module.params['stats_user'], 'include': True},
                             'stats_password': {'value': module.params['stats_password'], 'include': True},
                             'stats_port': {'value': module.params['stats_port'], 'include': True},
+                            # extra
+                            'cacert_file': {'value': module.params['cacert_file'], 'include': False},
                            })
 
 

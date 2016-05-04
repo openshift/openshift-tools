@@ -556,74 +556,6 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
-class OCSecretAdd(OpenShiftCLI):
-    ''' Class to wrap the oc command line tools '''
-
-    kind = 'sa'
-    # pylint allows 5. we need 6
-    # pylint: disable=too-many-arguments
-    def __init__(self,
-                 config,
-                 verbose=False):
-        ''' Constructor for OpenshiftOC '''
-        super(OCSecretAdd, self).__init__(config.namespace, config.kubeconfig)
-        self.config = config
-        self.verbose = verbose
-        self._service_account = None
-
-    @property
-    def service_account(self):
-        ''' Property for the yed var '''
-        if not self._service_account:
-            self.get()
-        return self._service_account
-
-    @service_account.setter
-    def service_account(self, data):
-        ''' setter for the yed var '''
-        self._service_account = data
-
-    def exists(self, in_secret):
-        ''' return whether a key, value  pair exists '''
-        result = self.service_account.find_secret(in_secret)
-        if not result:
-            return False
-        return True
-
-    def get(self):
-        '''return a environment variables '''
-        env = self._get(OCSecretAdd.kind, self.config.name)
-        if env['returncode'] == 0:
-            self.service_account = ServiceAccount(content=env['results'][0])
-            env['results'] = self.service_account.get('secrets')
-        return env
-
-    def delete(self):
-        '''delete secrets '''
-
-        modified = []
-        for rem_secret in self.service_account.secrets:
-            modified.append(self.service_account.delete_secret(rem_secret))
-
-        if any(modified):
-            return self._replace_content(OCSecretAdd.kind, self.config.name, self.service_account.yaml_dict)
-
-        return {'returncode': 0, 'changed': False}
-
-    def put(self):
-        '''place secrets into sa '''
-        modified = False
-        for add_secret in self.config.secrets:
-            if not self.service_account.find_secret(add_secret):
-                self.service_account.add_secret(add_secret)
-                modified = True
-
-        if modified:
-            return self._replace_content(OCSecretAdd.kind, self.config.name, self.service_account.yaml_dict)
-
-        return {'returncode': 0, 'changed': False}
-
-
 class ServiceAccountConfig(object):
     '''Service account config class
 
@@ -752,9 +684,95 @@ class ServiceAccount(Yedit):
         else:
             self.put(ServiceAccount.image_pull_secrets_path, [{"name": inc_secret}])
 
+# pylint: disable=too-many-instance-attributes
+class OCServiceAccount(OpenShiftCLI):
+    ''' Class to wrap the oc command line tools '''
+    kind = 'sa'
+
+    # pylint allows 5
+    # pylint: disable=too-many-arguments
+    def __init__(self,
+                 config,
+                 verbose=False):
+        ''' Constructor for OCVolume '''
+        super(OCServiceAccount, self).__init__(config.namespace, config.kubeconfig)
+        self.config = config
+        self.namespace = config.namespace
+        self._service_account = None
+
+    @property
+    def service_account(self):
+        ''' property function service'''
+        if not self._service_account:
+            self.get()
+        return self._service_account
+
+    @service_account.setter
+    def service_account(self, data):
+        ''' setter function for yedit var '''
+        self._service_account = data
+
+    def exists(self):
+        ''' return whether a volume exists '''
+        if self.service_account:
+            return True
+
+        return False
+
+    def get(self):
+        '''return volume information '''
+        result = self._get(self.kind, self.config.name)
+        if result['returncode'] == 0:
+            self.service_account = ServiceAccount(content=result['results'][0])
+        elif '\"%s\" not found' % self.config.name in result['stderr']:
+            result['returncode'] = 0
+            result['results'] = [{}]
+
+        return result
+
+    def delete(self):
+        '''delete the object'''
+        return self._delete(self.kind, self.config.name)
+
+    def create(self):
+        '''create the object'''
+        return self._create_from_content(self.config.name, self.config.data)
+
+    def update(self):
+        '''update the object'''
+        # need to update the tls information and the service name
+        for secret in self.config.secrets:
+            result = self.service_account.find_secret(secret)
+            if not result:
+                self.service_account.add_secret(secret)
+
+        for secret in self.config.image_pull_secrets:
+            result = self.service_account.find_image_pull_secret(secret)
+            if not result:
+                self.service_account.add_image_pull_secret(secret)
+
+        return self._replace_content(self.kind, self.config.name, self.config.data)
+
+    def needs_update(self):
+        ''' verify an update is needed '''
+        # since creating an service account generates secrets and imagepullsecrets
+        # check_def_equal will not work
+        # Instead, verify all secrets passed are in the list
+        for secret in self.config.secrets:
+            result = self.service_account.find_secret(secret)
+            if not result:
+                return True
+
+        for secret in self.config.image_pull_secrets:
+            result = self.service_account.find_image_pull_secret(secret)
+            if not result:
+                return True
+
+        return False
+
 def main():
     '''
-    ansible oc module for services
+    ansible oc module for route
     '''
 
     module = AnsibleModule(
@@ -763,25 +781,25 @@ def main():
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             debug=dict(default=False, type='bool'),
-            kind=dict(default='rc', choices=['dc', 'rc', 'pods'], type='str'),
-            namespace=dict(default='default', type='str'),
+            name=dict(default=None, required=True, type='str'),
+            namespace=dict(default=None, required=True, type='str'),
             secrets=dict(default=None, type='list'),
-            service_account=dict(default=None, type='str'),
+            image_pull_secrets=dict(default=None, type='list'),
         ),
         supports_check_mode=True,
     )
-    sconfig = ServiceAccountConfig(module.params['service_account'],
+    rconfig = ServiceAccountConfig(module.params['name'],
                                    module.params['namespace'],
                                    module.params['kubeconfig'],
                                    module.params['secrets'],
-                                   None)
-
-    oc_secret_add = OCSecretAdd(sconfig,
-                                verbose=module.params['debug'])
+                                   module.params['image_pull_secrets'],
+                                  )
+    oc_sa = OCServiceAccount(rconfig,
+                             verbose=module.params['debug'])
 
     state = module.params['state']
 
-    api_rval = oc_secret_add.get()
+    api_rval = oc_sa.get()
 
     #####
     # Get
@@ -793,41 +811,55 @@ def main():
     # Delete
     ########
     if state == 'absent':
-        for secret in module.params.get('secrets', []):
-            if oc_secret_add.exists(secret):
+        if oc_sa.exists():
 
-                if module.check_mode:
-                    module.exit_json(changed=False, msg='Would have performed a delete.')
+            if module.check_mode:
+                module.exit_json(changed=False, msg='Would have performed a delete.')
 
-                api_rval = oc_secret_add.delete()
+            api_rval = oc_sa.delete()
 
-                module.exit_json(changed=True, results=api_rval, state="absent")
+            module.exit_json(changed=True, results=api_rval, state="absent")
         module.exit_json(changed=False, state="absent")
 
     if state == 'present':
         ########
         # Create
         ########
-        for secret in module.params.get('secrets', []):
-            if not oc_secret_add.exists(secret):
+        if not oc_sa.exists():
 
-                if module.check_mode:
-                    module.exit_json(changed=False, msg='Would have performed a create.')
+            if module.check_mode:
+                module.exit_json(changed=False, msg='Would have performed a create.')
 
-                # Create it here
-                api_rval = oc_secret_add.put()
+            # Create it here
+            api_rval = oc_sa.create()
 
-                if api_rval['returncode'] != 0:
-                    module.fail_json(msg=api_rval)
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
 
-                # return the created object
-                api_rval = oc_secret_add.get()
+            # return the created object
+            api_rval = oc_sa.get()
 
-                if api_rval['returncode'] != 0:
-                    module.fail_json(msg=api_rval)
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
 
-                module.exit_json(changed=True, results=api_rval, state="present")
+            module.exit_json(changed=True, results=api_rval, state="present")
 
+        ########
+        # Update
+        ########
+        if oc_sa.needs_update():
+            api_rval = oc_sa.update()
+
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
+
+            # return the created object
+            api_rval = oc_sa.get()
+
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
+
+            module.exit_json(changed=True, results=api_rval, state="present")
 
         module.exit_json(changed=False, results=api_rval, state="present")
 
