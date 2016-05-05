@@ -28,7 +28,7 @@
 import argparse
 import json
 import requests
-import os
+import os, sys
 import yaml
 import base64
 from OpenSSL import crypto
@@ -41,15 +41,28 @@ class OpenshiftCertificateRequester(object):
         self.key = None
         self.req = None
         self.config = None
+        self.valid_hosts = ["use-tower1.ops.rhcloud.com", "use-ctl1.ops.rhcloud.com"]
 
     def run(self):
         """  Main function """
 
         self.parse_args()
+        self.check_host()
         self.parse_config()
         self.gen_key()
         self.gen_csr()
         self.digicert_submit_csr()
+
+    def check_host(self):
+        """ Limit running to bastion hosts """
+
+        hostname = os.uname()[1]
+        if hostname in self.valid_hosts:
+            if self.args.verbose or self.args.debug:
+                print "Host is valid"
+        else:
+            print "This script must be run on a bastion host"
+            sys.exit(1)
 
     def gen_key(self):
         """ Generate an ssl private key """
