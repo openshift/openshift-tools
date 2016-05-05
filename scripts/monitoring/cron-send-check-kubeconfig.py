@@ -67,7 +67,9 @@ class OpenshiftKubeconfigChecker(object):
         """ parse the args from the cli """
 
         parser = argparse.ArgumentParser(description='Openshift pod sender')
-        parser.add_argument('-c', '--config', help='kubeconfig to parse (default /etc/origin/master/admin.kubeconfig)', default='/etc/origin/master/admin.kubeconfig')
+        parser.add_argument('-c', '--config', \
+            help='kubeconfig to parse (default /etc/origin/master/admin.kubeconfig)', \
+            default='/etc/origin/master/admin.kubeconfig')
         parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
         parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
 
