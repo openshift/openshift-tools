@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-  Send Pod status checks to Zagg
+  Send kubeconfig status checks to Zagg
 '''
 # vim: expandtab:tabstop=4:shiftwidth=4
 #
@@ -30,7 +30,7 @@ from openshift_tools.monitoring.zagg_sender import ZaggSender
 import yaml
 
 class OpenshiftKubeconfigChecker(object):
-    """ Checks for Openshift Pods """
+    """ Checks whether kubeconfig is valid yaml """
 
     def __init__(self):
         self.args = None
@@ -66,7 +66,7 @@ class OpenshiftKubeconfigChecker(object):
     def parse_args(self):
         """ parse the args from the cli """
 
-        parser = argparse.ArgumentParser(description='Openshift pod sender')
+        parser = argparse.ArgumentParser(description='Openshift kubeconfig checker')
         parser.add_argument('-c', '--config', \
             help='kubeconfig to parse (default /etc/origin/master/admin.kubeconfig)', \
             default='/etc/origin/master/admin.kubeconfig')
