@@ -131,8 +131,8 @@ class OpenshiftCertificateRequester(object):
 
         url = self.args.digicert_api_url + "enterprise/certificate/ssl"
         response = requests.post(url, headers=api_headers, data=digicert_csr_json)
-        import pprint
-        pprint.pprint(response.text)
+        if self.args.verbose or self.args.debug:
+            print response.text
 
     def parse_args(self):
         """ parse the args from the cli """
@@ -152,8 +152,7 @@ class OpenshiftCertificateRequester(object):
         """ parse config file for additional info needed to generate the cert """
 
         configfile = open(self.args.configfile, 'r')
-        config = yaml.load(configfile)
-        self.config = config
+        self.config = yaml.load(configfile)
 
 if __name__ == '__main__':
     OWCR = OpenshiftCertificateRequester()
