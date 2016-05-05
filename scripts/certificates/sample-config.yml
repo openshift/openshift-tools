@@ -1,0 +1,21 @@
+node: '*.testdontsign.openshift.com'
+keyfile: ./wildcard.testdontsign.openshift.com.key
+csrfile: ./wildcard.testdontsign.openshift.com.csr
+keylength: 2048
+country: US
+state: North Carolina
+locality: Raleigh
+org_name: Red Hat, Inc.
+ou: RHC Cloud Operations
+org_addr1: 100 E. Davie Street
+org_state: NC
+org_zip: 27601
+org_country: US
+org_firstname: RHC
+org_lastname: Cloud Operations
+org_email: libra-ops@redhat.com
+org_tel: 888-733-4281
+server_id: 2
+ou_id: 82891
+valid_years: 1
+keylength: 2048
