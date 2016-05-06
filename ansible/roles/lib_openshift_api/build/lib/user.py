@@ -8,7 +8,8 @@ class UserConfig(object):
                  namespace,
                  kubeconfig,
                  username,
-                 full_name):
+                 full_name,
+                ):
         ''' constructor for handling user options '''
         self.kubeconfig = kubeconfig
         self.namespace = namespace

@@ -107,6 +107,12 @@ FILES = {'oc_obj.py': ['lib/base.py',
                         'src/oc_user.py',
                         'ansible/oc_user.py',
                        ],
+         'oc_group.py': ['lib/base.py',
+                         '../../lib_yaml_editor/build/src/yedit.py',
+                         'lib/group.py',
+                         'src/oc_group.py',
+                         'ansible/oc_group.py',
+                        ],
         }
 
 
