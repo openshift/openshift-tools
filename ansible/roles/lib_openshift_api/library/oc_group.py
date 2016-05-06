@@ -557,87 +557,82 @@ class Yedit(object):
         return (False, self.yaml_dict)
 
 # pylint: disable=too-many-instance-attributes
-class UserConfig(object):
-    ''' Handle user options '''
+class GroupConfig(object):
+    ''' Handle route options '''
     # pylint: disable=too-many-arguments
     def __init__(self,
+                 sname,
                  namespace,
-                 kubeconfig,
-                 username,
-                 full_name,
-                ):
-        ''' constructor for handling user options '''
+                 kubeconfig):
+        ''' constructor for handling group options '''
         self.kubeconfig = kubeconfig
+        self.name = sname
         self.namespace = namespace
-        self.username = username
-        self.full_name = full_name
-
         self.data = {}
+
         self.create_dict()
 
     def create_dict(self):
-        ''' return a user as a dict '''
+        ''' return a service as a dict '''
         self.data['apiVersion'] = 'v1'
-        self.data['fullName'] = self.full_name
-        self.data['groups'] = None
-        self.data['identities'] = None
-        self.data['kind'] = 'User'
+        self.data['kind'] = 'Group'
         self.data['metadata'] = {}
-        self.data['metadata']['name'] = self.username
+        self.data['metadata']['name'] = self.name
+        self.data['users'] = None
+
 
 # pylint: disable=too-many-instance-attributes
-class User(Yedit):
+class Group(Yedit):
     ''' Class to wrap the oc command line tools '''
-    kind = 'user'
+    kind = 'group'
 
     def __init__(self, content):
-        '''User constructor'''
-        super(User, self).__init__(content=content)
+        '''Group constructor'''
+        super(Group, self).__init__(content=content)
 # vim: expandtab:tabstop=4:shiftwidth=4
 # pylint: skip-file
 
 # pylint: disable=too-many-instance-attributes
-class OCUser(OpenShiftCLI):
+class OCGroup(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
-    kind = 'users'
+    kind = 'group'
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
     def __init__(self,
                  config,
-                 groups=None,
                  verbose=False):
-        ''' Constructor for OCVolume '''
-        super(OCUser, self).__init__(config.namespace, config.kubeconfig)
+        ''' Constructor for OCGroup '''
+        super(OCGroup, self).__init__(config.namespace, config.kubeconfig)
         self.config = config
-        self.groups = groups
-        self._user = None
+        self.namespace = config.namespace
+        self._group = None
 
     @property
-    def user(self):
+    def group(self):
         ''' property function service'''
-        if not self._user:
+        if not self._group:
             self.get()
-        return self._user
+        return self._group
 
-    @user.setter
-    def user(self, data):
+    @group.setter
+    def group(self, data):
         ''' setter function for yedit var '''
-        self._user = data
+        self._group = data
 
     def exists(self):
-        ''' return whether a user exists '''
-        if self.user:
+        ''' return whether a group exists '''
+        if self.group:
             return True
 
         return False
 
     def get(self):
-        '''return user information '''
-        result = self._get(self.kind, self.config.username)
+        '''return group information '''
+        result = self._get(self.kind, self.config.name)
         if result['returncode'] == 0:
-            self.user = User(content=result['results'][0])
-        elif 'users \"%s\" not found' % self.config.username in result['stderr']:
+            self.group = Group(content=result['results'][0])
+        elif 'groups \"%s\" not found' % self.config.name in result['stderr']:
             result['returncode'] = 0
             result['results'] = [{}]
 
@@ -645,126 +640,53 @@ class OCUser(OpenShiftCLI):
 
     def delete(self):
         '''delete the object'''
-        return self._delete(self.kind, self.config.username)
-
-    def create_group_entries(self):
-        ''' make entries for user to the provided group list '''
-        if self.groups != None:
-            for group in self.groups:
-                cmd = ['groups', 'add-users', group, self.config.username]
-                rval = self.openshift_cmd(cmd, oadm=True)
-                if rval['returncode'] != 0:
-                    return rval
-
-                return rval
-
-        return {'returncode': 0}
+        return self._delete(self.kind, self.config.name)
 
     def create(self):
         '''create the object'''
-        rval = self.create_group_entries()
-        if rval['returncode'] != 0:
-            return rval
-
-        return self._create_from_content(self.config.username, self.config.data)
-
-    def group_update(self):
-        ''' update group membership '''
-        rval = {'returncode': 0}
-        cmd = ['get', 'groups', '-n', self.namespace, '-o', 'json']
-        all_groups = self.openshift_cmd(cmd, output=True)
-
-        for group in all_groups['results']['items']:
-            # If we're supposed to be in this group
-            if group['metadata']['name'] in self.groups \
-               and ( group['users'] == None or self.config.username not in group['users']):
-                cmd = ['groups', 'add-users', group['metadata']['name'],
-                       self.config.username]
-                rval = self.openshift_cmd(cmd, oadm=True)
-                if rval['returncode'] != 0:
-                    return rval
-            # else if we're in the group, but aren't supposed to be
-            elif self.config.username in group['users'] \
-                 and group['metadata']['name'] not in self.groups:
-                cmd = ['groups', 'remove-users', group['metadata']['name'],
-                       self.config.username]
-                rval = self.openshift_cmd(cmd, oadm=True)
-                if rval['returncode'] != 0:
-                    return rval
-
-        return rval
+        return self._create_from_content(self.config.name, self.config.data)
 
     def update(self):
         '''update the object'''
-        rval = self.group_update()
-        if rval['returncode'] != 0:
-            return rval
-
-        # need to update the user's info
-        return self._replace_content(self.kind, self.config.username, self.config.data, force=True)
-
-    def needs_group_update(self):
-        ''' check if there are group membership changes '''
-        cmd = ['get', 'groups', '-n', self.namespace, '-o', 'json']
-        all_groups = self.openshift_cmd(cmd, output=True)
-        for group in all_groups['results']['items']:
-            # If we're supposed to be in this group
-            if group['metadata']['name'] in self.groups \
-               and ( group['users'] == None or self.config.username not in group['users']):
-                return True
-            # else if we're in the group, but aren't supposed to be
-            elif self.config.username in group['users'] \
-                 and group['metadata']['name'] not in self.groups:
-                return True
-        
-        return False
+        # need to update the tls information and the service name
+        return self._replace_content(self.kind, self.config.name, self.config.data)
 
     def needs_update(self):
         ''' verify an update is needed '''
         skip = []
-        if self.needs_group_update() == True:
-            return True
-
-        return not Utils.check_def_equal(self.config.data, self.user.yaml_dict, skip_keys=skip, debug=True)
-
+        return not Utils.check_def_equal(self.config.data, self.group.yaml_dict, skip_keys=skip, debug=True)
 # vim: expandtab:tabstop=4:shiftwidth=4
-# pylint: skip-file
 
 #pylint: disable=too-many-branches
 def main():
     '''
-    ansible oc module for user
+    ansible oc module for group
     '''
 
     module = AnsibleModule(
         argument_spec=dict(
             kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
-            namespace=dict(default='default', type='str'),
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             debug=dict(default=False, type='bool'),
-            username=dict(default=None, type='str'),
-            full_name=dict(default=None, type='str'),
-            # setting groups for user data will not populate the 
-            # 'groups' field in the user data.
-            # it will call out to the group data and make the user
-            # entry there
-            groups=dict(default=[], type='list'),
+            name=dict(default=None, type='str'),
+            namespace=dict(default='default', type='str'),
+            # addind users to a group is handled through the oc_users module
+            #users=dict(default=None, type='list'),
         ),
         supports_check_mode=True,
     )
 
-    uconfig = UserConfig(module.params['namespace'],
-                         module.params['kubeconfig'],
-                         module.params['username'],
-                         module.params['full_name'],
-                        )
+    gconfig = GroupConfig(module.params['name'],
+                          module.params['namespace'],
+                          module.params['kubeconfig'],
+                         )
+    oc_group = OCGroup(gconfig,
+                       verbose=module.params['debug'])
 
-    oc_user = OCUser(uconfig, module.params['groups'],
-                     verbose=module.params['debug'])
     state = module.params['state']
 
-    api_rval = oc_user.get()
+    api_rval = oc_group.get()
 
     #####
     # Get
@@ -776,12 +698,12 @@ def main():
     # Delete
     ########
     if state == 'absent':
-        if oc_user.exists():
+        if oc_group.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a delete.')
 
-            api_rval = oc_user.delete()
+            api_rval = oc_group.delete()
 
             module.exit_json(changed=True, results=api_rval, state="absent")
         module.exit_json(changed=False, state="absent")
@@ -790,19 +712,19 @@ def main():
         ########
         # Create
         ########
-        if not oc_user.exists():
+        if not oc_group.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a create.')
 
             # Create it here
-            api_rval = oc_user.create()
+            api_rval = oc_group.create()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
 
             # return the created object
-            api_rval = oc_user.get()
+            api_rval = oc_group.get()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
@@ -812,17 +734,14 @@ def main():
         ########
         # Update
         ########
-        if oc_user.needs_update():
-            api_rval = oc_user.update()
+        if oc_group.needs_update():
+            api_rval = oc_group.update()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
 
-            orig_cmd = api_rval['cmd']
             # return the created object
-            api_rval = oc_user.get()
-            # overwrite the get/list cmd
-            api_rval['cmd'] = orig_cmd
+            api_rval = oc_group.get()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
