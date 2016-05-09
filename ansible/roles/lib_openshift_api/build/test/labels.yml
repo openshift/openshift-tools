@@ -7,12 +7,18 @@
   vars:
   - def_namespace: default
   - def_kind: node
-  - def_name: ip-172-31-12-168.ec2.internal
+  - def_name: ip-172-31-4-81.ec2.internal
   - def_original_labels:
+    - key: beta.kubernetes.io/instance-type
+      value: m4.large
     - key: color
       value: red
+    - key: failure-domain.beta.kubernetes.io/region
+      value: us-east-1
+    - key: failure-domain.beta.kubernetes.io/zone
+      value: us-east-1c
     - key: kubernetes.io/hostname
-      value: ip-172-31-12-168.ec2.internal
+      value: ip-172-31-4-81.ec2.internal
     - key: region
       value: us-east-1
     - key: type
@@ -36,7 +42,7 @@
       kind: "{{ def_kind }}"
       name: "{{ def_name }}"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that jdiaz2 and jdiaz3 test labels don't exist
     assert:
       that: label_out['results'][0]['jdiaz2'] is not defined and
@@ -49,10 +55,11 @@
       kind: "{{ def_kind }}"
       name: "{{ def_name }}"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that the original labels that should be there are actually there
     assert:
-      that: label_out['results'][0][item['key']] is defined
+      that: label_out['results'][0][item['key']] is defined and
+            label_out['results'][0][item['key']] == item['value']
     with_items: "{{ def_original_labels }}"
 
   - name: add label
@@ -65,7 +72,7 @@
       - key: jdiaz2
         value: "yes"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert adding label marked as changed
     assert:
       that: label_out['changed'] == True
@@ -77,7 +84,7 @@
       kind: "{{ def_kind }}"
       name: "{{ def_name }}"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that jdiaz2 label actually added
     assert:
       that: label_out['results'][0]['jdiaz2'] is defined and
@@ -93,7 +100,7 @@
       - key: jdiaz2
         value: "yes"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that re-adding made no changes
     assert:
       that: label_out['changed'] == False
@@ -108,7 +115,7 @@
       - key: jdiaz2
         value: "different"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that modifying existing label marked modified
     assert:
       that: label_out['changed'] == True
@@ -120,7 +127,7 @@
       kind: "{{ def_kind }}"
       name: "{{ def_name }}"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that jdiaz2 label actually modified
     assert:
       that: label_out['results'][0]['jdiaz2'] is defined and
@@ -135,7 +142,7 @@
       labels:
       - key: jdiaznone
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that deleting previous label marked changed
     assert:
       that: label_out['changed'] == False
@@ -149,7 +156,7 @@
       labels:
       - key: jdiaz2
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that deleting previous label marked changed
     assert:
       that: label_out['changed'] == True
@@ -163,7 +170,7 @@
       labels:
       - key: jdiaz2
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that re-deleting label marked not changed
     assert:
       that: label_out['changed'] == False
@@ -175,7 +182,7 @@
       kind: "{{ def_kind }}"
       name: "{{ def_name }}"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert label actually deleted
     assert:
       that: label_out['results'][0]['jdiaz2'] is not defined
@@ -192,7 +199,7 @@
       - key: jdiaz3
         value: "yes"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that adding a second label marked as changed
     assert:
       that: label_out['changed'] == True
@@ -204,7 +211,7 @@
       kind: "{{ def_kind }}"
       name: "{{ def_name }}"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that both labels actually exist
     assert:
       that: label_out['results'][0]['jdiaz2'] is defined and
@@ -222,7 +229,7 @@
       - key: jdiaz2
       - key: jdiaz3
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that change were made when delete both labels
     assert:
       that: label_out['changed'] == True
@@ -237,7 +244,7 @@
       - key: jdiaz2
       - key: jdiaz3
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that change was not made when re-delete both labels
     assert:
       that: label_out['changed'] == False
@@ -248,17 +255,9 @@
       namespace: "{{ def_namespace }}"
       kind: "{{ def_kind }}"
       name: "{{ def_name }}"
-      labels:
-      - key: color
-        value: red
-      - key: kubernetes.io/hostname
-        value: ip-172-31-12-168.ec2.internal
-      - key: region
-        value: us-east-1
-      - key: type
-        value: infra
+      labels: "{{ def_original_labels }}"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that no changes are made when current list matches existing list
     assert:
       that: label_out['changed'] == False
@@ -269,19 +268,9 @@
       namespace: "{{ def_namespace }}"
       kind: "{{ def_kind }}"
       name: "{{ def_name }}"
-      labels:
-      - key: color
-        value: red
-      - key: kubernetes.io/hostname
-        value: ip-172-31-12-168.ec2.internal
-      - key: region
-        value: us-east-1
-      - key: type
-        value: infra
-      - key: jdiaz2
-        value: "yes"
+      labels: "{{ def_original_labels + [{'key': 'jdiaz2', 'value': 'yes'}] }}"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that changes were made
     assert:
       that: label_out['changed'] == True
@@ -293,7 +282,7 @@
       kind: "{{ def_kind }}"
       name: "{{ def_name }}"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: asssert that new label was actually added
     assert:
       that: label_out['results'][0]['jdiaz2'] is defined and
@@ -305,19 +294,9 @@
       namespace: "{{ def_namespace }}"
       kind: "{{ def_kind }}"
       name: "{{ def_name }}"
-      labels:
-      - key: color
-        value: red
-      - key: kubernetes.io/hostname
-        value: ip-172-31-12-168.ec2.internal
-      - key: region
-        value: us-east-1
-      - key: type
-        value: infra
-      - key: jdiaz2
-        value: different
+      labels: "{{ def_original_labels + [{'key': 'jdiaz2', 'value': 'different'}]}}"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that changes were made when existing key's value is changed
     assert:
       that: label_out['changed'] == True
@@ -329,7 +308,7 @@
       kind: "{{ def_kind }}"
       name: "{{ def_name }}"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: asssert that changed label was actually changed
     assert:
       that: label_out['results'][0]['jdiaz2'] == 'different'
@@ -340,17 +319,9 @@
       namespace: "{{ def_namespace }}"
       kind: "{{ def_kind }}"
       name: "{{ def_name }}"
-      labels:
-      - key: color
-        value: red
-      - key: kubernetes.io/hostname
-        value: ip-172-31-12-168.ec2.internal
-      - key: region
-        value: us-east-1
-      - key: type
-        value: infra
+      labels: "{{ def_original_labels }}"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: assert that changes were made
     assert:
       that: label_out['changed'] == True
@@ -362,7 +333,7 @@
       kind: "{{ def_kind }}"
       name: "{{ def_name }}"
     register: label_out
-  - debug: var=label_out
+  #- debug: var=label_out
   - name: asssert that present-removed actually removed
     assert:
       that: label_out['results'][0]['jdiaz2'] is not defined
