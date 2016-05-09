@@ -1,8 +1,9 @@
 # pylint: skip-file
 
+#pylint: disable=too-many-branches
 def main():
     '''
-    ansible oc module for services
+    ansible oc module for pvc
     '''
 
     module = AnsibleModule(
@@ -11,42 +12,25 @@ def main():
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             debug=dict(default=False, type='bool'),
-            kind=dict(default='dc', choices=['dc', 'rc', 'pods'], type='str'),
-            namespace=dict(default='default', type='str'),
-            vol_name=dict(default=None, type='str'),
-            name=dict(default=None, type='str'),
-            mount_type=dict(default=None,
-                            choices=['emptydir', 'hostpath', 'secret', 'pvc'],
-                            type='str'),
-            mount_path=dict(default=None, type='str'),
-            # secrets require a name
-            secret_name=dict(default=None, type='str'),
-            # pvc requires a size
-            claim_size=dict(default=None, type='str'),
-            claim_name=dict(default=None, type='str'),
+            name=dict(default=None, required=True, type='str'),
+            namespace=dict(default=None, required=True, type='str'),
+            volume_capacity=dict(default='1G', type='str'),
+            access_modes=dict(default=None, type='list'),
         ),
         supports_check_mode=True,
     )
-    oc_volume = OCVolume(module.params['kind'],
-                         module.params['name'],
-                         module.params['namespace'],
-                         module.params['vol_name'],
-                         module.params['mount_path'],
-                         module.params['mount_type'],
-                         # secrets
-                         module.params['secret_name'],
-                         # pvc
-                         module.params['claim_size'],
-                         module.params['claim_name'],
-                         kubeconfig=module.params['kubeconfig'],
-                         verbose=module.params['debug'])
+
+    pconfig = PersistentVolumeClaimConfig(module.params['name'],
+                                          module.params['namespace'],
+                                          module.params['kubeconfig'],
+                                          module.params['access_modes'],
+                                          module.params['volume_capacity'],
+                                         )
+    oc_pvc = OCPVC(pconfig, verbose=module.params['debug'])
 
     state = module.params['state']
 
-    api_rval = oc_volume.get()
-
-    if api_rval['returncode'] != 0:
-        module.fail_json(msg=api_rval)
+    api_rval = oc_pvc.get()
 
     #####
     # Get
@@ -58,12 +42,12 @@ def main():
     # Delete
     ########
     if state == 'absent':
-        if oc_volume.exists():
+        if oc_pvc.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a delete.')
 
-            api_rval = oc_volume.delete()
+            api_rval = oc_pvc.delete()
 
             module.exit_json(changed=True, results=api_rval, state="absent")
         module.exit_json(changed=False, state="absent")
@@ -72,16 +56,19 @@ def main():
         ########
         # Create
         ########
-        if not oc_volume.exists():
+        if not oc_pvc.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a create.')
 
             # Create it here
-            api_rval = oc_volume.put()
+            api_rval = oc_pvc.create()
+
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
 
             # return the created object
-            api_rval = oc_volume.get()
+            api_rval = oc_pvc.get()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
@@ -91,14 +78,18 @@ def main():
         ########
         # Update
         ########
-        if oc_volume.needs_update():
-            api_rval = oc_volume.put()
+        if oc_pvc.pvc.is_bound() or oc_pvc.pvc.get_volume_name():
+            api_rval['msg'] = '##### - This volume is currently bound.  Will not update - ####'
+            module.exit_json(changed=False, results=api_rval, state="present")
+
+        if oc_pvc.needs_update():
+            api_rval = oc_pvc.update()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
 
             # return the created object
-            api_rval = oc_volume.get()
+            api_rval = oc_pvc.get()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)

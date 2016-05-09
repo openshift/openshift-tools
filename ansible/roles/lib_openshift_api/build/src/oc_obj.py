@@ -9,6 +9,7 @@ class OCObject(OpenShiftCLI):
                  kind,
                  namespace,
                  rname=None,
+                 selector=None,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
                  verbose=False):
         ''' Constructor for OpenshiftOC '''
@@ -16,12 +17,18 @@ class OCObject(OpenShiftCLI):
         self.kind = kind
         self.namespace = namespace
         self.name = rname
+        self.selector = selector
         self.kubeconfig = kubeconfig
         self.verbose = verbose
 
     def get(self):
-        '''return a deploymentconfig by name '''
-        return self._get(self.kind, rname=self.name)
+        '''return a kind by name '''
+        results = self._get(self.kind, rname=self.name, selector=self.selector)
+        if results['returncode'] != 0 and results.has_key('stderr') and \
+           '\"%s\" not found' % self.name in results['stderr']:
+            results['returncode'] = 0
+
+        return results
 
     def delete(self):
         '''return all pods '''

@@ -629,237 +629,706 @@ class Yedit(object):
             return (True, self.yaml_dict)
 
         return (False, self.yaml_dict)
-# vim: expandtab:tabstop=4:shiftwidth=4
-# pylint: skip-file
 
 # pylint: disable=too-many-instance-attributes
-class OCLabel(OpenShiftCLI):
-    ''' Class to wrap the oc command line tools '''
-
-    # pylint allows 5
+class RoleConfig(object):
+    ''' Handle route options '''
     # pylint: disable=too-many-arguments
     def __init__(self,
-                 name,
+                 sname,
                  namespace,
-                 kind,
-		 kubeconfig,
-                 labels=None,
-                 verbose=False):
-        ''' Constructor for OCLabel '''
-        super(OCLabel, self).__init__(namespace, kubeconfig)
-        self.name = name
-        self.namespace = namespace
-        self.kind = kind
+                 kubeconfig,
+                 kind='Role',
+                 rules=None):
+        ''' constructor for handling route options '''
         self.kubeconfig = kubeconfig
-        self.labels = labels
+        self.kind = kind
+        self.name = sname
+        self.namespace = namespace
+        self.rules = rules
+        self.data = {}
 
-    def all_user_labels_exist(self):
-        ''' return whether all the labels already exist '''
-        current_labels = self.get()['results'][0]
+        self.create_dict()
 
-        for label in self.labels:
-            if label['key'] not in current_labels or \
-               label['value'] != current_labels[label['key']]:
-                return False
+    def create_dict(self):
+        ''' return a service as a dict '''
+        self.data['apiVersion'] = 'v1'
+        self.data['kind'] = self.kind
+        self.data['metadata'] = {}
+        self.data['metadata']['name'] = self.name
+        self.data['rules'] = self.rules or []
+
+# pylint: disable=too-many-instance-attributes
+class Role(Yedit):
+    ''' Class to wrap the oc command line tools '''
+    rule_path = "rules"
+
+    def __init__(self, content, kind='Role'):
+        '''Role constructor'''
+        super(Role, self).__init__(content=content)
+        self.kind = kind
+
+    def get_rules(self):
+        ''' return cert '''
+        return self.get(Role.rule_path) or []
+
+
+class ClusterRole(Role):
+    ''' Class to wrap the oc command line tools '''
+    rule_path = "rules"
+
+    def __init__(self, content, kind='ClusterRole'):
+        '''ClusterRole constructor'''
+        super(ClusterRole, self).__init__(content=content)
+        self.kind = kind
+
+    def get_rules(self):
+        ''' return cert '''
+        return self.get(Role.rule_path) or []
+
+# pylint: disable=too-many-instance-attributes
+class RoleBindingConfig(object):
+    ''' Handle route options '''
+    # pylint: disable=too-many-arguments
+    def __init__(self,
+                 sname,
+                 namespace,
+                 kubeconfig,
+                 group_names=None,
+                 role_ref=None,
+                 subjects=None,
+                 usernames=None):
+        ''' constructor for handling route options '''
+        self.kubeconfig = kubeconfig
+        self.name = sname
+        self.namespace = namespace
+        self.group_names = group_names
+        self.role_ref = role_ref
+        self.subjects = subjects
+        self.usernames = usernames
+        self.data = {}
+
+        self.create_dict()
+
+    def create_dict(self):
+        ''' return a service as a dict '''
+        self.data['apiVersion'] = 'v1'
+        self.data['kind'] = 'RoleBinding'
+        self.data['groupNames'] = self.group_names
+        self.data['metadata']['name'] = self.name
+        self.data['metadata']['namespace'] = self.namespace
+
+        self.data['roleRef'] = self.role_ref
+        self.data['subjects'] = self.subjects
+        self.data['userNames'] = self.usernames
+
+
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
+class RoleBinding(Yedit):
+    ''' Class to wrap the oc command line tools '''
+    group_names_path = "groupNames"
+    role_ref_path = "roleRef"
+    subjects_path = "subjects"
+    user_names_path = "userNames"
+
+    kind = 'RoleBinding'
+
+    def __init__(self, content):
+        '''RoleBinding constructor'''
+        super(RoleBinding, self).__init__(content=content)
+        self._subjects = None
+        self._role_ref = None
+        self._group_names = None
+        self._user_names = None
+
+    @property
+    def subjects(self):
+        ''' subjects property '''
+        if self._subjects == None:
+            self._subjects = self.get_subjects()
+        return self._subjects
+
+    @subjects.setter
+    def subjects(self, data):
+        ''' subjects property setter'''
+        self._subjects = data
+
+    @property
+    def role_ref(self):
+        ''' role_ref property '''
+        if self._role_ref == None:
+            self._role_ref = self.get_role_ref()
+        return self._role_ref
+
+    @role_ref.setter
+    def role_ref(self, data):
+        ''' role_ref property setter'''
+        self._role_ref = data
+
+    @property
+    def group_names(self):
+        ''' group_names property '''
+        if self._group_names == None:
+            self._group_names = self.get_group_names()
+        return self._group_names
+
+    @group_names.setter
+    def group_names(self, data):
+        ''' group_names property setter'''
+        self._group_names = data
+
+    @property
+    def user_names(self):
+        ''' user_names property '''
+        if self._user_names == None:
+            self._user_names = self.get_user_names()
+        return self._user_names
+
+    @user_names.setter
+    def user_names(self, data):
+        ''' user_names property setter'''
+        self._user_names = data
+
+    def get_group_names(self):
+        ''' return groupNames '''
+        return self.get(RoleBinding.group_names_path) or []
+
+    def get_user_names(self):
+        ''' return usernames '''
+        return self.get(RoleBinding.user_names_path) or []
+
+    def get_role_ref(self):
+        ''' return role_ref '''
+        return self.get(RoleBinding.role_ref_path) or {}
+
+    def get_subjects(self):
+        ''' return subjects '''
+        return self.get(RoleBinding.subjects_path) or []
+
+    #### ADD #####
+    def add_subject(self, inc_subject):
+        ''' add a subject '''
+        if self.subjects:
+            self.subjects.append(inc_subject)
+        else:
+            self.put(RoleBinding.subjects_path, [inc_subject])
 
         return True
 
-    def get_user_keys(self):
-        ''' go through list of user key:values and return all keys '''
-        user_keys = []
-        for label in self.labels:
-            user_keys.append(label['key'])
-        return user_keys
+    def add_role_ref(self, inc_role_ref):
+        ''' add a role_ref '''
+        if not self.role_ref:
+            self.put(RoleBinding.role_ref_path, {"name": inc_role_ref})
+            return True
 
-    def get_extra_current_labels(self):
-        ''' return list of labels that are currently stored, but aren't
-            int user-provided list '''
-        extra_labels = []
-        current_labels = self.get()['results'][0]
-        user_label_keys = self.get_user_keys()
-
-        for current_key in current_labels.keys():
-            if current_key not in user_label_keys:
-                extra_labels.append(current_key)
-
-        return extra_labels
-                
-    def extra_current_labels(self):
-        ''' return whether there are labels currently stored that user 
-            hasn't directly provided '''
-        extra_labels = self.get_extra_current_labels()
-
-        if len(extra_labels) > 0:
-                return True
-        else:
-            return False
- 
-    def any_label_exists(self):
-        ''' return whether any single label already exists '''
-        current_labels = self.get()['results'][0]
-        for label in self.labels:
-            if label['key'] in current_labels:
-                return True
         return False
-            
-    def get(self):
-        '''return label information '''
 
-        result = self._get(self.kind, self.name)
-        if 'labels' in result['results'][0]['metadata']:
-
-            label_list = result['results'][0]['metadata']['labels']
-            result['results'][0] = label_list
+    def add_group_names(self, inc_group_names):
+        ''' add a group_names '''
+        if self.group_names:
+            self.group_names.append(inc_group_names)
         else:
-            result['results'][0] = {}
+            self.put(RoleBinding.group_names_path, [inc_group_names])
 
-        return result
+        return True
 
-    def replace(self):
-        ''' replace currently stored labels with user provided labels '''
-        cmd = self.cmd_template()
+    def add_user_name(self, inc_user_name):
+        ''' add a username '''
+        if self.user_names:
+            self.user_names.append(inc_user_name)
+        else:
+            self.put(RoleBinding.user_names_path, [inc_user_name])
 
-        # First delete any extra labels
-        extra_labels = self.get_extra_current_labels()
-        if len(extra_labels) > 0:
-            for label in extra_labels:
-                cmd.append("{}-".format(label))
+        return True
 
-        # Now add/modify the user-provided label list
-        if len(self.labels) > 0:
-            for label in self.labels:
-                cmd.append("{}={}".format(label['key'], label['value']))
+    #### /ADD #####
 
-        # --overwrite for the case where we are updating existing labels
-        cmd.append("--overwrite")
-        return self.openshift_cmd(cmd)
+    #### Remove #####
+    def remove_subject(self, inc_subject):
+        ''' remove a subject '''
+        try:
+            self.subjects.remove(inc_subject)
+        except ValueError as _:
+            return False
 
-    def cmd_template(self):
-        ''' boilerplate oc command for modifying lables on this object '''
-        cmd = ["-n", self.namespace, "--config", self.kubeconfig, "label", "node",
-               self.name]
-        return cmd
+        return True
 
-    def add(self):
-        ''' add labels '''
-        cmd = self.cmd_template()
+    def remove_role_ref(self, inc_role_ref):
+        ''' remove a role_ref '''
+        if self.role_ref and self.role_ref['name'] == inc_role_ref:
+            del self.role_ref['name']
+            return True
 
-        for label in self.labels:
-            cmd.append("{}={}".format(label['key'], label['value']))
+        return False
 
-        cmd.append("--overwrite")
+    def remove_group_name(self, inc_group_name):
+        ''' remove a groupname '''
+        try:
+            self.group_names.remove(inc_group_name)
+        except ValueError as _:
+            return False
 
-        return self.openshift_cmd(cmd)
+        return True
 
-    def delete(self):
-        '''delete the labels'''
-        cmd = self.cmd_template()
-        for label in self.labels:
-            cmd.append("{}-".format(label['key']))
+    def remove_user_name(self, inc_user_name):
+        ''' remove a username '''
+        try:
+            self.user_names.remove(inc_user_name)
+        except ValueError as _:
+            return False
 
-        return self.openshift_cmd(cmd)
-# vim: expandtab:tabstop=4:shiftwidth=4
-# pylint: skip-file
+        return True
 
-#pylint: disable=too-many-branches
+    #### /REMOVE #####
+
+    #### UPDATE #####
+    def update_subject(self, inc_subject):
+        ''' update a subject '''
+        try:
+            index = self.subjects.index(inc_subject)
+        except ValueError as _:
+            return self.add_subject(inc_subject)
+
+        self.subjects[index] = inc_subject
+
+        return True
+
+    def update_group_name(self, inc_group_name):
+        ''' update a groupname '''
+        try:
+            index = self.group_names.index(inc_group_name)
+        except ValueError as _:
+            return self.add_group_names(inc_group_name)
+
+        self.group_names[index] = inc_group_name
+
+        return True
+
+    def update_user_name(self, inc_user_name):
+        ''' update a username '''
+        try:
+            index = self.user_names.index(inc_user_name)
+        except ValueError as _:
+            return self.add_user_name(inc_user_name)
+
+        self.user_names[index] = inc_user_name
+
+        return True
+
+    def update_role_ref(self, inc_role_ref):
+        ''' update a role_ref '''
+        self.role_ref['name'] = inc_role_ref
+
+        return True
+
+    #### /UPDATE #####
+
+    #### FIND ####
+    def find_subject(self, inc_subject):
+        ''' find a subject '''
+        index = None
+        try:
+            index = self.subjects.index(inc_subject)
+        except ValueError as _:
+            return index
+
+        return index
+
+    def find_group_name(self, inc_group_name):
+        ''' find a group_name '''
+        index = None
+        try:
+            index = self.group_names.index(inc_group_name)
+        except ValueError as _:
+            return index
+
+        return index
+
+    def find_user_name(self, inc_user_name):
+        ''' find a user_name '''
+        index = None
+        try:
+            index = self.user_names.index(inc_user_name)
+        except ValueError as _:
+            return index
+
+        return index
+
+    def find_role_ref(self, inc_role_ref):
+        ''' find a user_name '''
+        if self.role_ref and self.role_ref['name'] == inc_role_ref['name']:
+            return self.role_ref
+
+        return None
+
+# pylint: disable=too-many-instance-attributes
+class SecurityContextConstraintsConfig(object):
+    ''' Handle route options '''
+    # pylint: disable=too-many-arguments
+    def __init__(self,
+                 sname,
+                 kubeconfig,
+                 options=None,
+                 fs_group='MustRunAs',
+                 default_add_capabilities=None,
+                 groups=None,
+                 priority=None,
+                 required_drop_capabilities=None,
+                 run_as_user='MustRunAsRange',
+                 se_linux_context='MustRunAs',
+                 supplemental_groups='RunAsAny',
+                 users=None,
+                 annotations=None):
+        ''' constructor for handling route options '''
+        self.kubeconfig = kubeconfig
+        self.name = sname
+        self.options = options
+        self.fs_group = fs_group
+        self.default_add_capabilities = default_add_capabilities
+        self.groups = groups
+        self.priority = priority
+        self.required_drop_capabilities = required_drop_capabilities
+        self.run_as_user = run_as_user
+        self.se_linux_context = se_linux_context
+        self.supplemental_groups = supplemental_groups
+        self.users = users
+        self.annotations = annotations
+        self.data = {}
+
+        self.create_dict()
+
+    def create_dict(self):
+        ''' return a service as a dict '''
+        # allow options
+        if self.options:
+            for key, value in self.options.items():
+                self.data[key] = value
+        else:
+            self.data['allowHostDirVolumePlugin'] = False
+            self.data['allowHostIPC'] = False
+            self.data['allowHostNetwork'] = False
+            self.data['allowHostPID'] = False
+            self.data['allowHostPorts'] = False
+            self.data['allowPrivilegedContainer'] = False
+            self.data['allowedCapabilities'] = None
+
+        # version
+        self.data['apiVersion'] = 'v1'
+        # kind
+        self.data['kind'] = 'SecurityContextConstraints'
+        # defaultAddCapabilities
+        self.data['defaultAddCapabilities'] = self.default_add_capabilities
+        # fsGroup
+        self.data['fsGroup']['type'] = self.fs_group
+        # groups
+        self.data['groups'] = []
+        if self.groups:
+            self.data['groups'] = self.groups
+        # metadata
+        self.data['metadata'] = {}
+        self.data['metadata']['name'] = self.name
+        if self.annotations:
+            for key, value in self.annotations.items():
+                self.data['metadata'][key] = value
+        # priority
+        self.data['priority'] = self.priority
+        # requiredDropCapabilities
+        self.data['requiredDropCapabilities'] = self.required_drop_capabilities
+        # runAsUser
+        self.data['runAsUser'] = {'type': self.run_as_user}
+        # seLinuxContext
+        self.data['seLinuxContext'] = {'type': self.se_linux_context}
+        # supplementalGroups
+        self.data['supplementalGroups'] = {'type': self.supplemental_groups}
+        # users
+        self.data['users'] = []
+        if self.users:
+            self.data['users'] = self.users
+
+
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
+class SecurityContextConstraints(Yedit):
+    ''' Class to wrap the oc command line tools '''
+    default_add_capabilities_path = "defaultAddCapabilities"
+    fs_group_path = "fsGroup"
+    groups_path = "groups"
+    priority_path = "priority"
+    required_drop_capabilities_path = "requiredDropCapabilities"
+    run_as_user_path = "runAsUser"
+    se_linux_context_path = "seLinuxContext"
+    supplemental_groups_path = "supplementalGroups"
+    users_path = "users"
+    kind = 'SecurityContextConstraints'
+
+    def __init__(self, content):
+        '''RoleBinding constructor'''
+        super(SecurityContextConstraints, self).__init__(content=content)
+        self._users = None
+
+    @property
+    def users(self):
+        ''' users property '''
+        if self._users == None:
+            self._users = self.get_users()
+        return self._users
+
+    @users.setter
+    def users(self, data):
+        ''' users property setter'''
+        self._users = data
+
+    def get_users(self):
+        '''get scc users'''
+        return self.get(SecurityContextConstraints.users_path) or []
+
+    #### ADD #####
+    def add_user(self, inc_user):
+        ''' add a subject '''
+        if self.users:
+            self.users.append(inc_user)
+        else:
+            self.put(SecurityContextConstraints.users_path, [inc_user])
+
+        return True
+
+    #### /ADD #####
+
+    #### Remove #####
+    def remove_user(self, inc_user):
+        ''' remove a user '''
+        try:
+            self.users.remove(inc_user)
+        except ValueError as _:
+            return False
+
+        return True
+
+    #### /REMOVE #####
+
+    #### UPDATE #####
+    def update_user(self, inc_user):
+        ''' update a user '''
+        try:
+            index = self.users.index(inc_user)
+        except ValueError as _:
+            return self.add_user(inc_user)
+
+        self.users[index] = inc_user
+
+        return True
+
+    #### /UPDATE #####
+
+    #### FIND ####
+    def find_user(self, inc_user):
+        ''' find a user '''
+        index = None
+        try:
+            index = self.users.index(inc_user)
+        except ValueError as _:
+            return index
+
+        return index
+
+class OadmPolicyException(Exception):
+    ''' Registry Exception Class '''
+    pass
+
+class OadmPolicyUserConfig(OpenShiftCLIConfig):
+    ''' RegistryConfig is a DTO for the registry.  '''
+    def __init__(self, namespace, kubeconfig, policy_options):
+        super(OadmPolicyUserConfig, self).__init__(policy_options['name']['value'],
+                                                   namespace, kubeconfig, policy_options)
+        self.kind = self.get_kind()
+        self.namespace = namespace
+
+    def get_kind(self):
+        ''' return the kind we are working with '''
+        if self.config_options['resource_kind']['value'] == 'role':
+            return 'rolebinding'
+        elif self.config_options['resource_kind']['value'] == 'cluster-role':
+            return 'clusterrolebinding'
+        elif self.config_options['resource_kind']['value'] == 'scc':
+            return 'scc'
+
+        return None
+
+class OadmPolicyUser(OpenShiftCLI):
+    ''' Class to wrap the oc command line tools '''
+
+    def __init__(self,
+                 policy_config,
+                 verbose=False):
+        ''' Constructor for OadmPolicyUser '''
+        super(OadmPolicyUser, self).__init__('default', policy_config.kubeconfig, verbose)
+        self.config = policy_config
+        self.verbose = verbose
+        self._rolebinding = None
+        self._scc = None
+
+    @property
+    def role_binding(self):
+        ''' role_binding property '''
+        return self._rolebinding
+
+    @role_binding.setter
+    def role_binding(self, binding):
+        ''' setter for role_binding property '''
+        self._rolebinding = binding
+
+    @property
+    def security_context_constraint(self):
+        ''' security_context_constraint property '''
+        return self._scc
+
+    @security_context_constraint.setter
+    def security_context_constraint(self, scc):
+        ''' setter for security_context_constraint property '''
+        self._scc = scc
+
+    def get(self):
+        '''fetch the desired kind'''
+        return self._get(self.config.kind, self.config.config_options['name']['value'])
+
+    def exists_role_binding(self):
+        ''' return whether role_binding exists '''
+        results = self.get()
+        if results['returncode'] == 0:
+            self.role_binding = RoleBinding(results['results'][0])
+            if self.role_binding.find_user_name(self.config.config_options['user']['value']) != None:
+                return True
+
+            return False
+
+        elif 'RoleBinding \"%s\" not found' % self.config.config_options['name']['value'] in results['stderr']:
+            return False
+
+        return results
+
+    def exists_scc(self):
+        ''' return whether scc exists '''
+        results = self.get()
+        if results['returncode'] == 0:
+            self.security_context_constraint = SecurityContextConstraints(results['results'][0])
+
+            if self.security_context_constraint.find_user(self.config.config_options['user']['value']):
+                return True
+
+            return False
+
+        return results
+
+    def exists(self):
+        '''does the object exist?'''
+        if self.config.config_options['resource_kind']['value'] == 'cluster-role':
+            return self.exists_role_binding()
+
+        elif self.config.config_options['resource_kind']['value'] == 'role':
+            return self.exists_role_binding()
+
+        elif self.config.config_options['resource_kind']['value'] == 'scc':
+            return self.exists_scc()
+
+        return False
+
+    def perform(self):
+        '''perform action on resource'''
+        cmd = ['-n', self.config.namespace, 'policy',
+               self.config.config_options['action']['value'],
+               self.config.config_options['name']['value'],
+               self.config.config_options['user']['value']]
+
+        return self.openshift_cmd(cmd, oadm=True)
+#Manage policy
+#
+#Usage:
+#  oadm policy [options]
+#
+#Available Commands:
+#  add-role-to-user                Add users to a role in the current project
+#  remove-role-from-user           Remove user from role in the current project
+#  remove-user                     Remove user from the current project
+#  add-cluster-role-to-user        Add users to a role for all projects in the cluster
+#  remove-cluster-role-from-user   Remove user from role for all projects in the cluster
+#  add-scc-to-user                 Add users to a security context constraint
+#  remove-scc-from-user            Remove user from scc
+#
+#Use "oadm help <command>" for more information about a given command.
+#Use "oadm options" for a list of global command-line options (applies to all commands).
+#
+
 def main():
     '''
-    ansible oc module for labels
+    ansible oadm module for user policy
     '''
 
     module = AnsibleModule(
         argument_spec=dict(
-            kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
             state=dict(default='present', type='str',
-                       choices=['present', 'absent', 'list', 'add']),
+                       choices=['present', 'absent']),
             debug=dict(default=False, type='bool'),
-            kind=dict(default='node', type='str',
-                          choices=['node', 'pod']),
-            name=dict(default=None, required=True, type='str'),
-            namespace=dict(default=None, required=True, type='str'),
-            labels=dict(default=None, type='list'),
-            host=dict(default=None, type='str'),
+            resource_name=dict(required=True, type='str'),
+            namespace=dict(default=None, type='str'),
+            kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
+
+            # add-role-to-user
+            user=dict(required=True, type='str'),
+            resource_kind=dict(required=True, choices=['role', 'cluster-role', 'scc'], type='str'),
         ),
         supports_check_mode=True,
     )
-
-    oc_label = OCLabel(module.params['name'],
-                       module.params['namespace'],
-                       module.params['kind'],
-                       module.params['kubeconfig'],
-                       module.params['labels'],
-                       verbose=module.params['debug'])
-
     state = module.params['state']
 
-    api_rval = oc_label.get()
+    action = None
+    if state == 'present':
+        action = 'add-' + module.params['resource_kind'] + '-to-user'
+    else:
+        action = 'remove-' + module.params['resource_kind'] + '-from-user'
 
-    #####
-    # Get
-    #####
-    if state == 'list':
-        module.exit_json(changed=False, results=api_rval['results'], state="list")
+    uconfig = OadmPolicyUserConfig(module.params['namespace'],
+                                   module.params['kubeconfig'],
+                                   {'action': {'value': action, 'include': False},
+                                    'user': {'value': module.params['user'], 'include': False},
+                                    'resource_kind': {'value': module.params['resource_kind'], 'include': False},
+                                    'name': {'value': module.params['resource_name'], 'include': False},
+                                   })
 
-    #######
-    # Add
-    #######
-    if state == 'add':
-        if not oc_label.all_user_labels_exist():
-            if module.check_mode:
-                module.exit_json(changed=False, msg='Would have performed an addition.')
-            api_rval = oc_label.add()
-
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
-
-            module.exit_json(changed=True, results=api_rval, state="add")
-
-        module.exit_json(changed=False, state="add")
+    oadmpolicyuser = OadmPolicyUser(uconfig)
 
     ########
     # Delete
     ########
     if state == 'absent':
-        if oc_label.any_label_exists():
+        if not oadmpolicyuser.exists():
+            module.exit_json(changed=False, state="absent")
 
-            if module.check_mode:
-                module.exit_json(changed=False, msg='Would have performed a delete.')
+        if module.check_mode:
+            module.exit_json(changed=False, msg='Would have performed a delete.')
 
-            api_rval = oc_label.delete()
+        api_rval = oadmpolicyuser.perform()
 
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
+        if api_rval['returncode'] != 0:
+            module.fail_json(msg=api_rval)
 
-            module.exit_json(changed=True, results=api_rval, state="absent")
-
-        module.exit_json(changed=False, state="absent")
+        module.exit_json(changed=True, results=api_rval, state="absent")
 
     if state == 'present':
         ########
-        # Update
+        # Create
         ########
-        # if all the labels passed in don't already exist
-        # or if there are currently stored labels that haven't
-        # been passed in
-        if not oc_label.all_user_labels_exist() or \
-           oc_label.extra_current_labels():
+        if not oadmpolicyuser.exists():
+
             if module.check_mode:
-                module.exit_json(changed=False, msg='Would have made changes.')
+                module.exit_json(changed=False, msg='Would have performed a create.')
 
-            api_rval = oc_label.replace()
-
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
-
-            # return the created object
-            api_rval = oc_label.get()
+            api_rval = oadmpolicyuser.perform()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
 
             module.exit_json(changed=True, results=api_rval, state="present")
 
-        module.exit_json(changed=False, results=api_rval, state="present")
+        module.exit_json(changed=False, state="present")
 
     module.exit_json(failed=True,
                      changed=False,
@@ -869,5 +1338,4 @@ def main():
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
 from ansible.module_utils.basic import *
-
 main()
