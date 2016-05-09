@@ -86,14 +86,31 @@ class OpenShiftCLI(object):
         '''return all pods '''
         return self.openshift_cmd(['delete', resource, rname, '-n', self.namespace])
 
-    def _get(self, resource, rname=None):
+    def _process(self, template_name):
+        '''return all pods '''
+        results = self.openshift_cmd(['process', template_name, '-n', self.namespace], output=True)
+        if results['returncode'] != 0:
+            return results
+
+        fname = '/tmp/%s' % template_name
+        yed = Yedit(fname, results['results'])
+        yed.write()
+
+        atexit.register(Utils.cleanup, [fname])
+
+        return self.openshift_cmd(['create', '-f', fname])
+
+    def _get(self, resource, rname=None, selector=None):
         '''return a secret by name '''
-        cmd = ['get', resource, '-o', 'json', '-n', self.namespace]
+        cmd = ['get']
+        if selector:
+            cmd.append('--selector=%s' % selector)
+        cmd.extend([resource, '-o', 'json', '-n', self.namespace])
         if rname:
             cmd.append(rname)
 
         rval = self.openshift_cmd(cmd, output=True)
-#
+
         # Ensure results are retuned in an array
         if rval.has_key('items'):
             rval['results'] = rval['items']
@@ -354,8 +371,8 @@ class YeditException(Exception):
 
 class Yedit(object):
     ''' Class to modify yaml files '''
-    re_valid_key = r"(((\[-?\d+\])|([a-zA-Z-./]+)).?)+$"
-    re_key = r"(?:\[(-?\d+)\])|([a-zA-Z-./]+)"
+    re_valid_key = r"(((\[-?\d+\])|([0-9a-zA-Z-./]+)).?)+$"
+    re_key = r"(?:\[(-?\d+)\])|([0-9a-zA-Z-./]+)"
 
     def __init__(self, filename=None, content=None, content_type='yaml'):
         self.content = content
@@ -473,7 +490,7 @@ class Yedit(object):
     def read(self):
         ''' write to file '''
         # check if it exists
-        if not self.exists():
+        if not self.file_exists():
             return None
 
         contents = None
@@ -482,7 +499,7 @@ class Yedit(object):
 
         return contents
 
-    def exists(self):
+    def file_exists(self):
         ''' return whether file exists '''
         if os.path.exists(self.filename):
             return True
@@ -517,41 +534,98 @@ class Yedit(object):
 
         return entry
 
-    def delete(self, key):
-        ''' remove key from a dict'''
+    def delete(self, path):
+        ''' remove path from a dict'''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, key)
+            entry = Yedit.get_entry(self.yaml_dict, path)
         except KeyError as _:
             entry = None
-        if not entry:
+
+        if entry == None:
             return  (False, self.yaml_dict)
 
-        result = Yedit.remove_entry(self.yaml_dict, key)
+        result = Yedit.remove_entry(self.yaml_dict, path)
         if not result:
             return (False, self.yaml_dict)
 
         return (True, self.yaml_dict)
 
-    def put(self, key, value):
-        ''' put key, value into a dict '''
+    def exists(self, path, value):
+        ''' check if value exists at path'''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, key)
+            entry = Yedit.get_entry(self.yaml_dict, path)
+        except KeyError as _:
+            entry = None
+
+        if isinstance(entry, list):
+            if value in entry:
+                return True
+            return False
+
+        elif isinstance(entry, dict):
+            if isinstance(value, dict):
+                rval = False
+                for key, val  in value.items():
+                    if  entry[key] != val:
+                        rval = False
+                        break
+                else:
+                    rval = True
+                return rval
+
+            return value in entry
+
+        return entry == value
+
+    def add_item(self, path, inc_dict):
+        ''' put path, value into a dict '''
+        try:
+            entry = Yedit.get_entry(self.yaml_dict, path)
+        except KeyError as _:
+            entry = None
+
+        if entry == None or not isinstance(entry, dict):
+            return (False, self.yaml_dict)
+
+        entry.update(inc_dict)
+
+        return (True, self.yaml_dict)
+
+    def append(self, path, value):
+        ''' put path, value into a dict '''
+        try:
+            entry = Yedit.get_entry(self.yaml_dict, path)
+        except KeyError as _:
+            entry = None
+
+        if entry == None or not isinstance(entry, list):
+            return (False, self.yaml_dict)
+
+        #pylint: disable=no-member,maybe-no-member
+        entry.append(value)
+
+        return (True, self.yaml_dict)
+
+    def put(self, path, value):
+        ''' put path, value into a dict '''
+        try:
+            entry = Yedit.get_entry(self.yaml_dict, path)
         except KeyError as _:
             entry = None
 
         if entry == value:
             return (False, self.yaml_dict)
 
-        result = Yedit.add_entry(self.yaml_dict, key, value)
+        result = Yedit.add_entry(self.yaml_dict, path, value)
         if not result:
             return (False, self.yaml_dict)
 
         return (True, self.yaml_dict)
 
-    def create(self, key, value):
+    def create(self, path, value):
         ''' create a yaml file '''
-        if not self.exists():
-            self.yaml_dict = {key: value}
+        if not self.file_exists():
+            self.yaml_dict = {path: value}
             return (True, self.yaml_dict)
 
         return (False, self.yaml_dict)
@@ -565,6 +639,7 @@ class OCObject(OpenShiftCLI):
                  kind,
                  namespace,
                  rname=None,
+                 selector=None,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
                  verbose=False):
         ''' Constructor for OpenshiftOC '''
@@ -572,12 +647,18 @@ class OCObject(OpenShiftCLI):
         self.kind = kind
         self.namespace = namespace
         self.name = rname
+        self.selector = selector
         self.kubeconfig = kubeconfig
         self.verbose = verbose
 
     def get(self):
-        '''return a deploymentconfig by name '''
-        return self._get(self.kind, rname=self.name)
+        '''return a kind by name '''
+        results = self._get(self.kind, rname=self.name, selector=self.selector)
+        if results['returncode'] != 0 and results.has_key('stderr') and \
+           '\"%s\" not found' % self.name in results['stderr']:
+            results['returncode'] = 0
+
+        return results
 
     def delete(self):
         '''return all pods '''
@@ -672,10 +753,15 @@ def main():
                                'groups',
                                'componentstatuses', 'cs',
                                'endpoints', 'ep'
+                               'role',
+                               'policybinding',
+                               'clusterbinding',
+                               'template',
                               ]),
             delete_after=dict(default=False, type='bool'),
             content=dict(default=None, type='dict'),
             force=dict(default=False, type='bool'),
+            selector=dict(default=None, type='str'),
         ),
         mutually_exclusive=[["content", "files"]],
 
@@ -684,6 +770,7 @@ def main():
     ocobj = OCObject(module.params['kind'],
                      module.params['namespace'],
                      module.params['name'],
+                     module.params['selector'],
                      kubeconfig=module.params['kubeconfig'],
                      verbose=module.params['debug'])
 
@@ -695,7 +782,7 @@ def main():
     # Get
     #####
     if state == 'list':
-        module.exit_json(changed=False, results=api_rval['results'], state="list")
+        module.exit_json(changed=False, results=api_rval, state="list")
 
     if not module.params['name']:
         module.fail_json(msg='Please specify a name when state is absent|present.')

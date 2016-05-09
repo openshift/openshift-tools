@@ -79,14 +79,31 @@ class OpenShiftCLI(object):
         '''return all pods '''
         return self.openshift_cmd(['delete', resource, rname, '-n', self.namespace])
 
-    def _get(self, resource, rname=None):
+    def _process(self, template_name):
+        '''return all pods '''
+        results = self.openshift_cmd(['process', template_name, '-n', self.namespace], output=True)
+        if results['returncode'] != 0:
+            return results
+
+        fname = '/tmp/%s' % template_name
+        yed = Yedit(fname, results['results'])
+        yed.write()
+
+        atexit.register(Utils.cleanup, [fname])
+
+        return self.openshift_cmd(['create', '-f', fname])
+
+    def _get(self, resource, rname=None, selector=None):
         '''return a secret by name '''
-        cmd = ['get', resource, '-o', 'json', '-n', self.namespace]
+        cmd = ['get']
+        if selector:
+            cmd.append('--selector=%s' % selector)
+        cmd.extend([resource, '-o', 'json', '-n', self.namespace])
         if rname:
             cmd.append(rname)
 
         rval = self.openshift_cmd(cmd, output=True)
-#
+
         # Ensure results are retuned in an array
         if rval.has_key('items'):
             rval['results'] = rval['items']

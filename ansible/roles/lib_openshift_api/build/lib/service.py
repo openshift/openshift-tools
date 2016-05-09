@@ -59,7 +59,7 @@ class ServiceConfig(object):
         if self.service_type:
             self.data['spec']['type'] = self.service_type
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
 class Service(Yedit):
     ''' Class to wrap the oc command line tools '''
     port_path = "spec#ports"
