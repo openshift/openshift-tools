@@ -172,6 +172,32 @@
     assert:
       that: group_out['results'][0]['users'][0] == 'jdiaz@redhat.com'
 
+  - name: user delete (group cleanup)
+    oc_user:
+      state: absent
+      username: jdiaz@redhat.com
+    register: group_out
+
+  - name: get user list for jgroup
+    oc_group:
+      state: list
+      name: jgroup
+    register: group_out
+  #- debug: var=group_out
+  - name: assert that group jgroup has no members
+    assert:
+      that: group_out['results'][0]['users'] == []
+
+  - name: get user list for jgroup2
+    oc_group:
+      state: list
+      name: jgroup2
+    register: group_out
+  #- debug: var=group_out
+  - name: assert that group jgroup2 has no members
+    assert:
+      that: group_out['results'][0]['users'] == []
+
   - name: user without groups defined
     oc_user:
       state: present
