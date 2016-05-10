@@ -53,6 +53,7 @@ spec:
   - type: ConfigChange
 '''
 
+    replicas_path = "spec#replicas"
     env_path = "spec#template#spec#containers[0]#env"
     volumes_path = "spec#template#spec#volumes"
     container_path = "spec#template#spec#containers"
@@ -187,6 +188,10 @@ spec:
 
         return None
 
+    def get_replicas(self):
+        ''' return replicas setting '''
+        return self.get(DeploymentConfig.replicas_path)
+
     def get_volume_mounts(self):
         '''return volume mount information '''
         return self.get_volumes(mounts=True)
@@ -244,6 +249,10 @@ spec:
             self.put(DeploymentConfig.volumes_path, [volume])
         else:
             exist_volumes.append(volume)
+
+    def update_replicas(self, replicas):
+        ''' update replicas value '''
+        self.put(DeploymentConfig.replicas_path, replicas)
 
     def update_volume(self, volume):
         '''place an env in the env var list'''
@@ -321,3 +330,8 @@ spec:
             results.append(exist_volume['hostPath']['path'] == volume_mount['mountPath'])
 
         return not all(results)
+
+    def needs_update_replicas(self, replicas):
+        ''' verify whether a replica update is needed '''
+        current_reps =  self.get(DeploymentConfig.replicas_path)
+        return not current_reps == replicas
