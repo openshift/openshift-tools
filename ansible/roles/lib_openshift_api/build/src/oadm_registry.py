@@ -229,7 +229,7 @@ class Registry(OpenShiftCLI):
         # Modification 1
         # we need specific environment variables to be set
         for key, value in self.config.config_options['env_vars']['value'].items():
-            if not deploymentconfig.exists_env_value(key, value):
+            if not deploymentconfig.exists_env_key(key):
                 deploymentconfig.add_env_value(key, value)
             else:
                 deploymentconfig.update_env_var(key, value)

@@ -142,7 +142,7 @@ spec:
                 break
 
         if idx:
-            env_vars_array[idx][key] = value
+            env_vars_array[idx]['value'] = value
         else:
             self.add_env_value(key, value)
 
@@ -333,5 +333,5 @@ spec:
 
     def needs_update_replicas(self, replicas):
         ''' verify whether a replica update is needed '''
-        current_reps =  self.get(DeploymentConfig.replicas_path)
+        current_reps = self.get(DeploymentConfig.replicas_path)
         return not current_reps == replicas

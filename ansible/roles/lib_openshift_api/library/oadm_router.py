@@ -26,6 +26,10 @@ def timestamp_constructor(_, node):
     return str(node.value)
 yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
 
+class OpenShiftCLIError(Exception):
+    '''Exception class for openshiftcli'''
+    pass
+
 # pylint: disable=too-few-public-methods
 class OpenShiftCLI(object):
     ''' Class to wrap the command line tools '''
@@ -119,9 +123,16 @@ class OpenShiftCLI(object):
 
         return rval
 
+    def _get_version(self):
+        ''' return the version of openshift '''
+        results = self.openshift_cmd(['version'], output=True, output_type='raw')
+        if results['returncode'] == 0:
+            return results['stdout'].split('\n')[0].strip()
+
+        raise OpenShiftCLIError('Problem detecting openshift version.')
+
     def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json'):
         '''Base command for oc '''
-        #cmds = ['/usr/bin/oc', '--config', self.kubeconfig]
         cmds = []
         if oadm:
             cmds = ['/usr/bin/oadm']
@@ -164,7 +175,6 @@ class OpenShiftCLI(object):
             if self.verbose:
                 print stdout
                 print stderr
-                print
 
             if err:
                 rval.update({"err": err,
@@ -261,7 +271,7 @@ class Utils(object):
         return contents
 
     # Disabling too-many-branches.  This is a yaml dictionary comparison function
-    # pylint: disable=too-many-branches,too-many-return-statements
+    # pylint: disable=too-many-branches,too-many-return-statements,too-many-statements
     @staticmethod
     def check_def_equal(user_def, result_def, skip_keys=None, debug=False):
         ''' Given a user defined definition, compare it with the results given back by our query.  '''
@@ -277,10 +287,25 @@ class Utils(object):
 
             # Both are lists
             if isinstance(value, list):
+                if not user_def.has_key(key):
+                    if debug:
+                        print 'User data does not have key [%s]' % key
+                        print 'User data: %s' % user_def
+                    return False
+
                 if not isinstance(user_def[key], list):
                     if debug:
                         print 'user_def[key] is not a list'
                     return False
+
+                if len(user_def[key]) != len(value):
+                    if debug:
+                        print "List lengths are not equal."
+                        print "key=[%s]: user_def[%s] != value[%s]" % (key, len(user_def[key]), len(value))
+                        print "user_def: %s" % user_def[key]
+                        print "value: %s" % value
+                    return False
+
 
                 for values in zip(user_def[key], value):
                     if isinstance(values[0], dict) and isinstance(values[1], dict):
@@ -316,9 +341,9 @@ class Utils(object):
                 user_values = set(user_def[key].keys()) - set(skip)
                 if api_values != user_values:
                     if debug:
+                        print "keys are not equal in dict"
                         print api_values
                         print user_values
-                        print "keys are not equal in dict"
                     return False
 
                 result = Utils.check_def_equal(user_def[key], value, skip_keys=skip_keys, debug=debug)
@@ -333,6 +358,7 @@ class Utils(object):
                 if not user_def.has_key(key) or value != user_def[key]:
                     if debug:
                         print "value not equal; user_def does not have key"
+                        print key
                         print value
                         print user_def[key]
                     return False
@@ -806,6 +832,7 @@ spec:
   - type: ConfigChange
 '''
 
+    replicas_path = "spec#replicas"
     env_path = "spec#template#spec#containers[0]#env"
     volumes_path = "spec#template#spec#volumes"
     container_path = "spec#template#spec#containers"
@@ -894,7 +921,7 @@ spec:
                 break
 
         if idx:
-            env_vars_array[idx][key] = value
+            env_vars_array[idx]['value'] = value
         else:
             self.add_env_value(key, value)
 
@@ -939,6 +966,10 @@ spec:
                 return exist_volume
 
         return None
+
+    def get_replicas(self):
+        ''' return replicas setting '''
+        return self.get(DeploymentConfig.replicas_path)
 
     def get_volume_mounts(self):
         '''return volume mount information '''
@@ -997,6 +1028,10 @@ spec:
             self.put(DeploymentConfig.volumes_path, [volume])
         else:
             exist_volumes.append(volume)
+
+    def update_replicas(self, replicas):
+        ''' update replicas value '''
+        self.put(DeploymentConfig.replicas_path, replicas)
 
     def update_volume(self, volume):
         '''place an env in the env var list'''
@@ -1075,6 +1110,510 @@ spec:
 
         return not all(results)
 
+    def needs_update_replicas(self, replicas):
+        ''' verify whether a replica update is needed '''
+        current_reps = self.get(DeploymentConfig.replicas_path)
+        return not current_reps == replicas
+
+# pylint: disable=too-many-instance-attributes
+class SecretConfig(object):
+    ''' Handle secret options '''
+    # pylint: disable=too-many-arguments
+    def __init__(self,
+                 sname,
+                 namespace,
+                 kubeconfig,
+                 secrets=None):
+        ''' constructor for handling secret options '''
+        self.kubeconfig = kubeconfig
+        self.name = sname
+        self.namespace = namespace
+        self.secrets = secrets
+        self.data = {}
+
+        self.create_dict()
+
+    def create_dict(self):
+        ''' return a secret as a dict '''
+        self.data['apiVersion'] = 'v1'
+        self.data['kind'] = 'Secret'
+        self.data['metadata'] = {}
+        self.data['metadata']['name'] = self.name
+        self.data['metadata']['namespace'] = self.namespace
+        self.data['data'] = {}
+        if self.secrets:
+            for key, value in self.secrets.items():
+                self.data['data'][key] = value
+
+# pylint: disable=too-many-instance-attributes
+class Secret(Yedit):
+    ''' Class to wrap the oc command line tools '''
+    secret_path = "data"
+    kind = 'secret'
+
+    def __init__(self, content):
+        '''secret constructor'''
+        super(Secret, self).__init__(content=content)
+        self._secrets = None
+
+    @property
+    def secrets(self):
+        '''secret property'''
+        if self._secrets == None:
+            self._secrets = self.get_secrets()
+        return self._secrets
+
+    @secrets.setter
+    def secrets(self):
+        '''secret property setter'''
+        if self._secrets == None:
+            self._secrets = self.get_secrets()
+        return self._secrets
+
+    def get_secrets(self):
+        ''' return cert '''
+        return self.get(Secret.secret_path) or {}
+
+    def add_secret(self, key, value):
+        ''' return cert '''
+        if self.secrets:
+            self.secrets[key] = value
+        else:
+            self.put(Secret.secret_path, {key: value})
+
+        return True
+
+    def delete_secret(self, key):
+        ''' delete secret'''
+        try:
+            del self.secrets[key]
+        except KeyError as _:
+            return False
+
+        return True
+
+    def find_secret(self, key):
+        ''' find secret'''
+        rval = None
+        try:
+            rval = self.secrets[key]
+        except KeyError as _:
+            return None
+
+        return {'key': key, 'value': rval}
+
+    def update_secret(self, key, value):
+        ''' update a secret'''
+        if self.secrets.has_key(key):
+            self.secrets[key] = value
+        else:
+            self.add_secret(key, value)
+
+        return True
+
+class ServiceAccountConfig(object):
+    '''Service account config class
+
+       This class stores the options and returns a default service account
+    '''
+
+    # pylint: disable=too-many-arguments
+    def __init__(self, sname, namespace, kubeconfig, secrets=None, image_pull_secrets=None):
+        self.name = sname
+        self.kubeconfig = kubeconfig
+        self.namespace = namespace
+        self.secrets = secrets or []
+        self.image_pull_secrets = image_pull_secrets or []
+        self.data = {}
+        self.create_dict()
+
+    def create_dict(self):
+        ''' return a properly structured volume '''
+        self.data['apiVersion'] = 'v1'
+        self.data['kind'] = 'ServiceAccount'
+        self.data['metadata'] = {}
+        self.data['metadata']['name'] = self.name
+        self.data['metadata']['namespace'] = self.namespace
+
+        self.data['secrets'] = []
+        if self.secrets:
+            for sec in self.secrets:
+                self.data['secrets'].append({"name": sec})
+
+        self.data['imagePullSecrets'] = []
+        if self.image_pull_secrets:
+            for sec in self.image_pull_secrets:
+                self.data['imagePullSecrets'].append({"name": sec})
+
+class ServiceAccount(Yedit):
+    ''' Class to wrap the oc command line tools '''
+    image_pull_secrets_path = "imagePullSecrets"
+    secrets_path = "secrets"
+
+    def __init__(self, content):
+        '''ServiceAccount constructor'''
+        super(ServiceAccount, self).__init__(content=content)
+        self._secrets = None
+        self._image_pull_secrets = None
+
+    @property
+    def image_pull_secrets(self):
+        ''' property for image_pull_secrets '''
+        if self._image_pull_secrets == None:
+            self._image_pull_secrets = self.get(ServiceAccount.image_pull_secrets_path) or []
+        return self._image_pull_secrets
+
+    @image_pull_secrets.setter
+    def image_pull_secrets(self, secrets):
+        ''' property for secrets '''
+        self._image_pull_secrets = secrets
+
+    @property
+    def secrets(self):
+        ''' property for secrets '''
+        print "Getting secrets property"
+        if not self._secrets:
+            self._secrets = self.get(ServiceAccount.secrets_path) or []
+        return self._secrets
+
+    @secrets.setter
+    def secrets(self, secrets):
+        ''' property for secrets '''
+        self._secrets = secrets
+
+    def delete_secret(self, inc_secret):
+        ''' remove a secret '''
+        remove_idx = None
+        for idx, sec in enumerate(self.secrets):
+            if sec['name'] == inc_secret:
+                remove_idx = idx
+                break
+
+        if remove_idx:
+            del self.secrets[remove_idx]
+            return True
+
+        return False
+
+    def delete_image_pull_secret(self, inc_secret):
+        ''' remove a image_pull_secret '''
+        remove_idx = None
+        for idx, sec in enumerate(self.image_pull_secrets):
+            if sec['name'] == inc_secret:
+                remove_idx = idx
+                break
+
+        if remove_idx:
+            del self.image_pull_secrets[remove_idx]
+            return True
+
+        return False
+
+    def find_secret(self, inc_secret):
+        '''find secret'''
+        for secret in self.secrets:
+            if secret['name'] == inc_secret:
+                return secret
+
+        return None
+
+    def find_image_pull_secret(self, inc_secret):
+        '''find secret'''
+        for secret in self.image_pull_secrets:
+            if secret['name'] == inc_secret:
+                return secret
+
+        return None
+
+    def add_secret(self, inc_secret):
+        '''add secret'''
+        if self.secrets:
+            self.secrets.append({"name": inc_secret})
+        else:
+            self.put(ServiceAccount.secrets_path, [{"name": inc_secret}])
+
+    def add_image_pull_secret(self, inc_secret):
+        '''add image_pull_secret'''
+        if self.image_pull_secrets:
+            self.image_pull_secrets.append({"name": inc_secret})
+        else:
+            self.put(ServiceAccount.image_pull_secrets_path, [{"name": inc_secret}])
+
+# pylint: disable=too-many-instance-attributes
+class RoleBindingConfig(object):
+    ''' Handle route options '''
+    # pylint: disable=too-many-arguments
+    def __init__(self,
+                 sname,
+                 namespace,
+                 kubeconfig,
+                 group_names=None,
+                 role_ref=None,
+                 subjects=None,
+                 usernames=None):
+        ''' constructor for handling route options '''
+        self.kubeconfig = kubeconfig
+        self.name = sname
+        self.namespace = namespace
+        self.group_names = group_names
+        self.role_ref = role_ref
+        self.subjects = subjects
+        self.usernames = usernames
+        self.data = {}
+
+        self.create_dict()
+
+    def create_dict(self):
+        ''' return a service as a dict '''
+        self.data['apiVersion'] = 'v1'
+        self.data['kind'] = 'RoleBinding'
+        self.data['groupNames'] = self.group_names
+        self.data['metadata']['name'] = self.name
+        self.data['metadata']['namespace'] = self.namespace
+
+        self.data['roleRef'] = self.role_ref
+        self.data['subjects'] = self.subjects
+        self.data['userNames'] = self.usernames
+
+
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
+class RoleBinding(Yedit):
+    ''' Class to wrap the oc command line tools '''
+    group_names_path = "groupNames"
+    role_ref_path = "roleRef"
+    subjects_path = "subjects"
+    user_names_path = "userNames"
+
+    kind = 'RoleBinding'
+
+    def __init__(self, content):
+        '''RoleBinding constructor'''
+        super(RoleBinding, self).__init__(content=content)
+        self._subjects = None
+        self._role_ref = None
+        self._group_names = None
+        self._user_names = None
+
+    @property
+    def subjects(self):
+        ''' subjects property '''
+        if self._subjects == None:
+            self._subjects = self.get_subjects()
+        return self._subjects
+
+    @subjects.setter
+    def subjects(self, data):
+        ''' subjects property setter'''
+        self._subjects = data
+
+    @property
+    def role_ref(self):
+        ''' role_ref property '''
+        if self._role_ref == None:
+            self._role_ref = self.get_role_ref()
+        return self._role_ref
+
+    @role_ref.setter
+    def role_ref(self, data):
+        ''' role_ref property setter'''
+        self._role_ref = data
+
+    @property
+    def group_names(self):
+        ''' group_names property '''
+        if self._group_names == None:
+            self._group_names = self.get_group_names()
+        return self._group_names
+
+    @group_names.setter
+    def group_names(self, data):
+        ''' group_names property setter'''
+        self._group_names = data
+
+    @property
+    def user_names(self):
+        ''' user_names property '''
+        if self._user_names == None:
+            self._user_names = self.get_user_names()
+        return self._user_names
+
+    @user_names.setter
+    def user_names(self, data):
+        ''' user_names property setter'''
+        self._user_names = data
+
+    def get_group_names(self):
+        ''' return groupNames '''
+        return self.get(RoleBinding.group_names_path) or []
+
+    def get_user_names(self):
+        ''' return usernames '''
+        return self.get(RoleBinding.user_names_path) or []
+
+    def get_role_ref(self):
+        ''' return role_ref '''
+        return self.get(RoleBinding.role_ref_path) or {}
+
+    def get_subjects(self):
+        ''' return subjects '''
+        return self.get(RoleBinding.subjects_path) or []
+
+    #### ADD #####
+    def add_subject(self, inc_subject):
+        ''' add a subject '''
+        if self.subjects:
+            self.subjects.append(inc_subject)
+        else:
+            self.put(RoleBinding.subjects_path, [inc_subject])
+
+        return True
+
+    def add_role_ref(self, inc_role_ref):
+        ''' add a role_ref '''
+        if not self.role_ref:
+            self.put(RoleBinding.role_ref_path, {"name": inc_role_ref})
+            return True
+
+        return False
+
+    def add_group_names(self, inc_group_names):
+        ''' add a group_names '''
+        if self.group_names:
+            self.group_names.append(inc_group_names)
+        else:
+            self.put(RoleBinding.group_names_path, [inc_group_names])
+
+        return True
+
+    def add_user_name(self, inc_user_name):
+        ''' add a username '''
+        if self.user_names:
+            self.user_names.append(inc_user_name)
+        else:
+            self.put(RoleBinding.user_names_path, [inc_user_name])
+
+        return True
+
+    #### /ADD #####
+
+    #### Remove #####
+    def remove_subject(self, inc_subject):
+        ''' remove a subject '''
+        try:
+            self.subjects.remove(inc_subject)
+        except ValueError as _:
+            return False
+
+        return True
+
+    def remove_role_ref(self, inc_role_ref):
+        ''' remove a role_ref '''
+        if self.role_ref and self.role_ref['name'] == inc_role_ref:
+            del self.role_ref['name']
+            return True
+
+        return False
+
+    def remove_group_name(self, inc_group_name):
+        ''' remove a groupname '''
+        try:
+            self.group_names.remove(inc_group_name)
+        except ValueError as _:
+            return False
+
+        return True
+
+    def remove_user_name(self, inc_user_name):
+        ''' remove a username '''
+        try:
+            self.user_names.remove(inc_user_name)
+        except ValueError as _:
+            return False
+
+        return True
+
+    #### /REMOVE #####
+
+    #### UPDATE #####
+    def update_subject(self, inc_subject):
+        ''' update a subject '''
+        try:
+            index = self.subjects.index(inc_subject)
+        except ValueError as _:
+            return self.add_subject(inc_subject)
+
+        self.subjects[index] = inc_subject
+
+        return True
+
+    def update_group_name(self, inc_group_name):
+        ''' update a groupname '''
+        try:
+            index = self.group_names.index(inc_group_name)
+        except ValueError as _:
+            return self.add_group_names(inc_group_name)
+
+        self.group_names[index] = inc_group_name
+
+        return True
+
+    def update_user_name(self, inc_user_name):
+        ''' update a username '''
+        try:
+            index = self.user_names.index(inc_user_name)
+        except ValueError as _:
+            return self.add_user_name(inc_user_name)
+
+        self.user_names[index] = inc_user_name
+
+        return True
+
+    def update_role_ref(self, inc_role_ref):
+        ''' update a role_ref '''
+        self.role_ref['name'] = inc_role_ref
+
+        return True
+
+    #### /UPDATE #####
+
+    #### FIND ####
+    def find_subject(self, inc_subject):
+        ''' find a subject '''
+        index = None
+        try:
+            index = self.subjects.index(inc_subject)
+        except ValueError as _:
+            return index
+
+        return index
+
+    def find_group_name(self, inc_group_name):
+        ''' find a group_name '''
+        index = None
+        try:
+            index = self.group_names.index(inc_group_name)
+        except ValueError as _:
+            return index
+
+        return index
+
+    def find_user_name(self, inc_user_name):
+        ''' find a user_name '''
+        index = None
+        try:
+            index = self.user_names.index(inc_user_name)
+        except ValueError as _:
+            return index
+
+        return index
+
+    def find_role_ref(self, inc_role_ref):
+        ''' find a user_name '''
+        if self.role_ref and self.role_ref['name'] == inc_role_ref['name']:
+            return self.role_ref
+
+        return None
+
 import time
 
 class RouterConfig(OpenShiftCLIConfig):
@@ -1099,11 +1638,17 @@ class Router(OpenShiftCLI):
         self.verbose = verbose
         self.router_parts = [{'kind': 'dc', 'name': self.config.name},
                              {'kind': 'svc', 'name': self.config.name},
+                             {'kind': 'sa', 'name': self.config.name},
+                             {'kind': 'secret', 'name': 'router-certs'},
+                             {'kind': 'clusterrolebinding', 'name': 'router-router-role'},
                              #{'kind': 'endpoints', 'name': self.config.name},
                             ]
 
         self.dconfig = None
         self.svc = None
+        self._secret = None
+        self._serviceaccount = None
+        self._rolebinding = None
         self.get()
 
     @property
@@ -1126,6 +1671,35 @@ class Router(OpenShiftCLI):
         ''' setter for property service '''
         self.svc = config
 
+    @property
+    def secret(self):
+        ''' property secret '''
+        return self._secret
+
+    @secret.setter
+    def secret(self, config):
+        ''' setter for property secret '''
+        self._secret = config
+
+    @property
+    def serviceaccount(self):
+        ''' property secret '''
+        return self._serviceaccount
+
+    @serviceaccount.setter
+    def serviceaccount(self, config):
+        ''' setter for property secret '''
+        self._serviceaccount = config
+
+    @property
+    def rolebinding(self):
+        ''' property rolebinding '''
+        return self._rolebinding
+
+    @rolebinding.setter
+    def rolebinding(self, config):
+        ''' setter for property rolebinding '''
+        self._rolebinding = config
 
     def get(self):
         ''' return the self.router_parts '''
@@ -1137,6 +1711,12 @@ class Router(OpenShiftCLI):
                 self.deploymentconfig = DeploymentConfig(result['results'][0])
             elif result['returncode'] == 0 and part['kind'] == 'svc':
                 self.service = Service(content=result['results'][0])
+            elif result['returncode'] == 0 and part['kind'] == 'sa':
+                self.serviceaccount = ServiceAccount(content=result['results'][0])
+            elif result['returncode'] == 0 and part['kind'] == 'secret':
+                self.secret = Secret(content=result['results'][0])
+            elif result['returncode'] == 0 and part['kind'] == 'clusterrolebinding':
+                self.rolebinding = RoleBinding(content=result['results'][0])
 
         return (self.deploymentconfig, self.service)
 
@@ -1196,6 +1776,7 @@ class Router(OpenShiftCLI):
 
         return self.create()
 
+    # pylint: disable=too-many-return-statements,too-many-branches
     def needs_update(self, verbose=False):
         ''' check to see if we need to update '''
         if not self.deploymentconfig or not self.service:
@@ -1206,31 +1787,61 @@ class Router(OpenShiftCLI):
             return results
 
         # Since the output from oadm_router is returned as raw
-        # we need to parse it.  The first line is the stats_password
+        # we need to parse it.  The first line is the stats_password in 3.1
+        # Inside of 3.2, it is just json
         router_results_split = results['results'].split('\n')
         # stats_password = user_dc_results[0]
 
-        # Load the string back into json and get the newly created dc and svc
-        json_results = json.loads('\n'.join(router_results_split[1:]))
+        # password for stats user admin has been set to xxxxxx
+        if 'password for stats user admin has ben set to' in router_results_split[0]:
+            # stats_password = user_dc_results[0]
+            router_results_split = router_results_split[1:]
 
-        # svc
-        user_svc = Service(content=json_results['items'][1])
+        json_results = json.loads('\n'.join(router_results_split))
+
+        user_dc = None
+        user_svc = None
+        user_secret = None
+        for item in json_results['items']:
+            if item['kind'] == 'Service':
+                user_svc = Service(content=item)
+            elif item['kind'] == 'DeploymentConfig':
+                user_dc = DeploymentConfig(content=item)
+            elif item['kind'] == 'Secret':
+                user_secret = Secret(content=item)
+            elif item['kind'] == 'ServiceAccount':
+                user_sa = ServiceAccount(content=item)
+
+        # Need to determine the pregenerated ones from the original
+        # Since these are auto generated, we can skip
+        skip = ['secrets', 'imagePullSecrets']
+        if not Utils.check_def_equal(user_sa.yaml_dict,
+                                     self.serviceaccount.yaml_dict,
+                                     skip_keys=skip,
+                                     debug=verbose):
+            return True
+
+        # In 3.2 oadm router generates a secret volume for certificates
+        # See if one was generated from our dry-run and verify it if needed
+        if user_secret:
+            if not self.secret:
+                return True
+            if not Utils.check_def_equal(user_secret.yaml_dict,
+                                         self.secret.yaml_dict,
+                                         skip_keys=skip,
+                                         debug=verbose):
+                return True
 
         # Fix the ports to have protocol=TCP
         for port in user_svc.get('spec#ports'):
             port['protocol'] = 'TCP'
 
         skip = ['portalIP', 'clusterIP', 'sessionAffinity', 'type']
-        service_results = Utils.check_def_equal(user_svc.yaml_dict,
-                                                self.service.yaml_dict,
-                                                skip_keys=skip,
-                                                debug=verbose)
-
-        if not service_results:
+        if not Utils.check_def_equal(user_svc.yaml_dict,
+                                     self.service.yaml_dict,
+                                     skip_keys=skip,
+                                     debug=verbose):
             return True
-
-        # dc
-        user_dc = DeploymentConfig(content=json_results['items'][0])
 
         # Router needs some exceptions.
         # We do not want to check the autogenerated password for stats admin
@@ -1251,7 +1862,7 @@ class Router(OpenShiftCLI):
                 'restartPolicy', 'timeoutSeconds',
                 'livenessProbe', 'readinessProbe',
                 'terminationMessagePath',
-                'rollingParams',
+                'rollingParams', 'hostPort',
                ]
 
         return not Utils.check_def_equal(user_dc.yaml_dict,
@@ -1273,7 +1884,6 @@ def main():
             name=dict(default='router', type='str'),
 
             kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
-            credentials=dict(default='/etc/origin/master/openshift-router.kubeconfig', type='str'),
             cert_file=dict(default=None, type='str'),
             key_file=dict(default=None, type='str'),
             images=dict(default=None, type='str'), #'openshift3/ose-${component}:${version}'
@@ -1311,8 +1921,7 @@ def main():
     rconfig = RouterConfig(module.params['name'],
                            module.params['namespace'],
                            module.params['kubeconfig'],
-                           {'credentials': {'value': module.params['credentials'], 'include': True},
-                            'default_cert': {'value': None, 'include': True},
+                           {'default_cert': {'value': None, 'include': True},
                             'cert_file': {'value': module.params['cert_file'], 'include': False},
                             'key_file': {'value': module.params['key_file'], 'include': False},
                             'images': {'value': module.params['images'], 'include': True},
