@@ -8,7 +8,6 @@
   - name: absent
     oadm_router:
       state: absent
-      credentials: /etc/origin/master/openshift-router.kubeconfig
       service_account: router
       replicas: 2
       namespace: default
@@ -24,7 +23,6 @@
 
   - name: present create
     oadm_router:
-      credentials: /etc/origin/master/openshift-router.kubeconfig
       service_account: router
       replicas: 2
       namespace: default
@@ -41,7 +39,6 @@
 
   - name: present no update
     oadm_router:
-      credentials: /etc/origin/master/openshift-router.kubeconfig
       service_account: router
       replicas: 2
       namespace: default
@@ -57,7 +54,6 @@
 
   - name: present update replicas 3
     oadm_router:
-      credentials: /etc/origin/master/openshift-router.kubeconfig
       service_account: router
       replicas: 3
       namespace: default
@@ -73,7 +69,6 @@
 
   - name: present update replicas 2
     oadm_router:
-      credentials: /etc/origin/master/openshift-router.kubeconfig
       service_account: router
       replicas: 2
       namespace: default
