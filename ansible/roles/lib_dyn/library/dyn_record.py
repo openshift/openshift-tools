@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# vim: expandtab:tabstop=4:shiftwidth=4
 #
 # (c) 2015, Russell Harrison <rharriso@redhat.com>
 #
@@ -99,6 +100,7 @@ options:
 
 notes:
   - The module makes a broad assumption that there will be only one record per "node" (FQDN).
+  - This module makes an assumptions that record types will not be changed (ie. CNAME to AAAA). For this, first delete then create the new record.
   - This module returns record(s) in the "result" element when 'state' is set to 'present'. This value can be be registered and used in your playbooks.
 
 requirements: [ dyn ]
@@ -202,6 +204,23 @@ def get_record_values(records):
             ret_dict[key].append(properties)
 
     return ret_dict
+
+def update_record_values(dyn_record, record_type, record_value, ttl):
+    ''' Update record values '''
+    rkey = get_record_key(record_type)
+    for record in dyn_record[rkey]:
+        if record_type == 'CNAME':
+            record.cname = record_value
+        elif record_type == 'A' or record_type == 'AAAA':
+            record.address = record_value
+        elif record_type == 'PTR':
+            record.ptrdname = record_value
+        elif record_type == 'TXT':
+            record.txtdata = record_value
+        record.ttl = ttl
+
+    # Assuming 1 record only per node
+    return dyn_record[rkey][0]
 
 def compare_record_values(record_type_key, user_record_value, dyn_values):
     ''' Verify the user record_value exists in dyn'''
@@ -326,20 +345,29 @@ def main():
         # node we will first delete the node if there are any records before
         # creating the correct record
         if dyn_node_records:
-            dyn_node.delete()
+            ######
+            # UPDATE
+            ######
+            record = update_record_values(dyn_node_records,
+                                          module.params['record_type'],
+                                          module.params['record_value'],
+                                          user_param_ttl)
+        else:
+            ######
+            # CREATE
+            ######
 
-        # Now lets create the correct node entry.
-        record = dyn_zone.add_record(dyn_node_name,
-                                     module.params['record_type'],
-                                     module.params['record_value'],
-                                     user_param_ttl
-                                    )
+            # Now lets create the correct node entry.
+            record = dyn_zone.add_record(dyn_node_name,
+                                         module.params['record_type'],
+                                         module.params['record_value'],
+                                         user_param_ttl
+                                        )
 
-        # Now publish the zone since we've updated it.
+        # Now publish the zone since we've updated/created it.
         dyn_zone.publish()
 
-        rmsg = "Created node [%s] "  % dyn_node_name
-        rmsg += "in zone: [%s]"      % module.params['zone']
+        rmsg = "Created node {} in zone {}".format(dyn_node_name, module.params['zone'])
         module.exit_json(changed=True, msg=rmsg, dyn_record=get_record_values({record_type_key: [record]}))
 
     module.fail_json(msg="Unknown state: [%s]" % module.params['state'])
