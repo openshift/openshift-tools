@@ -1,0 +1,19 @@
+---
+#  This user can do DNS updates/deletes from the domain(s) to have tests run against
+
+g_dyn_config_customer: test_customer
+g_dyn_config_username: test_user
+g_dyn_config_password: test_user_password
+
+tzone: "testzone.com"
+tnode: "testnode.{{ tzone }}"
+api:
+  fqdn: "api.{{ tnode }}"
+  type: CNAME
+  value: "something-random-123456789.us-east-1.elb.amazonaws.com."
+  ttl: 120
+internal_api:
+  fqdn: "internal.api.{{ tnode }}"
+  type: CNAME
+  value: "internal-something-random-123456789.us-east-1.elb.amazonaws.com."
+  ttl: 120
