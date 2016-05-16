@@ -21,9 +21,11 @@
     oc_secret:
       namespace: logging
       name: logging-deployer
-      contents:
-      - path: none
-        data: /dev/null
+      files:
+      - name: kibana.crt
+        path: /etc/origin/master/named_certificates/star.opstest.openshift.com.crt
+      - name: kibana.key
+        path: /etc/origin/master/named_certificates/wildcard.opstest.openshift.com.key
     register: secretout
   - debug: var=secretout
 
