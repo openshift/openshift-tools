@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.4
+Version:        0.0.5
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -91,6 +91,38 @@ Python library for interacting with Zabbix with Ansible.
 %{_datadir}/ansible/zabbix
 
 %changelog
+* Mon May 16 2016 Thomas Wiest <twiest@redhat.com> 0.0.5-1
+- Added ops-ec2-snapshot-ebs-volumes.py and ops-ec2-trim-ebs-snapshots.py
+  (twiest@redhat.com)
+- Moving lib_openshift_api to lib_openshift_3.2 (kwoodson@redhat.com)
+- Added ops-docker-storage-reinitialize.yml and the sysconfig_fact.py module.
+  (twiest@redhat.com)
+- update logic to avoid delete/create when updating existing node entries
+  (jdiaz@redhat.com)
+- Adding 3.2 changes (kwoodson@redhat.com)
+- add oc_scale to manage replicas on deploymentconfigs (jdiaz@redhat.com)
+- Initial oadm_policy_user (kwoodson@redhat.com)
+- add extra group tests and update label tests (jdiaz@redhat.com)
+- add group module and extend user module to manage group membership
+  (jdiaz@redhat.com)
+- added fstab_mount_options (mwoodson@redhat.com)
+- Adding exist, append, and add_item (kwoodson@redhat.com)
+- add user crud to lib_openshift_api (jdiaz@redhat.com)
+- Added cat_fact module. (twiest@redhat.com)
+- set dm.basesize to 3G EXTRA_DOCKER_STORAGE_OPTIONS is a no-op on 3.1 clusters
+  because docker 1.8's /usr/bin/docker-storage-setup doesn't read/use it. On
+  3.2 (docker 1.9) it will not allow container images sizes beyond 3G
+  (jdiaz@redhat.com)
+- Updated router to take cacert (kwoodson@redhat.com)
+- added new docker storage setup options (mwoodson@redhat.com)
+- Adding ability to force a refresh on the registry (kwoodson@redhat.com)
+- add support for labeling and test cases for labeling nodes specifically
+  (jdiaz@redhat.com)
+- oc_serviceaccount (kwoodson@redhat.com)
+- Bug fixes.  Now accept path or content for certs. (kwoodson@redhat.com)
+- oadm_project and oc_route (kwoodson@redhat.com)
+- Bug fixes to preserve registry service clusterIP (kwoodson@redhat.com)
+
 * Fri Apr 22 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.4-1
 - Kubeconfig fix (kwoodson@redhat.com)
 - Refactor. Adding registry helpers.  Adding registry (kwoodson@redhat.com)
