@@ -64,6 +64,8 @@ trap 'fatal_error ${LINENO}' ERR
 # We need to run from the directory where the script is (we use relative paths)
 cd $(dirname $0)
 
+sudo echo "Testing sudo works..."
+
 time (
   build_image "${OS}" oso-ops-base $@
 

@@ -45,7 +45,9 @@ cp -p monitoring/cron-send-os-skydns-checks.py %{buildroot}/usr/bin/cron-send-os
 cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
 cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
-cp -p cloud/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
+cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
+cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
+cp -p cloud/aws/ops-ec2-trim-ebs-snapshots.py %{buildroot}/usr/bin/ops-ec2-trim-ebs-snapshots
 cp -p monitoring/cron-send-build-app.py %{buildroot}/usr/bin/cron-send-build-app
 
 mkdir -p %{buildroot}/etc/openshift_tools
@@ -244,19 +246,22 @@ OpenShift Tools Zabbix Auto Heal Scripts
 /usr/bin/ops-zbx-event-processor
 
 # ----------------------------------------------------------------------------------
-# openshift-tools-scripts-cloud subpackage
+# openshift-tools-scripts-cloud-aws subpackage
 # ----------------------------------------------------------------------------------
-%package cloud
+%package cloud-aws
 Summary:       OpenShift Tools Cloud tools
-Requires:      python2,python-boto
+Requires:      python2,python-openshift-tools-cloud-aws
 BuildRequires: python2-devel
 BuildArch:     noarch
 
-%description cloud
-OpenShift Tools Cloud Tools
+%description cloud-aws
+OpenShift Tools AWS specific scripts
 
-%files cloud
+%files cloud-aws
 /usr/bin/ops-ec2-copy-ami-to-all-regions
+/usr/bin/ops-ec2-snapshot-ebs-volumes
+/usr/bin/ops-ec2-trim-ebs-snapshots
+
 
 
 %changelog
