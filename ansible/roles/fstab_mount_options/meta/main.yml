@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: Openshift Operations
+  description: Configure options in fstab
+  company: Red Hat
+  license: Apache 2.0
+  min_ansible_version: 1.9.2
+  platforms:
+  - name: EL
+    versions:
+    - 7
+  - name: Fedora
+    versions:
+    - all
+  categories:
+  - system
+dependencies:

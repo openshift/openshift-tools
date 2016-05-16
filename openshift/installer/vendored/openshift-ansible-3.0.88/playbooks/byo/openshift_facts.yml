@@ -1,0 +1,20 @@
+---
+- name: Cluster hosts
+  hosts: localhost
+  connection: local
+  become: no
+  gather_facts: no
+  tasks:
+  - include_vars: openshift-cluster/cluster_hosts.yml
+
+- include: ../common/openshift-cluster/evaluate_groups.yml
+
+- name: Gather Cluster facts
+  hosts: OSEv3
+  roles:
+  - openshift_facts
+  tasks:
+  - openshift_facts:
+      openshift_env: "{{ hostvars[inventory_hostname] | oo_openshift_env }}"
+    register: result
+  - debug: var=result

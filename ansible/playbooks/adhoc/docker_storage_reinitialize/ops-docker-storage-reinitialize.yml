@@ -1,0 +1,88 @@
+#!/usr/bin/ansible-playbook
+---
+# This playbook reinitializes docker storage.
+#
+# *** WARNING ***
+# THIS IS A DESTRUCTIVE OPERATION!!!
+# *** WARNING ***
+#
+#  NOTE: this playbook assume docker was already installed and working.
+#
+#  To run:
+#
+#  1. run the playbook:
+#
+#     ops-docker-storage-reinitialize.yml -e cli_name=<some_host>
+#
+#  Example:
+#
+#     ops-docker-storage-reinitialize.yml -e cli_name=opstest-node-compute-s3g5s
+
+- name: Reinitialize Docker Storage
+  gather_facts: no
+  hosts: "oo_name_{{ cli_name }}"
+  user: root
+  connection: ssh
+
+  vars_prompt:
+  - name: cli_name
+    prompt: "Name of the instance to run on (e.g. opstest-node-compute-s3g5s)"
+    private: no
+
+  - name: cli_confirm_run
+    prompt: "This is a DESTRUCTIVE operation, are you sure?"
+    default: "no"
+    private: no
+
+  roles:
+  - role: lib_utils
+
+  post_tasks:
+  - fail:
+      msg: "This playbook requires {{ item }} to be set and not empty."
+    when: "{{ item }} is not defined or {{ item }} == ''"
+    with_items:
+    - cli_name
+
+  - fail:
+      msg: "User aborted"
+    when: cli_confirm_run != "yes"
+
+  - name: Get the docker storage information from the docker-storage-setup sysconfig file
+    sysconfig_fact:
+      name: docker_storage_setup
+      src: /etc/sysconfig/docker-storage-setup
+
+  - name: make sure docker is stopped and disabled (to avoid resource conflicts)
+    service:
+      name: docker
+      state: stopped
+      enabled: False
+
+  - name: remove docker_vg if present
+    command: "vgremove -y '{{ docker_storage_setup.VG }}'"
+    ignore_errors: true
+
+  - name: remove 1st partition from device if present
+    command: "parted '{{ docker_storage_setup.DEVS }}' -s 'rm 1'"
+    ignore_errors: true
+
+  - name: wipe the beginning of the disk (mbr & more!)
+    command: "dd if=/dev/zero of='{{ docker_storage_setup.DEVS }}' bs=4096 count=1024"
+
+  - name: wipe out /var/lib/docker (current docker graph driver info)
+    file:
+      path: /var/lib/docker
+      state: absent
+
+  - name: start docker-storage-setup to initialize the docker storage
+    service:
+      name: docker-storage-setup
+      state: started
+      enabled: True
+
+  - name: start and enable docker daemon
+    service:
+      name: docker
+      state: started
+      enabled: True

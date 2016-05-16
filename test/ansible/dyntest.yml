@@ -1,0 +1,244 @@
+#!/usr/bin/ansible-playbook
+# populate dynlogin.yml with user account details that will allow running
+# the tests below
+#
+# Run with ansible-playbook -M ../../ansible/roles/lib_dyn/library/ ./dyntest.yml
+---
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+  - dynvars.yml
+
+  tasks:
+  - name: delete api.testnode nodes (recursively)
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: absent
+      record_fqdn: "{{ api['fqdn'] }}"
+    register: dyn_out
+  #- debug: var=dyn_out
+
+  - name: put api.testnode info
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: present
+      record_fqdn: "{{ api['fqdn'] }}"
+      record_type: "{{ api['type'] }}"
+      record_value: "{{ api['value'] }}"
+      record_ttl: "{{ api['ttl'] }}"
+    register: dyn_out
+  #- debug: var=dyn_out['dyn_record']
+
+  - name: put internal.api.testnode info
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: present
+      record_fqdn: "{{ internal_api['fqdn'] }}"
+      record_type: "{{ internal_api['type'] }}"
+      record_value: "{{ internal_api['value'] }}"
+      record_ttl: "{{ internal_api['ttl'] }}"
+    register: dyn_out
+  #- debug: var=dyn_out
+      
+  - name: fetch api.testnode info
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: list
+      record_fqdn: "{{ api['fqdn'] }}"
+    register: dyn_out
+  #- debug: var=dyn_out
+  - name: assert that values have been committed
+    assert:
+      that: dyn_out['dyn_records'] is defined and
+            dyn_out['dyn_records']['cname_records'][0]['cname'] == api['value'] and
+            dyn_out['dyn_records']['cname_records'][0]['ttl'] == api['ttl']
+
+  - name: update api.testnode info
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: present
+      record_fqdn: "{{ api['fqdn'] }}"
+      record_value: "something-random-987654321.us-east-1.elb.amazonaws.com."
+      record_type:  "{{ api['type'] }}"
+      record_ttl: "{{ api['ttl'] }}"
+    register: dyn_out
+  #- debug: var=dyn_out
+  - name: assert that updating api.testnode marked changed
+    assert:
+      that: dyn_out['changed'] == True
+
+  - name: check api.testnode update applied
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: list
+      record_fqdn: "{{ api['fqdn'] }}"
+    register: dyn_out
+  #- debug: var=dyn_out
+  - name: assert changes actually were made
+    assert:
+      that: dyn_out['dyn_records']['cname_records'][0]['cname'] == "something-random-987654321.us-east-1.elb.amazonaws.com."
+
+  - name: check internal.api not deleted
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: list
+      record_fqdn: "{{ internal_api['fqdn'] }}"
+    register: dyn_out
+  #- debug: var=dyn_out
+  - name: assert that child node not removed on parent node update
+    assert:
+      that: dyn_out['dyn_records'] != [] and
+            dyn_out['dyn_records']['cname_records'][0]['cname'] == internal_api['value']
+
+  - name: update api.testnode ttl field
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: present
+      record_fqdn: "{{ api['fqdn'] }}"
+      record_type: "{{ api['type'] }}"
+      record_value: "something-random-987654321.us-east-1.elb.amazonaws.com."
+      record_ttl: 240
+    register: dyn_out
+  - name: assert field change means node changed
+    assert:
+      that: dyn_out['changed'] == True
+
+  - name: check api.testnode ttl update aplied
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: list
+      record_fqdn: "{{ api['fqdn'] }}"
+    register: dyn_out
+  #- debug: var=dyn_out
+  - name: assert changes actually were made
+    assert:
+      that: dyn_out['dyn_records']['cname_records'][0]['ttl'] == 240
+
+  - name: re-apply current api.testnode config
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: present
+      record_fqdn: "{{ api['fqdn'] }}"
+      record_type: "{{ api['type'] }}"
+      record_value: "something-random-987654321.us-east-1.elb.amazonaws.com."
+      record_ttl: 240
+    register: dyn_out
+  - name: assert re-apply means resuls marked not changed
+    assert:
+      that: dyn_out['changed'] == False
+
+  - name: delete internal.api node
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: absent
+      record_fqdn: "{{ internal_api['fqdn'] }}"
+    register: dyn_out
+  #- debug: dyn_out
+
+  - name: internal.api config A record
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: present
+      record_fqdn: "{{ internal_api['fqdn'] }}"
+      record_type: A
+      record_value: "10.0.0.10"
+      record_ttl: 120
+    register: dyn_out
+  #- debug: dyn_out
+  - name: assert A record creation marked changed
+    assert:
+      that: dyn_out['changed'] == True
+
+  - name: check internal.api A record applied
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: list
+      record_fqdn: "{{ internal_api['fqdn'] }}"
+    register: dyn_out
+  #- debug: var=dyn_out
+  - name: assert A record created
+    assert:
+      that: dyn_out['dyn_records']['a_records'][0]['ttl'] == 120 and
+            dyn_out['dyn_records']['a_records'][0]['address'] == "10.0.0.10"
+
+  - name: modify internal.api A record
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: present
+      record_fqdn: "{{ internal_api['fqdn'] }}"
+      record_type: A
+      record_value: "10.0.0.11"
+      record_ttl: 120
+    register: dyn_out
+  #- debug: var=dyn_out
+  - name: assert internal.api A record changed
+    assert:
+      that: dyn_out['changed'] == True
+
+  - name: check internal.api A record modified
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: list
+      record_fqdn: "{{ internal_api['fqdn'] }}"
+    register: dyn_out
+  #- debug: var=dyn_out
+  - name: assert A record modified correctly
+    assert:
+      that: dyn_out['dyn_records']['a_records'][0]['ttl'] == 120 and
+            dyn_out['dyn_records']['a_records'][0]['address'] == "10.0.0.11"
+
+  - name: delete api.testnode nodes (recursively)
+    dyn_record:
+      user_name: "{{ g_dyn_config_username }}"
+      user_password: "{{ g_dyn_config_password }}"
+      customer_name: "{{ g_dyn_config_customer }}"
+      zone: "{{ tzone }}"
+      state: absent
+      record_fqdn: "{{ api['fqdn'] }}"
+    register: dyn_out
+  #- debug: var=dyn_out

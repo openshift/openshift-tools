@@ -6,8 +6,8 @@ class YeditException(Exception):
 
 class Yedit(object):
     ''' Class to modify yaml files '''
-    re_valid_key = r"(((\[-?\d+\])|([a-zA-Z-./]+)).?)+$"
-    re_key = r"(?:\[(-?\d+)\])|([a-zA-Z-./]+)"
+    re_valid_key = r"(((\[-?\d+\])|([0-9a-zA-Z-./]+)).?)+$"
+    re_key = r"(?:\[(-?\d+)\])|([0-9a-zA-Z-./]+)"
 
     def __init__(self, filename=None, content=None, content_type='yaml'):
         self.content = content
@@ -125,7 +125,7 @@ class Yedit(object):
     def read(self):
         ''' write to file '''
         # check if it exists
-        if not self.exists():
+        if not self.file_exists():
             return None
 
         contents = None
@@ -134,7 +134,7 @@ class Yedit(object):
 
         return contents
 
-    def exists(self):
+    def file_exists(self):
         ''' return whether file exists '''
         if os.path.exists(self.filename):
             return True
@@ -169,41 +169,98 @@ class Yedit(object):
 
         return entry
 
-    def delete(self, key):
-        ''' remove key from a dict'''
+    def delete(self, path):
+        ''' remove path from a dict'''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, key)
+            entry = Yedit.get_entry(self.yaml_dict, path)
         except KeyError as _:
             entry = None
-        if not entry:
+
+        if entry == None:
             return  (False, self.yaml_dict)
 
-        result = Yedit.remove_entry(self.yaml_dict, key)
+        result = Yedit.remove_entry(self.yaml_dict, path)
         if not result:
             return (False, self.yaml_dict)
 
         return (True, self.yaml_dict)
 
-    def put(self, key, value):
-        ''' put key, value into a dict '''
+    def exists(self, path, value):
+        ''' check if value exists at path'''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, key)
+            entry = Yedit.get_entry(self.yaml_dict, path)
+        except KeyError as _:
+            entry = None
+
+        if isinstance(entry, list):
+            if value in entry:
+                return True
+            return False
+
+        elif isinstance(entry, dict):
+            if isinstance(value, dict):
+                rval = False
+                for key, val  in value.items():
+                    if  entry[key] != val:
+                        rval = False
+                        break
+                else:
+                    rval = True
+                return rval
+
+            return value in entry
+
+        return entry == value
+
+    def add_item(self, path, inc_dict):
+        ''' put path, value into a dict '''
+        try:
+            entry = Yedit.get_entry(self.yaml_dict, path)
+        except KeyError as _:
+            entry = None
+
+        if entry == None or not isinstance(entry, dict):
+            return (False, self.yaml_dict)
+
+        entry.update(inc_dict)
+
+        return (True, self.yaml_dict)
+
+    def append(self, path, value):
+        ''' put path, value into a dict '''
+        try:
+            entry = Yedit.get_entry(self.yaml_dict, path)
+        except KeyError as _:
+            entry = None
+
+        if entry == None or not isinstance(entry, list):
+            return (False, self.yaml_dict)
+
+        #pylint: disable=no-member,maybe-no-member
+        entry.append(value)
+
+        return (True, self.yaml_dict)
+
+    def put(self, path, value):
+        ''' put path, value into a dict '''
+        try:
+            entry = Yedit.get_entry(self.yaml_dict, path)
         except KeyError as _:
             entry = None
 
         if entry == value:
             return (False, self.yaml_dict)
 
-        result = Yedit.add_entry(self.yaml_dict, key, value)
+        result = Yedit.add_entry(self.yaml_dict, path, value)
         if not result:
             return (False, self.yaml_dict)
 
         return (True, self.yaml_dict)
 
-    def create(self, key, value):
+    def create(self, path, value):
         ''' create a yaml file '''
-        if not self.exists():
-            self.yaml_dict = {key: value}
+        if not self.file_exists():
+            self.yaml_dict = {path: value}
             return (True, self.yaml_dict)
 
         return (False, self.yaml_dict)

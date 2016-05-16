@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.87
+Version:       0.0.88
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -45,7 +45,9 @@ cp -p monitoring/cron-send-os-skydns-checks.py %{buildroot}/usr/bin/cron-send-os
 cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
 cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
-cp -p cloud/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
+cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
+cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
+cp -p cloud/aws/ops-ec2-trim-ebs-snapshots.py %{buildroot}/usr/bin/ops-ec2-trim-ebs-snapshots
 cp -p monitoring/cron-send-build-app.py %{buildroot}/usr/bin/cron-send-build-app
 
 mkdir -p %{buildroot}/etc/openshift_tools
@@ -244,22 +246,40 @@ OpenShift Tools Zabbix Auto Heal Scripts
 /usr/bin/ops-zbx-event-processor
 
 # ----------------------------------------------------------------------------------
-# openshift-tools-scripts-cloud subpackage
+# openshift-tools-scripts-cloud-aws subpackage
 # ----------------------------------------------------------------------------------
-%package cloud
+%package cloud-aws
 Summary:       OpenShift Tools Cloud tools
-Requires:      python2,python-boto
+Requires:      python2,python-openshift-tools-cloud-aws
 BuildRequires: python2-devel
 BuildArch:     noarch
 
-%description cloud
-OpenShift Tools Cloud Tools
+%description cloud-aws
+OpenShift Tools AWS specific scripts
 
-%files cloud
+%files cloud-aws
 /usr/bin/ops-ec2-copy-ami-to-all-regions
+/usr/bin/ops-ec2-snapshot-ebs-volumes
+/usr/bin/ops-ec2-trim-ebs-snapshots
+
 
 
 %changelog
+* Mon May 16 2016 Thomas Wiest <twiest@redhat.com> 0.0.88-1
+- Added ops-ec2-snapshot-ebs-volumes.py and ops-ec2-trim-ebs-snapshots.py
+  (twiest@redhat.com)
+- added a function to prevent running outside bastion hosts (sten@redhat.com)
+- fixed comments referring to the check this was based on (sten@redhat.com)
+- pylint.... (sten@redhat.com)
+- add kubeconfig test (sten@redhat.com)
+- a little cleanup as suggested by mwoodson (sten@redhat.com)
+- fixed pylint errors (sten@redhat.com)
+- script to generate + request signing of certs (sten@redhat.com)
+- renamed build-local-setup.sh to build-local-setup-centos7.sh and fixed it to
+  work with our latest way to build. Also fixed the
+  local_development_monitoring.adoc to be in line with our current way of
+  developing. (twiest@redhat.com)
+
 * Fri Apr 22 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.87-1
 - Kubeconfig fix (kwoodson@redhat.com)
 - fix up references to openshift-ansible repo (jdiaz@redhat.com)
