@@ -13,11 +13,15 @@ def main():
             debug=dict(default=False, type='bool'),
             namespace=dict(default='default', type='str'),
             template_name=dict(default=None, type='str'),
+            params=dict(default=None, type='dict'),
+            create=dict(default=False, type='bool'),
         ),
         supports_check_mode=True,
     )
     ocprocess = OCProcess(module.params['namespace'],
                           module.params['template_name'],
+                          module.params['params'],
+                          module.params['create'],
                           kubeconfig=module.params['kubeconfig'],
                           verbose=module.params['debug'])
 

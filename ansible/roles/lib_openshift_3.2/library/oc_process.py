@@ -90,10 +90,17 @@ class OpenShiftCLI(object):
         '''return all pods '''
         return self.openshift_cmd(['delete', resource, rname, '-n', self.namespace])
 
-    def _process(self, template_name):
+    def _process(self, template_name, create=False, params=None):
         '''return all pods '''
-        results = self.openshift_cmd(['process', template_name, '-n', self.namespace], output=True)
-        if results['returncode'] != 0:
+        cmd = ['process', template_name, '-n', self.namespace]
+        if params:
+            param_str = ["%s=%s" % (key, value) for key, value in params.items()]
+            cmd.append('-v')
+            cmd.extend(param_str)
+
+        results = self.openshift_cmd(cmd, output=True)
+
+        if results['returncode'] != 0 or not create:
             return results
 
         fname = '/tmp/%s' % template_name
@@ -102,7 +109,7 @@ class OpenShiftCLI(object):
 
         atexit.register(Utils.cleanup, [fname])
 
-        return self.openshift_cmd(['create', '-f', fname])
+        return self.openshift_cmd(['-n', self.namespace, 'create', '-f', fname])
 
     def _get(self, resource, rname=None, selector=None):
         '''return a secret by name '''
@@ -664,18 +671,22 @@ class OCProcess(OpenShiftCLI):
     def __init__(self,
                  namespace,
                  tname=None,
+                 params=None,
+                 create=False,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
                  verbose=False):
         ''' Constructor for OpenshiftOC '''
         super(OCProcess, self).__init__(namespace, kubeconfig)
         self.namespace = namespace
         self.name = tname
+        self.params = params
+        self.create = create
         self.kubeconfig = kubeconfig
         self.verbose = verbose
 
     def process(self):
         '''process a template'''
-        return self._process(self.name)
+        return self._process(self.name, self.create, self.params)
 
 # pylint: disable=too-many-branches
 def main():
@@ -690,11 +701,15 @@ def main():
             debug=dict(default=False, type='bool'),
             namespace=dict(default='default', type='str'),
             template_name=dict(default=None, type='str'),
+            params=dict(default=None, type='dict'),
+            create=dict(default=False, type='bool'),
         ),
         supports_check_mode=True,
     )
     ocprocess = OCProcess(module.params['namespace'],
                           module.params['template_name'],
+                          module.params['params'],
+                          module.params['create'],
                           kubeconfig=module.params['kubeconfig'],
                           verbose=module.params['debug'])
 

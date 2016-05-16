@@ -90,10 +90,17 @@ class OpenShiftCLI(object):
         '''return all pods '''
         return self.openshift_cmd(['delete', resource, rname, '-n', self.namespace])
 
-    def _process(self, template_name):
+    def _process(self, template_name, create=False, params=None):
         '''return all pods '''
-        results = self.openshift_cmd(['process', template_name, '-n', self.namespace], output=True)
-        if results['returncode'] != 0:
+        cmd = ['process', template_name, '-n', self.namespace]
+        if params:
+            param_str = ["%s=%s" % (key, value) for key, value in params.items()]
+            cmd.append('-v')
+            cmd.extend(param_str)
+
+        results = self.openshift_cmd(cmd, output=True)
+
+        if results['returncode'] != 0 or not create:
             return results
 
         fname = '/tmp/%s' % template_name
@@ -102,7 +109,7 @@ class OpenShiftCLI(object):
 
         atexit.register(Utils.cleanup, [fname])
 
-        return self.openshift_cmd(['create', '-f', fname])
+        return self.openshift_cmd(['-n', self.namespace, 'create', '-f', fname])
 
     def _get(self, resource, rname=None, selector=None):
         '''return a secret by name '''
@@ -1186,7 +1193,7 @@ class OadmPolicyUser(OpenShiftCLI):
                  policy_config,
                  verbose=False):
         ''' Constructor for OadmPolicyUser '''
-        super(OadmPolicyUser, self).__init__('default', policy_config.kubeconfig, verbose)
+        super(OadmPolicyUser, self).__init__(policy_config.namespace, policy_config.kubeconfig, verbose)
         self.config = policy_config
         self.verbose = verbose
         self._rolebinding = None
@@ -1214,7 +1221,11 @@ class OadmPolicyUser(OpenShiftCLI):
 
     def get(self):
         '''fetch the desired kind'''
-        return self._get(self.config.kind, self.config.config_options['name']['value'])
+        resource_name = self.config.config_options['name']['value']
+        if resource_name == 'cluster-reader':
+            resource_name += 's'
+
+        return self._get(self.config.kind, resource_name)
 
     def exists_role_binding(self):
         ''' return whether role_binding exists '''
@@ -1226,7 +1237,7 @@ class OadmPolicyUser(OpenShiftCLI):
 
             return False
 
-        elif 'RoleBinding \"%s\" not found' % self.config.config_options['name']['value'] in results['stderr']:
+        elif '\"%s\" not found' % self.config.config_options['name']['value'] in results['stderr']:
             return False
 
         return results
@@ -1342,7 +1353,11 @@ def main():
         ########
         # Create
         ########
-        if not oadmpolicyuser.exists():
+        results = oadmpolicyuser.exists()
+        if isinstance(results, dict) and results.has_key('returncode') and results['returncode'] != 0:
+            module.fail_json(msg=results)
+
+        if not results:
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a create.')

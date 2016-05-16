@@ -30,7 +30,7 @@ class OadmPolicyUser(OpenShiftCLI):
                  policy_config,
                  verbose=False):
         ''' Constructor for OadmPolicyUser '''
-        super(OadmPolicyUser, self).__init__('default', policy_config.kubeconfig, verbose)
+        super(OadmPolicyUser, self).__init__(policy_config.namespace, policy_config.kubeconfig, verbose)
         self.config = policy_config
         self.verbose = verbose
         self._rolebinding = None
@@ -58,7 +58,11 @@ class OadmPolicyUser(OpenShiftCLI):
 
     def get(self):
         '''fetch the desired kind'''
-        return self._get(self.config.kind, self.config.config_options['name']['value'])
+        resource_name = self.config.config_options['name']['value']
+        if resource_name == 'cluster-reader':
+            resource_name += 's'
+
+        return self._get(self.config.kind, resource_name)
 
     def exists_role_binding(self):
         ''' return whether role_binding exists '''
@@ -70,7 +74,7 @@ class OadmPolicyUser(OpenShiftCLI):
 
             return False
 
-        elif 'RoleBinding \"%s\" not found' % self.config.config_options['name']['value'] in results['stderr']:
+        elif '\"%s\" not found' % self.config.config_options['name']['value'] in results['stderr']:
             return False
 
         return results
