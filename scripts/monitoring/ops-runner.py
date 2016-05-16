@@ -41,7 +41,6 @@ class OpsRunner(object):
 
     def __init__(self):
         """ constructor """
-        self.zagg_sender = ZaggSender()
         self.parse_args()
         self.tmp_file_handle = None
         self.lock_file_handle = None

@@ -1,11 +1,39 @@
 ---
 g_template_aws:
   name: Template AWS
+
+  zitems:
+  - key: aws.ebs.snapshotter.expired_snapshots
+    applications:
+    - EBS Snapshotter
+    value_type: int
+
+  - key: aws.ebs.snapshotter.deleted_snapshots
+    applications:
+    - EBS Snapshotter
+    value_type: int
+
+  - key: aws.ebs.snapshotter.deletion_errors
+    applications:
+    - EBS Snapshotter
+    value_type: int
+
+  ztriggers:
+  - name: 'EBS Snapshot deletion failed on {HOST.NAME}'
+    expression: '{Template AWS:aws.ebs.snapshotter.deletion_errors.min(#3)}>0'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ebs_snapshotter.asciidoc'
+    priority: average
+
   zdiscoveryrules:
   - name: disc.aws
     key: disc.aws
     lifetime: 14
     description: "Dynamically register AWS bucket info"
+
+  - name: disc.aws.ebs.snapshotter
+    key: disc.aws.ebs.snapshotter
+    lifetime: 1
+    description: "Dynamically register EBS Snapshotter items"
 
   zitemprototypes:
   - discoveryrule_key: disc.aws
@@ -23,3 +51,33 @@ g_template_aws:
     description: "Objects in S3 bucket"
     applications:
     - AWS
+
+  - discoveryrule_key: disc.aws.ebs.snapshotter
+    name: "Total snapshottable volumes [{#OSO_SNAP_SCHEDULE}]"
+    key: "disc.aws.ebs.snapshotter.snapshottable_volumes[{#OSO_SNAP_SCHEDULE}]"
+    value_type: int
+    description: "Total number of snapshottable volumes"
+    applications:
+    - EBS Snapshotter
+
+  - discoveryrule_key: disc.aws.ebs.snapshotter
+    name: "Total number of snapshots created [{#OSO_SNAP_SCHEDULE}]"
+    key: "disc.aws.ebs.snapshotter.snapshots_created[{#OSO_SNAP_SCHEDULE}]"
+    value_type: int
+    description: "Total number of snapshots created"
+    applications:
+    - EBS Snapshotter
+
+  - discoveryrule_key: disc.aws.ebs.snapshotter
+    name: "Total number of snapshot creation errors [{#OSO_SNAP_SCHEDULE}]"
+    key: "disc.aws.ebs.snapshotter.snapshot_creation_errors[{#OSO_SNAP_SCHEDULE}]"
+    value_type: int
+    description: "Total number of snapshot creation errors"
+    applications:
+    - EBS Snapshotter
+
+  ztriggerprototypes:
+  - name: 'EBS Snapshotter[{#OSO_SNAP_SCHEDULE}]: error creating ebs snapshots on {HOST.NAME}'
+    expression: '{Template AWS:disc.aws.ebs.snapshotter.snapshot_creation_errors[{#OSO_SNAP_SCHEDULE}].min(#3)}>0'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ebs_snapshotter.asciidoc'
+    priority: average

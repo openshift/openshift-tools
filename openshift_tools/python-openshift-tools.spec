@@ -22,6 +22,14 @@ OpenShift Tools Python Package
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools
 cp -p *.py %{buildroot}%{python_sitelib}/openshift_tools/
 
+# openshift_tools/cloud install
+mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/cloud
+cp -p cloud/*.py %{buildroot}%{python_sitelib}/openshift_tools/cloud
+
+# openshift_tools/cloud/aws install
+mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/cloud/aws
+cp -p cloud/aws/*.py %{buildroot}%{python_sitelib}/openshift_tools/cloud/aws
+
 # openshift_tools/monitoring install
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/monitoring
 cp -p monitoring/*.py %{buildroot}%{python_sitelib}/openshift_tools/monitoring
@@ -213,6 +221,40 @@ Thin API wrapper to communicate with a Zabbix server
 %dir %{python_sitelib}/openshift_tools/zbxapi
 %{python_sitelib}/openshift_tools/zbxapi/*.py
 %{python_sitelib}/openshift_tools/zbxapi/*.py[co]
+
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-cloud subpackage
+# ----------------------------------------------------------------------------------
+%package cloud
+Summary:       OpenShift Tools Cloud Python Package
+Requires:      python2
+BuildArch:     noarch
+
+%description cloud
+Adds openshift_tools/cloud python package
+
+# openshift_tools/cloud files
+%files cloud
+%dir %{python_sitelib}/openshift_tools/cloud
+%{python_sitelib}/openshift_tools/cloud/*.py
+%{python_sitelib}/openshift_tools/cloud/*.py[co]
+
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-cloud-aws subpackage
+# ----------------------------------------------------------------------------------
+%package cloud-aws
+Summary:       OpenShift Tools Aws Cloud Python Package
+Requires:      python2,python-openshift-tools-cloud,python-boto
+BuildArch:     noarch
+
+%description cloud-aws
+Adds Aws specific python modules
+
+# openshift_tools/cloud/aws files
+%files cloud-aws
+%dir %{python_sitelib}/openshift_tools/cloud/aws
+%{python_sitelib}/openshift_tools/cloud/aws/*.py
+%{python_sitelib}/openshift_tools/cloud/aws/*.py[co]
 
 
 %changelog
