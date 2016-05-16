@@ -28,7 +28,7 @@ class Secret(OpenShiftCLI):
         if not files:
             files = Utils.create_files_from_contents(contents, content_type=content_type)
 
-        secrets = ["%s=%s" % (os.path.basename(sfile), sfile) for sfile in files]
+        secrets = ["%s=%s" % (sfile['name'], sfile['path']) for sfile in files]
         cmd = ['-n%s' % self.namespace, 'secrets', 'new', self.name]
         cmd.extend(secrets)
 
@@ -59,7 +59,7 @@ class Secret(OpenShiftCLI):
         if not files:
             files = Utils.create_files_from_contents(contents)
 
-        secrets = ["%s=%s" % (os.path.basename(sfile), sfile) for sfile in files]
+        secrets = ["%s=%s" % (sfile['name'], sfile['path']) for sfile in files]
         cmd = ['-ojson', '-n%s' % self.namespace, 'secrets', 'new', self.name]
         cmd.extend(secrets)
 
