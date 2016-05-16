@@ -6,12 +6,13 @@
   vars:
     clusterid: opstest
     es_cluster_size: 3
+    version: 2
 
   tasks:
   - name: create project
     oadm_project:
       name: logging
-      node_selector: type=infra
+      node_selector: ""
       display_name: logging
     register: projectout
   - debug: var=projectout
@@ -62,15 +63,15 @@
     register: policyout
   - debug: var=policyout
 
-  - name: copy logging deployer template into place
-    template:
-      dest: /tmp/logging-template.yml
-      src: files/logging-deployer.yaml.j2
+#  - name: copy logging deployer template into place
+#    template:
+#      dest: /tmp/logging-template.yml
+#      src: files/logging-deployer.yaml.j2
 
-  - name: copy logging-support-template into place
-    template:
-      dest: /tmp/support.yml
-      src: files/support.yaml.j2
+#  - name: copy logging-support-template into place
+#    template:
+#      dest: /tmp/support.yml
+#      src: files/support.yaml.j2
 
   - name: create logging deployer template
     oc_obj:
@@ -79,7 +80,7 @@
       name: logging-deployer-template
       kind: template
       files:
-      - /tmp/logging-template.yml
+      - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.{{ version }}/infrastructure-templates/enterprise/logging-deployer.yaml"
     register: templateout
   - debug: var=templateout
 
@@ -87,6 +88,12 @@
     oc_process:
       namespace: logging
       template_name: logging-deployer-template
+      create: True
+      params:
+        KIBANA_HOSTNAME: "kibana.{{ clusterid }}.openshift.com"
+        ES_CLUSTER_SIZE: "{{ es_cluster_size }}"
+        PUBLIC_MASTER_URL: "https://api.{{ clusterid  }}.openshift.com"
+        MASTER_URL: "https://internal.api.{{ clusterid  }}.openshift.com"
     register: processout
   - debug: var=processout
 
@@ -152,22 +159,23 @@
     register: pvcout
   - debug: var=pvcout
 
-  - name: fix dc nodeSelector on elastic search dc
-    oc_edit:
-      name: "{{ item['metadata']['name'] }}"
-      namespace: logging
-      kind: dc
-      content:
-        spec#template#spec#nodeSelector:
-          type: infra
-    with_items: dcout.results.results[0]['items']
-    register: editout
-  - debug: var=editout
+#  - name: fix dc nodeSelector on elastic search dc
+#    oc_edit:
+#      name: "{{ item['metadata']['name'] }}"
+#      namespace: logging
+#      kind: dc
+#      content:
+#        spec#template#spec#nodeSelector:
+#          type: infra
+#    with_items: dcout.results.results[0]['items']
+#    register: editout
+#  - debug: var=editout
 
   - name: create template
     oc_process:
       namespace: logging
       template_name: logging-support-template
+      create: True
     register: processout
   - debug: var=processout
 
@@ -180,6 +188,15 @@
         metadata#annotations#openshift.io/node-selector: ''
     register: editout
   - debug: var=editout
+
+  - name: scale fluentd
+    oc_scale:
+      name: logging-fluentd
+      kind: dc
+      namespace: logging
+      replicas: 4
+    register: scaleout
+  - debug: var=scaleout
 
 # oc process logging-deployer-template -n openshift -v
 # KIBANA_HOSTNAME=kibana.<clusterid>.openshift.com,

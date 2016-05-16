@@ -76,7 +76,11 @@ def main():
         ########
         # Create
         ########
-        if not oadmpolicyuser.exists():
+        results = oadmpolicyuser.exists()
+        if isinstance(results, dict) and results.has_key('returncode') and results['returncode'] != 0:
+            module.fail_json(msg=results)
+
+        if not results:
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a create.')
