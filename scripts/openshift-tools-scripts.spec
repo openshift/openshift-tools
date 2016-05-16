@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.87
+Version:       0.0.88
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -265,6 +265,21 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Mon May 16 2016 Thomas Wiest <twiest@redhat.com> 0.0.88-1
+- Added ops-ec2-snapshot-ebs-volumes.py and ops-ec2-trim-ebs-snapshots.py
+  (twiest@redhat.com)
+- added a function to prevent running outside bastion hosts (sten@redhat.com)
+- fixed comments referring to the check this was based on (sten@redhat.com)
+- pylint.... (sten@redhat.com)
+- add kubeconfig test (sten@redhat.com)
+- a little cleanup as suggested by mwoodson (sten@redhat.com)
+- fixed pylint errors (sten@redhat.com)
+- script to generate + request signing of certs (sten@redhat.com)
+- renamed build-local-setup.sh to build-local-setup-centos7.sh and fixed it to
+  work with our latest way to build. Also fixed the
+  local_development_monitoring.adoc to be in line with our current way of
+  developing. (twiest@redhat.com)
+
 * Fri Apr 22 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.87-1
 - Kubeconfig fix (kwoodson@redhat.com)
 - fix up references to openshift-ansible repo (jdiaz@redhat.com)
