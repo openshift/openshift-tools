@@ -77,6 +77,9 @@ def main():
             if files and module.params['delete_after']:
                 Utils.cleanup(files)
 
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
+
             module.exit_json(changed=True, results=api_rval, state="present")
 
         ########
