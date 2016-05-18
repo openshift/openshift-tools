@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.88
+Version:       0.0.89
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -265,6 +265,10 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Wed May 18 2016 Matt Woodson <mwoodson@redhat.com> 0.0.89-1
+- shortening the project name in the cron-send-build-app.py
+  (mwoodson@redhat.com)
+
 * Mon May 16 2016 Thomas Wiest <twiest@redhat.com> 0.0.88-1
 - Added ops-ec2-snapshot-ebs-volumes.py and ops-ec2-trim-ebs-snapshots.py
   (twiest@redhat.com)
