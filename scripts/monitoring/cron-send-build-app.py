@@ -193,7 +193,8 @@ def main():
     ''' Do the application creation
     '''
     kubeconfig = copy_kubeconfig('/tmp/admin.kubeconfig')
-    proj_name = 'ops-monitor-appbuild' + os.environ['ZAGG_CLIENT_HOSTNAME']
+    node_hash = os.environ['ZAGG_CLIENT_HOSTNAME'].split('-')[-1]
+    proj_name = 'ops-master-' + node_hash
     app = 'nodejs-example'
     verbose = True
 
