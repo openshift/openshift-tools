@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: OpenShift Ops
+  description: Openshift Operations AWS Persistent Volume Creation
+  company: Red Hat, Inc
+  license: ASL 2.0
+  min_ansible_version: 1.2
+  platforms:
+  - name: EL
+    versions:
+    - 7
+dependencies:
+- role: ops_roles/lib_ansible_20
+- role: tools_roles/lib_openshift_3.2
+

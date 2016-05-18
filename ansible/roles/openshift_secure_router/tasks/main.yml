@@ -1,0 +1,31 @@
+---
+- name: get cert's basename
+  set_fact:
+    cert_basename: "{{ ossr_default_router_cert | basename }}"
+    key_basename: "{{ ossr_default_router_key | basename }}"
+    cacert_basename: "{{ ossr_default_router_cacert | basename }}"
+
+- name: copy router certs to masters
+  copy:
+    src: "{{ item }}"
+    dest: /etc/origin/master/named_certificates/
+  with_items:
+  - "{{ ossr_default_router_cert }}"
+  - "{{ ossr_default_router_key }}"
+  - "{{ ossr_default_router_cacert }}"
+
+- name: create secured router
+  oadm_router:
+    service_account: router
+    replicas: 2
+    namespace: default
+    selector: type=infra
+    cert_file: "/etc/origin/master/named_certificates/{{ cert_basename }}"
+    key_file: "/etc/origin/master/named_certificates/{{ key_basename }}"
+    cacert_file: "/etc/origin/master/named_certificates/{{ cacert_basename }}"
+  register: router_out
+  run_once: true
+
+- debug:
+    var: router_out
+  run_once: true
