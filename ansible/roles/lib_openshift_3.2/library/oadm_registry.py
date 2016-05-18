@@ -86,9 +86,13 @@ class OpenShiftCLI(object):
         '''return all pods '''
         return self.openshift_cmd(['create', '-f', fname, '-n', self.namespace])
 
-    def _delete(self, resource, rname):
+    def _delete(self, resource, rname, selector=None):
         '''return all pods '''
-        return self.openshift_cmd(['delete', resource, rname, '-n', self.namespace])
+        cmd = ['delete', resource, rname, '-n', self.namespace]
+        if selector:
+            cmd.append('--selector=%s' % selector)
+
+        return self.openshift_cmd(cmd)
 
     def _process(self, template_name, create=False, params=None):
         '''return all pods '''
