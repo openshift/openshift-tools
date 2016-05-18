@@ -82,6 +82,9 @@ class DockerUtil(object):
         num = matches.group("num")
         unit = matches.group("unit")
 
+        if unit == "TB":
+            return float(num) * 1024
+
         if unit == "GB":
             return float(num)
 
