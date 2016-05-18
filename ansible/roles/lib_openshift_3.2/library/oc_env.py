@@ -220,14 +220,13 @@ class Utils(object):
     @staticmethod
     def create_files_from_contents(content, content_type=None):
         '''Turn an array of dict: filename, content into a files array'''
-        if isinstance(content, list):
-            files = []
-            for item in content:
-                files.append(Utils.create_file(item['path'], item['data'], ftype=content_type))
-            return files
-
-        return Utils.create_file(content['path'], content['data'])
-
+        if not isinstance(content, list):
+            content = [content]
+        files = []
+        for item in content:
+            path = Utils.create_file(item['path'], item['data'], ftype=content_type)
+            files.append({'name': os.path.basename(path), 'path': path})
+        return files
 
     @staticmethod
     def cleanup(files):
