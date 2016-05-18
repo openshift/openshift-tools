@@ -1,0 +1,242 @@
+---
+- name: get cert's basename
+  set_fact:
+    cert_basename: "{{ osalog_default_logging_cert | basename }}"
+    key_basename: "{{ osalog_default_logging_key | basename }}"
+    cacert_basename: "{{ osalog_default_logging_cacert | basename }}"
+
+- name: copy logging certs to masters
+  copy:
+    src: "{{ item }}"
+    dest: /etc/origin/master/named_certificates/
+  with_items:
+  - "{{ osalog_default_logging_cert }}"
+  - "{{ osalog_default_logging_key }}"
+  - "{{ osalog_default_logging_cacert }}"
+
+- name: create project
+  oadm_project:
+    name: logging
+    node_selector: ""
+    display_name: logging
+  register: projectout
+  run_once: true
+- debug: var=projectout
+
+- name: create secret
+  oc_secret:
+    namespace: logging
+    name: logging-deployer
+    files:
+    - name: kibana.crt
+      path: "/etc/origin/master/named_certificates/{{ cert_basename }}"
+    - name: kibana.key
+      path: "/etc/origin/master/named_certificates/{{ key_basename }}"
+  register: secretout
+  run_once: true
+- debug: var=secretout
+
+- name: create serviceaccount
+  oc_serviceaccount:
+    name: logging-deployer
+    namespace: logging
+    secrets:
+    - logging-deployer
+  register: saout
+  run_once: true
+- debug: var=saout
+
+- name: create role binding to logging-deployer service account
+  oadm_policy_user:
+    namespace: logging
+    user: system:serviceaccount:logging:logging-deployer
+    resource_kind: role
+    resource_name: edit
+  register: policyout
+  run_once: true
+- debug: var=policyout
+
+- name: add scc to aggregated-logging-fluentd service account
+  oadm_policy_user:
+    namespace: logging
+    user: system:serviceaccount:logging:aggregated-logging-fluentd
+    resource_kind: scc
+    resource_name: privileged
+  register: policyout
+  run_once: true
+- debug: var=policyout
+
+- name: add cluster role binding to aggregated-logging-fluentd service account
+  oadm_policy_user:
+    namespace: logging
+    user: system:serviceaccount:logging:aggregated-logging-fluentd
+    resource_kind: cluster-role
+    resource_name: cluster-reader
+  register: policyout
+  run_once: true
+- debug: var=policyout
+
+- name: create logging deployer template
+  oc_obj:
+    state: present
+    namespace: logging
+    name: logging-deployer-template
+    kind: template
+    files:
+    - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/infrastructure-templates/enterprise/logging-deployer.yaml"
+  register: templateout
+  run_once: true
+- debug: var=templateout
+
+- name: create template
+  oc_process:
+    namespace: logging
+    template_name: logging-deployer-template
+    create: True
+    params:
+      KIBANA_HOSTNAME: "kibana.{{ osalog_clusterid }}.openshift.com"
+      ES_CLUSTER_SIZE: "{{ osalog_es_cluster_size }}"
+      PUBLIC_MASTER_URL: "https://api.{{ osalog_clusterid  }}.openshift.com"
+      MASTER_URL: "https://internal.api.{{ osalog_clusterid  }}.openshift.com"
+  register: processout
+  run_once: true
+- debug: var=processout
+
+# wait 2 minutes for deployer pod to complete
+- name: wait until logging deployer pod has completed
+  oc_obj:
+    state: list
+    namespace: logging
+    kind: pods
+  register: podout
+  until: podout.results.results[0]['items'][0].status.phase == 'Succeeded'
+  retries: 24
+  delay: 5
+  run_once: true
+
+- name: get deployer pod status
+  oc_obj:
+    state: list
+    namespace: logging
+    kind: pods
+  register: podout
+  run_once: true
+
+- fail:
+    msg: logging deployer failed to complete setup
+  when: podout.results.results[0]['items'][0].status.phase != 'Succeeded'
+  run_once: true
+
+- name: get deployer pod status
+  oc_obj:
+    state: list
+    namespace: logging
+    kind: pods
+  register: podout
+  run_once: true
+
+- name: fetch the elastic search dc's with selector
+  oc_obj:
+    state: list
+    namespace: logging
+    kind: dc
+    selector: logging-infra=elasticsearch
+  register: dcout
+  run_once: true
+- debug: var=dcout
+
+- name: attach storage volumes to instances
+  oc_pvc:
+    namespace: logging
+    name: "{{ item['metadata']['name'] }}"
+    access_modes:
+    - ReadWriteOnce
+    volume_capacity: "{{ osalog_pv_size }}G"
+  with_items: dcout.results.results[0]['items']
+  register: pvcout
+  run_once: true
+- debug: var=pvcout
+
+- name: attach storage volumes to instances
+  oc_volume:
+    namespace: logging
+    kind: dc
+    name: "{{ item['metadata']['name'] }}"
+    mount_type: pvc
+    claim_name: "{{ item['metadata']['name'] }}"
+    claim_size: "{{ osalog_pv_size }}G"
+    vol_name: elasticsearch-storage
+  with_items: dcout.results.results[0]['items']
+  register: volumeout
+  run_once: true
+- debug: var=volumeout
+
+- name: create template
+  oc_process:
+    namespace: logging
+    template_name: logging-support-template
+    create: True
+  register: processout
+  run_once: true
+- debug: var=processout
+
+- name:
+  oc_edit:
+    name: logging
+    kind: project
+    namespace: logging
+    content:
+      metadata#annotations#openshift.io/node-selector: ''
+  register: editout
+  run_once: true
+- debug: var=editout
+
+- name: scale fluentd
+  oc_scale:
+    name: logging-fluentd
+    kind: dc
+    namespace: logging
+    replicas: '{{ osalog_node_count }}'
+  register: scaleout
+  run_once: true
+- debug: var=scaleout
+
+- name: scale kibana frontend
+  oc_scale:
+    name: logging-kibana
+    kind: dc
+    namespace: logging
+    replicas: 2
+  register: scaleout
+  run_once: true
+- debug: var=scaleout
+
+- name: add kibana url to master-config.yml
+  yedit:
+    src: /etc/origin/master/master-config.yaml
+    key: assetConfig#loggingPublicURL
+    value: "https://kibana.{{ osalog_clusterid }}.openshift.com"
+  register: yeditout
+  notify:
+  - restart openshift master services
+- debug: var=yeditout
+
+#  We may need a reencrypt route in the future
+#  This was tested, but didn't quite work.
+#
+#- name: create route for the kibana
+#  oc_route:
+#    name: kibana
+#    namespace: logging
+#    tls_termination: reencrypt
+#    cert_path: "/etc/origin/master/named_certificates/{{ cert_basename }}"
+#    key_path: "/etc/origin/master/named_certificates/{{ key_basename }}"
+#    cacert_path: "/etc/origin/master/named_certificates/{{ cacert_basename }}"
+#    dest_cacert_path: "/etc/origin/master/named_certificates/{{ cacert_basename }}"
+#    service_name: logging-kibana
+#    host: "kibana.{{ osalog_clusterid }}.openshift.com"
+#  register: routeout
+#  run_once: True
+#
+#- debug: var=routeout
+#  run_once: True

@@ -1,0 +1,8 @@
+---
+
+- name: Change annotation
+  oc_edit:
+    kind: namespace
+    name: default
+    content:
+      'metadata:annotations:openshift.io/node-selector': 'type=infra'
