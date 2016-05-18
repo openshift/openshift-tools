@@ -53,6 +53,7 @@ from dns import exception as dns_exception
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 import socket
+import sys
 
 class OpenshiftSkyDNSZaggClient(object):
     """ Checks for the Openshift Master SkyDNS """
@@ -61,7 +62,7 @@ class OpenshiftSkyDNSZaggClient(object):
         self.args = None
         self.zagg_sender = None
         self.ora = OpenshiftRestApi()
-        self.dns_host = '127.0.0.1'
+        self.dns_host = ''
         self.dns_port = 53
         self.openshift_services = []
 
@@ -71,8 +72,17 @@ class OpenshiftSkyDNSZaggClient(object):
         self.parse_args()
         self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
 
+        self.get_openshift_services()
+        dns_host = [i for i in self.openshift_services if i['name'] == 'kubernetes' and i['namespace'] == 'default']
+
+        if len(dns_host) == 1:
+            self.dns_host = dns_host[0]['ip']
+        else:
+            print "\nUnable to find SKY DNS server."
+            print "Please run \"oc get services -n default\" to locate kubernetes service"
+            sys.exit(1)
+
         if self.check_dns_port_alive():
-            self.get_openshift_services()
             self.do_dns_check()
 
         self.zagg_sender.send_metrics()
