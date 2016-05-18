@@ -19,6 +19,7 @@ def main():
             contents=dict(default=None, type='list'),
             content_type=dict(default='raw', choices=['yaml', 'json', 'raw'], type='str'),
             force=dict(default=False, type='bool'),
+            decode=dict(default=False, type='bool'),
         ),
         mutually_exclusive=[["contents", "files"]],
 
@@ -26,6 +27,7 @@ def main():
     )
     occmd = Secret(module.params['namespace'],
                    module.params['name'],
+                   module.params['decode'],
                    kubeconfig=module.params['kubeconfig'],
                    verbose=module.params['debug'])
 
@@ -37,7 +39,7 @@ def main():
     # Get
     #####
     if state == 'list':
-        module.exit_json(changed=False, results=api_rval['results'], state="list")
+        module.exit_json(changed=False, results=api_rval, state="list")
 
     if not module.params['name']:
         module.fail_json(msg='Please specify a name when state is absent|present.')
