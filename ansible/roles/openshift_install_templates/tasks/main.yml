@@ -1,0 +1,41 @@
+---
+- name: Ensure openshift-ansible-roles is installed
+  action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
+  with_items:
+  - openshift-ansible-roles
+
+- name: Process and create templates
+  command: "oc --config /etc/origin/master/admin.kubeconfig -n openshift create -f {{ item }}"
+  with_fileglob:
+  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/image-streams/image-streams-rhel7.*
+  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/db-templates
+  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/infrastructure-templates
+  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/quickstart-templates
+  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/xpaas*
+  ignore_errors: yes
+  run_once: yes
+
+- name: Process and replace templates
+  command: "oc --config /etc/origin/master/admin.kubeconfig -n openshift replace -f {{ item }}"
+  with_fileglob:
+  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/image-streams/image-streams-rhel7.*
+  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/db-templates
+  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/infrastructure-templates
+  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/quickstart-templates
+  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/xpaas*
+  ignore_errors: yes
+  run_once: yes
+
+#- name: Process and create templates
+#  oc_process:
+#    namespace: openshift
+#    template_name: "{{ item }}"
+#    create: True
+#  with_items:
+#  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/image-streams/image-streams-rhel7.json
+#  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/db-templates
+#  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/infrastructure-templates
+#  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/quickstart-templates
+#  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/xpaas-streams
+#  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/xpaas-templates
+#  register: processout
