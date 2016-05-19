@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.91
+Version:       0.0.92
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -267,6 +267,9 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Thu May 19 2016 Joel Diaz <jdiaz@redhat.com> 0.0.92-1
+- add build/deploy/image pruning script (jdiaz@redhat.com)
+
 * Thu May 19 2016 Matt Woodson <mwoodson@redhat.com> 0.0.91-1
 - fixed the aws s3 check (mwoodson@redhat.com)
 
