@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.61
+Version:       0.0.62
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -258,6 +258,9 @@ Adds Aws specific python modules
 
 
 %changelog
+* Thu May 19 2016 Matt Woodson <mwoodson@redhat.com> 0.0.62-1
+- fixed the aws s3 check (mwoodson@redhat.com)
+
 * Wed May 18 2016 Matt Woodson <mwoodson@redhat.com> 0.0.61-1
 - added TB to dockerutil (mwoodson@redhat.com)
 
