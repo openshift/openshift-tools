@@ -23,10 +23,11 @@
 
 import argparse
 import base64
-import yaml
-from openshift_tools.monitoring.zagg_sender import ZaggSender
 from openshift_tools.monitoring.awsutil import AWSUtil
 from openshift_tools.monitoring.ocutil import OCUtil
+from openshift_tools.monitoring.zagg_sender import ZaggSender
+import sys
+import yaml
 
 def parse_args():
     '''Parse the arguments for this script'''
@@ -38,6 +39,27 @@ def parse_args():
                         action="store_true", help="Run the script but don't send to zabbix")
     args = parser.parse_args()
     return args
+
+def get_registry_config_secret(yaml_results):
+    ''' Find the docker registry config secret '''
+
+    volume_mounts = yaml.safe_load(yaml_results)['spec']['template']['spec']['containers'][0]['volumeMounts']
+    registry_config_volume = [i for i in volume_mounts if i['mountPath'] == '/etc/registryconfig']
+
+    if len(registry_config_volume) != 1:
+        print "Please run \"oc get dc docker-registry\""
+        print "Unable to find the \"/etc/registryconfig\" volume mount."
+        sys.exit(1)
+
+    volumes = yaml.safe_load(yaml_results)['spec']['template']['spec']['volumes']
+    registry_config_secret = [i for i in volumes if i['name'] == registry_config_volume[0]['name']]
+
+    if len(registry_config_secret) != 1:
+        print "Unable to find the %s volume mount." %registry_config_volume[0]['name']
+        print "Please run \"oc get dc docker-registry\""
+        sys.exit(1)
+
+    return registry_config_secret[0]['secret']['secretName']
 
 def get_aws_creds(yaml_results):
     ''' Get AWS authentication and S3 bucket name for the docker-registry '''
@@ -63,7 +85,10 @@ def main():
     args = parse_args()
 
     ocutil = OCUtil()
-    oc_yaml = ocutil.get_secrets('dockerregistry')
+    dc_yaml = ocutil.get_dc('docker-registry')
+    registry_config_secret = get_registry_config_secret(dc_yaml)
+
+    oc_yaml = ocutil.get_secrets(registry_config_secret)
 
     aws_access, aws_secret = get_aws_creds(oc_yaml)
     awsutil = AWSUtil(aws_access, aws_secret, args.debug)
