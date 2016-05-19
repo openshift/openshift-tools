@@ -9,6 +9,7 @@
     g_oso_environment: "{{ lookup('env', 'OSO_ENVIRONMENT') | default('undefenv', True) }}"
     g_oso_host_type: "{{ lookup('env', 'OSO_HOST_TYPE') }}"
     g_oso_master_ha: "{{ lookup('env', 'OSO_MASTER_HA') | default(g_default_openshift_master_ha, True) }}"
+    g_oso_master_primary: "{{ lookup('env', 'OSO_MASTER_PRIMARY') | default(False, True) }}"
 
     g_zagg_client_config:
       host:
@@ -148,10 +149,11 @@
       minute: "*/5"
       job: ops-runner -f -s 30 -n cskc.openshift.master.kubeconfig.status /usr/bin/cron-send-check-kubeconfig 
 
-    - name: "Clean old builds and deployments"
-      hour: "1"
-      minute: "0"
-      job: "/usr/bin/oadm prune deployments --keep-complete=2 --keep-younger-than=30m --keep-failed=1 --confirm=true --config=/tmp/admin.kubeconfig &>> /var/log/prune_deployments.log; /usr/bin/oadm prune builds --keep-complete=2 --keep-younger-than=30m --keep-failed=1 --confirm=true  --config=/tmp/admin.kubeconfig &>> /var/log/prune_builds.log"
+    - name: "Prune builds/deployments/images"
+      hour: "*/3"
+      minute: "30"
+      job: ops-runner -f -s 30 -n cosp.openshift.master.prune /usr/bin/cron-openshift-pruner
+      condition: "{{ g_oso_master_primary|bool }}"
 
   pre_tasks:
   - stat:
