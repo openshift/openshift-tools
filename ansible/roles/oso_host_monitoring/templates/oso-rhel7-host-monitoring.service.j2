@@ -58,6 +58,7 @@ ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                
            -v /var/run/docker.sock:/var/run/docker.sock                                      \
            -v /var/run/openvswitch:/var/run/openvswitch                                      \
 {% if hostvars[inventory_hostname]['oo_hosttype'] == 'master' %}
+           -e OSO_MASTER_PRIMARY={{ oo_master_primary }}                                     \
            -v /etc/origin/master/admin.kubeconfig:/etc/origin/master/admin.kubeconfig:ro  \
            -v /etc/origin/master/master.etcd-client.crt:/etc/origin/master/master.etcd-client.crt \
            -v /etc/origin/master/master.etcd-client.key:/etc/origin/master/master.etcd-client.key \
