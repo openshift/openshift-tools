@@ -18,7 +18,7 @@
   oadm_project:
     name: openshift-infra
     description: openshift-infra
-    node_selector: ""
+    node_selector: type=infra
     display_name: openshift-infra
   register: projectout
   run_once: true
@@ -90,7 +90,7 @@
 
 - name: wait for deployment to finish
   pause:
-    seconds: 20
+    seconds: 120
   run_once: true
 
 - name: get deployer pod status
@@ -133,7 +133,7 @@
   yedit:
     src: /etc/origin/master/master-config.yaml
     key: assetConfig#metricsPublicURL
-    value: https://metrics.opstest.openshift.com/hawkular/metrics
+    value: "https://metrics.{{ osamet_clusterid }}.openshift.com/hawkular/metrics"
   register: yeditout
   notify:
   - restart openshift master services
