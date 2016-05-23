@@ -50,6 +50,7 @@ cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-
 cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
 cp -p cloud/aws/ops-ec2-trim-ebs-snapshots.py %{buildroot}/usr/bin/ops-ec2-trim-ebs-snapshots
 cp -p monitoring/cron-send-build-app.py %{buildroot}/usr/bin/cron-send-build-app
+cp -p monitoring/cron-send-cpu-mem-process.sh %{buildroot}/usr/bin/cron-send-cpu-mem-process
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -190,6 +191,7 @@ OpenShift Tools Zagg Server Monitoring Scripts
 /usr/bin/ops-zagg-metric-processor
 /usr/bin/ops-zagg-heartbeat-processor
 /usr/bin/ops-zagg-heartbeater
+/usr/bin/cron-send-cpu-mem-process
 /var/run/zagg/data
 %config(noreplace)/etc/openshift_tools/zagg_server.yaml
 
