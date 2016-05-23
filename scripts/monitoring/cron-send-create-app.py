@@ -85,8 +85,12 @@ class OpenShiftOC(object):
         cmd = ['project']
         results = self.oc_cmd(cmd)
         curr_project = results.split()[2].strip('"')
+        version = self.get_version()
         cmd = ['new-project', self.namespace]
-        rval = self.oc_cmd(cmd)
+        if "v3.2" in version:  ## remove this after BZ1333049 resolved in OSE
+            rval = self.oadm_cmd(cmd)
+        else:
+            rval = self.oc_cmd(cmd)
         cmd = ['project', curr_project]
         results = self.oc_cmd(cmd)
         return rval
@@ -111,9 +115,32 @@ class OpenShiftOC(object):
 
         return results
 
+    def get_version(self):
+        '''get openshift version'''
+        return self.oc_cmd(['version'])
+
     def oc_cmd(self, cmd):
         '''Base command for oc '''
         cmds = ['/usr/bin/oc']
+        cmds.extend(cmd)
+        print ' '.join(cmds)
+        proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
+                                env={'KUBECONFIG': self.kubeconfig})
+        proc.wait()
+        if proc.returncode == 0:
+            output = proc.stdout.read()
+            if self.verbose:
+                print "Stdout:"
+                print output
+                print "Stderr:"
+                print proc.stderr.read()
+            return output
+
+        return "Error: %s.  Return: %s" % (proc.returncode, proc.stderr.read())
+
+    def oadm_cmd(self, cmd):
+        '''Base command for oadm '''
+        cmds = ['/usr/bin/oadm']
         cmds.extend(cmd)
         print ' '.join(cmds)
         proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
