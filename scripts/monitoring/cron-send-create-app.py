@@ -85,8 +85,12 @@ class OpenShiftOC(object):
         cmd = ['project']
         results = self.oc_cmd(cmd)
         curr_project = results.split()[2].strip('"')
+        version = self.get_version()
         cmd = ['new-project', self.namespace]
-        rval = self.oadm_cmd(cmd)
+        if "v3.2" in version:  ## remove this after BZ1333049 resolved in OSE
+            rval = self.oadm_cmd(cmd)
+        else:
+            rval = self.oc_cmd(cmd)
         cmd = ['project', curr_project]
         results = self.oc_cmd(cmd)
         return rval
@@ -110,6 +114,10 @@ class OpenShiftOC(object):
         results = [proj.split()[0] for proj in self.oc_cmd(cmd).split('\n') if proj and len(proj) > 0]
 
         return results
+
+    def get_version(self):
+        '''get openshift version'''
+        return self.oc_cmd(['version'])
 
     def oc_cmd(self, cmd):
         '''Base command for oc '''
