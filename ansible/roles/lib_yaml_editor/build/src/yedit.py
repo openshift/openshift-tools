@@ -212,34 +212,39 @@ class Yedit(object):
 
         return entry == value
 
-    def add_item(self, path, inc_dict):
+    def update(self, path, value, index=None, curr_value=None):
         ''' put path, value into a dict '''
         try:
             entry = Yedit.get_entry(self.yaml_dict, path)
         except KeyError as _:
             entry = None
 
-        if entry == None or not isinstance(entry, dict):
-            return (False, self.yaml_dict)
+        if isinstance(entry, dict):
+            entry.update(value)
+            return (True, self.yaml_dict)
 
-        entry.update(inc_dict)
+        elif isinstance(entry, list):
+            #pylint: disable=no-member,maybe-no-member
+            ind = None
+            if curr_value:
+                ind = None
+                try:
+                    ind = entry.index(curr_value)
+                except ValueError:
+                    return (False, self.yaml_dict)
 
-        return (True, self.yaml_dict)
+                entry[ind] = value
 
-    def append(self, path, value):
-        ''' put path, value into a dict '''
-        try:
-            entry = Yedit.get_entry(self.yaml_dict, path)
-        except KeyError as _:
-            entry = None
+            elif index:
+                entry[index] = value
 
-        if entry == None or not isinstance(entry, list):
-            return (False, self.yaml_dict)
+            else:
+                entry.append(value)
+                return (True, self.yaml_dict)
 
-        #pylint: disable=no-member,maybe-no-member
-        entry.append(value)
+            return (True, self.yaml_dict)
 
-        return (True, self.yaml_dict)
+        return (False, self.yaml_dict)
 
     def put(self, path, value):
         ''' put path, value into a dict '''
