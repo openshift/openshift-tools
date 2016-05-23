@@ -13,6 +13,8 @@ import os
 # pylint: disable=import-error
 from yedit import Yedit
 
+# pylint: disable=too-many-public-methods
+# Silly pylint, moar tests!
 class YeditTest(unittest.TestCase):
     '''
      Test class for yedit
@@ -150,20 +152,38 @@ class YeditTest(unittest.TestCase):
         self.assertTrue(yed.exists('b:c:d', [{'x': {'y': 'inject'}}]))
         self.assertFalse(yed.exists('b:c:d', [{'x': {'y': 'test'}}]))
 
-    def test_append_to_list(self):
-        '''Testing append to list'''
+    def test_append_to_list_with_index(self):
+        '''Testing update to list with index'''
         yed = Yedit("yedit_test.yml")
         yed.put('x:y:z', [1, 2, 3])
-        yed.append('x:y:z', [5, 6])
+        yed.update('x:y:z', [5, 6], index=2)
+        self.assertTrue(yed.get('x:y:z') == [1, 2, [5, 6]])
+        self.assertTrue(yed.exists('x:y:z', [5, 6]))
+        self.assertFalse(yed.exists('x:y:z', 4))
+
+    def test_append_to_list_with_curr_value(self):
+        '''Testing update to list with index'''
+        yed = Yedit("yedit_test.yml")
+        yed.put('x:y:z', [1, 2, 3])
+        yed.update('x:y:z', [5, 6], curr_value=3)
+        self.assertTrue(yed.get('x:y:z') == [1, 2, [5, 6]])
+        self.assertTrue(yed.exists('x:y:z', [5, 6]))
+        self.assertFalse(yed.exists('x:y:z', 4))
+
+    def test_append_to_list(self):
+        '''Testing update to list'''
+        yed = Yedit("yedit_test.yml")
+        yed.put('x:y:z', [1, 2, 3])
+        yed.update('x:y:z', [5, 6])
         self.assertTrue(yed.get('x:y:z') == [1, 2, 3, [5, 6]])
         self.assertTrue(yed.exists('x:y:z', [5, 6]))
         self.assertFalse(yed.exists('x:y:z', 4))
 
     def test_add_item_to_dict(self):
-        '''Testing add_item to dict'''
+        '''Testing update to dict'''
         yed = Yedit("yedit_test.yml")
         yed.put('x:y:z', {'a': 1, 'b': 2})
-        yed.add_item('x:y:z', {'c': 3, 'd': 4})
+        yed.update('x:y:z', {'c': 3, 'd': 4})
         self.assertTrue(yed.get('x:y:z') == {'a': 1, 'b': 2, 'c': 3, 'd': 4})
         self.assertTrue(yed.exists('x:y:z', {'c': 3}))
 

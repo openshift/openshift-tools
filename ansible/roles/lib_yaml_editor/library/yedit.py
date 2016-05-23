@@ -14,6 +14,7 @@ module for managing yaml files
 import os
 import re
 
+import json
 import yaml
 # This is here because of a bug that causes yaml
 # to incorrectly handle timezone info on timestamps
@@ -235,34 +236,39 @@ class Yedit(object):
 
         return entry == value
 
-    def add_item(self, path, inc_dict):
+    def update(self, path, value, index=None, curr_value=None):
         ''' put path, value into a dict '''
         try:
             entry = Yedit.get_entry(self.yaml_dict, path)
         except KeyError as _:
             entry = None
 
-        if entry == None or not isinstance(entry, dict):
-            return (False, self.yaml_dict)
+        if isinstance(entry, dict):
+            entry.update(value)
+            return (True, self.yaml_dict)
 
-        entry.update(inc_dict)
+        elif isinstance(entry, list):
+            #pylint: disable=no-member,maybe-no-member
+            ind = None
+            if curr_value:
+                ind = None
+                try:
+                    ind = entry.index(curr_value)
+                except ValueError:
+                    return (False, self.yaml_dict)
 
-        return (True, self.yaml_dict)
+                entry[ind] = value
 
-    def append(self, path, value):
-        ''' put path, value into a dict '''
-        try:
-            entry = Yedit.get_entry(self.yaml_dict, path)
-        except KeyError as _:
-            entry = None
+            elif index:
+                entry[index] = value
 
-        if entry == None or not isinstance(entry, list):
-            return (False, self.yaml_dict)
+            else:
+                entry.append(value)
+                return (True, self.yaml_dict)
 
-        #pylint: disable=no-member,maybe-no-member
-        entry.append(value)
+            return (True, self.yaml_dict)
 
-        return (True, self.yaml_dict)
+        return (False, self.yaml_dict)
 
     def put(self, path, value):
         ''' put path, value into a dict '''
@@ -288,6 +294,20 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
+def get_curr_value(invalue, val_type):
+    '''return the current value'''
+    if not invalue:
+        return None
+
+    curr_value = None
+    if val_type == 'yaml':
+        curr_value = yaml.load(invalue)
+    elif val_type == 'json':
+        curr_value = json.loads(invalue)
+
+    return curr_value
+
+# pylint: disable=too-many-branches
 def main():
     '''
     ansible oc module for secrets
@@ -303,8 +323,12 @@ def main():
             key=dict(default=None, type='str'),
             value=dict(default=None, type='str'),
             value_format=dict(default='yaml', choices=['yaml', 'json'], type='str'),
+            update=dict(default=False, type='bool'),
+            index=dict(default=None, type='int'),
+            curr_value=dict(default=None, type='str'),
+            curr_value_format=dict(default='yaml', choices=['yaml', 'json'], type='str'),
         ),
-        #mutually_exclusive=[["src", "content"]],
+        mutually_exclusive=[["curr_value", "index"]],
 
         supports_check_mode=True,
     )
@@ -318,6 +342,8 @@ def main():
                              ' file exists, that it is has correct permissions, and is valid yaml.')
 
     if state == 'list':
+        if module.params['key']:
+            rval = yamlfile.get(module.params['key'])
         module.exit_json(changed=False, results=rval, state="list")
 
     if state == 'absent':
@@ -332,7 +358,12 @@ def main():
             value = json.loads(module.params['value'])
 
         if rval:
-            rval = yamlfile.put(module.params['key'], value)
+            if module.params['update']:
+                curr_value = get_curr_value(module.params['curr_value'], module.params['curr_value_format'])
+                rval = yamlfile.update(module.params['key'], value, index=module.params['index'], curr_value=curr_value)
+            else:
+                rval = yamlfile.put(module.params['key'], value)
+
             if rval[0]:
                 yamlfile.write()
             module.exit_json(changed=rval[0], results=rval[1], state="present")
@@ -350,8 +381,19 @@ def main():
                      results='Unknown state passed. %s' % state,
                      state="unknown")
 
+# If running unit tests, please uncomment this block
+####
+#if __name__ == '__main__':
+    #from ansible.module_utils.basic import *
+    #main()
+####
+
+
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
+# IF RUNNING UNIT TESTS, COMMENT OUT THIS SECTION
+####
 from ansible.module_utils.basic import *
 
 main()
+####
