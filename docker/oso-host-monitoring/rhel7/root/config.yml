@@ -28,6 +28,8 @@
         hostgroups:
         - "{{ g_oso_cluster_id }}"
         - "{{ g_oso_environment }}"
+    g_oso_snapshot_aws_access_key_id: "{{ lookup('env', 'OSO_SNAPSHOT_AWS_ACCESS_KEY_ID') | default(None, True) }}"
+    g_oso_snapshot_aws_secret_access_key: "{{ lookup('env', 'OSO_SNAPSHOT_AWS_SECRET_ACCESS_KEY') | default(None, True) }}"
 
     # Generic Linux Checks
     g_zagg_client_cron:
@@ -155,6 +157,39 @@
       job: ops-runner -f -s 30 -n cosp.openshift.master.prune /usr/bin/cron-openshift-pruner
       condition: "{{ g_oso_master_primary|bool }}"
 
+    - name: "Snapshot volumes tagged with hourly"
+      hour: "*"
+      minute: "0"
+      job: ops-runner -f -s 30 -n oesev.snapshot.hourly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule hourly
+      condition: "{{ g_oso_master_primary|bool }}"
+
+    - name: "Snapshot EBS volumes tagged with daily"
+      hour: "0"
+      minute: "0"
+      job: ops-runner -f -s 30 -n oesev.snapshot.daily ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule daily
+      condition: "{{ g_oso_master_primary|bool }}"
+
+    - name: "Snapshot EBS volumes tagged with weekly"
+      weekday: "0"
+      hour: "0"
+      minute: "0"
+      job: ops-runner -f -s 30 -n oesev.snapshot.weekly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule weekly
+      condition: "{{ g_oso_master_primary|bool }}"
+
+    - name: "Snapshot EBS volumes tagged with monthly"
+      day: "1"
+      hour: "0"
+      minute: "0"
+      job: ops-runner -f -s 30 -n oesev.snapshot.monthly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule monthly
+      condition: "{{ g_oso_master_primary|bool }}"
+
+    # DO NOT CHANGE without first talking to twiest.
+    - name: "Trim EBS Snapshot"
+      minute: "10"
+      job: ops-runner -f -s 30 -n oetes.trim.snapshots ops-ec2-trim-ebs-snapshots --aws-creds-profile snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
+      condition: "{{ g_oso_master_primary|bool }}"
+
+
   pre_tasks:
   - stat:
       path: /secrets/host_monitoring_vars.yml
@@ -238,3 +273,16 @@
       dest: /tmp/admin.kubeconfig
       mode: '0770'
     when: kubepath.stat.exists
+
+  - name: add snapshotter aws creds to /root/.aws/credentials
+    ini_file:
+      dest: /root/.aws/credentials
+      section: snapshotter
+      option: "{{ item.key }}"
+      value: "{{ item.value }}"
+    when: g_oso_snapshot_aws_access_key_id and g_oso_snapshot_aws_secret_access_key
+    with_items:
+    - key: aws_access_key_id
+      value: "{{ g_oso_snapshot_aws_access_key_id }}"
+    - key: aws_secret_access_key
+      value: "{{ g_oso_snapshot_aws_secret_access_key }}"
