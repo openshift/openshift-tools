@@ -183,7 +183,6 @@ class OpenShiftPrune(object):
                '--config', self.args.kube_config,
                '--confirm']
 
-        # can save output and count pruned objects in the future
         output = subprocess.check_output(cmd)
         if self.args.debug:
             print "Prune deployment output:\n" + output
@@ -191,9 +190,27 @@ class OpenShiftPrune(object):
     def main(self):
         ''' Prune images/builds/deployments '''
 
-        self.prune_deployments()
-        self.prune_builds()
-        self.prune_images()
+        rc = 0
+        try:
+            self.prune_deployments()
+        except subprocess.CalledProcessError as e:
+            print "Error pruning deployments"
+            rc = e.returncode
+
+        try:
+            self.prune_builds()
+        except subprocess.CalledProcessError as e:
+            print "Error pruning builds"
+            rc = e.returncode
+
+        try:
+            self.prune_images()
+        except subprocess.CalledProcessError as e:
+            print "Error pruning images"
+            rc = e.returncode
+
+        if rc != 0:
+            raise Exception("Error during pruning")
 
 if __name__ == '__main__':
     OSPruner = OpenShiftPrune()
