@@ -55,3 +55,20 @@ then
 else
     echo 
 fi
+
+
+#docker daemon
+
+processidofdocker=`ps -ef |grep '/usr/bin/docker daemon --selinux-enabled'|grep -v "grep" |awk '{print $2}'`
+
+CpuUsagedocker=`ps -p $processidofdocker -o %cpu |grep -v CPU`
+
+echo "the cpu usage of docker daemon is $CpuUsagedocker%"
+
+MemUsagedocker=`ps -p $processidofdocker -o %mem |grep -v MEM`
+
+echo "the mem usage of docker daemon is $MemUsagedocker%"
+
+ops-zagg-client -k "openshift.docker.daemon.cpu" -o "$CpuUsageetcd"
+ops-zagg-client -k "openshift.docker.daemon.mem" -o "$MemUsageetcd"
+
