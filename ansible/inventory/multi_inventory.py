@@ -66,17 +66,14 @@ class MultiInventory(object):
              os.environ.has_key("AWS_SECRET_ACCESS_KEY"):
             # Build a default config
             self.config = {}
-            self.config['accounts'] = [
-                {
-                    'name': 'default',
-                    'cache_location': DEFAULT_CACHE_PATH,
-                    'provider': 'aws/hosts/ec2.py',
-                    'env_vars': {
-                        'AWS_ACCESS_KEY_ID':     os.environ["AWS_ACCESS_KEY_ID"],
-                        'AWS_SECRET_ACCESS_KEY': os.environ["AWS_SECRET_ACCESS_KEY"],
-                    }
-                },
-            ]
+            # pylint: disable=line-too-long
+            self.config['accounts'] = {'default': {'cache_location': DEFAULT_CACHE_PATH,
+                                                   'provider': 'aws/hosts/ec2.py',
+                                                   'env_vars': {'AWS_ACCESS_KEY_ID':     os.environ["AWS_ACCESS_KEY_ID"],
+                                                                'AWS_SECRET_ACCESS_KEY': os.environ["AWS_SECRET_ACCESS_KEY"],
+                                                               }
+                                                  }
+                                      }
 
             self.config['cache_max_age'] = 300
         else:
@@ -119,10 +116,6 @@ class MultiInventory(object):
 
         with open(conf_file) as conf:
             config = yaml.safe_load(conf)
-
-        # Provide a check for unique account names
-        if len(set([acc['name'] for acc in config['accounts']])) != len(config['accounts']):
-            raise MultiInventoryException('Duplicate account names in config file')
 
         return config
 
@@ -177,7 +170,7 @@ class MultiInventory(object):
             all_results = []
             tmp_dir_paths = []
             processes = {}
-            for account in self.config['accounts']:
+            for acc_name, account in self.config['accounts'].items():
                 tmp_dir = None
                 if account.has_key('provider_files'):
                     tmp_dir = MultiInventory.generate_config(account['provider_files'])
@@ -190,9 +183,8 @@ class MultiInventory(object):
                     for key, value in env.items():
                         env[key] = Template(value).substitute(tmpdir=tmp_dir)
 
-                name = account['name']
                 provider = account['provider']
-                processes[name] = self.get_provider_tags(provider, env)
+                processes[acc_name] = self.get_provider_tags(provider, env)
 
             # for each process collect stdout when its available
             for name, process in processes.items():
@@ -250,8 +242,8 @@ class MultiInventory(object):
 
             # Check if user wants extra vars in yaml by
             # having hostvars and all_group defined
-            for acc_config in self.config['accounts']:
-                self.apply_account_config(acc_config)
+            for acc_name, acc_config in self.config['accounts'].items():
+                self.apply_account_config(acc_name, acc_config)
 
             # Build results by merging all dictionaries
             values = self.all_inventory_results.values()
@@ -340,9 +332,9 @@ class MultiInventory(object):
                         else:
                             inventory['_meta']['hostvars'][host][selector['name']] = False
 
-    def apply_account_config(self, acc_config):
+    def apply_account_config(self, acc_name, acc_config):
         ''' Apply account config settings '''
-        results = self.all_inventory_results[acc_config['name']]
+        results = self.all_inventory_results[acc_name]
         results['all_hosts'] = results['_meta']['hostvars'].keys()
 
         self.apply_extra_vars(results['_meta']['hostvars'], acc_config.get('extra_vars', {}))
@@ -356,7 +348,7 @@ class MultiInventory(object):
         self.apply_group_selectors(results, acc_config.get('group_selectors', {}))
 
         # store the results back into all_inventory_results
-        self.all_inventory_results[acc_config['name']] = results
+        self.all_inventory_results[acc_name] = results
 
     @staticmethod
     def merge_destructively(input_a, input_b):

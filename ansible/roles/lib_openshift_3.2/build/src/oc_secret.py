@@ -1,11 +1,15 @@
 # pylint: skip-file
 
+import base64
+
+# pylint: disable=too-many-arguments
 class Secret(OpenShiftCLI):
     ''' Class to wrap the oc command line tools
     '''
     def __init__(self,
                  namespace,
                  secret_name=None,
+                 decode=False,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
                  verbose=False):
         ''' Constructor for OpenshiftOC '''
@@ -13,11 +17,25 @@ class Secret(OpenShiftCLI):
         self.namespace = namespace
         self.name = secret_name
         self.kubeconfig = kubeconfig
+        self.decode = decode
         self.verbose = verbose
 
     def get(self):
         '''return a secret by name '''
-        return self._get('secrets', self.name)
+        results = self._get('secrets', self.name)
+        results['decoded'] = {}
+        results['exists'] = False
+        if results['returncode'] == 0 and results['results'][0]:
+            results['exists'] = True
+            if self.decode:
+                if results['results'][0].has_key('data'):
+                    for sname, value in results['results'][0]['data'].items():
+                        results['decoded'][sname] = base64.decodestring(value)
+
+        if results['returncode'] != 0 and '"%s" not found' % self.name in results['stderr']:
+            results['returncode'] = 0
+
+        return results
 
     def delete(self):
         '''delete a secret by name'''
@@ -28,7 +46,7 @@ class Secret(OpenShiftCLI):
         if not files:
             files = Utils.create_files_from_contents(contents, content_type=content_type)
 
-        secrets = ["%s=%s" % (os.path.basename(sfile), sfile) for sfile in files]
+        secrets = ["%s=%s" % (sfile['name'], sfile['path']) for sfile in files]
         cmd = ['-n%s' % self.namespace, 'secrets', 'new', self.name]
         cmd.extend(secrets)
 
@@ -59,7 +77,7 @@ class Secret(OpenShiftCLI):
         if not files:
             files = Utils.create_files_from_contents(contents)
 
-        secrets = ["%s=%s" % (os.path.basename(sfile), sfile) for sfile in files]
+        secrets = ["%s=%s" % (sfile['name'], sfile['path']) for sfile in files]
         cmd = ['-ojson', '-n%s' % self.namespace, 'secrets', 'new', self.name]
         cmd.extend(secrets)
 

@@ -104,3 +104,10 @@ class OCUtil(object):
 
         return service_yaml
 
+    def get_dc(self, name):
+        ''' Get deployment config details '''
+
+        dc_cmd = "oc get dc {} -n{} -o yaml".format(name, self.namespace)
+        dc_yaml = self._run_cmd(dc_cmd)
+
+        return dc_yaml

@@ -7,6 +7,7 @@ module for managing yaml files
 import os
 import re
 
+import json
 import yaml
 # This is here because of a bug that causes yaml
 # to incorrectly handle timezone info on timestamps

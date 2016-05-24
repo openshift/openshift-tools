@@ -1,0 +1,11 @@
+---
+
+- name: Change node-selector on default
+  oc_edit:
+    kind: namespace
+    name: "{{ item }}"
+    content:
+      'metadata:annotations:openshift.io/node-selector': 'type=infra'
+  with_items:
+  - default
+  - openshift-infra

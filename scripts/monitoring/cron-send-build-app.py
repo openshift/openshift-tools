@@ -193,7 +193,8 @@ def main():
     ''' Do the application creation
     '''
     kubeconfig = copy_kubeconfig('/tmp/admin.kubeconfig')
-    proj_name = 'ops-monitor-appbuild' + os.environ['ZAGG_CLIENT_HOSTNAME']
+    node_hash = os.environ['ZAGG_CLIENT_HOSTNAME'].split('-')[-1]
+    proj_name = 'ops-master-' + node_hash
     app = 'nodejs-example'
     verbose = True
 
@@ -209,7 +210,7 @@ def main():
     BuildTime = 0
     CreateTime = 0
     # Now we wait until the pod comes up
-    for _ in range(24):
+    for _ in range(60):
         time.sleep(10)
         #checking the building pod
         buildPod = OpenShiftOC.get_build_pod(app, proj_name, kubeconfig, verbose)
@@ -220,7 +221,7 @@ def main():
         if buildPod and buildPod['status']['phase'] == 'Succeeded':
             BuildTime = time.time() - start_time
             for _ in range(24):
-                time.sleep(5)
+                time.sleep(10)
                 create_app = check_route(app, kubeconfig, proj_name, verbose)
                 if create_app == 0:
                     CreateTime = time.time() - start_time

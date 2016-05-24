@@ -86,9 +86,13 @@ class OpenShiftCLI(object):
         '''return all pods '''
         return self.openshift_cmd(['create', '-f', fname, '-n', self.namespace])
 
-    def _delete(self, resource, rname):
+    def _delete(self, resource, rname, selector=None):
         '''return all pods '''
-        return self.openshift_cmd(['delete', resource, rname, '-n', self.namespace])
+        cmd = ['delete', resource, rname, '-n', self.namespace]
+        if selector:
+            cmd.append('--selector=%s' % selector)
+
+        return self.openshift_cmd(cmd)
 
     def _process(self, template_name, create=False, params=None):
         '''return all pods '''
@@ -220,14 +224,13 @@ class Utils(object):
     @staticmethod
     def create_files_from_contents(content, content_type=None):
         '''Turn an array of dict: filename, content into a files array'''
-        if isinstance(content, list):
-            files = []
-            for item in content:
-                files.append(Utils.create_file(item['path'], item['data'], ftype=content_type))
-            return files
-
-        return Utils.create_file(content['path'], content['data'])
-
+        if not isinstance(content, list):
+            content = [content]
+        files = []
+        for item in content:
+            path = Utils.create_file(item['path'], item['data'], ftype=content_type)
+            files.append({'name': os.path.basename(path), 'path': path})
+        return files
 
     @staticmethod
     def cleanup(files):
@@ -663,12 +666,16 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
+import base64
+
+# pylint: disable=too-many-arguments
 class Secret(OpenShiftCLI):
     ''' Class to wrap the oc command line tools
     '''
     def __init__(self,
                  namespace,
                  secret_name=None,
+                 decode=False,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
                  verbose=False):
         ''' Constructor for OpenshiftOC '''
@@ -676,11 +683,25 @@ class Secret(OpenShiftCLI):
         self.namespace = namespace
         self.name = secret_name
         self.kubeconfig = kubeconfig
+        self.decode = decode
         self.verbose = verbose
 
     def get(self):
         '''return a secret by name '''
-        return self._get('secrets', self.name)
+        results = self._get('secrets', self.name)
+        results['decoded'] = {}
+        results['exists'] = False
+        if results['returncode'] == 0 and results['results'][0]:
+            results['exists'] = True
+            if self.decode:
+                if results['results'][0].has_key('data'):
+                    for sname, value in results['results'][0]['data'].items():
+                        results['decoded'][sname] = base64.decodestring(value)
+
+        if results['returncode'] != 0 and '"%s" not found' % self.name in results['stderr']:
+            results['returncode'] = 0
+
+        return results
 
     def delete(self):
         '''delete a secret by name'''
@@ -691,7 +712,7 @@ class Secret(OpenShiftCLI):
         if not files:
             files = Utils.create_files_from_contents(contents, content_type=content_type)
 
-        secrets = ["%s=%s" % (os.path.basename(sfile), sfile) for sfile in files]
+        secrets = ["%s=%s" % (sfile['name'], sfile['path']) for sfile in files]
         cmd = ['-n%s' % self.namespace, 'secrets', 'new', self.name]
         cmd.extend(secrets)
 
@@ -722,7 +743,7 @@ class Secret(OpenShiftCLI):
         if not files:
             files = Utils.create_files_from_contents(contents)
 
-        secrets = ["%s=%s" % (os.path.basename(sfile), sfile) for sfile in files]
+        secrets = ["%s=%s" % (sfile['name'], sfile['path']) for sfile in files]
         cmd = ['-ojson', '-n%s' % self.namespace, 'secrets', 'new', self.name]
         cmd.extend(secrets)
 
@@ -749,6 +770,7 @@ def main():
             contents=dict(default=None, type='list'),
             content_type=dict(default='raw', choices=['yaml', 'json', 'raw'], type='str'),
             force=dict(default=False, type='bool'),
+            decode=dict(default=False, type='bool'),
         ),
         mutually_exclusive=[["contents", "files"]],
 
@@ -756,6 +778,7 @@ def main():
     )
     occmd = Secret(module.params['namespace'],
                    module.params['name'],
+                   module.params['decode'],
                    kubeconfig=module.params['kubeconfig'],
                    verbose=module.params['debug'])
 
@@ -767,7 +790,7 @@ def main():
     # Get
     #####
     if state == 'list':
-        module.exit_json(changed=False, results=api_rval['results'], state="list")
+        module.exit_json(changed=False, results=api_rval, state="list")
 
     if not module.params['name']:
         module.fail_json(msg='Please specify a name when state is absent|present.')
@@ -805,7 +828,10 @@ def main():
 
             # Remove files
             if files and module.params['delete_after']:
-                Utils.cleanup(files)
+                Utils.cleanup([ftmp['path'] for ftmp in files])
+
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
 
             module.exit_json(changed=True, results=api_rval, state="present")
 
@@ -821,7 +847,7 @@ def main():
 
             # Remove files
             if files and module.params['delete_after']:
-                Utils.cleanup(files)
+                Utils.cleanup([ftmp['path'] for ftmp in files])
 
             module.exit_json(changed=False, results=secret['results'], state="present")
 
@@ -832,7 +858,7 @@ def main():
 
         # Remove files
         if secret and module.params['delete_after']:
-            Utils.cleanup(files)
+            Utils.cleanup([ftmp['path'] for ftmp in files])
 
         if api_rval['returncode'] != 0:
             module.fail_json(msg=api_rval)

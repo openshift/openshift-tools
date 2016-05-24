@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.88
+Version:       0.0.93
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -44,6 +44,7 @@ cp -p monitoring/ops-zbx-event-processor.py %{buildroot}/usr/bin/ops-zbx-event-p
 cp -p monitoring/cron-send-os-skydns-checks.py %{buildroot}/usr/bin/cron-send-os-skydns-checks
 cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
+cp -p monitoring/cron-openshift-pruner.py %{buildroot}/usr/bin/cron-openshift-pruner
 cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
 cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
 cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
@@ -229,6 +230,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-build-app
 /usr/bin/cron-send-os-skydns-checks
 /usr/bin/cron-send-registry-checks
+/usr/bin/cron-openshift-pruner
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -265,6 +267,26 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Tue May 24 2016 Joel Diaz <jdiaz@redhat.com> 0.0.93-1
+- 'try' each pruning attempt so an earlier error doesn't stop all pruning
+  (jdiaz@redhat.com)
+- use oadm instead of oc as a workaround for 3.2 (sten@redhat.com)
+- demo using oadm to create project (sten@redhat.com)
+- 10 minutes for build, 4 minutes for deploy (sten@redhat.com)
+
+* Thu May 19 2016 Joel Diaz <jdiaz@redhat.com> 0.0.92-1
+- add build/deploy/image pruning script (jdiaz@redhat.com)
+
+* Thu May 19 2016 Matt Woodson <mwoodson@redhat.com> 0.0.91-1
+- fixed the aws s3 check (mwoodson@redhat.com)
+
+* Wed May 18 2016 Matt Woodson <mwoodson@redhat.com> 0.0.90-1
+- fixed a skydns issue (mwoodson@redhat.com)
+
+* Wed May 18 2016 Matt Woodson <mwoodson@redhat.com> 0.0.89-1
+- shortening the project name in the cron-send-build-app.py
+  (mwoodson@redhat.com)
+
 * Mon May 16 2016 Thomas Wiest <twiest@redhat.com> 0.0.88-1
 - Added ops-ec2-snapshot-ebs-volumes.py and ops-ec2-trim-ebs-snapshots.py
   (twiest@redhat.com)

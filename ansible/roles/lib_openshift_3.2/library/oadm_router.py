@@ -86,9 +86,13 @@ class OpenShiftCLI(object):
         '''return all pods '''
         return self.openshift_cmd(['create', '-f', fname, '-n', self.namespace])
 
-    def _delete(self, resource, rname):
+    def _delete(self, resource, rname, selector=None):
         '''return all pods '''
-        return self.openshift_cmd(['delete', resource, rname, '-n', self.namespace])
+        cmd = ['delete', resource, rname, '-n', self.namespace]
+        if selector:
+            cmd.append('--selector=%s' % selector)
+
+        return self.openshift_cmd(cmd)
 
     def _process(self, template_name, create=False, params=None):
         '''return all pods '''
@@ -220,14 +224,13 @@ class Utils(object):
     @staticmethod
     def create_files_from_contents(content, content_type=None):
         '''Turn an array of dict: filename, content into a files array'''
-        if isinstance(content, list):
-            files = []
-            for item in content:
-                files.append(Utils.create_file(item['path'], item['data'], ftype=content_type))
-            return files
-
-        return Utils.create_file(content['path'], content['data'])
-
+        if not isinstance(content, list):
+            content = [content]
+        files = []
+        for item in content:
+            path = Utils.create_file(item['path'], item['data'], ftype=content_type)
+            files.append({'name': os.path.basename(path), 'path': path})
+        return files
 
     @staticmethod
     def cleanup(files):
@@ -1991,6 +1994,9 @@ def main():
                 module.exit_json(changed=False, msg='Would have performed a create.')
 
             api_rval = ocrouter.create()
+
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
 
             module.exit_json(changed=True, results=api_rval, state="present")
 
