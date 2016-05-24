@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.92
+Version:       0.0.93
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -267,6 +267,13 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Tue May 24 2016 Joel Diaz <jdiaz@redhat.com> 0.0.93-1
+- 'try' each pruning attempt so an earlier error doesn't stop all pruning
+  (jdiaz@redhat.com)
+- use oadm instead of oc as a workaround for 3.2 (sten@redhat.com)
+- demo using oadm to create project (sten@redhat.com)
+- 10 minutes for build, 4 minutes for deploy (sten@redhat.com)
+
 * Thu May 19 2016 Joel Diaz <jdiaz@redhat.com> 0.0.92-1
 - add build/deploy/image pruning script (jdiaz@redhat.com)
 
