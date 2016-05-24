@@ -59,6 +59,8 @@ ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                
            -v /var/run/openvswitch:/var/run/openvswitch                                      \
 {% if hostvars[inventory_hostname]['oo_hosttype'] == 'master' %}
            -e OSO_MASTER_PRIMARY={{ oo_master_primary }}                                     \
+           -e OSO_SNAPSHOT_AWS_ACCESS_KEY_ID={{ osohm_snapshot_aws_access_key_id }}          \
+           -e OSO_SNAPSHOT_AWS_SECRET_ACCESS_KEY={{ osohm_snapshot_aws_secret_access_key }}  \
            -v /etc/origin/master/admin.kubeconfig:/etc/origin/master/admin.kubeconfig:ro  \
            -v /etc/origin/master/master.etcd-client.crt:/etc/origin/master/master.etcd-client.crt \
            -v /etc/origin/master/master.etcd-client.key:/etc/origin/master/master.etcd-client.key \

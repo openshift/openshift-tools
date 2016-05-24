@@ -79,6 +79,11 @@ ADD vendor/prometheus_client /usr/lib/python2.7/site-packages/prometheus_client/
 # Create ops-runner.log file with proper permissions
 RUN touch /var/log/ops-runner.log && chmod 664 /var/log/ops-runner.log
 
+# Setup the AWS credentials file so that we can populate it on startup.
+RUN mkdir -p /root/.aws && \
+    touch /root/.aws/credentials && \
+    chmod g+rw /root/.aws/credentials
+
 # Add the start script and tell the container to run it by default
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh

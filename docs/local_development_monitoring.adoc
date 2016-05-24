@@ -215,42 +215,34 @@ For development purposes, it's almost always preferable to set the python path, 
 .Steps to configure the Ansible Zabbix Modules:
 . Change into the openshift-tools git repo
 ----
-> cd openshift-tools
+> cd openshift-tools/ansible/playbooks/adhoc/zabbix_setup
 ----
 
 . Set the python path to see our openshift_tools python package, as well as the system's site-packages
 ----
-> export PYTHONPATH=$(pwd):$(ls /usr/lib/python2*/site-packages/ -d)
-----
-
-. Export the credentials the module should use to login to the zabbix api
-----
-> export ZABBIX_USER=Admin
-> export ZABBIX_PASSWORD=zabbix
+> export PYTHONPATH=$(pwd)/../../../..:$(ls /usr/lib/python2*/site-packages/ -d)
 ----
 
 
 === Cleaning out the ZAIO
 For our monitoring development, we really don't need the vast majority of the default templates.
 
-To clean them out, run the `oo-clean-zaio.yml` playbook, located in the openshift-tools git repo https://github.com/openshift/openshift-tools/blob/prod/ansible/playbooks/adhoc/zabbix_setup/oo-clean-zaio.yml[here].
+To clean them out, run the `oo-clean-zaio.yml` playbook.
 
 .Example of running the oo-clean-zaio.yml playbook:
 ----
-> cd openshift-tools/ansible/playbooks/adhoc/zabbix_setup/
 > ./oo-clean-zaio.yml
 ----
 
 === Setup the Monitoring templates, items and triggers in the ZAIO
 After cleaning out the default templates, items and triggers from the ZAIO, it is necessary to setup the ZAIO with our latest monitoring templates, items and triggers.
 
-To do this, run the oo-config-zaio.yml playbook.
+To do this, run the `oo-config-zaio.yml` playbook.
 
 *Note: this playbook is idempotent and can be run multiple times without any new changes being made.*
 
 .Example of running the oo-config-zaio.yml playbook:
 ----
-> cd openshift-tools/ansible/playbooks/adhoc/zabbix_setup/
 > ./oo-config-zaio.yml
 ----
 
