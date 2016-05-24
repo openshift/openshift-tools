@@ -5,11 +5,11 @@ processidofnode=`ps -ef |grep '/usr/bin/openshift start node --config=/etc/origi
 
 CpuUsagenode=`ps -p $processidofnode -o %cpu |grep -v CPU`
 
-echo "the cpu usage of openshift.node process is $CpuUsagenode"
+echo "the cpu usage of openshift.node process is $CpuUsagenode%"
 
 MemUsagenode=`ps -p $processidofnode -o %mem |grep -v MEM`
 
-echo "the mem usage of openshift.node process is $MemUsagenode"
+echo "the mem usage of openshift.node process is $MemUsagenode%"
 
 ops-zagg-client -k "openshift.nodeprocess.cpu" -o "$CpuUsagenode"
 ops-zagg-client -k "openshift.nodeprocess.mem" -o "$MemUsagenode"
@@ -23,14 +23,35 @@ if [ "$processidofmaster" != "" ];
 then
     CpuUsagemasterapi=`ps -p $processidofmaster -o %cpu |grep -v CPU`
 
-    echo "the cpu usage of openshift.master.api is $CpuUsagemasterapi"
+    echo "the cpu usage of openshift.master.api is $CpuUsagemasterapi%"
 
     MemUsagemasterapi=`ps -p $processidofmaster -o %mem |grep -v MEM`
 
-    echo "the mem usage of openshift.master.api is $MemUsagemasterapi"
+    echo "the mem usage of openshift.master.api is $MemUsagemasterapi%"
 
     ops-zagg-client -k "openshift.master.api.cpu" -o "$CpuUsagenode"
     ops-zagg-client -k "openshift.master.api.mem" -o "$MemUsagenode"
+else
+    echo 
+fi
+
+
+#the cpu use of etcd 
+
+processidofetcd=`ps -ef |grep '/usr/bin/etcd'|grep -v "grep" |awk '{print $2}'`
+
+if [ "$processidofetcd" != "" ];
+then
+    CpuUsageetcd=`ps -p $processidofetcd -o %cpu |grep -v CPU`
+
+    echo "the cpu usage of openshift.etcd is $CpuUsageetcd%"
+
+    MemUsageetcd=`ps -p $processidofetcd -o %mem |grep -v MEM`
+
+    echo "the mem usage of openshift.etcd is $MemUsageetcd%"
+
+    ops-zagg-client -k "openshift.etcd.cpu" -o "$CpuUsageetcd"
+    ops-zagg-client -k "openshift.etcd.mem" -o "$MemUsageetcd"
 else
     echo 
 fi
