@@ -66,6 +66,8 @@ ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                
 {% elif hostvars[inventory_hostname]['oo_hosttype'] == 'node' %}
            -v /etc/origin/node:/etc/origin/node                                              \
 {% endif %}
+           -v /usr/bin/oc:/usr/bin/oc                                                        \
+           -v /usr/bin/oadm:/usr/bin/oadm                                                    \
            {{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}
 
 
