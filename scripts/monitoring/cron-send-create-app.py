@@ -200,7 +200,11 @@ def main():
     oocmd.new_app(app)
 
     create_app = 1
+
+    build_ran = 0
+
     pod = None
+
     # Now we wait until the pod comes up
     for _ in range(120):
         time.sleep(5)
@@ -209,6 +213,7 @@ def main():
             print 'Polling Pod status: %s' % pod['status']['phase']
         if pod and pod['status'] and "build" in pod['metadata']['name']:
             print 'Polling Build Pod status: %s' % pod['status']['phase']
+            build_ran = 1
         if pod and pod['status']['phase'] == 'Running' and pod['status'].has_key('podIP') and not "build" in pod['metadata']['name']:
             #c_results = curl(pod['status']['podIP'], '8080')
             #if c_results == 'Hello OpenShift!\n':
@@ -234,7 +239,10 @@ def main():
         oocmd.delete_project()
 
     zgs = ZaggSender()
-    zgs.add_zabbix_keys({'openshift.master.app.create': create_app})
+    if build_ran == 1:
+        zgs.add_zabbix_keys({'openshift.master.app.build.create': create_app})
+    else:
+        zgs.add_zabbix_keys({'openshift.master.app.create': create_app})
     zgs.send_metrics()
 
 
