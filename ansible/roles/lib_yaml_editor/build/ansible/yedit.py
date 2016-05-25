@@ -27,7 +27,7 @@ def main():
             src=dict(default=None, type='str'),
             content=dict(default=None, type='dict'),
             key=dict(default=None, type='str'),
-            value=dict(default=None, type='str'),
+            value=dict(),
             value_format=dict(default='yaml', choices=['yaml', 'json'], type='str'),
             update=dict(default=False, type='bool'),
             index=dict(default=None, type='int'),
@@ -58,10 +58,7 @@ def main():
 
     if state == 'present':
 
-        if module.params['value_format'] == 'yaml':
-            value = yaml.load(module.params['value'])
-        elif module.params['value_format'] == 'json':
-            value = json.loads(module.params['value'])
+        value = module.params['value']
 
         if rval:
             if module.params['update']:

@@ -187,6 +187,25 @@ class YeditTest(unittest.TestCase):
         self.assertTrue(yed.get('x:y:z') == {'a': 1, 'b': 2, 'c': 3, 'd': 4})
         self.assertTrue(yed.exists('x:y:z', {'c': 3}))
 
+    def test_first_level_dict_with_none_value(self):
+        '''test dict value with none value'''
+        yed = Yedit(content={'a': None})
+        yed.put('a:b:c', 'test')
+        self.assertTrue(yed.get('a:b:c') == 'test')
+        self.assertTrue(yed.get('a:b'), {'c': 'test'})
+
+    def test_adding_yaml_variable(self):
+        '''test dict value with none value'''
+        yed = Yedit("yedit_test.yml")
+        yed.put('z:y', '{{test}}')
+        self.assertTrue(yed.get('z:y') == '{{test}}')
+
+    def test_keys_with_underscore(self):
+        '''test dict value with none value'''
+        yed = Yedit("yedit_test.yml")
+        yed.put('z_:y_y', {'test': '{{test}}'})
+        self.assertTrue(yed.get('z_:y_y') == {'test': '{{test}}'})
+
     def tearDown(self):
         '''TearDown method'''
         os.unlink(YeditTest.filename)
