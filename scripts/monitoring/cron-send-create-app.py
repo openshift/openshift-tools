@@ -214,7 +214,10 @@ def main():
         if pod and pod['status'] and "build" in pod['metadata']['name']:
             print 'Polling Build Pod status: %s' % pod['status']['phase']
             build_ran = 1
-        if pod and pod['status']['phase'] == 'Running' and pod['status'].has_key('podIP') and not "build" in pod['metadata']['name']:
+        if pod \
+            and pod['status']['phase'] == 'Running' \
+            and pod['status'].has_key('podIP') \
+            and not "build" in pod['metadata']['name']:
             #c_results = curl(pod['status']['podIP'], '8080')
             #if c_results == 'Hello OpenShift!\n':
             print 'Finished.'
