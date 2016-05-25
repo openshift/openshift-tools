@@ -11,7 +11,7 @@ None
 Role Variables
 --------------
 
-  oda_ded_admin_users: A list of users to set as OpenShift Dedicated Admins
+ oda_ded_admin_users: A list of users to set as OpenShift Dedicated Admins
 
 Dependencies
 ------------
@@ -21,12 +21,12 @@ None
 Example Playbook
 ----------------
 
-    - hosts: servers
-      roles:
-         - role: openshift_dedicated_admin
-	   oda_ded_admin_users:
-	   - user1
-           - user2	
+- hosts: servers
+  roles:
+  - role: openshift_dedicated_admin
+    oda_ded_admin_users:
+    - user1
+    - user2	
 
 
 License
