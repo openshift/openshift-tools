@@ -18,7 +18,7 @@ g_template_openshift_master:
     applications:
     - Openshift Master
     key: openshift.master.app.create
-  
+
   - key: openshift.master.app.build.create
     description: "check the app create with a build process"
     value_type: int
@@ -240,7 +240,7 @@ g_template_openshift_master:
   - key: openshift.master.nodesnotready.count
     description: "This check shows how many nodes in a cluster are in NotReady state."
     value_type: int
-    applications: 
+    applications:
     - Openshift Master
 
   - key: openshift.master.nodesnotschedulable.count
@@ -352,6 +352,10 @@ g_template_openshift_master:
     url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc'
     priority: info
 
+  - name: 'Failed Persistent Volumes on {HOST.NAME}'
+    expression: '{Template Openshift Master:openshift.master.pv.failed.count.last(#2)}>0'
+    priority: info
+
   # Put triggers that depend on other triggers here (deps must be created first)
   - name: 'Application creation has failed on {HOST.NAME}'
     expression: '{Template Openshift Master:openshift.master.app.create.last(#1)}=1 and {Template Openshift Master:openshift.master.app.create.last(#2)}=1'
@@ -431,7 +435,7 @@ g_template_openshift_master:
   - name: 'Hosts not ready according to {HOST.NAME}'
     expression: '{Template Openshift Master:openshift.master.nodesnotready.count.last(#2)}>0'
     url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node.asciidoc'
-    dependencies: 
+    dependencies:
     - 'Openshift Master process not running on {HOST.NAME}'
     priority: high
 
