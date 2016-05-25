@@ -101,7 +101,7 @@
 
     - name: send openshift-node process Mem usage and Cpu usage
       minute: "*/2"
-      job: ops-runner -f -s 15 -n csrc.openshift.node.process.usage /usr/bin/cron-send-cpu-mem-process
+      job: ops-runner -f -s 15 -n cscmp.openshift.node.process.usage /usr/bin/cron-send-cpu-mem-process
     # Openshift Master checks
     g_zagg_client_master_crons:
     - name: run create app every 5 minutes
