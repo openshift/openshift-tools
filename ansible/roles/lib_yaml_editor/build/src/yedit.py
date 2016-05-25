@@ -6,8 +6,8 @@ class YeditException(Exception):
 
 class Yedit(object):
     ''' Class to modify yaml files '''
-    re_valid_key = r"(((\[-?\d+\])|([0-9a-zA-Z-./]+)).?)+$"
-    re_key = r"(?:\[(-?\d+)\])|([0-9a-zA-Z-./]+)"
+    re_valid_key = r"(((\[-?\d+\])|([0-9a-zA-Z-./_]+)).?)+$"
+    re_key = r"(?:\[(-?\d+)\])|([0-9a-zA-Z-./_]+)"
 
     def __init__(self, filename=None, content=None, content_type='yaml'):
         self.content = content
@@ -70,9 +70,12 @@ class Yedit(object):
         key_indexes = re.findall(Yedit.re_key, key)
         for arr_ind, dict_key in key_indexes[:-1]:
             if dict_key:
-                if isinstance(data, dict) and data.has_key(dict_key):
+                if isinstance(data, dict) and data.has_key(dict_key) and data[dict_key]:
                     data = data[dict_key]
                     continue
+
+                elif not isinstance(data, dict):
+                    return None
 
                 data[dict_key] = {}
                 data = data[dict_key]
@@ -119,8 +122,23 @@ class Yedit(object):
         if not self.filename:
             raise YeditException('Please specify a filename.')
 
-        with open(self.filename, 'w') as yfd:
-            yfd.write(yaml.safe_dump(self.yaml_dict, default_flow_style=False))
+
+        tmp_filename = self.filename + '.tmp'
+        try:
+            with open(tmp_filename, 'w') as yfd:
+                yml_dump = yaml.safe_dump(self.yaml_dict, default_flow_style=False)
+                for line in yml_dump.split('\n'):
+                    if '{{' in line and '}}' in line:
+                        yfd.write(line.replace("'{{", '"{{').replace("}}'", '}}"') + '\n')
+                    else:
+                        yfd.write(line + '\n')
+        except Exception as err:
+            raise YeditException(err.message)
+
+        shutil.copyfile(tmp_filename, self.filename)
+
+        os.rename(tmp_filename, self.filename)
+
 
     def read(self):
         ''' write to file '''
