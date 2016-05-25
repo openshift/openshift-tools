@@ -19,3 +19,6 @@
     name: openshift-dedicated-role
     state: started
     enabled: true
+
+handlers:
+  - include: handlers/main.yml
