@@ -17,6 +17,7 @@ import atexit
 import shutil
 import string
 import random
+import argparse
 
 # Our jenkins server does not include these rpms.
 # In the future we might move this to a container where these
@@ -43,23 +44,27 @@ def copy_kubeconfig(config):
 
 class OpenShiftOC(object):
     ''' Class to wrap the oc command line tools '''
-    def __init__(self, namespace, pod_name, kubeconfig, verbose=False):
+    def __init__(self, namespace, kubeconfig, args, verbose=False):
         ''' Constructor for OpenShiftOC '''
         self.namespace = namespace
-        self.pod_name = pod_name
         self.verbose = verbose
         self.kubeconfig = kubeconfig
+        self.args = args
 
     def get_pod(self):
-        '''return a pod by name '''
+        '''return a pod by name'''
         pods = self.get_pods()
-        regex = re.compile('%s-[0-9]-[a-z0-9]{5}$' % self.pod_name)
+        if '/' in self.args.name:
+            podname = self.args.name.split('/')[1]
+        else:
+            podname = self.args.name
+        regex = re.compile('%s-[0-9]-[a-z0-9]{5}$' % podname)
         for pod in pods['items']:
             results = regex.search(pod['metadata']['name'])
             if results:
-                return pod
-
-        return None
+                if "build" in pod['metadata']['name'] and pod['status']['phase'] != 'Running':
+                    continue
+                else: return pod
 
     def get_pods(self):
         '''return all pods '''
@@ -163,6 +168,17 @@ def curl(ip_addr, port):
     '''
     return urllib.urlopen('http://%s:%s' % (ip_addr, port)).read()
 
+
+def parse_args():
+    """ parse the args from the cli """
+
+    parser = argparse.ArgumentParser(description='OpenShift app create end-to-end test')
+    parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
+    parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
+    parser.add_argument('--name', default="openshift/hello-openshift", help='app template')
+    return parser.parse_args()
+
+
 def main():
     ''' Do the application creation
     '''
@@ -171,8 +187,9 @@ def main():
     print '################################################################################'
     kubeconfig = copy_kubeconfig('/tmp/admin.kubeconfig')
     namespace = 'ops-monitor-' + os.environ['ZAGG_CLIENT_HOSTNAME']
-    oocmd = OpenShiftOC(namespace, 'hello-openshift', kubeconfig, verbose=False)
-    app = 'openshift/hello-openshift:v1.0.6'
+    args = parse_args()
+    oocmd = OpenShiftOC(namespace, kubeconfig, args, verbose=False)
+    app = args.name
 
     start_time = time.time()
     if namespace in  oocmd.get_projects():
@@ -185,12 +202,14 @@ def main():
     create_app = 1
     pod = None
     # Now we wait until the pod comes up
-    for _ in range(24):
+    for _ in range(120):
         time.sleep(5)
         pod = oocmd.get_pod()
-        if pod and pod['status']:
+        if pod and pod['status'] and not "build" in pod['metadata']['name']:
             print 'Polling Pod status: %s' % pod['status']['phase']
-        if pod and pod['status']['phase'] == 'Running' and pod['status'].has_key('podIP'):
+        if pod and pod['status'] and "build" in pod['metadata']['name']:
+            print 'Polling Build Pod status: %s' % pod['status']['phase']
+        if pod and pod['status']['phase'] == 'Running' and pod['status'].has_key('podIP') and not "build" in pod['metadata']['name']:
             #c_results = curl(pod['status']['podIP'], '8080')
             #if c_results == 'Hello OpenShift!\n':
             print 'Finished.'
