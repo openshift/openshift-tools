@@ -2,6 +2,18 @@
 g_template_openshift_master:
   name: Template Openshift Master
   zitems:
+  - key: openshift.master.cluster.memory_allocation
+    description: "Percentage of allocatable memory (cluster-wide) that has been allocated/granted"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.cluster.max_mem_pods_schedulable
+    description: "Number of max memory pods that can be scheduled (cluster-wide)"
+    value_type: int
+    applications:
+    - Openshift Master
+
   - name: openshift.master.app.create
     applications:
     - Openshift Master
