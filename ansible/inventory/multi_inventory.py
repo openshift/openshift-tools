@@ -277,6 +277,26 @@ class MultiInventory(object):
         else:
             return data.get(keys, None)
 
+    def apply_cluster_vars(self, inventory, cluster_vars):
+        ''' Apply the account config cluster vars '''
+        # cluster vars go here
+        # do nothing for accounts that do not have cluster vars
+        if not cluster_vars:
+            return
+
+        cluster_tag = cluster_vars['cluster_tag']
+
+        for host in inventory.values():
+            # match the clusterid with the correct cluster vars
+            # use get entry for accessing because of gce ex. gce_metadata.clusterid
+            clusterid = self.get_entry(host, cluster_tag)
+            if clusterid and cluster_vars['clusters'].has_key(clusterid):
+                self.add_entry(host, 'oo_clusterid', clusterid)
+
+                # apply each cluster var to the host
+                for new_var, value in cluster_vars['clusters'][clusterid].items():
+                    self.add_entry(host, new_var, value)
+
     def apply_extra_vars(self, inventory, extra_vars):
         ''' Apply the account config extra vars '''
         # Extra vars go here
@@ -336,6 +356,8 @@ class MultiInventory(object):
         ''' Apply account config settings '''
         results = self.all_inventory_results[acc_name]
         results['all_hosts'] = results['_meta']['hostvars'].keys()
+
+        self.apply_cluster_vars(results['_meta']['hostvars'], acc_config.get('cluster_vars', {}))
 
         self.apply_extra_vars(results['_meta']['hostvars'], acc_config.get('extra_vars', {}))
 
