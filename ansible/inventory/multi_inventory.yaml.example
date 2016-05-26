@@ -3,7 +3,7 @@
 cache_location: ~/.ansible/tmp/multi_inventory.cache
 
 accounts:
-  - name: aws1
+  aws1:
     provider: aws/ec2.py
     provider_files:
     - name: ec2.ini
@@ -23,8 +23,18 @@ accounts:
     extra_vars:
       cloud: aws
       account: aws1
+    cluster_vars:
+      cluster_tag: ec2_tag_clusterid
+      clusters:
+        test:
+          oo_var_example: 1234
 
--   name: mygce
+  mygce:
+    cluster_vars:
+      cluster_tag: gce_metadata.clusterid
+      clusters:
+        test:
+          oo_var_example: 1234
     extra_vars:
       cloud: gce
       account: gce1
