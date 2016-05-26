@@ -353,15 +353,15 @@ g_template_openshift_master:
     priority: info
 
   - name: 'Failed Persistent Volumes on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.pv.failed.count.last(#2)}>0'
+    expression: '{Template Openshift Master:openshift.master.pv.failed.count.min(#2)}>0'
     priority: info
 
   - name: 'Less than 10 Available Persistent Volumes on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.pv.available.count.last(#2)}<10'
+    expression: '{Template Openshift Master:openshift.master.pv.available.count.max(#2)}<10'
     priority: info
 
   - name: 'Less than 5 Available Persistent Volumes on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.pv.available.count.last(#2)}<5'
+    expression: '{Template Openshift Master:openshift.master.pv.available.count.max(#2)}<5'
     priority: warn
 
   # Put triggers that depend on other triggers here (deps must be created first)
