@@ -203,6 +203,32 @@ def pod_name(name):
     return name
 
 
+def send_zagg_data(build_ran, create_app, http_code, run_time):
+    ''' send data to Zagg'''
+    zgs = ZaggSender()
+    print "Send data to Zagg"
+    if build_ran == 1:
+        zgs.add_zabbix_keys({'openshift.master.app.build.create': create_app})
+        zgs.add_zabbix_keys({'openshift.master.app.build.create.code': http_code})
+        zgs.add_zabbix_keys({'openshift.master.app.build.create.time': run_time})
+    else:
+        zgs.add_zabbix_keys({'openshift.master.app.create': create_app})
+        zgs.add_zabbix_keys({'openshift.master.app.create.code': http_code})
+        zgs.add_zabbix_keys({'openshift.master.app.create.time': run_time})
+    zgs.send_metrics()
+
+def handle_fail(run_time, oocmd, pod):
+    ''' Print failure info '''
+    print 'Finished.'
+    print 'State: Fail'
+    print 'Time: %s' % run_time
+    print 'Fetching Events:'
+    oocmd.verbose = True
+    print oocmd.get_events()
+    print 'Fetching Logs:'
+    print oocmd.get_logs()
+    print 'Fetching Pod:'
+    print pod
 
 def main():
     ''' Do the application creation
@@ -260,32 +286,13 @@ def main():
             break
 
     else:
-        print 'Finished.'
-        print 'State: Fail'
         run_time = str(time.time() - start_time)
-        print 'Time: %s' % str(time.time() - start_time)
-        print 'Fetching Events:'
-        oocmd.verbose = True
-        print oocmd.get_events()
-        print 'Fetching Logs:'
-        print oocmd.get_logs()
-        print 'Fetching Pod:'
-        print pod
+        handle_fail(run_time, oocmd, pod)
 
     if namespace in oocmd.get_projects():
         oocmd.delete_project()
 
-    zgs = ZaggSender()
-    if build_ran == 1:
-        zgs.add_zabbix_keys({'openshift.master.app.build.create': create_app})
-        zgs.add_zabbix_keys({'openshift.master.app.build.create.code': http_code})
-        zgs.add_zabbix_keys({'openshift.master.app.build.create.time': run_time})
-    else:
-        zgs.add_zabbix_keys({'openshift.master.app.create': create_app})
-        zgs.add_zabbix_keys({'openshift.master.app.create.code': http_code})
-        zgs.add_zabbix_keys({'openshift.master.app.create.time': run_time})
-    zgs.send_metrics()
-
+    send_zagg_data(build_ran, create_app, http_code, run_time)
 
 if __name__ == "__main__":
     main()
