@@ -216,7 +216,7 @@ OpenShift Tools AWS Monitoring Scripts
 # ----------------------------------------------------------------------------------
 %package monitoring-openshift
 Summary:       OpenShift Tools Openshift Product Scripts
-Requires:      python2,python-openshift-tools-monitoring-openshift,python-openshift-tools-monitoring-zagg,openvswitch,python-dns
+Requires:      python2,python-openshift-tools,python-openshift-tools-monitoring-openshift,python-openshift-tools-monitoring-zagg,openvswitch,python-dns
 BuildRequires: python2-devel
 BuildArch:     noarch
 
