@@ -88,13 +88,17 @@ class OpenshiftClusterCapacity(object):
             node['type'] = new_node['metadata']['labels']['type']
             node['api'] = new_node['metadata']['selfLink']
 
-            cpu = new_node['status']['allocatable']['cpu']
+            if 'allocatable' in new_node['status']:
+                cpu = new_node['status']['allocatable']['cpu']
+                mem = new_node['status']['allocatable']['memory']
+                node['max_pods'] = int(new_node['status']['allocatable']['pods'])
+            else:
+                cpu = new_node['status']['capacity']['cpu']
+                mem = new_node['status']['capacity']['memory']
+                node['max_pods'] = int(new_node['status']['capacity']['pods'])
+
             node['max_cpu'] = to_milicores(cpu)
-
-            mem = new_node['status']['allocatable']['memory']
             node['max_memory'] = to_bytes(mem)
-
-            node['max_pods'] = int(new_node['status']['allocatable']['pods'])
 
             if self.args.debug:
                 print "Adding node: {}".format(str(node))
