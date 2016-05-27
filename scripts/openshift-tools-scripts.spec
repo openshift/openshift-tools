@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.93
+Version:       0.0.94
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -269,6 +269,14 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Fri May 27 2016 Joel Diaz <jdiaz@redhat.com> 0.0.94-1
+- cluster-capacity script relies on base python-openshift-tools/conversions.py
+  (jdiaz@redhat.com)
+- allow capacity checks on 3.1 clusters (jdiaz@redhat.com)
+- memory available and max-mem pod schedulable capacity checks plus new
+  'conversions' library and necessary RPM spec updates to include capacity
+  checks into monitoring-openshift.rpm (jdiaz@redhat.com)
+
 * Tue May 24 2016 Joel Diaz <jdiaz@redhat.com> 0.0.93-1
 - 'try' each pruning attempt so an earlier error doesn't stop all pruning
   (jdiaz@redhat.com)
