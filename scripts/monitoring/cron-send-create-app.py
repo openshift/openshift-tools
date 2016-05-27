@@ -180,6 +180,8 @@ def curl(ip_addr, port):
         code = urllib2.urlopen('http://%s:%s' % (ip_addr, port)).getcode()
     except urllib2.HTTPError, e:
         code = e.fp.getcode()
+    except urllib2.URLError, e:
+        code = e.fp.getcode()
     return code
 
 
