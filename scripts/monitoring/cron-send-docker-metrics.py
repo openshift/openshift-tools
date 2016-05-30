@@ -77,6 +77,7 @@ if __name__ == "__main__":
                 if Deadcontainer[0]['Status'].find('Exited') != -1:
                     #do the remove step
                     print Deadcontainer[0]['Status'].find('Exited')
+                    #cli_storage.remove_container(container=container['Id'])
             else:
                 print 'container not exist'
     else:
