@@ -13,7 +13,6 @@ module for managing yaml files
 
 import os
 import re
-import shutil
 
 import json
 import yaml
@@ -40,7 +39,9 @@ class Yedit(object):
         self.__yaml_dict = content
         self.content_type = content_type
         if self.filename and not self.content:
-            self.load(content_type=self.content_type)
+            if not self.load(content_type=self.content_type):
+                self.__yaml_dict = {}
+
 
     @property
     def yaml_dict(self):
@@ -160,10 +161,7 @@ class Yedit(object):
         except Exception as err:
             raise YeditException(err.message)
 
-        shutil.copyfile(tmp_filename, self.filename)
-
         os.rename(tmp_filename, self.filename)
-
 
     def read(self):
         ''' write to file '''
@@ -263,6 +261,7 @@ class Yedit(object):
             entry = None
 
         if isinstance(entry, dict):
+            #pylint: disable=no-member,maybe-no-member
             entry.update(value)
             return (True, self.yaml_dict)
 
@@ -308,8 +307,9 @@ class Yedit(object):
     def create(self, path, value):
         ''' create a yaml file '''
         if not self.file_exists():
-            self.yaml_dict = {path: value}
-            return (True, self.yaml_dict)
+            result = Yedit.add_entry(self.yaml_dict, path, value)
+            if result:
+                return (True, self.yaml_dict)
 
         return (False, self.yaml_dict)
 
@@ -337,11 +337,10 @@ def main():
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             debug=dict(default=False, type='bool'),
-            src=dict(default=None, type='str'),
+            src=dict(default=None, required=True, type='str'),
             content=dict(default=None, type='dict'),
             key=dict(default=None, type='str'),
             value=dict(),
-            value_format=dict(default='yaml', choices=['yaml', 'json'], type='str'),
             update=dict(default=False, type='bool'),
             index=dict(default=None, type='int'),
             curr_value=dict(default=None, type='str'),
@@ -385,7 +384,7 @@ def main():
             module.exit_json(changed=rval[0], results=rval[1], state="present")
 
         if not module.params['content']:
-            rval = yamlfile.create(module.params['key'], value)
+            rval = yamlfile.put(module.params['key'], value)
         else:
             rval = yamlfile.load()
         yamlfile.write()
