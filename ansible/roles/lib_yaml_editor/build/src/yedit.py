@@ -15,7 +15,9 @@ class Yedit(object):
         self.__yaml_dict = content
         self.content_type = content_type
         if self.filename and not self.content:
-            self.load(content_type=self.content_type)
+            if not self.load(content_type=self.content_type):
+                self.__yaml_dict = {}
+
 
     @property
     def yaml_dict(self):
@@ -65,36 +67,38 @@ class Yedit(object):
         if not (key and re.match(Yedit.re_valid_key, key) and isinstance(data, (list, dict))):
             return None
 
-        curr_data = data
+        curr_data = copy.deepcopy(data)
 
         key_indexes = re.findall(Yedit.re_key, key)
         for arr_ind, dict_key in key_indexes[:-1]:
             if dict_key:
-                if isinstance(data, dict) and data.has_key(dict_key) and data[dict_key]:
-                    data = data[dict_key]
+                if isinstance(curr_data, dict) and curr_data.has_key(dict_key) and curr_data[dict_key]:
+                    curr_data = curr_data[dict_key]
                     continue
 
-                elif not isinstance(data, dict):
+                elif not isinstance(curr_data, dict):
                     return None
 
-                data[dict_key] = {}
-                data = data[dict_key]
+                curr_data[dict_key] = {}
+                curr_data = curr_data[dict_key]
 
-            elif arr_ind and isinstance(data, list) and int(arr_ind) <= len(data) - 1:
-                data = data[int(arr_ind)]
+            elif arr_ind and isinstance(curr_data, list) and int(arr_ind) <= len(curr_data) - 1:
+                curr_data = curr_data[int(arr_ind)]
             else:
                 return None
 
         # process last index for add
         # expected list entry
-        if key_indexes[-1][0] and isinstance(data, list) and int(key_indexes[-1][0]) <= len(data) - 1:
-            data[int(key_indexes[-1][0])] = item
+        if key_indexes[-1][0] and isinstance(curr_data, list) and int(key_indexes[-1][0]) <= len(curr_data) - 1:
+            curr_data[int(key_indexes[-1][0])] = item
 
         # expected dict entry
-        elif key_indexes[-1][1] and isinstance(data, dict):
-            data[key_indexes[-1][1]] = item
+        elif key_indexes[-1][1] and isinstance(curr_data, dict):
+            curr_data[key_indexes[-1][1]] = item
 
-        return curr_data
+
+        data = curr_data
+        return data
 
     @staticmethod
     def get_entry(data, key):
@@ -135,10 +139,7 @@ class Yedit(object):
         except Exception as err:
             raise YeditException(err.message)
 
-        shutil.copyfile(tmp_filename, self.filename)
-
         os.rename(tmp_filename, self.filename)
-
 
     def read(self):
         ''' write to file '''
@@ -238,6 +239,7 @@ class Yedit(object):
             entry = None
 
         if isinstance(entry, dict):
+            #pylint: disable=no-member,maybe-no-member
             entry.update(value)
             return (True, self.yaml_dict)
 
@@ -283,7 +285,8 @@ class Yedit(object):
     def create(self, path, value):
         ''' create a yaml file '''
         if not self.file_exists():
-            self.yaml_dict = {path: value}
-            return (True, self.yaml_dict)
+            result = Yedit.add_entry(self.yaml_dict, path, value)
+            if result:
+                return (True, self.yaml_dict)
 
         return (False, self.yaml_dict)
