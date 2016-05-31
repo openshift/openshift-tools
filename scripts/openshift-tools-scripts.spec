@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.95
+Version:       0.0.96
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -271,6 +271,10 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Tue May 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.96-1
+- Fixing list functionality when oo vars are missing (kwoodson@redhat.com)
+- add cpu check for process (zhizhang@zhizhang-laptop-nay.redhat.com)
+
 * Tue May 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.95-1
 - 
 
