@@ -10,6 +10,7 @@
     g_oso_host_type: "{{ lookup('env', 'OSO_HOST_TYPE') }}"
     g_oso_master_ha: "{{ lookup('env', 'OSO_MASTER_HA') | default(g_default_openshift_master_ha, True) }}"
     g_oso_master_primary: "{{ lookup('env', 'OSO_MASTER_PRIMARY') | default(False, True) }}"
+    g_oso_enable_cluster_capacity_reporting: "{{ lookup('env', 'OSO_ENABLE_CLUSTER_CAPACITY_REPORTING') | default(False, True) }}"
 
     g_zagg_client_config:
       host:
@@ -154,6 +155,12 @@
     - name: send kubeconfig parser check
       minute: "*/5"
       job: ops-runner -f -s 30 -n cskc.openshift.master.kubeconfig.status /usr/bin/cron-send-check-kubeconfig 
+
+    - name: "Cluster capacity reporting"
+      hour: "*"
+      minute: "15"
+      job: ops-runner -f -s 30 -n cscc.openshift.master.capacity /usr/bin/cron-send-cluster-capacity
+      condition: "{{ g_oso_enable_cluster_capacity_reporting|bool and g_oso_master_primary|bool }}"
 
     - name: "Prune builds/deployments/images"
       hour: "*/3"
