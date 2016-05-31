@@ -47,6 +47,7 @@
       volume_type: "{{ cli_volume_type }}"
       device_name: "{{ cli_device_name }}"
       iops: "{{ cli_volume_iops }}"
+      encrypted: True
     register: vol
 
   - debug: var=vol
