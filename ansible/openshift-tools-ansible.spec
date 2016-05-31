@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.8
+Version:        0.0.9
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -91,6 +91,11 @@ Python library for interacting with Zabbix with Ansible.
 %{_datadir}/ansible/zabbix
 
 %changelog
+* Tue May 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.9-1
+- Adding snythetic hosts for bootstrapping (kwoodson@redhat.com)
+- TDGC: Update vars in example playbook section (whearn@redhat.com)
+- Add temp_dir_git_clone (whearn@redhat.com)
+
 * Tue May 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.8-1
 - Rename cluster_group to clusterid (kwoodson@redhat.com)
 
