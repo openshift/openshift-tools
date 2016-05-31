@@ -24,7 +24,7 @@ Example Playbook
 
     - hosts: localhost
       roles:
-         - { role: temp_dir_git_clone, repo_name: openshift_ansible, repo: "git@github.com:openshift/openshift-ansible" }
+         - { role: temp_dir_git_clone, tdgc_repo_name: openshift_ansible, tdgc_repo: "git@github.com:openshift/openshift-ansible" }
       tasks:
          - debug: var=tdgc_retval_repo_dir
 
