@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.6
+Version:        0.0.7
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -91,6 +91,16 @@ Python library for interacting with Zabbix with Ansible.
 %{_datadir}/ansible/zabbix
 
 %changelog
+* Tue May 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.7-1
+- Fixed a bug with partial creates (kwoodson@redhat.com)
+- Fixed create state. (kwoodson@redhat.com)
+- Changes to prevent flapping (rharriso@redhat.com)
+- Add triggers for low available PVs (rharriso@redhat.com)
+- Add trigger to alert when failed persistant volumes are present
+  (rharriso@redhat.com)
+- Adding cluster_var support. (kwoodson@redhat.com)
+- add zabbix entries to hold cluster-wide calculated items (jdiaz@redhat.com)
+
 * Wed May 25 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.6-1
 - Yedit bug fixes as well as enhancements (kwoodson@redhat.com)
 - bind in host's oc and oadm binaries (so we get 3.1/3.2 bins on 3.1/3.2
