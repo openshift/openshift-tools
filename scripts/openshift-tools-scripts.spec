@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.94
+Version:       0.0.95
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -269,6 +269,9 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Tue May 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.95-1
+- 
+
 * Fri May 27 2016 Joel Diaz <jdiaz@redhat.com> 0.0.94-1
 - cluster-capacity script relies on base python-openshift-tools/conversions.py
   (jdiaz@redhat.com)
