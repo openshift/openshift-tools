@@ -39,3 +39,22 @@
     register: output
   - debug:
       var: output
+
+  - yedit:
+      src: noexist.yml
+      content:
+        a: test
+        b: test
+    register: output
+  - debug:
+      var: output
+
+  - yedit:
+      src: noexist1.yml
+      key: a
+      value:
+        a: test
+        b: test
+    register: output
+  - debug:
+      var: output
