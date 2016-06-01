@@ -83,6 +83,15 @@ class OpenshiftClusterCapacity(object):
         response = self.ora.get('/api/v1/nodes')
 
         for new_node in response['items']:
+            # Skip nodes not in 'Ready' state
+            node_ready = False
+            for condition in new_node['status']['conditions']:
+                if condition['type'] == 'Ready' and \
+                   condition['status'] == 'True':
+                    node_ready = True
+            if not node_ready:
+                continue
+
             node = {}
             node['name'] = new_node['metadata']['name']
             node['type'] = new_node['metadata']['labels']['type']
