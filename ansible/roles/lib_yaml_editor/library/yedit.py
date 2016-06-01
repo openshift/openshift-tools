@@ -276,16 +276,16 @@ class Yedit(object):
                 except ValueError:
                     return (False, self.yaml_dict)
 
-                entry[ind] = value
-
             elif index:
-                entry[index] = value
+                ind = index
 
             else:
                 entry.append(value)
                 return (True, self.yaml_dict)
 
-            return (True, self.yaml_dict)
+            if ind and entry[ind] != value:
+                entry[ind] = value
+                return (True, self.yaml_dict)
 
         return (False, self.yaml_dict)
 
