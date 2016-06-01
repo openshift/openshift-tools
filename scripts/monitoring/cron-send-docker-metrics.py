@@ -74,7 +74,7 @@ if __name__ == "__main__":
                     try:
                         #cli.remove_container(container=container['Id'])
                         print 'done this container'
-                    except Exception:
+                    except (DockerException, TimeoutException) as ex:
                         print 'something wrong during the remote of the container'
             else:
                 print 'container not exist'
@@ -93,7 +93,7 @@ if __name__ == "__main__":
                     try:
                         #cli.remove_container(container=container['Id'])
                         print 'done this container'
-                    except Exception:
+                    except (DockerException, TimeoutException) as ex:
                         print 'something wrong during the remote of the container'
 
             else:
