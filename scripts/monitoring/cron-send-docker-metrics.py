@@ -8,7 +8,7 @@
 # Adding the ignore because it does not like the naming of the script
 # to be different than the class name
 # pylint: disable=invalid-name
-
+# pylint: disable=line-too-long
 
 from docker import AutoVersionClient
 from docker.errors import DockerException
