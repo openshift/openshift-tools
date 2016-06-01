@@ -24,11 +24,10 @@ def main():
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             debug=dict(default=False, type='bool'),
-            src=dict(default=None, type='str'),
+            src=dict(default=None, required=True, type='str'),
             content=dict(default=None, type='dict'),
             key=dict(default=None, type='str'),
-            value=dict(default=None, type='str'),
-            value_format=dict(default='yaml', choices=['yaml', 'json'], type='str'),
+            value=dict(),
             update=dict(default=False, type='bool'),
             index=dict(default=None, type='int'),
             curr_value=dict(default=None, type='str'),
@@ -58,12 +57,9 @@ def main():
 
     if state == 'present':
 
-        if module.params['value_format'] == 'yaml':
-            value = yaml.load(module.params['value'])
-        elif module.params['value_format'] == 'json':
-            value = json.loads(module.params['value'])
+        value = module.params['value']
 
-        if rval:
+        if rval != None:
             if module.params['update']:
                 curr_value = get_curr_value(module.params['curr_value'], module.params['curr_value_format'])
                 rval = yamlfile.update(module.params['key'], value, index=module.params['index'], curr_value=curr_value)
@@ -75,10 +71,10 @@ def main():
             module.exit_json(changed=rval[0], results=rval[1], state="present")
 
         if not module.params['content']:
-            rval = yamlfile.create(module.params['key'], value)
+            rval = yamlfile.put(module.params['key'], value)
         else:
             rval = yamlfile.load()
-        yamlfile.write()
+        rval = yamlfile.write()
 
         module.exit_json(changed=rval[0], results=rval[1], state="present")
 

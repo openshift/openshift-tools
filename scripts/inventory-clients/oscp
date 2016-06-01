@@ -138,8 +138,13 @@ class Oscp(object):
         '''Function to print out the host inventory.
         '''
         for _, server_info in self.host_inventory.items():
-            print '{oo_name:<35} {oo_clusterid:<10} {oo_environment:<8} ' \
-                '{oo_id:<15} {oo_public_ip:<18} {oo_private_ip:<18}'.format(**server_info)
+            print '%-42s %-18s %-8s %-25s %-18s %-18s' % (\
+                  server_info.get('oo_name', 'None'),
+                  server_info.get('oo_clusterid', 'None'),
+                  server_info.get('oo_environment', 'None'),
+                  server_info.get('oo_id', 'None'),
+                  server_info.get('oo_public_ip', 'None'),
+                  server_info.get('oo_private_ip', 'None'))
 
     def scp(self):
         '''scp files to or from a specified host

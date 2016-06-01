@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.62
+Version:       0.0.64
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -258,6 +258,14 @@ Adds Aws specific python modules
 
 
 %changelog
+* Tue May 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.64-1
+- 
+
+* Fri May 27 2016 Joel Diaz <jdiaz@redhat.com> 0.0.63-1
+- memory available and max-mem pod schedulable capacity checks plus new
+  'conversions' library and necessary RPM spec updates to include capacity
+  checks into monitoring-openshift.rpm (jdiaz@redhat.com)
+
 * Thu May 19 2016 Matt Woodson <mwoodson@redhat.com> 0.0.62-1
 - fixed the aws s3 check (mwoodson@redhat.com)
 

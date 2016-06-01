@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.93
+Version:       0.0.97
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -50,6 +50,8 @@ cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-
 cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
 cp -p cloud/aws/ops-ec2-trim-ebs-snapshots.py %{buildroot}/usr/bin/ops-ec2-trim-ebs-snapshots
 cp -p monitoring/cron-send-build-app.py %{buildroot}/usr/bin/cron-send-build-app
+cp -p monitoring/cron-send-cluster-capacity.py %{buildroot}/usr/bin/cron-send-cluster-capacity
+cp -p monitoring/cron-send-cpu-mem-process.sh %{buildroot}/usr/bin/cron-send-cpu-mem-process
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -190,6 +192,7 @@ OpenShift Tools Zagg Server Monitoring Scripts
 /usr/bin/ops-zagg-metric-processor
 /usr/bin/ops-zagg-heartbeat-processor
 /usr/bin/ops-zagg-heartbeater
+/usr/bin/cron-send-cpu-mem-process
 /var/run/zagg/data
 %config(noreplace)/etc/openshift_tools/zagg_server.yaml
 
@@ -215,7 +218,7 @@ OpenShift Tools AWS Monitoring Scripts
 # ----------------------------------------------------------------------------------
 %package monitoring-openshift
 Summary:       OpenShift Tools Openshift Product Scripts
-Requires:      python2,python-openshift-tools-monitoring-openshift,python-openshift-tools-monitoring-zagg,openvswitch,python-dns
+Requires:      python2,python-openshift-tools,python-openshift-tools-monitoring-openshift,python-openshift-tools-monitoring-zagg,openvswitch,python-dns
 BuildRequires: python2-devel
 BuildArch:     noarch
 
@@ -231,6 +234,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-os-skydns-checks
 /usr/bin/cron-send-registry-checks
 /usr/bin/cron-openshift-pruner
+/usr/bin/cron-send-cluster-capacity
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -267,6 +271,24 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Wed Jun 01 2016 Joel Diaz <jdiaz@redhat.com> 0.0.97-1
+- ignore non-ready nodes (jdiaz@redhat.com)
+
+* Tue May 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.96-1
+- Fixing list functionality when oo vars are missing (kwoodson@redhat.com)
+- add cpu check for process (zhizhang@zhizhang-laptop-nay.redhat.com)
+
+* Tue May 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.95-1
+- 
+
+* Fri May 27 2016 Joel Diaz <jdiaz@redhat.com> 0.0.94-1
+- cluster-capacity script relies on base python-openshift-tools/conversions.py
+  (jdiaz@redhat.com)
+- allow capacity checks on 3.1 clusters (jdiaz@redhat.com)
+- memory available and max-mem pod schedulable capacity checks plus new
+  'conversions' library and necessary RPM spec updates to include capacity
+  checks into monitoring-openshift.rpm (jdiaz@redhat.com)
+
 * Tue May 24 2016 Joel Diaz <jdiaz@redhat.com> 0.0.93-1
 - 'try' each pruning attempt so an earlier error doesn't stop all pruning
   (jdiaz@redhat.com)

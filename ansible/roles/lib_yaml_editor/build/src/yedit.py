@@ -6,8 +6,8 @@ class YeditException(Exception):
 
 class Yedit(object):
     ''' Class to modify yaml files '''
-    re_valid_key = r"(((\[-?\d+\])|([0-9a-zA-Z-./]+)).?)+$"
-    re_key = r"(?:\[(-?\d+)\])|([0-9a-zA-Z-./]+)"
+    re_valid_key = r"(((\[-?\d+\])|([0-9a-zA-Z-./_]+)).?)+$"
+    re_key = r"(?:\[(-?\d+)\])|([0-9a-zA-Z-./_]+)"
 
     def __init__(self, filename=None, content=None, content_type='yaml'):
         self.content = content
@@ -15,7 +15,9 @@ class Yedit(object):
         self.__yaml_dict = content
         self.content_type = content_type
         if self.filename and not self.content:
-            self.load(content_type=self.content_type)
+            if not self.load(content_type=self.content_type):
+                self.__yaml_dict = {}
+
 
     @property
     def yaml_dict(self):
@@ -59,20 +61,21 @@ class Yedit(object):
     def add_entry(data, key, item=None):
         ''' Get an item from a dictionary with key notation a.b.c
             d = {'a': {'b': 'c'}}}
-            key = a.b
+            key = a#b
             return c
         '''
         if not (key and re.match(Yedit.re_valid_key, key) and isinstance(data, (list, dict))):
             return None
 
-        curr_data = data
-
         key_indexes = re.findall(Yedit.re_key, key)
         for arr_ind, dict_key in key_indexes[:-1]:
             if dict_key:
-                if isinstance(data, dict) and data.has_key(dict_key):
+                if isinstance(data, dict) and data.has_key(dict_key) and data[dict_key]:
                     data = data[dict_key]
                     continue
+
+                elif data and not isinstance(data, dict):
+                    return None
 
                 data[dict_key] = {}
                 data = data[dict_key]
@@ -91,7 +94,7 @@ class Yedit(object):
         elif key_indexes[-1][1] and isinstance(data, dict):
             data[key_indexes[-1][1]] = item
 
-        return curr_data
+        return data
 
     @staticmethod
     def get_entry(data, key):
@@ -119,8 +122,22 @@ class Yedit(object):
         if not self.filename:
             raise YeditException('Please specify a filename.')
 
-        with open(self.filename, 'w') as yfd:
-            yfd.write(yaml.safe_dump(self.yaml_dict, default_flow_style=False))
+
+        tmp_filename = self.filename + '.tmp'
+        try:
+            with open(tmp_filename, 'w') as yfd:
+                yml_dump = yaml.safe_dump(self.yaml_dict, default_flow_style=False)
+                for line in yml_dump.split('\n'):
+                    if '{{' in line and '}}' in line:
+                        yfd.write(line.replace("'{{", '"{{').replace("}}'", '}}"') + '\n')
+                    else:
+                        yfd.write(line + '\n')
+        except Exception as err:
+            raise YeditException(err.message)
+
+        os.rename(tmp_filename, self.filename)
+
+        return (True, self.yaml_dict)
 
     def read(self):
         ''' write to file '''
@@ -220,6 +237,7 @@ class Yedit(object):
             entry = None
 
         if isinstance(entry, dict):
+            #pylint: disable=no-member,maybe-no-member
             entry.update(value)
             return (True, self.yaml_dict)
 
@@ -256,16 +274,22 @@ class Yedit(object):
         if entry == value:
             return (False, self.yaml_dict)
 
-        result = Yedit.add_entry(self.yaml_dict, path, value)
+        tmp_copy = copy.deepcopy(self.yaml_dict)
+        result = Yedit.add_entry(tmp_copy, path, value)
         if not result:
             return (False, self.yaml_dict)
+
+        self.yaml_dict = tmp_copy
 
         return (True, self.yaml_dict)
 
     def create(self, path, value):
         ''' create a yaml file '''
         if not self.file_exists():
-            self.yaml_dict = {path: value}
-            return (True, self.yaml_dict)
+            tmp_copy = copy.deepcopy(self.yaml_dict)
+            result = Yedit.add_entry(tmp_copy, path, value)
+            if result:
+                self.yaml_dict = tmp_copy
+                return (True, self.yaml_dict)
 
         return (False, self.yaml_dict)
