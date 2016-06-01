@@ -63,7 +63,7 @@ tito related activities.
 +
 [source]
 ----
-[user@desktop]$ time tito build --test --rpm
+[user@desktop]$ mkdir -p "$HOME/.tito-build" && time tito build --test --rpm --output "$HOME/.tito-build"
 ----
 +
 . Output should look something like this:
@@ -106,7 +106,7 @@ git fetch --tags
 . Build test packages (no tagging needed)
 +
 ----
-tito build --test --rpm
+mkdir -p "$HOME/.tito-build" && time tito build --test --rpm --output "$HOME/.tito-build"
 ----
 +
 . OPTIONAL: If a new version of the package is needed, follow these instructions:
@@ -125,7 +125,7 @@ git push && git push origin package-name-and-new-VERSION
 . Build new packages based on the latest tag information
 +
 ----
-tito build --rpm
+mkdir -p "$HOME/.tito-build" && time tito build --rpm --output "$HOME/.tito-build"
 ----
 
 
@@ -153,7 +153,7 @@ git fetch --tags
 . Build test packages (no tagging needed)
 +
 ----
-tito build --test --rpm
+mkdir -p "$HOME/.tito-build" && time tito build --test --rpm --output "$HOME/.tito-build"
 ----
 +
 . OPTIONAL: If a new version of the package is needed, follow these instructions:
@@ -172,7 +172,7 @@ git push && git push origin package-name-and-new-VERSION
 . Build new packages based on the latest tag information
 +
 ----
-tito build --rpm
+mkdir -p "$HOME/.tito-build" && time tito build --rpm --output "$HOME/.tito-build"
 ----
 
 
@@ -201,7 +201,7 @@ git fetch --tags
 . Build test packages (no tagging needed)
 +
 ----
-tito build --test --rpm
+mkdir -p "$HOME/.tito-build" && time tito build --test --rpm --output "$HOME/.tito-build"
 ----
 +
 . OPTIONAL: If a new version of the package is needed, follow these instructions:
@@ -220,5 +220,5 @@ git push && git push origin package-name-and-new-VERSION
 . Build new packages based on the latest tag information
 +
 ----
-tito build --rpm
+mkdir -p "$HOME/.tito-build" && time tito build --rpm --output "$HOME/.tito-build"
 ----
