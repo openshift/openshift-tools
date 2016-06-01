@@ -72,6 +72,7 @@ class TrimmerCli(object):
         regions = ebs_snapshotter.EbsSnapshotter.get_supported_regions()
 
         for region in regions:
+            print "Region: %s:" % region
             ss = ebs_snapshotter.EbsSnapshotter(region.name, verbose=True)
 
             expired_snapshots, deleted_snapshots, snapshot_deletion_errors = \

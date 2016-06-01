@@ -42,45 +42,37 @@
                               dry_run=dry_run)
 """
 
-import boto.ec2
+from openshift_tools.cloud.aws.base import Base
 
 from datetime import datetime
 from datetime import timedelta
-
-# Specifically exclude certain regions
-EXCLUDED_REGIONS = ['us-gov-west-1', 'cn-north-1']
 
 SNAP_TAG_KEY = 'snapshot'
 
 SUPPORTED_SCHEDULES = ['hourly', 'daily', 'weekly', 'monthly']
 ALL_SCHEDULES = 'all'
 
-DRY_RUN_MSG = "*** DRY RUN, NO ACTION TAKEN ***"
-
-class EbsSnapshotter(object):
+class EbsSnapshotter(Base):
     """ Class responsible for creating and removing EBS snapshots """
 
     def __init__(self, region, verbose=False):
         """ Initialize the class """
-        self.region = region
-        self.ec2 = boto.ec2.connect_to_region(region)
-        self.verbose = verbose
+        super(EbsSnapshotter, self).__init__(region, verbose)
 
-        # Print the region we're working in
-        self.verbose_print("Region: %s:" % (self.region))
+    def create_volume_snapshot_tag(self, volume_ids, schedule, prefix="", dry_run=False):
+        """ Adds a tag to the EBS volume for snapshotting purposes """
+        self.verbose_print("Adding 'snapshot: %s' tag to %d volume(s): %s" % \
+                           (schedule, len(volume_ids), volume_ids),
+                           prefix=prefix)
 
-    def verbose_print(self, msg="", prefix="", end="\n"):
-        """ Prints msg using prefix and end IF verbose is set on the class. """
-        if self.verbose:
-            print("%s%s%s") % (prefix, msg, end),
+        if dry_run:
+            self.print_dry_run_msg(prefix=prefix + "  ")
+        else:
+            self.ec2.create_tags(volume_ids, {SNAP_TAG_KEY: schedule})
 
-    @staticmethod
-    def get_supported_regions():
-        """ Returns the regions that we support (we're not allowed in all regions). """
-        all_regions = boto.ec2.regions()
-
-        supported_regions = [r for r in all_regions if r.name not in EXCLUDED_REGIONS]
-        return supported_regions
+    def get_already_tagged_volume_ids(self):
+        """ Returns a list of volumes that already have the snapshot tag. """
+        return [v.id for v in self.ec2.get_all_volumes() if v.tags.get(SNAP_TAG_KEY) != None]
 
     def get_volumes_with_schedule(self, schedule):
         """ Returns the volumes that are tagged in AWS with the defined schedule.
@@ -100,14 +92,6 @@ class EbsSnapshotter(object):
         vols_w_sched = [v for v in vols if v.tags[SNAP_TAG_KEY].lower() == schedule.lower()]
 
         return vols_w_sched
-
-    def print_volume(self, volume, prefix=""):
-        """ Prints out the details of the given volume. """
-        self.verbose_print("%s:" % volume.id, prefix=prefix)
-        self.verbose_print("  Tags:", prefix=prefix)
-
-        for tag in volume.tags.iteritems():
-            self.verbose_print("    %s: %s" % (tag[0], tag[1]), prefix=prefix)
 
     def create_snapshots(self, schedule, script_name=None, dry_run=False):
         """ Creates a snapshot for volumes tagged with the given schedule. """
@@ -131,7 +115,7 @@ class EbsSnapshotter(object):
 
             try:
                 if dry_run:
-                    self.verbose_print(DRY_RUN_MSG, prefix="    ")
+                    self.print_dry_run_msg(prefix="    ")
                 else:
                     new_snapshot = volume.create_snapshot(description=description)
                     snapshots.append(new_snapshot)
@@ -149,14 +133,6 @@ class EbsSnapshotter(object):
         self.verbose_print()
 
         return (volumes, snapshots, errors)
-
-    def print_snapshots(self, snapshots, msg=None, prefix=""):
-        """ Prints out the details for the given snapshots. """
-        if msg:
-            self.verbose_print(msg, prefix=prefix)
-
-        for snap in snapshots:
-            self.verbose_print("  %s: start_time %s" % (snap.id, snap.start_time), prefix=prefix)
 
     @staticmethod
     def sort_snapshots(snaps):
@@ -363,7 +339,7 @@ class EbsSnapshotter(object):
                 self.verbose_print(exp_snap.id, prefix="        ")
                 try:
                     if dry_run:
-                        self.verbose_print(DRY_RUN_MSG, prefix="          ")
+                        self.print_dry_run_msg(prefix="          ")
                     else:
                         exp_snap.delete()
                         deleted_snapshots.append(exp_snap)
