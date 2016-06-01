@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.98
+Version:       0.0.99
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -269,6 +269,9 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Wed Jun 01 2016 Sten Turpin <sten@redhat.com> 0.0.99-1
+- moved app build check into cron-send-create-app
+
 * Wed Jun 01 2016 Sten Turpin <sten@redhat.com> 0.0.98-1
 - remove cron-send-build-app script (sten@redhat.com)
 - added build/arbitrary app create capability to create-app check
