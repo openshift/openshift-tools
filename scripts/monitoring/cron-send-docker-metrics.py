@@ -11,7 +11,6 @@
 
 
 from docker import AutoVersionClient
-from docker import Client
 from docker.errors import DockerException
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 from openshift_tools.timeout import TimeoutException
@@ -25,8 +24,8 @@ if __name__ == "__main__":
         cli = AutoVersionClient(base_url='unix://var/run/docker.sock')
         #cli_storage = Client(base_url='unix://var/run/docker.sock')
         du = DockerUtil(cli)
-        exited_containers = cli.containers(quiet=True,filters={'status':'exited'}) #get all the exited container
-        dead_containers = cli.containers(all=True,quiet=True,filters={'status':'dead'}) #get all the exited container
+        exited_containers = cli.containers(quiet=True, filters={'status':'exited'}) #get all the exited container
+        dead_containers = cli.containers(all=True, quiet=True, filters={'status':'dead'}) #get all the exited container
         du_dds = du.get_disk_usage()
         keys = {
             'docker.storage.data.space.used': du_dds.data_space_used,
@@ -55,25 +54,23 @@ if __name__ == "__main__":
     print json.dumps(keys, indent=4)
     zs.send_metrics()
     print "\nDone.\n"
-    
-    #start auto-heal 
+    #start auto-heal
 
-    
     if int(du_dds.data_space_percent_available) < 50:
         print 'Docker has less than 50% storage avaiable. Attempting to clean up space.'
         print '***********************************'
         #clean the exited containers
         for container in exited_containers:
             print '*******start cleaning**************'
-            print 'the container id is :',container['Id']
+            print 'the container id is :', container['Id']
             #get the info
-            exited_container = cli.containers(all=True,filters={'id':container['Id']})
+            exited_container = cli.containers(all=True, filters={'id':container['Id']})
             #print Deadcontainer
             if len(exited_container) == 1:
-                print 'the status of the container is :',exited_container[0]['Status']
+                print 'the status of the container is :', exited_container[0]['Status']
                 if exited_container[0]['Status'].find('Exited') != -1:
                     #do the remove step
-                    print 'status confirmed :',exited_container[0]['Status']
+                    print 'status confirmed :', exited_container[0]['Status']
                     try:
                         #cli.remove_container(container=container['Id'])
                         print 'done this container'
@@ -84,16 +81,15 @@ if __name__ == "__main__":
         #clean the dead containers
         for container in dead_containers:
             print '*******start cleaning**************'
-            print 'the container id is :',container['Id']
+            print 'the container id is :', container['Id']
             #get the info
-            dead_container = cli.containers(all=True,filters={'id':container['Id']})
+            dead_container = cli.containers(all=True, filters={'id':container['Id']})
             #print Deadcontainer
             if len(dead_container) == 1:
-                
-                print 'the status of the container is :',dead_container[0]['Status']
+                print 'the status of the container is :', dead_container[0]['Status']
                 if dead_container[0]['Status'].find('Dead') != -1:
                     #do the remove step
-                    print 'status confirmed :',dead_container[0]['Status']
+                    print 'status confirmed :', dead_container[0]['Status']
                     try:
                         #cli.remove_container(container=container['Id'])
                         print 'done this container'
@@ -103,4 +99,4 @@ if __name__ == "__main__":
             else:
                 print 'container not exist'
     else:
-        print 'Docker storage has more than 50% available. Skipping autoheal to clean up space',int(du_dds.data_space_percent_available)
+        print 'Docker storage has more than 50% available. Skipping autoheal to clean up space', int(du_dds.data_space_percent_available)
