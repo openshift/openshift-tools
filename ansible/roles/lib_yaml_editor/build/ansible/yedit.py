@@ -59,7 +59,7 @@ def main():
 
         value = module.params['value']
 
-        if rval:
+        if rval != None:
             if module.params['update']:
                 curr_value = get_curr_value(module.params['curr_value'], module.params['curr_value_format'])
                 rval = yamlfile.update(module.params['key'], value, index=module.params['index'], curr_value=curr_value)
@@ -74,7 +74,7 @@ def main():
             rval = yamlfile.put(module.params['key'], value)
         else:
             rval = yamlfile.load()
-        yamlfile.write()
+        rval = yamlfile.write()
 
         module.exit_json(changed=rval[0], results=rval[1], state="present")
 
