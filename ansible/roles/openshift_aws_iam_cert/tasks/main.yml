@@ -1,0 +1,52 @@
+---
+- debug:
+    var: "{{ item }}"
+    verbosity: 2
+  with_items:
+  - "{{ osaic_iam_certname }}"
+  - "{{ osaic_cert }}"
+  - "{{ osaic_key }}"
+  - "{{ osaic_default_chain_cert }}"
+  - "{{ osaic_chain_cert }}"
+  - "{{ osaic_dest_file }}"
+
+- name: upload a cert with cert chain
+  iam_cert20:
+    name: "{{ osaic_iam_certname }}"
+    state: present
+    cert: "{{ osaic_cert }}"
+    key: "{{ osaic_key }}"
+    cert_chain: "{{ osaic_chain_cert | default(omit, True) }}"
+  register: uploaded_cert
+
+
+#- name: upload a cert without cert chain
+#  iam_cert20:
+#    name: "{{ osaic_iam_certname }}"
+#    state: present
+#    cert: "{{ osaic_cert }}"
+#    key: "{{ osaic_key }}"
+#  register: uploaded_cert
+##  when: osaic_default_chain_cert is not defined
+##  when: not osaic_default_chain_cert
+#  #when: osaic_chain_cert is not defined
+#  when: osaic_chain_cert is defined and not osaic_chain_cert
+
+- debug:
+    var: uploaded_cert
+
+#- name: save cert ARN to VPC file
+#  yedit:
+#    state: present
+#    src: "{{ osaic_dest_file }}"
+#    key: g_aws_iam_openshift_cert_arn
+#    value: "{{ uploaded_cert.arn }}"
+#  when: osaic_dest_file is defined
+
+- name: save cert ARN to VPC file
+  lineinfile:
+    create: yes
+    dest: "{{ osaic_dest_file }}"
+    regexp: ^g_aws_iam_openshift_cert_arn
+    line: "g_aws_iam_openshift_cert_arn: {{ uploaded_cert.arn }}"
+  when: osaic_dest_file is defined
