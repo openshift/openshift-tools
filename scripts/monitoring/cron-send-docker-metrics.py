@@ -56,7 +56,7 @@ if __name__ == "__main__":
     print "\nDone.\n"
     #start auto-heal
 
-    if int(du_dds.data_space_percent_available) < 50:
+    if int(du_dds.data_space_percent_available) < 90:
         print 'Docker has less than 50% storage avaiable. Attempting to clean up space.'
         print '***********************************'
         #clean the exited containers
@@ -72,9 +72,9 @@ if __name__ == "__main__":
                     #do the remove step
                     print 'status confirmed :', exited_container[0]['Status']
                     try:
-                        #cli.remove_container(container=container['Id'])
+                        cli.remove_container(container=container['Id'])
                         print 'done this container'
-                    except (DockerException, TimeoutException) as ex:
+                    except Exception, e:
                         print 'something wrong during the remote of the container'
             else:
                 print 'container not exist'
@@ -91,12 +91,13 @@ if __name__ == "__main__":
                     #do the remove step
                     print 'status confirmed :', dead_container[0]['Status']
                     try:
-                        #cli.remove_container(container=container['Id'])
+                        cli.remove_container(container=container['Id'])
                         print 'done this container'
-                    except (DockerException, TimeoutException) as ex:
+                    except Exception, e:
                         print 'something wrong during the remote of the container'
 
             else:
                 print 'container not exist'
     else:
         print 'Docker storage has more than 50% available. Skipping autoheal to clean up space', int(du_dds.data_space_percent_available)
+
