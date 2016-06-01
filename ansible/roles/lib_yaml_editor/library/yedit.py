@@ -86,43 +86,39 @@ class Yedit(object):
     def add_entry(data, key, item=None):
         ''' Get an item from a dictionary with key notation a.b.c
             d = {'a': {'b': 'c'}}}
-            key = a.b
+            key = a#b
             return c
         '''
         if not (key and re.match(Yedit.re_valid_key, key) and isinstance(data, (list, dict))):
             return None
 
-        curr_data = copy.deepcopy(data)
-
         key_indexes = re.findall(Yedit.re_key, key)
         for arr_ind, dict_key in key_indexes[:-1]:
             if dict_key:
-                if isinstance(curr_data, dict) and curr_data.has_key(dict_key) and curr_data[dict_key]:
-                    curr_data = curr_data[dict_key]
+                if isinstance(data, dict) and data.has_key(dict_key) and data[dict_key]:
+                    data = data[dict_key]
                     continue
 
-                elif not isinstance(curr_data, dict):
+                elif data and not isinstance(data, dict):
                     return None
 
-                curr_data[dict_key] = {}
-                curr_data = curr_data[dict_key]
+                data[dict_key] = {}
+                data = data[dict_key]
 
-            elif arr_ind and isinstance(curr_data, list) and int(arr_ind) <= len(curr_data) - 1:
-                curr_data = curr_data[int(arr_ind)]
+            elif arr_ind and isinstance(data, list) and int(arr_ind) <= len(data) - 1:
+                data = data[int(arr_ind)]
             else:
                 return None
 
         # process last index for add
         # expected list entry
-        if key_indexes[-1][0] and isinstance(curr_data, list) and int(key_indexes[-1][0]) <= len(curr_data) - 1:
-            curr_data[int(key_indexes[-1][0])] = item
+        if key_indexes[-1][0] and isinstance(data, list) and int(key_indexes[-1][0]) <= len(data) - 1:
+            data[int(key_indexes[-1][0])] = item
 
         # expected dict entry
-        elif key_indexes[-1][1] and isinstance(curr_data, dict):
-            curr_data[key_indexes[-1][1]] = item
+        elif key_indexes[-1][1] and isinstance(data, dict):
+            data[key_indexes[-1][1]] = item
 
-
-        data = curr_data
         return data
 
     @staticmethod
@@ -165,6 +161,8 @@ class Yedit(object):
             raise YeditException(err.message)
 
         os.rename(tmp_filename, self.filename)
+
+        return (True, self.yaml_dict)
 
     def read(self):
         ''' write to file '''
@@ -301,17 +299,22 @@ class Yedit(object):
         if entry == value:
             return (False, self.yaml_dict)
 
-        result = Yedit.add_entry(self.yaml_dict, path, value)
+        tmp_copy = copy.deepcopy(self.yaml_dict)
+        result = Yedit.add_entry(tmp_copy, path, value)
         if not result:
             return (False, self.yaml_dict)
+
+        self.yaml_dict = tmp_copy
 
         return (True, self.yaml_dict)
 
     def create(self, path, value):
         ''' create a yaml file '''
         if not self.file_exists():
-            result = Yedit.add_entry(self.yaml_dict, path, value)
+            tmp_copy = copy.deepcopy(self.yaml_dict)
+            result = Yedit.add_entry(tmp_copy, path, value)
             if result:
+                self.yaml_dict = tmp_copy
                 return (True, self.yaml_dict)
 
         return (False, self.yaml_dict)
@@ -375,7 +378,7 @@ def main():
 
         value = module.params['value']
 
-        if rval:
+        if rval != None:
             if module.params['update']:
                 curr_value = get_curr_value(module.params['curr_value'], module.params['curr_value_format'])
                 rval = yamlfile.update(module.params['key'], value, index=module.params['index'], curr_value=curr_value)
@@ -390,7 +393,7 @@ def main():
             rval = yamlfile.put(module.params['key'], value)
         else:
             rval = yamlfile.load()
-        yamlfile.write()
+        rval = yamlfile.write()
 
         module.exit_json(changed=rval[0], results=rval[1], state="present")
 
