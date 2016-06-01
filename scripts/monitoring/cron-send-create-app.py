@@ -11,12 +11,13 @@ import subprocess
 import json
 import time
 import re
-import urllib
+import urllib2
 import os
 import atexit
 import shutil
 import string
 import random
+import argparse
 
 # Our jenkins server does not include these rpms.
 # In the future we might move this to a container where these
@@ -43,23 +44,26 @@ def copy_kubeconfig(config):
 
 class OpenShiftOC(object):
     ''' Class to wrap the oc command line tools '''
-    def __init__(self, namespace, pod_name, kubeconfig, verbose=False):
+    def __init__(self, namespace, kubeconfig, args, verbose=False):
         ''' Constructor for OpenShiftOC '''
         self.namespace = namespace
-        self.pod_name = pod_name
         self.verbose = verbose
         self.kubeconfig = kubeconfig
+        self.args = args
 
     def get_pod(self):
-        '''return a pod by name '''
+        '''return a pod by name'''
         pods = self.get_pods()
-        regex = re.compile('%s-[0-9]-[a-z0-9]{5}$' % self.pod_name)
+        podname = pod_name(self.args.name)
+        # this will match on build pods but not deploy pods
+        regex = re.compile('%s-[0-9]-[a-z0-9]{5}$' % podname)
         for pod in pods['items']:
             results = regex.search(pod['metadata']['name'])
             if results:
-                return pod
-
-        return None
+                # only report on running build pods, we'll wait if build pod is pending
+                if "build" in pod['metadata']['name'] and pod['status']['phase'] != 'Running':
+                    continue
+                else: return pod
 
     def get_pods(self):
         '''return all pods '''
@@ -102,6 +106,16 @@ class OpenShiftOC(object):
             return self.oc_cmd(['logs', pod['metadata']['name'], '-n', self.namespace])
 
         return 'Could not get logs for pod.  Could not determine pod name.'
+
+    def get_route(self):
+        '''get route to check if app is running'''
+        cmd = ['get', 'route', '--no-headers', '-o', 'json', '-n', self.namespace]
+        results = self.oc_cmd(cmd)
+        return json.loads(results)
+
+    def get_service(self):
+        '''get service to check if app is running'''
+        return json.loads(self.oc_cmd(['get', 'service', '--no-headers', '-n', self.namespace, '-o', 'json']))
 
     def get_events(self):
         '''get all events'''
@@ -161,7 +175,62 @@ class OpenShiftOC(object):
 def curl(ip_addr, port):
     ''' Open an http connection to the url and read
     '''
-    return urllib.urlopen('http://%s:%s' % (ip_addr, port)).read()
+    code = 0
+    try:
+        code = urllib2.urlopen('http://%s:%s' % (ip_addr, port)).getcode()
+    except urllib2.HTTPError, e:
+        code = e.fp.getcode()
+    except urllib2.URLError, e:
+        code = e.fp.getcode()
+    return code
+
+
+
+def parse_args():
+    """ parse the args from the cli """
+
+    parser = argparse.ArgumentParser(description='OpenShift app create end-to-end test')
+    parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
+    parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
+    parser.add_argument('--name', default="openshift/hello-openshift", help='app template')
+    return parser.parse_args()
+
+def pod_name(name):
+    """ strip pre/suffices from app name to get pod name """
+    # for app deploy "openshift/hello-openshift:latest", pod name is hello-openshift
+    if '/' in name:
+        name = name.split('/')[1]
+    if ':' in name:
+        name = name.split(':')[0]
+    return name
+
+
+def send_zagg_data(build_ran, create_app, http_code, run_time):
+    ''' send data to Zagg'''
+    zgs = ZaggSender()
+    print "Send data to Zagg"
+    if build_ran == 1:
+        zgs.add_zabbix_keys({'openshift.master.app.build.create': create_app})
+        zgs.add_zabbix_keys({'openshift.master.app.build.create.code': http_code})
+        zgs.add_zabbix_keys({'openshift.master.app.build.create.time': run_time})
+    else:
+        zgs.add_zabbix_keys({'openshift.master.app.create': create_app})
+        zgs.add_zabbix_keys({'openshift.master.app.create.code': http_code})
+        zgs.add_zabbix_keys({'openshift.master.app.create.time': run_time})
+    zgs.send_metrics()
+
+def handle_fail(run_time, oocmd, pod):
+    ''' Print failure info '''
+    print 'Finished.'
+    print 'State: Fail'
+    print 'Time: %s' % run_time
+    print 'Fetching Events:'
+    oocmd.verbose = True
+    print oocmd.get_events()
+    print 'Fetching Logs:'
+    print oocmd.get_logs()
+    print 'Fetching Pod:'
+    print pod
 
 def main():
     ''' Do the application creation
@@ -170,9 +239,10 @@ def main():
     print '  Starting App Create'
     print '################################################################################'
     kubeconfig = copy_kubeconfig('/tmp/admin.kubeconfig')
-    namespace = 'ops-monitor-' + os.environ['ZAGG_CLIENT_HOSTNAME']
-    oocmd = OpenShiftOC(namespace, 'hello-openshift', kubeconfig, verbose=False)
-    app = 'openshift/hello-openshift:v1.0.6'
+    args = parse_args()
+    namespace = 'ops-' + pod_name(args.name) + '-' + os.environ['ZAGG_CLIENT_HOSTNAME']
+    oocmd = OpenShiftOC(namespace, kubeconfig, args, verbose=False)
+    app = args.name
 
     start_time = time.time()
     if namespace in  oocmd.get_projects():
@@ -183,41 +253,48 @@ def main():
     oocmd.new_app(app)
 
     create_app = 1
+    build_ran = 0
     pod = None
+    http_code = 0
+    run_time = 0
+
     # Now we wait until the pod comes up
-    for _ in range(24):
+    for _ in range(120):
         time.sleep(5)
         pod = oocmd.get_pod()
-        if pod and pod['status']:
+        if pod and pod['status'] and not "build" in pod['metadata']['name']:
             print 'Polling Pod status: %s' % pod['status']['phase']
-        if pod and pod['status']['phase'] == 'Running' and pod['status'].has_key('podIP'):
-            #c_results = curl(pod['status']['podIP'], '8080')
-            #if c_results == 'Hello OpenShift!\n':
+        if pod and pod['status'] and "build" in pod['metadata']['name']:
+            print 'Polling Build Pod status: %s' % pod['status']['phase']
+            build_ran = 1
+        if pod \
+            and pod['status']['phase'] == 'Running' \
+            and pod['status'].has_key('podIP') \
+            and not "build" in pod['metadata']['name']:
+            route = oocmd.get_route()
+            if route['items']:
+                # FIXME: no port in the route object, is 80 a safe assumption?
+                http_code = curl(route['items'][0]['spec']['host'], 80)
+            else:
+                service = oocmd.get_service()
+                http_code = curl(service['items'][0]['spec']['clusterIP'], \
+                    service['items'][0]['spec']['ports'][0]['port'])
             print 'Finished.'
-            print 'State: Success'
-            print 'Time: %s' % str(time.time() - start_time)
+            print 'Deploy State: Success'
+            print 'Service HTTP response code: %s' % http_code
+            run_time = str(time.time() - start_time)
+            print 'Time: %s' % run_time
             create_app = 0
             break
 
     else:
-        print 'Finished.'
-        print 'State: Fail'
-        print 'Time: %s' % str(time.time() - start_time)
-        print 'Fetching Events:'
-        oocmd.verbose = True
-        print oocmd.get_events()
-        print 'Fetching Logs:'
-        print oocmd.get_logs()
-        print 'Fetching Pod:'
-        print pod
+        run_time = str(time.time() - start_time)
+        handle_fail(run_time, oocmd, pod)
 
     if namespace in oocmd.get_projects():
         oocmd.delete_project()
 
-    zgs = ZaggSender()
-    zgs.add_zabbix_keys({'openshift.master.app.create': create_app})
-    zgs.send_metrics()
-
+    send_zagg_data(build_ran, create_app, http_code, run_time)
 
 if __name__ == "__main__":
     main()

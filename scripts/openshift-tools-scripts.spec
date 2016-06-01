@@ -49,7 +49,6 @@ cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
 cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
 cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
 cp -p cloud/aws/ops-ec2-trim-ebs-snapshots.py %{buildroot}/usr/bin/ops-ec2-trim-ebs-snapshots
-cp -p monitoring/cron-send-build-app.py %{buildroot}/usr/bin/cron-send-build-app
 cp -p monitoring/cron-send-cluster-capacity.py %{buildroot}/usr/bin/cron-send-cluster-capacity
 cp -p monitoring/cron-send-cpu-mem-process.sh %{buildroot}/usr/bin/cron-send-cpu-mem-process
 
@@ -230,7 +229,6 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-etcd-status
 /usr/bin/cron-send-os-master-metrics
 /usr/bin/cron-send-create-app
-/usr/bin/cron-send-build-app
 /usr/bin/cron-send-os-skydns-checks
 /usr/bin/cron-send-registry-checks
 /usr/bin/cron-openshift-pruner
