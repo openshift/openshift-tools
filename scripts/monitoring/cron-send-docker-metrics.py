@@ -57,7 +57,7 @@ if __name__ == "__main__":
     #start auto-heal
 
     if int(du_dds.data_space_percent_available) < 90:
-        print 'Docker has less than 50% storage avaiable. Attempting to clean up space.'
+        print 'Docker has less than 90% storage avaiable. Attempting to clean up space.'
         print '***********************************'
         #clean the exited containers
         for container in exited_containers:
@@ -99,5 +99,5 @@ if __name__ == "__main__":
             else:
                 print 'container not exist'
     else:
-        print 'Docker storage has more than 50% available. Skipping autoheal to clean up space', int(du_dds.data_space_percent_available)
+        print 'Docker storage has more than 90% available. Skipping autoheal to clean up space', int(du_dds.data_space_percent_available)
 
