@@ -8,7 +8,6 @@
 # Adding the ignore because it does not like the naming of the script
 # to be different than the class name
 # pylint: disable=invalid-name
-# pylint: disable=line-too-long
 
 from docker import AutoVersionClient
 from docker.errors import DockerException
@@ -16,6 +15,10 @@ from openshift_tools.monitoring.zagg_sender import ZaggSender
 from openshift_tools.timeout import TimeoutException
 from openshift_tools.monitoring.dockerutil import DockerUtil
 import json
+
+
+
+
 
 if __name__ == "__main__":
     keys = None
@@ -56,11 +59,8 @@ if __name__ == "__main__":
     print "\nDone.\n"
     #start auto-heal
 
-    if int(du_dds.data_space_percent_available) < 90:
-        print 'Docker has less than 90% storage avaiable. Attempting to clean up space.'
-        print '***********************************'
-        #clean the exited containers
-        for container in exited_containers:
+    def remove_containers(containers, status):
+        for container in containers:
             print '*******start cleaning**************'
             print 'the container id is :', container['Id']
             #get the info
@@ -68,7 +68,7 @@ if __name__ == "__main__":
             #print Deadcontainer
             if len(exited_container) == 1:
                 print 'the status of the container is :', exited_container[0]['Status']
-                if exited_container[0]['Status'].find('Exited') != -1:
+                if exited_container[0]['Status'].find(status) != -1:
                     #do the remove step
                     print 'status confirmed :', exited_container[0]['Status']
                     try:
@@ -78,26 +78,15 @@ if __name__ == "__main__":
                         print 'something wrong during the remote of the container'
             else:
                 print 'container not exist'
-        #clean the dead containers
-        for container in dead_containers:
-            print '*******start cleaning**************'
-            print 'the container id is :', container['Id']
-            #get the info
-            dead_container = cli.containers(all=True, filters={'id':container['Id']})
-            #print Deadcontainer
-            if len(dead_container) == 1:
-                print 'the status of the container is :', dead_container[0]['Status']
-                if dead_container[0]['Status'].find('Dead') != -1:
-                    #do the remove step
-                    print 'status confirmed :', dead_container[0]['Status']
-                    try:
-                        cli.remove_container(container=container['Id'])
-                        print 'done this container'
-                    except Exception, e:
-                        print 'something wrong during the remote of the container'
 
-            else:
-                print 'container not exist'
+
+    if int(du_dds.data_space_percent_available) < 90:
+        print 'Docker has less than 90% storage avaiable. Attempting to clean up space.'
+        print '***********************************'
+        #clean the exited containers
+        remove_containers(exited_containers, "Exited")
+        remove_containers(dead_containers,"Dead")
     else:
-        print 'Docker storage has more than 90% available. Skipping autoheal to clean up space', int(du_dds.data_space_percent_available)
+        print 'Docker storage has more than 90% available. Skipping autoheal to clean up space', 
+        int(du_dds.data_space_percent_available)
 
