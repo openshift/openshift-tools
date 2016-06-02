@@ -85,7 +85,7 @@ if __name__ == "__main__":
         print '***********************************'
         #clean the exited containers
         remove_containers(exited_containers, "Exited")
-        remove_containers(dead_containers,"Dead")
+        remove_containers(dead_containers, "Dead")
     else:
         print 'Docker storage has more than 90% available. Skipping autoheal to clean up space', 
         int(du_dds.data_space_percent_available)
