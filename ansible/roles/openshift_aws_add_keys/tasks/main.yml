@@ -5,3 +5,4 @@
     key_material: "{{ item.pub_key }}"
     region: "{{ osaak_region }}"
   with_items: "{{ osaak_users }}"
+  no_log: True
