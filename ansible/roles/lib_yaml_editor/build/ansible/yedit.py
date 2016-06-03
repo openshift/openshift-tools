@@ -50,6 +50,8 @@ def main():
     if state == 'list':
         if module.params['key']:
             rval = yamlfile.get(module.params['key'])
+        if rval == None:
+            rval = {}
         module.exit_json(changed=False, results=rval, state="list")
 
     elif state == 'absent':
