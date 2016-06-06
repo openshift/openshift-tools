@@ -1,0 +1,31 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: localhost
+  gather_facts: no
+
+  tasks:
+  - name: test git_commit
+    git_commit:
+      path: /home/mwoodson/tmp/git_test/git_repo
+      msg: commit 1
+
+  - name: test git_merge
+    git_merge:
+      path: /home/mwoodson/tmp/git_test/git_repo
+      branch: stg
+      merge_id: master
+    register: merge
+  - debug:
+      var: merge
+
+  - name: test git_push
+    git_push:
+      path: /home/mwoodson/tmp/git_test/git_repo
+      remote: origin
+      #remote: ''
+      src_branch: ""
+      dest_branch: stg
+    register: push
+    ignore_errors: yes
+  - debug:
+      var: push
