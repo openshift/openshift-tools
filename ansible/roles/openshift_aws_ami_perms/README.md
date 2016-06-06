@@ -12,8 +12,11 @@ Ansible Modules:
 Role Variables
 --------------
 
-osaak_users: list of dicts of users
-osaak_region: ec2_region to install the keys
+osaap_src_ami_access_id: AWS Access Key (with permissions to share) of the SRC account
+osaap_src_ami_access_key  AWS Secret Key (with permissions to share) of the SRC account
+osaap_dest_aws_accountid: The account that needs access to the AMI
+osaap_region: region the ami lives in and will be shared in
+osaap_image_id: AMI id
 
 Dependencies
 ------------
@@ -22,20 +25,12 @@ Dependencies
 Example Playbook
 ----------------
 
-sample-osaak_users:
-- user1:
-    username: user1
-    pub_key: <user1 ssh public key>
-- user2:
-    username: user2
-    pub_key: <user2 ssh public key>
-
-sample_osaak_region: us-east-1
-
-- role: tools_roles/openshift_aws_add_keys
-  osaak_users: "{{ sample-osaak_users }}"
-  osaak_region: "{{ sample_osaak_region }}"
-
+  - role: tools_roles/openshift_aws_ami_perms
+    osaap_src_ami_access_id: XXXXXXXXXX
+    osaap_src_ami_access_key: YYYYYYYYY
+    osaap_dest_aws_accountid: 123456789
+    osaap_region: us-west-1
+    osaap_image_id: ami-123456
 
 
 License

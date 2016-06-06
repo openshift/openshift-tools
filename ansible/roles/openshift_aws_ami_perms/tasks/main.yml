@@ -3,7 +3,7 @@
   set_fact:
     dest_account_id:
       user_ids:
-      - "{{ osaap_src_aws_accountid }}"
+      - "{{ osaap_dest_aws_accountid }}"
 
 - name: Add permissions to AMI to new aws account
   ec2_ami20:

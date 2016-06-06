@@ -1,5 +1,2 @@
 ---
-osau_user_state: present
 osau_default_gpg_keyserver: 'hkp://keys.gnupg.net'
-osau_aws_accountid: XXXXXXXXXX
-osau_credentials_dir: "/home/{{ ansible_ssh_user }}/credentials/{{ osau_aws_accountid }}"
