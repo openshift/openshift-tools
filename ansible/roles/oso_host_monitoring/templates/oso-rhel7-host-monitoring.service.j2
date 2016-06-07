@@ -71,6 +71,7 @@ ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                
 {% endif %}
            -v /usr/bin/oc:/usr/bin/oc                                                        \
            -v /usr/bin/oadm:/usr/bin/oadm                                                    \
+           -v /etc/openshift_tools/monitoring-config.yml:/etc/openshift_tools/monitoring-config.yml \
            {{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}
 
 
