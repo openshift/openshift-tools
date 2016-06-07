@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.97
+Version:       0.0.100
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -49,7 +49,6 @@ cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
 cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
 cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
 cp -p cloud/aws/ops-ec2-trim-ebs-snapshots.py %{buildroot}/usr/bin/ops-ec2-trim-ebs-snapshots
-cp -p monitoring/cron-send-build-app.py %{buildroot}/usr/bin/cron-send-build-app
 cp -p monitoring/cron-send-cluster-capacity.py %{buildroot}/usr/bin/cron-send-cluster-capacity
 cp -p monitoring/cron-send-cpu-mem-process.sh %{buildroot}/usr/bin/cron-send-cpu-mem-process
 
@@ -230,7 +229,6 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-etcd-status
 /usr/bin/cron-send-os-master-metrics
 /usr/bin/cron-send-create-app
-/usr/bin/cron-send-build-app
 /usr/bin/cron-send-os-skydns-checks
 /usr/bin/cron-send-registry-checks
 /usr/bin/cron-openshift-pruner
@@ -271,6 +269,17 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Thu Jun 02 2016 Sten Turpin <sten@redhat.com> 0.0.100-1
+- specify known-good version of hello-openshift (sten@redhat.com)
+
+* Wed Jun 01 2016 Sten Turpin <sten@redhat.com> 0.0.99-1
+- moved app build check into cron-send-create-app
+
+* Wed Jun 01 2016 Sten Turpin <sten@redhat.com> 0.0.98-1
+- remove cron-send-build-app script (sten@redhat.com)
+- added build/arbitrary app create capability to create-app check
+  (sten@redhat.com)
+
 * Wed Jun 01 2016 Joel Diaz <jdiaz@redhat.com> 0.0.97-1
 - ignore non-ready nodes (jdiaz@redhat.com)
 

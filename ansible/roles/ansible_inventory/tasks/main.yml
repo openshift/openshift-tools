@@ -4,14 +4,6 @@
     name: openshift-tools-scripts-inventory-clients
     state: present
 
-- name: Create/update multi_inventory.yaml
-  copy:
-    content: "{{ oo_inventory_accounts | to_nice_yaml }}"
-    dest: /etc/ansible/multi_inventory.yaml
-    group: "{{ oo_inventory_group }}"
-    owner: "{{ oo_inventory_owner }}"
-    mode: "0640"
-
 - file:
     state: directory
     dest: /etc/ansible/inventory

@@ -1,0 +1,35 @@
+---
+- debug:
+    var: "{{ item }}"
+    verbosity: 2
+  with_items:
+  - "{{ osaic_iam_certname }}"
+  - "{{ osaic_cert }}"
+  - "{{ osaic_key }}"
+  - "{{ osaic_default_chain_cert }}"
+  - "{{ osaic_chain_cert }}"
+  - "{{ osaic_dest_file }}"
+
+- name: upload a cert with cert chain
+  iam_cert20:
+    name: "{{ osaic_iam_certname }}"
+    state: present
+    cert: "{{ osaic_cert }}"
+    key: "{{ osaic_key }}"
+    cert_chain: "{{ osaic_chain_cert | default(omit, True) }}"
+  register: uploaded_cert
+
+- debug:
+    var: uploaded_cert
+
+- name: Verify VPC dir is created
+  file:
+    path: "{{ osaic_dest_file | dirname }}"
+    recurse: yes
+    state: directory
+
+- name: save account variables to vpc file
+  yedit:
+    src: "{{ osaic_dest_file }}"
+    key:  g_aws_iam_openshift_cert_arn
+    value: "{{ uploaded_cert.arn }}"

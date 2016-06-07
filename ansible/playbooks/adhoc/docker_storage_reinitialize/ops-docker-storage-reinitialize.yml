@@ -75,6 +75,11 @@
       path: /var/lib/docker
       state: absent
 
+  - name: remove /etc/sysconfig/docker-storage (for any stray references to pools)
+    file:
+      path: /etc/sysconfig/docker-storage
+      state: absent
+
   - name: start docker-storage-setup to initialize the docker storage
     service:
       name: docker-storage-setup

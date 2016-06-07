@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.64
+Version:       0.0.65
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -258,6 +258,9 @@ Adds Aws specific python modules
 
 
 %changelog
+* Wed Jun 01 2016 Sten Turpin <sten@redhat.com> 0.0.65-1
+- removed cron-send-build-app, replaced with new capabilities in cron-send-create-app
+
 * Tue May 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.64-1
 - 
 

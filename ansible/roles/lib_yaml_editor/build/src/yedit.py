@@ -32,6 +32,13 @@ class Yedit(object):
     @staticmethod
     def remove_entry(data, key):
         ''' remove data at location key '''
+        if key == '' and isinstance(data, dict):
+            data.clear()
+            return True
+        elif key == '' and isinstance(data, list):
+            del data[:]
+            return True
+
         if not (key and re.match(Yedit.re_valid_key, key) and isinstance(data, (list, dict))):
             return None
 
@@ -64,7 +71,9 @@ class Yedit(object):
             key = a#b
             return c
         '''
-        if not (key and re.match(Yedit.re_valid_key, key) and isinstance(data, (list, dict))):
+        if key == '':
+            pass
+        elif not (key and re.match(Yedit.re_valid_key, key) and isinstance(data, (list, dict))):
             return None
 
         key_indexes = re.findall(Yedit.re_key, key)
@@ -103,7 +112,9 @@ class Yedit(object):
             key = a.b
             return c
         '''
-        if not (key and re.match(Yedit.re_valid_key, key) and isinstance(data, (list, dict))):
+        if key == '':
+            pass
+        elif not (key and re.match(Yedit.re_valid_key, key) and isinstance(data, (list, dict))):
             return None
 
         key_indexes = re.findall(Yedit.re_key, key)
@@ -229,6 +240,19 @@ class Yedit(object):
 
         return entry == value
 
+    def append(self, path, value):
+        '''append value to a list'''
+        try:
+            entry = Yedit.get_entry(self.yaml_dict, path)
+        except KeyError as _:
+            entry = None
+
+        if entry == None or not isinstance(entry, list):
+            return (False, self.yaml_dict)
+
+        entry.append(value)
+        return (True, self.yaml_dict)
+
     def update(self, path, value, index=None, curr_value=None):
         ''' put path, value into a dict '''
         try:
@@ -245,23 +269,29 @@ class Yedit(object):
             #pylint: disable=no-member,maybe-no-member
             ind = None
             if curr_value:
-                ind = None
                 try:
                     ind = entry.index(curr_value)
                 except ValueError:
                     return (False, self.yaml_dict)
 
-                entry[ind] = value
-
             elif index:
-                entry[index] = value
+                ind = index
 
-            else:
+            if ind and entry[ind] != value:
+                entry[ind] = value
+                return (True, self.yaml_dict)
+
+            # see if it exists in the list
+            try:
+                ind = entry.index(value)
+            except ValueError:
+                # doesn't exist, append it
                 entry.append(value)
                 return (True, self.yaml_dict)
 
-            return (True, self.yaml_dict)
-
+            #already exists, return
+            if ind:
+                return (False, self.yaml_dict)
         return (False, self.yaml_dict)
 
     def put(self, path, value):
