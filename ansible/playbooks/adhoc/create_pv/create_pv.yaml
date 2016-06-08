@@ -57,6 +57,7 @@
       tags:
         Name: "pv-{{ hostvars[oo_name]['ec2_tag_Name'] }}"
         clusterid: "{{cli_clusterid}}"
+        snapshot: daily
     register: voltags
 
   - debug: var=voltags
