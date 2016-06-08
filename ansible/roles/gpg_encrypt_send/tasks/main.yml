@@ -13,7 +13,6 @@
   - "{{ gpges_users }}"
   - "{{ plain_files_stat.results }}"
   register: encrypted_results
-  when: item[1].stat.exists
   no_log: True
 
 - name: stat the gpg encrytped files
@@ -23,9 +22,6 @@
   register: gpg_files_stat
   no_log: True
 
-- debug:
-    var: gpg_files_stat
-
 - name: Remove unencrypted files
   file:
     path: "{{ gpges_dir }}/{{ item[0].username }}"
@@ -34,6 +30,7 @@
   with_together:
   - "{{ gpges_users }}"
   - "{{ plain_files_stat.results }}"
+  no_log: True
 
 - name: Send credentials to users
   mail:

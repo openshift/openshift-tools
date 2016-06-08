@@ -24,10 +24,9 @@
     iam_type: user
     name: "{{ item[0].username }}"
     access_key_state: create
-    #password: "{{ item[1].password|default('NOTNEEDEDUPONABSENT') }}"
     password: "{{ item[1].password | default(omit) }}"
     update_password: on_create
-    groups: "{{ osau_groups }}"
+    groups: "{{ osau_groups | default(omit) }}"
   register: created_users
   no_log: True
   with_together:
@@ -77,4 +76,4 @@
     state: present
   when: osau_user_state == 'present' and osau_output_format == "yaml" and created_users.changed and item.user_meta is defined
   with_items: created_users.results
-#  no_log: True
+  no_log: True
