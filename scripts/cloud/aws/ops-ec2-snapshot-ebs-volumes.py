@@ -74,6 +74,7 @@ class SnapshotterCli(object):
 
 
         for region in regions:
+            print "Region: %s:" % region
             ss = ebs_snapshotter.EbsSnapshotter(region.name, verbose=True)
 
             avail_vols, snapshots_created, snapshot_creation_errors = \

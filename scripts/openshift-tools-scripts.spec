@@ -49,6 +49,7 @@ cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
 cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
 cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
 cp -p cloud/aws/ops-ec2-trim-ebs-snapshots.py %{buildroot}/usr/bin/ops-ec2-trim-ebs-snapshots
+cp -p cloud/aws/ops-ec2-add-snapshot-tag-to-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-add-snapshot-tag-to-ebs-volumes
 cp -p monitoring/cron-send-cluster-capacity.py %{buildroot}/usr/bin/cron-send-cluster-capacity
 cp -p monitoring/cron-send-cpu-mem-process.sh %{buildroot}/usr/bin/cron-send-cpu-mem-process
 
@@ -265,6 +266,7 @@ OpenShift Tools AWS specific scripts
 /usr/bin/ops-ec2-copy-ami-to-all-regions
 /usr/bin/ops-ec2-snapshot-ebs-volumes
 /usr/bin/ops-ec2-trim-ebs-snapshots
+/usr/bin/ops-ec2-add-snapshot-tag-to-ebs-volumes
 
 
 
