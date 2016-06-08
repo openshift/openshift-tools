@@ -68,7 +68,7 @@ class EbsSnapshotter(Base):
         if dry_run:
             self.print_dry_run_msg(prefix=prefix + "  ")
         else:
-            self.ec2.create_tags(volume_ids, {SNAP_TAG_KEY: schedule})
+            self.ec2.create_tags(list(volume_ids), {SNAP_TAG_KEY: schedule})
 
     def get_already_tagged_volume_ids(self):
         """ Returns a list of volumes that already have the snapshot tag. """
