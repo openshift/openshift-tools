@@ -196,6 +196,18 @@ host_monitoring_cron:
   minute: "*/5"
   job: ops-runner -f -s 30 -n cskc.openshift.master.kubeconfig.status /usr/bin/cron-send-check-kubeconfig
 
+- name: send etcd connection on port 2379 count 
+  minute: "*/5"
+  job: ops-runner -f -s 30 -n /usr/bin/cron-send-connection-count.py etcd 2379 openshift.master.etcd.port_2379.connections.established
+
+- name: send etcd connection on port 2380 count 
+  minute: "*/5"
+  job: ops-runner -f -s 30 -n /usr/bin/cron-send-connection-count.py etcd 2380 openshift.master.etcd.port_2380.connections.established
+
+- name: send master api server connection on port 443 count 
+  minute: "*/5"
+  job: ops-runner -f -s 30 -n /usr/bin/cron-send-connection-count.py openshift 443 openshift.master.api.port_443.connections.established
+
 {% if osohm_enable_cluster_capacity_reporting|bool and osohm_master_primary | default(False, True) | bool %}
 - name: "Cluster capacity reporting"
   hour: "*"
