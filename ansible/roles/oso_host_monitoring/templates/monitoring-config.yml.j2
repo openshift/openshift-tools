@@ -196,47 +196,47 @@ host_monitoring_cron:
   minute: "*/5"
   job: ops-runner -f -s 30 -n cskc.openshift.master.kubeconfig.status /usr/bin/cron-send-check-kubeconfig
 
-- name: send etcd connection on port 2379 count 
+- name: send etcd connections count on port 2379
   minute: "*/5"
   job: ops-runner -f -s 30 -n /usr/bin/cron-send-connection-count.py etcd 2379 openshift.master.etcd.port_2379.connections.established
 
-- name: send etcd connection on port 2380 count 
+- name: send etcd connections count on port 2380
   minute: "*/5"
   job: ops-runner -f -s 30 -n /usr/bin/cron-send-connection-count.py etcd 2380 openshift.master.etcd.port_2380.connections.established
 
-- name: send master api server connection on port 443 count 
+- name: send master api server connections count on port 443
   minute: "*/5"
   job: ops-runner -f -s 30 -n /usr/bin/cron-send-connection-count.py openshift 443 openshift.master.api.port_443.connections.established
 
-{% if osohm_enable_cluster_capacity_reporting|bool and osohm_master_primary | default(False, True) | bool %}
+{% if osohm_enable_cluster_capacity_reporting|bool and osohm_master_primary | default(False) | bool %}
 - name: "Cluster capacity reporting"
   hour: "*"
   minute: "15"
   job: ops-runner -f -s 30 -n cscc.openshift.master.capacity /usr/bin/cron-send-cluster-capacity
 {% endif %}
 
-{% if osohm_master_primary | default(False,True) | bool %}
+{% if osohm_master_primary | default(False) | bool %}
 - name: "Prune builds/deployments/images"
   hour: "{{ osohm_pruning.cron.hour }}"
   minute: "{{ osohm_pruning.cron.minute }}"
   job: "ops-runner -f -s 30 -n cosp.openshift.master.prune /usr/bin/cron-openshift-pruner --image-keep-younger-than {{ osohm_pruning.image_hours_to_keep }} --image-keep-tag-revisions {{ osohm_pruning.image_revisions_to_keep }}"
 {% endif %}
 
-{% if osohm_master_primary | default(False, True) | bool %}
+{% if osohm_master_primary | default(False) | bool %}
 - name: "Snapshot volumes tagged with hourly"
   hour: "*"
   minute: "0"
   job: ops-runner -f -s 30 -n oesev.snapshot.hourly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule hourly
 {% endif %}
 
-{% if osohm_master_primary | default(False, True) | bool %}
+{% if osohm_master_primary | default(False) | bool %}
 - name: "Snapshot EBS volumes tagged with daily"
   hour: "0"
   minute: "0"
   job: ops-runner -f -s 30 -n oesev.snapshot.daily ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule daily
 {% endif %}
 
-{% if osohm_master_primary | default(False, True) | bool %}
+{% if osohm_master_primary | default(False) | bool %}
 - name: "Snapshot EBS volumes tagged with weekly"
   weekday: "0"
   hour: "0"
@@ -244,7 +244,7 @@ host_monitoring_cron:
   job: ops-runner -f -s 30 -n oesev.snapshot.weekly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule weekly
 {% endif %}
 
-{% if osohm_master_primary | default(False, True) | bool %}
+{% if osohm_master_primary | default(False) | bool %}
 - name: "Snapshot EBS volumes tagged with monthly"
   day: "1"
   hour: "0"
@@ -252,7 +252,7 @@ host_monitoring_cron:
   job: ops-runner -f -s 30 -n oesev.snapshot.monthly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule monthly
 {% endif %}
 
-{% if osohm_master_primary | default(False, True) | bool %}
+{% if osohm_master_primary | default(False) | bool %}
 # DO NOT CHANGE without first talking to twiest.
 - name: "Trim EBS Snapshot"
   minute: "10"
