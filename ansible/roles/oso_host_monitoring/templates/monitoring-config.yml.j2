@@ -208,7 +208,7 @@ host_monitoring_cron:
   minute: "*/5"
   job: ops-runner -f -s 30 -n /usr/bin/cron-send-connection-count.py openshift 443 openshift.master.api.port_443.connections.established
 
-{% if osohm_enable_cluster_capacity_reporting|bool and osohm_master_primary | default(False, True) | bool %}
+{% if osohm_enable_cluster_capacity_reporting|bool and osohm_master_primary | default(False) | bool %}
 - name: "Cluster capacity reporting"
   hour: "*"
   minute: "15"
