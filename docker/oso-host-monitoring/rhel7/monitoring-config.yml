@@ -52,7 +52,7 @@ zagg_client_config:
     - undefcid
     - undefenv
 
-zagg_client_cron:
+host_monitoring_cron:
 - name: send pcp ping every 5 minutes
   minute: "*/5"
   job: ops-runner -f -s 15 -n cspp.pcp.ping /usr/bin/cron-send-pcp-ping
