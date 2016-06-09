@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.67
+Version:       0.0.68
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -258,6 +258,10 @@ Adds Aws specific python modules
 
 
 %changelog
+* Thu Jun 09 2016 Thomas Wiest <twiest@redhat.com> 0.0.68-1
+- Changed root device detection to be more accurate. Added volume tag and
+  attachment data to snapshot tags. (twiest@redhat.com)
+
 * Wed Jun 08 2016 Thomas Wiest <twiest@redhat.com> 0.0.67-1
 - Added more attach names for the root master and node volumes and fixed bug.
   (twiest@redhat.com)
