@@ -64,17 +64,16 @@ class EbsUtil(Base):
                 # Etcd is stored on the root volume on the masters. This is
                 # also how we backup the ca.crt private keys and other master
                 # specific data.
-                if hosttype == 'master' and device in ['/dev/xvda', '/dev/sda', '/dev/sda1']:
+                if hosttype == 'master' and device == inst.root_device_name:
                     # We're only going to keep the volume_id because we'll be filtering these out.
                     master_root_volume_ids.add(vol.volume_id)
 
                 # nodes are cattle. We don't care about their root volumes.
-                if hosttype == 'node' and device in ['/dev/xvda', '/dev/sda', '/dev/sda1']:
+                if hosttype == 'node' and device == inst.root_device_name:
                     node_root_volume_ids.add(vol.volume_id)
 
                 # masters and nodes have their docker storage volume on xvdb
-                if (hosttype == 'master' or hosttype == 'node') and \
-                   device == '/dev/xvdb':
+                if hosttype in ['master', 'node'] and device == '/dev/xvdb':
                     docker_storage_volume_ids.add(vol.volume_id)
 
         return (master_root_volume_ids, node_root_volume_ids, docker_storage_volume_ids)

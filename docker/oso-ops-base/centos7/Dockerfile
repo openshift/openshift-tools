@@ -21,10 +21,11 @@ ENV USER root
 ENV HOME /root
 ENV TERM xterm
 WORKDIR /root
-ADD bashrc /root/.bashrc
+ADD root/bashrc /root/.bashrc
+ADD root/pdbrc /root/.pdbrc
 
 # Make working in Python nice
-ADD pythonrc /root/.pythonrc
+ADD root/pythonrc /root/.pythonrc
 ENV PYTHONSTARTUP=/root/.pythonrc
 
 # setup epel repo
