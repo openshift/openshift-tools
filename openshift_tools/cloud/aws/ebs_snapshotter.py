@@ -93,6 +93,14 @@ class EbsSnapshotter(Base):
 
         return vols_w_sched
 
+    def get_all_instances_as_dict(self):
+        """ Returns a disctionary of all instances where the key is the instance id """
+        retval = {}
+        for inst in self.ec2.get_only_instances():
+            retval[inst.id] = inst
+
+        return retval
+
     def create_snapshots(self, schedule, script_name=None, dry_run=False):
         """ Creates a snapshot for volumes tagged with the given schedule. """
 
@@ -107,6 +115,7 @@ class EbsSnapshotter(Base):
             description += " by %s" % script_name
 
         volumes = self.get_volumes_with_schedule(schedule)
+        all_instances = self.get_all_instances_as_dict()
 
         self.verbose_print("Creating %s snapshot for:" % schedule, prefix="  ")
 
@@ -118,6 +127,24 @@ class EbsSnapshotter(Base):
                     self.print_dry_run_msg(prefix="    ")
                 else:
                     new_snapshot = volume.create_snapshot(description=description)
+                    inst_id = volume.attach_data.instance_id
+                    inst_name = None
+
+                    if inst_id:
+                        inst_name = all_instances[inst_id].tags.get('Name')
+
+                    attach_data = "%s:%s:%s:%s" % (volume.attach_data.status, \
+                                                inst_id, \
+                                                inst_name, \
+                                                volume.attach_data.device)
+
+                    # Take all of the volume's tags (including Name) and add the attachment data.
+                    snap_tags = volume.tags.copy()
+                    snap_tags['attach_data'] = attach_data
+
+                    # We want the snapshot to have as much identifying information as possible.
+                    new_snapshot.add_tags(snap_tags)
+
                     snapshots.append(new_snapshot)
             # Reason: disable pylint broad-except because we want to continue on error.
             # Status: permanently disabled
@@ -128,7 +155,8 @@ class EbsSnapshotter(Base):
             self.verbose_print()
 
         self.verbose_print("Number of volumes to snapshot: %d" % len(volumes), prefix="  ")
-        self.verbose_print("Number of snapshots taken: %d" % len(snapshots), prefix="  ")
+        self.verbose_print("Number of snapshots taken: %d: %s" % (len(snapshots), snapshots), \
+                           prefix="  ")
         self.verbose_print("Number of snapshot creation errors: %d" % len(errors), prefix="  ")
         self.verbose_print()
 
