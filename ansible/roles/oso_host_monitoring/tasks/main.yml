@@ -40,7 +40,7 @@
   file:
     path: /etc/openshift_tools
     state: directory
-    mode: 0770
+    mode: 0775
     group: root
     owner: root
 
