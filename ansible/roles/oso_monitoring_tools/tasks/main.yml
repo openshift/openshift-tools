@@ -11,8 +11,14 @@
 
 - debug: var=g_zagg_client_config
 
+- name: Ensure all users can send monitoring data
+  file:
+    state: directory
+    path: /etc/openshift_tools
+    mode: "0755"
+
 - name: Generate the /etc/openshift_tools/zagg_client.yaml config file
   copy:
     content: "{{ osomt_zagg_client_config | to_nice_yaml }}"
     dest: /etc/openshift_tools/zagg_client.yaml
-    mode: "644"
+    mode: "0644"
