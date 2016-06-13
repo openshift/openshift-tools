@@ -214,14 +214,14 @@ host_monitoring_cron:
 - name: "Snapshot volumes tagged with hourly"
   hour: "*"
   minute: "0"
-  job: ops-runner -f -s 30 -n oesev.snapshot.hourly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule hourly
+  job: ops-runner -f -s 90 -n oesev.snapshot.hourly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule hourly
 {% endif %}
 
 {% if osohm_master_primary | default(False) | bool %}
 - name: "Snapshot EBS volumes tagged with daily"
   hour: "0"
   minute: "0"
-  job: ops-runner -f -s 30 -n oesev.snapshot.daily ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule daily
+  job: ops-runner -f -s 90 -n oesev.snapshot.daily ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule daily
 {% endif %}
 
 {% if osohm_master_primary | default(False) | bool %}
@@ -229,7 +229,7 @@ host_monitoring_cron:
   weekday: "0"
   hour: "0"
   minute: "0"
-  job: ops-runner -f -s 30 -n oesev.snapshot.weekly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule weekly
+  job: ops-runner -f -s 90 -n oesev.snapshot.weekly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule weekly
 {% endif %}
 
 {% if osohm_master_primary | default(False) | bool %}
@@ -237,14 +237,14 @@ host_monitoring_cron:
   day: "1"
   hour: "0"
   minute: "0"
-  job: ops-runner -f -s 30 -n oesev.snapshot.monthly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule monthly
+  job: ops-runner -f -s 90 -n oesev.snapshot.monthly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule monthly
 {% endif %}
 
 {% if osohm_master_primary | default(False) | bool %}
 # DO NOT CHANGE without first talking to twiest.
 - name: "Trim EBS Snapshot"
   minute: "10"
-  job: ops-runner -f -s 30 -n oetes.trim.snapshots ops-ec2-trim-ebs-snapshots --aws-creds-profile snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
+  job: ops-runner -f -s 90 -n oetes.trim.snapshots ops-ec2-trim-ebs-snapshots --aws-creds-profile snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
 {% endif %}
 
 {# end if host master #}
