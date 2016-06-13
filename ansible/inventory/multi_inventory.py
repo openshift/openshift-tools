@@ -273,7 +273,10 @@ class MultiInventory(object):
         '''
         if keys and "." in keys:
             key, rest = keys.split(".", 1)
-            return self.get_entry(data[key], rest)
+            if data.has_key(key):
+                return self.get_entry(data[key], rest)
+
+            return None
         else:
             return data.get(keys, None)
 
