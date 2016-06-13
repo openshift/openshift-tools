@@ -47,6 +47,8 @@ from openshift_tools.cloud.aws.base import Base
 from datetime import datetime
 from datetime import timedelta
 
+from boto.exception import EC2ResponseError
+
 SNAP_TAG_KEY = 'snapshot'
 
 SUPPORTED_SCHEDULES = ['hourly', 'daily', 'weekly', 'monthly']
@@ -150,11 +152,22 @@ class EbsSnapshotter(Base):
             # Status: permanently disabled
             # pylint: disable=broad-except
             except Exception as ex:
-                errors.append(ex)
+                if isinstance(ex, EC2ResponseError) and \
+                   ex.error_code == "SnapshotCreationPerVolumeRateExceeded":
+                    # This message means that a snapshot of this volume was recently taken,
+                    # which we're trying to do anyway. So, we can safely ignore this error.
+
+                    # Add that latest snapshot to the list of snapshots.
+                    ex_snaps = volume.snapshots()
+                    self.sort_snapshots(ex_snaps)
+                    snapshots.append(ex_snaps[-1])
+                else:
+                    errors.append(ex)
 
             self.verbose_print()
 
-        self.verbose_print("Number of volumes to snapshot: %d" % len(volumes), prefix="  ")
+        self.verbose_print("Number of volumes to snapshot: %d: %s" % (len(volumes), volumes), \
+                           prefix="  ")
         self.verbose_print("Number of snapshots taken: %d: %s" % (len(snapshots), snapshots), \
                            prefix="  ")
         self.verbose_print("Number of snapshot creation errors: %d" % len(errors), prefix="  ")
@@ -309,7 +322,8 @@ class EbsSnapshotter(Base):
                     time_period_number += 1
                     snap_found_for_this_time_period = False
 
-        return snaps_to_trim
+        # We want to make sure we're only sending back 1 copy of each snapshot to trim.
+        return list(set(snaps_to_trim))
 
     @staticmethod
     def get_volume_snapshots(volume, all_snapshots):
@@ -375,7 +389,12 @@ class EbsSnapshotter(Base):
                 # Status: permanently disabled
                 # pylint: disable=broad-except
                 except Exception as ex:
-                    errors.append(ex)
+                    if isinstance(ex, EC2ResponseError) and ex.error_code == "InvalidSnapshot.NotFound":
+                        # This message means that the snapshot is gone, which is what we
+                        # were trying to do anyway. So, count this snap among the deleted.
+                        deleted_snapshots.append(exp_snap)
+                    else:
+                        errors.append(ex)
                 self.verbose_print()
 
         self.verbose_print("Number of expired snapshots: %d" % len(all_expired_snapshots), prefix="  ")
