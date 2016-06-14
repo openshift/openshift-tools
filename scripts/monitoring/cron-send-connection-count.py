@@ -4,13 +4,19 @@
 '''
 # vim: expandtab:tabstop=4:shiftwidth=4
 
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+# Disabling invalid-name because pylint doesn't like the naming conention we have.
+# pylint: disable=invalid-name
+
 import argparse
 import psutil
+# Reason: disable pylint import-error because our libs aren't loaded on jenkins.
+# Status: temporary until we start testing in a container where our stuff is installed.
+# pylint: disable=import-error
+from openshift_tools.monitoring.zagg_sender import ZaggSender
 
 def parse_args():
     """ parse the args from the cli """
-    
+
     TCP_STATUSES = [
         'ESTABLISHED',
         'SYN_SENT',
@@ -32,7 +38,6 @@ def parse_args():
     parser.add_argument('zabbix_key', help='Zabbix key to send with the connection count')
     parser.add_argument('-s', '--conn_status', choices=TCP_STATUSES, default='ESTABLISHED')
 
-    
     return parser.parse_args()
 
 def main():
@@ -43,7 +48,8 @@ def main():
     for proc in psutil.process_iter():
         try:
             if proc.name() == argz.proc_to_check:
-                if argz.debug: print proc.connections() 
+                if argz.debug:
+                    print proc.connections()
                 for conn in proc.connections():
                     if conn.status == argz.conn_status and conn.laddr[1] == argz.port:
                         conn_count += 1
@@ -51,13 +57,11 @@ def main():
             pass
 
     if argz.debug:
-        print 'Process ({0}) on port {1} has {2} connections in {3} status'.format(argz.proc_to_check, 
+        print 'Process ({0}) on port {1} has {2} connections in {3} status'.format(argz.proc_to_check,
                                                                                    argz.port,
                                                                                    conn_count,
                                                                                    argz.conn_status
-        )
-
-
+                                                                                  )
 
     zgs = ZaggSender(debug=argz.debug)
     zgs.add_zabbix_keys({'{0}'.format(argz.zabbix_key) : conn_count})
