@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.9
+Version:        0.0.10
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -91,6 +91,48 @@ Python library for interacting with Zabbix with Ansible.
 %{_datadir}/ansible/zabbix
 
 %changelog
+* Mon Jun 13 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.10-1
+- Fixing a bug if get_entry does not contain a key. (kwoodson@redhat.com)
+- Made the snapshot and trim operations more error resistant.
+  (twiest@redhat.com)
+- allow o+rx on openshift_tools (jdiaz@redhat.com)
+- change default(False, True) usage to default(False) (jdiaz@redhat.com)
+- allow for per-cluster pruning vars (jdiaz@redhat.com)
+- added rhmap to image exceptions (sedgar@redhat.com)
+- Backup copy to protect ourselves (kwoodson@redhat.com)
+- Added ops-ec2-add-snapshot-tag-to-ebs-volumes.py (twiest@redhat.com)
+- cleanup of openshft_aws_user (mwoodson@redhat.com)
+- move monitoring container configuration into passed-in/bound file Rather than
+  pass numerous environment variable to control how the host-monitoring
+  container is started/configured, move environment vars into a yaml file that
+  can be bound in. This will configure things like the list of cron jobs to
+  instantiate, the clusterid, zagg settings, etc. Logic that determines what
+  gets installed is moved into the oso-host-monitoring role when it generates a
+  monitoring-config.yml file for each node. Config loop will now install
+  /etc/openshift_tools/monitoring-config.yml, and the systemd file for host-
+  monitoring will bind it in at the same location. (jdiaz@redhat.com)
+- Bug fix for first level entries, added append, and fixed update
+  (kwoodson@redhat.com)
+- cleaned up some new aws account setup roles : (mwoodson@redhat.com)
+- add step to remove /etc/sysconfig/docker-storage file old thin pool settings
+  in the file can keep docker-storage-setup from working properly
+  (jdiaz@redhat.com)
+- Updating for dynamic inventory generation (kwoodson@redhat.com)
+- more role cleanup (mwoodson@redhat.com)
+- added lib_git (mwoodson@redhat.com)
+- added module lib_iam_accountid (mwoodson@redhat.com)
+- Adding a test for results coming back as None (kwoodson@redhat.com)
+- add no log to ssh add keys (mwoodson@redhat.com)
+- more fixes for the aws_user (mwoodson@redhat.com)
+- Content is now idempotent. (kwoodson@redhat.com)
+- added new roles for setting up aws stuff (mwoodson@redhat.com)
+- Fixed return val when updating a list (kwoodson@redhat.com)
+- Fixed a bug introduced by the deepcopy. Fixed a bug with create.
+  (kwoodson@redhat.com)
+- detect/enable cluster capacity reporting in the data hierarchy, set
+  g_enable_cluster_capacity_reporting to True for any cluster that should have
+  this reporting enabled (jdiaz@redhat.com)
+
 * Tue May 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.9-1
 - Adding snythetic hosts for bootstrapping (kwoodson@redhat.com)
 - TDGC: Update vars in example playbook section (whearn@redhat.com)
