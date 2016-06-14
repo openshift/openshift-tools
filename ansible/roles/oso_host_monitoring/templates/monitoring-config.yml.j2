@@ -152,7 +152,7 @@ host_monitoring_cron:
 
 - name: run create app with build process every 30 minutes
   minute: "*/30"
-  job: "export ZAGG_CLIENT_HOSTNAME={{ osohm_host_name }}; ops-runner -f -s 15 -n csca.openshift.master.app.build.create /usr/bin/cron-send-create-app --name nodejs-example &>> /var/log/build_app.log"
+  job: "export ZAGG_CLIENT_HOSTNAME={{ osohm_host_name }}; ops-runner -f -s 15 -n csca.openshift.master.app.build.create /usr/bin/cron-send-create-app --name https://github.com/openshift/nodejs-ex &>> /var/log/build_app.log"
 
 {% if osohm_master_ha|bool %}
 - name: send openshift-master process count
