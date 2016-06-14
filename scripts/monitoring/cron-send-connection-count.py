@@ -1,7 +1,8 @@
-#!/bin/env python
+#!/bin/env python2
 '''
   Command to send process connection count to Zagg
 '''
+# vim: expandtab:tabstop=4:shiftwidth=4
 
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 import argparse
@@ -37,8 +38,6 @@ def parse_args():
 def main():
     """  Main function to run the check """
     argz = parse_args()
-
-    print argz
     conn_count = 0
 
     for proc in psutil.process_iter():
