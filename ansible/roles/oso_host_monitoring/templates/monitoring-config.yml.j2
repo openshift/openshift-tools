@@ -72,12 +72,12 @@ host_monitoring_cron:
   minute: "*/5"
   job: ops-runner -f -s 15 -n cspp.pcp.ping /usr/bin/cron-send-pcp-ping
 
-- name: run pcp checks every 5 minutes
-  minute: "*/5"
+- name: run pcp checks every minute
+  minute: "*"
   job: ops-runner -f -s 15 -n ozpc.send.pcp /usr/bin/ops-zagg-pcp-client
 
-- name: run pcp sampler every 5 minutes
-  minute: "*/5"
+- name: run pcp sampler every minute
+  minute: "*"
   job: ops-runner -f -s 15 -n cspsm.kernal.all.cpu /usr/bin/cron-send-pcp-sampled-metrics -m kernel.all.cpu.idle -m kernel.all.cpu.nice -m kernel.all.cpu.steal -m kernel.all.cpu.sys -m kernel.all.cpu.user -m kernel.all.cpu.wait.total -m kernel.all.cpu.irq.hard -m kernel.all.cpu.irq.soft
 
 - name: Do a full heartbeat
@@ -93,12 +93,12 @@ host_monitoring_cron:
   minute: "*/10"
   job: ops-runner -f -s 15 -n csfm.filesys.full /usr/bin/cron-send-filesystem-metrics
 
-- name: run disk TPS checks every 2 minutes
-  minute: "*/2"
+- name: run disk TPS checks every minute
+  minute: "*"
   job: ops-runner -f -s 15 -n csdim.disk.tps /usr/bin/cron-send-disk-metrics
 
-- name: run network checks every 3 minutes
-  minute: "*/3"
+- name: run network checks every minute
+  minute: "*"
   job: ops-runner -f -s 15 -n csnm.network.int /usr/bin/cron-send-network-metrics
 
 # We might want to break docker checks out at some point.
