@@ -43,7 +43,7 @@ sudo systemctl status docker
 == Locating the container definitions (Dockerfiles)
 All of the containers are located in the openshift-tools git repository under the `docker` subdirectory.
 
-For a full list of containers, please see the repository https://github.com/openshift/openshift-tools/tree/master/docker[here].
+For a full list of containers, please see the repository https://github.com/openshift/openshift-tools/tree/prod/docker[here].
 
 == Building the monitoring containers
 The openshift-tools git repository contains a number of docker containers that are part of our monitoring containers.
