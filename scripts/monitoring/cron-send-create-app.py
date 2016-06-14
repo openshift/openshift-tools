@@ -86,17 +86,12 @@ class OpenShiftOC(object):
 
     def new_project(self):
         '''create new project '''
-        cmd = ['project']
-        results = self.oc_cmd(cmd)
-        curr_project = results.split()[2].strip('"')
         version = self.get_version()
         cmd = ['new-project', self.namespace]
         if "v3.2" in version:  ## remove this after BZ1333049 resolved in OSE
             rval = self.oadm_cmd(cmd)
         else:
             rval = self.oc_cmd(cmd)
-        cmd = ['project', curr_project]
-        results = self.oc_cmd(cmd)
         return rval
 
     def get_logs(self):
@@ -139,7 +134,8 @@ class OpenShiftOC(object):
         cmds.extend(cmd)
         print ' '.join(cmds)
         proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
-                                env={'KUBECONFIG': self.kubeconfig})
+                                env={'KUBECONFIG': self.kubeconfig, \
+                                     'PATH': os.environ["PATH"]})
         proc.wait()
         if proc.returncode == 0:
             output = proc.stdout.read()
@@ -158,7 +154,8 @@ class OpenShiftOC(object):
         cmds.extend(cmd)
         print ' '.join(cmds)
         proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
-                                env={'KUBECONFIG': self.kubeconfig})
+                                env={'KUBECONFIG': self.kubeconfig, \
+                                     'PATH': os.environ["PATH"]})
         proc.wait()
         if proc.returncode == 0:
             output = proc.stdout.read()
@@ -197,7 +194,11 @@ def parse_args():
 
 def pod_name(name):
     """ strip pre/suffices from app name to get pod name """
-    # for app deploy "openshift/hello-openshift:latest", pod name is hello-openshift
+    # for app deploy "https://github.com/openshift/hello-openshift:latest", pod name is hello-openshift
+    if 'http' in name:
+        name = name.rsplit('/')[-1]
+    if 'git' in name:
+        name = name.replace('.git', '')
     if '/' in name:
         name = name.split('/')[1]
     if ':' in name:
