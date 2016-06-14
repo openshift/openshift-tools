@@ -159,6 +159,12 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.api.port_443.connections.established
+    description: Show number of established connections on ssl port for openshift master api process
+    value_type: int
+    applications:
+    - Openshift Master
+
   - key: openshift.master.etcd.create.success
     description: Show number of successful create actions
     value_type: int
@@ -227,6 +233,18 @@ g_template_openshift_master:
 
   - key: openshift.master.etcd.ping
     description: etcd ping
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.master.etcd.port_2379.connections.established
+    description: Show number of established connections on public port for etcd process
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.master.etcd.port_2380.connections.established
+    description: Show number of established connections on peer port for etcd process
     value_type: int
     applications:
     - Openshift Etcd
@@ -446,6 +464,36 @@ g_template_openshift_master:
     dependencies:
     - 'Openshift Master process not running on {HOST.NAME}'
     priority: high
+
+  - name: 'Critically large number of connections on etcd public port on {HOST.NAME}'
+    expression: '{Template Openshift Master:openshift.master.etcd.port_2379.connections.established.last()}>600'
+    priority: high
+    
+  - name: 'Large number of connections on etcd public port on {HOST.NAME}'
+    expression: '{Template Openshift Master:openshift.master.etcd.port_2379.connections.established.last()}>400'
+    dependencies:
+    - 'Critically large number of connections on etcd public port on {HOST.NAME}'
+    priority: avg
+
+  - name: 'Critically large number of connections on etcd peer port on {HOST.NAME}'
+    expression: '{Template Openshift Master:openshift.master.etcd.port_2380.connections.established.last()}>600'
+    priority: high
+    
+  - name: 'Large number of connections on etcd peer port on {HOST.NAME}'
+    expression: '{Template Openshift Master:openshift.master.etcd.port_2380.connections.established.last()}>400'
+    dependencies:
+    - 'Critically large number of connections on etcd peer port on {HOST.NAME}'
+    priority: avg
+
+  - name: 'Critically large number of connections on openshift master api server on {HOST.NAME}'
+    expression: '{Template Openshift Master:openshift.master.api.port_443.connections.established.last()}>400'
+    priority: high
+
+  - name: 'Large number of connections on openshift master api server on {HOST.NAME}'
+    expression: '{Template Openshift Master:openshift.master.api.port_443.connections.established.last()}>350'
+    dependencies:
+    - 'Critically large number of connections on openshift master api server on {HOST.NAME}'
+    priority: avg
 
   zgraphs:
   - name: Openshift Master API Server Latency Pods LIST Quantiles
