@@ -36,7 +36,7 @@
   mail:
     host: localhost
     port: 25
-    to: "{{ item[0].username }}@{{ gpges_email_domain }}.com"
+    to: "{{ item[0].username }}@{{ gpges_email_domain }}"
     from: libra-ops@redhat.com
     subject: "{{ gpges_mail_subject }}"
     body: See attached gpg encrypted file.
