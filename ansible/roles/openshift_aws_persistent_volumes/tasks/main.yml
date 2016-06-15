@@ -68,6 +68,7 @@
       purpose: customer persistent volume
   when: item.changed
   with_items: "{{ volumes.results }}"
+  run_once: true
 
 - name: Create pv file from template
   template:
