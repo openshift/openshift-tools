@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.101
+Version:       0.0.102
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -273,6 +273,10 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Wed Jun 15 2016 Unknown name 0.0.102-1
+- Adding monitoring for existing connections on etcd and master api server
+  (ihorvath@redhat.com)
+
 * Wed Jun 08 2016 Thomas Wiest <twiest@redhat.com> 0.0.101-1
 - Added ops-ec2-add-snapshot-tag-to-ebs-volumes.py (twiest@redhat.com)
 - fix for the s3 docker registry (mwoodson@redhat.com)
