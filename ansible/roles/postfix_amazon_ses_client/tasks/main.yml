@@ -1,0 +1,53 @@
+---
+- name: remove sendmail package
+  yum:
+    name: sendmail
+    state: absent
+
+- name: ensure postfix packages are installed
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - postfix
+  - cyrus-sasl
+  - cyrus-sasl-plain
+  - cyrus-sasl-md5
+
+- name: edit postfix main.cf settings
+  lineinfile:
+    dest: /etc/postfix/main.cf
+    regexp: "{{ item.regx }}"
+    line: "{{ item.line }}"
+  with_items:
+  - regx: ^relayhost *=.*
+    line: "relayhost = [{{ pfases_amazon_ses_server }}]:25"
+  - regx: ^smtp_sasl_auth_enable *=.*
+    line: smtp_sasl_auth_enable = yes
+  - regx: ^smtp_sasl_security_options *=.*
+    line: smtp_sasl_security_options = noanonymous
+  - regx: ^smtp_sasl_password_maps *=.*
+    line: smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+  - regx: ^smtp_use_tls *=.*
+    line: smtp_use_tls = yes
+  - regx: ^smtp_tls_security_level *=.*
+    line: smtp_tls_security_level = encrypt
+  - regx: ^smtp_tls_note_starttls_offer *=.*
+    line: smtp_tls_note_starttls_offer = yes
+  - regx: ^smtp_tls_CAfile *=.*
+    line: smtp_tls_CAfile = /etc/ssl/certs/ca-bundle.trust.crt
+  notify:
+  - restart postfix
+
+- name: edit postfix sasl_passwd settings
+  lineinfile:
+    dest: /etc/postfix/sasl_passwd
+    regexp: "^.*{{ pfases_amazon_ses_server }}.*"
+    line: "[{{ pfases_amazon_ses_server }}]:25 {{ pfases_amazon_ses_username }}:{{ g_aws_ses_smtp_password }}"
+    create: yes
+    state: present
+    mode: 0600
+    owner: root
+    group: root
+  notify:
+  - hash saml_passwd

@@ -37,7 +37,7 @@
     host: localhost
     port: 25
     to: "{{ item[0].username }}@{{ gpges_email_domain }}.com"
-    from: ansible@rhcloud.com
+    from: libra-ops@redhat.com
     subject: "{{ gpges_mail_subject }}"
     body: See attached gpg encrypted file.
     attach: "{{ gpges_dir }}/{{ item[0].username }}-{{ gpges_file_name }}.gpg"
