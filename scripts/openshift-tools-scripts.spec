@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.102
+Version:       0.0.103
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -273,6 +273,9 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Wed Jun 15 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.103-1
+- fixing typo in path inside script spec file (ihorvath@redhat.com)
+
 * Wed Jun 15 2016 Unknown name 0.0.102-1
 - Adding monitoring for existing connections on etcd and master api server
   (ihorvath@redhat.com)
