@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.101
+Version:       0.0.103
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -52,6 +52,7 @@ cp -p cloud/aws/ops-ec2-trim-ebs-snapshots.py %{buildroot}/usr/bin/ops-ec2-trim-
 cp -p cloud/aws/ops-ec2-add-snapshot-tag-to-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-add-snapshot-tag-to-ebs-volumes
 cp -p monitoring/cron-send-cluster-capacity.py %{buildroot}/usr/bin/cron-send-cluster-capacity
 cp -p monitoring/cron-send-cpu-mem-process.sh %{buildroot}/usr/bin/cron-send-cpu-mem-process
+cp -p monitoring/cron-send-connection-count.py %{buildroot}/usr/bin/cron-send-connection-count
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -234,6 +235,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-registry-checks
 /usr/bin/cron-openshift-pruner
 /usr/bin/cron-send-cluster-capacity
+/usr/bin/cron-send-connection-count
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -271,6 +273,13 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Wed Jun 15 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.103-1
+- fixing typo in path inside script spec file (ihorvath@redhat.com)
+
+* Wed Jun 15 2016 Unknown name 0.0.102-1
+- Adding monitoring for existing connections on etcd and master api server
+  (ihorvath@redhat.com)
+
 * Wed Jun 08 2016 Thomas Wiest <twiest@redhat.com> 0.0.101-1
 - Added ops-ec2-add-snapshot-tag-to-ebs-volumes.py (twiest@redhat.com)
 - fix for the s3 docker registry (mwoodson@redhat.com)

@@ -56,6 +56,17 @@
   register: volumes
   run_once: true
 
+- name: Tag newly created volumes
+  delegate_to: localhost
+  ec2_tag:
+    region: "{{ osapv_region }}"
+    resource: "{{ item.volume.id }}"
+    tags:
+      snapshot: daily
+      purpose: customer persistent volume
+  when: item.changed
+  with_items: "{{ volumes.results }}"
+
 - name: Create pv file from template
   template:
     src: ebs_persistent_volume.yml.j2
