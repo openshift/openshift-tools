@@ -61,6 +61,8 @@
   ec2_tag:
     region: "{{ osapv_region }}"
     resource: "{{ item.volume.id }}"
+    aws_access_key: "{{ osapv_aws_access_key }}"
+    aws_secret_key: "{{ osapv_aws_secret_key }}"
     tags:
       snapshot: daily
       purpose: customer persistent volume
