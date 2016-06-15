@@ -3,5 +3,5 @@
 handlers:
 - name: restart openshift-dedicated-role
   service: 
-    name=openshift-dedicated-role 
-    state=restarted
+    name: openshift-dedicated-role 
+    state: restarted
