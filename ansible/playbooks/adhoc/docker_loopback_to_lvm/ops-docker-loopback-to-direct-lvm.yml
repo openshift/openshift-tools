@@ -20,6 +20,14 @@
   user: root
   connection: ssh
   gather_facts: no
+  vars_prompt:
+  - name: cli_name
+    prompt: Host to convert from loopback to direct LVM
+    private: no
+  - name: cli_docker_device
+    prompt: Docker storage volume device
+    default: /dev/xvdb
+    private: no
 
   pre_tasks:
   - fail:
@@ -27,6 +35,15 @@
     when: "{{ item }} is not defined or {{ item }} == ''"
     with_items:
     - cli_docker_device
+    - cli_name
+
+  - set_fact:
+      dss_docker_device: "{{ cli_docker_device }}"
+
+  - name: make sure docker can start
+    file:
+      path: /var/lib/docker/volumes
+      state: directory
 
   - name: start docker
     service:
@@ -46,15 +63,9 @@
       msg:  loopback not detected! Please investigate manually.
     when: loop_device_check.rc == 1
 
-  - name: stop zagg client monitoring container
+  - name: stop host monitoring container
     service:
-      name: oso-rhel7-zagg-client
-      state: stopped
-    ignore_errors: yes
-
-  - name: stop pcp client monitoring container
-    service:
-      name: oso-f22-host-monitoring
+      name: oso-rhel7-host-monitoring
       state: stopped
     ignore_errors: yes
 
@@ -74,18 +85,21 @@
     service:
       name: docker
       state: stopped
+      enabled: false
+
+  - name: make sure we can remove /var/lib/docker
+    command: chattr -i /var/lib/docker/volumes
+    ignore_errors: yes
 
   - name: delete /var/lib/docker
-    command: rm -rf /var/lib/docker
-
-  - name: remove /var/lib/docker
-    command: rm -rf /var/lib/docker
+    file:
+      state: absent
+      path: /var/lib/docker
 
   - name: copy the docker-storage-setup config file
-    copy:
-      content: >
-        DEVS={{ cli_docker_device }}
-        VG=docker_vg
+    template:
+      # TODO: fix this, this sucks. Right now we can't use that role directly :(
+      src: ../../../roles/docker_storage_setup/templates/docker-storage-setup.j2
       dest: /etc/sysconfig/docker-storage-setup
       owner: root
       group: root
@@ -97,16 +111,16 @@
 
   - debug: var=setup_output
 
-  - name: extend the vg
-    command: lvextend -l 90%VG /dev/docker_vg/docker-pool
-    register: extend_output
-
-  - debug: var=extend_output
+  - name: make sure docker can start
+    file:
+      path: /var/lib/docker/volumes
+      state: directory
 
   - name: start docker
     service:
       name: docker
       state: restarted
+      enabled: true
 
   - name: docker info
     command: docker info
