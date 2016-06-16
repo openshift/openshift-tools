@@ -57,6 +57,7 @@ RUN yum clean metadata && \
         openshift-tools-scripts-monitoring-autoheal \
         pcp-manager pcp-webapi python-pcp \
         openvswitch \
+        python-psutil \
         docker-python && \
     yum -y update && \
     yum clean all
