@@ -11,8 +11,7 @@
     mode: "0644"
     owner: root
     group: root
-    notify:
-    - restart openshift-dedicated-role
+  notify: restart openshift-dedicated-role
 
 - name: Enable and start the Dedicated Admin scripts
   service:
