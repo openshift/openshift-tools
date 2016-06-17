@@ -227,6 +227,7 @@ BuildArch:     noarch
 OpenShift Tools Openshift Product Scripts
 
 %files monitoring-openshift
+%defattr(755,root,root)
 /usr/bin/cron-send-ovs-status
 /usr/bin/cron-send-etcd-status
 /usr/bin/cron-send-os-master-metrics
