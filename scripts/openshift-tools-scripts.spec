@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.103
+Version:       0.0.104
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -274,6 +274,11 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Fri Jun 17 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.104-1
+- changing the cron entries, because they were lacking the names and adding
+  defattr to files section in one of the packages in the script spec file
+  (ihorvath@redhat.com)
+
 * Wed Jun 15 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.103-1
 - fixing typo in path inside script spec file (ihorvath@redhat.com)
 
