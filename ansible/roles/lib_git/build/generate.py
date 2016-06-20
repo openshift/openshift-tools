@@ -34,6 +34,14 @@ FILES = {'git_commit.py': ['lib/base.py',
                              'src/git_checkout.py',
                              'ansible/git_checkout.py',
                             ],
+         'git_diff.py': ['lib/base.py',
+                         'src/git_diff.py',
+                         'ansible/git_diff.py',
+                        ],
+         'git_rebase.py': ['lib/base.py',
+                           'src/git_rebase.py',
+                           'ansible/git_rebase.py',
+                          ],
         }
 
 def main():
