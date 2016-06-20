@@ -94,6 +94,22 @@ class GitCLI(object):
 
         return results
 
+    def _diff(self, diff_branch):
+        ''' Do a git diff diff_branch'''
+
+        cmd = ["diff", diff_branch]
+        results = self.git_cmd(cmd, output=True, output_type='raw')
+
+        return results
+
+    def _rebase(self, rebase_branch):
+        ''' Do a git rebase rebase_branch'''
+
+        cmd = ["rebase", rebase_branch]
+        results = self.git_cmd(cmd, output=True, output_type='raw')
+
+        return results
+
     def git_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for git '''
         cmds = ['/usr/bin/git']
