@@ -100,9 +100,14 @@ class OpenShiftPrune(object):
                                                         SERVICE_ACCOUNT)
         cmd = ['oc', 'get', 'clusterrolebindings', 'system:image-pruner',
                '-o', 'json', '--config', self.args.kube_config]
-        output = json.loads(subprocess.check_output(cmd))
 
-        if username not in output['userNames']:
+        rc = 0
+        try:
+            output = json.loads(subprocess.check_output(cmd))
+        except subprocess.CalledProcessError as e:
+            rc = e.returncode
+
+        if rc != 0 or username not in output['userNames']:
             # grant image pruning
             if self.args.debug:
                 print "Granding image pruning perms"
