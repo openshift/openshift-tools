@@ -128,6 +128,10 @@
         spec#template#spec#containers[0]#readinessProbe#httpGet#scheme: HTTPS
   register: registryout
 
+- name: Pause for race conditions
+  pause:
+    seconds: 60
+
 - debug: var=registryout
   run_once: True
 
