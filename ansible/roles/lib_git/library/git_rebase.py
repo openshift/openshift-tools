@@ -262,8 +262,8 @@ def main():
         supports_check_mode=False,
     )
     git = GitRebase(module.params['path'],
-                  module.params['branch'],
-                  module.params['rebase_branch'])
+                    module.params['branch'],
+                    module.params['rebase_branch'])
 
     state = module.params['state']
 
