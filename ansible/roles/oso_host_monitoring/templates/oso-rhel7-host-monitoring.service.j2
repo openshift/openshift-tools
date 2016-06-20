@@ -40,17 +40,6 @@ ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                
            --pid=host                                                                        \
            --net=host                                                                        \
            --ipc=host                                                                        \
-           -e ZAGG_URL={{ osohm_zagg_web_url }}                                              \
-           -e ZAGG_USER={{ osohm_default_zagg_server_user }}                                 \
-           -e ZAGG_PASSWORD={{ osohm_default_zagg_server_password }}                         \
-           -e ZAGG_CLIENT_HOSTNAME={{ oo_name }}                                        \
-           -e ZAGG_SSL_VERIFY={{ osohm_zagg_verify_ssl }}                                    \
-           -e OSO_CLUSTER_GROUP={{ oo_clusterid }}                                          \
-           -e OSO_CLUSTER_ID={{ oo_clusterid }}                                              \
-           -e OSO_ENVIRONMENT={{ oo_environment }}                                           \
-           -e OSO_HOST_TYPE={{ hostvars[inventory_hostname]['oo_hosttype'] }}          \
-           -e OSO_SUB_HOST_TYPE={{ hostvars[inventory_hostname]['oo_subhosttype'] }}  \
-           -e OSO_MASTER_HA={{ osohm_master_ha }}                                            \
            -v /etc/localtime:/etc/localtime                                                  \
            -v /sys:/sys:ro                                                                   \
            -v /var/lib/docker/volumes-ops/oso-rhel7-host-monitoring/empty_selinux:/sys/fs/selinux \
@@ -58,10 +47,6 @@ ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                
            -v /var/run/docker.sock:/var/run/docker.sock                                      \
            -v /var/run/openvswitch:/var/run/openvswitch                                      \
 {% if hostvars[inventory_hostname]['oo_hosttype'] == 'master' %}
-           -e OSO_MASTER_PRIMARY={{ oo_master_primary }}                                     \
-           -e OSO_ENABLE_CLUSTER_CAPACITY_REPORTING={{ osohm_enable_cluster_capacity_reporting }} \
-           -e OSO_SNAPSHOT_AWS_ACCESS_KEY_ID={{ osohm_snapshot_aws_access_key_id }}          \
-           -e OSO_SNAPSHOT_AWS_SECRET_ACCESS_KEY={{ osohm_snapshot_aws_secret_access_key }}  \
            -v /etc/origin/master/admin.kubeconfig:/etc/origin/master/admin.kubeconfig:ro  \
            -v /etc/origin/master/master.etcd-client.crt:/etc/origin/master/master.etcd-client.crt \
            -v /etc/origin/master/master.etcd-client.key:/etc/origin/master/master.etcd-client.key \
