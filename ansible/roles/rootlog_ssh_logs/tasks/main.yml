@@ -1,27 +1,31 @@
 ---
 # tasks file for rootlog scripts, rpm, and logrotate
 
-- name: Make sure rootlog is installed
-   yum: name=rootlog state=present
-        tags:
-                 - rootlog
+- name: make sure the rootlog rpm is installed
+    yum: 
+      name: rootlog 
+      state: present
+    tags:
+    - rootlog
 
-- copy:
-    src: 10_root_profile_d.sh
-    dest: /etc/profile.d/10_root_profile_d.sh
-    mode: "0644"
-    owner: root
-    group: root
+- name: copy 10_root_profile_d script
+    copy:
+      src: 10_root_profile_d.sh
+      dest: /etc/profile.d/10_root_profile_d.sh
+      mode: "0644"
+      owner: root
+      group: root
 
-- copy:
-    src: "{{ item }}"
-    dest: "/root/.profile.d/{{ item }}"
-    mode: "0600"
-    owner: root
-    group: root
-  with_items:
-  - history.sh
-  - session_record.sh
+- name: copy history and session scripts
+    copy:
+      src: "{{ item }}"
+      dest: "/root/.profile.d/{{ item }}"
+      mode: "0600"
+      owner: root
+      group: root
+    with_items:
+    - history.sh
+    - session_record.sh
 
 - name: setup ssh log rotate
   copy:
