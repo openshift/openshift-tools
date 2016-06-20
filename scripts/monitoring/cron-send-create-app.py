@@ -173,12 +173,15 @@ def curl(ip_addr, port):
     ''' Open an http connection to the url and read
     '''
     code = 0
+    timeout = 30 ## only wait this number of seconds for a response
     try:
-        code = urllib2.urlopen('http://%s:%s' % (ip_addr, port)).getcode()
+        code = urllib2.urlopen( \
+            'http://%s:%s' % (ip_addr, port), timeout=timeout).getcode()
     except urllib2.HTTPError, e:
         code = e.fp.getcode()
     except urllib2.URLError, e:
-        code = e.fp.getcode()
+        print "timed out in %s seconds opening http://%s:%s" % \
+            (timeout, ip_addr, port)
     return code
 
 
