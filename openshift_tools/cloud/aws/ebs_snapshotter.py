@@ -43,6 +43,7 @@
 """
 
 from openshift_tools.cloud.aws.base import Base
+from openshift_tools.cloud.aws.instance_util import InstanceUtil
 
 from datetime import datetime
 from datetime import timedelta
@@ -61,10 +62,12 @@ class EbsSnapshotter(Base):
         """ Initialize the class """
         super(EbsSnapshotter, self).__init__(region, verbose)
 
-    def create_volume_snapshot_tag(self, volume_ids, schedule, prefix="", dry_run=False):
-        """ Adds a tag to the EBS volume for snapshotting purposes """
-        self.verbose_print("Adding 'snapshot: %s' tag to %d volume(s): %s" % \
-                           (schedule, len(volume_ids), volume_ids),
+        self.instance_util = InstanceUtil(region, verbose)
+
+    def set_volume_snapshot_tag(self, volume_ids, schedule, prefix="", dry_run=False):
+        """ Sets a tag to the EBS volume for snapshotting purposes """
+        self.verbose_print("Setting tag '%s: %s' on %d volume(s): %s" % \
+                           (SNAP_TAG_KEY, schedule, len(volume_ids), volume_ids),
                            prefix=prefix)
 
         if dry_run:
@@ -95,14 +98,6 @@ class EbsSnapshotter(Base):
 
         return vols_w_sched
 
-    def get_all_instances_as_dict(self):
-        """ Returns a disctionary of all instances where the key is the instance id """
-        retval = {}
-        for inst in self.ec2.get_only_instances():
-            retval[inst.id] = inst
-
-        return retval
-
     def create_snapshots(self, schedule, script_name=None, dry_run=False):
         """ Creates a snapshot for volumes tagged with the given schedule. """
 
@@ -117,7 +112,7 @@ class EbsSnapshotter(Base):
             description += " by %s" % script_name
 
         volumes = self.get_volumes_with_schedule(schedule)
-        all_instances = self.get_all_instances_as_dict()
+        all_instances = self.instance_util.get_all_instances_as_dict()
 
         self.verbose_print("Creating %s snapshot for:" % schedule, prefix="  ")
 
