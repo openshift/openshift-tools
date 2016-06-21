@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.69
+Version:       0.0.70
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -258,6 +258,10 @@ Adds Aws specific python modules
 
 
 %changelog
+* Tue Jun 21 2016 Thomas Wiest <twiest@redhat.com> 0.0.70-1
+- Added Name and purpose tagging to ops-ec2-add-snapshot-tag-to-ebs-volumes.py
+  (twiest@redhat.com)
+
 * Mon Jun 13 2016 Thomas Wiest <twiest@redhat.com> 0.0.69-1
 - Made the snapshot and trim operations more error resistant.
   (twiest@redhat.com)
