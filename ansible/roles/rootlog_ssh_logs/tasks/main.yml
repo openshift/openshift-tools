@@ -2,9 +2,10 @@
 # tasks file for rootlog scripts, rpm, and logrotate
 
 - name: make sure the rootlog rpm is installed
-    yum: 
+    action: "{{ ansible_pkg_mgr }}"
       name: rootlog 
-      state: present
+      state: latest
+    register: install_result
     tags:
     - rootlog
 
@@ -46,7 +47,7 @@
 - name: setup session log rotate
   copy:
     content: |
-      /var/log/config_loop.log {
+      /var/log/rootlog/sessions/logrotate_fakelog {
           firstaction
               # compress week-old session files
               find /var/log/rootlog/sessions -maxdepth 1 -regextype posix-egrep -regex ".*/[0-9.-]{20}[a-zA-Z0-9_]*-[0-9]*(\.timing)?\$" -mtime +7 -exec gzip {} \;
@@ -66,7 +67,7 @@
           rotate 0
           ifempty
       }
-    dest: /etc/logrotate.d/config_loop
+    dest: /etc/logrotate.d/rootlog_ssh_sessions
     mode: "0644"
     owner: root
     group: root

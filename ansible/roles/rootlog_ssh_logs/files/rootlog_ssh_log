@@ -1,8 +1,0 @@
-/var/log/rootlog/ssh.log {
-    copytruncate
-    maxage 365
-    size 30M
-    missingok
-    notifempty
-    compress
-}
