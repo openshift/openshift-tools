@@ -1,0 +1,20 @@
+---
+- name: Install the OpenShift Dedicated Admin scripts
+  yum:
+    name: openshift-scripts-dedicated
+    state: present
+
+- name: Setup the OpenShift Dedicated Admin service config file
+  template:
+    src: openshift-dedicated-role.j2
+    dest: /etc/sysconfig/openshift-dedicated-role
+    mode: "0644"
+    owner: root
+    group: root
+  notify: restart openshift-dedicated-role
+
+- name: Enable and start the Dedicated Admin scripts
+  service:
+    name: openshift-dedicated-role
+    state: started
+    enabled: true

@@ -22,23 +22,12 @@ TimeoutStartSec=5m
 
 ExecStartPre=-/usr/bin/docker rm "oso-{{ base_os }}-host-monitoring"
 
-#ExecStart=/usr/bin/docker run --rm --name host-monitoring                                    \
-#           --privileged --ipc=host --net=host --pid=host                                 \
-#           -e HOST=/host -e NAME=host-monitoring -e IMAGE=host-monitoring                        \
-#           -e ZAGG_SERVER=oso-rhel7-zagg-web.kwoodsontest2.opstest.online.openshift.com  \
-#           -e ZAGG_PASSWORD=r3dh@t                                                       \
-#           -v /var/log:/var/log -v /etc/localtime:/etc/localtime -v /:/host              \
-#           -v /run/pcp:/run/pcp                                                          \
-#           docker-registry.ops.rhcloud.com/ops/host-monitoring
-
 ExecStart=/usr/bin/docker run --name oso-{{ base_os }}-host-monitoring  \
            --net=host                                       \
            --pid=host                                       \
            --ipc=host                                       \
            -e NAME=oso-{{ base_os }}-host-monitoring        \
            -e IMAGE=oso-{{ base_os }}-host-monitoring       \
-           -e ZAGG_SERVER=REPLACE_WITH_ZAGG_URL             \
-           -e ZAGG_PASSWORD=REPLACE_WITH_ZAGG_PASSWORD      \
            -v /etc/localtime:/etc/localtime                 \
            -v /sys:/sys:ro                                  \
            -v /var/lib/docker:/var/lib/docker:ro            \

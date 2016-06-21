@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Max Whittingham
+  description: This role deploys the OpenShift Dedicated Admin Role
+  company: Red Hat
+  license: Apache
+  min_ansible_version: 1.9
+  platforms:
+  - name: EL
+    verisons:
+    - 7
+  categories:
+  - cloud
+  dependencies: []

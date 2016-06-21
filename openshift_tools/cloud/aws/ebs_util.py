@@ -22,6 +22,7 @@
 import re
 from collections import namedtuple
 from openshift_tools.cloud.aws.base import Base
+from openshift_tools.cloud.aws.instance_util import InstanceUtil
 
 OpenShiftVolumeIdTypes = namedtuple('OpenShiftVolumeIdTypes',
                                     ['master_root',
@@ -33,12 +34,17 @@ OpenShiftVolumeIdTypes = namedtuple('OpenShiftVolumeIdTypes',
                                     ])
 
 
+PURPOSE_TAG_KEY = 'purpose'
+NAME_TAG_KEY = 'Name'
+
 class EbsUtil(Base):
     """ Useful utility methods for EBS """
 
     def __init__(self, region, verbose=False):
         """ Initialize the class """
         super(EbsUtil, self).__init__(region, verbose)
+
+        self.instance_util = InstanceUtil(region, verbose)
 
     def get_instance_volume_ids(self, skip_volume_ids=None):
         """ Returns the volume IDs attached to different instance types. """
@@ -155,4 +161,51 @@ class EbsUtil(Base):
                                       manually_provisioned_pv=mpids,
                                       unidentified=uids
                                      )
+
+    def set_volume_purpose_tag(self, volume_ids, purpose, prefix="", dry_run=False):
+        """ Adds a tag to the EBS volume describing the purpose of this volume """
+        self.verbose_print("Setting tag '%s: %s' on %d volume(s): %s" % \
+                           (PURPOSE_TAG_KEY, purpose, len(volume_ids), volume_ids),
+                           prefix=prefix)
+
+        if dry_run:
+            self.print_dry_run_msg(prefix=prefix + "  ")
+        else:
+            self.ec2.create_tags(list(volume_ids), {PURPOSE_TAG_KEY: purpose})
+
+    def set_volume_name_tag(self, volume_ids, prefix="", dry_run=False):
+        """ Adds a tag to the EBS volume of the name of the host it belongs to """
+
+        all_instances = self.instance_util.get_all_instances_as_dict()
+        all_vols = self.ec2.get_all_volumes()
+
+        for volume_id in volume_ids:
+            volumes = [vol for vol in all_vols if vol.id == volume_id]
+
+            if not volumes or len(volumes) != 1:
+                # no need to keep going if we can't fine the volume for the volume id.
+                continue
+
+            volume = volumes[0]
+
+            if not volume.attach_data or not volume.attach_data.instance_id:
+                # no need to keep going if the volume isn't attached to a host.
+                continue
+
+            inst_id = volume.attach_data.instance_id
+
+            inst_name = all_instances[inst_id].tags.get('Name')
+
+            if not inst_name:
+                # no need to keep going if we weren't able to get a name from the instance.
+                continue
+
+            self.verbose_print("Setting tag '%s: %s' on %d volume(s): %s" % \
+                               (NAME_TAG_KEY, inst_name, 1, volume_id),
+                               prefix=prefix)
+
+            if dry_run:
+                self.print_dry_run_msg(prefix=prefix + "  ")
+            else:
+                self.ec2.create_tags([volume_id], {NAME_TAG_KEY: inst_name})
 

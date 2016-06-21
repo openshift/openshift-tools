@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.103
+Version:       0.0.106
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -227,6 +227,7 @@ BuildArch:     noarch
 OpenShift Tools Openshift Product Scripts
 
 %files monitoring-openshift
+%defattr(755,root,root)
 /usr/bin/cron-send-ovs-status
 /usr/bin/cron-send-etcd-status
 /usr/bin/cron-send-os-master-metrics
@@ -273,6 +274,18 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Mon Jun 20 2016 Joel Diaz <jdiaz@redhat.com> 0.0.106-1
+- fixed handling urlerror, added timeout (sten@redhat.com)
+
+* Mon Jun 20 2016 Joel Diaz <jdiaz@redhat.com> 0.0.105-1
+- handle case when no clusterrolebinding is defined (return code non-zero)
+  (jdiaz@redhat.com)
+
+* Fri Jun 17 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.104-1
+- changing the cron entries, because they were lacking the names and adding
+  defattr to files section in one of the packages in the script spec file
+  (ihorvath@redhat.com)
+
 * Wed Jun 15 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.103-1
 - fixing typo in path inside script spec file (ihorvath@redhat.com)
 
