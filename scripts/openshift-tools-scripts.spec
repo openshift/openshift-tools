@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.107
+Version:       0.0.108
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -274,6 +274,10 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Wed Jun 22 2016 Joel Diaz <jdiaz@redhat.com> 0.0.108-1
+- catch ocassional exception on container cleanup (and retry)
+  (jdiaz@redhat.com)
+
 * Tue Jun 21 2016 Thomas Wiest <twiest@redhat.com> 0.0.107-1
 - Added Name and purpose tagging to ops-ec2-add-snapshot-tag-to-ebs-volumes.py
   (twiest@redhat.com)
