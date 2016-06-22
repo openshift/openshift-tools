@@ -10,7 +10,11 @@
 # pylint: disable=invalid-name
 
 
+import time
 from docker import AutoVersionClient
+from docker.errors import APIError
+# Jenkins doesn't have our tools which results in import errors
+# pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 
 ZBX_KEY = "docker.container.dns.resolution"
@@ -21,7 +25,14 @@ if __name__ == "__main__":
                                      command='getent hosts redhat.com')
     cli.start(container=container.get('Id'))
     exit_code = cli.wait(container)
-    cli.remove_container(container.get('Id'))
+
+    for i in range(0, 3):
+        try:
+            cli.remove_container(container.get('Id'))
+            break
+        except APIError:
+            print "Error while cleaning up container."
+            time.sleep(5)
 
     zs = ZaggSender()
     zs.add_zabbix_keys({ZBX_KEY: exit_code})
