@@ -292,11 +292,17 @@ g_template_os_linux:
     url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_proc.asciidoc'
     priority: warn
 
-  - name: 'Lack of available memory on {HOST.NAME}'
-    expression: '{Template OS Linux:mem.freemem.last()}<30720000'
+  - name: 'Critical lack of available memory on {HOST.NAME}'
+    expression: '{Template OS Linux:mem.util.available.last()}<314572800'
     url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_memory.asciidoc'
-    priority: warn
-    description: 'Alert on less than 30MegaBytes.  This is 30 Million Bytes.  30000 KB x 1024'
+    priority: high
+
+  - name: 'Lack of available memory on {HOST.NAME}'
+    expression: '{Template OS Linux:mem.util.available.last()}<524288000'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_memory.asciidoc'
+    priority: avg
+    dependencies:
+    - 'Critical lack of available memory on {HOST.NAME}'
 
     #  CPU Utilization #
   - name: 'CPU idle less than 5% on {HOST.NAME}'
