@@ -1,0 +1,30 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: localhost
+  gather_facts: no
+  user: kwoodson
+
+  tasks:
+  # should support list/absent/present
+  - name: deployment list
+    gcloud_dm_deployments:
+      state: list
+    register: deploylist
+
+  - debug: var=deploylist
+
+  - name: deployment delete
+    gcloud_dm_deployments:
+      state: absent
+      name: optestgcp
+    register: deployout
+
+  - debug: var=deployout
+
+  - name: create
+    gcloud_dm_deployments:
+      name: optestgcp
+      config: /home/kwoodson/opstestgce/new_test.yaml
+    register: dmcreate
+
+  - debug: var=dmcreate
