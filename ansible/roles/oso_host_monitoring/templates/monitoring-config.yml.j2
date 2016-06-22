@@ -82,8 +82,8 @@ host_monitoring_cron:
 
 - name: Do a full heartbeat
   minute: "10"
-  hour: "*"
-  job: ops-runner -f -s 15 -s 3600 -n ozc.send.heartbeat.full /usr/bin/ops-zagg-client --send-heartbeat
+  hour: "*/4"
+  job: ops-runner -f -s 300 -n ozc.send.heartbeat.full /usr/bin/ops-zagg-client --send-heartbeat
 
 - name: Do a quick heartbeat
   minute: "*/5"
