@@ -36,6 +36,22 @@
     - history.sh
     - session_record.sh
 
+- name: create rootlog directory
+  file:
+    path: "/var/log/rootlog"
+    state: directory
+    mode: "0700"
+    owner: root
+    group: root
+
+- name: create rootlog sessions directory
+  file:
+    path: "/var/log/rootlog/sessions"
+    state: directory
+    mode: "0700"
+    owner: root
+    group: root
+
 - name: setup ssh log rotate
   copy:
     content: |
