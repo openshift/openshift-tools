@@ -56,5 +56,5 @@
       zbx_password: "{{ g_password }}"
       name: "{{ item }}"
       state: absent
-    with_items: "{{ templates.results | difference(templ_zabbix_agent.results) | difference(templ_zabbix_server.results) | oo_collect('host') }}"
+    with_items: "{{ templates.results | difference(templ_zabbix_agent.results) | difference(templ_zabbix_server.results) | ops_collect('host') }}"
     when:  templ_heartbeat.results | length == 0

@@ -5,8 +5,6 @@
 Custom zabbix filters for use in openshift-ansible
 '''
 
-import pdb
-
 class FilterModule(object):
     ''' Custom zabbix ansible filters '''
 
@@ -19,7 +17,7 @@ class FilterModule(object):
         return data
 
     @staticmethod
-    def oo_set_zbx_trigger_triggerid(item, trigger_results):
+    def ops_set_zbx_trigger_triggerid(item, trigger_results):
         '''Set zabbix trigger id from trigger results
         '''
         if isinstance(trigger_results, list):
@@ -30,7 +28,7 @@ class FilterModule(object):
         return item
 
     @staticmethod
-    def oo_set_zbx_item_hostid(item, template_results):
+    def ops_set_zbx_item_hostid(item, template_results):
         ''' Set zabbix host id from template results
         '''
         if isinstance(template_results, list):
@@ -39,15 +37,6 @@ class FilterModule(object):
 
         item['hostid'] = template_results['templateids'][0]
         return item
-
-    @staticmethod
-    def oo_pdb(arg):
-        ''' This pops you into a pdb instance where arg is the data passed in
-            from the filter.
-            Ex: "{{ hostvars | oo_pdb }}"
-        '''
-        pdb.set_trace()
-        return arg
 
     @staticmethod
     def select_by_name(ans_data, data):
@@ -60,7 +49,7 @@ class FilterModule(object):
         return None
 
     @staticmethod
-    def oo_build_zabbix_collect(data, string, value):
+    def ops_build_zabbix_collect(data, string, value):
         ''' Build a list of dicts from a list of data matched on string attribute
         '''
         rval = []
@@ -71,7 +60,7 @@ class FilterModule(object):
         return rval
 
     @staticmethod
-    def oo_build_zabbix_list_dict(values, string):
+    def ops_build_zabbix_list_dict(values, string):
         ''' Build a list of dicts with string as key for each value
         '''
         rval = []
@@ -80,7 +69,7 @@ class FilterModule(object):
         return rval
 
     @staticmethod
-    def oo_remove_attr_from_list_dict(data, attr):
+    def ops_remove_attr_from_list_dict(data, attr):
         ''' Remove a specific attribute from a dict
         '''
         attrs = []
@@ -147,12 +136,12 @@ class FilterModule(object):
         ''' returns a mapping of filters to methods '''
         return {
             "select_by_name": self.select_by_name,
-            "oo_set_zbx_item_hostid": self.oo_set_zbx_item_hostid,
-            "oo_set_zbx_trigger_triggerid": self.oo_set_zbx_trigger_triggerid,
-            "oo_build_zabbix_list_dict": self.oo_build_zabbix_list_dict,
+            "ops_set_zbx_item_hostid": self.ops_set_zbx_item_hostid,
+            "ops_set_zbx_trigger_triggerid": self.ops_set_zbx_trigger_triggerid,
+            "ops_build_zabbix_list_dict": self.ops_build_zabbix_list_dict,
             "create_data": self.create_data,
-            "oo_build_zabbix_collect": self.oo_build_zabbix_collect,
-            "oo_remove_attr_from_list_dict": self.oo_remove_attr_from_list_dict,
+            "ops_build_zabbix_collect": self.ops_build_zabbix_collect,
+            "ops_remove_attr_from_list_dict": self.ops_remove_attr_from_list_dict,
             "itservice_results_builder": self.itservice_results_builder,
             "itservice_dependency_builder": self.itservice_dependency_builder,
             "itservice_dep_builder_list": self.itservice_dep_builder_list,
