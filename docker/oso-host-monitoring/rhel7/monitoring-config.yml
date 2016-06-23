@@ -46,8 +46,11 @@ zagg_client_config:
     - Template Heartbeat        # So we can send heartbeats
     - Template OS Linux         # So we can send host related metrics
     - Template Docker           # So we can send docker related metrics
+    - Template Openshift Node   # So we can send node related metrics
     - Template Operations Tools # So ops-runner works
     - Template Performance Copilot # So we can report PCP metrics
+    - Template Openshift Master # So we can send master related metrics
+    - Template AWS
     hostgroups:
     - undefcid
     - undefenv
