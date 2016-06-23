@@ -214,7 +214,11 @@ class OpenshiftClusterCapacity(object):
         for row in self.sql_conn.execute('''SELECT nodes.name, nodes.max_memory
                                             FROM nodes
                                             WHERE nodes.type="compute"'''):
-            nodes[row[0]] = {'max_memory': row[1]}
+            nodes[row[0]] = {'max_memory': row[1],
+                             # set memory_allocated to '0' because node may have
+                             # no pods running, and next SQL query below will
+                             # leave this field unpopulated
+                             'memory_allocated': 0}
 
         # get memory allocated/granted for each compute node
         for row in self.sql_conn.execute('''SELECT nodes.name,

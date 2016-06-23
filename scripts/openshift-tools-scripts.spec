@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.107
+Version:       0.0.110
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -193,7 +193,6 @@ OpenShift Tools Zagg Server Monitoring Scripts
 /usr/bin/ops-zagg-metric-processor
 /usr/bin/ops-zagg-heartbeat-processor
 /usr/bin/ops-zagg-heartbeater
-/usr/bin/cron-send-cpu-mem-process
 /var/run/zagg/data
 %config(noreplace)/etc/openshift_tools/zagg_server.yaml
 
@@ -237,6 +236,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-openshift-pruner
 /usr/bin/cron-send-cluster-capacity
 /usr/bin/cron-send-connection-count
+/usr/bin/cron-send-cpu-mem-process
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -274,6 +274,17 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Thu Jun 23 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.110-1
+- deal will nodes with no running pods (jdiaz@redhat.com)
+- move the script to right rpm (zhizhang@zhizhang-laptop-nay.redhat.com)
+
+* Thu Jun 23 2016 zhiming
+- 
+
+* Wed Jun 22 2016 Joel Diaz <jdiaz@redhat.com> 0.0.108-1
+- catch ocassional exception on container cleanup (and retry)
+  (jdiaz@redhat.com)
+
 * Tue Jun 21 2016 Thomas Wiest <twiest@redhat.com> 0.0.107-1
 - Added Name and purpose tagging to ops-ec2-add-snapshot-tag-to-ebs-volumes.py
   (twiest@redhat.com)

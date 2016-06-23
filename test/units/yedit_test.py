@@ -234,6 +234,26 @@ class YeditTest(unittest.TestCase):
         yed.get('')
         self.assertTrue([{'a': 1}, {'b': 2}, {'b': 3}] == yed.yaml_dict)
 
+    def test_pop_list_item(self):
+        '''test dict value with none value'''
+        yed = Yedit(content=[{'a': 1}, {'b': 2}, {'b': 3}])
+        yed.pop('', {'b': 2})
+        self.assertTrue([{'a': 1}, {'b': 3}] == yed.yaml_dict)
+
+    def test_pop_list_item_2(self):
+        '''test dict value with none value'''
+        z = range(10)
+        yed = Yedit(content=z)
+        yed.pop('', 5)
+        z.pop(5)
+        self.assertTrue(z == yed.yaml_dict)
+
+    def test_pop_dict_key(self):
+        '''test dict value with none value'''
+        yed = Yedit(content={'a': {'b': {'c': 1, 'd': 2}}})
+        yed.pop('a#b', 'c')
+        self.assertTrue({'a': {'b': {'d': 2}}} == yed.yaml_dict)
+
     def tearDown(self):
         '''TearDown method'''
         os.unlink(YeditTest.filename)
