@@ -184,6 +184,7 @@ def main():
             units=dict(default=None, type='str'),
             applications=dict(default=None, type='list'),
             state=dict(default='present', type='str'),
+            params=dict(default=None, type='str'),
         ),
         #supports_check_mode=True
     )
@@ -246,6 +247,7 @@ def main():
                   'units': module.params['units'],
                   'delay': module.params['interval'],
                   'delta': module.params['delta'],
+                  'params': module.params['params'],
                  }
 
         # Remove any None valued params

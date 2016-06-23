@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.11
+Version:        0.0.12
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,11 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Jun 23 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.12-1
+- Adding filter plugins from openshift-ansible and moved to ops
+  (kwoodson@redhat.com)
+- Adding params for calculated items (kwoodson@redhat.com)
+
 * Thu Jun 23 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.11-1
 - Setting up filter plugins for ops (kwoodson@redhat.com)
 - Install python-gcloud. (kwoodson@redhat.com)

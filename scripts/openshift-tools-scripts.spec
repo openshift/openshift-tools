@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.110
+Version:       0.0.111
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -274,6 +274,9 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Thu Jun 23 2016 Joel Diaz <jdiaz@redhat.com> 0.0.111-1
+- gracefully handle nodes with no 'type' label (jdiaz@redhat.com)
+
 * Thu Jun 23 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.110-1
 - deal will nodes with no running pods (jdiaz@redhat.com)
 - move the script to right rpm (zhizhang@zhizhang-laptop-nay.redhat.com)

@@ -9,8 +9,8 @@
 
 
 - set_fact:
-    lzbx_item_applications: "{{ template.zitems | default([], True) | oo_select_keys_from_list(['applications']) | oo_flatten | unique }}"
-    lzbx_itemprototype_applications: "{{ template.zitemprototypes | default([], True) | oo_select_keys_from_list(['applications']) | oo_flatten | unique }}"
+    lzbx_item_applications: "{{ template.zitems | default([], True) | ops_select_keys_from_list(['applications']) | ops_flatten | unique }}"
+    lzbx_itemprototype_applications: "{{ template.zitemprototypes | default([], True) | ops_select_keys_from_list(['applications']) | ops_flatten | unique }}"
 
 - name: Create Application
   zbx_application:
@@ -42,6 +42,7 @@
     zabbix_type: "{{ item.zabbix_type | default('trapper') }}"
     interval: "{{ item.interval | default(60, True) }}"
     delta: "{{ item.delta | default(0, True) }}"
+    params: "{{ item.params | default(omit, True) }}"
   with_items: template.zitems
   register: created_items
   when: template.zitems is defined
