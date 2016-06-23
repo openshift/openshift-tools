@@ -57,7 +57,14 @@ def main():
         module.exit_json(changed=False, results=rval, state="list")
 
     elif state == 'absent':
-        rval = yamlfile.delete(module.params['key'])
+        if module.params['update']:
+            rval = yamlfile.pop(module.params['key'], module.params['value'])
+        else:
+            rval = yamlfile.delete(module.params['key'])
+
+        if rval[0]:
+            yamlfile.write()
+
         module.exit_json(changed=rval[0], results=rval[1], state="absent")
 
     elif state == 'present' and module.params['value']:

@@ -225,6 +225,37 @@ class Yedit(object):
 
         return entry
 
+    def pop(self, path, key_or_item):
+        ''' remove a key, value pair from a dict or an item for a list'''
+        try:
+            entry = Yedit.get_entry(self.yaml_dict, path)
+        except KeyError as _:
+            entry = None
+
+        if entry == None:
+            return  (False, self.yaml_dict)
+
+        if isinstance(entry, dict):
+            # pylint: disable=no-member,maybe-no-member
+            if entry.has_key(key_or_item):
+                entry.pop(key_or_item)
+                return (True, self.yaml_dict)
+            return (False, self.yaml_dict)
+
+        elif isinstance(entry, list):
+            # pylint: disable=no-member,maybe-no-member
+            ind = None
+            try:
+                ind = entry.index(key_or_item)
+            except ValueError:
+                return (False, self.yaml_dict)
+
+            entry.pop(ind)
+            return (True, self.yaml_dict)
+
+        return (False, self.yaml_dict)
+
+
     def delete(self, path):
         ''' remove path from a dict'''
         try:
@@ -410,7 +441,14 @@ def main():
         module.exit_json(changed=False, results=rval, state="list")
 
     elif state == 'absent':
-        rval = yamlfile.delete(module.params['key'])
+        if module.params['update']:
+            rval = yamlfile.pop(module.params['key'], module.params['value'])
+        else:
+            rval = yamlfile.delete(module.params['key'])
+
+        if rval[0]:
+            yamlfile.write()
+
         module.exit_json(changed=rval[0], results=rval[1], state="absent")
 
     elif state == 'present' and module.params['value']:
