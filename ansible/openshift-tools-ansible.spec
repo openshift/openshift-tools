@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.10
+Version:        0.0.11
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,58 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Jun 23 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.11-1
+- Setting up filter plugins for ops (kwoodson@redhat.com)
+- Install python-gcloud. (kwoodson@redhat.com)
+- adding pop functionality (kwoodson@redhat.com)
+- Changed the thresholds of the established connections as well as critically
+  low memory triggers. (twiest@redhat.com)
+- Adding instance_states to gce.py (kwoodson@redhat.com)
+- random sleep for 5 minutes and run every 4 hours (jdiaz@redhat.com)
+- only need to pass one sleep flag (and not 3600 seconds) (jdiaz@redhat.com)
+- Adding a 60 sec wait for possible race condition when restarts of services
+  occur (kwoodson@redhat.com)
+- fixed pylint errors: (mwoodson@redhat.com)
+- removed git status (mwoodson@redhat.com)
+- added new git modules (mwoodson@redhat.com)
+- changing the cron entries, because they were lacking the names and adding
+  defattr to files section in one of the packages in the script spec file
+  (ihorvath@redhat.com)
+- Fixing spacing (mwhittingham@redhat.com)
+- Fixing how far it's indented (mwhittingham@redhat.com)
+- Fixing handlers name section (mwhittingham@redhat.com)
+- Actually fixing yaml syntax (mwhittingham@redhat.com)
+- Fixed bug where ec2_tag would run for each master. (twiest@redhat.com)
+- Fixed bug where I wasn't passing creds to ec2_tag. (twiest@redhat.com)
+- Fixing yaml syntax (mwhittingham@redhat.com)
+- Updated ops-docker-loopback-to-direct-lvm.yml to work with our current setup.
+  (twiest@redhat.com)
+- removed dump extra .com (mwoodson@redhat.com)
+- added the postfix_amazon ses client role; updated from address on gpg send
+  role (mwoodson@redhat.com)
+- Added volume tags to openshift_aws_persistent_volumes (twiest@redhat.com)
+- use nodejs-ex instead of nodejs-example for STI test (sten@redhat.com)
+- Adding monitoring for existing connections on etcd and master api server
+  (ihorvath@redhat.com)
+- twiest asked me to change the wording on zagg queue triggers
+  (ihorvath@redhat.com)
+- Updating to latest gce.py (kwoodson@redhat.com)
+- Changed base OS level checks to run every minute so that Jeremy Eder's team
+  can use our zabbix data. (twiest@redhat.com)
+- Added purpose tag to EBS PV creator. (twiest@redhat.com)
+- stop passing in environment variable to host-monitoring container only one
+  script uses one of these environment variables (scripts/monitoring/cron-send-
+  create-app.py), and the cron job for it is written in a way where the needed
+  environment variable is explicitely passed in before launching it
+  (jdiaz@redhat.com)
+- Removing handlers section from the task section (mwhittingham@redhat.com)
+- Fixing spacing for handlers section (mwhittingham@redhat.com)
+- Fixing notify handler (mwhittingham@redhat.com)
+- Fixing README spacing (mwhittingham@redhat.com)
+- Adding notify to template task for service restarts during config changes
+  (mwhittingham@redhat.com)
+- Creating openshift_dedicated_admin role (mwhittingham@redhat.com)
+
 * Mon Jun 13 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.10-1
 - Fixing a bug if get_entry does not contain a key. (kwoodson@redhat.com)
 - Made the snapshot and trim operations more error resistant.
