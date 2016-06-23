@@ -42,6 +42,7 @@
     zabbix_type: "{{ item.zabbix_type | default('trapper') }}"
     interval: "{{ item.interval | default(60, True) }}"
     delta: "{{ item.delta | default(0, True) }}"
+    params: "{{ item.params | default(omit, True) }}"
   with_items: template.zitems
   register: created_items
   when: template.zitems is defined
