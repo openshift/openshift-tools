@@ -321,6 +321,53 @@ g_template_openshift_master:
     applications:
     - Openshift Master Metrics
 
+  - key: openshift.master.mem.used_per_user
+    description: "The master's memory used on a per user basis to support the cluster."
+    value_type: int
+    units: B
+    zabbix_type: calculated
+    interval: 3600
+    params: '( max("mem.physmem", 86400) - max("mem.util.available", 86400) ) /  last("openshift.master.user.count")'
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.mem.users_available
+    description: "The number of users that can be added before the master will run out of memory."
+    value_type: int
+    zabbix_type: calculated
+    interval: 3600
+    params: '( 0.70 * last("mem.util.available") ) / last("openshift.master.mem.used_per_user")'
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.cpu.used_per_user
+    description: "The master's cpu used on a per user basis to support the cluster."
+    value_type: float
+    units: "%"
+    zabbix_type: calculated
+    interval: 3600
+    params: '( 100 - last("kernel.all.cpu.idle") ) / last("openshift.master.user.count")'
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.cpu.users_available
+    description: "The number of users that can be added before the master will run out of cpu."
+    value_type: int
+    zabbix_type: calculated
+    interval: 3600
+    params: 'avg("kernel.all.cpu.idle", 86400) / last("openshift.master.cpu.used_per_user")'
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.avg_running_pods_per_user
+    description: "The average number of pods each user is running."
+    value_type: float
+    zabbix_type: calculated
+    interval: 3600
+    params: 'last("openshift.master.user.count") / last("openshift.master.pod.user.running.count")'
+    applications:
+    - Openshift Master
+
   zdiscoveryrules:
   - name: disc.pv
     key: disc.pv
