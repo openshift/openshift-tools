@@ -94,7 +94,7 @@ class OpenshiftClusterCapacity(object):
 
             node = {}
             node['name'] = new_node['metadata']['name']
-            node['type'] = new_node['metadata']['labels']['type']
+            node['type'] = new_node['metadata']['labels'].get('type', 'unknown')
             node['api'] = new_node['metadata']['selfLink']
 
             if 'allocatable' in new_node['status']:
