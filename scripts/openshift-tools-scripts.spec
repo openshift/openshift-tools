@@ -193,7 +193,6 @@ OpenShift Tools Zagg Server Monitoring Scripts
 /usr/bin/ops-zagg-metric-processor
 /usr/bin/ops-zagg-heartbeat-processor
 /usr/bin/ops-zagg-heartbeater
-/usr/bin/cron-send-cpu-mem-process
 /var/run/zagg/data
 %config(noreplace)/etc/openshift_tools/zagg_server.yaml
 
@@ -237,6 +236,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-openshift-pruner
 /usr/bin/cron-send-cluster-capacity
 /usr/bin/cron-send-connection-count
+/usr/bin/cron-send-cpu-mem-process
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
