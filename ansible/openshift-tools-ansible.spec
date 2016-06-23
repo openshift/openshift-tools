@@ -36,10 +36,15 @@ cp -p inventory/multi_inventory.yaml.example %{buildroot}/etc/ansible/multi_inve
 cp -p inventory/aws/hosts/ec2.py %{buildroot}%{_datadir}/ansible/inventory/aws
 cp -p inventory/gce/hosts/gce.py %{buildroot}%{_datadir}/ansible/inventory/gce
 
+# openshift-tools-ansible-filter-plugins install
+mkdir -p %{buildroot}%{_datadir}/ansible_plugins/filter_plugins
+cp -p filter_plugins/ops_filters.py %{buildroot}%{_datadir}/ansible_plugins/filter_plugins/ops_filters.py
+cp -p filter_plugins/ops_zabbix_filters.py %{buildroot}%{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py
+
 # ----------------------------------------------------------------------------------
 # openshift-tools-ansible-inventory subpackage
 # ----------------------------------------------------------------------------------
-%package inventory 
+%package inventory
 Summary:       Openshift Tools Ansible Inventories
 BuildArch:     noarch
 
@@ -89,6 +94,21 @@ Python library for interacting with Zabbix with Ansible.
 
 %files zabbix
 %{_datadir}/ansible/zabbix
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-ansible-filter-plugins subpackage
+# ----------------------------------------------------------------------------------
+%package filter-plugins
+Summary:       Openshift Tools Ansible Filter Plugins
+BuildArch:     noarch
+
+%description filter-plugins
+Ansible filter plugins used with the openshift-tools
+
+%files filter-plugins
+%dir %{_datadir}/ansible_plugins/filter_plugins
+%{_datadir}/ansible_plugins/filter_plugins/ops_filters.py*
+%{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
 * Mon Jun 13 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.10-1
