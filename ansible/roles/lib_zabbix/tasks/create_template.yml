@@ -9,8 +9,8 @@
 
 
 - set_fact:
-    lzbx_item_applications: "{{ template.zitems | default([], True) | oo_select_keys_from_list(['applications']) | oo_flatten | unique }}"
-    lzbx_itemprototype_applications: "{{ template.zitemprototypes | default([], True) | oo_select_keys_from_list(['applications']) | oo_flatten | unique }}"
+    lzbx_item_applications: "{{ template.zitems | default([], True) | ops_select_keys_from_list(['applications']) | ops_flatten | unique }}"
+    lzbx_itemprototype_applications: "{{ template.zitemprototypes | default([], True) | ops_select_keys_from_list(['applications']) | ops_flatten | unique }}"
 
 - name: Create Application
   zbx_application:
