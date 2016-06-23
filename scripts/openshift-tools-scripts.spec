@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.108
+Version:       0.0.109
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -274,6 +274,9 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Thu Jun 23 2016 zhiming
+- 
+
 * Wed Jun 22 2016 Joel Diaz <jdiaz@redhat.com> 0.0.108-1
 - catch ocassional exception on container cleanup (and retry)
   (jdiaz@redhat.com)
