@@ -14,7 +14,7 @@ echo "the mem usage of openshift.node process is $MemUsagenode%"
 ops-zagg-client -k "openshift.nodeprocess.cpu" -o "$CpuUsagenode"
 ops-zagg-client -k "openshift.nodeprocess.mem" -o "$MemUsagenode"
 
-#the cpu use of master api process
+#the cpu use of master api process usage
 
 
 processidofmaster=`ps -ef |grep '/usr/bin/openshift start master api --config=/etc/origin/master/master-config.yaml'|grep -v "grep" |awk '{print $2}'`
