@@ -382,30 +382,30 @@ class OpenshiftMasterZaggClient(object):
             {'openshift.master.nodesnotschedulable.count' : len(nodes_not_schedulable)})
 
 
-def nodes_not_labeled(self):
-    """ check the nodes in the cluster that are not labeled
-        Note: This check only searches for nodes with no label keys set"""
+    def nodes_not_labeled(self):
+        """ check the nodes in the cluster that are not labeled
+            Note: This check only searches for nodes with no label keys set"""
 
-    print "\nPerforming nodes not labeled check..."
+        print "\nPerforming nodes not labeled check..."
 
-    response = self.ora.get('/api/v1/nodes')
+        response = self.ora.get('/api/v1/nodes')
 
-    nodes_not_labeled = []
-    nodes_labeled = []
-    error_found = 1
-
-    for n in response['items']:
-        for o in n['metadata']:
-            if 'label' in o:
-                error_found = 0
-        if error_found == 0:
-            nodes_labeled.append(n['metadata']['name'])
-        else:
-            nodes_not_labeled.append(n['metadata']['name'])
+        nodes_not_labeled = []
+        nodes_labeled = []
         error_found = 1
 
-    print "Nodes not labeled: %s\nNodes labeled: %s \n" % (nodes_not_labeled,nodes_labeled)
-    self.zagg_sender.add_zabbix_keys(
+        for n in response['items']:
+            for o in n['metadata']:
+                if 'label' in o:
+                    error_found = 0
+            if error_found == 0:
+                nodes_labeled.append(n['metadata']['name'])
+            else:
+                nodes_not_labeled.append(n['metadata']['name'])
+            error_found = 1
+
+        print "Nodes not labeled: %s\nNodes labeled: %s \n" % (nodes_not_labeled, nodes_labeled)
+        self.zagg_sender.add_zabbix_keys(
             {'openshift.master.nodesnotlabeled.count' : len(nodes_not_labeled)})
 
 
