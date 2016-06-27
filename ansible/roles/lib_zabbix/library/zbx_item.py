@@ -90,7 +90,7 @@ def get_app_ids(application_names, app_name_ids):
 
     return applications
 
-def get_template_id(zapi, template_name):
+def get_template_ids(zapi, template_name):
     '''
     get related templates
     '''
@@ -107,6 +107,22 @@ def get_template_id(zapi, template_name):
             app_ids[app['name']] = app['applicationid']
 
     return template_ids, app_ids
+
+def get_host_ids(zapi, hostname):
+    '''
+    get related host_id
+    '''
+    host_ids = []
+
+    content = zapi.get_content('host',
+                               'get',
+                               {'search': {'host': hostname}})
+
+    if content.has_key('result'):
+        host_ids.append(content['result'][0]['hostid'])
+
+    return host_ids
+
 
 def get_multiplier(inval):
     ''' Determine the multiplier
@@ -159,11 +175,13 @@ def get_zabbix_type(ztype):
     return _vtype
 
 # The branches are needed for CRUD and error handling
-# pylint: disable=too-many-branches
+# pylint: disable=too-many-branches, too-many-statements
 def main():
     '''
     ansible zabbix module for zbx_item
     '''
+
+
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -174,6 +192,7 @@ def main():
             name=dict(default=None, type='str'),
             key=dict(default=None, type='str'),
             template_name=dict(default=None, type='str'),
+            hostname=dict(default=None, type='str'),
             zabbix_type=dict(default='trapper', type='str'),
             value_type=dict(default='int', type='str'),
             data_type=dict(default='decimal', type='str'),
@@ -187,6 +206,7 @@ def main():
             params=dict(default=None, type='str'),
         ),
         #supports_check_mode=True
+        mutually_exclusive=[('template_name', 'hostname')]
     )
 
     zapi = ZabbixAPI(ZabbixConnection(module.params['zbx_server'],
@@ -198,21 +218,56 @@ def main():
     zbx_class_name = 'item'
     state = module.params['state']
 
-    templateid, app_name_ids = get_template_id(zapi, module.params['template_name'])
+    template_ids = None
+    app_name_ids = None
+    host_ids = None
+    content = None
 
-    # Fail if a template was not found matching the name
-    if not templateid:
-        module.exit_json(failed=True,
-                         changed=False,
-                         results='Error: Could find template with name %s for item.' % module.params['template_name'],
-                         state="Unkown")
+    if module.params['template_name']:
+        template_ids, app_name_ids = get_template_ids(zapi, module.params['template_name'])
 
-    content = zapi.get_content(zbx_class_name,
-                               'get',
-                               {'search': {'key_': module.params['key']},
-                                'selectApplications': 'applicationid',
-                                'templateids': templateid,
-                               })
+        if not template_ids:
+            module.exit_json(failed=True,
+                             changed=False,
+                             results='Error: Could not find template with name %s for item.' % \
+                                     module.params['template_name'],
+                             state="Unknown")
+
+        if len(template_ids) != 1:
+            module.exit_json(failed=True,
+                             changed=False,
+                             results='Error: Found multiple templates matching %s for item.' % \
+                                     module.params['template_name'],
+                             state="Unknown")
+
+        content = zapi.get_content(zbx_class_name,
+                                   'get',
+                                   {'search': {'key_': module.params['key']},
+                                    'selectApplications': 'applicationid',
+                                    'templateids': template_ids,
+                                   })
+
+    if module.params['hostname']:
+        host_ids = get_host_ids(zapi, module.params['hostname'])
+
+        if not host_ids:
+            module.exit_json(failed=True,
+                             changed=False,
+                             results='Error: Could not find host with name %s for item.' % module.params['hostname'],
+                             state="Unknown")
+
+        if len(host_ids) != 1:
+            module.exit_json(failed=True,
+                             changed=False,
+                             results='Error: Found multiple hosts matching %s for item.' % module.params['hostname'],
+                             state="Unknown")
+
+
+        content = zapi.get_content(zbx_class_name,
+                                   'get',
+                                   {'search': {'key_': module.params['key']},
+                                    'hostids': host_ids,
+                                   })
 
     #******#
     # GET
@@ -234,13 +289,12 @@ def main():
     if state == 'present':
 
         formula, use_multiplier = get_multiplier(module.params['multiplier'])
+
         params = {'name': module.params.get('name', module.params['key']),
                   'key_': module.params['key'],
-                  'hostid': templateid[0],
                   'type': get_zabbix_type(module.params['zabbix_type']),
                   'value_type': get_value_type(module.params['value_type']),
                   'data_type': get_data_type(module.params['data_type']),
-                  'applications': get_app_ids(module.params['applications'], app_name_ids),
                   'formula': formula,
                   'multiplier': use_multiplier,
                   'description': module.params['description'],
@@ -249,6 +303,12 @@ def main():
                   'delta': module.params['delta'],
                   'params': module.params['params'],
                  }
+
+        if module.params['hostname']:
+            params['hostid'] = host_ids[0]
+        else:
+            params['applications'] = get_app_ids(module.params['applications'], app_name_ids)
+            params['hostid'] = template_ids[0]
 
         # Remove any None valued params
         _ = [params.pop(key, None) for key in params.keys() if params[key] is None]
@@ -271,8 +331,8 @@ def main():
         _ = params.pop('hostid', None)
         differences = {}
         zab_results = content['result'][0]
-        for key, value in params.items():
 
+        for key, value in params.items():
             if key == 'applications':
                 app_ids = [item['applicationid'] for item in zab_results[key]]
                 if set(app_ids) != set(value):
