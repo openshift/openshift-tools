@@ -364,7 +364,7 @@ g_template_openshift_master:
     value_type: float
     zabbix_type: calculated
     interval: 3600
-    params: 'last("openshift.master.user.count") / last("openshift.master.pod.user.running.count")'
+    params: 'last("openshift.master.pod.user.running.count") / last("openshift.master.user.count")'
     applications:
     - Openshift Master
 
