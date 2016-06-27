@@ -78,10 +78,14 @@ class OpsRunner(object):
 
         # We want to flock before we potentially sleep, just to keep multiple process
         # from running at the same time.
-        if self.args.flock:
+        if self.args.flock or self.args.flock_no_fail:
             lock_aquired = self.attempt_to_lock_file()
             if not lock_aquired:
-                self.fail('this process is already running.')
+                if self.args.flock_no_fail:
+                    self.verbose_print('Process already running. Exit quietly.')
+                    sys.exit(0)
+                else:
+                    self.fail('this process is already running.')
 
         # Random Sleep if specified
         if self.args.random_sleep:
@@ -153,14 +157,19 @@ class OpsRunner(object):
         """ parse the args from the cli """
         parser = argparse.ArgumentParser(description='ops-runner - Runs commands and reports results to zabbix.')
         parser.add_argument('-n', '--name', required=True, help='Name identifier for this command.')
-        parser.add_argument('-f', '--flock', default=False, action="store_true",
-                            help='Flock the command so that only one can run at ' + \
-                                 'a time (good for cron jobs).')
         parser.add_argument('-s', '--random-sleep', help='Sleep time, random. Insert a random ' + \
                                                          'sleep between 1 and X number of seconds.')
         parser.add_argument('-v', '--verbose', default=False, action="store_true",
                             help='Makes ops-runner print more invormation.')
         parser.add_argument('rest', nargs=argparse.REMAINDER)
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument('-f', '--flock', default=False, action="store_true",
+                           help='Flock the command so that only one can run at ' + \
+                                 'a time (good for cron jobs).')
+        group.add_argument('--flock-no-fail', default=False, action="store_true",
+                           help='Flock the command so that only one can run at ' + \
+                                 'a time (good for cron jobs). But do not ' + \
+                                 'return an error.')
 
         self.args = parser.parse_args()
 
