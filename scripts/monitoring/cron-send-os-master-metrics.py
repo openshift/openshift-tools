@@ -94,8 +94,9 @@ class OpenshiftMasterZaggClient(object):
             if self.args.pv_info or self.args.all_checks:
                 self.pv_info()
 
-            if self.args.nodes_not_ready or self.args.all_checks:
+            if self.args.node_checks or self.args.all_checks:
                 self.nodes_not_ready()
+                self.nodes_not_labeled()
 
         except Exception as ex:
             print "Problem Openshift API checks: %s " % ex.message
@@ -145,8 +146,8 @@ class OpenshiftMasterZaggClient(object):
         master_check_group.add_argument('--pv-info', action='store_true', default=None,
                                         help='Query the Openshift Master for Persistent Volumes Info')
 
-        master_check_group.add_argument('--nodes-not-ready', action='store_true', default=None,
-                                        help='Query the Openshift Master for number of nodes not in Ready state')
+        master_check_group.add_argument('--node-checks', action='store_true', default=None,
+                                        help='Query the Openshift Master for node checks')
 
         self.args = parser.parse_args()
 
@@ -379,6 +380,34 @@ class OpenshiftMasterZaggClient(object):
 
         self.zagg_sender.add_zabbix_keys(
             {'openshift.master.nodesnotschedulable.count' : len(nodes_not_schedulable)})
+
+
+def nodes_not_labeled(self):
+    """ check the nodes in the cluster that are not labeled
+        Note: This check only searches for nodes with no label keys set"""
+
+    print "\nPerforming nodes not labeled check..."
+
+    response = self.ora.get('/api/v1/nodes')
+
+    nodes_not_labeled = []
+    nodes_labeled = []
+    error_found = 1
+
+    for n in response['items']:
+        for o in n['metadata']:
+            if 'label' in o:
+                error_found = 0
+        if error_found == 0:
+            nodes_labeled.append(n['metadata']['name'])
+        else:
+            nodes_not_labeled.append(n['metadata']['name'])
+        error_found = 1
+
+    print "Nodes not labeled: %s\nNodes labeled: %s \n" % (nodes_not_labeled,nodes_labeled)
+    self.zagg_sender.add_zabbix_keys(
+            {'openshift.master.nodesnotlabeled.count' : len(nodes_not_labeled)})
+
 
 if __name__ == '__main__':
     OMCZ = OpenshiftMasterZaggClient()

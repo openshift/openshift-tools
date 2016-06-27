@@ -306,6 +306,12 @@ g_template_openshift_master:
     value_type: int
     applications:
     - Openshift Master
+  
+  - key: openshift.master.nodesnotlabeled.count
+    description: This check shows how many nodes in a cluster are not labeled.
+    value_type: int
+    applications:
+    - Openshift Master
 
   - key: openshift.master.apiserver.latency.summary.pods.quantile.list.5
     description: "Value from https://master/metrics.  This is the time, in miliseconds, that 50% of the pod operations have taken to completed."
@@ -585,6 +591,13 @@ g_template_openshift_master:
 
   - name: 'Hosts not ready according to {HOST.NAME}'
     expression: '{Template Openshift Master:openshift.master.nodesnotready.count.last(#2)}>0'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node.asciidoc'
+    dependencies:
+    - 'Openshift Master process not running on {HOST.NAME}'
+    priority: high
+
+  - name: 'Hosts not labeled according to {HOST.NAME}'
+    expression: '{Template Openshift Master:openshift.master.nodesnotlabeled.count.last(#2)}>0'
     url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node.asciidoc'
     dependencies:
     - 'Openshift Master process not running on {HOST.NAME}'
