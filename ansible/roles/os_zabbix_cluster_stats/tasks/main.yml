@@ -1,0 +1,78 @@
+---
+  - zbx_item:
+      zbx_server: "{{ ozcs_zbx_server }}"
+      zbx_user: "{{ ozcs_zbx_user }}"
+      zbx_password: "{{ ozcs_zbx_password }}"
+      key: openshift.node.mem.used_per_user
+      name: openshift.node.mem.used_per_user
+      value_type: int
+      data_type: decimal
+      description: "The node's memory used on a per user basis to support the cluster."
+      multiplier: ''
+      units: B
+      hostname: "{{ item }}"
+      zabbix_type: calculated
+      interval: 3600
+      delta: 0
+      params: '( last("{{ item }}:mem.physmem") - min("{{ item }}:mem.util.available", 86400) ) /  last("{{ ozcs_primary_master }}:openshift.master.user.count")'
+    with_items: "{{ ozcs_infra_nodes }}"
+    delegate_to: localhost
+    run_once: true
+
+  - zbx_item:
+      zbx_server: "{{ ozcs_zbx_server }}"
+      zbx_user: "{{ ozcs_zbx_user }}"
+      zbx_password: "{{ ozcs_zbx_password }}"
+      key: openshift.node.mem.users_available
+      name: openshift.node.mem.users_available
+      value_type: int
+      data_type: decimal
+      description: "The number of users that can be added before the node will run out of memory."
+      multiplier: ''
+      hostname: "{{ item }}"
+      zabbix_type: calculated
+      interval: 3600
+      delta: 0
+      params: '( 0.70 * last("{{ item }}:mem.util.available") ) / last("{{ item }}:openshift.node.mem.used_per_user")'
+    with_items: "{{ ozcs_infra_nodes }}"
+    delegate_to: localhost
+    run_once: true
+
+  - zbx_item:
+      zbx_server: "{{ ozcs_zbx_server }}"
+      zbx_user: "{{ ozcs_zbx_user }}"
+      zbx_password: "{{ ozcs_zbx_password }}"
+      key: openshift.node.cpu.used_per_user
+      name: openshift.node.cpu.used_per_user
+      value_type: float
+      data_type: decimal
+      units: '%'
+      description: "The node's cpu used on a per user basis to support the cluster."
+      multiplier: ''
+      hostname: "{{ item }}"
+      zabbix_type: calculated
+      interval: 3600
+      delta: 0
+      params: '( 100 - last("{{ item }}:kernel.all.cpu.idle") ) / last("{{ ozcs_primary_master }}:openshift.master.user.count")'
+    with_items: "{{ ozcs_infra_nodes }}"
+    delegate_to: localhost
+    run_once: true
+
+  - zbx_item:
+      zbx_server: "{{ ozcs_zbx_server }}"
+      zbx_user: "{{ ozcs_zbx_user }}"
+      zbx_password: "{{ ozcs_zbx_password }}"
+      key: openshift.node.cpu.users_available
+      name: openshift.node.cpu.users_available
+      value_type: int
+      data_type: decimal
+      description: "The number of users that can be added before the node will run out of cpu."
+      multiplier: ''
+      hostname: "{{ item }}"
+      zabbix_type: calculated
+      interval: 3600
+      delta: 0
+      params: 'avg("{{ item }}:kernel.all.cpu.idle", 86400) / last("{{ item }}:openshift.node.cpu.used_per_user")'
+    with_items: "{{ ozcs_infra_nodes }}"
+    delegate_to: localhost
+    run_once: true
