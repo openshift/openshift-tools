@@ -138,9 +138,13 @@ host_monitoring_cron:
   minute: "*/2"
   job: ops-runner -f -s 15 -n csrc.openshift.node.registry.checks /usr/bin/cron-send-registry-checks
 
-- name: send openshift-node process Mem usage and Cpu usage
-  minute: "*/2"
-  job: ops-runner -f -s 15 -n cscmp.openshift.node.process.usage /usr/bin/cron-send-cpu-mem-process
+- name: send openshift-node cpu mem per process stats
+  minute: "*/5"
+  job: ops-runner -f -s 15 -n cscpm.openshift.node.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start node' openshift.node.process
+
+- name: send docker daemon cpu mem per process stats
+  minute: "*/5"
+  job: ops-runner -f -s 15 -n cscpm.openshift.node.docker.daemon.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'docker-current daemon' openshift.node.docker.daemon
 {# end if host master or node #}
 {% endif %}
 
@@ -207,6 +211,18 @@ host_monitoring_cron:
 - name: send master api server connections count on port 443
   minute: "*/5"
   job: ops-runner -f -s 30 -n cscc.openshift.master.api.connections.443 /usr/bin/cron-send-connection-count openshift 443 openshift.master.api.port_443.connections.established
+
+- name: send openshift master api cpu mem per process stats
+  minute: "*/5"
+  job: ops-runner -f -s 15 -n cscpm.openshift.master.api.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start master api' openshift.master.api.process
+
+- name: send openshift master controllers cpu mem per process stats
+  minute: "*/5"
+  job: ops-runner -f -s 15 -n cscpm.openshift.master.controllers.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start master controllers' openshift.master.controllers.process
+
+- name: send etcd cpu mem per process stats
+  minute: "*/5"
+  job: ops-runner -f -s 15 -n cscpm.openshift.etcd.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats etcd openshift.etcd.process
 
 {% if osohm_enable_cluster_capacity_reporting|bool and osohm_master_primary | default(False) | bool %}
 - name: "Cluster capacity reporting"
