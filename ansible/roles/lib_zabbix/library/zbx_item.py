@@ -206,7 +206,10 @@ def main():
             params=dict(default=None, type='str'),
         ),
         #supports_check_mode=True
-        mutually_exclusive=[('template_name', 'hostname')]
+        mutually_exclusive=[
+            ('template_name', 'hostname'),
+            ('applications', 'hostname'),
+        ]
     )
 
     zapi = ZabbixAPI(ZabbixConnection(module.params['zbx_server'],

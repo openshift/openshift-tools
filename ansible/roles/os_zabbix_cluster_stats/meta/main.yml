@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: Thomas Wiest
+  description: Adds items to cluster instances in zabbix
+  company: Red Hat
+  license: ASL 2.0
+  min_ansible_version: 1.9
+  platforms:
+  - name: EL
+    versions:
+    - 7
+  categories:
+  - monitoring
+dependencies:
+- tools_roles/lib_zabbix

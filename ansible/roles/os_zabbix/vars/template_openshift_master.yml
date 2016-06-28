@@ -14,6 +14,12 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.cluster.event.failedscheduling
+    description: "Count of FailedScheduling events reported"
+    value_type: int
+    applications:
+    - Openshift Master
+
   - name: openshift.master.app.create
     applications:
     - Openshift Master
@@ -327,7 +333,7 @@ g_template_openshift_master:
     units: B
     zabbix_type: calculated
     interval: 3600
-    params: '( max("mem.physmem", 86400) - max("mem.util.available", 86400) ) /  last("openshift.master.user.count")'
+    params: '( last("mem.physmem") - min("mem.util.available", 86400) ) /  last("openshift.master.user.count")'
     applications:
     - Openshift Master
 
