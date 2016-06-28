@@ -166,7 +166,12 @@ def main():
 
             if key == 'usrgrps':
                 # this must be done as a list of ordered dictionaries fails comparison
-                if not all([_ in value for _ in zab_results[key]]):
+                # if the current zabbix group list is not all in the
+                # provided group list
+                # or the provided group list is not all in the current zabbix
+                # group list
+                if not all([_ in value for _ in zab_results[key]]) \
+                   or not all([_ in zab_results[key] for _ in value]):
                     differences[key] = value
 
             elif zab_results[key] != value and zab_results[key] != str(value):
