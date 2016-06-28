@@ -255,6 +255,25 @@ g_template_openshift_master:
     applications:
     - Openshift Etcd
 
+  - key: openshift.etcd.process.cpu
+    description: Show etcd process cpu usage
+    value_type: float
+    units: "%"
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.process.mem.vms
+    description: "Show etcd process memory (vms/virt) usage"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.process.mem.rss
+    description: "Show etcd process memory (rss) usage"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
   - key: openshift.master.metric.ping
     description: "This check verifies that the https://master/metrics check is alive and communicating properly."
     value_type: int
@@ -371,6 +390,44 @@ g_template_openshift_master:
     zabbix_type: calculated
     interval: 3600
     params: 'last("openshift.master.pod.user.running.count") / last("openshift.master.user.count")'
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.api.process.cpu
+    description: Show openshift master api process cpu usage
+    value_type: float
+    units: "%"
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.api.process.mem.vms
+    description: "Show openshift master api process memory (vms/virt) usage"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.api.process.mem.rss
+    description: "Show openshift master api process memory (rss) usage"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.controllers.process.cpu
+    description: Show openshift master controllers process cpu usage
+    value_type: float
+    units: "%"
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.controllers.process.mem.vms
+    description: "Show openshift master controllers process memory (vms/virt) usage"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.controllers.process.mem.rss
+    description: "Show openshift master controllers process memory (rss) usage"
+    value_type: int
     applications:
     - Openshift Master
 

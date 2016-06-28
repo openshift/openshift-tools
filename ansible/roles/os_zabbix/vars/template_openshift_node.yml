@@ -38,6 +38,44 @@ g_template_openshift_node:
     applications:
     - Openshift Node
 
+  - key: openshift.node.process.cpu
+    description: Openshift node process cpu usage
+    value_type: float
+    units: "%"
+    applications:
+    - Openshift Node
+
+  - key: openshift.node.process.mem.vms
+    description: "Openshift node process memory (vms/virt) usage"
+    value_type: int
+    applications:
+    - Openshift Node
+
+  - key: openshift.node.process.mem.rss
+    description: "Openshift node process memory (rss) usage"
+    value_type: int
+    applications:
+    - Openshift Node
+
+  - key: openshift.node.docker.daemon.cpu
+    description: Docker daemon cpu usage
+    value_type: float
+    units: "%"
+    applications:
+    - Openshift Node
+
+  - key: openshift.node.docker.daemon.mem.vms
+    description: "Docker daemon memory (vms/virt) usage"
+    value_type: int
+    applications:
+    - Openshift Node
+
+  - key: openshift.node.docker.daemon.mem.rss
+    description: "Docker daemon memory (rss) usage"
+    value_type: int
+    applications:
+    - Openshift Node
+
   ztriggers:
   - name: 'One or more Docker Registries is unhealthy according to {HOST.NAME}'
     expression: '{Template Openshift Node:openshift.node.registry-pods.healthy_pct.last(#2)}<100 and {Template Openshift Node:openshift.node.registry-pods.healthy_pct.last(#1)}<100'
