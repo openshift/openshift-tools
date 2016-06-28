@@ -12,4 +12,4 @@ galaxy_info:
   categories:
   - monitoring
 dependencies:
-- lib_zabbix
+- tools_roles/lib_zabbix
