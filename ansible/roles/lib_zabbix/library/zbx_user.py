@@ -98,6 +98,7 @@ def main():
             user_type=dict(default=None, type='str'),
             password=dict(default=None, type='str'),
             refresh=dict(default=None, type='int'),
+            autologout=dict(default=None, type='int'),
             update_password=dict(default=False, type='bool'),
             user_groups=dict(default=[], type='list'),
             state=dict(default='present', type='str'),
@@ -139,6 +140,7 @@ def main():
                   'name': module.params['first_name'],
                   'surname': module.params['last_name'],
                   'refresh': module.params['refresh'],
+                  'autologout': module.params['autologout'],
                   'type': get_usertype(module.params['user_type']),
                  }
 
