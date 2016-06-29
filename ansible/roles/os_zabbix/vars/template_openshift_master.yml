@@ -5,6 +5,7 @@ g_template_openshift_master:
   - key: openshift.master.cluster.memory_allocation
     description: "Percentage of allocatable memory (cluster-wide) that has been allocated/granted"
     value_type: int
+    units: "%"
     applications:
     - Openshift Master
 
