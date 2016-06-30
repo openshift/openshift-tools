@@ -1,12 +1,17 @@
 # pylint: skip-file
+
 '''
-   OpenShiftCLI class that wraps the oc commands in a subprocess
+   GcloudCLI class that wraps the oc commands in a subprocess
 '''
 
+import string
+import random
 import json
 import os
+import yaml
 import shutil
 import subprocess
+import atexit
 
 class GcloudCLIError(Exception):
     '''Exception class for openshiftcli'''
@@ -36,7 +41,11 @@ class GcloudCLI(object):
         ''' create a deployment'''
         cmd = ['deployment-manager', 'deployments', 'create', dname]
         if config:
-            cmd.extend(['--config=%s' % config])
+            if isinstance(config, dict):
+                config = Utils.create_file(dname, config)
+
+            if isinstance(config, str) and os.path.exists(config):
+                cmd.extend(['--config=%s' % config])
 
         if opts:
             for key, val in opts.items():
@@ -48,7 +57,11 @@ class GcloudCLI(object):
         ''' create a deployment'''
         cmd = ['deployment-manager', 'deployments', 'update', dname]
         if config:
-            cmd.extend(['--config=%s' % config])
+            if isinstance(config, dict):
+                config = Utils.create_file(dname, config)
+
+            if isinstance(config, str) and os.path.exists(config):
+                cmd.extend(['--config=%s' % config])
 
         if opts:
             for key, val in opts.items():
@@ -112,8 +125,47 @@ class GcloudCLI(object):
 
         return rval
 
+################################################################################
+# utilities and helpers for generation
+################################################################################
 class Utils(object):
     ''' utilities for openshiftcli modules '''
+
+    COMPUTE_URL_BASE = 'https://www.googleapis.com/compute/v1/'
+
+    @staticmethod
+    def create_file(rname, data, ftype='yaml'):
+        ''' create a file in tmp with name and contents'''
+        path = os.path.join('/tmp', rname)
+        with open(path, 'w') as fds:
+            if ftype == 'yaml':
+                fds.write(yaml.safe_dump(data, default_flow_style=False))
+
+            elif ftype == 'json':
+                fds.write(json.dumps(data))
+            else:
+                fds.write(data)
+
+        # Register cleanup when module is done
+        atexit.register(Utils.cleanup, [path])
+        return path
+
+    @staticmethod
+    def global_compute_url(project, collection, rname):
+        '''build the global compute url for a resource'''
+        return ''.join([Utils.COMPUTE_URL_BASE, 'projects/', project, '/global/', collection, '/', rname])
+
+    @staticmethod
+    def zonal_compute_url(project, zone, collection, rname):
+        '''build the zone compute url for a resource'''
+        return ''.join([Utils.COMPUTE_URL_BASE, 'projects/', project, '/zones/', zone, '/', collection, '/', rname])
+
+    @staticmethod
+    def generate_random_name(size):
+        '''generate a random string of lowercase and digits the length of size'''
+        return ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(size))
+
+
     @staticmethod
     def cleanup(files):
         '''Clean up on exit '''

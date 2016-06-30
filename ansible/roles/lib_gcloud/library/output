@@ -1,0 +1,165 @@
+- name: optestgcp-master-healthcheck
+  properties:
+    checkIntervalSec: 30
+    description: Check https port 443
+    healthyThreshold: 2
+    port: 443
+    timeoutSec: 5
+    unhealthyThreshold: 2
+  type: compute.v1.httpHealthCheck
+- name: optestgcp-master-ip-address
+  properties:
+    description: Static IP of the Master LB
+    region: us-east1
+  type: compute.v1.address
+- name: optestgcp-master-targetpool
+  properties:
+    description: load balancer for master nodes
+    healthChecks:
+    - $(ref.optestgcp-master-healthcheck.selfLink)
+    instances:
+    - $(ref.optestgcp-master-78b3y.selfLink)
+    - $(ref.optestgcp-master-vglj0.selfLink)
+    - $(ref.optestgcp-master-ojkm4.selfLink)
+    region: us-east1
+    sessionAffinity: NONE
+  type: compute.v1.targetPool
+- name: optestgcp-master-forwarding-rule-443
+  properties:
+    IPAddress: optestgcp-master-ip-address
+    IPProtocol: TCP
+    description: Port 443 forwarding rule for master
+    portRange: 443
+    region: us-east1
+    target: $(ref.optestgcp-master-targetpool.selfLink)
+  type: compute.v1.forwardingRule
+- name: optestgcp
+  properties:
+    autoCreateSubnetworks: false
+    description: main network for cluster
+  type: compute.v1.network
+- name: allow-internal-traffic
+  properties:
+    allowed:
+    - IPProtocol: tcp
+    - IPProtocol: udp
+    - IPProtocol: icmp
+    description: allow internal traffic
+    network: $(ref.optestgcp.selfLink)
+    sourceRanges:
+    - 0.0.0.0/0
+    sourceTags: []
+    targetTags: []
+  type: compute.v1.firewall
+- name: optestgcp-master-znqff-dockerdisk
+  properties:
+    autoDelete: true
+    sizeGb: 100
+    type: https://www.googleapis.com/compute/v1/projects/optestgcp/zones/us-east1-c/diskTypes/pd-standard
+    zone: us-east1-c
+  type: compute.v1.disk
+- name: optestgcp-master-znqff
+  properties:
+    disks:
+    - autoDelete: true
+      boot: true
+      deviceName: boot
+      initializeParams:
+        diskName: optestgcp-master-znqff-osdisk
+        sourceImage: https://www.googleapis.com/compute/v1/projects/optestgcp/global/images/rhel-7-2016-06-10
+      sizeGb: 40
+      type: PERSISTENT
+    - autoDelete: true
+      deviceName: docker
+      source: $(ref.optestgcp-master-znqff-dockerdisk.selfLink)
+      type: PERSISTENT
+    machineType: https://www.googleapis.com/compute/v1/projects/optestgcp/zones/us-east1-c/machineTypes/g1-small
+    metadata:
+      items:
+      - key: clusterid
+        value: optestgcp
+      - key: hosttype
+        value: master
+    networkInterfaces:
+    - accessConfigs:
+      - name: external-nat
+        type: ONE_TO_ONE_NAT
+      network: $(ref.optestgcp.selfLink)
+      subnet: optestgcp-subnet1
+    zone: us-east1-c
+  type: compute.v1.instance
+- name: optestgcp-master-8smoy-dockerdisk
+  properties:
+    autoDelete: true
+    sizeGb: 100
+    type: https://www.googleapis.com/compute/v1/projects/optestgcp/zones/us-east1-c/diskTypes/pd-standard
+    zone: us-east1-c
+  type: compute.v1.disk
+- name: optestgcp-master-8smoy
+  properties:
+    disks:
+    - autoDelete: true
+      boot: true
+      deviceName: boot
+      initializeParams:
+        diskName: optestgcp-master-8smoy-osdisk
+        sourceImage: https://www.googleapis.com/compute/v1/projects/optestgcp/global/images/rhel-7-2016-06-10
+      sizeGb: 40
+      type: PERSISTENT
+    - autoDelete: true
+      deviceName: docker
+      source: $(ref.optestgcp-master-8smoy-dockerdisk.selfLink)
+      type: PERSISTENT
+    machineType: https://www.googleapis.com/compute/v1/projects/optestgcp/zones/us-east1-c/machineTypes/g1-small
+    metadata:
+      items:
+      - key: clusterid
+        value: optestgcp
+      - key: hosttype
+        value: master
+    networkInterfaces:
+    - accessConfigs:
+      - name: external-nat
+        type: ONE_TO_ONE_NAT
+      network: $(ref.optestgcp.selfLink)
+      subnet: optestgcp-subnet1
+    zone: us-east1-c
+  type: compute.v1.instance
+- name: optestgcp-master-o2x01-dockerdisk
+  properties:
+    autoDelete: true
+    sizeGb: 100
+    type: https://www.googleapis.com/compute/v1/projects/optestgcp/zones/us-east1-c/diskTypes/pd-standard
+    zone: us-east1-c
+  type: compute.v1.disk
+- name: optestgcp-master-o2x01
+  properties:
+    disks:
+    - autoDelete: true
+      boot: true
+      deviceName: boot
+      initializeParams:
+        diskName: optestgcp-master-o2x01-osdisk
+        sourceImage: https://www.googleapis.com/compute/v1/projects/optestgcp/global/images/rhel-7-2016-06-10
+      sizeGb: 40
+      type: PERSISTENT
+    - autoDelete: true
+      deviceName: docker
+      source: $(ref.optestgcp-master-o2x01-dockerdisk.selfLink)
+      type: PERSISTENT
+    machineType: https://www.googleapis.com/compute/v1/projects/optestgcp/zones/us-east1-c/machineTypes/g1-small
+    metadata:
+      items:
+      - key: clusterid
+        value: optestgcp
+      - key: hosttype
+        value: master
+    networkInterfaces:
+    - accessConfigs:
+      - name: external-nat
+        type: ONE_TO_ONE_NAT
+      network: $(ref.optestgcp.selfLink)
+      subnet: optestgcp-subnet1
+    zone: us-east1-c
+  type: compute.v1.instance
+

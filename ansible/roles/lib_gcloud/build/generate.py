@@ -6,7 +6,7 @@
 import os
 
 # pylint: disable=anomalous-backslash-in-string
-GEN_STR = "#!/usr/bin/env python\n"                                  + \
+GEN_STR = "#!/usr/bin/env python \n" + \
           "#     ___ ___ _  _ ___ ___    _ _____ ___ ___\n"          + \
           "#    / __| __| \| | __| _ \  /_\_   _| __|   \\\n"        + \
           "#   | (_ | _|| .` | _||   / / _ \| | | _|| |) |\n"        + \
@@ -23,6 +23,21 @@ FILES = {'gcloud_dm_deployments.py': ['lib/base.py',
                                       'src/gcloud_dm_deployments.py',
                                       'ansible/gcloud_dm_deployments.py',
                                      ],
+         'gcloud_dm_resource_builder.py': ['lib/base.py',
+                                           'lib/gcpresource.py',
+                                           'lib/address.py',
+                                           'lib/disk.py',
+                                           'lib/firewall_rule.py',
+                                           'lib/forwarding_rule.py',
+                                           'lib/health_check.py',
+                                           'lib/network_interface.py',
+                                           'lib/network.py',
+                                           'lib/subnetwork.py',
+                                           'lib/target_pool.py',
+                                           'lib/vminstance.py',
+                                           'src/gcloud_dm_resource_builder.py',
+                                           'ansible/gcloud_dm_resource_builder.py',
+                                          ],
         }
 
 
