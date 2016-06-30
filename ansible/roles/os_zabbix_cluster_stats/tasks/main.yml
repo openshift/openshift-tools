@@ -96,6 +96,8 @@
         hosts: "{{ ozcs_masters }}"
       - item_name: openshift.node.cpu.users_available
         hosts: "{{ ozcs_infra_nodes }}"
+    delegate_to: localhost
+    run_once: true
 
   - name: "graph: OpenShift Masters and Infra Nodes mem.users_available"
     zbx_graph:
@@ -112,3 +114,5 @@
         hosts: "{{ ozcs_masters }}"
       - item_name: openshift.node.mem.users_available
         hosts: "{{ ozcs_infra_nodes }}"
+    delegate_to: localhost
+    run_once: true
