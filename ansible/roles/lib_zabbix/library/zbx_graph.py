@@ -57,23 +57,25 @@ class ZabbixQueryEmptyResultsError(Exception):
     pass
 
 COLORS = {
-          'red': 'FF0000',
-          'green': '008000',
-          'blue': '0000FF',
-          'purple': '800080',
-          'brown': 'A52A2A',
-          'black': '000000',
-          'pink': 'FFC0CB',
-          'orange': 'FFA500',
-          'gold': 'FFD700',
-          'yellow': 'FFFF00',
-          'cyan': '00FFFF',
-          'aqua': '00FFFF',
-          'gray': '808080',
-          'grey': '808080',
-          'silver': 'C0C0C0',
-         }
+    'red': 'FF0000',
+    'green': '008000',
+    'blue': '0000FF',
+    'purple': '800080',
+    'brown': 'A52A2A',
+    'black': '000000',
+    'pink': 'FFC0CB',
+    'orange': 'FFA500',
+    'gold': 'FFD700',
+    'yellow': 'FFFF00',
+    'cyan': '00FFFF',
+    'aqua': '00FFFF',
+    'gray': '808080',
+    'grey': '808080',
+    'silver': 'C0C0C0',
+}
 
+# Reason: We need to refactor this into a class. Once we do, this will go away.
+# pylint: disable=invalid-name
 unused_colors = []
 
 def exists(content, key='result'):
@@ -151,8 +153,10 @@ def get_color(color_in):
 
         Will have a few setup by default
     '''
-
+    # Reason: We need to refactor this into a class. Once we do, this will go away.
+    # pylint: disable=invalid-name,global-variable-not-assigned
     global unused_colors
+
     if COLORS.has_key(color_in):
         if color_in in unused_colors:
             # Only remove if it's in the list
@@ -164,7 +168,10 @@ def get_color(color_in):
 
 def get_unused_color():
     ''' Allocates one of the unused colors and returns it. '''
+    # Reason: We need to refactor this into a class. Once we do, this will go away.
+    # pylint: disable=invalid-name,global-statement
     global unused_colors
+
     if not unused_colors:
         unused_colors = COLORS.keys() # Re-populate the list
 
@@ -210,6 +217,7 @@ def get_graph_item_type(gtype):
     return rval
 
 def populate_graph_item(zapi, item, host=None):
+    ''' Converts a definition of a graph_item into an exact graph_item. '''
     params = {'filter': {'name': item['item_name']}}
 
     if host:
