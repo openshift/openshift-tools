@@ -52,7 +52,7 @@ class OpenshiftClusterCapacity(object):
         self.ora = OpenshiftRestApi(host=master_cfg['oauthConfig']['masterURL'],
                                     verify_ssl=True)
 
-        self.node_capacity()
+        self.cluster_capacity()
 
         if not self.args.dry_run:
             self.zagg_sender.send_metrics()
@@ -90,6 +90,10 @@ class OpenshiftClusterCapacity(object):
                    condition['status'] == 'True':
                     node_ready = True
             if not node_ready:
+                continue
+
+            # Skip unschedulable nodes
+            if new_node['spec'].get('unschedulable'):
                 continue
 
             node = {}
@@ -240,11 +244,41 @@ class OpenshiftClusterCapacity(object):
 
         return schedulable
 
-    def node_capacity(self):
-        ''' check capacity of compute nodes '''
+    def get_avg_cpu_compute_nodes(self):
+        ''' return average cpu allocation percentage across compute nodes '''
+
+        node_averages = []
+        for row in self.sql_conn.execute('''SELECT nodes.name, nodes.max_cpu, SUM(pods.cpu_limits)
+                                            FROM pods, nodes
+                                            WHERE pods.node=nodes.name
+                                              AND nodes.type="compute"
+                                            GROUP BY nodes.name'''):
+            node_averages.append(float(100)*row[2]/row[1])
+        cluster_avg = sum(node_averages) / len(node_averages)
+
+        return cluster_avg
+
+    def get_avg_mem_compute_nodes(self):
+        ''' return average memory allocation across compute nodes '''
+
+        node_averages = []
+        for row in self.sql_conn.execute('''SELECT nodes.name, nodes.max_memory, SUM(pods.memory_limits)
+                                            FROM pods, nodes
+                                            WHERE pods.node=nodes.name
+                                              AND nodes.type="compute"
+                                            GROUP BY nodes.name'''):
+            node_averages.append(100*(float(row[2])/row[1]))
+        cluster_avg = sum(node_averages) / len(node_averages)
+
+        return cluster_avg
+
+    def cluster_capacity(self):
+        ''' check capacity of compute nodes on cluster'''
 
         zbx_key_mem_alloc = "openshift.master.cluster.memory_allocation"
         zbx_key_max_pods = "openshift.master.cluster.max_mem_pods_schedulable"
+        zbx_key_avg_mem = "openshift.master.cluster.compute_nodes.allocated.mem.average"
+        zbx_key_avg_cpu = "openshift.master.cluster.compute_nodes.allocated.cpu.average"
 
         self.sql_conn = sqlite3.connect(':memory:')
 
@@ -252,19 +286,26 @@ class OpenshiftClusterCapacity(object):
         self.load_pods()
 
         memory_percentage = self.get_memory_percentage()
+        print "Percentage of memory allocated: {}".format(memory_percentage)
+        self.zagg_sender.add_zabbix_keys({zbx_key_mem_alloc:
+                                          int(memory_percentage)})
 
         largest = self.get_largest_pod()
         if self.args.debug:
             print "Largest memory pod: {}".format(largest)
 
         schedulable = self.how_many_schedulable(largest)
-
-        print "Percentage of memory allocated: {}".format(memory_percentage)
         print "Number of max-size nodes schedulable: {}".format(schedulable)
-
-        self.zagg_sender.add_zabbix_keys({zbx_key_mem_alloc:
-                                          int(memory_percentage)})
         self.zagg_sender.add_zabbix_keys({zbx_key_max_pods: schedulable})
+
+        avg_mem_compute_nodes = self.get_avg_mem_compute_nodes()
+        print "Avg mem % across compute nodes: {}".format(avg_mem_compute_nodes)
+        self.zagg_sender.add_zabbix_keys({zbx_key_avg_mem: avg_mem_compute_nodes})
+
+        avg_cpu_compute_nodes = self.get_avg_cpu_compute_nodes()
+        print "Avg cpu % across compute nodes: {}".format(avg_cpu_compute_nodes)
+        self.zagg_sender.add_zabbix_keys({zbx_key_avg_cpu: avg_cpu_compute_nodes})
+
 
 if __name__ == '__main__':
     OCC = OpenshiftClusterCapacity()
