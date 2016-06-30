@@ -86,7 +86,7 @@
       zbx_server: "{{ ozcs_zbx_server }}"
       zbx_user: "{{ ozcs_zbx_user }}"
       zbx_password: "{{ ozcs_zbx_password }}"
-      name: OpenShift Masters and Infra Nodes cpu.users_available
+      name: "OpenShift Masters and Infra Nodes cpu.users_available [{{ ozcs_clusterid }}]"
       width: 900
       height: 200
       yaxismin: "0.0000"  # MUST be quoted and with this precision otherwise it will always modify
@@ -104,7 +104,7 @@
       zbx_server: "{{ ozcs_zbx_server }}"
       zbx_user: "{{ ozcs_zbx_user }}"
       zbx_password: "{{ ozcs_zbx_password }}"
-      name: OpenShift Masters and Infra Nodes mem.users_available
+      name: "OpenShift Masters and Infra Nodes mem.users_available [{{ ozcs_clusterid }}]"
       width: 900
       height: 200
       yaxismin: "0.0000"  # MUST be quoted and with this precision otherwise it will always modify
