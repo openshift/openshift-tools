@@ -15,6 +15,20 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.cluster.compute_nodes.allocated.mem.average
+    description: "Average of memory percentage allocated across compute nodes"
+    value_type: int
+    units: "%"
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.cluster.compute_nodes.allocated.cpu.average
+    description: "Average of cpu percentage allocated across compute nodes"
+    value_type: int
+    units: "%"
+    applications:
+    - Openshift Master
+
   - key: openshift.master.cluster.event.failedscheduling
     description: "Count of FailedScheduling events reported"
     value_type: int
