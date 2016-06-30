@@ -13,8 +13,8 @@ lib_zabbix
 Role Variables
 --------------
 
+  ozcs_masters: The masters of the cluster
   ozcs_infra_nodes: The infrastructure nodes of the cluster
-  ozcs_primary_master: The primary master of the cluster
   ozcs_zbx_server: The zabbix server in which to create the items
   ozcs_zbx_user: The zabbix user with which to authenticate
   ozcs_zbx_password: The zabbix password with which to authenticate
@@ -34,7 +34,10 @@ Example Playbook
            ozcs_zbx_server: http://localhost/zabbix/api_jsonrpc.php
            ozcs_zbx_user: Admin
            ozcs_zbx_password: zabbix
-           ozcs_primary_master: cid-master-07f3e
+           ozcs_masters:
+           - cid-master-07f3e
+           - cid-master-7223a
+           - cid-master-82dca
            ozcs_infra_nodes:
            - cid-node-infra-2d7f7
            - cid-node-infra-d1f9a

@@ -207,8 +207,8 @@ def main():
         ),
         #supports_check_mode=True
         mutually_exclusive=[
-            ('template_name', 'hostname'),
-            ('applications', 'hostname'),
+            ['template_name', 'hostname'],
+            ['applications', 'hostname'],
         ]
     )
 
