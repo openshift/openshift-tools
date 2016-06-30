@@ -51,6 +51,33 @@
 # pylint: disable=import-error
 from openshift_tools.zbxapi import ZabbixAPI, ZabbixConnection
 
+
+class ZabbixQueryEmptyResultsError(Exception):
+    """ Used when a zabbix query returns empty results, but we expected results """
+    pass
+
+COLORS = {
+    'red': 'FF0000',
+    'green': '008000',
+    'blue': '0000FF',
+    'purple': '800080',
+    'brown': 'A52A2A',
+    'black': '000000',
+    'pink': 'FFC0CB',
+    'orange': 'FFA500',
+    'gold': 'FFD700',
+    'yellow': 'FFFF00',
+    'cyan': '00FFFF',
+    'aqua': '00FFFF',
+    'gray': '808080',
+    'grey': '808080',
+    'silver': 'C0C0C0',
+}
+
+# Reason: We need to refactor this into a class. Once we do, this will go away.
+# pylint: disable=invalid-name
+unused_colors = []
+
 def exists(content, key='result'):
     ''' Check if key exists in content or the size of content[key] > 0
     '''
@@ -79,6 +106,22 @@ def get_graph_type(graphtype):
         gtype = 3
 
     return gtype
+
+def get_ymin_type(ymin_type):
+    '''
+    Possible values:
+    0 - calculated;
+    1 - fixed;
+    2 - item;
+    '''
+
+    retval = 0 #default
+    if 'fixed' in ymin_type:
+        retval = 1
+    elif 'item' in ymin_type:
+        retval = 2
+
+    return retval
 
 def get_show_legend(show_legend):
     '''Get the value for show_legend
@@ -110,26 +153,29 @@ def get_color(color_in):
 
         Will have a few setup by default
     '''
-    colors = {'black': '000000',
-              'red': 'FF0000',
-              'pink': 'FFC0CB',
-              'purple': '800080',
-              'orange': 'FFA500',
-              'gold': 'FFD700',
-              'yellow': 'FFFF00',
-              'green': '008000',
-              'cyan': '00FFFF',
-              'aqua': '00FFFF',
-              'blue': '0000FF',
-              'brown': 'A52A2A',
-              'gray': '808080',
-              'grey': '808080',
-              'silver': 'C0C0C0',
-             }
-    if colors.has_key(color_in):
-        return colors[color_in]
+    # Reason: We need to refactor this into a class. Once we do, this will go away.
+    # pylint: disable=invalid-name,global-variable-not-assigned
+    global unused_colors
+
+    if COLORS.has_key(color_in):
+        if color_in in unused_colors:
+            # Only remove if it's in the list
+            unused_colors.remove(color_in)
+
+        return COLORS[color_in]
 
     return color_in
+
+def get_unused_color():
+    ''' Allocates one of the unused colors and returns it. '''
+    # Reason: We need to refactor this into a class. Once we do, this will go away.
+    # pylint: disable=invalid-name,global-statement
+    global unused_colors
+
+    if not unused_colors:
+        unused_colors = COLORS.keys() # Re-populate the list
+
+    return unused_colors[0]
 
 def get_line_style(style):
     '''determine the line style
@@ -170,28 +216,52 @@ def get_graph_item_type(gtype):
 
     return rval
 
+def populate_graph_item(zapi, item, host=None):
+    ''' Converts a definition of a graph_item into an exact graph_item. '''
+    params = {'filter': {'name': item['item_name']}}
+
+    if host:
+        params['host'] = host
+
+    content = zapi.get_content('item',
+                               'get',
+                               params)
+    drawtype = get_line_style(item.get('line_style', 'line'))
+    func = get_calc_function(item.get('calc_func', 'avg'))
+    g_type = get_graph_item_type(item.get('graph_item_type', 'simple'))
+
+    if not item.has_key('color'):
+        item['color'] = get_unused_color()
+
+    if content.has_key('result'):
+        if not content['result']:
+            raise ZabbixQueryEmptyResultsError("Item not found for %s" % params)
+
+        tmp = {'itemid': content['result'][0]['itemid'],
+               'color': get_color(item.pop('color')),
+               'drawtype': drawtype,
+               'calc_fnc': func,
+               'type': g_type,
+              }
+        return tmp
+
+    return None
+
+
 def get_graph_items(zapi, gitems):
     '''Get graph items by id'''
 
     r_items = []
     for item in gitems:
-        content = zapi.get_content('item',
-                                   'get',
-                                   {'filter': {'name': item['item_name']}})
-        _ = item.pop('item_name')
-        color = get_color(item.pop('color'))
-        drawtype = get_line_style(item.get('line_style', 'line'))
-        func = get_calc_function(item.get('calc_func', 'avg'))
-        g_type = get_graph_item_type(item.get('graph_item_type', 'simple'))
-
-        if content.has_key('result'):
-            tmp = {'itemid': content['result'][0]['itemid'],
-                   'color': color,
-                   'drawtype': drawtype,
-                   'calc_fnc': func,
-                   'type': g_type,
-                  }
-            r_items.append(tmp)
+        if item.has_key('hosts'):
+            for host in item['hosts']:
+                tmp = populate_graph_item(zapi, item, host)
+                if tmp:
+                    r_items.append(tmp)
+        else:
+            tmp = populate_graph_item(zapi, item)
+            if tmp:
+                r_items.append(tmp)
 
     return r_items
 
@@ -227,11 +297,16 @@ def main():
             name=dict(default=None, type='str'),
             height=dict(default=None, type='int'),
             width=dict(default=None, type='int'),
+            yaxismin=dict(default=None, type='str'),
+            ymin_type=dict(default=None, type='str'),
             graph_type=dict(default='normal', type='str'),
             show_legend=dict(default='show', type='str'),
             state=dict(default='present', type='str'),
             graph_items=dict(default=None, type='list'),
         ),
+        required_together=[
+            ["ymin_type", "yaxismin"],
+        ]
         #supports_check_mode=True
     )
 
@@ -277,6 +352,11 @@ def main():
                   'show_legend': get_show_legend(module.params['show_legend']),
                   'gitems': get_graph_items(zapi, module.params['graph_items']),
                  }
+
+        # Both have to be specified
+        if module.params['yaxismin'] and module.params['ymin_type']:
+            params['yaxismin'] = module.params['yaxismin']
+            params['ymin_type'] = get_ymin_type(module.params['ymin_type'])
 
         # Remove any None valued params
         _ = [params.pop(key, None) for key in params.keys() if params[key] is None]

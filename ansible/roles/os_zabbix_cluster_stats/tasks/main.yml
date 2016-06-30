@@ -1,5 +1,6 @@
 ---
-  - zbx_item:
+  - name: "item: openshift.node.mem.used_per_user"
+    zbx_item:
       zbx_server: "{{ ozcs_zbx_server }}"
       zbx_user: "{{ ozcs_zbx_user }}"
       zbx_password: "{{ ozcs_zbx_password }}"
@@ -14,12 +15,13 @@
       zabbix_type: calculated
       interval: 3600
       delta: 0
-      params: '( last("{{ item }}:mem.physmem") - min("{{ item }}:mem.util.available", 86400) ) /  last("{{ ozcs_primary_master }}:openshift.master.user.count")'
+      params: '( last("{{ item }}:mem.physmem") - min("{{ item }}:mem.util.available", 86400) ) /  last("{{ ozcs_masters | first }}:openshift.master.user.count")'
     with_items: "{{ ozcs_infra_nodes }}"
     delegate_to: localhost
     run_once: true
 
-  - zbx_item:
+  - name: "item: openshift.node.mem.users_available"
+    zbx_item:
       zbx_server: "{{ ozcs_zbx_server }}"
       zbx_user: "{{ ozcs_zbx_user }}"
       zbx_password: "{{ ozcs_zbx_password }}"
@@ -38,7 +40,8 @@
     delegate_to: localhost
     run_once: true
 
-  - zbx_item:
+  - name: "item: openshift.node.cpu.used_per_user"
+    zbx_item:
       zbx_server: "{{ ozcs_zbx_server }}"
       zbx_user: "{{ ozcs_zbx_user }}"
       zbx_password: "{{ ozcs_zbx_password }}"
@@ -53,12 +56,13 @@
       zabbix_type: calculated
       interval: 3600
       delta: 0
-      params: '( 100 - last("{{ item }}:kernel.all.cpu.idle") ) / last("{{ ozcs_primary_master }}:openshift.master.user.count")'
+      params: '( 100 - last("{{ item }}:kernel.all.cpu.idle") ) / last("{{ ozcs_masters | first }}:openshift.master.user.count")'
     with_items: "{{ ozcs_infra_nodes }}"
     delegate_to: localhost
     run_once: true
 
-  - zbx_item:
+  - name: "item: openshift.node.cpu.users_available"
+    zbx_item:
       zbx_server: "{{ ozcs_zbx_server }}"
       zbx_user: "{{ ozcs_zbx_user }}"
       zbx_password: "{{ ozcs_zbx_password }}"
@@ -74,5 +78,41 @@
       delta: 0
       params: 'avg("{{ item }}:kernel.all.cpu.idle", 86400) / last("{{ item }}:openshift.node.cpu.used_per_user")'
     with_items: "{{ ozcs_infra_nodes }}"
+    delegate_to: localhost
+    run_once: true
+
+  - name: "graph: OpenShift Masters and Infra Nodes cpu.users_available"
+    zbx_graph:
+      zbx_server: "{{ ozcs_zbx_server }}"
+      zbx_user: "{{ ozcs_zbx_user }}"
+      zbx_password: "{{ ozcs_zbx_password }}"
+      name: OpenShift Masters and Infra Nodes cpu.users_available
+      width: 900
+      height: 200
+      yaxismin: "0.0000"  # MUST be quoted and with this precision otherwise it will always modify
+      ymin_type: fixed
+      graph_items:
+      - item_name: openshift.master.cpu.users_available
+        hosts: "{{ ozcs_masters }}"
+      - item_name: openshift.node.cpu.users_available
+        hosts: "{{ ozcs_infra_nodes }}"
+    delegate_to: localhost
+    run_once: true
+
+  - name: "graph: OpenShift Masters and Infra Nodes mem.users_available"
+    zbx_graph:
+      zbx_server: "{{ ozcs_zbx_server }}"
+      zbx_user: "{{ ozcs_zbx_user }}"
+      zbx_password: "{{ ozcs_zbx_password }}"
+      name: OpenShift Masters and Infra Nodes mem.users_available
+      width: 900
+      height: 200
+      yaxismin: "0.0000"  # MUST be quoted and with this precision otherwise it will always modify
+      ymin_type: fixed
+      graph_items:
+      - item_name: openshift.master.mem.users_available
+        hosts: "{{ ozcs_masters }}"
+      - item_name: openshift.node.mem.users_available
+        hosts: "{{ ozcs_infra_nodes }}"
     delegate_to: localhost
     run_once: true
