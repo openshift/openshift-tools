@@ -392,17 +392,12 @@ class OpenshiftMasterZaggClient(object):
 
         nodes_not_labeled = []
         nodes_labeled = []
-        error_found = 1
 
         for n in response['items']:
-            for o in n['metadata']:
-                if 'label' in o:
-                    error_found = 0
-            if error_found == 0:
+            if 'labels' in n['metadata']:
                 nodes_labeled.append(n['metadata']['name'])
             else:
                 nodes_not_labeled.append(n['metadata']['name'])
-            error_found = 1
 
         print "Nodes not labeled: %s\nNodes labeled: %s \n" % (nodes_not_labeled, nodes_labeled)
         self.zagg_sender.add_zabbix_keys(
