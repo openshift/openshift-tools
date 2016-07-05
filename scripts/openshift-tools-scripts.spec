@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.112
+Version:       0.0.113
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -274,6 +274,14 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Tue Jul 05 2016 Sten Turpin <sten@redhat.com> 0.0.113-1
+- added debug info for nodes not ready check (sten@redhat.com)
+- Making refresh-cache work in oscp ossh. (kwoodson@redhat.com)
+- report average cpu and memory allocations for compute nodes across the
+  cluster (jdiaz@redhat.com)
+- add flock without erroring on lock already acquired (jdiaz@redhat.com)
+- openshift event watcher/reporter (jdiaz@redhat.com)
+
 * Fri Jun 24 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.112-1
 - just in order to build new rpm (zhizhang@zhizhang-laptop-nay.redhat.com)
 
