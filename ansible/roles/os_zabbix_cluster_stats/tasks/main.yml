@@ -35,7 +35,7 @@
       zabbix_type: calculated
       interval: 3600
       delta: 0
-      params: '( 0.70 * last("{{ item }}:mem.util.available") ) / last("{{ item }}:openshift.node.mem.used_per_user")'
+      params: '( 0.70 * avg("{{ item }}:mem.util.available", 3600) ) / last("{{ item }}:openshift.node.mem.used_per_user")'
     with_items: "{{ ozcs_infra_nodes }}"
     delegate_to: localhost
     run_once: true
@@ -56,7 +56,7 @@
       zabbix_type: calculated
       interval: 3600
       delta: 0
-      params: '( 100 - last("{{ item }}:kernel.all.cpu.idle") ) / last("{{ ozcs_masters | first }}:openshift.master.user.count")'
+      params: '( 100 - avg("{{ item }}:kernel.all.cpu.idle", 3600) ) / last("{{ ozcs_masters | first }}:openshift.master.user.count")'
     with_items: "{{ ozcs_infra_nodes }}"
     delegate_to: localhost
     run_once: true
@@ -76,35 +76,17 @@
       zabbix_type: calculated
       interval: 3600
       delta: 0
-      params: 'avg("{{ item }}:kernel.all.cpu.idle", 86400) / last("{{ item }}:openshift.node.cpu.used_per_user")'
+      params: 'avg("{{ item }}:kernel.all.cpu.idle", 3600) / last("{{ item }}:openshift.node.cpu.used_per_user")'
     with_items: "{{ ozcs_infra_nodes }}"
     delegate_to: localhost
     run_once: true
 
-  - name: "graph: OpenShift Masters and Infra Nodes cpu.users_available"
+  - name: "graph: OpenShift Masters and Infra Nodes cpu and mem users_available"
     zbx_graph:
       zbx_server: "{{ ozcs_zbx_server }}"
       zbx_user: "{{ ozcs_zbx_user }}"
       zbx_password: "{{ ozcs_zbx_password }}"
-      name: "OpenShift Masters and Infra Nodes cpu.users_available [{{ ozcs_clusterid }}]"
-      width: 900
-      height: 200
-      yaxismin: "0.0000"  # MUST be quoted and with this precision otherwise it will always modify
-      ymin_type: fixed
-      graph_items:
-      - item_name: openshift.master.cpu.users_available
-        hosts: "{{ ozcs_masters }}"
-      - item_name: openshift.node.cpu.users_available
-        hosts: "{{ ozcs_infra_nodes }}"
-    delegate_to: localhost
-    run_once: true
-
-  - name: "graph: OpenShift Masters and Infra Nodes mem.users_available"
-    zbx_graph:
-      zbx_server: "{{ ozcs_zbx_server }}"
-      zbx_user: "{{ ozcs_zbx_user }}"
-      zbx_password: "{{ ozcs_zbx_password }}"
-      name: "OpenShift Masters and Infra Nodes mem.users_available [{{ ozcs_clusterid }}]"
+      name: "OpenShift Masters and Infra Nodes cpu and mem users_available [{{ ozcs_clusterid }}]"
       width: 900
       height: 200
       yaxismin: "0.0000"  # MUST be quoted and with this precision otherwise it will always modify
@@ -113,6 +95,10 @@
       - item_name: openshift.master.mem.users_available
         hosts: "{{ ozcs_masters }}"
       - item_name: openshift.node.mem.users_available
+        hosts: "{{ ozcs_infra_nodes }}"
+      - item_name: openshift.master.cpu.users_available
+        hosts: "{{ ozcs_masters }}"
+      - item_name: openshift.node.cpu.users_available
         hosts: "{{ ozcs_infra_nodes }}"
     delegate_to: localhost
     run_once: true

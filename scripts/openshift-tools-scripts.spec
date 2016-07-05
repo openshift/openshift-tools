@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.112
+Version:       0.0.113
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -28,6 +28,7 @@ cp -p monitoring/cron-send-process-count.sh %{buildroot}/usr/bin/cron-send-proce
 cp -p monitoring/cron-send-filesystem-metrics.py %{buildroot}/usr/bin/cron-send-filesystem-metrics
 cp -p monitoring/cron-send-pcp-sampled-metrics.py %{buildroot}/usr/bin/cron-send-pcp-sampled-metrics
 cp -p monitoring/ops-runner.py %{buildroot}/usr/bin/ops-runner
+cp -p monitoring/cron-event-watcher.py %{buildroot}/usr/bin/cron-event-watcher
 cp -p monitoring/cron-send-ovs-status.py %{buildroot}/usr/bin/cron-send-ovs-status
 cp -p monitoring/cron-send-pcp-ping.sh %{buildroot}/usr/bin/cron-send-pcp-ping
 cp -p monitoring/cron-send-etcd-status.py %{buildroot}/usr/bin/cron-send-etcd-status
@@ -227,6 +228,7 @@ OpenShift Tools Openshift Product Scripts
 
 %files monitoring-openshift
 %defattr(755,root,root)
+/usr/bin/cron-event-watcher
 /usr/bin/cron-send-ovs-status
 /usr/bin/cron-send-etcd-status
 /usr/bin/cron-send-os-master-metrics
@@ -274,6 +276,14 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Tue Jul 05 2016 Sten Turpin <sten@redhat.com> 0.0.113-1
+- added debug info for nodes not ready check (sten@redhat.com)
+- Making refresh-cache work in oscp ossh. (kwoodson@redhat.com)
+- report average cpu and memory allocations for compute nodes across the
+  cluster (jdiaz@redhat.com)
+- add flock without erroring on lock already acquired (jdiaz@redhat.com)
+- openshift event watcher/reporter (jdiaz@redhat.com)
+
 * Fri Jun 24 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.112-1
 - just in order to build new rpm (zhizhang@zhizhang-laptop-nay.redhat.com)
 
