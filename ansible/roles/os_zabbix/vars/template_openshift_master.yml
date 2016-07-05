@@ -357,7 +357,7 @@ g_template_openshift_master:
     value_type: int
     zabbix_type: calculated
     interval: 3600
-    params: '( 0.70 * last("mem.util.available") ) / last("openshift.master.mem.used_per_user")'
+    params: '( 0.70 * avg("mem.util.available", 3600) ) / last("openshift.master.mem.used_per_user")'
     applications:
     - Openshift Master
 
@@ -367,7 +367,7 @@ g_template_openshift_master:
     units: "%"
     zabbix_type: calculated
     interval: 3600
-    params: '( 100 - last("kernel.all.cpu.idle") ) / last("openshift.master.user.count")'
+    params: '( 100 - avg("kernel.all.cpu.idle", 3600) ) / last("openshift.master.user.count")'
     applications:
     - Openshift Master
 
@@ -376,7 +376,7 @@ g_template_openshift_master:
     value_type: int
     zabbix_type: calculated
     interval: 3600
-    params: 'avg("kernel.all.cpu.idle", 86400) / last("openshift.master.cpu.used_per_user")'
+    params: 'avg("kernel.all.cpu.idle", 3600) / last("openshift.master.cpu.used_per_user")'
     applications:
     - Openshift Master
 
