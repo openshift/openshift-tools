@@ -28,6 +28,7 @@ cp -p monitoring/cron-send-process-count.sh %{buildroot}/usr/bin/cron-send-proce
 cp -p monitoring/cron-send-filesystem-metrics.py %{buildroot}/usr/bin/cron-send-filesystem-metrics
 cp -p monitoring/cron-send-pcp-sampled-metrics.py %{buildroot}/usr/bin/cron-send-pcp-sampled-metrics
 cp -p monitoring/ops-runner.py %{buildroot}/usr/bin/ops-runner
+cp -p monitoring/cron-event-watcher.py %{buildroot}/usr/bin/cron-event-watcher
 cp -p monitoring/cron-send-ovs-status.py %{buildroot}/usr/bin/cron-send-ovs-status
 cp -p monitoring/cron-send-pcp-ping.sh %{buildroot}/usr/bin/cron-send-pcp-ping
 cp -p monitoring/cron-send-etcd-status.py %{buildroot}/usr/bin/cron-send-etcd-status
@@ -227,6 +228,7 @@ OpenShift Tools Openshift Product Scripts
 
 %files monitoring-openshift
 %defattr(755,root,root)
+/usr/bin/cron-event-watcher
 /usr/bin/cron-send-ovs-status
 /usr/bin/cron-send-etcd-status
 /usr/bin/cron-send-os-master-metrics
