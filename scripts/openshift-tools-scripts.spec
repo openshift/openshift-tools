@@ -52,8 +52,8 @@ cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-sna
 cp -p cloud/aws/ops-ec2-trim-ebs-snapshots.py %{buildroot}/usr/bin/ops-ec2-trim-ebs-snapshots
 cp -p cloud/aws/ops-ec2-add-snapshot-tag-to-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-add-snapshot-tag-to-ebs-volumes
 cp -p monitoring/cron-send-cluster-capacity.py %{buildroot}/usr/bin/cron-send-cluster-capacity
-cp -p monitoring/cron-send-cpu-mem-process.sh %{buildroot}/usr/bin/cron-send-cpu-mem-process
 cp -p monitoring/cron-send-connection-count.py %{buildroot}/usr/bin/cron-send-connection-count
+cp -p monitoring/cron-send-cpu-mem-stats.py %{buildroot}/usr/bin/cron-send-cpu-mem-stats
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -238,7 +238,8 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-openshift-pruner
 /usr/bin/cron-send-cluster-capacity
 /usr/bin/cron-send-connection-count
-/usr/bin/cron-send-cpu-mem-process
+/usr/bin/cron-send-cpu-mem-stats
+
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
