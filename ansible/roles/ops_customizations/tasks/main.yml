@@ -1,0 +1,17 @@
+---
+- name: Add ops_promt.sh in /etc/profile.d
+  template:
+    src: ops_prompt.sh.j2
+    dest: /etc/profile.d/ops_prompt.sh
+    owner: root
+    group: root
+    mode: 0644
+
+- name: setup ops specific aliases
+  lineinfile:
+    dest: /root/.bashrc
+    regexp: '^\s*alias\s*{{ item.name }}='
+    line: "alias {{ item.name }}='{{ item.alias }} '"
+  with_items:
+  - name: vi
+    alias: vim
