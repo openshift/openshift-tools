@@ -21,6 +21,7 @@ class Ossh(object):
     def __init__(self):
         self.user = None
         self.host = None
+        self.host_inventory = None
         self.file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)))
 
         # Default the config path to /etc
@@ -28,7 +29,7 @@ class Ossh(object):
                                         'openshift_tools', \
                                         'openshift_tools.conf')
 
-        self.parse_cli_args()
+        self.args, self.parser = self.parse_cli_args()
         self.parse_config_file()
 
         self.aws = awsutil.AwsUtil()
@@ -60,6 +61,7 @@ class Ossh(object):
             config = ConfigParser.ConfigParser()
             config.read(self.config_path)
 
+    # pylint: disable=no-self-use
     def parse_cli_args(self):
         ''' read cli parameters '''
         parser = argparse.ArgumentParser(description='OpenShift Online SSH Tool.')
@@ -83,9 +85,8 @@ class Ossh(object):
                             help='Forward authentication agent')
         parser.add_argument('host', nargs='?', default='')
 
-        self.args = parser.parse_args()
-        self.parser = parser
-
+        args = parser.parse_args()
+        return args, parser
 
     def process_host(self):
         '''Determine host name and user name for SSH.
@@ -107,7 +108,7 @@ class Ossh(object):
     def get_hosts(self, refresh_cache=False):
         '''Query our host inventory and return a dict where the format '''
         if refresh_cache:
-            self.host_inventory = self.aws.get_inventory(['--refresh-cache'])['_meta']['hostvars']
+            self.host_inventory = self.aws.get_inventory({'refresh_cache': '--refresh-cache'})['_meta']['hostvars']
         else:
             self.host_inventory = self.aws.get_inventory()['_meta']['hostvars']
 
