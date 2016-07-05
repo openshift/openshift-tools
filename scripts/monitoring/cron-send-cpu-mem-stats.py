@@ -77,7 +77,7 @@ def main():
             print 'No values: {0}'.format(ex)
 
 
-    if not zagg_data:
+    if zagg_data:
         zgs = ZaggSender(debug=argz.debug)
         zgs.add_zabbix_keys(zagg_data)
         zgs.send_metrics()
