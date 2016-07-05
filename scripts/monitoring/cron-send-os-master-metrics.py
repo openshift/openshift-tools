@@ -27,6 +27,8 @@
 # pylint is flagging import errors, as the bot doesn't know out openshift-tools libs
 #pylint: disable=import-error
 #pylint: disable=line-too-long
+# PV checks have a lot of locals
+#pylint: disable=too-many-locals
 
 import argparse
 from collections import defaultdict
@@ -355,12 +357,18 @@ class OpenshiftMasterZaggClient(object):
         for n in response['items']:
             has_ready_status = False
             for cond in n['status']['conditions']:
-                if cond['reason'] == "KubeletReady":
+                if self.args.verbose:
+                    print "Get ready status of %s" % n['metadata']['name']
+                if cond['type'] == "Ready":
                     has_ready_status = True
                     if cond['status'].lower() != "true":
-                        nodes_not_ready.append(n)
+                        if self.args.verbose:
+                            print "Non-true ready status of %s : %s" % (n['metadata']['name'], cond['status'])
+                        nodes_not_ready.append(n['metadata']['name'])
             if has_ready_status == False:
-                nodes_not_ready.append(n)
+                if self.args.verbose:
+                    print "Did not find ready status for %s" % n['metadata']['name']
+                nodes_not_ready.append(n['metadata']['name'])
 
 
         print "Count of nodes not schedulable: %s" % len(nodes_not_schedulable)

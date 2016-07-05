@@ -173,7 +173,7 @@ host_monitoring_cron:
 
 - name: send openshift-master /healthz status every 4 minutes
   minute: "*/4"
-  job: ops-runner -f -s 15 -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --healthz --api-ping --metrics --nodes-not-ready
+  job: ops-runner -f -s 15 -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --healthz --api-ping --metrics --nodes-not-ready -v &>> /var/log/csosmm-notready.log
 
 - name: send openshift-master local (test https://127.0.0.1) status every 5 minutes
   minute: "*/5"
