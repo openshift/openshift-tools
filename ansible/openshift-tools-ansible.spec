@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.12
+Version:        0.0.13
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,37 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Wed Jul 06 2016 Joel Smith <joesmith@redhat.com> 0.0.13-1
+- page out when app builds fail >2hr or app creates fail >1hr (sten@redhat.com)
+- Add ops_map_format filter to the ops_filters plugin (joesmith@redhat.com)
+- Made some tweaks to our users_available calculations per dmcphers feedback.
+  (twiest@redhat.com)
+- added debug info for nodes not ready check (sten@redhat.com)
+- added ops_customizations (mwoodson@redhat.com)
+- adding cpu and memory per process monitoring (ihorvath@redhat.com)
+- Added ozcs_clusterid to the name in the graphs in os_zabbix_cluster_stats
+  (twiest@redhat.com)
+- Fixed bug in os_zabbix_cluster_stats (twiest@redhat.com)
+- Added graphs for mem.users_available and cpu.users_available.
+  (twiest@redhat.com)
+- report average cpu and memory allocations for compute nodes across the
+  cluster (jdiaz@redhat.com)
+- Added features to graph_item (twiest@redhat.com)
+- Added check to ops-docker-storage-reinitialize.yml for when the docker_vg is
+  being used by another device. (twiest@redhat.com)
+- mark zabbix item as a "%%" unit (jdiaz@redhat.com)
+- Fixed bug in os_zabbix_cluster_stats (twiest@redhat.com)
+- allow passing in auto-logout value for zabbix users (jdiaz@redhat.com)
+- deal with new groups being added to a user (jdiaz@redhat.com)
+- Added os_zabbix_cluster_stats (twiest@redhat.com)
+- Added ability to create items directly on a host to the zbx_item ansible
+  module. (twiest@redhat.com)
+- add item to hold FailedScheduling event counts (jdiaz@redhat.com)
+- Fixed openshift.master.avg_running_pods_per_user (twiest@redhat.com)
+- Added metrics for openshift master memory and cpu for the number of users
+  using the system. (twiest@redhat.com)
+- First attempt at gcloud deployment-manager deployments. (kwoodson@redhat.com)
+
 * Thu Jun 23 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.12-1
 - Adding filter plugins from openshift-ansible and moved to ops
   (kwoodson@redhat.com)
