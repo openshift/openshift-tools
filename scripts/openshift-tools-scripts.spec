@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.113
+Version:       0.0.114
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -277,6 +277,13 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Wed Jul 06 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.114-1
+- adding cpu and memory per process monitoring (ihorvath@redhat.com)
+- adding new cpu/mem percentage monitoring script (ihorvath@redhat.com)
+- adding cpu and memory per process monitoring (ihorvath@redhat.com)
+- adding new cpu/mem percentage monitoring script (ihorvath@redhat.com)
+- add event watching script to RPM (jdiaz@redhat.com)
+
 * Tue Jul 05 2016 Sten Turpin <sten@redhat.com> 0.0.113-1
 - added debug info for nodes not ready check (sten@redhat.com)
 - Making refresh-cache work in oscp ossh. (kwoodson@redhat.com)
