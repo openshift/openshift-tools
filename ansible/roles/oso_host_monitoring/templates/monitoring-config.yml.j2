@@ -177,7 +177,7 @@ host_monitoring_cron:
 
 - name: send openshift-master /healthz status every 4 minutes
   minute: "*/4"
-  job: ops-runner -f -s 15 -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --healthz --api-ping --metrics --nodes-not-ready -v &>> /var/log/csosmm-notready.log
+  job: ops-runner -f -s 15 -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --healthz --api-ping --metrics --nodes-checks -v &>> /var/log/csosmm-notready.log
 
 - name: send openshift-master local (test https://127.0.0.1) status every 5 minutes
   minute: "*/5"
@@ -236,39 +236,29 @@ host_monitoring_cron:
   hour: "{{ osohm_pruning.cron.hour }}"
   minute: "{{ osohm_pruning.cron.minute }}"
   job: "ops-runner -f -s 30 -n cosp.openshift.master.prune /usr/bin/cron-openshift-pruner --image-keep-younger-than {{ osohm_pruning.image_hours_to_keep }} --image-keep-tag-revisions {{ osohm_pruning.image_revisions_to_keep }}"
-{% endif %}
 
-{% if osohm_master_primary | default(False) | bool %}
 - name: "Snapshot volumes tagged with hourly"
   hour: "*"
   minute: "0"
   job: ops-runner -f -s 90 -n oesev.snapshot.hourly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule hourly
-{% endif %}
 
-{% if osohm_master_primary | default(False) | bool %}
 - name: "Snapshot EBS volumes tagged with daily"
   hour: "0"
   minute: "0"
   job: ops-runner -f -s 90 -n oesev.snapshot.daily ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule daily
-{% endif %}
 
-{% if osohm_master_primary | default(False) | bool %}
 - name: "Snapshot EBS volumes tagged with weekly"
   weekday: "0"
   hour: "0"
   minute: "0"
   job: ops-runner -f -s 90 -n oesev.snapshot.weekly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule weekly
-{% endif %}
 
-{% if osohm_master_primary | default(False) | bool %}
 - name: "Snapshot EBS volumes tagged with monthly"
   day: "1"
   hour: "0"
   minute: "0"
   job: ops-runner -f -s 90 -n oesev.snapshot.monthly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule monthly
-{% endif %}
 
-{% if osohm_master_primary | default(False) | bool %}
 # DO NOT CHANGE without first talking to twiest.
 - name: "Trim EBS Snapshot"
   minute: "10"
