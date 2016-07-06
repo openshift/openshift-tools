@@ -8,6 +8,7 @@ Custom filters for operations use
 import pdb
 from ansible import errors
 from collections import Mapping
+from jinja2.utils import soft_unicode
 
 class FilterModule(object):
     """ Custom ansible filters """
@@ -130,6 +131,18 @@ class FilterModule(object):
 
         return retval
 
+    # adapted from https://gist.github.com/halberom/b1f6eaed16dba1b298e8
+
+    @staticmethod
+    def ops_map_format(value, pattern, *args):
+        """
+        Apply python string formatting on an object:
+        .. sourcecode:: jinja
+            {{ my_list | map("ops_map_format", "Item {0}") | list }}
+                -> [ "Item 1", "Item 2", "Item 3" ]
+        """
+        return soft_unicode(pattern).format(value, *args)
+
     def filters(self):
         """ returns a mapping of filters to methods """
         return {
@@ -140,4 +153,5 @@ class FilterModule(object):
             "ops_get_attr": self.ops_get_attr,
             "ops_collect": self.ops_collect,
             "ops_get_hosts_from_hostvars": self.ops_get_hosts_from_hostvars,
+            "ops_map_format": self.ops_map_format,
         }
