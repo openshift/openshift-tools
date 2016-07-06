@@ -14,9 +14,11 @@ Role Variables
 osohm_zagg_web_url: where to contact monitoring service
 osohm_host_monitoring: name of host monitoring container
 osohm_zagg_client: name of container with zabbix client
+osohm_monitor_dnsmasq: Should dnsmasq be monitored on the nodes. `True` or `False`
 osohm_docker_registry_url: docker repository containing above containers
 osohm_default_zagg_server_user: login info to zabbix server
 osohm_default_zagg_password: password to zabbix server
+osohm_monitor_dnsmasq: Should dnsmasq be monitored on the nodes. `True` or `False`
 osohm_snapshot_aws_access_key_id: The AWS access key to use for the snapshotter
 osohm_snapshot_aws_secret_access_key: The AWS secret access key to use for the snapshotter
 
