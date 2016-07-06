@@ -300,11 +300,13 @@ class OpenshiftClusterCapacity(object):
 
         avg_mem_compute_nodes = self.get_avg_mem_compute_nodes()
         print "Avg mem % across compute nodes: {}".format(avg_mem_compute_nodes)
-        self.zagg_sender.add_zabbix_keys({zbx_key_avg_mem: avg_mem_compute_nodes})
+        self.zagg_sender.add_zabbix_keys({zbx_key_avg_mem:
+                                          int(avg_mem_compute_nodes)})
 
         avg_cpu_compute_nodes = self.get_avg_cpu_compute_nodes()
         print "Avg cpu % across compute nodes: {}".format(avg_cpu_compute_nodes)
-        self.zagg_sender.add_zabbix_keys({zbx_key_avg_cpu: avg_cpu_compute_nodes})
+        self.zagg_sender.add_zabbix_keys({zbx_key_avg_cpu:
+                                          int(avg_cpu_compute_nodes)})
 
 
 if __name__ == '__main__':
