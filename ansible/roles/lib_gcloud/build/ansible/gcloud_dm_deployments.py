@@ -10,7 +10,7 @@ def main():
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             name=dict(default=None, type='str'),
-            config=dict(default=None, type='str'),
+            config=dict(default=None),
             opts=dict(default=None, type='dict'),
         ),
         supports_check_mode=True,
