@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.116
+Version:       0.0.117
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -279,6 +279,12 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Thu Jul 07 2016 Russell Harrison <rharriso@redhat.com> 0.0.117-1
+- Removed unused sys import (rharriso@redhat.com)
+- Remove rev bump (rharriso@redhat.com)
+- Add basic dnsmasq monitoring template and cron configuration
+  (rharriso@redhat.com)
+
 * Thu Jul 07 2016 Joel Diaz <jdiaz@redhat.com> 0.0.116-1
 - add new cluster-wide calculations 1) cluster-wide max allocatable memory (for
   compute nodes) 2) cluster-wide max cpu (for compute nodes) in milicores 3)
