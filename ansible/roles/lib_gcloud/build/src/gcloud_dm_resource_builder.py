@@ -26,6 +26,7 @@ class GcloudResourceBuilder(object):
                                  metadata,
                                  disk_info,
                                  network_info,
+                                 provisioning=False,
                                 ):
         '''build instance resources and return them in a list'''
 
@@ -58,6 +59,9 @@ class GcloudResourceBuilder(object):
                                         nic.get('access_config_type', None))
 
                 nics.append(_nic.get_instance_interface())
+
+            if provisioning:
+                metadata['new_provision'] = 'True'
 
             inst = VMInstance(_name,
                               self.project,
