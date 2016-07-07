@@ -48,6 +48,9 @@ zagg_client_config:
     templates:
     - Template Heartbeat        # So we can send hearbeats
     - Template OS Linux         # So we can send host related metrics
+{% if osohm_host_type == 'node' and osohm_monitor_dnsmasq|bool %}
+    - Template dnsmasq          # So we can monitor dnsmasq
+{% endif %}
     - Template Docker           # So we can send docker related metrics
 {% if osohm_host_type == 'master' or osohm_host_type == 'node' %}
     - Template Openshift Node   # So we can send node related metrics
@@ -119,6 +122,18 @@ host_monitoring_cron:
 - name: run docker dns test on existing containers
   minute: "*/5"
   job: ops-runner -f -s 15 -n csdedr.docker.existing.dns.resolution /usr/bin/cron-send-docker-existing-dns-resolution
+
+{% if osohm_host_type == 'node' and osohm_monitor_dnsmasq|bool %}
+{# dnsmasq checks #}
+- name: send dnsmasq process count
+  minute: "*/2"
+  job: ops-runner -f -s 15 -n cspc.openshift.dnsmasq.process.count /usr/bin/cron-send-process-count '^dnsmasq' openshift.dnsmasq.process.count
+
+- name: send openshift-node dnsmasq status every 4 minutes
+  minute: "*/4"
+  job: ops-runner -f -s 50 -n csosms.openshift.dnsmasq /usr/bin/cron-send-os-dnsmasq-checks
+{# end if dnsmasq #}
+{% endif %}
 
 {% if osohm_host_type == 'master' or osohm_host_type == 'node' %}
 {# Openshift node checks #}
