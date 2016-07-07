@@ -216,92 +216,116 @@ class Utils(object):
 
 
 # pylint: disable=too-many-instance-attributes
-class GcloudDeploymentManager(GcloudCLI):
-    ''' Class to wrap the gcloud deployment manager '''
+class GcloudComputeImage(GcloudCLI):
+    ''' Class to wrap the gcloud compute images command'''
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
     def __init__(self,
-                 dname,
-                 config=None,
-                 opts=None,
-                 credentials=None,
+                 iname=None,
+                 desc=None,
+                 family=None,
+                 licenses=None,
+                 source_disk=None,
+                 source_disk_zone=None,
+                 source_uri=None,
                  verbose=False):
         ''' Constructor for OCVolume '''
-        super(GcloudDeploymentManager, self).__init__()
-        self.dname = dname
-        self.opts = opts
-        self.config = config
-        self.credentials = credentials
+        super(GcloudComputeImage, self).__init__()
+        self.image_name = iname
+        self.desc = desc
+        self.family = family
+        self.licenses = licenses
+        self.source_disk = source_disk
+        self.source_disk_zone = source_disk_zone
+        self.source_uri = source_uri
+        self.verbose = verbose
 
-    def list_deployments(self):
-        '''return deployment'''
-        results = self._list_deployments()
+    def list_images(self, image_name=None):
+        '''return a list of images'''
+        results = self._list_images(image_name)
         if results['returncode'] == 0:
-            results['results'] = results['results'].strip().split('\n')
+            results['results'] = results['results'].strip().split('\n')[1:]
 
         return results
 
     def exists(self):
-        ''' return whether a deployment exists '''
-        deployments = self.list_deployments()
-        if deployments['returncode'] != 0:
-            raise GcloudCLIError('Something went wrong.  Results: %s' % deployments['stderr'])
-        return self.dname in deployments['results']
+        ''' return whether an image exists '''
+        images = self.list_images()
+        if images['returncode'] != 0:
+            if 'was not found' in images['stderr']:
+                images['returncode'] = 0
+                return images
+            raise GcloudCLIError('Something went wrong.  Results: %s' % images['stderr'])
 
+        return any([self.image_name in line for line in images['results']])
 
-    def delete(self):
-        '''delete a deployment'''
-        return self._delete_deployment(self.dname)
+    def delete_image(self):
+        '''delete an image'''
+        return self._delete_image(self.image_name)
 
-    def create_deployment(self):
-        '''create a deployment'''
-        return self._create_deployment(self.dname, self.config, self.opts)
-
-    def update_deployment(self):
-        '''update a deployment'''
-        return self._update_deployment(self.dname, self.config, self.opts)
+    def create_image(self):
+        '''create an image'''
+        image_info = {}
+        image_info['description'] = self.desc
+        image_info['family'] = self.family
+        image_info['licenses'] = self.licenses
+        image_info['source-disk'] = self.source_disk
+        image_info['source-disk-zone'] = self.source_disk_zone
+        image_info['source-uri'] = self.source_uri
+        return self._create_image(self.image_name, image_info)
 
 # vim: expandtab:tabstop=4:shiftwidth=4
 
 #pylint: disable=too-many-branches
 def main():
-    ''' ansible module for gcloud deployment-manager deployments '''
+    ''' ansible module for gcloud compute images'''
     module = AnsibleModule(
         argument_spec=dict(
             # credentials
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             name=dict(default=None, type='str'),
-            config=dict(default=None),
-            opts=dict(default=None, type='dict'),
+            description=dict(default=None, type='str'),
+            family=dict(default=None, type='str'),
+            licenses=dict(default=None, type='list'),
+            source_disk=dict(default=None, type='str'),
+            source_disk_zone=dict(default=None, type='str'),
+            source_uri=dict(default=None, type='str'),
         ),
         supports_check_mode=True,
     )
-    gconfig = GcloudDeploymentManager(module.params['name'],
-                                      module.params['config'],
-                                      module.params['opts'])
+    gimage = GcloudComputeImage(module.params['name'],
+                                module.params['description'],
+                                module.params['family'],
+                                module.params['licenses'],
+                                module.params['source_disk'],
+                                module.params['source_disk_zone'],
+                                module.params['source_uri'])
 
     state = module.params['state']
 
-    api_rval = gconfig.list_deployments()
+    api_rval = gimage.list_images(module.params['name'])
 
     #####
     # Get
     #####
     if state == 'list':
+        if api_rval['returncode'] != 0:
+            module.fail_json(msg=api_rval, state="list")
+
         module.exit_json(changed=False, results=api_rval['results'], state="list")
 
     ########
     # Delete
     ########
     if state == 'absent':
-        if gconfig.exists():
+        if gimage.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a delete.')
 
-            api_rval = gconfig.delete()
+            api_rval = gimage.delete_image()
 
             module.exit_json(changed=True, results=api_rval, state="absent")
         module.exit_json(changed=False, state="absent")
@@ -310,29 +334,20 @@ def main():
         ########
         # Create
         ########
-        if not gconfig.exists():
+        if not gimage.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a create.')
 
             # Create it here
-            api_rval = gconfig.create_deployment()
+            api_rval = gimage.create_image()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
 
             module.exit_json(changed=True, results=api_rval, state="present")
 
-        ########
-        # Update
-        ########
-        api_rval = gconfig.update_deployment()
-
-        if api_rval['returncode'] != 0:
-            module.fail_json(msg=api_rval)
-
-        module.exit_json(changed=True, results=api_rval, state="present")
-
+        module.exit_json(changed=False, results=api_rval, state="present")
 
     module.exit_json(failed=True,
                      changed=False,
@@ -340,8 +355,8 @@ def main():
                      state="unknown")
 
 #if __name__ == '__main__':
-#    gcloud = GcloudDeploymentManager('optestgcp')
-#    print gcloud.list_deployments()
+#    gcloud = GcloudComputeImage('rhel-7-base-2016-06-10')
+#    print gcloud.list_images()
 
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled

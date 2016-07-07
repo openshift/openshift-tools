@@ -38,6 +38,10 @@ FILES = {'gcloud_dm_deployments.py': ['lib/base.py',
                                            'src/gcloud_dm_resource_builder.py',
                                            'ansible/gcloud_dm_resource_builder.py',
                                           ],
+         'gcloud_compute_image.py': ['lib/base.py',
+                                     'src/gcloud_compute_image.py',
+                                     'ansible/gcloud_compute_image.py',
+                                    ],
         }
 
 
