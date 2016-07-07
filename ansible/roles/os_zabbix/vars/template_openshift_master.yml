@@ -2,38 +2,98 @@
 g_template_openshift_master:
   name: Template Openshift Master
   zitems:
-  - key: openshift.master.cluster.memory_allocation
-    description: "Percentage of allocatable memory (cluster-wide) that has been allocated/granted"
+  - key: openshift.master.cluster.compute_nodes.scheduled.cpu
+    description: "Scheduled CPU (millicores) for compute nodes"
+    value_type: int
+    applications:
+    - Openshift Cluster
+
+  - key: openshift.master.cluster.compute_nodes.unscheduled.cpu
+    description: "Unscheduled CPU (millicores) for compute nodes"
+    value_type: int
+    applications:
+    - Openshift Cluster
+
+  - key: openshift.master.cluster.compute_nodes.max_schedulable.cpu
+    description: "Maximum (total) schedulable CPU (millicores) for compute nodes"
+    value_type: int
+    applications:
+    - Openshift Cluster
+
+  - key: openshift.master.cluster.compute_nodes.scheduled.cpu_pct
+    description: "Percent scheduled CPU for compute nodes"
     value_type: int
     units: "%"
     applications:
-    - Openshift Master
+    - Openshift Cluster
+
+  - key: openshift.master.cluster.compute_nodes.unscheduled.cpu_pct
+    description: "Percent unscheduled CPU for compute nodes"
+    value_type: int
+    units: "%"
+    applications:
+    - Openshift Cluster
+
+  - key: openshift.master.cluster.compute_nodes.oversubscribed.cpu_pct
+    description: "Percent oversubscribed CPU for compute nodes"
+    value_type: float
+    units: "%"
+    applications:
+    - Openshift Cluster
+
+  - key: openshift.master.cluster.compute_nodes.scheduled.mem
+    description: "Scheduled mem for compute nodes"
+    value_type: int
+    units: B
+    applications:
+    - Openshift Cluster
+
+  - key: openshift.master.cluster.compute_nodes.unscheduled.mem
+    description: "Unscheduled mem for compute nodes"
+    value_type: int
+    units: B
+    applications:
+    - Openshift Cluster
+
+  - key: openshift.master.cluster.compute_nodes.max_schedulable.mem
+    description: "Maximum (total) schedulable memory for compute nodes"
+    value_type: int
+    units: B
+    applications:
+    - Openshift Cluster
+
+  - key: openshift.master.cluster.compute_nodes.scheduled.mem_pct
+    description: "Percent scheduled mem for compute nodes"
+    value_type: int
+    units: "%"
+    applications:
+    - Openshift Cluster
+
+  - key: openshift.master.cluster.compute_nodes.unscheduled.mem_pct
+    description: "Percent unscheduled mem for compute nodes"
+    value_type: int
+    units: "%"
+    applications:
+    - Openshift Cluster
+
+  - key: openshift.master.cluster.compute_nodes.oversubscribed.mem_pct
+    description: "Percent oversubscribed mem for compute nodes"
+    value_type: float
+    units: "%"
+    applications:
+    - Openshift Cluster
 
   - key: openshift.master.cluster.max_mem_pods_schedulable
-    description: "Number of max memory pods that can be scheduled (cluster-wide)"
+    description: "Number of max memory pods that can be scheduled for compute nodes"
     value_type: int
     applications:
-    - Openshift Master
-
-  - key: openshift.master.cluster.compute_nodes.allocated.mem.average
-    description: "Average of memory percentage allocated across compute nodes"
-    value_type: int
-    units: "%"
-    applications:
-    - Openshift Master
-
-  - key: openshift.master.cluster.compute_nodes.allocated.cpu.average
-    description: "Average of cpu percentage allocated across compute nodes"
-    value_type: int
-    units: "%"
-    applications:
-    - Openshift Master
+    - Openshift Cluster
 
   - key: openshift.master.cluster.event.failedscheduling
     description: "Count of FailedScheduling events reported"
     value_type: int
     applications:
-    - Openshift Master
+    - Openshift Cluster
 
   - name: openshift.master.app.create
     applications:
@@ -94,7 +154,7 @@ g_template_openshift_master:
     description: Shows number of users in a cluster
     value_type: int
     applications:
-    - Openshift Master
+    - Openshift Cluster
 
   - key: openshift.master.pod.running.count
     description: Shows number of pods running
@@ -118,13 +178,13 @@ g_template_openshift_master:
     description: Shows the total number of nodes found in the Openshift Cluster
     value_type: int
     applications:
-    - Openshift Master
+    - Openshift Cluster
 
   - key: openshift.project.count
     description: Shows number of projects on a cluster
     value_type: int
     applications:
-    - Openshift Master
+    - Openshift Cluster
 
   - key: openshift.master.pv.space.total
     description: Shows the total space of pv
@@ -142,31 +202,31 @@ g_template_openshift_master:
     description: Total number of Persistent Volumes in the Openshift Cluster
     value_type: int
     applications:
-    - Openshift Master
+    - Openshift Cluster
 
   - key: openshift.master.pv.available.count
     description: Total number of Available Persistent Volumes in the Openshift Cluster
     value_type: int
     applications:
-    - Openshift Master
+    - Openshift Cluster
 
   - key: openshift.master.pv.released.count
     description: Total number of Released Persistent Volumes in the Openshift Cluster
     value_type: int
     applications:
-    - Openshift Master
+    - Openshift Cluster
 
   - key: openshift.master.pv.bound.count
     description: Total number of Bound Persistent Volumes in the Openshift Cluster
     value_type: int
     applications:
-    - Openshift Master
+    - Openshift Cluster
 
   - key: openshift.master.pv.failed.count
     description: Total number of Failed Persistent Volumes in the Openshift Cluster
     value_type: int
     applications:
-    - Openshift Master
+    - Openshift Cluster
 
   - key: openshift.master.skydns.port.open
     description: State of the SkyDNS port open and listening
@@ -270,6 +330,25 @@ g_template_openshift_master:
     applications:
     - Openshift Etcd
 
+  - key: openshift.etcd.process.cpu
+    description: Show etcd process cpu usage
+    value_type: float
+    units: "%"
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.process.mem.vms
+    description: "Show etcd process memory (vms/virt) usage"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.process.mem.rss
+    description: "Show etcd process memory (rss) usage"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
   - key: openshift.master.metric.ping
     description: "This check verifies that the https://master/metrics check is alive and communicating properly."
     value_type: int
@@ -280,13 +359,19 @@ g_template_openshift_master:
     description: "This check shows how many nodes in a cluster are in NotReady state."
     value_type: int
     applications:
-    - Openshift Master
+    - Openshift Cluster
 
   - key: openshift.master.nodesnotschedulable.count
     description: "This check shows how many nodes in a cluster are not schedulable."
     value_type: int
     applications:
-    - Openshift Master
+    - Openshift Cluster
+  
+  - key: openshift.master.nodesnotlabeled.count
+    description: This check shows how many nodes in a cluster are not labeled.
+    value_type: int
+    applications:
+    - Openshift Cluster
 
   - key: openshift.master.apiserver.latency.summary.pods.quantile.list.5
     description: "Value from https://master/metrics.  This is the time, in miliseconds, that 50% of the pod operations have taken to completed."
@@ -350,16 +435,16 @@ g_template_openshift_master:
     interval: 3600
     params: '( last("mem.physmem") - min("mem.util.available", 86400) ) /  last("openshift.master.user.count")'
     applications:
-    - Openshift Master
+    - Openshift Cluster
 
   - key: openshift.master.mem.users_available
-    description: "The number of users that can be added before the master will run out of memory."
+    description: "The number of users that can be added to the cluster before the master will run out of memory."
     value_type: int
     zabbix_type: calculated
     interval: 3600
     params: '( 0.70 * avg("mem.util.available", 3600) ) / last("openshift.master.mem.used_per_user")'
     applications:
-    - Openshift Master
+    - Openshift Cluster
 
   - key: openshift.master.cpu.used_per_user
     description: "The master's cpu used on a per user basis to support the cluster."
@@ -369,7 +454,7 @@ g_template_openshift_master:
     interval: 3600
     params: '( 100 - avg("kernel.all.cpu.idle", 3600) ) / last("openshift.master.user.count")'
     applications:
-    - Openshift Master
+    - Openshift Cluster
 
   - key: openshift.master.cpu.users_available
     description: "The number of users that can be added before the master will run out of cpu."
@@ -386,6 +471,44 @@ g_template_openshift_master:
     zabbix_type: calculated
     interval: 3600
     params: 'last("openshift.master.pod.user.running.count") / last("openshift.master.user.count")'
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.api.process.cpu
+    description: Show openshift master api process cpu usage
+    value_type: float
+    units: "%"
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.api.process.mem.vms
+    description: "Show openshift master api process memory (vms/virt) usage"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.api.process.mem.rss
+    description: "Show openshift master api process memory (rss) usage"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.controllers.process.cpu
+    description: Show openshift master controllers process cpu usage
+    value_type: float
+    units: "%"
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.controllers.process.mem.vms
+    description: "Show openshift master controllers process memory (vms/virt) usage"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.controllers.process.mem.rss
+    description: "Show openshift master controllers process memory (rss) usage"
+    value_type: int
     applications:
     - Openshift Master
 
@@ -471,7 +594,7 @@ g_template_openshift_master:
     dependencies:
     - 'Openshift Master process not running on {HOST.NAME}'
     description: The application create loop has failed 4 or more times in the last hour
-    priority: avg
+    priority: high
 
   - name: 'Application with build creation has failed multiple times in the last 2 hour on {HOST.NAME}'
     expression: '{Template Openshift Master:openshift.master.app.build.create.sum(2h)}>3'
@@ -479,7 +602,7 @@ g_template_openshift_master:
     dependencies:
     - 'Openshift Master process not running on {HOST.NAME}'
     description: The application create loop has failed 4 or more times in the last hour
-    priority: avg
+    priority: high
 
   - name: 'Openshift Master API health check is failing on {HOST.NAME}'
     expression: '{Template Openshift Master:openshift.master.api.healthz.max(#3)}<1'
@@ -528,6 +651,13 @@ g_template_openshift_master:
 
   - name: 'Hosts not ready according to {HOST.NAME}'
     expression: '{Template Openshift Master:openshift.master.nodesnotready.count.last(#2)}>0'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node.asciidoc'
+    dependencies:
+    - 'Openshift Master process not running on {HOST.NAME}'
+    priority: high
+
+  - name: 'Hosts not labeled according to {HOST.NAME}'
+    expression: '{Template Openshift Master:openshift.master.nodesnotlabeled.count.last(#2)}>0'
     url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node.asciidoc'
     dependencies:
     - 'Openshift Master process not running on {HOST.NAME}'

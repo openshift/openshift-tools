@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.113
+Version:       0.0.115
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -52,8 +52,8 @@ cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-sna
 cp -p cloud/aws/ops-ec2-trim-ebs-snapshots.py %{buildroot}/usr/bin/ops-ec2-trim-ebs-snapshots
 cp -p cloud/aws/ops-ec2-add-snapshot-tag-to-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-add-snapshot-tag-to-ebs-volumes
 cp -p monitoring/cron-send-cluster-capacity.py %{buildroot}/usr/bin/cron-send-cluster-capacity
-cp -p monitoring/cron-send-cpu-mem-process.sh %{buildroot}/usr/bin/cron-send-cpu-mem-process
 cp -p monitoring/cron-send-connection-count.py %{buildroot}/usr/bin/cron-send-connection-count
+cp -p monitoring/cron-send-cpu-mem-stats.py %{buildroot}/usr/bin/cron-send-cpu-mem-stats
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -238,7 +238,8 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-openshift-pruner
 /usr/bin/cron-send-cluster-capacity
 /usr/bin/cron-send-connection-count
-/usr/bin/cron-send-cpu-mem-process
+/usr/bin/cron-send-cpu-mem-stats
+
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -276,6 +277,19 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Wed Jul 06 2016 Joel Diaz <jdiaz@redhat.com> 0.0.115-1
+- Illiminated unnecessary for loop (benpack101@gmail.com)
+- Fixed pylint issues (benpack101@gmail.com)
+- Added check for nodes without labels (bshpurke@redhat.com)
+- send integers to zabbix (that's what it expects) (jdiaz@redhat.com)
+
+* Wed Jul 06 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.114-1
+- adding cpu and memory per process monitoring (ihorvath@redhat.com)
+- adding new cpu/mem percentage monitoring script (ihorvath@redhat.com)
+- adding cpu and memory per process monitoring (ihorvath@redhat.com)
+- adding new cpu/mem percentage monitoring script (ihorvath@redhat.com)
+- add event watching script to RPM (jdiaz@redhat.com)
+
 * Tue Jul 05 2016 Sten Turpin <sten@redhat.com> 0.0.113-1
 - added debug info for nodes not ready check (sten@redhat.com)
 - Making refresh-cache work in oscp ossh. (kwoodson@redhat.com)
