@@ -13,6 +13,9 @@
 - include_vars: template_os_linux.yml
   tags:
   - linux
+- include_vars: template_dnsmasq.yml
+  tags:
+  - dnsmasq
 - include_vars: template_docker.yml
   tags:
   - docker
@@ -64,6 +67,16 @@
     password: "{{ ozb_password }}"
   tags:
   - linux
+
+- name: Include Template dnsmasq
+  include: ../../lib_zabbix/tasks/create_template.yml
+  vars:
+    template: "{{ g_template_dnsmasq }}"
+    server: "{{ ozb_server }}"
+    user: "{{ ozb_user }}"
+    password: "{{ ozb_password }}"
+  tags:
+  - dnsmasq
 
 - name: Include Template docker
   include: ../../lib_zabbix/tasks/create_template.yml

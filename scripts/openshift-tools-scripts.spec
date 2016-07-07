@@ -43,6 +43,7 @@ cp -p monitoring/cron-send-docker-existing-dns-resolution.py %{buildroot}/usr/bi
 cp -p monitoring/cron-send-registry-checks.py %{buildroot}/usr/bin/cron-send-registry-checks
 cp -p monitoring/ops-zbx-event-processor.py %{buildroot}/usr/bin/ops-zbx-event-processor
 cp -p monitoring/cron-send-os-skydns-checks.py %{buildroot}/usr/bin/cron-send-os-skydns-checks
+cp -p monitoring/cron-send-os-dnsmasq-checks.py %{buildroot}/usr/bin/cron-send-os-dnsmasq-checks
 cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
 cp -p monitoring/cron-openshift-pruner.py %{buildroot}/usr/bin/cron-openshift-pruner
@@ -233,6 +234,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-etcd-status
 /usr/bin/cron-send-os-master-metrics
 /usr/bin/cron-send-create-app
+/usr/bin/cron-send-os-dnsmasq-checks
 /usr/bin/cron-send-os-skydns-checks
 /usr/bin/cron-send-registry-checks
 /usr/bin/cron-openshift-pruner
@@ -320,7 +322,7 @@ OpenShift Tools AWS specific scripts
 - move the script to right rpm (zhizhang@zhizhang-laptop-nay.redhat.com)
 
 * Thu Jun 23 2016 zhiming
-- 
+-
 
 * Wed Jun 22 2016 Joel Diaz <jdiaz@redhat.com> 0.0.108-1
 - catch ocassional exception on container cleanup (and retry)
@@ -372,7 +374,7 @@ OpenShift Tools AWS specific scripts
 - add cpu check for process (zhizhang@zhizhang-laptop-nay.redhat.com)
 
 * Tue May 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.95-1
-- 
+-
 
 * Fri May 27 2016 Joel Diaz <jdiaz@redhat.com> 0.0.94-1
 - cluster-capacity script relies on base python-openshift-tools/conversions.py
@@ -558,7 +560,7 @@ OpenShift Tools AWS specific scripts
   (jdiaz@redhat.com)
 
 * Wed Jan 27 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.57-1
-- 
+-
 
 * Tue Jan 26 2016 Joel Diaz <jdiaz@redhat.com> 0.0.56-1
 - improve quoting of passed in arguments (jdiaz@redhat.com)
@@ -696,7 +698,7 @@ OpenShift Tools AWS specific scripts
   to add cron job for checking pcp ping state (jdiaz@redhat.com)
 
 * Mon Nov 02 2015 Unknown name 0.0.20-1
-- 
+-
 
 * Fri Oct 30 2015 Unknown name 0.0.19-1
 - Update cron-send-project-count.sh (gburges@redhat.com)
@@ -749,7 +751,7 @@ OpenShift Tools AWS specific scripts
 - Combined the two graphs and refactored some things (jessek@redhat.com)
 
 * Fri Jul 31 2015 Matt Woodson <mwoodson@redhat.com> 0.0.6-1
-- 
+-
 
 * Fri Jul 31 2015 Thomas Wiest <twiest@redhat.com> 0.0.5-1
 - added zagg to zagg capability to ops-zagg-processor (twiest@redhat.com)
