@@ -51,6 +51,10 @@ class Ohi(object):
             self.aws.print_host_types()
             return 0
 
+        if self.args.list_clusters:
+            self.aws.print_cluster_list()
+            return 0
+
         if self.args.v3:
             version = '3'
         elif self.args.all_versions:
@@ -101,6 +105,7 @@ class Ohi(object):
         parser = argparse.ArgumentParser(description='OpenShift Host Inventory')
 
         parser.add_argument('--list-host-types', default=False, action='store_true', help='List all of the host types')
+        parser.add_argument('--list-clusters', default=False, action='store_true', help='List all of the clusters')
         parser.add_argument('--list', default=False, action='store_true', help='List all hosts')
 
         parser.add_argument('-c', '--cluster', action="append", help="Which clusterid to use")

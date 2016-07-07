@@ -167,6 +167,13 @@ class AwsUtil(object):
                 print  ht_format_str % host_type
         print
 
+    def print_cluster_list(self):
+        """Gets the list of clusters and outputs them"""
+        clusters = self.get_clusters()
+
+        for cluster in clusters:
+            print cluster
+
     def resolve_host_type(self, host_type):
         """Converts a host-type alias into a host-type.
 
