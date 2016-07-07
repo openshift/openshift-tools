@@ -107,6 +107,54 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
+    def _list_manifests(self, deployment, mname=None):
+        ''' list manifests
+            if a name is specified then perform a describe
+        '''
+        cmd = ['deployment-manager', 'manifests', '--deployment', deployment]
+        if mname:
+            cmd.extend(['describe', mname])
+        else:
+            cmd.append('list')
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _delete_address(self, aname):
+        ''' list addresses
+            if a name is specified then perform a describe
+        '''
+        cmd = ['compute', 'addresses', 'delete', aname]
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_addresses(self, aname=None):
+        ''' list addresses
+            if a name is specified then perform a describe
+        '''
+        cmd = ['compute', 'addresses']
+        if aname:
+            cmd.extend(['describe', aname])
+        else:
+            cmd.append('list')
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _create_address(self, address_name, address_info, address=None, isglobal=False):
+        ''' create a deployment'''
+        cmd = ['compute', 'addresses', 'create', address_name]
+
+        if address:
+            cmd.append(address)
+
+        if isglobal:
+            cmd.append('--global')
+
+        for key, val in address_info.items():
+            if val:
+                cmd.extend(['--%s' % key, val])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
     def gcloud_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for gcloud '''
         cmds = ['/usr/bin/gcloud']
@@ -251,16 +299,22 @@ class Address(GCPResource):
     resource_type = "compute.v1.address"
 
     # pylint: disable=too-many-arguments
-    def __init__(self, rname, project, zone, desc, region):
+    def __init__(self, rname, project, zone, desc, region, ipaddr=None):
         '''constructor for gcp resource'''
         super(Address, self).__init__(rname, Address.resource_type, project, zone)
         self._desc = desc
+        self._ipaddr = ipaddr
         self._region = region
 
     @property
     def description(self):
         '''property for resource description'''
         return self._desc
+
+    @property
+    def ip_address(self):
+        '''property for resource ip address'''
+        return self._ipaddr
 
     @property
     def region(self):
