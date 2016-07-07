@@ -109,7 +109,7 @@ class GcloudCLI(object):
 
     def gcloud_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for gcloud '''
-        cmds = ['/home/kwoodson/tmp/google-cloud-sdk/bin/gcloud']
+        cmds = ['/usr/bin/gcloud']
 
         cmds.extend(cmd)
 
