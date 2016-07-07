@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.116
+Version:       0.0.115
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -279,9 +279,6 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
-* Thr Jul 07 2016 Russell Harrison <rharriso@redhat.com> 0.0.116-1
-- Adding check script for dnsmasq
-
 * Wed Jul 06 2016 Joel Diaz <jdiaz@redhat.com> 0.0.115-1
 - Illiminated unnecessary for loop (benpack101@gmail.com)
 - Fixed pylint issues (benpack101@gmail.com)
