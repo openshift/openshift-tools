@@ -8,9 +8,6 @@ exclude_pattern_list=(
  'ansible/inventory/gce/hosts/gce.py'
 )
 
-# Use the openshift-ansible .pylintrc
-/usr/bin/wget https://raw.githubusercontent.com/openshift/openshift-ansible/master/git/.pylintrc -O jenkins/.pylintrc -q
-
 oldrev=$1
 newrev=$2
 
