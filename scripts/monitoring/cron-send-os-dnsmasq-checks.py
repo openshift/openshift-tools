@@ -36,7 +36,6 @@ from dns import resolver
 from dns import exception as dns_exception
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 import socket
-import sys
 
 class DnsmasqZaggClient(object):
     """ Checks for the dnsmasq local DNS cache """
