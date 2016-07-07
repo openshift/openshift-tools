@@ -25,6 +25,37 @@ class GcloudCLI(object):
         self.credentials = credentials
         self.verbose = verbose
 
+    def _create_image(self, image_name, image_info):
+        '''create an image name'''
+        cmd = ['compute', 'images', 'create', image_name]
+        for key, val in image_info.items():
+            if val:
+                cmd.extend(['--%s' % key, val])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _delete_image(self, image_name):
+        '''delete image by name '''
+        cmd = ['compute', 'images', 'delete', image_name]
+        if image_name:
+            cmd.extend(['describe', image_name])
+        else:
+            cmd.append('list')
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_images(self, image_name=None):
+        '''list images.
+           if name is supplied perform a describe and return
+        '''
+        cmd = ['compute', 'images']
+        if image_name:
+            cmd.extend(['describe', image_name])
+        else:
+            cmd.append('list')
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
     def _list_deployments(self, simple=True):
         '''list deployments by name '''
         cmd = ['deployment-manager', 'deployments', 'list']
