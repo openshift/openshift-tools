@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #     ___ ___ _  _ ___ ___    _ _____ ___ ___
 #    / __| __| \| | __| _ \  /_\_   _| __|   \
 #   | (_ | _|| .` | _||   / / _ \| | | _|| |) |
@@ -913,6 +913,7 @@ class GcloudResourceBuilder(object):
                                  metadata,
                                  disk_info,
                                  network_info,
+                                 provisioning=False,
                                 ):
         '''build instance resources and return them in a list'''
 
@@ -945,6 +946,9 @@ class GcloudResourceBuilder(object):
                                         nic.get('access_config_type', None))
 
                 nics.append(_nic.get_instance_interface())
+
+            if provisioning:
+                metadata['new_provision'] = 'True'
 
             inst = VMInstance(_name,
                               self.project,
@@ -1037,6 +1041,7 @@ def main():
             firewall_rules=dict(default=[], type='list'),
             forwarding_rules=dict(default=[], type='list'),
             instances=dict(default=None, type='dict'),
+            provisioning=dict(default=False, type='bool'),
             instance_counts=dict(default=None, type='dict'),
             networks=dict(default=[], type='list'),
             target_pools=dict(default=[], type='list'),
@@ -1051,7 +1056,6 @@ def main():
         ],
         supports_check_mode=True,
     )
-    # TODO
     gcloud = GcloudResourceBuilder(module.params['accountid'],
                                    module.params['clusterid'],
                                    module.params['sublocation'],
@@ -1128,7 +1132,8 @@ def main():
                                                              properties['machine_type'],
                                                              properties['metadata'],
                                                              properties['disk_info'],
-                                                             properties['network_interfaces']))
+                                                             properties['network_interfaces'],
+                                                             module.params['provisioning']))
 
         # disks
         resources.extend(gcloud.build_disks(module.params.get('disks', [])))
