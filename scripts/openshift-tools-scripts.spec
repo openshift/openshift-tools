@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.114
+Version:       0.0.115
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -277,6 +277,12 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Wed Jul 06 2016 Joel Diaz <jdiaz@redhat.com> 0.0.115-1
+- Illiminated unnecessary for loop (benpack101@gmail.com)
+- Fixed pylint issues (benpack101@gmail.com)
+- Added check for nodes without labels (bshpurke@redhat.com)
+- send integers to zabbix (that's what it expects) (jdiaz@redhat.com)
+
 * Wed Jul 06 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.114-1
 - adding cpu and memory per process monitoring (ihorvath@redhat.com)
 - adding new cpu/mem percentage monitoring script (ihorvath@redhat.com)
