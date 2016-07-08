@@ -73,7 +73,7 @@ zagg_client_config:
 host_monitoring_cron:
 - name: send pcp ping every 5 mintues
   minute: "*/5"
-  job: ops-runner -f -s 15 -n cspp.pcp.ping /usr/bin/cron-send-pcp-ping
+  job: ops-runner -f -s 60 -n cspp.pcp.ping /usr/bin/cron-send-pcp-ping
 
 - name: run pcp checks every minute
   minute: "*"
@@ -90,11 +90,11 @@ host_monitoring_cron:
 
 - name: Do a quick heartbeat
   minute: "*/5"
-  job: ops-runner -f -s 15 -n ozc.send.heartbeat.quick /usr/bin/ops-zagg-client -k heartbeat.ping -o 1
+  job: ops-runner -f -s 60 -n ozc.send.heartbeat.quick /usr/bin/ops-zagg-client -k heartbeat.ping -o 1
 
 - name: run filesystem space checks every 10 minutes
   minute: "*/10"
-  job: ops-runner -f -s 15 -n csfm.filesys.full /usr/bin/cron-send-filesystem-metrics
+  job: ops-runner -f -s 120 -n csfm.filesys.full /usr/bin/cron-send-filesystem-metrics
 
 - name: run disk TPS checks every minute
   minute: "*"
@@ -107,21 +107,21 @@ host_monitoring_cron:
 # We might want to break docker checks out at some point.
 - name: run docker storage space checks every 10 minutes
   minute: "*/10"
-  job: ops-runner -f -s 15 -n csdm.docker.storage /usr/bin/cron-send-docker-metrics
+  job: ops-runner -f -s 120 -n csdm.docker.storage /usr/bin/cron-send-docker-metrics
 
 - name: run docker info timer
   minute: "*/10"
-  job: ops-runner -f -s 15 -n csdt.docker.timer /usr/bin/cron-send-docker-timer
+  job: ops-runner -f -s 120 -n csdt.docker.timer /usr/bin/cron-send-docker-timer
 
 {% if osohm_host_type != 'ansible-tower' %}
 - name: run docker dns test
   minute: "*/5"
-  job: ops-runner -f -s 15 -n csddr.docker.dns.resolution /usr/bin/cron-send-docker-dns-resolution
+  job: ops-runner -f -s 60 -n csddr.docker.dns.resolution /usr/bin/cron-send-docker-dns-resolution
 {% endif %}
 
 - name: run docker dns test on existing containers
   minute: "*/5"
-  job: ops-runner -f -s 15 -n csdedr.docker.existing.dns.resolution /usr/bin/cron-send-docker-existing-dns-resolution
+  job: ops-runner -f -s 60 -n csdedr.docker.existing.dns.resolution /usr/bin/cron-send-docker-existing-dns-resolution
 
 {% if osohm_host_type == 'node' and osohm_monitor_dnsmasq|bool %}
 {# dnsmasq checks #}
@@ -143,11 +143,11 @@ host_monitoring_cron:
 
 - name: send ovs status data
   minute: "*/5"
-  job: ops-runner -f -s 15 -n csos.openshift.master.ovs.status /usr/bin/cron-send-ovs-status
+  job: ops-runner -f -s 60 -n csos.openshift.master.ovs.status /usr/bin/cron-send-ovs-status
 
 - name: fix and report on stray OVS rules
   minute: "*/5"
-  job: ops-runner -f -s 15 -n cfor.openshift.node.ovs.stray.rules /usr/bin/cron-fix-ovs-rules
+  job: ops-runner -f -s 60 -n cfor.openshift.node.ovs.stray.rules /usr/bin/cron-fix-ovs-rules
 
 - name: send cluster docker registry checks
   minute: "*/2"
@@ -155,11 +155,11 @@ host_monitoring_cron:
 
 - name: send openshift-node cpu mem per process stats
   minute: "*/5"
-  job: ops-runner -f -s 15 -n cscpm.openshift.node.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start node' openshift.node.process
+  job: ops-runner -f -s 60 -n cscpm.openshift.node.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start node' openshift.node.process
 
 - name: send docker daemon cpu mem per process stats
   minute: "*/5"
-  job: ops-runner -f -s 15 -n cscpm.openshift.node.docker.daemon.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'docker-current daemon' openshift.node.docker.daemon
+  job: ops-runner -f -s 60 -n cscpm.openshift.node.docker.daemon.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'docker-current daemon' openshift.node.docker.daemon
 {# end if host master or node #}
 {% endif %}
 
@@ -167,11 +167,11 @@ host_monitoring_cron:
 {# Openshift Master checks #}
 - name: run create app every 5 minutes
   minute: "*/5"
-  job: "export ZAGG_CLIENT_HOSTNAME={{ osohm_host_name }}; ops-runner -f -s 15 -n csca.openshift.master.app.create /usr/bin/cron-send-create-app &>> /var/log/create_app.log"
+  job: "export ZAGG_CLIENT_HOSTNAME={{ osohm_host_name }}; ops-runner -f -s 60 -n csca.openshift.master.app.create /usr/bin/cron-send-create-app &>> /var/log/create_app.log"
 
 - name: run create app with build process every 30 minutes
   minute: "*/30"
-  job: "export ZAGG_CLIENT_HOSTNAME={{ osohm_host_name }}; ops-runner -f -s 15 -n csca.openshift.master.app.build.create /usr/bin/cron-send-create-app --name https://github.com/openshift/nodejs-ex &>> /var/log/build_app.log"
+  job: "export ZAGG_CLIENT_HOSTNAME={{ osohm_host_name }}; ops-runner -f -s 120 -n csca.openshift.master.app.build.create /usr/bin/cron-send-create-app --name https://github.com/openshift/nodejs-ex &>> /var/log/build_app.log"
 
 {% if osohm_master_ha|bool %}
 - name: send openshift-master process count
@@ -196,7 +196,7 @@ host_monitoring_cron:
 
 - name: send openshift-master local (test https://127.0.0.1) status every 5 minutes
   minute: "*/5"
-  job: ops-runner -f -s 15 -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --local
+  job: ops-runner -f -s 60 -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --local
 
 - name: send openshift-master SkyDNS status every 4 minutes
   minute: "*/4"
@@ -206,44 +206,44 @@ host_monitoring_cron:
   minute: "*/2"
   job: ops-runner -f -s 15 -n cspc.openshift.master.etcd.status /usr/bin/cron-send-etcd-status
 
-- name: send S3 bucket metrics weekly
+- name: send S3 bucket metrics every day
   hour: "3"
   minute: "0"
-  job: ops-runner -f -s 90 -n cssm.aws /usr/bin/cron-send-s3-metrics
+  job: ops-runner -f -s 120 -n cssm.aws /usr/bin/cron-send-s3-metrics
 
 - name: send kubeconfig parser check
   minute: "*/5"
-  job: ops-runner -f -s 30 -n cskc.openshift.master.kubeconfig.status /usr/bin/cron-send-check-kubeconfig
+  job: ops-runner -f -s 60 -n cskc.openshift.master.kubeconfig.status /usr/bin/cron-send-check-kubeconfig
 
 - name: send etcd connections count on port 2379
   minute: "*/5"
-  job: ops-runner -f -s 30 -n cscc.openshift.master.etcd.connections.2379 /usr/bin/cron-send-connection-count etcd 2379 openshift.master.etcd.port_2379.connections.established
+  job: ops-runner -f -s 60 -n cscc.openshift.master.etcd.connections.2379 /usr/bin/cron-send-connection-count etcd 2379 openshift.master.etcd.port_2379.connections.established
 
 - name: send etcd connections count on port 2380
   minute: "*/5"
-  job: ops-runner -f -s 30 -n cscc.openshift.master.etcd.connections.2380 /usr/bin/cron-send-connection-count etcd 2380 openshift.master.etcd.port_2380.connections.established
+  job: ops-runner -f -s 60 -n cscc.openshift.master.etcd.connections.2380 /usr/bin/cron-send-connection-count etcd 2380 openshift.master.etcd.port_2380.connections.established
 
 - name: send master api server connections count on port 443
   minute: "*/5"
-  job: ops-runner -f -s 30 -n cscc.openshift.master.api.connections.443 /usr/bin/cron-send-connection-count openshift 443 openshift.master.api.port_443.connections.established
+  job: ops-runner -f -s 60 -n cscc.openshift.master.api.connections.443 /usr/bin/cron-send-connection-count openshift 443 openshift.master.api.port_443.connections.established
 
 - name: send openshift master api cpu mem per process stats
   minute: "*/5"
-  job: ops-runner -f -s 15 -n cscpm.openshift.master.api.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start master api' openshift.master.api.process
+  job: ops-runner -f -s 60 -n cscpm.openshift.master.api.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start master api' openshift.master.api.process
 
 - name: send openshift master controllers cpu mem per process stats
   minute: "*/5"
-  job: ops-runner -f -s 15 -n cscpm.openshift.master.controllers.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start master controllers' openshift.master.controllers.process
+  job: ops-runner -f -s 60 -n cscpm.openshift.master.controllers.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start master controllers' openshift.master.controllers.process
 
 - name: send etcd cpu mem per process stats
   minute: "*/5"
-  job: ops-runner -f -s 15 -n cscpm.openshift.etcd.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats etcd openshift.etcd.process
+  job: ops-runner -f -s 60 -n cscpm.openshift.etcd.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats etcd openshift.etcd.process
 
 {% if osohm_enable_cluster_capacity_reporting|bool and osohm_master_primary | default(False) | bool %}
 - name: "Cluster capacity reporting"
   hour: "*"
   minute: "15"
-  job: ops-runner -f -s 30 -n cscc.openshift.master.capacity /usr/bin/cron-send-cluster-capacity
+  job: ops-runner -f -s 120 -n cscc.openshift.master.capacity /usr/bin/cron-send-cluster-capacity
 {% endif %}
 
 {% if osohm_master_primary | default(False) | bool %}
@@ -255,29 +255,29 @@ host_monitoring_cron:
 - name: "Snapshot volumes tagged with hourly"
   hour: "*"
   minute: "0"
-  job: ops-runner -f -s 90 -n oesev.snapshot.hourly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule hourly
+  job: ops-runner -f -s 120 -n oesev.snapshot.hourly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule hourly
 
 - name: "Snapshot EBS volumes tagged with daily"
   hour: "0"
   minute: "0"
-  job: ops-runner -f -s 90 -n oesev.snapshot.daily ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule daily
+  job: ops-runner -f -s 120 -n oesev.snapshot.daily ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule daily
 
 - name: "Snapshot EBS volumes tagged with weekly"
   weekday: "0"
   hour: "0"
   minute: "0"
-  job: ops-runner -f -s 90 -n oesev.snapshot.weekly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule weekly
+  job: ops-runner -f -s 120 -n oesev.snapshot.weekly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule weekly
 
 - name: "Snapshot EBS volumes tagged with monthly"
   day: "1"
   hour: "0"
   minute: "0"
-  job: ops-runner -f -s 90 -n oesev.snapshot.monthly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule monthly
+  job: ops-runner -f -s 120 -n oesev.snapshot.monthly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule monthly
 
 # DO NOT CHANGE without first talking to twiest.
 - name: "Trim EBS Snapshot"
   minute: "10"
-  job: ops-runner -f -s 90 -n oetes.trim.snapshots ops-ec2-trim-ebs-snapshots --aws-creds-profile snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
+  job: ops-runner -f -s 120 -n oetes.trim.snapshots ops-ec2-trim-ebs-snapshots --aws-creds-profile snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
 {% endif %}
 
 {# end if host master #}
