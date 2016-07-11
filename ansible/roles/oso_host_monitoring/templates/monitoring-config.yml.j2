@@ -239,6 +239,11 @@ host_monitoring_cron:
   minute: "*/5"
   job: ops-runner -f -s 60 -n cscpm.openshift.etcd.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats etcd openshift.etcd.process
 
+- name: "OpenShift event watcher"
+  hour: "*"
+  minute: "*/2"
+  job: ops-runner --flock-no-fail -n oscew.event.watcher /usr/bin/cron-event-watcher --watch-for FailedScheduling
+
 {% if osohm_enable_cluster_capacity_reporting|bool %}
 - name: "Cluster capacity reporting"
   hour: "*"
