@@ -239,7 +239,7 @@ host_monitoring_cron:
   minute: "*/5"
   job: ops-runner -f -s 60 -n cscpm.openshift.etcd.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats etcd openshift.etcd.process
 
-{% if osohm_enable_cluster_capacity_reporting|bool and osohm_master_primary | default(False) | bool %}
+{% if osohm_enable_cluster_capacity_reporting|bool %}
 - name: "Cluster capacity reporting"
   hour: "*"
   minute: "15"
