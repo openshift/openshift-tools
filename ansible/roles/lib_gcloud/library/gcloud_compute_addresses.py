@@ -264,92 +264,114 @@ class Utils(object):
 
 
 # pylint: disable=too-many-instance-attributes
-class GcloudDeploymentManager(GcloudCLI):
-    ''' Class to wrap the gcloud deployment manager '''
+class GcloudComputeAddresses(GcloudCLI):
+    ''' Class to wrap the gcloud compute addresses command'''
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
     def __init__(self,
-                 dname,
-                 config=None,
-                 opts=None,
-                 credentials=None,
+                 aname=None,
+                 desc=None,
+                 region=None,
+                 address=None,
+                 isglobal=False,
                  verbose=False):
         ''' Constructor for OCVolume '''
-        super(GcloudDeploymentManager, self).__init__()
-        self.dname = dname
-        self.opts = opts
-        self.config = config
-        self.credentials = credentials
+        super(GcloudComputeAddresses, self).__init__()
+        self.name = aname
+        self.desc = desc
+        self.region = region
+        self.isglobal = isglobal
+        self.address = address
+        self.verbose = verbose
 
-    def list_deployments(self):
-        '''return deployment'''
-        results = self._list_deployments()
+    def list_addresses(self, address_name=None):
+        '''return a list of addresses'''
+        results = self._list_addresses(address_name)
         if results['returncode'] == 0:
-            results['results'] = results['results'].strip().split('\n')
+            if not address_name:
+                rval = []
+                for addr in results['results'].strip().split('\n')[1:]:
+                    aname, region, aip, status = addr.split()
+                    rval.append({'name': aname, 'region': region, 'address': aip, 'status': status})
+                results['results'] = rval
+
+            else:
+                results['results'] = yaml.load(results['results'])
 
         return results
 
     def exists(self):
-        ''' return whether a deployment exists '''
-        deployments = self.list_deployments()
-        if deployments['returncode'] != 0:
-            raise GcloudCLIError('Something went wrong.  Results: %s' % deployments['stderr'])
-        return self.dname in deployments['results']
+        ''' return whether an address exists '''
+        addresses = self.list_addresses()
+        if addresses['returncode'] != 0:
+            if 'was not found' in addresses['stderr']:
+                addresses['returncode'] = 0
+                return addresses
+            raise GcloudCLIError('Something went wrong.  Results: %s' % addresses['stderr'])
 
+        return any([self.name == addr['name'] for addr in addresses['results']])
 
-    def delete(self):
-        '''delete a deployment'''
-        return self._delete_deployment(self.dname)
+    def delete_address(self):
+        '''delete an address'''
+        return self._delete_address(self.name)
 
-    def create_deployment(self):
-        '''create a deployment'''
-        return self._create_deployment(self.dname, self.config, self.opts)
-
-    def update_deployment(self):
-        '''update a deployment'''
-        return self._update_deployment(self.dname, self.config, self.opts)
+    def create_address(self):
+        '''create an address'''
+        address_info = {}
+        address_info['description'] = self.desc
+        address_info['region'] = self.region
+        return self._create_address(self.name, address_info, self.address, self.isglobal)
 
 # vim: expandtab:tabstop=4:shiftwidth=4
 
 #pylint: disable=too-many-branches
 def main():
-    ''' ansible module for gcloud deployment-manager deployments '''
+    ''' ansible module for gcloud compute addresses'''
     module = AnsibleModule(
         argument_spec=dict(
             # credentials
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             name=dict(default=None, type='str'),
-            config=dict(default=None),
-            opts=dict(default=None, type='dict'),
+            description=dict(default=None, type='str'),
+            region=dict(default=None, type='str'),
+            address=dict(default=None, type='str'),
+            isglobal=dict(default=False, type='bool'),
+            project=dict(default=False, type='str'),
         ),
         supports_check_mode=True,
+        mutually_exclusive=[['isglobal', 'region']],
     )
-    gconfig = GcloudDeploymentManager(module.params['name'],
-                                      module.params['config'],
-                                      module.params['opts'])
+    gcloud = GcloudComputeAddresses(module.params['name'],
+                                    module.params['description'],
+                                    module.params['region'],
+                                    module.params['address'],
+                                    module.params['isglobal'])
 
     state = module.params['state']
 
-    api_rval = gconfig.list_deployments()
+    api_rval = gcloud.list_addresses(module.params['name'])
 
     #####
     # Get
     #####
     if state == 'list':
+        if api_rval['returncode'] != 0:
+            module.fail_json(msg=api_rval, state="list")
+
         module.exit_json(changed=False, results=api_rval['results'], state="list")
 
     ########
     # Delete
     ########
     if state == 'absent':
-        if gconfig.exists():
+        if gcloud.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a delete.')
 
-            api_rval = gconfig.delete()
+            api_rval = gcloud.delete_address()
 
             module.exit_json(changed=True, results=api_rval, state="absent")
         module.exit_json(changed=False, state="absent")
@@ -358,29 +380,22 @@ def main():
         ########
         # Create
         ########
-        if not gconfig.exists():
+        if not gcloud.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a create.')
 
             # Create it here
-            api_rval = gconfig.create_deployment()
+            api_rval = gcloud.create_address()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
 
             module.exit_json(changed=True, results=api_rval, state="present")
 
-        ########
-        # Update
-        ########
-        api_rval = gconfig.update_deployment()
+        # update??
 
-        if api_rval['returncode'] != 0:
-            module.fail_json(msg=api_rval)
-
-        module.exit_json(changed=True, results=api_rval, state="present")
-
+        module.exit_json(changed=False, results=api_rval, state="present")
 
     module.exit_json(failed=True,
                      changed=False,
@@ -388,8 +403,8 @@ def main():
                      state="unknown")
 
 #if __name__ == '__main__':
-#    gcloud = GcloudDeploymentManager('optestgcp')
-#    print gcloud.list_deployments()
+#    gcloud = GcloudComputeImage('rhel-7-base-2016-06-10')
+#    print gcloud.list_images()
 
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
