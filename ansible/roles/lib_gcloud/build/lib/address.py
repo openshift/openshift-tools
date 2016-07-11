@@ -6,16 +6,22 @@ class Address(GCPResource):
     resource_type = "compute.v1.address"
 
     # pylint: disable=too-many-arguments
-    def __init__(self, rname, project, zone, desc, region):
+    def __init__(self, rname, project, zone, desc, region, ipaddr=None):
         '''constructor for gcp resource'''
         super(Address, self).__init__(rname, Address.resource_type, project, zone)
         self._desc = desc
+        self._ipaddr = ipaddr
         self._region = region
 
     @property
     def description(self):
         '''property for resource description'''
         return self._desc
+
+    @property
+    def ip_address(self):
+        '''property for resource ip address'''
+        return self._ipaddr
 
     @property
     def region(self):
