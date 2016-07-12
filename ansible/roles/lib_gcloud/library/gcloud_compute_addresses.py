@@ -155,6 +155,42 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
+    def _list_metadata(self):
+        '''create metadata'''
+        cmd = ['compute', 'project-info', 'describe']
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _delete_metadata(self, keys, remove_all=False):
+        '''create metadata'''
+        cmd = ['compute', 'project-info', 'remove-metadata']
+
+        if remove_all:
+            cmd.append('--all')
+
+        else:
+            cmd.append('--keys')
+            cmd.append(','.join(keys))
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _create_metadata(self, metadata=None, metadata_from_file=None):
+        '''create metadata'''
+        cmd = ['compute', 'project-info', 'add-metadata']
+
+        data = None
+
+        if metadata_from_file:
+            cmd.append('--metadata-from-file')
+            data = metadata_from_file
+        else:
+            cmd.append('--metadata')
+            data = metadata
+
+        cmd.append(','.join(['%s=%s' % (key, val) for key, val in data.items()]))
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
     def gcloud_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for gcloud '''
         cmds = ['/usr/bin/gcloud']
@@ -276,7 +312,7 @@ class GcloudComputeAddresses(GcloudCLI):
                  address=None,
                  isglobal=False,
                  verbose=False):
-        ''' Constructor for OCVolume '''
+        ''' Constructor for gcloud resource '''
         super(GcloudComputeAddresses, self).__init__()
         self.name = aname
         self.desc = desc

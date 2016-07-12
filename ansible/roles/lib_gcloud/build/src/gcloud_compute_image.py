@@ -15,7 +15,7 @@ class GcloudComputeImage(GcloudCLI):
                  source_disk_zone=None,
                  source_uri=None,
                  verbose=False):
-        ''' Constructor for OCVolume '''
+        ''' Constructor for gcloud resource '''
         super(GcloudComputeImage, self).__init__()
         self.image_name = iname
         self.desc = desc
