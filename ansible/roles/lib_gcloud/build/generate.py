@@ -50,6 +50,10 @@ FILES = {'gcloud_dm_deployments.py': ['lib/base.py',
                                          'src/gcloud_compute_addresses.py',
                                          'ansible/gcloud_compute_addresses.py',
                                         ],
+         'gcloud_compute_projectinfo.py': ['lib/base.py',
+                                           'src/gcloud_compute_projectinfo.py',
+                                           'ansible/gcloud_compute_projectinfo.py',
+                                          ],
         }
 
 

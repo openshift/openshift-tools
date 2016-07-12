@@ -12,7 +12,7 @@ class GcloudDeploymentManager(GcloudCLI):
                  opts=None,
                  credentials=None,
                  verbose=False):
-        ''' Constructor for OCVolume '''
+        ''' Constructor for gcloud resource '''
         super(GcloudDeploymentManager, self).__init__()
         self.dname = dname
         self.opts = opts

@@ -13,7 +13,7 @@ class GcloudComputeAddresses(GcloudCLI):
                  address=None,
                  isglobal=False,
                  verbose=False):
-        ''' Constructor for OCVolume '''
+        ''' Constructor for gcloud resource '''
         super(GcloudComputeAddresses, self).__init__()
         self.name = aname
         self.desc = desc

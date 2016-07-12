@@ -12,7 +12,7 @@ class GcloudResourceBuilder(object):
                  region,
                  zone,
                  verbose=False):
-        ''' Constructor for OCVolume '''
+        ''' Constructor for gcloud resource '''
         #super(GcloudDeploymentManager, self).__init__()
         self.clusterid = clusterid
         self.project = project
