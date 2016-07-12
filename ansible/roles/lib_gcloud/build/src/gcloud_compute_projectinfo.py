@@ -64,7 +64,7 @@ class GcloudComputeProjectInfo(GcloudCLI):
                         ssh_keys[user] = pub_key
                     # compare the users that were passed in to see if we need to update
                     for inc_user, inc_pub_key in val.items():
-                        if not ssh_keys.has_key(inc_user) and ssh_keys[inc_user] != inc_pub_key:
+                        if not ssh_keys.has_key(inc_user) or ssh_keys[inc_user] != inc_pub_key:
                             return False
                     # matched all ssh keys
                     break
