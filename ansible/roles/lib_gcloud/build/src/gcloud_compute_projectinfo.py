@@ -60,7 +60,9 @@ class GcloudComputeProjectInfo(GcloudCLI):
                     ssh_keys = {}
                     # get all the users and their public keys out of the project
                     for user_pub_key in data['value'].strip().split('\n'):
-                        user, pub_key = user_pub_key.split(':')
+                        col_index = user_pub_key.find(':')
+                        user = user_pub_key[:col_index]
+                        pub_key = user_pub_key[col_index+1:]
                         ssh_keys[user] = pub_key
                     # compare the users that were passed in to see if we need to update
                     for inc_user, inc_pub_key in val.items():
