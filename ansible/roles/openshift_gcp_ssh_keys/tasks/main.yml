@@ -1,0 +1,16 @@
+---
+- name: get the user dictionary into a format to pass the the gcp key module
+  set_fact:
+    ssh_key_data: >
+              {% set ssh_keys = {} %}
+              {%- for user in osgsk_user_list %}
+              {%-     set _ = ssh_keys.update({user.username : user.pub_key}) %}
+              {%- endfor %}
+              {{- ssh_keys -}}
+
+- name: Add SSH keys to GCP
+  gcloud_compute_projectinfo:
+    state: present
+    metadata:
+      sshKeys: "{{ ssh_key_data }}"
+  register: mdout

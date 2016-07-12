@@ -1,0 +1,65 @@
+---
+- name: generate dm yaml
+  gcloud_dm_resource_builder:
+    clusterid: "{{ osgcc_clusterid }}"
+    account: "{{ osgcc_account }}"
+    sublocation: "{{ osgcc_sublocation }}"
+    zone: "{{ osgcc_zone }}"
+    health_checks: "{{ osgcc_health_checks }}"
+    addresses: "{{ osgcc_addresses }}"
+    target_pools: "{{ osgcc_target_pools }}"
+    forwarding_rules: "{{ osgcc_forwarding_rules }}"
+    firewall_rules: "{{ osgcc_firewall_rules }}"
+    networks: "{{ osgcc_networks }}"
+    subnetworks: "{{ osgcc_subnetworks }}"
+    instance_counts:
+      master: "{{ osgcc_master_instance_count }}"
+      infra: "{{ osgcc_infra_instance_count }}"
+      compute: "{{ osgcc_compute_instance_count }}"
+    instances: "{{ osgcc_instances }}"
+    provisioning: True
+  register: dmyaml
+
+- name: Deploy Generate config for cluster
+  gcloud_dm_deployments:
+    config: "{{ dmyaml.results }}"
+    name: "{{ osgcc_clusterid }}-cluster-deploy"
+  register: deployout
+
+- name: Get Master LB IP Address
+  gcloud_compute_addresses:
+    state: list
+    name: "{{ osgcc_clusterid }}-master-lb-address"
+  register: master_lb_addrout
+
+- name: Get Infra LB IP Address
+  gcloud_compute_addresses:
+    state: list
+    name: "{{ osgcc_clusterid }}-infra-lb-address"
+  register: infra_lb_addrout
+
+- name: Update DNS for GCP Master LB
+  dyn_record:
+    customer_name: "{{ osgcc_dyn_customer_name }}"
+    user_name: "{{ osgcc_dyn_user_name }}"
+    user_password: "{{ osgcc_dyn_user_password }}"
+    state: present
+    record_type: A
+    zone: "{{ item.zone }}"
+    record_value: "{{ master_lb_addrout.results.address }}"
+    record_fqdn: "{{ item.fqdn }}"
+    record_ttl: 120
+  with_items: "{{ g_gcp_master_lb_dns_cnames }}"
+
+- name: Update DNS for GCP Infra LB
+  dyn_record:
+    customer_name: "{{ osgcc_dyn_customer_name }}"
+    user_name: "{{ osgcc_dyn_user_name }}"
+    user_password: "{{ osgcc_dyn_user_password }}"
+    state: present
+    record_type: A
+    zone: "{{ item.zone }}"
+    record_value: "{{ infra_lb_addrout.results.address }}"
+    record_fqdn: "{{ item.fqdn }}"
+    record_ttl: 120
+  with_items: "{{ g_gcp_infra_lb_dns_cnames }}"

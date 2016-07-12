@@ -22,7 +22,3 @@
 
 - set_fact:
     tdgc_retval_repo_dir: "{{ tdgc_dest_dir }}/{{ tdgc_repo_name }}"
-
-- name: COMMIT THE OPS REPO MESSAGE
-  debug:
-    msg: "******* DON'T FORGET TO COMMIT THE OPS REPOSITORY CHANGES **********"
