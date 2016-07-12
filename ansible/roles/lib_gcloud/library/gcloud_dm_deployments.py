@@ -49,6 +49,8 @@ class GcloudCLI(object):
         else:
             cmd.append('list')
 
+        cmd.append('-q')
+
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
     def _list_images(self, image_name=None):
@@ -123,7 +125,7 @@ class GcloudCLI(object):
         ''' list addresses
             if a name is specified then perform a describe
         '''
-        cmd = ['compute', 'addresses', 'delete', aname]
+        cmd = ['compute', 'addresses', 'delete', aname, '-q']
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
@@ -172,6 +174,8 @@ class GcloudCLI(object):
             cmd.append('--keys')
             cmd.append(','.join(keys))
 
+        cmd.append('-q')
+
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
     def _create_metadata(self, metadata=None, metadata_from_file=None):
@@ -190,6 +194,46 @@ class GcloudCLI(object):
         cmd.append(','.join(['%s=%s' % (key, val) for key, val in data.items()]))
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_service_accounts(self, sa_name=None):
+        '''return service accounts '''
+        cmd = ['iam', 'service-accounts']
+        if sa_name:
+            cmd.extend(['describe', sa_name])
+        else:
+            cmd.append('list')
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _delete_service_account(self, sa_name):
+        '''delete service account '''
+        cmd = ['iam', 'service-accounts', 'delete', sa_name, '-q']
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _create_service_account(self, sa_name, display_name=None):
+        '''create service account '''
+        cmd = ['iam', 'service-accounts', 'create', sa_name]
+        if display_name:
+            cmd.extend(['--display-name', display_name])
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _update_service_account(self, sa_name, display_name=None):
+        '''update service account '''
+        cmd = ['iam', 'service-accounts', 'update', sa_name]
+        if display_name:
+            cmd.extend(['--display-name', display_name])
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
 
     def gcloud_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for gcloud '''
