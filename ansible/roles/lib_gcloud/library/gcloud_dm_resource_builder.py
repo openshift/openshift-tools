@@ -1155,7 +1155,7 @@ def main():
         argument_spec=dict(
             # credentials
             clusterid=dict(required=True, type='str'),
-            accountid=dict(required=True, type='str'),
+            account=dict(required=True, type='str'),
             sublocation=dict(required=True, type='str'),
             zone=dict(required=True, type='str'),
             health_checks=dict(default=[], type='list'),
@@ -1177,8 +1177,8 @@ def main():
         ],
         supports_check_mode=True,
     )
-    gcloud = GcloudResourceBuilder(module.params['accountid'],
-                                   module.params['clusterid'],
+    gcloud = GcloudResourceBuilder(module.params['clusterid'],
+                                   module.params['account'],
                                    module.params['sublocation'],
                                    module.params['zone'])
     names = {}
