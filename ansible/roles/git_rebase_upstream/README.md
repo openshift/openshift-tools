@@ -1,6 +1,6 @@
-verify_aws_accountid
+git_rebase_upstream
 =========
-This role checks to see if the AWS Key matches an account ID. If they don't match, it will fail
+This role does a git rebase of the upstream branch
 
 Configure
 ------------
@@ -10,7 +10,10 @@ None
 Role Variables
 --------------
 
-vawsid_accountid: The account ID to check against
+    grbu_repo_path: path to the git repo
+    grbu_rebase_remote: the remote to rebase from
+    grbu_push_remote: the push of the remote
+    grbu_src_branch: the src branch to rebase
 
 Dependencies
 ------------
@@ -20,8 +23,6 @@ None
 Example Playbook
 ----------------
 
-  - role: tools_roles/verify_aws_accountid
-    vawsid_accountid: "{{ g_aws_account_id }}"
 
 License
 -------

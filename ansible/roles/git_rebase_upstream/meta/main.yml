@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: OpenShift Ops
-  description: Openshift Operations Verify AWS Account ID
+  description: Openshift Operations Git Rebase Role
   company: Red Hat, Inc
   license: ASL 2.0
   min_ansible_version: 1.2
@@ -10,4 +10,3 @@ galaxy_info:
     versions:
     - 7
 dependencies:
-- tools_roles/lib_iam_accountid
