@@ -21,7 +21,7 @@ In this document, we're going to focus on the monitoring components, but similar
 .The following packages are required:
 . Docker
 . python-ndg_httpsclient-0.3.2-1
-. ansible
+. ansible (As of 17 June 2016, Ansible 1.9 must be used, *not* 2.*)
 
 .Fedora:
 ----
@@ -43,7 +43,7 @@ sudo systemctl status docker
 == Locating the container definitions (Dockerfiles)
 All of the containers are located in the openshift-tools git repository under the `docker` subdirectory.
 
-For a full list of containers, please see the repository https://github.com/openshift/openshift-tools/tree/master/docker[here].
+For a full list of containers, please see the repository https://github.com/openshift/openshift-tools/tree/prod/docker[here].
 
 == Building the monitoring containers
 The openshift-tools git repository contains a number of docker containers that are part of our monitoring containers.
@@ -56,7 +56,7 @@ Each container has a build.sh script that handles building it locally.
 
 For the containers to build properly, they must be built in a certain order.
 
-.*Recommended build order*:
+.*Build order*:
 . oso-ops-base
 . oso-zaio
 . oso-zagg-web
@@ -170,10 +170,15 @@ The run.sh scripts run the containers in the foreground. For development purpose
 
 *Note: For local development, you don't need to run all containers, just the ones listed below.*
 
-For the containers to link up properly, they must be run in a certain order.
+For the containers to link up properly, they must be run in a certain order. 
 
-.*Recommended run order*:
+
+*Important:* The oso-zaio container must undergo cleanup and configuration before _oso-zagg-web_ and _oso-host-monitoring_ are run.
+Complete everything in the *Setting up the ZAIO* section before running any of the other containers. 
+
+.*Run order*:
 . oso-zaio
+. _Setup ZAIO_
 . oso-zagg-web
 . oso-host-monitoring
 
@@ -193,13 +198,6 @@ Preparing the db
 
 *Note: the container will stay in the foreground (on purpose). This allows you to see the container startup messages and allows you to exit the container by pressing ctrl-c*
 
-== Logging into the ZAIO
-Once the containers are up and running, you can log into the Zaio http://localhost/zabbix[here].
-
-The username is `Admin`.
-The password is `zabbix`.
-
-
 == Setting up the ZAIO
 The ZAIO is a completely default installation of zabbix. It has the default templates, items and triggers loaded. The reason it's completely default is that the ZAIO is used by multiple teams, for multiple projects. Therefore, having a default install makes sense.
 
@@ -214,11 +212,12 @@ For development purposes, it's almost always preferable to set the python path, 
 
 .Steps to configure the Ansible Zabbix Modules:
 . Change into the openshift-tools git repo
+[source]
 ----
 > cd openshift-tools/ansible/playbooks/adhoc/zabbix_setup
 ----
-
 . Set the python path to see our openshift_tools python package, as well as the system's site-packages
+[source]
 ----
 > export PYTHONPATH=$(pwd)/../../../..:$(ls /usr/lib/python2*/site-packages/ -d)
 ----
@@ -246,6 +245,11 @@ To do this, run the `oo-config-zaio.yml` playbook.
 > ./oo-config-zaio.yml
 ----
 
+== Logging into the ZAIO
+Once the containers are up and running, you can log into the Zaio http://localhost/zabbix[here].
+
+The username is `Admin`.
+The password is `zabbix`.
 
 == Container Features
 

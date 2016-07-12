@@ -38,6 +38,7 @@ class OpenshiftClusterCapacity(object):
         self.zagg_sender = None
         self.ora = None
         self.sql_conn = None
+        self.zbx_key_prefix = "openshift.master.cluster.compute_nodes."
 
     def run(self):
         '''  Main function to run the check '''
@@ -153,7 +154,7 @@ class OpenshiftClusterCapacity(object):
 
         self.sql_conn.execute('''CREATE TABLE pods
                                  (name text, namespace text, api text,
-                                  cpu_limits integer, cpu_requets integer,
+                                  cpu_limits integer, cpu_requests integer,
                                   memory_limits integer,
                                   memory_requests integer, node text)''')
         response = self.ora.get('/api/v1/pods')
@@ -177,31 +178,11 @@ class OpenshiftClusterCapacity(object):
                                    pod.get('memory_requests'),
                                    pod['node']))
 
-    def get_memory_percentage(self):
-        ''' calculate pod memory limits as a percentage
-            of cluster (compute-node) memory capacity '''
-
-        node_mem = 0
-        pod_mem = 0
-
-        for row in self.sql_conn.execute('''SELECT SUM(nodes.max_memory)
-                                            FROM nodes
-                                            WHERE nodes.type="compute"'''):
-            node_mem = row[0]
-
-        for row in self.sql_conn.execute('''SELECT SUM(pods.memory_limits)
-                                            FROM pods, nodes
-                                            WHERE pods.node=nodes.name
-                                              AND nodes.type="compute"'''):
-            pod_mem = row[0]
-
-        return float(100) * pod_mem / node_mem
-
     def get_largest_pod(self):
-        ''' return memory limit for largest pod '''
+        ''' return single largest memory request number for all running pods '''
 
         max_pod = 0
-        for row in self.sql_conn.execute('''SELECT MAX(memory_limits)
+        for row in self.sql_conn.execute('''SELECT MAX(memory_requests)
                                             FROM pods, nodes
                                             WHERE pods.node=nodes.name
                                               AND nodes.type="compute"'''):
@@ -209,8 +190,8 @@ class OpenshiftClusterCapacity(object):
 
         return max_pod
 
-    def how_many_schedulable(self, size):
-        ''' return how many pods with memory 'size' can be scheduled '''
+    def how_many_schedulable(self, node_size):
+        ''' return how many pods with memory request 'node_size' can be scheduled '''
 
         nodes = {}
 
@@ -222,92 +203,211 @@ class OpenshiftClusterCapacity(object):
                              # set memory_allocated to '0' because node may have
                              # no pods running, and next SQL query below will
                              # leave this field unpopulated
-                             'memory_allocated': 0}
+                             'memory_scheduled': 0}
 
-        # get memory allocated/granted for each compute node
+        # get memory requests for all pods on all compute nodes
         for row in self.sql_conn.execute('''SELECT nodes.name,
-                                                   SUM(pods.memory_limits)
+                                                   SUM(pods.memory_requests)
                                             FROM pods, nodes
                                             WHERE pods.node=nodes.name
                                               AND nodes.type="compute"
                                             GROUP BY nodes.name'''):
-            nodes[row[0]]['memory_allocated'] = row[1]
+            nodes[row[0]]['memory_scheduled'] = row[1]
 
         schedulable = 0
         for node in nodes.keys():
             available = nodes[node]['max_memory'] - \
-                        nodes[node]['memory_allocated']
-            num = available / size
+                        nodes[node]['memory_scheduled']
+            num = available / node_size
             # ignore negative number (overcommitted nodes)
             if num > 0:
                 schedulable += num
 
         return schedulable
 
-    def get_avg_cpu_compute_nodes(self):
-        ''' return average cpu allocation percentage across compute nodes '''
+    def get_compute_nodes_max_schedulable_cpu(self):
+        ''' calculate total schedulable CPU (in milicores) for all compute nodes '''
+        max_cpu = 0
+        for row in self.sql_conn.execute('''SELECT SUM(nodes.max_cpu)
+                                            FROM nodes
+                                            WHERE nodes.type="compute" '''):
+            max_cpu = row[0]
+        return max_cpu
 
-        node_averages = []
-        for row in self.sql_conn.execute('''SELECT nodes.name, nodes.max_cpu, SUM(pods.cpu_limits)
+    def get_compute_nodes_max_schedulable_mem(self):
+        ''' calculate total schedulable memory for all compute nodes '''
+        max_mem = 0
+        for row in self.sql_conn.execute('''SELECT SUM(nodes.max_memory)
+                                            FROM nodes
+                                            WHERE nodes.type="compute" '''):
+            max_mem = row[0]
+        return max_mem
+
+    def get_compute_nodes_scheduled_cpu(self):
+        ''' calculate cpu scheduled to pods
+            (total requested and percentage of cluster-wide total) '''
+        max_cpu = self.get_compute_nodes_max_schedulable_cpu()
+        cpu_requests_for_all_pods = 0
+        for row in self.sql_conn.execute('''SELECT SUM(pods.cpu_requests)
                                             FROM pods, nodes
-                                            WHERE pods.node=nodes.name
-                                              AND nodes.type="compute"
-                                            GROUP BY nodes.name'''):
-            node_averages.append(float(100)*row[2]/row[1])
-        cluster_avg = sum(node_averages) / len(node_averages)
+                                            WHERE pods.node = nodes.name
+                                              AND nodes.type = "compute" '''):
+            cpu_requests_for_all_pods = row[0]
 
-        return cluster_avg
+        cpu_scheduled_as_pct = 100.0 * cpu_requests_for_all_pods / max_cpu
 
-    def get_avg_mem_compute_nodes(self):
-        ''' return average memory allocation across compute nodes '''
+        cpu_unscheduled = max_cpu - cpu_requests_for_all_pods
+        cpu_unscheduled_as_pct = 100.0 * cpu_unscheduled / max_cpu
 
-        node_averages = []
-        for row in self.sql_conn.execute('''SELECT nodes.name, nodes.max_memory, SUM(pods.memory_limits)
+        return (cpu_requests_for_all_pods, cpu_scheduled_as_pct,
+                cpu_unscheduled, cpu_unscheduled_as_pct)
+
+    def get_compute_nodes_scheduled_mem(self):
+        ''' calculate mem allocated to pods
+            (total requested and percentage of cluster-wide total) '''
+        max_mem = self.get_compute_nodes_max_schedulable_mem()
+        mem_requests_for_all_pods = 0
+        for row in self.sql_conn.execute('''SELECT SUM(pods.memory_requests)
                                             FROM pods, nodes
-                                            WHERE pods.node=nodes.name
-                                              AND nodes.type="compute"
-                                            GROUP BY nodes.name'''):
-            node_averages.append(100*(float(row[2])/row[1]))
-        cluster_avg = sum(node_averages) / len(node_averages)
+                                            WHERE pods.node = nodes.name
+                                              AND nodes.type = "compute" '''):
+            mem_requests_for_all_pods = row[0]
 
-        return cluster_avg
+        mem_scheduled_as_pct = 100.0 * mem_requests_for_all_pods / max_mem
+
+        mem_unscheduled = max_mem - mem_requests_for_all_pods
+        mem_unscheduled_as_pct = 100.0 * mem_unscheduled / max_mem
+
+        return (mem_requests_for_all_pods, mem_scheduled_as_pct, mem_unscheduled, mem_unscheduled_as_pct)
+
+    def get_oversub_cpu(self):
+        ''' return percentage oversubscribed based on CPU limits on runing pods '''
+        max_cpu = self.get_compute_nodes_max_schedulable_cpu()
+        pod_cpu_limits = 0
+
+        # get cpu limits for all running pods
+        for row in self.sql_conn.execute('''SELECT SUM(pods.cpu_limits)
+                                            FROM pods, nodes
+                                            WHERE pods.node = nodes.name
+                                              AND nodes.type = "compute" '''):
+            pod_cpu_limits = row[0]
+
+        return ((float(pod_cpu_limits)/max_cpu) * 100.0) - 100
+
+    def get_oversub_mem(self):
+        ''' return percentage oversubscribed based on memory limits on running pods '''
+        max_mem = self.get_compute_nodes_max_schedulable_mem()
+        pod_mem_limits = 0
+
+        # get mem limits for all running pods
+        for row in self.sql_conn.execute('''SELECT SUM(pods.memory_limits)
+                                            FROM pods, nodes
+                                            WHERE pods.node = nodes.name
+                                              AND nodes.type = "compute" '''):
+            pod_mem_limits = row[0]
+
+        return ((float(pod_mem_limits)/max_mem) * 100.0) - 100
+
+    def do_cpu_stats(self):
+        ''' gather and report CPU statistics '''
+         # CPU items
+        zbx_key_max_schedulable_cpu = self.zbx_key_prefix + "max_schedulable.cpu"
+        zbx_key_scheduled_cpu = self.zbx_key_prefix + "scheduled.cpu"
+        zbx_key_scheduled_cpu_pct = self.zbx_key_prefix + "scheduled.cpu_pct"
+        zbx_key_unscheduled_cpu = self.zbx_key_prefix + "unscheduled.cpu"
+        zbx_key_unscheduled_cpu_pct = self.zbx_key_prefix + "unscheduled.cpu_pct"
+        zbx_key_oversub_cpu_pct = self.zbx_key_prefix + "oversubscribed.cpu_pct"
+
+        print "CPU Stats:"
+        max_schedulable_cpu = self.get_compute_nodes_max_schedulable_cpu()
+        self.zagg_sender.add_zabbix_keys({zbx_key_max_schedulable_cpu:
+                                          max_schedulable_cpu})
+
+        scheduled_cpu, scheduled_cpu_pct, unscheduled_cpu, unscheduled_cpu_pct = self.get_compute_nodes_scheduled_cpu()
+        oversub_cpu_pct = self.get_oversub_cpu()
+
+        print "  Scheduled CPU for compute nodes:\t\t\t" + \
+              "{:>15} milicores".format(scheduled_cpu)
+        print "  Unscheduled CPU for compute nodes:\t\t\t" + \
+              "{:>15} milicores".format(unscheduled_cpu)
+        print "  Maximum (total) schedulable CPU for compute " + \
+              "nodes:\t{:>15} milicores".format(max_schedulable_cpu)
+        print "  Percent scheduled CPU for compute nodes:\t\t\t" + \
+              "{:.2f}%".format(scheduled_cpu_pct)
+        print "  Percent unscheduled CPU for compute nodes:\t\t\t" + \
+              "{:.2f}%".format(unscheduled_cpu_pct)
+        print "  Percent oversubscribed CPU for compute nodes: \t\t" + \
+              "{:.2f}%".format(oversub_cpu_pct)
+        self.zagg_sender.add_zabbix_keys({zbx_key_scheduled_cpu: scheduled_cpu})
+        self.zagg_sender.add_zabbix_keys({zbx_key_scheduled_cpu_pct:
+                                          int(scheduled_cpu_pct)})
+        self.zagg_sender.add_zabbix_keys({zbx_key_unscheduled_cpu: unscheduled_cpu})
+        self.zagg_sender.add_zabbix_keys({zbx_key_unscheduled_cpu_pct:
+                                          int(unscheduled_cpu_pct)})
+        self.zagg_sender.add_zabbix_keys({zbx_key_oversub_cpu_pct:
+                                          int(oversub_cpu_pct)})
+
+    def do_mem_stats(self):
+        ''' gather and report memory statistics '''
+        # Memory items
+        zbx_key_max_schedulable_mem = self.zbx_key_prefix + "max_schedulable.mem"
+        zbx_key_scheduled_mem = self.zbx_key_prefix + "scheduled.mem"
+        zbx_key_scheduled_mem_pct = self.zbx_key_prefix + "scheduled.mem_pct"
+        zbx_key_unscheduled_mem = self.zbx_key_prefix + "unscheduled.mem"
+        zbx_key_unscheduled_mem_pct = self.zbx_key_prefix + "unscheduled.mem_pct"
+        zbx_key_oversub_mem_pct = self.zbx_key_prefix + "oversubscribed.mem_pct"
+
+        print "\nMemory Stats:"
+        max_schedulable_mem = self.get_compute_nodes_max_schedulable_mem()
+        self.zagg_sender.add_zabbix_keys({zbx_key_max_schedulable_mem:
+                                          max_schedulable_mem})
+
+        scheduled_mem, scheduled_mem_pct, unscheduled_mem, unscheduled_mem_pct = self.get_compute_nodes_scheduled_mem()
+        oversub_mem_pct = self.get_oversub_mem()
+        print "  Scheduled mem for compute nodes:\t\t\t" + \
+              "{:>20} bytes".format(scheduled_mem)
+        print "  Unscheduled mem for compute nodes:\t\t\t" + \
+              "{:>20} bytes".format(unscheduled_mem)
+        print "  Maximum (total) schedulable memory for compute nodes:\t" + \
+              "{:>20} bytes".format(max_schedulable_mem)
+        print "  Percent scheduled mem for compute nodes:\t\t\t" + \
+              "{:.2f}%".format(scheduled_mem_pct)
+        print "  Percent unscheduled mem for compute nodes:\t\t\t" + \
+              "{:.2f}%".format(unscheduled_mem_pct)
+        print "  Percent oversubscribed mem for compute nodes: \t\t" + \
+              "{:.2f}%".format(oversub_mem_pct)
+        self.zagg_sender.add_zabbix_keys({zbx_key_scheduled_mem: scheduled_mem})
+        self.zagg_sender.add_zabbix_keys({zbx_key_scheduled_mem_pct:
+                                          int(scheduled_mem_pct)})
+        self.zagg_sender.add_zabbix_keys({zbx_key_unscheduled_mem: unscheduled_mem})
+        self.zagg_sender.add_zabbix_keys({zbx_key_unscheduled_mem_pct:
+                                          int(unscheduled_mem_pct)})
+        self.zagg_sender.add_zabbix_keys({zbx_key_oversub_mem_pct:
+                                          int(oversub_mem_pct)})
+
 
     def cluster_capacity(self):
         ''' check capacity of compute nodes on cluster'''
 
-        zbx_key_mem_alloc = "openshift.master.cluster.memory_allocation"
+        # Other zabbix items
         zbx_key_max_pods = "openshift.master.cluster.max_mem_pods_schedulable"
-        zbx_key_avg_mem = "openshift.master.cluster.compute_nodes.allocated.mem.average"
-        zbx_key_avg_cpu = "openshift.master.cluster.compute_nodes.allocated.cpu.average"
 
         self.sql_conn = sqlite3.connect(':memory:')
 
         self.load_nodes()
         self.load_pods()
 
-        memory_percentage = self.get_memory_percentage()
-        print "Percentage of memory allocated: {}".format(memory_percentage)
-        self.zagg_sender.add_zabbix_keys({zbx_key_mem_alloc:
-                                          int(memory_percentage)})
+        self.do_cpu_stats()
+        self.do_mem_stats()
 
+        print "\nOther stats:"
         largest = self.get_largest_pod()
         if self.args.debug:
-            print "Largest memory pod: {}".format(largest)
+            print "  Largest memory pod: {}".format(largest)
 
         schedulable = self.how_many_schedulable(largest)
-        print "Number of max-size nodes schedulable: {}".format(schedulable)
+        print "  Number of max-size nodes schedulable:\t\t\t\t{}".format(schedulable)
         self.zagg_sender.add_zabbix_keys({zbx_key_max_pods: schedulable})
-
-        avg_mem_compute_nodes = self.get_avg_mem_compute_nodes()
-        print "Avg mem % across compute nodes: {}".format(avg_mem_compute_nodes)
-        self.zagg_sender.add_zabbix_keys({zbx_key_avg_mem:
-                                          int(avg_mem_compute_nodes)})
-
-        avg_cpu_compute_nodes = self.get_avg_cpu_compute_nodes()
-        print "Avg cpu % across compute nodes: {}".format(avg_cpu_compute_nodes)
-        self.zagg_sender.add_zabbix_keys({zbx_key_avg_cpu:
-                                          int(avg_cpu_compute_nodes)})
-
 
 if __name__ == '__main__':
     OCC = OpenshiftClusterCapacity()
