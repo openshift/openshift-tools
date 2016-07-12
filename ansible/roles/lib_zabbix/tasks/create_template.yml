@@ -131,6 +131,8 @@
     height: "{{ item.height }}"
     width: "{{ item.width }}"
     graph_items: "{{ item.graph_items }}"
+    yaxismin: "{{ item.yaxismin | default(omit, True) }}"
+    ymin_type: "{{ item.ymin_type | default(omit, True) }}"
   with_items: template.zgraphs
   when: template.zgraphs is defined
 

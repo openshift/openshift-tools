@@ -732,3 +732,23 @@ g_template_openshift_master:
       color: blue
     - item_name: openshift.master.scheduler.e2e.scheduling.latency.quantile.99
       color: orange
+
+  - name: Openshift Cluster Scheduled CPU and Memory Percentages
+    width: 900
+    height: 200
+    yaxismin: "0.0000"  # MUST be quoted and with this precision otherwise it will always modify
+    ymin_type: fixed
+    graph_items:
+    - item_name: openshift.master.cluster.compute_nodes.scheduled.cpu_pct
+      color: red
+    - item_name: openshift.master.cluster.compute_nodes.scheduled.mem_pct
+      color: blue
+
+  - name: Openshift Cluster Oversubscription CPU and Memory Percentages
+    width: 900
+    height: 200
+    graph_items:
+    - item_name: openshift.master.cluster.compute_nodes.oversubscribed.cpu_pct
+      color: red
+    - item_name: openshift.master.cluster.compute_nodes.oversubscribed.mem_pct
+      color: blue
