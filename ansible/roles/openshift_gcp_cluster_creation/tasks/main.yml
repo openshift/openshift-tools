@@ -20,11 +20,51 @@
     provisioning: True
   register: dmyaml
 
+- name: run the inventory refresh
+  command: "/usr/share/ansible/inventory/multi_inventory.py --refresh-cache"
+
+- name: get the master nodes via ohi
+  command: "ohi -c {{ osgcc_clusterid }} -t master --v3"
+  register: master_out
+
+- name: get the infra nodes via ohi
+  command: "ohi -c {{ osgcc_clusterid }} -s infra --v3"
+  register: infra_out
+
+- name: get the compute nodes via ohi
+  command: "ohi -c {{ osgcc_clusterid }} -s compute --v3"
+  register: compute_out
+
+- name: fetch latest manifests
+  gcloud_dm_manifest:
+    state: list
+    deployment: "{{ cli_clusterid }}"
+  register: manifest_out
+
+- set_fact:
+    current_dm_config: "{{ manifest_out.results[-1].config.content | from_yaml}}"
+  when: manifest_out.results|length > 0
+
+- name: reconcile the resources
+  gcloud_dm_resource_reconciler:
+    resources: "{{ dmyaml.results }}"
+    instance_counts:
+      master: "{{ osgcc_master_instance_count  }}"
+      infra: "{{ osgcc_infra_instance_count  }}"
+      compute: "{{ osgcc_compute_instance_count  }}"
+    existing_instance_names:
+      master: "{{ master_out.stdout_lines }}"
+      infra: "{{ infra_out.stdout_lines }}"
+      compute: "{{ compute_out.stdout_lines }}"
+    current_dm_config: "{{ current_dm_config | default({}, True) }}"
+  register: reconcile_out
+
 - name: Deploy Generate config for cluster
   gcloud_dm_deployments:
     config: "{{ dmyaml.results }}"
     name: "{{ osgcc_clusterid }}-cluster-deploy"
   register: deployout
+  when: reconcile_out.run_dm
 
 - name: Get Master LB IP Address
   gcloud_compute_addresses:
