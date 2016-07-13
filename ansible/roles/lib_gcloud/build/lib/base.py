@@ -12,6 +12,10 @@ import yaml
 import shutil
 import subprocess
 import atexit
+# Not all genearated modules use this.
+# pylint: disable=unused-import
+import copy
+
 
 class GcloudCLIError(Exception):
     '''Exception class for openshiftcli'''
@@ -112,7 +116,9 @@ class GcloudCLI(object):
         else:
             cmd.append('list')
 
-        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
 
     def _delete_address(self, aname):
         ''' list addresses
@@ -246,9 +252,7 @@ class GcloudCLI(object):
                                 stderr=subprocess.PIPE,
                                 env={})
 
-        proc.wait()
-        stdout = proc.stdout.read()
-        stderr = proc.stderr.read()
+        stdout, stderr = proc.communicate()
         rval = {"returncode": proc.returncode,
                 "results": results,
                 "cmd": ' '.join(cmds),
