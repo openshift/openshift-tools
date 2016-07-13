@@ -46,6 +46,7 @@ cp -p monitoring/cron-send-os-skydns-checks.py %{buildroot}/usr/bin/cron-send-os
 cp -p monitoring/cron-send-os-dnsmasq-checks.py %{buildroot}/usr/bin/cron-send-os-dnsmasq-checks
 cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
+cp -p monitoring/cron-send-saml-status.py %{buildroot}/usr/bin/cron-send-saml-status
 cp -p monitoring/cron-openshift-pruner.py %{buildroot}/usr/bin/cron-openshift-pruner
 cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
 cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
@@ -241,7 +242,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-cluster-capacity
 /usr/bin/cron-send-connection-count
 /usr/bin/cron-send-cpu-mem-stats
-
+/usr/bin/cron-send-saml-status
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
