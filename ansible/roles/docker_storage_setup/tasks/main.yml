@@ -2,7 +2,7 @@
 - name: Ensure docker is installed
   action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
   with_items:
-  - docker-1.8.2
+  - docker-1.9.1
 
 - name: copy the docker-storage-setup config file
   template:
