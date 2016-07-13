@@ -38,7 +38,7 @@
 - name: fetch latest manifests
   gcloud_dm_manifest:
     state: list
-    deployment: "{{ cli_clusterid }}"
+    deployment: "{{ osgcc_clusterid }}-deployment"
   register: manifest_out
 
 - set_fact:
@@ -62,7 +62,7 @@
 - name: Deploy Generate config for cluster
   gcloud_dm_deployments:
     config: "{{ dmyaml.results }}"
-    name: "{{ osgcc_clusterid }}-cluster-deploy"
+    name: "{{ osgcc_clusterid }}-deployment"
   register: deployout
   when: reconcile_out.run_dm
 
