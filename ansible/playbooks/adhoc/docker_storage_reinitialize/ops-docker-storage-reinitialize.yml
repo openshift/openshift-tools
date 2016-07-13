@@ -64,9 +64,21 @@
     ignore_errors: true
     register: vgremove_output
 
+  - name: dmsetup remove docker devices if vgremove failed
+    shell: "dmsetup table | grep ^docker- | cut -d: -f1-2 | xargs -n1 dmsetup remove"
+    ignore_errors: true
+    register: dmsetup_output
+    when: "'is used by another device' in vgremove_output.stderr"
+   
+  - name: remove docker_vg if present
+    command: "vgremove -y '{{ docker_storage_setup.VG }}'"
+    ignore_errors: true
+    register: vgremove_output
+    when: not dmsetup_output|skipped
+
   - fail:
       msg: "Failed to remove the docker VG. You may need to disable the docker and atomic-openshift-node services and reboot the machine. Then re-run this playbook. Once it has been re-initialized, re-enable the atomic-openshift-node service."
-    when: "'is used by another device' in vgremove_output.stderr"
+    when: vgremove_output|failed
 
   - name: remove 1st partition from device if present
     command: "parted '{{ docker_storage_setup.DEVS }}' -s 'rm 1'"
