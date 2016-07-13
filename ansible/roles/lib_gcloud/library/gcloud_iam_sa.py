@@ -344,94 +344,109 @@ class Utils(object):
 
 
 # pylint: disable=too-many-instance-attributes
-class GcloudComputeAddresses(GcloudCLI):
-    ''' Class to wrap the gcloud compute addresses command'''
+class GcloudIAMServiceAccount(GcloudCLI):
+    ''' Class to wrap the gcloud compute iam service-accounts command'''
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
     def __init__(self,
-                 aname=None,
-                 desc=None,
-                 region=None,
-                 address=None,
-                 isglobal=False,
+                 sname=None,
+                 display_name=None,
                  verbose=False):
         ''' Constructor for gcloud resource '''
-        super(GcloudComputeAddresses, self).__init__()
-        self.name = aname
-        self.desc = desc
-        self.region = region
-        self.isglobal = isglobal
-        self.address = address
+        super(GcloudIAMServiceAccount, self).__init__()
+        self._name = sname
+        self._display_name = display_name
+        self._exist_sa = None
         self.verbose = verbose
 
-    def list_addresses(self, address_name=None):
-        '''return a list of addresses'''
-        results = self._list_addresses(address_name)
-        if results['returncode'] == 0:
-            if not address_name:
-                rval = []
-                for addr in results['results'].strip().split('\n')[1:]:
-                    aname, region, aip, status = addr.split()
-                    rval.append({'name': aname, 'region': region, 'address': aip, 'status': status})
-                results['results'] = rval
+    @property
+    def existing_service_accounts(self):
+        '''property for existing service ccounts'''
+        if self._exist_sa == None:
+            self._exist_sa = self._list_service_accounts()['results']
+        return self._exist_sa
 
-            else:
-                results['results'] = yaml.load(results['results'])
+    @property
+    def name(self):
+        '''property for name'''
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        '''property setter for name'''
+        self._name = value
+
+    @property
+    def display_name(self):
+        '''property for display_name'''
+        return self._display_name
+
+    def list_service_accounts(self):
+        '''return metatadata'''
+        results = self._list_service_accounts()
+        if results['returncode'] != 0:
+            if 'Permission denied: service account' in results['stderr']:
+                results['results'] = []
+        elif results['returncode'] == 0:
+            for sacc in results['results']:
+                if self.name == sacc['email'] or self.name == sacc['email'].split('@')[0]:
+                    results['results'] = sacc
+                    break
 
         return results
 
     def exists(self):
-        ''' return whether an address exists '''
-        addresses = self.list_addresses()
-        if addresses['returncode'] != 0:
-            if 'was not found' in addresses['stderr']:
-                addresses['returncode'] = 0
-                return addresses
-            raise GcloudCLIError('Something went wrong.  Results: %s' % addresses['stderr'])
+        ''' return whether the service account exists '''
+        for sacc in self.existing_service_accounts:
+            if self.name == sacc['email'] or self.name == sacc['email'].split('@')[0]:
+                self.name = sacc['email']
+                return True
 
-        return any([self.name == addr['name'] for addr in addresses['results']])
+        return False
 
-    def delete_address(self):
-        '''delete an address'''
-        return self._delete_address(self.name)
+    def needs_update(self):
+        ''' return whether an we need to update '''
+        # compare incoming values with service account returned
+        # does the display name exist?
+        for sacc in self.existing_service_accounts:
+            if self.name in sacc['email'] and self.display_name == sacc['displayName']:
+                return False
 
-    def create_address(self):
-        '''create an address'''
-        address_info = {}
-        address_info['description'] = self.desc
-        address_info['region'] = self.region
-        return self._create_address(self.name, address_info, self.address, self.isglobal)
+        return True
 
+    def delete_service_account(self):
+        ''' attempt to remove service_name '''
+        return self._delete_service_account(self.name)
+
+    def create_service_account(self):
+        '''create an service_name'''
+        return self._create_service_account(self.name, self.display_name)
+
+    def update_service_account(self):
+        '''create an service_name'''
+        return self._update_service_account(self.name, self.display_name)
 # vim: expandtab:tabstop=4:shiftwidth=4
 
 #pylint: disable=too-many-branches
 def main():
-    ''' ansible module for gcloud compute addresses'''
+    ''' ansible module for gcloud iam servicetaccount'''
     module = AnsibleModule(
         argument_spec=dict(
             # credentials
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             name=dict(default=None, type='str'),
-            description=dict(default=None, type='str'),
-            region=dict(default=None, type='str'),
-            address=dict(default=None, type='str'),
-            isglobal=dict(default=False, type='bool'),
-            project=dict(default=False, type='str'),
+            display_name=dict(default=None, type='str'),
         ),
         supports_check_mode=True,
-        mutually_exclusive=[['isglobal', 'region']],
     )
-    gcloud = GcloudComputeAddresses(module.params['name'],
-                                    module.params['description'],
-                                    module.params['region'],
-                                    module.params['address'],
-                                    module.params['isglobal'])
+
+    gcloud = GcloudIAMServiceAccount(module.params['name'], module.params['display_name'])
 
     state = module.params['state']
 
-    api_rval = gcloud.list_addresses(module.params['name'])
+    api_rval = gcloud.list_service_accounts()
 
     #####
     # Get
@@ -451,7 +466,7 @@ def main():
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a delete.')
 
-            api_rval = gcloud.delete_address()
+            api_rval = gcloud.delete_service_account()
 
             module.exit_json(changed=True, results=api_rval, state="absent")
         module.exit_json(changed=False, state="absent")
@@ -466,14 +481,24 @@ def main():
                 module.exit_json(changed=False, msg='Would have performed a create.')
 
             # Create it here
-            api_rval = gcloud.create_address()
+            api_rval = gcloud.create_service_account()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
 
             module.exit_json(changed=True, results=api_rval, state="present")
 
-        # update??
+        # update
+        elif gcloud.needs_update():
+            if module.check_mode:
+                module.exit_json(changed=False, msg='Would have performed an update.')
+
+            api_rval = gcloud.update_service_account()
+
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
+
+            module.exit_json(changed=True, results=api_rval, state="present|update")
 
         module.exit_json(changed=False, results=api_rval, state="present")
 
@@ -481,10 +506,6 @@ def main():
                      changed=False,
                      results='Unknown state passed. %s' % state,
                      state="unknown")
-
-#if __name__ == '__main__':
-#    gcloud = GcloudComputeImage('rhel-7-base-2016-06-10')
-#    print gcloud.list_images()
 
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
