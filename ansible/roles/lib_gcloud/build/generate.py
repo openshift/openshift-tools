@@ -58,6 +58,10 @@ FILES = {'gcloud_dm_deployments.py': ['lib/base.py',
                               'src/gcloud_iam_sa.py',
                               'ansible/gcloud_iam_sa.py',
                              ],
+         'gcloud_dm_resource_reconciler.py': ['lib/base.py',
+                                              'src/gcloud_dm_resource_reconciler.py',
+                                              'ansible/gcloud_dm_resource_reconciler.py',
+                                             ],
         }
 
 
