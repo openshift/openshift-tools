@@ -15,6 +15,7 @@ Role Variables
 
   ozcs_masters: The masters of the cluster
   ozcs_infra_nodes: The infrastructure nodes of the cluster
+  ozcs_compute_nodes: The compute nodes of the cluster
   ozcs_zbx_server: The zabbix server in which to create the items
   ozcs_zbx_user: The zabbix user with which to authenticate
   ozcs_zbx_password: The zabbix password with which to authenticate
@@ -41,6 +42,9 @@ Example Playbook
            ozcs_infra_nodes:
            - cid-node-infra-2d7f7
            - cid-node-infra-d1f9a
+           ozcs_compute_nodes:
+           - cid-node-compute-4d6a3
+           - cid-node-compute-ec54a
 
 License
 -------
