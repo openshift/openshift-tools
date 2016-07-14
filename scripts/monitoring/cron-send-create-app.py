@@ -95,12 +95,16 @@ class OpenShiftOC(object):
         return rval
 
     def get_logs(self):
-        '''get all events'''
-        pod = self.get_pod()
-        if pod:
-            return self.oc_cmd(['logs', pod['metadata']['name'], '-n', self.namespace])
+        '''get all pod logs'''
+        pods = self.get_pods()
+        result = ""
+        for pod in pods['items']:
+            result = result + self.oc_cmd(['logs', pod['metadata']['name'], '-n', self.namespace])
 
-        return 'Could not get logs for pod.  Could not determine pod name.'
+        if result == "":
+            return 'Could not get logs for pod.  Could not determine pod name.'
+
+        return result
 
     def get_route(self):
         '''get route to check if app is running'''
@@ -136,17 +140,16 @@ class OpenShiftOC(object):
         proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
                                 env={'KUBECONFIG': self.kubeconfig, \
                                      'PATH': os.environ["PATH"]})
-        proc.wait()
+        stdout, stderr = proc.communicate()
         if proc.returncode == 0:
-            output = proc.stdout.read()
             if self.verbose:
                 print "Stdout:"
-                print output
+                print stdout
                 print "Stderr:"
-                print proc.stderr.read()
-            return output
+                print stderr
+            return stdout
 
-        return "Error: %s.  Return: %s" % (proc.returncode, proc.stderr.read())
+        return "Error: %s.  Return: %s" % (proc.returncode, stderr)
 
     def oadm_cmd(self, cmd):
         '''Base command for oadm '''
@@ -156,18 +159,16 @@ class OpenShiftOC(object):
         proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
                                 env={'KUBECONFIG': self.kubeconfig, \
                                      'PATH': os.environ["PATH"]})
-        proc.wait()
+        stdout, stderr = proc.communicate()
         if proc.returncode == 0:
-            output = proc.stdout.read()
             if self.verbose:
                 print "Stdout:"
-                print output
+                print stdout
                 print "Stderr:"
-                print proc.stderr.read()
-            return output
+                print stderr
+            return stdout
 
-        return "Error: %s.  Return: %s" % (proc.returncode, proc.stderr.read())
-
+        return "Error: %s.  Return: %s" % (proc.returncode, stderr)
 
 def curl(ip_addr, port):
     ''' Open an http connection to the url and read
