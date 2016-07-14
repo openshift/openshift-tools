@@ -96,11 +96,16 @@ class OpenShiftOC(object):
 
     def get_logs(self):
         '''get all events'''
-        pod = self.get_pod()
-        if pod:
-            return self.oc_cmd(['logs', pod['metadata']['name'], '-n', self.namespace])
+        pods = self.get_pods()
+        result = ""
+        for pod in pods['items']:
+            result = result + self.oc_cmd(['logs', pod['metadata']['name'], '-n', self.namespace])
 
-        return 'Could not get logs for pod.  Could not determine pod name.'
+        if result == "":
+            return 'Could not get logs for pod.  Could not determine pod name.'
+
+        return result
+
 
     def get_route(self):
         '''get route to check if app is running'''
