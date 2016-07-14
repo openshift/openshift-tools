@@ -81,6 +81,98 @@
     delegate_to: localhost
     run_once: true
 
+  - name: "item: openshift.master.cluster.all.cpu.idle_sum"
+    zbx_item:
+      zbx_server: "{{ ozcs_zbx_server }}"
+      zbx_user: "{{ ozcs_zbx_user }}"
+      zbx_password: "{{ ozcs_zbx_password }}"
+      name: openshift.master.cluster.all.cpu.idle_sum
+      key: 'grpsum["{{ ozcs_clusterid }}", "kernel.all.cpu.idle", avg, 3600]'
+      value_type: float
+      data_type: decimal
+      description: "The Sum of CPU Idle for all instances in the cluster."
+      multiplier: ''
+      hostname: "{{ item }}"
+      zabbix_type: aggregate
+      interval: 3600
+      delta: 0
+      units: '%'
+    with_items: "{{ ozcs_masters }}"
+    delegate_to: localhost
+    run_once: true
+
+  - name: "item: openshift.master.cluster.compute_nodes.cpu.idle_avg"
+    zbx_item:
+      zbx_server: "{{ ozcs_zbx_server }}"
+      zbx_user: "{{ ozcs_zbx_user }}"
+      zbx_password: "{{ ozcs_zbx_password }}"
+      key: openshift.master.cluster.compute_nodes.cpu.idle_avg
+      name: openshift.master.cluster.compute_nodes.cpu.idle_avg
+      value_type: float
+      data_type: decimal
+      description: "The Average CPU Idle for compute nodes in the cluster."
+      multiplier: ''
+      hostname: "{{ item }}"
+      zabbix_type: calculated
+      interval: 3600
+      delta: 0
+      units: '%'
+      params: |-
+        {%- set non_compute_cpu_idle = [] %}
+        {%- for node in ozcs_infra_nodes + ozcs_masters %}
+        {{ non_compute_cpu_idle.append('avg("' ~ node ~ ':kernel.all.cpu.idle", 3600)') }}
+        {%- endfor %}
+        ( last("grpsum[\"{{ ozcs_clusterid }}\", \"kernel.all.cpu.idle\", avg, 3600]") - ( {{ non_compute_cpu_idle | join(' + ') }} ) ) / {{ ozcs_compute_nodes | length() }}
+    with_items: "{{ ozcs_masters }}"
+    delegate_to: localhost
+    run_once: true
+
+  - name: "item: openshift.master.cluster.all.mem.util.available_sum"
+    zbx_item:
+      zbx_server: "{{ ozcs_zbx_server }}"
+      zbx_user: "{{ ozcs_zbx_user }}"
+      zbx_password: "{{ ozcs_zbx_password }}"
+      name: openshift.master.cluster.all.mem.util.available_sum
+      key: 'grpsum["{{ ozcs_clusterid }}", "mem.util.available", avg, 3600]'
+      value_type: int
+      data_type: decimal
+      description: "The Sum of Memory Available for all instances in the cluster."
+      multiplier: ''
+      hostname: "{{ item }}"
+      zabbix_type: aggregate
+      interval: 3600
+      delta: 0
+      units: B
+    with_items: "{{ ozcs_masters }}"
+    delegate_to: localhost
+    run_once: true
+
+  - name: "item: openshift.master.cluster.compute_nodes.mem.util.available_avg"
+    zbx_item:
+      zbx_server: "{{ ozcs_zbx_server }}"
+      zbx_user: "{{ ozcs_zbx_user }}"
+      zbx_password: "{{ ozcs_zbx_password }}"
+      key: openshift.master.cluster.compute_nodes.mem.util.available_avg
+      name: openshift.master.cluster.compute_nodes.mem.util.available_avg
+      value_type: int
+      data_type: decimal
+      description: "The Average Memory Available for compute nodes in the cluster."
+      multiplier: ''
+      hostname: "{{ item }}"
+      zabbix_type: calculated
+      interval: 3600
+      delta: 0
+      units: B
+      params: |-
+        {%- set non_compute_mem_available = [] %}
+        {%- for node in ozcs_infra_nodes + ozcs_masters %}
+        {{ non_compute_mem_available.append('avg("' ~ node ~ ':mem.util.available", 3600)') }}
+        {%- endfor %}
+        ( last("grpsum[\"{{ ozcs_clusterid }}\", \"mem.util.available\", avg, 3600]") - ( {{ non_compute_mem_available | join(' + ') }} ) ) / {{ ozcs_compute_nodes | length() }}
+    with_items: "{{ ozcs_masters }}"
+    delegate_to: localhost
+    run_once: true
+
   - name: "graph: OpenShift Masters and Infra Nodes cpu and mem users_available"
     zbx_graph:
       zbx_server: "{{ ozcs_zbx_server }}"
@@ -100,5 +192,37 @@
         hosts: "{{ ozcs_masters }}"
       - item_name: openshift.node.cpu.users_available
         hosts: "{{ ozcs_infra_nodes }}"
+    delegate_to: localhost
+    run_once: true
+
+  - name: "graph: OpenShift Compute Nodes Average CPU Idle"
+    zbx_graph:
+      zbx_server: "{{ ozcs_zbx_server }}"
+      zbx_user: "{{ ozcs_zbx_user }}"
+      zbx_password: "{{ ozcs_zbx_password }}"
+      name: "OpenShift Compute Nodes Average CPU Idle [{{ ozcs_clusterid }}]"
+      width: 900
+      height: 200
+      yaxismin: "0.0000"  # MUST be quoted and with this precision otherwise it will always modify
+      ymin_type: fixed
+      graph_items:
+      - item_name: openshift.master.cluster.compute_nodes.cpu.idle_avg
+        color: green
+    delegate_to: localhost
+    run_once: true
+
+  - name: "graph: OpenShift Compute Nodes Average Memory Available"
+    zbx_graph:
+      zbx_server: "{{ ozcs_zbx_server }}"
+      zbx_user: "{{ ozcs_zbx_user }}"
+      zbx_password: "{{ ozcs_zbx_password }}"
+      name: "OpenShift Compute Nodes Average Memory Available [{{ ozcs_clusterid }}]"
+      width: 900
+      height: 200
+      yaxismin: "0.0000"  # MUST be quoted and with this precision otherwise it will always modify
+      ymin_type: fixed
+      graph_items:
+      - item_name: openshift.master.cluster.compute_nodes.mem.util.available_avg
+        color: green
     delegate_to: localhost
     run_once: true
