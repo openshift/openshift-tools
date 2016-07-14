@@ -95,7 +95,7 @@ class OpenShiftOC(object):
         return rval
 
     def get_logs(self):
-        '''get all events'''
+        '''get all pod logs'''
         pods = self.get_pods()
         result = ""
         for pod in pods['items']:
@@ -105,7 +105,6 @@ class OpenShiftOC(object):
             return 'Could not get logs for pod.  Could not determine pod name.'
 
         return result
-
 
     def get_route(self):
         '''get route to check if app is running'''
@@ -141,17 +140,16 @@ class OpenShiftOC(object):
         proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
                                 env={'KUBECONFIG': self.kubeconfig, \
                                      'PATH': os.environ["PATH"]})
-        proc.wait()
+        result = proc.communicate()
         if proc.returncode == 0:
-            output = proc.stdout.read()
             if self.verbose:
                 print "Stdout:"
-                print output
+                print result[0]
                 print "Stderr:"
-                print proc.stderr.read()
-            return output
+                print result[1]
+            return result[0]
 
-        return "Error: %s.  Return: %s" % (proc.returncode, proc.stderr.read())
+        return "Error: %s.  Return: %s" % (proc.returncode, result[1])
 
     def oadm_cmd(self, cmd):
         '''Base command for oadm '''
