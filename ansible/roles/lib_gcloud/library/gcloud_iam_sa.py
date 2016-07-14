@@ -241,6 +241,62 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='json')
 
+    def _delete_service_account_key(self, sa_name, key_id):
+        '''delete service account key'''
+        cmd = ['iam', 'service-accounts', 'keys', 'delete', key_id, '--iam-account', sa_name, '-q']
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_service_account_keys(self, sa_name):
+        '''return service account keys '''
+        cmd = ['iam', 'service-accounts', 'keys', 'list', '--iam-account', sa_name]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _create_service_account_key(self, sa_name, outputfile, key_format='p12'):
+        '''create service account key '''
+        # Ensure we remove the key file
+        atexit.register(Utils.cleanup, [outputfile])
+
+        cmd = ['iam', 'service-accounts', 'keys', 'create', outputfile,
+               '--iam-account', sa_name, '--key-file-type', key_format]
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_project_policy(self, project):
+        '''create service account key '''
+        cmd = ['projects', 'get-iam-policy', project]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _add_project_policy(self, project, member, role):
+        '''create service account key '''
+        cmd = ['projects', 'add-iam-policy-binding', project, '--member', member, '--role', role]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _remove_project_policy(self, project, member, role):
+        '''create service account key '''
+        cmd = ['projects', 'remove-iam-policy-binding', project, '--member', member, '--role', role]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _set_project_policy(self, project, policy_path):
+        '''create service account key '''
+        cmd = ['projects', 'set-iam-policy', project, policy_path]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
     def gcloud_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for gcloud '''
         cmds = ['/usr/bin/gcloud']

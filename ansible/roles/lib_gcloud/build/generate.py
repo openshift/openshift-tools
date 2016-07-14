@@ -58,10 +58,18 @@ FILES = {'gcloud_dm_deployments.py': ['lib/base.py',
                               'src/gcloud_iam_sa.py',
                               'ansible/gcloud_iam_sa.py',
                              ],
+         'gcloud_iam_sa_keys.py': ['lib/base.py',
+                                   'src/gcloud_iam_sa_keys.py',
+                                   'ansible/gcloud_iam_sa_keys.py',
+                                  ],
          'gcloud_dm_resource_reconciler.py': ['lib/base.py',
                                               'src/gcloud_dm_resource_reconciler.py',
                                               'ansible/gcloud_dm_resource_reconciler.py',
                                              ],
+         'gcloud_project_policy.py': ['lib/base.py',
+                                      'src/gcloud_project_policy.py',
+                                      'ansible/gcloud_project_policy.py',
+                                     ],
         }
 
 

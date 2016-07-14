@@ -404,101 +404,88 @@ class Utils(object):
 
 
 # pylint: disable=too-many-instance-attributes
-class GcloudComputeImage(GcloudCLI):
-    ''' Class to wrap the gcloud compute images command'''
+class GcloudIAMServiceAccountKeys(GcloudCLI):
+    ''' Class to wrap the gcloud compute iam service-accounts command'''
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
     def __init__(self,
-                 iname=None,
-                 desc=None,
-                 family=None,
-                 licenses=None,
-                 source_disk=None,
-                 source_disk_zone=None,
-                 source_uri=None,
+                 acc_name,
+                 output_path=None,
+                 key_format='p12',
                  verbose=False):
         ''' Constructor for gcloud resource '''
-        super(GcloudComputeImage, self).__init__()
-        self.image_name = iname
-        self.desc = desc
-        self.family = family
-        self.licenses = licenses
-        self.source_disk = source_disk
-        self.source_disk_zone = source_disk_zone
-        self.source_uri = source_uri
+        super(GcloudIAMServiceAccountKeys, self).__init__()
+        self._service_account_name = acc_name
+        self._output_path = output_path
+        self._key_format = key_format
         self.verbose = verbose
 
-    def list_images(self, image_name=None):
-        '''return a list of images'''
-        results = self._list_images(image_name)
-        if results['returncode'] == 0:
-            results['results'] = results['results'].strip().split('\n')[1:]
+    @property
+    def key_format(self):
+        '''property for key format '''
+        return self._key_format
+
+    @property
+    def service_account_name(self):
+        '''property for service account name'''
+        return self._service_account_name
+
+    @service_account_name.setter
+    def service_account_name(self, value):
+        '''property setter for service_account_name'''
+        self._service_account_name = value
+
+    def list_service_account_keys(self):
+        '''return service account key ids'''
+        return self._list_service_account_keys(self.service_account_name)
+
+    def delete_service_account_key(self, key_id):
+        ''' delete key by id'''
+        # compare incoming values with service account returned
+        # does the display name exist?
+        return self._delete_service_account_key(self.service_account_name, key_id)
+
+    def create_service_account_key(self, outputfile):
+        '''create an service account key'''
+        results = self._create_service_account_key(self.service_account_name, outputfile)
+        if results['returncode'] != 0:
+            return results
+
+        # we need to dump the private key out and return it
+        from OpenSSL import crypto
+        p12 = crypto.load_pkcs12(open(outputfile, 'rb').read(), 'notasecret')
+        results['results'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, p12.get_privatekey()).strip()
 
         return results
-
-    def exists(self):
-        ''' return whether an image exists '''
-        images = self.list_images()
-        if images['returncode'] != 0:
-            if 'was not found' in images['stderr']:
-                images['returncode'] = 0
-                return images
-            raise GcloudCLIError('Something went wrong.  Results: %s' % images['stderr'])
-
-        return any([self.image_name in line for line in images['results']])
-
-    def delete_image(self):
-        '''delete an image'''
-        return self._delete_image(self.image_name)
-
-    def create_image(self):
-        '''create an image'''
-        image_info = {}
-        image_info['description'] = self.desc
-        image_info['family'] = self.family
-        image_info['licenses'] = self.licenses
-        image_info['source-disk'] = self.source_disk
-        image_info['source-disk-zone'] = self.source_disk_zone
-        image_info['source-uri'] = self.source_uri
-        return self._create_image(self.image_name, image_info)
-
 # vim: expandtab:tabstop=4:shiftwidth=4
 
 #pylint: disable=too-many-branches
 def main():
-    ''' ansible module for gcloud compute images'''
+    ''' ansible module for gcloud iam service-account keys'''
     module = AnsibleModule(
         argument_spec=dict(
             # credentials
-            state=dict(default='present', type='str',
-                       choices=['present', 'absent', 'list']),
-            name=dict(default=None, type='str'),
-            description=dict(default=None, type='str'),
-            family=dict(default=None, type='str'),
-            licenses=dict(default=None, type='list'),
-            source_disk=dict(default=None, type='str'),
-            source_disk_zone=dict(default=None, type='str'),
-            source_uri=dict(default=None, type='str'),
+            state=dict(default='present', type='str', choices=['present', 'absent', 'list']),
+            service_account_name=dict(required=True, type='str'),
+            key_format=dict(type='str', choices=['p12', 'json']),
+            key_id=dict(default=None, type='str'),
+            display_name=dict(default=None, type='str'),
         ),
         supports_check_mode=True,
     )
-    gimage = GcloudComputeImage(module.params['name'],
-                                module.params['description'],
-                                module.params['family'],
-                                module.params['licenses'],
-                                module.params['source_disk'],
-                                module.params['source_disk_zone'],
-                                module.params['source_uri'])
+
+    gcloud = GcloudIAMServiceAccountKeys(module.params['service_account_name'],
+                                         module.params['key_format'])
 
     state = module.params['state']
-
-    api_rval = gimage.list_images(module.params['name'])
 
     #####
     # Get
     #####
     if state == 'list':
+        api_rval = gcloud.list_service_account_keys()
+
         if api_rval['returncode'] != 0:
             module.fail_json(msg=api_rval, state="list")
 
@@ -508,43 +495,37 @@ def main():
     # Delete
     ########
     if state == 'absent':
-        if gimage.exists():
 
-            if module.check_mode:
-                module.exit_json(changed=False, msg='Would have performed a delete.')
+        if module.check_mode:
+            module.exit_json(changed=False, msg='Would have performed a delete.')
 
-            api_rval = gimage.delete_image()
+        api_rval = gcloud.delete_service_account_key(module.params['key_id'])
 
-            module.exit_json(changed=True, results=api_rval, state="absent")
-        module.exit_json(changed=False, state="absent")
+        if api_rval['returncode'] != 0:
+            module.fail_json(msg=api_rval)
+
+        module.exit_json(changed=True, results=api_rval, state="absent")
 
     if state == 'present':
         ########
         # Create
         ########
-        if not gimage.exists():
+        if module.check_mode:
+            module.exit_json(changed=False, msg='Would have performed a create.')
 
-            if module.check_mode:
-                module.exit_json(changed=False, msg='Would have performed a create.')
+        # Create it here
+        outputfile = '/tmp/glcoud_iam_sa_keys'
+        api_rval = gcloud.create_service_account_key(outputfile)
 
-            # Create it here
-            api_rval = gimage.create_image()
+        if api_rval['returncode'] != 0:
+            module.fail_json(msg=api_rval)
 
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
-
-            module.exit_json(changed=True, results=api_rval, state="present")
-
-        module.exit_json(changed=False, results=api_rval, state="present")
+        module.exit_json(changed=True, results=api_rval, state="present")
 
     module.exit_json(failed=True,
                      changed=False,
                      results='Unknown state passed. %s' % state,
                      state="unknown")
-
-#if __name__ == '__main__':
-#    gcloud = GcloudComputeImage('rhel-7-base-2016-06-10')
-#    print gcloud.list_images()
 
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
