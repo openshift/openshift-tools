@@ -140,16 +140,16 @@ class OpenShiftOC(object):
         proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
                                 env={'KUBECONFIG': self.kubeconfig, \
                                      'PATH': os.environ["PATH"]})
-        result = proc.communicate()
+        stdout, stderr = proc.communicate()
         if proc.returncode == 0:
             if self.verbose:
                 print "Stdout:"
-                print result[0]
+                print stdout
                 print "Stderr:"
-                print result[1]
-            return result[0]
+                print stderr
+            return stdout
 
-        return "Error: %s.  Return: %s" % (proc.returncode, result[1])
+        return "Error: %s.  Return: %s" % (proc.returncode, stderr)
 
     def oadm_cmd(self, cmd):
         '''Base command for oadm '''
@@ -159,18 +159,16 @@ class OpenShiftOC(object):
         proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
                                 env={'KUBECONFIG': self.kubeconfig, \
                                      'PATH': os.environ["PATH"]})
-        proc.wait()
+        stdout, stderr = proc.communicate()
         if proc.returncode == 0:
-            output = proc.stdout.read()
             if self.verbose:
                 print "Stdout:"
-                print output
+                print stdout
                 print "Stderr:"
-                print proc.stderr.read()
-            return output
+                print stderr
+            return stdout
 
-        return "Error: %s.  Return: %s" % (proc.returncode, proc.stderr.read())
-
+        return "Error: %s.  Return: %s" % (proc.returncode, stderr)
 
 def curl(ip_addr, port):
     ''' Open an http connection to the url and read
