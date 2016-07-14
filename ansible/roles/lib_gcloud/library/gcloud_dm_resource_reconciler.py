@@ -347,237 +347,187 @@ class Utils(object):
                     os.remove(sfile)
 
 
-class GcloudComputeProjectInfoError(Exception):
-    '''exception class for projectinfo'''
+class GcloudResourceReconcilerError(Exception):
+    ''' error class for resource reconciler'''
     pass
 
 # pylint: disable=too-many-instance-attributes
-class GcloudComputeProjectInfo(GcloudCLI):
-    ''' Class to wrap the gcloud compute projectinfo command'''
+class GcloudResourceReconciler(object):
+    ''' Class to wrap the gcloud deployment manager '''
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
     def __init__(self,
-                 metadata=None,
-                 metadata_from_file=None,
-                 remove_keys=None,
+                 resources,
+                 instance_counts,
+                 existing_instance_info=None,
+                 current_dm_config=None,
                  verbose=False):
         ''' Constructor for gcloud resource '''
-        super(GcloudComputeProjectInfo, self).__init__()
-        self._metadata = metadata
-        self.metadata_from_file = metadata_from_file
-        self.remove_keys = remove_keys
-        self._existing_metadata = None
+        #super(GcloudDeploymentManager, self).__init__()
+        self.resources = resources
+        self.instance_counts = instance_counts
+        self.existing_instance_info = existing_instance_info
+        self.current_dm_config = current_dm_config
         self.verbose = verbose
 
-    @property
-    def metadata(self):
-        '''property for existing metadata'''
-        return self._metadata
+    @staticmethod
+    def metadata_todict(item_arr):
+        '''convert the array of metadata into a dict'''
+        metadata = {}
+        for mdata in item_arr:
+            metadata[mdata['key']] = mdata['value']
 
-    @property
-    def existing_metadata(self):
-        '''property for existing metadata'''
-        if self._existing_metadata == None:
-            self._existing_metadata = []
-            metadata = self.list_metadata()
-            metadata = metadata['results']['commonInstanceMetadata']
-            if metadata.has_key('items'):
-                self._existing_metadata = metadata['items']
+        return metadata
 
-        return self._existing_metadata
+    def gather_instance_resources(self):
+        '''compare the resources with the aready existing instances '''
 
-    def list_metadata(self):
-        '''return metatadata'''
-        results = self._list_metadata()
-        if results['returncode'] == 0:
-            results['results'] = yaml.load(results['results'])
+        masters = []
+        infra = []
+        compute = []
+        for resource in self.resources:
+            if resource['type'] == 'compute.v1.instance' and \
+               resource['properties'].has_key('metadata') and \
+               resource['properties']['metadata'].has_key('items'):
+                # find the host-type if it exists
+                mdata = self.metadata_todict(resource['properties']['metadata']['items'])
+                if mdata.has_key('host-type') and mdata['host-type'] == 'master':
+                    masters.append(resource)
+                    continue
+                elif mdata.has_key('host-type') and mdata['host-type'] == 'node' and \
+                   mdata.has_key('sub-host-type') and mdata['sub-host-type'] == 'infra':
+                    infra.append(resource)
+                elif mdata.has_key('host-type') and mdata['host-type'] == 'node' and \
+                   mdata.has_key('sub-host-type') and mdata['sub-host-type'] == 'compute':
+                    compute.append(resource)
 
-        return results
+        return {'master': masters, 'infra': infra, 'compute': compute}
 
-    def exists(self):
-        ''' return whether the metadata that we are removing exists '''
-        # currently we aren't opening up files for comparison so always return False
-        if self.metadata_from_file:
-            return False
+    def resource_swap(self, rname, resource):
+        '''swap out the name into the resource'''
+        # Currently the named objects are the following
+        # name:
+        replace_name = resource['name']
+        resource['name'] = resource['name'].replace(replace_name, rname)
+        resource['properties']['disks'][0]['initializeParams']['diskName'] = \
+          resource['properties']['disks'][0]['initializeParams']['diskName'].replace(replace_name, rname)
+        docker_name_to_replace = resource['properties']['disks'][1]['source'].split('.')[1]
 
-        for key, val in self.metadata.items():
-            for data in self.existing_metadata:
-                if key == 'sshKeys' and data['key'] == key:
-                    ssh_keys = {}
-                    # get all the users and their public keys out of the project
-                    for user_pub_key in data['value'].strip().split('\n'):
-                        col_index = user_pub_key.find(':')
-                        user = user_pub_key[:col_index]
-                        pub_key = user_pub_key[col_index+1:]
-                        ssh_keys[user] = pub_key
-                    # compare the users that were passed in to see if we need to update
-                    for inc_user, inc_pub_key in val.items():
-                        if not ssh_keys.has_key(inc_user) or ssh_keys[inc_user] != inc_pub_key:
-                            return False
-                    # matched all ssh keys
-                    break
+        resource['properties']['disks'][1]['source'] = \
+          resource['properties']['disks'][1]['source'].replace(replace_name, rname)
 
-                elif data['key'] == str(key) and str(data['value']) == str(val):
-                    break
+        # The resources that need to be updated are the following
+        # - docker disk names
+        # - target pool instance names
+        for resource in self.resources:
+            # update dockerdisk name
+            if docker_name_to_replace == resource['name']:
+                resource['name'] = resource['name'].replace(replace_name, rname)
+
+            # Update targetpool
+            elif '-targetpool' in resource['name']:
+                for idx, inst in enumerate(resource['properties']['instances']):
+                    if replace_name in inst:
+                        resource['properties']['instances'][idx] = \
+                          resource['properties']['instances'][idx].replace(replace_name, rname)
+                        break
+
+
+    def reconcile_count(self, new_resources):
+        '''check the existing instances against the count'''
+        instance_types = ['master', 'infra', 'compute']
+        for inst_type in instance_types:
+            if not self.existing_instance_info:
+                break
+
+            if len(self.existing_instance_info[inst_type]) <= self.instance_counts[inst_type]:
+                # Now swap out existing instances with the new resources
+                for exist_name in self.existing_instance_info[inst_type]:
+                    # Does name exist in new_resources?
+                    for res in new_resources[inst_type]:
+                        if res['name'] == exist_name:
+                            break
+                    else:
+                        if len(new_resources[inst_type]) > 0:
+                            self.resource_swap(exist_name, new_resources[inst_type].pop())
+                        else:
+                            raise GcloudResourceReconcilerError(\
+                                   'Ran out of resources to reconcile from input resource list')
             else:
-                return False
+                raise GcloudResourceReconcilerError(\
+                'Requesting a delete.  Suggested resources are greater than the instance counts.')
 
-        return True
-
-    def keys_exist(self):
-        ''' return whether the keys exist in the metadata'''
-        for key in self.remove_keys:
-            for mdata in self.existing_metadata:
-                if key == mdata['key']:
-                    break
-
-            else:
-                # NOT FOUND
-                return False
-
-        return True
-
-    def needs_update(self):
-        ''' return whether an we need to update '''
-        # compare incoming values with metadata returned
-        # for each key in user supplied check against returned data
-        return not self.exists()
-
-    def delete_metadata(self, remove_all=False):
-        ''' attempt to remove metadata '''
-        return self._delete_metadata(self.remove_keys, remove_all=remove_all)
-
-    def create_metadata(self):
-        '''create an metadata'''
-        results = None
-        if self.metadata and self.metadata.has_key('sshKeys'):
-            # create a file and pass it to create
-            ssh_strings = ["%s:%s" % (user, pub_key) for user, pub_key in self.metadata['sshKeys'].items()]
-            ssh_keys = {'sshKeys': Utils.create_file('ssh_keys', '\n'.join(ssh_strings), 'raw')}
-            results = self._create_metadata(self.metadata, ssh_keys)
-
-            # remove them and continue
-            del self.metadata['sshKeys']
-
-            if len(self.metadata.keys()) == 0:
-                return results
+    def get_resources(self):
+        '''return the resources in a dict'''
+        return {'resources': self.resources}
 
 
-        new_results = self._create_metadata(self.metadata, self.metadata_from_file)
-        if results:
-            return [results, new_results]
+    def compare_dm_config_resources(self, config_content):
+        ''' compare generated resources with the current deployment manager config '''
+        # We are going to ensure all of the resource names are the same
+        config_names = set([cont['name'] for cont in config_content])
+        resource_names = set([res['name'] for res in self.resources])
 
-        return new_results
+        return not config_names == resource_names
 
 # vim: expandtab:tabstop=4:shiftwidth=4
 
-#def parse_metadata(path):
-#    '''grab the metadata from file so we can compare it with existing metadata'''
-#
-#    if not os.path.exists(path):
-#        raise GcloudComputeProjectInfoError('Error finding path to metadata file [%s]' % path)
-#
-#    metadata = {}
-#
-#    with open(path) as _metafd:
-#        for line in _metafd.readlines():
-#            if line:
-#                key, value = line.split(':')
-#            metadata[key] = value
-#
-#
-#    return metadata
-
 #pylint: disable=too-many-branches
 def main():
-    ''' ansible module for gcloud compute project_info'''
+    ''' ansible module for gcloud deployment-manager deployments '''
     module = AnsibleModule(
         argument_spec=dict(
             # credentials
-            state=dict(default='present', type='str',
-                       choices=['present', 'absent', 'list']),
-            metadata=dict(default=None, type='dict'),
-            metadata_from_file=dict(default=None, type='dict'),
-            remove_keys=dict(default=None, type='list'),
-            remove_all=dict(default=False, type='bool'),
+            resources=dict(required=True, type='dict'),
+            instance_counts=dict(default=None, type='dict'),
+            existing_instance_names=dict(default=None, type='dict'),
+            current_dm_config=dict(default=None, type='dict'),
+            state=dict(default='present', type='str', choices=['present']),
         ),
+        required_together=[
+            ['existing_instance_names', 'instance_counts', 'resources'],
+        ],
         supports_check_mode=True,
-        mutually_exclusive=[['metadata', 'metadata_from_file'],
-                            ['remove_keys', 'remove_all'],
-                           ]
     )
-
-
-    #metadata = module.params['metadata']
-    #if not metadata and module.params['metadata_from_file']:
-    #    # read in metadata and parse it
-    #    metadata = {}
-    #    for _, val in module.params['metadata_from_file'].items():
-    #        metadata.update(parse_metadata(val))
-
-    gcloud = GcloudComputeProjectInfo(module.params['metadata'],
-                                      module.params['metadata_from_file'],
-                                      module.params.get('remove_keys', None),
-                                     )
+    gcloud = GcloudResourceReconciler(module.params['resources']['resources'],
+                                      module.params['instance_counts'],
+                                      module.params['existing_instance_names'],
+                                      module.params['current_dm_config'])
 
     state = module.params['state']
 
-    api_rval = gcloud.list_metadata()
-
-    #####
-    # Get
-    #####
-    if state == 'list':
-        if api_rval['returncode'] != 0:
-            module.fail_json(msg=api_rval, state="list")
-
-        module.exit_json(changed=False, results=api_rval['results'], state="list")
+    orig_resources = copy.deepcopy(module.params['resources'])
 
     ########
-    # Delete
+    # generate resources
     ########
-    if state == 'absent':
-        if module.params['remove_all'] or gcloud.keys_exist():
-
-            if module.check_mode:
-                module.exit_json(changed=False, msg='Would have performed a delete.')
-
-            api_rval = gcloud.delete_metadata(remove_all=module.params['remove_all'])
-
-            module.exit_json(changed=True, results=api_rval, state="absent")
-        module.exit_json(changed=False, state="absent")
-
     if state == 'present':
-        ########
-        # Create
-        ########
-        if not gcloud.exists():
+        # Deployment manager has run but nothing is in the inventory
+        if not module.params['existing_instance_names'] and module.params['current_dm_config']:
+            raise GcloudResourceReconcilerError(\
+             'Found current deployment manager config but no existing resource names.' + \
+             'Please update inventory and rerun.')
 
-            if module.check_mode:
-                module.exit_json(changed=False, msg='Would have performed a create.')
+        # No existing instance names passed so we cannot reconcile.
+        if not module.params['existing_instance_names']:
+            module.exit_json(changed=False, results=module.params['resources'], run_dm=True)
 
-            # Create it here
-            api_rval = gcloud.create_metadata()
+        inst_resources = gcloud.gather_instance_resources()
 
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
+        gcloud.reconcile_count(inst_resources)
 
-            module.exit_json(changed=True, results=api_rval, state="present")
+        results = gcloud.get_resources()
 
-        # update
-        elif gcloud.needs_update():
-            if module.check_mode:
-                module.exit_json(changed=False, msg='Would have performed an update.')
+        if module.params['current_dm_config']:
+            run_dm = gcloud.compare_dm_config_resources(module.params['current_dm_config']['resources'])
 
-            api_rval = gcloud.create_metadata()
+            if results == orig_resources:
+                module.exit_json(changed=False, results=orig_resources, run_dm=run_dm)
 
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
+            module.exit_json(changed=True, results=results, run_dm=run_dm)
 
-            module.exit_json(changed=True, results=api_rval, state="present|update")
-
-        module.exit_json(changed=False, results=api_rval, state="present")
+        module.exit_json(changed=True, results=results, run_dm=True)
 
     module.exit_json(failed=True,
                      changed=False,
@@ -585,8 +535,12 @@ def main():
                      state="unknown")
 
 #if __name__ == '__main__':
-#    gcloud = GcloudComputeImage('rhel-7-base-2016-06-10')
-#    print gcloud.list_images()
+#    gcloud = GcloudResourceReconciler(resources,
+#                                      {'master': 1, 'infra': 2, 'compute': 4},
+#                                      existing_instance_info)
+#    resources = gcloud.gather_instance_resources()
+#    gcloud.reconcile_count(resources)
+#    print yaml.dump(gcloud.resources, default_flow_style=False)
 
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
