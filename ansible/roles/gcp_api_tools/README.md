@@ -1,14 +1,14 @@
-gcp_packages
+gcp_api_tools
 =========
 
-Ansible role for installing the needed packages for gcp
+Ansible role for installing the needed packages for gcp management
 
 Requirements
 ------------
 
 Ansible Modules:
 
-- tools_roles/gcp_packages
+- tools_roles/gcp_api_tools
 
 
 Role Variables
