@@ -17,6 +17,7 @@ class HealthCheck(GCPResource):
                  port,
                  timeout_secs,
                  unhealthy_threshold,
+                 request_path='/',
                 ):
         '''constructor for gcp resource'''
         super(HealthCheck, self).__init__(rname, HealthCheck.resource_type, project, zone)
@@ -26,6 +27,7 @@ class HealthCheck(GCPResource):
         self._unhealthy_threshold = unhealthy_threshold
         self._port = port
         self._timeout_secs = timeout_secs
+        self._request_path = request_path
 
     @property
     def description(self):
@@ -57,6 +59,11 @@ class HealthCheck(GCPResource):
         '''property for resource port'''
         return self._port
 
+    @property
+    def request_path(self):
+        '''property for request path'''
+        return self._request_path
+
     def to_resource(self):
         """ return the resource representation"""
         return {'name': self.name,
@@ -67,6 +74,7 @@ class HealthCheck(GCPResource):
                                'healthyThreshold': self.healthy_threshold,
                                'unhealthyThreshold': self.unhealthy_threshold,
                                'timeoutSec': 5,
+                               'requestPath': self.request_path,
                               }
                }
 
