@@ -650,15 +650,22 @@ g_template_openshift_master:
     priority: high
 
   - name: 'Hosts not ready according to {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.nodesnotready.count.last(#2)}>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node.asciidoc'
+    expression: '{Template Openshift Master:openshift.master.nodesnotready.count.min(#2)}>0'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node_not_ready.asciidoc'
+    dependencies:
+    - 'Openshift Master process not running on {HOST.NAME}'
+    priority: high
+  
+  - name: 'Hosts not schedulable according to {HOST.NAME}'
+    expression: '{Template Openshift Master:openshift.master.nodesnotschedulable.count.min(#2)}>0'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node_not_schedulable.asciidoc' 
     dependencies:
     - 'Openshift Master process not running on {HOST.NAME}'
     priority: high
 
   - name: 'Hosts not labeled according to {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.nodesnotlabeled.count.last(#2)}>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node.asciidoc'
+    expression: '{Template Openshift Master:openshift.master.nodesnotlabeled.count.min(#2)}>0'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node_not_labeled.asciidoc' 
     dependencies:
     - 'Openshift Master process not running on {HOST.NAME}'
     priority: high
