@@ -74,7 +74,7 @@ class GcloudResourceBuilder(object):
 
         return results
 
-    def build_health_check(self, rname, desc, interval, h_thres, port, timeout, unh_thres):
+    def build_health_check(self, rname, desc, interval, h_thres, port, timeout, unh_thres, req_path):
         '''create health check resource'''
         return HealthCheck(rname,
                            self.project,
@@ -84,7 +84,8 @@ class GcloudResourceBuilder(object):
                            h_thres,
                            port,
                            timeout,
-                           unh_thres)
+                           unh_thres,
+                           req_path)
 
     def build_subnetwork(self, rname, ip_cidr_range, region, network):
         '''build subnetwork and return it'''

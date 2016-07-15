@@ -63,7 +63,8 @@ def main():
                                                        health_check['healthyThreshold'],
                                                        health_check['port'],
                                                        health_check['timeoutSec'],
-                                                       health_check['unhealthyThreshold']))
+                                                       health_check['unhealthyThreshold'],
+                                                       health_check.get('requestPath', '/')))
 
         # Address
         for address in module.params.get('addresses', []):
