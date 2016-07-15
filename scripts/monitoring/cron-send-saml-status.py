@@ -110,7 +110,7 @@ class OpenShiftOC(object):
 
     def get_service(self):
         '''get service to check if app is running'''
-        return json.loads(self.oc_cmd(['get', 'service', '--no-headers', '-n','default','-o','json']))
+        return json.loads(self.oc_cmd(['get', 'service', '--no-headers', '-n', 'default', '-o', 'json']))
 
     def get_events(self):
         '''get all events'''
@@ -212,7 +212,6 @@ def pod_name(name):
 def send_zagg_data(key_zabbix, result):
     ''' send data to Zagg'''
     zgs = ZaggSender()
-    print "Send data to Zagg",result
     zgs.add_zabbix_keys({key_zabbix: result})
     zgs.send_metrics()
 
@@ -247,10 +246,10 @@ def main():
     for ser in services['items']:
         print 'start finding the saml pod'
         if ser['metadata']['name'] == service_name:
-            print 'found the service',service_name
-            print 'ip of the service is :',ser['spec']['clusterIP']
-            status = curl(ser['spec']['clusterIP'],443)
-            print 'status of ip is',status
+            print 'found the service', service_name
+            print 'ip of the service is :', ser['spec']['clusterIP']
+            status = curl(ser['spec']['clusterIP'], 443)
+            print 'status of ip is', status
             if status == 200:
                 # if the value is 1 ,everything is ok
                 result = 1 
@@ -258,7 +257,7 @@ def main():
                 # if the value =2 ,shows that we have the pod ,but the pod is in bad healthz
                 result = 2
     #send the value to zabbix
-    send_zagg_data(key_zabbix,result)
+    send_zagg_data(key_zabbix, result)
 
 if __name__ == "__main__":
     main()
