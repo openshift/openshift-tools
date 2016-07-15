@@ -20,24 +20,23 @@ def main():
             forwarding_rules=dict(default=[], type='list'),
             instances=dict(default=None, type='dict'),
             provisioning=dict(default=False, type='bool'),
-            instance_counts=dict(default=None, type='dict'),
+            instance_counts=dict(default={}, type='dict'),
             networks=dict(default=[], type='list'),
             target_pools=dict(default=[], type='list'),
             subnetworks=dict(default=[], type='list'),
             addresses=dict(default=[], type='list'),
             disks=dict(default=[], type='list'),
+            persistent_volumes=dict(default=[], type='list'),
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
         ),
-        required_together=[
-            ['instances', 'target_pools'],
-        ],
         supports_check_mode=True,
     )
     gcloud = GcloudResourceBuilder(module.params['clusterid'],
                                    module.params['account'],
                                    module.params['sublocation'],
                                    module.params['zone'])
+
     names = {}
     resources = []
 
@@ -116,6 +115,9 @@ def main():
 
         # disks
         resources.extend(gcloud.build_disks(module.params.get('disks', [])))
+
+        # pv disks
+        resources.extend(gcloud.build_pv_disks(module.params.get('persistent_volumes', [])))
 
         # Return resources in their deployment-manager resource form.
         resources = [res.to_resource() for res in resources if isinstance(res, GCPResource)]
