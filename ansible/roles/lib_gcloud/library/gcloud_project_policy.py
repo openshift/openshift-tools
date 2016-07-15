@@ -404,101 +404,158 @@ class Utils(object):
 
 
 # pylint: disable=too-many-instance-attributes
-class GcloudComputeImage(GcloudCLI):
-    ''' Class to wrap the gcloud compute images command'''
+class GcloudProjectPolicy(GcloudCLI):
+    ''' Class to wrap the gcloud compute iam service-accounts command'''
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
     def __init__(self,
-                 iname=None,
-                 desc=None,
-                 family=None,
-                 licenses=None,
-                 source_disk=None,
-                 source_disk_zone=None,
-                 source_uri=None,
+                 project,
+                 role=None,
+                 member=None,
+                 member_type='serviceAccount',
                  verbose=False):
         ''' Constructor for gcloud resource '''
-        super(GcloudComputeImage, self).__init__()
-        self.image_name = iname
-        self.desc = desc
-        self.family = family
-        self.licenses = licenses
-        self.source_disk = source_disk
-        self.source_disk_zone = source_disk_zone
-        self.source_uri = source_uri
+        super(GcloudProjectPolicy, self).__init__()
+        self._project = project
+        self._role = role
+        self._member = '%s:%s' % (member_type, member)
+        self._exist_policy = None
+        self._policy_data = None
+        self._policy_path = None
         self.verbose = verbose
 
-    def list_images(self, image_name=None):
-        '''return a list of images'''
-        results = self._list_images(image_name)
-        if results['returncode'] == 0:
-            results['results'] = results['results'].strip().split('\n')[1:]
+    @property
+    def existing_policy(self):
+        '''existing project policy'''
+        if self._exist_policy == None:
+            results = self.list_project_policy()
+            self._exist_policy = results['results']
 
-        return results
+        return self._exist_policy
+
+    @property
+    def project(self):
+        '''property for project'''
+        return self._project
+
+    @property
+    def member(self):
+        '''property for member'''
+        return self._member
+
+    @property
+    def role(self):
+        '''property for role '''
+        return self._role
+
+    @property
+    def policy_path(self):
+        '''property for policy path'''
+        return self._policy_path
+
+    @policy_path.setter
+    def policy_path(self, value):
+        '''property for policy path'''
+        self._policy_path = value
+
+    @property
+    def policy_data(self):
+        '''property for policy data'''
+        return self._policy_data
+
+    @policy_data.setter
+    def policy_data(self, value):
+        '''property for policy data'''
+        self._policy_data = value
+
+    def list_project_policy(self):
+        '''return project policy'''
+        return self._list_project_policy(self.project)
+
+    def remove_project_policy(self):
+        ''' remove a member from a role in a project'''
+        return self._remove_project_policy(self.project, self.member, self.role)
+
+    def add_project_policy(self):
+        '''create an service account key'''
+        return self._add_project_policy(self.project, self.member, self.role)
+
+    def set_project_policy(self, policy_data=None, policy_path=None):
+        '''set a project policy '''
+        # set the policy data and policy path
+        self.convert_to_file(policy_data, policy_path)
+
+        return self._set_project_policy(self.project, self.policy_path)
 
     def exists(self):
-        ''' return whether an image exists '''
-        images = self.list_images()
-        if images['returncode'] != 0:
-            if 'was not found' in images['stderr']:
-                images['returncode'] = 0
-                return images
-            raise GcloudCLIError('Something went wrong.  Results: %s' % images['stderr'])
+        '''check whether a member is in a project policy'''
+        for policy in self.existing_policy['bindings']:
+            if policy['role'] == self.role:
+                return self.member in policy['members']
 
-        return any([self.image_name in line for line in images['results']])
+        return False
 
-    def delete_image(self):
-        '''delete an image'''
-        return self._delete_image(self.image_name)
+    def needs_update(self, policy_data=None, policy_path=None):
+        '''compare results with incoming policy'''
+        # set the policy data and policy path
+        self.convert_to_file(policy_data, policy_path)
 
-    def create_image(self):
-        '''create an image'''
-        image_info = {}
-        image_info['description'] = self.desc
-        image_info['family'] = self.family
-        image_info['licenses'] = self.licenses
-        image_info['source-disk'] = self.source_disk
-        image_info['source-disk-zone'] = self.source_disk_zone
-        image_info['source-uri'] = self.source_uri
-        return self._create_image(self.image_name, image_info)
+        for policy in self.policy_data['bindings']:
+            for exist_policy in self.existing_policy['bindings']:
+                if policy['role'] == exist_policy['role']:
+                    if policy['members'] != exist_policy['members']:
+                        return True
+                    break
+            else:
+                # Did not find the role
+                return True
 
+        return False
+
+    def convert_to_file(self, policy_data=None, policy_path=None):
+        '''convert the policy data into a dict and ensure we have a file'''
+        if policy_data:
+            self.policy_data = policy_data
+            self.policy_path = Utils.create_file('policy', policy_data, 'json')
+
+        elif policy_path:
+            self.policy_data = json.load(open(policy_path))
+            self.policy_path = policy_path
 # vim: expandtab:tabstop=4:shiftwidth=4
 
 #pylint: disable=too-many-branches
 def main():
-    ''' ansible module for gcloud compute images'''
+    ''' ansible module for gcloud project policy'''
     module = AnsibleModule(
         argument_spec=dict(
             # credentials
-            state=dict(default='present', type='str',
-                       choices=['present', 'absent', 'list']),
-            name=dict(default=None, type='str'),
-            description=dict(default=None, type='str'),
-            family=dict(default=None, type='str'),
-            licenses=dict(default=None, type='list'),
-            source_disk=dict(default=None, type='str'),
-            source_disk_zone=dict(default=None, type='str'),
-            source_uri=dict(default=None, type='str'),
+            state=dict(default='present', type='str', choices=['present', 'absent', 'list']),
+            project=dict(required=True, type='str'),
+            member=dict(default=None, type='str'),
+            member_type=dict(type='str', choices=['serviceAccount', 'user']),
+            role=dict(default=None, type='str'),
+            policy_data=dict(default=None, type='dict'),
+            policy_path=dict(default=None, type='str'),
         ),
         supports_check_mode=True,
+        mutually_exclusive=[['policy_path', 'policy_data']],
     )
-    gimage = GcloudComputeImage(module.params['name'],
-                                module.params['description'],
-                                module.params['family'],
-                                module.params['licenses'],
-                                module.params['source_disk'],
-                                module.params['source_disk_zone'],
-                                module.params['source_uri'])
+
+    gcloud = GcloudProjectPolicy(module.params['project'],
+                                 module.params['role'],
+                                 module.params['member'],
+                                 module.params['member_type'])
 
     state = module.params['state']
 
-    api_rval = gimage.list_images(module.params['name'])
+    api_rval = gcloud.list_project_policy()
 
     #####
     # Get
     #####
     if state == 'list':
+
         if api_rval['returncode'] != 0:
             module.fail_json(msg=api_rval, state="list")
 
@@ -508,27 +565,47 @@ def main():
     # Delete
     ########
     if state == 'absent':
-        if gimage.exists():
+        if gcloud.exists():
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a delete.')
 
-            api_rval = gimage.delete_image()
+            api_rval = gcloud.remove_project_policy()
+
+            if api_rval['returncode'] != 0:
+                module.fail_json(msg=api_rval)
 
             module.exit_json(changed=True, results=api_rval, state="absent")
-        module.exit_json(changed=False, state="absent")
+
+        module.exit_json(changed=False, results=api_rval, state="absent")
 
     if state == 'present':
         ########
         # Create
         ########
-        if not gimage.exists():
+        if module.params['policy_data'] or module.params['policy_path']:
 
+
+            if gcloud.needs_update(module.params['policy_data'], module.params['policy_path']):
+                # perform set
+                if module.check_mode:
+                    module.exit_json(changed=False, msg='Would have performed a set policy.')
+
+                api_rval = gcloud.set_project_policy(module.params['policy_data'], module.params['policy_path'])
+
+                if api_rval['returncode'] != 0:
+                    module.fail_json(msg=api_rval)
+
+                module.exit_json(changed=True, results=api_rval, state="present")
+
+            module.exit_json(changed=False, results=api_rval, state="present")
+
+
+        if not gcloud.exists():
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a create.')
 
-            # Create it here
-            api_rval = gimage.create_image()
+            api_rval = gcloud.add_project_policy()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
@@ -541,10 +618,6 @@ def main():
                      changed=False,
                      results='Unknown state passed. %s' % state,
                      state="unknown")
-
-#if __name__ == '__main__':
-#    gcloud = GcloudComputeImage('rhel-7-base-2016-06-10')
-#    print gcloud.list_images()
 
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
