@@ -655,13 +655,6 @@ g_template_openshift_master:
     dependencies:
     - 'Openshift Master process not running on {HOST.NAME}'
     priority: high
-  
-  - name: 'Hosts not schedulable according to {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.nodesnotschedulable.count.min(#2)}>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node_not_schedulable.asciidoc' 
-    dependencies:
-    - 'Openshift Master process not running on {HOST.NAME}'
-    priority: high
 
   - name: 'Hosts not labeled according to {HOST.NAME}'
     expression: '{Template Openshift Master:openshift.master.nodesnotlabeled.count.min(#2)}>0'
