@@ -136,7 +136,27 @@
       key: 'grpsum["{{ ozcs_clusterid }}", "mem.util.available", avg, 3600]'
       value_type: int
       data_type: decimal
-      description: "The Sum of Memory Available for all instances in the cluster."
+      description: "The Sum of memory available for all instances in the cluster."
+      multiplier: ''
+      hostname: "{{ item }}"
+      zabbix_type: aggregate
+      interval: 3600
+      delta: 0
+      units: B
+    with_items: "{{ ozcs_masters }}"
+    delegate_to: localhost
+    run_once: true
+
+  - name: "item: openshift.master.cluster.all.mem.physmem_sum"
+    zbx_item:
+      zbx_server: "{{ ozcs_zbx_server }}"
+      zbx_user: "{{ ozcs_zbx_user }}"
+      zbx_password: "{{ ozcs_zbx_password }}"
+      name: openshift.master.cluster.all.mem.physmem_sum
+      key: 'grpsum["{{ ozcs_clusterid }}", "mem.physmem", last, 0]'
+      value_type: int
+      data_type: decimal
+      description: "The Sum of total physical memory for all instances in the cluster."
       multiplier: ''
       hostname: "{{ item }}"
       zabbix_type: aggregate
@@ -173,6 +193,34 @@
     delegate_to: localhost
     run_once: true
 
+  - name: "item: openshift.master.cluster.compute_nodes.mem.util.available_avg_pct"
+    zbx_item:
+      zbx_server: "{{ ozcs_zbx_server }}"
+      zbx_user: "{{ ozcs_zbx_user }}"
+      zbx_password: "{{ ozcs_zbx_password }}"
+      key: openshift.master.cluster.compute_nodes.mem.util.available_avg_pct
+      name: openshift.master.cluster.compute_nodes.mem.util.available_avg_pct
+      value_type: float
+      data_type: decimal
+      description: "The Average Memory Available for compute nodes in the cluster."
+      multiplier: ''
+      hostname: "{{ item }}"
+      zabbix_type: calculated
+      interval: 3600
+      delta: 0
+      units: '%'
+      params: |-
+        {%- set non_compute_mem_available = [] %}
+        {%- set non_compute_physical_mem = [] %}
+        {%- for host in ozcs_infra_nodes + ozcs_masters %}
+        {{- non_compute_mem_available.append('avg("' ~ host ~ ':mem.util.available", 3600)') }}
+        {{- non_compute_physical_mem.append('last("' ~ host ~ ':mem.physmem")') }}
+        {%- endfor %}
+        ( last("grpsum[\"{{ ozcs_clusterid }}\", \"mem.util.available\", avg, 3600]") - ( {{ non_compute_mem_available | join(' + ') }} ) ) / ( last("grpsum[\"{{ ozcs_clusterid }}\", \"mem.physmem\", last, 0]") - ( {{ non_compute_physical_mem | join(' + ') }} ) ) * 100
+    with_items: "{{ ozcs_masters }}"
+    delegate_to: localhost
+    run_once: true
+
   - name: "graph: OpenShift Masters and Infra Nodes cpu and mem users_available"
     zbx_graph:
       zbx_server: "{{ ozcs_zbx_server }}"
@@ -195,12 +243,12 @@
     delegate_to: localhost
     run_once: true
 
-  - name: "graph: OpenShift Compute Nodes Average CPU Idle"
+  - name: "graph: OpenShift Compute Nodes Unscheduled vs Idle resources"
     zbx_graph:
       zbx_server: "{{ ozcs_zbx_server }}"
       zbx_user: "{{ ozcs_zbx_user }}"
       zbx_password: "{{ ozcs_zbx_password }}"
-      name: "OpenShift Compute Nodes Average CPU Idle [{{ ozcs_clusterid }}]"
+      name: "OpenShift Compute Nodes Unscheduled vs Idle resources [{{ ozcs_clusterid }}]"
       width: 900
       height: 200
       yaxismin: "0.0000"  # MUST be quoted and with this precision otherwise it will always modify
@@ -208,6 +256,20 @@
       graph_items:
       - item_name: openshift.master.cluster.compute_nodes.cpu.idle_avg
         color: green
+        hosts:
+        - "{{ ozcs_masters | first }}"
+      - item_name: openshift.master.cluster.compute_nodes.mem.util.available_avg_pct
+        color: blue
+        hosts:
+        - "{{ ozcs_masters | first }}"
+      - item_name: openshift.master.cluster.compute_nodes.unscheduled.cpu_pct
+        color: red
+        hosts:
+        - "{{ ozcs_masters | first }}"
+      - item_name: openshift.master.cluster.compute_nodes.unscheduled.mem_pct
+        color: purple
+        hosts:
+        - "{{ ozcs_masters | first }}"
     delegate_to: localhost
     run_once: true
 
