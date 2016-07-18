@@ -650,15 +650,15 @@ g_template_openshift_master:
     priority: high
 
   - name: 'Hosts not ready according to {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.nodesnotready.count.last(#2)}>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node.asciidoc'
+    expression: '{Template Openshift Master:openshift.master.nodesnotready.count.min(#2)}>0'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node_not_ready.asciidoc'
     dependencies:
     - 'Openshift Master process not running on {HOST.NAME}'
     priority: high
 
   - name: 'Hosts not labeled according to {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.nodesnotlabeled.count.last(#2)}>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node.asciidoc'
+    expression: '{Template Openshift Master:openshift.master.nodesnotlabeled.count.min(#2)}>0'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node_not_labeled.asciidoc' 
     dependencies:
     - 'Openshift Master process not running on {HOST.NAME}'
     priority: high
@@ -752,3 +752,16 @@ g_template_openshift_master:
       color: red
     - item_name: openshift.master.cluster.compute_nodes.oversubscribed.mem_pct
       color: blue
+
+  - name: Openshift Cluster User, Project and User Running Pod Counts
+    width: 900
+    height: 200
+    yaxismin: "0.0000"  # MUST be quoted and with this precision otherwise it will always modify
+    ymin_type: fixed
+    graph_items:
+    - item_name: openshift.master.user.count
+      color: green
+    - item_name: openshift.project.count
+      color: blue
+    - item_name: openshift.master.pod.user.running.count
+      color: purple

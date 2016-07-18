@@ -1,0 +1,10 @@
+[google-cloud-compute]
+name=Google Cloud Compute
+baseurl=https://packages.cloud.google.com/yum/repos/google-cloud-compute-el7-x86_64
+enabled=1
+gpgcheck=1
+# mwoodson note: I disabled repo_gpgcheck. Installs failed and I couldn't get google
+#  cloud packages to install until I disabled this
+repo_gpgcheck=0
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg

@@ -241,6 +241,62 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='json')
 
+    def _delete_service_account_key(self, sa_name, key_id):
+        '''delete service account key'''
+        cmd = ['iam', 'service-accounts', 'keys', 'delete', key_id, '--iam-account', sa_name, '-q']
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_service_account_keys(self, sa_name):
+        '''return service account keys '''
+        cmd = ['iam', 'service-accounts', 'keys', 'list', '--iam-account', sa_name]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _create_service_account_key(self, sa_name, outputfile, key_format='p12'):
+        '''create service account key '''
+        # Ensure we remove the key file
+        atexit.register(Utils.cleanup, [outputfile])
+
+        cmd = ['iam', 'service-accounts', 'keys', 'create', outputfile,
+               '--iam-account', sa_name, '--key-file-type', key_format]
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_project_policy(self, project):
+        '''create service account key '''
+        cmd = ['projects', 'get-iam-policy', project]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _add_project_policy(self, project, member, role):
+        '''create service account key '''
+        cmd = ['projects', 'add-iam-policy-binding', project, '--member', member, '--role', role]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _remove_project_policy(self, project, member, role):
+        '''create service account key '''
+        cmd = ['projects', 'remove-iam-policy-binding', project, '--member', member, '--role', role]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _set_project_policy(self, project, policy_path):
+        '''create service account key '''
+        cmd = ['projects', 'set-iam-policy', project, policy_path]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
     def gcloud_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for gcloud '''
         cmds = ['/usr/bin/gcloud']
@@ -696,6 +752,7 @@ class HealthCheck(GCPResource):
                  port,
                  timeout_secs,
                  unhealthy_threshold,
+                 request_path='/',
                 ):
         '''constructor for gcp resource'''
         super(HealthCheck, self).__init__(rname, HealthCheck.resource_type, project, zone)
@@ -705,6 +762,7 @@ class HealthCheck(GCPResource):
         self._unhealthy_threshold = unhealthy_threshold
         self._port = port
         self._timeout_secs = timeout_secs
+        self._request_path = request_path
 
     @property
     def description(self):
@@ -736,6 +794,11 @@ class HealthCheck(GCPResource):
         '''property for resource port'''
         return self._port
 
+    @property
+    def request_path(self):
+        '''property for request path'''
+        return self._request_path
+
     def to_resource(self):
         """ return the resource representation"""
         return {'name': self.name,
@@ -746,6 +809,7 @@ class HealthCheck(GCPResource):
                                'healthyThreshold': self.healthy_threshold,
                                'unhealthyThreshold': self.unhealthy_threshold,
                                'timeoutSec': 5,
+                               'requestPath': self.request_path,
                               }
                }
 
@@ -1092,6 +1156,7 @@ class GcloudResourceBuilder(object):
                           self.project,
                           self.zone,
                           disk['size'],
+                          disk.get('disk_type', 'pd-standard'),
                           boot=disk.get('boot', False),
                           device_name=disk['device_name'],
                           image=disk.get('image', None)) for disk in disk_info]
@@ -1130,7 +1195,7 @@ class GcloudResourceBuilder(object):
 
         return results
 
-    def build_health_check(self, rname, desc, interval, h_thres, port, timeout, unh_thres):
+    def build_health_check(self, rname, desc, interval, h_thres, port, timeout, unh_thres, req_path):
         '''create health check resource'''
         return HealthCheck(rname,
                            self.project,
@@ -1140,7 +1205,8 @@ class GcloudResourceBuilder(object):
                            h_thres,
                            port,
                            timeout,
-                           unh_thres)
+                           unh_thres,
+                           req_path)
 
     def build_subnetwork(self, rname, ip_cidr_range, region, network):
         '''build subnetwork and return it'''
@@ -1186,9 +1252,34 @@ class GcloudResourceBuilder(object):
                                 self.project,
                                 self.zone,
                                 disk['size'],
+                                disk.get('disk_type', 'pd-standard'),
                                 boot=disk.get('boot', False),
                                 device_name=disk['device_name'],
                                 image=disk.get('image', None)))
+        return results
+
+    def build_pv_disks(self, disk_size_info):
+        '''build disk resources for pvs and return them
+           disk_size_count:
+           - size: 1
+             count: 5
+           - size: 5
+           - count: 10
+        '''
+        results = []
+        for size_count in disk_size_info:
+            size = size_count['size']
+            count = size_count['count']
+            d_type = size_count.get('disk_type', 'pd-standard')
+            for idx in range(1, int(count) + 1):
+                results.append(Disk('pv-%s-%dg-%d' % (self.project, size, idx),
+                                    self.project,
+                                    self.zone,
+                                    size,
+                                    disk_type=d_type,
+                                    boot=False,
+                                    device_name='pv_%dg%d' % (size, idx),
+                                    image=None))
         return results
 # vim: expandtab:tabstop=4:shiftwidth=4
 
@@ -1211,24 +1302,23 @@ def main():
             forwarding_rules=dict(default=[], type='list'),
             instances=dict(default=None, type='dict'),
             provisioning=dict(default=False, type='bool'),
-            instance_counts=dict(default=None, type='dict'),
+            instance_counts=dict(default={}, type='dict'),
             networks=dict(default=[], type='list'),
             target_pools=dict(default=[], type='list'),
             subnetworks=dict(default=[], type='list'),
             addresses=dict(default=[], type='list'),
             disks=dict(default=[], type='list'),
+            persistent_volumes=dict(default=[], type='list'),
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
         ),
-        required_together=[
-            ['instances', 'target_pools'],
-        ],
         supports_check_mode=True,
     )
     gcloud = GcloudResourceBuilder(module.params['clusterid'],
                                    module.params['account'],
                                    module.params['sublocation'],
                                    module.params['zone'])
+
     names = {}
     resources = []
 
@@ -1254,7 +1344,8 @@ def main():
                                                        health_check['healthyThreshold'],
                                                        health_check['port'],
                                                        health_check['timeoutSec'],
-                                                       health_check['unhealthyThreshold']))
+                                                       health_check['unhealthyThreshold'],
+                                                       health_check.get('requestPath', '/')))
 
         # Address
         for address in module.params.get('addresses', []):
@@ -1306,6 +1397,9 @@ def main():
 
         # disks
         resources.extend(gcloud.build_disks(module.params.get('disks', [])))
+
+        # pv disks
+        resources.extend(gcloud.build_pv_disks(module.params.get('persistent_volumes', [])))
 
         # Return resources in their deployment-manager resource form.
         resources = [res.to_resource() for res in resources if isinstance(res, GCPResource)]

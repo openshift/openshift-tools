@@ -36,6 +36,7 @@ class GcloudResourceBuilder(object):
                           self.project,
                           self.zone,
                           disk['size'],
+                          disk.get('disk_type', 'pd-standard'),
                           boot=disk.get('boot', False),
                           device_name=disk['device_name'],
                           image=disk.get('image', None)) for disk in disk_info]
@@ -74,7 +75,7 @@ class GcloudResourceBuilder(object):
 
         return results
 
-    def build_health_check(self, rname, desc, interval, h_thres, port, timeout, unh_thres):
+    def build_health_check(self, rname, desc, interval, h_thres, port, timeout, unh_thres, req_path):
         '''create health check resource'''
         return HealthCheck(rname,
                            self.project,
@@ -84,7 +85,8 @@ class GcloudResourceBuilder(object):
                            h_thres,
                            port,
                            timeout,
-                           unh_thres)
+                           unh_thres,
+                           req_path)
 
     def build_subnetwork(self, rname, ip_cidr_range, region, network):
         '''build subnetwork and return it'''
@@ -130,7 +132,32 @@ class GcloudResourceBuilder(object):
                                 self.project,
                                 self.zone,
                                 disk['size'],
+                                disk.get('disk_type', 'pd-standard'),
                                 boot=disk.get('boot', False),
                                 device_name=disk['device_name'],
                                 image=disk.get('image', None)))
+        return results
+
+    def build_pv_disks(self, disk_size_info):
+        '''build disk resources for pvs and return them
+           disk_size_count:
+           - size: 1
+             count: 5
+           - size: 5
+           - count: 10
+        '''
+        results = []
+        for size_count in disk_size_info:
+            size = size_count['size']
+            count = size_count['count']
+            d_type = size_count.get('disk_type', 'pd-standard')
+            for idx in range(1, int(count) + 1):
+                results.append(Disk('pv-%s-%dg-%d' % (self.project, size, idx),
+                                    self.project,
+                                    self.zone,
+                                    size,
+                                    disk_type=d_type,
+                                    boot=False,
+                                    device_name='pv_%dg%d' % (size, idx),
+                                    image=None))
         return results

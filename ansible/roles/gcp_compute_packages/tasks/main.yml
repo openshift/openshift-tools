@@ -1,0 +1,25 @@
+---
+- name: Install Google Cloud Repo
+  copy:
+    src: google-cloud.repo
+    dest: /etc/yum.repos.d/google-cloud.repo
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Install Google Cloud RPM GPG key
+  rpm_key:
+    state: present
+    key: "{{ item }}"
+  with_items:
+  - https://packages.cloud.google.com/yum/doc/yum-key.gpg
+  - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+
+- name: install the google packages
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - google-compute-engine
+  - google-compute-engine-init
+  - google-config
