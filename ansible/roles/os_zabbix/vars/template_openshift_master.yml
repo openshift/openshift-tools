@@ -752,3 +752,16 @@ g_template_openshift_master:
       color: red
     - item_name: openshift.master.cluster.compute_nodes.oversubscribed.mem_pct
       color: blue
+
+  - name: Openshift Cluster User, Project and User Running Pod Counts
+    width: 900
+    height: 200
+    yaxismin: "0.0000"  # MUST be quoted and with this precision otherwise it will always modify
+    ymin_type: fixed
+    graph_items:
+    - item_name: openshift.master.user.count
+      color: green
+    - item_name: openshift.project.count
+      color: blue
+    - item_name: openshift.master.pod.user.running.count
+      color: purple
