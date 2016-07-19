@@ -15,12 +15,25 @@ g_template_ops_tools:
     description: "The exit code of the command run from ops-runner"
     applications:
     - Ops Runner
+  - discoveryrule_key: disc.ops.runner
+    name: "Timeout of ops-runner[{#OSO_COMMAND}]"
+    key: "disc.ops.runner.command.timeout[{#OSO_COMMAND}]"
+    value_type: int
+    description: "The number of seconds waited before timing out"
+    applications:
+    - Ops Runner
+
 
   ztriggerprototypes:
   - name: 'ops-runner[{#OSO_COMMAND}]: non-zero exit code on {HOST.NAME}'
     expression: '{Template Operations Tools:disc.ops.runner.command.exitcode[{#OSO_COMMAND}].last()}<>0'
     url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ops_runner_command.asciidoc'
     priority: average
+  - name: 'ops-runner[{#OSO_COMMAND}]: timeout on {HOST.NAME}'
+    expression: '{Template Operations Tools:disc.ops.runner.command.timeout[{#OSO_COMMAND}].last()}<>0'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ops_runner_command.asciidoc'
+    priority: average
+
 
   zactions:
   - name: 'Remote command for [Heal] triggers'
