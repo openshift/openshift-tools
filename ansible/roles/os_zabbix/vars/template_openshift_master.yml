@@ -349,6 +349,120 @@ g_template_openshift_master:
     applications:
     - Openshift Etcd
 
+  - key: openshift.etcd.server.file.descriptors.used.total
+    description: "High file descriptors might indicate a potential out of file descriptors issue. That might cause etcd fails to create new WAL files and panics"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.server.pending.proposal.total
+    description: "Pending proposal gives you an idea about how many proposal are in the queue and waiting for commit. An increasing pending number indicates a high client load or an unstable cluster."
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.server.proposal.failed.total
+    description: "Failed proposals are normally related to two issues: temporary failures related to a leader election or longer duration downtime caused by a loss of quorum in the cluster"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.storage.delete.total
+    description: "Total number of deletes seen by this member"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.storage.keys.total
+    description: "Total number of keys"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.storage.put.total
+    description: "Total number of puts seen by this member"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.storage.range.total
+    description: "Total number of ranges seen by this member"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.storage.txn.total
+    description: "Total number of txns seen by this member"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.store.expires.total
+    description: "Total number of expired keys (due to TTL)"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.store.reads.total.get
+    description: "Total number of reads from store, should differ among etcd members (local reads)"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.store.reads.total.getRecursive
+    description: "Total number of reads from store, should differ among etcd members (local reads)"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.store.watch.requests.total
+    description: "Total number of incoming watch requests to this etcd member (local watches)"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.store.watchers
+    description: "Current count of active watchers on this etcd member"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.store.writes.total.compareAndDelete
+    description: "Total number of writes to store, should be same among all etcd members"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.store.writes.total.compareAndSwap
+    description: "Total number of writes to store, should be same among all etcd members"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.store.writes.total.create
+    description: "Total number of writes to store, should be same among all etcd members"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.store.writes.total.delete
+    description: "Total number of writes to store, should be same among all etcd members"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.store.writes.total.set
+    description: "Total number of writes to store, should be same among all etcd members"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
+  - key: openshift.etcd.wal.last.index.saved
+    description: "The index of the last entry saved by wal"
+    value_type: int
+    applications:
+    - Openshift Etcd
+
   - key: openshift.master.metric.ping
     description: "This check verifies that the https://master/metrics check is alive and communicating properly."
     value_type: int
