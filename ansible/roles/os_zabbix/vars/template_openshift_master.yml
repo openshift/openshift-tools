@@ -765,3 +765,12 @@ g_template_openshift_master:
       color: blue
     - item_name: openshift.master.pod.user.running.count
       color: purple
+
+  - name: Openshift Cluster Pods Schedulable at Max Pod Memory Size
+    width: 900
+    height: 200
+    yaxismin: "0.0000"  # MUST be quoted and with this precision otherwise it will always modify
+    ymin_type: fixed
+    graph_items:
+    - item_name: openshift.master.cluster.max_mem_pods_schedulable
+      color: green
