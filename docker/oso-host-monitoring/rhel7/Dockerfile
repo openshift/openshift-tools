@@ -79,6 +79,9 @@ RUN mkdir -p /root/.aws && \
     touch /root/.aws/credentials && \
     chmod g+rw /root/.aws/credentials
 
+# Add container-build-env-fingerprint
+ADD container-build-env-fingerprint.output /etc/oso-container-build-env-fingerprint
+
 # Add the start script and tell the container to run it by default
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
