@@ -95,6 +95,7 @@ class OpenshiftMasterZaggClient(object):
                 self.pv_info()
 
             if self.args.node_checks or self.args.all_checks:
+                self.nodes_not_schedulable()
                 self.nodes_not_ready()
                 self.nodes_not_labeled()
 
@@ -338,6 +339,28 @@ class OpenshiftMasterZaggClient(object):
                                               "%s[%s]" %(item_prototype_key_available, size) : dynamic_pv_available[size]})
 
 
+    def nodes_not_schedulable(self):
+        """check the number of nodes in the cluster that are not schedulable"""
+
+        print "\nPerforming nodes not schedulable check..."
+
+        response = self.ora.get('/api/v1/nodes')
+
+        nodes_not_schedulable = []
+
+        for n in response['items']:
+            if n['metadata']['labels']['type'] == 'master':
+                print "Node: %s is a master\n" % n['metadata']['name']
+            else:
+                #print "This is not a master\n"
+                if "unschedulable" in n['spec']:
+                    nodes_not_schedulable.append(n['metadata']['name'])
+
+        print "Count of nodes not schedulable: %s" % len(nodes_not_schedulable)
+        print "Nodes not schedulable: %s\n" % nodes_not_schedulable
+
+        self.zagg_sender.add_zabbix_keys(
+            {'openshift.master.nodesnotschedulable.count' : len(nodes_not_schedulable)})
 
 
     def nodes_not_ready(self):
@@ -346,12 +369,6 @@ class OpenshiftMasterZaggClient(object):
         print "\nPerforming nodes not ready check..."
 
         response = self.ora.get('/api/v1/nodes')
-
-        nodes_not_schedulable = []
-
-        for n in response['items']:
-            if "unschedulable" in n['spec']:
-                nodes_not_schedulable.append(n)
 
         nodes_not_ready = []
 
@@ -371,15 +388,10 @@ class OpenshiftMasterZaggClient(object):
                     print "Did not find ready status for %s" % n['metadata']['name']
                 nodes_not_ready.append(n['metadata']['name'])
 
-
-        print "Count of nodes not schedulable: %s" % len(nodes_not_schedulable)
         print "Count of nodes not ready: %s" % len(nodes_not_ready)
 
         self.zagg_sender.add_zabbix_keys(
             {'openshift.master.nodesnotready.count' : len(nodes_not_ready)})
-
-        self.zagg_sender.add_zabbix_keys(
-            {'openshift.master.nodesnotschedulable.count' : len(nodes_not_schedulable)})
 
 
     def nodes_not_labeled(self):
