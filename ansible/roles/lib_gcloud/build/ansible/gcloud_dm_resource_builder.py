@@ -109,6 +109,7 @@ def main():
             resources.extend(gcloud.build_instance_resources(names[hosttype],
                                                              properties['machine_type'],
                                                              properties['metadata'],
+                                                             properties['tags'],
                                                              properties['disk_info'],
                                                              properties['network_interfaces'],
                                                              module.params['provisioning']))
