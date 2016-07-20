@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.117
+Version:       0.0.118
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -279,6 +279,15 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Tue Jul 19 2016 Joel Diaz <jdiaz@redhat.com> 0.0.118-1
+- add --timeout to ops-runner and a dynamic item to hold these items
+  (jdiaz@redhat.com)
+- better readability, same refactor for oadm (sten@redhat.com)
+- refactor to use subprocess.communicate(), capture all pod logs in the project
+  on failure (sten@redhat.com)
+- return all pod logs (sten@redhat.com)
+- add --list-cluster to ohi (sten@redhat.com)
+
 * Thu Jul 07 2016 Russell Harrison <rharriso@redhat.com> 0.0.117-1
 - Removed unused sys import (rharriso@redhat.com)
 - Remove rev bump (rharriso@redhat.com)
