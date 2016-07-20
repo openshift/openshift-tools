@@ -65,17 +65,16 @@ class EtcdStatusZaggSender(object):
         return_data = {}
         api_response = self.call_etcd_api(met['path'])
         if api_response:
-            content = json.loads(api_response.json())
+            content = json.loads(api_response)
 
             for item in met['values']:
-                return_data[self.config['etcd_info']['common']['prefix'] + item['zab_key']] = content[item['src']]
+                return_data[met['prefix'] + item['zab_key']] = content[item['src']]
 
         return return_data
 
     def text_metric(self, met):
         '''process text value from etcd'''
         return_data = {}
-        dyn_keys = []
 
         content = self.call_etcd_api(met['path'])
         if content:
@@ -84,22 +83,19 @@ class EtcdStatusZaggSender(object):
                 if metric.type in ['histogram', 'summary']:
                     continue
                 elif metric.type in ['counter', 'gauge'] and metric.name in met['values']:
-                    zab_metric_name = metric.name.replace('_', '.')
-                    return_data['metrics.etcd.name[{0}]'.format(zab_metric_name)] = zab_metric_name
+                    zab_metric_name = met['prefix'] + metric.name.replace('_', '.')
                     if len(metric.samples) > 1:
                         if met['values'][metric.name]:
                             sub_key = met['values'][metric.name]
                         for singlemetric in metric.samples:
-                            return_data['metrics.etcd[{0}.{1}]'.format(zab_metric_name, singlemetric[1][sub_key])] = singlemetric[2]
-                            dyn_keys.append(zab_metric_name + '.' + singlemetric[1][sub_key])
+                            return_data['{0}.{1}'.format(zab_metric_name, singlemetric[1][sub_key])] = singlemetric[2]
                     else:
-                        return_data['metrics.etcd[{0}]'.format(zab_metric_name)] = metric.samples[0][2]
-                        dyn_keys.append(zab_metric_name)
+                        return_data[zab_metric_name] = metric.samples[0][2]
                 else:
                     if self.args.debug:
                         print 'Got unknown type of metric from etcd, skipping it: ({0}) '.format(metric.type)
 
-        return return_data, dyn_keys
+        return return_data
 
     def run(self):
         ''' Get data from etcd API
@@ -127,10 +123,7 @@ class EtcdStatusZaggSender(object):
         # let's get the metrics
         for metric in self.config['etcd_info']['metrics']:
             if metric['type'] == 'text':
-                zkeys, dynamic_keys = self.text_metric(metric)
-                if zkeys and dynamic_keys:
-                    self.zagg_sender.add_zabbix_dynamic_item('metrics.etcd', '#ETCD_METRIC', dynamic_keys)
-                    self.zagg_sender.add_zabbix_keys(zkeys)
+                self.zagg_sender.add_zabbix_keys(self.text_metric(metric))
             elif metric['type'] == 'json':
                 self.zagg_sender.add_zabbix_keys(self.json_metric(metric))
 

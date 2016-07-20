@@ -4,12 +4,9 @@ etcd_info:
     ssl_client_cert: '/etc/origin/master/master.etcd-client.crt'
     ssl_client_key: '/etc/origin/master/master.etcd-client.key'
     openshift_master_config: '/etc/origin/master/master-config.yaml'
-  common:
-    prefix: 'openshift.master.'
-    disc_key: 'metrics.etcd'
-    disc_macro: '#ETCD_METRIC'
   metrics:
     - type: 'json'
+      prefix: 'openshift.etcd.'
       path: '/v2/stats/store'
       values:
         - zab_key: 'create.success'
@@ -35,6 +32,7 @@ etcd_info:
         - zab_key: 'watchers'
           src: 'watchers'
     - type: 'text'
+      prefix: 'openshift.'
       path: '/metrics'
       values:
         'etcd_server_file_descriptors_used_total' :
