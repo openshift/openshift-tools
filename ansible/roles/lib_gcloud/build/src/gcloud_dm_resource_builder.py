@@ -24,6 +24,7 @@ class GcloudResourceBuilder(object):
                                  names,
                                  mtype,
                                  metadata,
+                                 tags,
                                  disk_info,
                                  network_info,
                                  provisioning=False,
@@ -69,6 +70,7 @@ class GcloudResourceBuilder(object):
                               self.zone,
                               mtype,
                               metadata,
+                              tags,
                               inst_disks,
                               nics)
             results.append(inst)
