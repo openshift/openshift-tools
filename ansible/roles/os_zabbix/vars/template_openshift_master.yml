@@ -518,6 +518,11 @@ g_template_openshift_master:
     lifetime: 1
     description: "Dynamically register the Persistent Volumes"
 
+  - name: metrics.etcd
+    key: metrics.etcd
+    lifetime: 14
+    description: "Etcd metrics values coming from /metrics and"
+
   zitemprototypes:
   - discoveryrule_key: disc.pv
     name: "disc.pv.count.{#OSO_PV}"
@@ -532,6 +537,20 @@ g_template_openshift_master:
     key: "disc.pv.available[{#OSO_PV}]"
     value_type: int
     description: "Number of PV's of this size that are available"
+    applications:
+    - Openshift Master
+
+  - discoveryrule_key: metrics.etcd
+    name: "metrics.etcd.{#ETCD_METRIC}"
+    key: "metrics.etcd[{#ETCD_METRIC}]"
+    value_type: float
+    applications:
+    - Openshift Master
+
+  - discoveryrule_key: metrics.etcd
+    name: "metrics.etcd.name.{#ETCD_METRIC}"
+    key: "metrics.etcd.name[{#ETCD_METRIC}]"
+    value_type: text
     applications:
     - Openshift Master
 
