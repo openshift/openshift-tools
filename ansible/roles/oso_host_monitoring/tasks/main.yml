@@ -54,6 +54,14 @@
   notify:
   - "Restart the {{ osohm_host_monitoring }} service"
 
+- name: "Copy etcd metrics config file"
+  copy:
+    src: etcd_metrics.yaml
+    dest: /etc/openshift_tools/etcd_metrics.yaml
+    owner: root
+    group: root
+    mode: 0644
+  
 - name: "Copy {{ osohm_host_monitoring }} systemd file"
   template:
     src: "{{ osohm_host_monitoring }}.service.j2"
