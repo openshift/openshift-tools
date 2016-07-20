@@ -350,9 +350,9 @@ class OpenshiftMasterZaggClient(object):
 
         for n in response['items']:
             if n['metadata']['labels']['type'] == 'master':
-                print "Node: %s is a master\n" % n['metadata']['name']
+                if self.args.verbose:
+                    print "Node: %s is a master\n" % n['metadata']['name']
             else:
-                #print "This is not a master\n"
                 if "unschedulable" in n['spec']:
                     nodes_not_schedulable.append(n['metadata']['name'])
 
