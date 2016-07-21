@@ -26,6 +26,13 @@
       dest: /etc/openshift_tools/zagg_client.yaml
       mode: "644"
 
+  - name: Generate the zagg_client.yaml config file
+    copy:
+      content: "{{ clusterwide_zagg_client_config | to_nice_yaml }}"
+      dest: /etc/openshift_tools/clusterwide_zagg_client.yaml
+      mode: "644"
+    when: clusterwide_zagg_client_config is defined
+
   - name: Check whether /etc/origin exists
     stat:
       path: /etc/origin
