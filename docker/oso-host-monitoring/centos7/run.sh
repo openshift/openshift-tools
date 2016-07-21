@@ -19,7 +19,7 @@
 #   cron but using systemd timers
 #           -v /run:/run                                     \
 
-MONITORING_CONFIG=$(readlink -f ./monitoring-config.yml)
+CONFIG_SOURCE=$(readlink -f ./container_setup)
 sudo docker run --rm=true -it --name oso-centos7-host-monitoring \
            --privileged                                     \
            --pid=host                                       \
@@ -31,5 +31,5 @@ sudo docker run --rm=true -it --name oso-centos7-host-monitoring \
            -v /var/lib/docker:/var/lib/docker:ro            \
            -v /var/lib/docker/volumes/shared:/shared:rw     \
            -v /var/run/docker.sock:/var/run/docker.sock     \
-           -v ${MONITORING_CONFIG}:/etc/openshift_tools/monitoring-config.yml \
+           -v ${CONFIG_SOURCE}:/container_setup:ro \
            oso-centos7-host-monitoring $@
