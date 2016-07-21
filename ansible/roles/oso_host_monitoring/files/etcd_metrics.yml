@@ -1,54 +1,55 @@
 ---
-etcd_info:
-  files:
-    ssl_client_cert: '/etc/origin/master/master.etcd-client.crt'
-    ssl_client_key: '/etc/origin/master/master.etcd-client.key'
-    openshift_master_config: '/etc/origin/master/master-config.yaml'
-  metrics:
-    - type: 'json'
-      prefix: 'openshift.etcd.'
-      path: '/v2/stats/store'
-      values:
-        - zab_key: 'create.success'
-          src: 'createSuccess'
-        - zab_key: 'create.fail'
-          src: 'createFail'
-        - zab_key: 'delete.success'
-          src: 'deleteSuccess'
-        - zab_key: 'delete.fail'
-          src: 'deleteFail'
-        - zab_key: 'get.success'
-          src: 'getsSuccess'
-        - zab_key: 'get.fail'
-          src: 'getsFail'
-        - zab_key: 'set.success'
-          src: 'setsSuccess'
-        - zab_key: 'set.fail'
-          src: 'setsFail'
-        - zab_key: 'update.success'
-          src: 'updateSuccess'
-        - zab_key: 'update.fail'
-          src: 'updateFail'
-        - zab_key: 'watchers'
-          src: 'watchers'
-    - type: 'text'
-      prefix: 'openshift.'
-      path: '/metrics'
-      values:
-        'etcd_server_file_descriptors_used_total' :
-        'etcd_server_pending_proposal_total' :
-        'etcd_server_proposal_failed_total' :
-        'etcd_storage_delete_total' :
-        'etcd_storage_keys_total' :
-        'etcd_storage_put_total' :
-        'etcd_storage_range_total' :
-        'etcd_storage_txn_total' :
-        'etcd_store_expires_total' :
-        'etcd_store_reads_total' : 'action'
-        'etcd_store_watch_requests_total' :
-        'etcd_store_watchers' :
-        'etcd_store_writes_total' : 'action'
-        'etcd_wal_last_index_saved' :
+etcd_metrics_config:
+  etcd_info:
+    files:
+      ssl_client_cert: '/etc/origin/master/master.etcd-client.crt'
+      ssl_client_key: '/etc/origin/master/master.etcd-client.key'
+      openshift_master_config: '/etc/origin/master/master-config.yaml'
+    metrics:
+      - type: 'json'
+        prefix: 'openshift.etcd.'
+        path: '/v2/stats/store'
+        values:
+          - zab_key: 'create.success'
+            src: 'createSuccess'
+          - zab_key: 'create.fail'
+            src: 'createFail'
+          - zab_key: 'delete.success'
+            src: 'deleteSuccess'
+          - zab_key: 'delete.fail'
+            src: 'deleteFail'
+          - zab_key: 'get.success'
+            src: 'getsSuccess'
+          - zab_key: 'get.fail'
+            src: 'getsFail'
+          - zab_key: 'set.success'
+            src: 'setsSuccess'
+          - zab_key: 'set.fail'
+            src: 'setsFail'
+          - zab_key: 'update.success'
+            src: 'updateSuccess'
+          - zab_key: 'update.fail'
+            src: 'updateFail'
+          - zab_key: 'watchers'
+            src: 'watchers'
+      - type: 'text'
+        prefix: 'openshift.'
+        path: '/metrics'
+        values:
+          'etcd_server_file_descriptors_used_total' :
+          'etcd_server_pending_proposal_total' :
+          'etcd_server_proposal_failed_total' :
+          'etcd_storage_delete_total' :
+          'etcd_storage_keys_total' :
+          'etcd_storage_put_total' :
+          'etcd_storage_range_total' :
+          'etcd_storage_txn_total' :
+          'etcd_store_expires_total' :
+          'etcd_store_reads_total' : 'action'
+          'etcd_store_watch_requests_total' :
+          'etcd_store_watchers' :
+          'etcd_store_writes_total' : 'action'
+          'etcd_wal_last_index_saved' :
 
 
 # etcd 2.2.1 available metrics
