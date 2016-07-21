@@ -56,8 +56,8 @@
 
 - name: "Copy etcd metrics config file"
   copy:
-    src: etcd_metrics.yaml
-    dest: /etc/openshift_tools/etcd_metrics.yaml
+    src: etcd_metrics.yml
+    dest: /etc/openshift_tools/etcd_metrics.yml
     owner: root
     group: root
     mode: 0644
