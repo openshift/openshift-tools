@@ -20,6 +20,11 @@ time ansible-playbook /root/config.yml
 # Send a heartbeat when the container starts up
 /usr/bin/ops-zagg-client --send-heartbeat
 
+CLUSTER_ZAGG_FILE=/etc/openshift_tools/clusterwide_zagg_client.yaml
+if [ -a $CLUSTER_ZAGG_FILE ] ; then
+  /usr/bin/ops-zagg-client --send-heartbeat -c $CLUSTER_ZAGG_FILE
+fi
+
 # fire off the check pmcd status script
 check-pmcd-status.sh &
 # fire off the pmcd script

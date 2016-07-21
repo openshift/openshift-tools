@@ -11,6 +11,8 @@ oso_master_primary: True
 zagg_client_config:
   host:
     name: UNNAMED-ZAGG-CLIENT-CTR
+  clusterwide_host:
+    name: undefcid-synthetic
   zagg:
     url: https://localhost:8443
     user: admin
@@ -55,6 +57,25 @@ zagg_client_config:
     - undefcid
     - undefenv
 
+clusterwide_zagg_client_config:
+  host:
+    name: undefcid-synthetic
+  clusterwide_host:
+    name: undefcid-synthetic
+  zagg:
+    url: https://localhost:8443
+    user: admin
+    pass: password
+    ssl_verify: False
+    verbose: False
+    debug: False
+  heartbeat:
+    templates:
+    - Template Heartbeat        # So we can send heartbeats
+    hostgroups:
+    - undefcid
+    - undefenv
+
 host_monitoring_cron:
 - name: send pcp ping every 5 minutes
   minute: "*/5"
@@ -73,9 +94,18 @@ host_monitoring_cron:
   hour: "*"
   job: ops-runner -f -s 15 -s 3600 -n ozc.send.heartbeat.full /usr/bin/ops-zagg-client --send-heartbeat
 
+- name: Do a full heartbeat for clusterwide synthetic host
+  minute: "10"
+  hour: "*"
+  job: ops-runner -f -s 15 -s 3600 -n ozc.send.synth.heartbeat.full /usr/bin/ops-zagg-client --send-heartbeat -c /etc/openshift_tools/clusterwide_zagg_client.yaml
+
 - name: Do a quick heartbeat
   minute: "*/5"
   job: ops-runner -f -s 15 -n ozc.send.heartbeat.quick /usr/bin/ops-zagg-client -k heartbeat.ping -o 1
+
+- name: Do a quick heartbeat for clusterwide synthetic host
+  minute: "*/5"
+  job: ops-runner -f -s 15 -n ozc.send.synth.heartbeat.quick /usr/bin/ops-zagg-client -k heartbeat.ping -o 1 -c /etc/openshift_tools/clusterwide_zagg_client.yaml
 
 - name: run filesystem space checks every 10 minutes
   minute: "*/10"
