@@ -69,6 +69,13 @@ zagg_client_config:
     - "{{ osohm_cluster_id }}"
     - "{{ osohm_environment }}"
 
+  synthetic_clusterwide:
+    host:
+      name: "{{ osohm_cluster_id }}-synthetic"
+    heartbeat:
+      templates:
+      - Template Heartbeat        # So we can send hearbeats
+
 # Generic Linux Checks
 host_monitoring_cron:
 - name: send pcp ping every 5 mintues
