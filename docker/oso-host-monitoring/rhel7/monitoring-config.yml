@@ -54,6 +54,12 @@ zagg_client_config:
     hostgroups:
     - undefcid
     - undefenv
+  synthetic_clusterwide:
+    host:
+      name: undefcid-synthetic
+    heartbeat:
+      templates:
+      - Template Heartbeat        # So we can send heartbeats
 
 host_monitoring_cron:
 - name: send pcp ping every 5 minutes
