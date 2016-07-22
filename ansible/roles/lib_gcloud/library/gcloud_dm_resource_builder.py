@@ -472,6 +472,25 @@ class Address(GCPResource):
 
 
 # pylint: disable=too-many-instance-attributes
+class Bucket(GCPResource):
+    '''Object to represent a gcp storage bucket'''
+
+    resource_type = "storage.v1.bucket"
+
+    # pylint: disable=too-many-arguments
+    def __init__(self, rname, project, zone):
+        '''constructor for gcp resource'''
+        super(Bucket, self).__init__(rname, Bucket.resource_type, project, zone)
+
+    def to_resource(self):
+        """ return the resource representation"""
+        return {'name': self.name + '-bucket',
+                'type': Bucket.resource_type,
+                'properties': {'name': self.name}
+               }
+
+
+# pylint: disable=too-many-instance-attributes
 class Disk(GCPResource):
     '''Object to represent a gcp disk'''
 
@@ -814,6 +833,48 @@ class HealthCheck(GCPResource):
                }
 
 
+# pylint: disable=too-many-instance-attributes
+class Network(GCPResource):
+    '''Object to represent a gcp Network'''
+
+    resource_type = "compute.v1.network"
+
+    # pylint: disable=too-many-arguments
+    def __init__(self,
+                 rname,
+                 project,
+                 zone,
+                 desc,
+                 auto_create_subnets,
+                ):
+        '''constructor for gcp resource'''
+        super(Network, self).__init__(rname,
+                                      Network.resource_type,
+                                      project,
+                                      zone)
+        self._desc = desc
+        self._auto_create_subnets = auto_create_subnets
+
+    @property
+    def description(self):
+        '''property for resource description'''
+        return self._desc
+
+    @property
+    def auto_create_subnets(self):
+        '''property for resource auto_create_subnets'''
+        return self._auto_create_subnets
+
+    def to_resource(self):
+        """ return the resource representation"""
+        return {'name': self.name,
+                'type': Network.resource_type,
+                'properties': {'description': self.description,
+                               'autoCreateSubnetworks': self.auto_create_subnets,
+                              }
+               }
+
+
 # pylint: disable=too-many-instance-attributes,interface-not-implemented
 class NetworkInterface(GCPResource):
     '''Object to represent a gcp disk'''
@@ -866,48 +927,6 @@ class NetworkInterface(GCPResource):
         return {'accessConfigs': self.access_config,
                 'network': self._network_link,
                 'subnetwork': self._subnet_link,
-               }
-
-
-# pylint: disable=too-many-instance-attributes
-class Network(GCPResource):
-    '''Object to represent a gcp Network'''
-
-    resource_type = "compute.v1.network"
-
-    # pylint: disable=too-many-arguments
-    def __init__(self,
-                 rname,
-                 project,
-                 zone,
-                 desc,
-                 auto_create_subnets,
-                ):
-        '''constructor for gcp resource'''
-        super(Network, self).__init__(rname,
-                                      Network.resource_type,
-                                      project,
-                                      zone)
-        self._desc = desc
-        self._auto_create_subnets = auto_create_subnets
-
-    @property
-    def description(self):
-        '''property for resource description'''
-        return self._desc
-
-    @property
-    def auto_create_subnets(self):
-        '''property for resource auto_create_subnets'''
-        return self._auto_create_subnets
-
-    def to_resource(self):
-        """ return the resource representation"""
-        return {'name': self.name,
-                'type': Network.resource_type,
-                'properties': {'description': self.description,
-                               'autoCreateSubnetworks': self.auto_create_subnets,
-                              }
                }
 
 
@@ -1291,6 +1310,14 @@ class GcloudResourceBuilder(object):
                                     device_name='pv_%dg%d' % (size, idx),
                                     image=None))
         return results
+
+    def build_storage_buckets(self, bucket_names):
+        ''' create the resource for storage buckets'''
+        results = []
+        for b_name in bucket_names:
+            results.append(Bucket(b_name, self.project, self.zone))
+
+        return results
 # vim: expandtab:tabstop=4:shiftwidth=4
 
 def get_names(rname, count):
@@ -1318,6 +1345,7 @@ def main():
             subnetworks=dict(default=[], type='list'),
             addresses=dict(default=[], type='list'),
             disks=dict(default=[], type='list'),
+            buckets=dict(default=[], type='list'),
             persistent_volumes=dict(default=[], type='list'),
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
@@ -1345,7 +1373,6 @@ def main():
                                    int(module.params['instance_counts'].get('infra', 0)))
         names['compute'] = get_names(module.params['clusterid'] + '-node-compute',
                                      int(module.params['instance_counts'].get('compute', 0)))
-
         # Health Checks
         for health_check in module.params.get('health_checks', []):
             resources.append(gcloud.build_health_check(health_check['name'],
@@ -1405,6 +1432,9 @@ def main():
                                                              properties['disk_info'],
                                                              properties['network_interfaces'],
                                                              module.params['provisioning']))
+
+        # storage buckets
+        resources.extend(gcloud.build_storage_buckets(module.params.get('buckets', [])))
 
         # disks
         resources.extend(gcloud.build_disks(module.params.get('disks', [])))

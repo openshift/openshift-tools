@@ -163,3 +163,11 @@ class GcloudResourceBuilder(object):
                                     device_name='pv_%dg%d' % (size, idx),
                                     image=None))
         return results
+
+    def build_storage_buckets(self, bucket_names):
+        ''' create the resource for storage buckets'''
+        results = []
+        for b_name in bucket_names:
+            results.append(Bucket(b_name, self.project, self.zone))
+
+        return results
