@@ -222,11 +222,22 @@ def update_record_values(dyn_record, record_type, record_value, ttl):
     # Assuming 1 record only per node
     return dyn_record[rkey][0]
 
+def same_record_types(record_type_key, dyn_values):
+    '''check to see if dyn_values includes the same record type'''
+    return dyn_values.has_key(record_type_key)
+
+
 def compare_record_values(record_type_key, user_record_value, dyn_values):
     ''' Verify the user record_value exists in dyn'''
     rtype = get_record_type(record_type_key)
+
+    # check to see if the dyn_values include the record type
+    if not same_record_types(record_type_key, dyn_values):
+        return False
+
     for record in dyn_values[record_type_key]:
-        if user_record_value in record[RECORD_PARAMS[rtype]['value_param']]:
+        if record.has_key(RECORD_PARAMS[rtype]['value_param']) and \
+           user_record_value in record[RECORD_PARAMS[rtype]['value_param']]:
             return True
 
     return False
@@ -243,6 +254,7 @@ def compare_record_ttl(record_type_key, user_record_value, dyn_values, user_para
 
     return False
 
+# pylint: disable=too-many-statements
 def main():
     '''Ansible module for managing Dyn DNS records.'''
     module = AnsibleModule(
@@ -334,29 +346,32 @@ def main():
         record_type_key = get_record_key(module.params['record_type'])
         user_record_value = module.params['record_value']
 
+        ########
+        # CREATE
+        ########
         # Check to see if the record is already in place before doing anything.
-        if dyn_node_records and compare_record_values(record_type_key, user_record_value, dyn_values):
-
+        # If there are no records for this node, create it.
+        if not dyn_node_records:
+            record = dyn_zone.add_record(dyn_node_name,
+                                         module.params['record_type'],
+                                         module.params['record_value'],
+                                         user_param_ttl
+                                        )
+        ########
+        # UPDATE
+        ########
+        elif compare_record_values(record_type_key, user_record_value, dyn_values):
             if user_param_ttl == 0 or \
                compare_record_ttl(record_type_key, user_record_value, dyn_values, user_param_ttl):
                 module.exit_json(changed=False, dyn_record=dyn_values)
 
-        # Working on the assumption that there is only one record per
-        # node we will first delete the node if there are any records before
-        # creating the correct record
-        if dyn_node_records:
-            ######
-            # UPDATE
-            ######
             record = update_record_values(dyn_node_records,
                                           module.params['record_type'],
                                           module.params['record_value'],
                                           user_param_ttl)
+        # remove the record as it is not the same type as the requested
         else:
-            ######
-            # CREATE
-            ######
-
+            dyn_node.delete()
             # Now lets create the correct node entry.
             record = dyn_zone.add_record(dyn_node_name,
                                          module.params['record_type'],
