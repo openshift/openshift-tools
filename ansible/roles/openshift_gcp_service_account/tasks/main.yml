@@ -1,0 +1,66 @@
+---
+- name: Stat the multi_inventory file
+  stat:
+    path: "{{ osgcpsa_destination }}/multi_inventory.yaml"
+  register: user_file_stat
+  when: osgcpsa_output_type == "multi_inventory"
+- debug: var=user_file_stat
+
+- name: Check if multi_inventory file exists
+  set_fact:
+    user_file_missing: True
+  when: not user_file_stat.stat.exists
+
+- name: Delete service account if user file is missing
+  gcloud_iam_sa:
+    state: absent
+    name: "{{ osgcpsa_username }}"
+  when: user_file_missing
+  register: delete_user
+
+- name: sleep if user was deleted
+  pause:
+    seconds: 5
+  when: delete_user.changed
+
+- name: Ensure service account is present
+  gcloud_iam_sa:
+    state: present
+    name: "{{ osgcpsa_username }}"
+    display_name: "{{ osgcpsa_display_name }}"
+  register: sa_user_create
+
+- name: Get the sa user account email account
+  set_fact:
+    sa_user_email: "{{ sa_user_create.results.results.email }}"
+  when: sa_user_create.results.returncode == 0
+
+- name: add project policy
+  gcloud_project_policy:
+    state: present
+    project: "{{ osgcpsa_project }}"
+    role: "{{ osgcpsa_roles }}"
+    member: "{{ sa_user_email }}"
+    member_type: serviceAccount
+  register: project_policy_out
+  when: sa_user_email is defined
+
+- name: create service account key
+  gcloud_iam_sa_keys:
+    state: present
+    service_account_name: "{{ sa_user_email }}"
+    key_format: p12
+  register: sa_key_out
+  when: sa_user_create.changed or osgcpsa_force_update
+
+- name: Set the private key
+  set_fact:
+    private_key: "{{ sa_key_out.results.results }}"
+  when: sa_key_out.changed
+- debug: var=private_key
+
+- name: Write out the multi_inventory file
+  template:
+    dest: "{{ osgcpsa_destination }}/multi_inventory.yaml"
+    src: multi_inventory.yml.j2
+  when: (private_key is defined) and (osgcpsa_output_type == "multi_inventory")
