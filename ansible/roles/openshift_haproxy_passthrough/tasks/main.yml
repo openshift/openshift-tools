@@ -1,18 +1,4 @@
 ---
-- name: Grab the current firewall rules
-  command: /usr/sbin/iptables -nL
-  register: iptables_list_out
-  changed_when: False
-
-- name: Add the iptables rule if not found
-  command: /usr/sbin/iptables -A INPUT -p tcp --dport 8080 -j ACCEPT -m comment --comment "haproxy"
-  when: not 'tcp dpt:8080 /* haproxy */' in iptables_list_out.stdout
-  register: iptables_add_out
-
-- name: Save the iptables rules if one was added
-  command: /usr/libexec/iptables/iptables.init save
-  when: iptables_add_out.changed
-
 - name: install the haproxy package
   yum:
     name: "{{ item }}"
