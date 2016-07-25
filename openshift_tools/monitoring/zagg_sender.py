@@ -135,10 +135,12 @@ class ZaggSender(object):
                                                  )
         self.unique_metrics.append(hb_metric)
 
-    def add_zabbix_keys(self, zabbix_keys, host=None):
+    def add_zabbix_keys(self, zabbix_keys, host=None, synthetic=False):
         """ create unique metric from zabbix key value pair """
 
-        if not host:
+        if synthetic and not host:
+            host = self.config['synthetic_clusterwide']['host']['name']
+        elif not host:
             host = self.host
 
         zabbix_metrics = []
@@ -149,7 +151,9 @@ class ZaggSender(object):
 
         self.unique_metrics += zabbix_metrics
 
-    def add_zabbix_dynamic_item(self, discovery_key, macro_string, macro_array, host=None):
+    # Allow for 6 arguments (including 'self')
+    # pylint: disable=too-many-arguments
+    def add_zabbix_dynamic_item(self, discovery_key, macro_string, macro_array, host=None, synthetic=False):
         """
         This creates a dynamic item prototype that is required
         for low level discovery rules in Zabbix.
@@ -166,7 +170,9 @@ class ZaggSender(object):
                         ]}"
         """
 
-        if not host:
+        if synthetic and not host:
+            host = self.config['synthetic_clusterwide']['host']['name']
+        elif not host:
             host = self.host
 
         data_array = [{'{%s}' % macro_string : i} for i in macro_array]
