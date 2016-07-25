@@ -24,6 +24,7 @@ class GcloudResourceBuilder(object):
                                  names,
                                  mtype,
                                  metadata,
+                                 tags,
                                  disk_info,
                                  network_info,
                                  provisioning=False,
@@ -69,6 +70,7 @@ class GcloudResourceBuilder(object):
                               self.zone,
                               mtype,
                               metadata,
+                              tags,
                               inst_disks,
                               nics)
             results.append(inst)
@@ -160,4 +162,12 @@ class GcloudResourceBuilder(object):
                                     boot=False,
                                     device_name='pv_%dg%d' % (size, idx),
                                     image=None))
+        return results
+
+    def build_storage_buckets(self, bucket_names):
+        ''' create the resource for storage buckets'''
+        results = []
+        for b_name in bucket_names:
+            results.append(Bucket(b_name, self.project, self.zone))
+
         return results

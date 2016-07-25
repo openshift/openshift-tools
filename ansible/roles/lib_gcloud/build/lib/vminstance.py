@@ -13,6 +13,7 @@ class VMInstance(GCPResource):
                  zone,
                  machine_type,
                  metadata,
+                 tags,
                  disks,
                  network_interfaces,
                 ):
@@ -20,6 +21,7 @@ class VMInstance(GCPResource):
         super(VMInstance, self).__init__(rname, VMInstance.resource_type, project, zone)
         self._machine_type = machine_type
         self._machine_type_url = None
+        self._tags = tags
         self._metadata = []
         if metadata and isinstance(metadata, dict):
             self._metadata = {'items': [{'key': key, 'value': value} for key, value in metadata.items()]}
@@ -47,6 +49,11 @@ class VMInstance(GCPResource):
         return  self._machine_type_url
 
     @property
+    def tags(self):
+        '''property for resource tags '''
+        return self._tags
+
+    @property
     def metadata(self):
         '''property for resource metadata'''
         return self._metadata
@@ -63,6 +70,7 @@ class VMInstance(GCPResource):
             self._properties = {'zone': self.zone,
                                 'machineType': self.machine_type_url,
                                 'metadata': self.metadata,
+                                'tags': self.tags,
                                 'disks': self.disks,
                                 'networkInterfaces': self.network_interfaces,
                                }

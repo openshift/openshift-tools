@@ -35,28 +35,28 @@ ExecStartPre=-/usr/bin/docker pull "{{ osohm_docker_registry_url }}{{ osohm_host
 #   cron but using systemd timers
 #           -v /run:/run                                     \
 
-ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                             \
-           --privileged                                                                      \
-           --pid=host                                                                        \
-           --net=host                                                                        \
-           --ipc=host                                                                        \
-           -v /etc/localtime:/etc/localtime                                                  \
-           -v /sys:/sys:ro                                                                   \
-           -v /var/lib/docker/volumes-ops/oso-rhel7-host-monitoring/empty_selinux:/sys/fs/selinux \
-           -v /var/lib/docker:/var/lib/docker:ro                                             \
-           -v /var/run/docker.sock:/var/run/docker.sock                                      \
-           -v /var/run/openvswitch:/var/run/openvswitch                                      \
+ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                                    \
+           --privileged                                                                             \
+           --pid=host                                                                               \
+           --net=host                                                                               \
+           --ipc=host                                                                               \
+           -v /etc/localtime:/etc/localtime                                                         \
+           -v /sys:/sys:ro                                                                          \
+           -v /var/lib/docker/volumes-ops/oso-rhel7-host-monitoring/empty_selinux:/sys/fs/selinux   \
+           -v /var/lib/docker:/var/lib/docker:ro                                                    \
+           -v /var/run/docker.sock:/var/run/docker.sock                                             \
+           -v /var/run/openvswitch:/var/run/openvswitch                                             \
 {% if hostvars[inventory_hostname]['oo_hosttype'] == 'master' %}
-           -v /etc/origin/master/admin.kubeconfig:/etc/origin/master/admin.kubeconfig:ro  \
-           -v /etc/origin/master/master.etcd-client.crt:/etc/origin/master/master.etcd-client.crt \
-           -v /etc/origin/master/master.etcd-client.key:/etc/origin/master/master.etcd-client.key \
-           -v /etc/origin/master/master-config.yaml:/etc/origin/master/master-config.yaml \
+           -v /etc/origin/master/admin.kubeconfig:/etc/origin/master/admin.kubeconfig:ro            \
+           -v /etc/origin/master/master.etcd-client.crt:/etc/origin/master/master.etcd-client.crt   \
+           -v /etc/origin/master/master.etcd-client.key:/etc/origin/master/master.etcd-client.key   \
+           -v /etc/origin/master/master-config.yaml:/etc/origin/master/master-config.yaml           \
 {% elif hostvars[inventory_hostname]['oo_hosttype'] == 'node' %}
-           -v /etc/origin/node:/etc/origin/node                                              \
+           -v /etc/origin/node:/etc/origin/node                                                     \
 {% endif %}
-           -v /usr/bin/oc:/usr/bin/oc                                                        \
-           -v /usr/bin/oadm:/usr/bin/oadm                                                    \
-           -v /etc/openshift_tools/monitoring-config.yml:/etc/openshift_tools/monitoring-config.yml \
+           -v /usr/bin/oc:/usr/bin/oc                                                               \
+           -v /usr/bin/oadm:/usr/bin/oadm                                                           \
+           -v /etc/openshift_tools:/container_setup:ro                                              \
            {{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}
 
 

@@ -26,6 +26,7 @@ def main():
             subnetworks=dict(default=[], type='list'),
             addresses=dict(default=[], type='list'),
             disks=dict(default=[], type='list'),
+            buckets=dict(default=[], type='list'),
             persistent_volumes=dict(default=[], type='list'),
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
@@ -53,7 +54,6 @@ def main():
                                    int(module.params['instance_counts'].get('infra', 0)))
         names['compute'] = get_names(module.params['clusterid'] + '-node-compute',
                                      int(module.params['instance_counts'].get('compute', 0)))
-
         # Health Checks
         for health_check in module.params.get('health_checks', []):
             resources.append(gcloud.build_health_check(health_check['name'],
@@ -109,9 +109,13 @@ def main():
             resources.extend(gcloud.build_instance_resources(names[hosttype],
                                                              properties['machine_type'],
                                                              properties['metadata'],
+                                                             properties['tags'],
                                                              properties['disk_info'],
                                                              properties['network_interfaces'],
                                                              module.params['provisioning']))
+
+        # storage buckets
+        resources.extend(gcloud.build_storage_buckets(module.params.get('buckets', [])))
 
         # disks
         resources.extend(gcloud.build_disks(module.params.get('disks', [])))

@@ -69,6 +69,13 @@ zagg_client_config:
     - "{{ osohm_cluster_id }}"
     - "{{ osohm_environment }}"
 
+  synthetic_clusterwide:
+    host:
+      name: "{{ osohm_cluster_id }}-synthetic"
+    heartbeat:
+      templates:
+      - Template Heartbeat        # So we can send hearbeats
+
 # Generic Linux Checks
 host_monitoring_cron:
 - name: send pcp ping every 5 mintues
@@ -167,11 +174,11 @@ host_monitoring_cron:
 {# Openshift Master checks #}
 - name: run create app every 5 minutes
   minute: "*/5"
-  job: "export ZAGG_CLIENT_HOSTNAME={{ osohm_host_name }}; ops-runner -f -s 60 -n csca.openshift.master.app.create /usr/bin/cron-send-create-app &>> /var/log/create_app.log"
+  job: "export ZAGG_CLIENT_HOSTNAME={{ osohm_host_name }}; ops-runner -f -t 180 -s 60 -n csca.openshift.master.app.create /usr/bin/cron-send-create-app &>> /var/log/create_app.log"
 
 - name: run create app with build process every 30 minutes
   minute: "*/30"
-  job: "export ZAGG_CLIENT_HOSTNAME={{ osohm_host_name }}; ops-runner -f -s 120 -n csca.openshift.master.app.build.create /usr/bin/cron-send-create-app --name https://github.com/openshift/nodejs-ex &>> /var/log/build_app.log"
+  job: "export ZAGG_CLIENT_HOSTNAME={{ osohm_host_name }}; ops-runner -f -t 1200 -s 120 -n csca.openshift.master.app.build.create /usr/bin/cron-send-create-app --name https://github.com/openshift/nodejs-ex &>> /var/log/build_app.log"
 
 {% if osohm_master_ha|bool %}
 - name: send openshift-master process count
@@ -204,7 +211,7 @@ host_monitoring_cron:
 
 - name: send openshift-master etcd status
   minute: "*/2"
-  job: ops-runner -f -s 15 -n cspc.openshift.master.etcd.status /usr/bin/cron-send-etcd-status
+  job: ops-runner -f -s 15 -n cspc.openshift.master.etcd.status /usr/bin/cron-send-etcd-status -c /etc/openshift_tools/etcd_metrics.yml
 
 - name: send S3 bucket metrics every day
   hour: "3"
