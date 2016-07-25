@@ -10,7 +10,7 @@ oso_master_primary: True
 
 zagg_client_config:
   host:
-    name: UNNAMED-ZAGG-CLIENT-CTR
+    name: "host-monitoring-{{ lookup('env', 'container_uuid')[0:4] }}"
   zagg:
     url: https://localhost:8443
     user: admin
