@@ -252,7 +252,7 @@ def main():
             print 'status of ip is', status
             if status == 200:
                 # if the value is 1 ,everything is ok
-                result = 1 
+                result = 1
             else:
                 # if the value =2 ,shows that we have the pod ,but the pod is in bad healthz
                 result = 2
