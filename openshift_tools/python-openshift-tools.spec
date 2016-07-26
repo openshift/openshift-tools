@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.70
+Version:       0.0.71
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -258,6 +258,11 @@ Adds Aws specific python modules
 
 
 %changelog
+* Mon Jul 25 2016 Joel Diaz <jdiaz@redhat.com> 0.0.71-1
+- add support to ZaggSender to create/send cluster-wide synthetic items
+  (jdiaz@redhat.com)
+- add --list-cluster to ohi (sten@redhat.com)
+
 * Tue Jun 21 2016 Thomas Wiest <twiest@redhat.com> 0.0.70-1
 - Added Name and purpose tagging to ops-ec2-add-snapshot-tag-to-ebs-volumes.py
   (twiest@redhat.com)

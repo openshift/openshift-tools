@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.118
+Version:       0.0.120
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -279,6 +279,26 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Mon Jul 25 2016 Joel Diaz <jdiaz@redhat.com> 0.0.120-1
+- add synthetic cluster-wide host support to ops-zagg-client (jdiaz@redhat.com)
+- moving everything from dynamic keys to static zabbix items
+  (ihorvath@redhat.com)
+- Moved unncecesary output to only display on verbose mode
+  (bshpurke@redhat.com)
+- Improved nodes_not_schedulable check Check avoids master nodes Reincluded
+  zabbix trigger for check (bshpurke@redhat.com)
+- etcd metrics with dynamic items in zabbix (ihorvath@redhat.com)
+
+* Mon Jul 25 2016 Joel Diaz <jdiaz@redhat.com>
+- add synthetic cluster-wide host support to ops-zagg-client (jdiaz@redhat.com)
+- moving everything from dynamic keys to static zabbix items
+  (ihorvath@redhat.com)
+- Moved unncecesary output to only display on verbose mode
+  (bshpurke@redhat.com)
+- Improved nodes_not_schedulable check Check avoids master nodes Reincluded
+  zabbix trigger for check (bshpurke@redhat.com)
+- etcd metrics with dynamic items in zabbix (ihorvath@redhat.com)
+
 * Tue Jul 19 2016 Joel Diaz <jdiaz@redhat.com> 0.0.118-1
 - add --timeout to ops-runner and a dynamic item to hold these items
   (jdiaz@redhat.com)
