@@ -7,7 +7,7 @@ Ops OS Firewall manages  iptable rules
 Requirements
 ------------
 
-lib_os_firewall
+lib_aos_modules
 
 Role Variables
 --------------
