@@ -448,7 +448,7 @@ class GcloudIAMServiceAccountKeys(GcloudCLI):
 
     def create_service_account_key(self, outputfile):
         '''create an service account key'''
-        results = self._create_service_account_key(self.service_account_name, outputfile)
+        results = self._create_service_account_key(self.service_account_name, outputfile, self.key_format)
         if results['returncode'] != 0:
             return results
 
@@ -478,7 +478,7 @@ def main():
     )
 
     gcloud = GcloudIAMServiceAccountKeys(module.params['service_account_name'],
-                                         module.params['key_format'])
+                                         key_format=module.params['key_format'])
 
     state = module.params['state']
 

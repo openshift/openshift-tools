@@ -17,7 +17,7 @@ def main():
     )
 
     gcloud = GcloudIAMServiceAccountKeys(module.params['service_account_name'],
-                                         module.params['key_format'])
+                                         key_format=module.params['key_format'])
 
     state = module.params['state']
 
