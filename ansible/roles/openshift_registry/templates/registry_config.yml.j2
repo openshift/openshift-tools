@@ -1,0 +1,34 @@
+version: 0.1
+log:
+  level: debug
+http:
+  addr: :5000
+storage:
+  cache:
+    layerinfo: inmemory
+  delete:
+    enabled: true
+{% if oo_location == 'aws' %}
+  s3:
+    accesskey: {{ osreg_aws_access_key }}
+    secretkey: {{ osreg_aws_secret_key }}
+    region: {{ osreg_region }}
+    bucket: {{ osreg_bucket_name }}
+    encrypt: true
+    secure: true
+    v4auth: true
+    rootdirectory: /registry
+{% elif oo_location == 'gcp' %}
+  gcs:
+    bucket: {{ osreg_bucket_name }}
+    keyfile: {{ osreg_registry_cred_path }}
+    rootdirectory: /registry
+{% endif %}
+auth:
+  openshift:
+    realm: openshift
+middleware:
+  repository:
+    - name: openshift
+      options:
+        pullthrough: true
