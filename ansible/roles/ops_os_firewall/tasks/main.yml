@@ -1,0 +1,16 @@
+---
+- name: Add iptables allow rules
+  aos_firewall_manage_iptables:
+    action: add
+    name: "{{ item.service }}"
+    protocol: "{{ item.protocol }}"
+    port: "{{ item.port }}"
+  with_items: "{{ oof_firewall_allow }}"
+
+- name: Remove iptables rules
+  aos_firewall_manage_iptables:
+    action: remove
+    name: "{{ item.service }}"
+    protocol: "{{ item.port }}"
+    port: "{{ item.protocol }}"
+  with_items: "{{ oof_firewall_deny }}"

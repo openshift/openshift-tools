@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Openshift Operations
+  description:  A role to provide Ops AOS Ansible modules
+  company: Red Hat, Inc.
+  license: Apache
+  min_ansible_version: 1.9
+  platforms:
+    - name: EL
+      versions:
+       - 7
+  categories:
+    - utils
+dependencies:
