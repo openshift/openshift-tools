@@ -1080,10 +1080,12 @@ class VMInstance(GCPResource):
                  tags,
                  disks,
                  network_interfaces,
+                 service_accounts=None,
                 ):
         '''constructor for gcp resource'''
         super(VMInstance, self).__init__(rname, VMInstance.resource_type, project, zone)
         self._machine_type = machine_type
+        self._service_accounts = service_accounts
         self._machine_type_url = None
         self._tags = tags
         self._metadata = []
@@ -1094,6 +1096,11 @@ class VMInstance(GCPResource):
         self._disks = disks
         self._network_interfaces = network_interfaces
         self._properties = None
+
+    @property
+    def service_accounts(self):
+        '''property for resource service accounts '''
+        return self._service_accounts
 
     @property
     def network_interfaces(self):
@@ -1138,6 +1145,8 @@ class VMInstance(GCPResource):
                                 'disks': self.disks,
                                 'networkInterfaces': self.network_interfaces,
                                }
+            if self.service_accounts:
+                self._properties['serviceAccounts'] = self.service_accounts
         return self._properties
 
     def to_resource(self):
@@ -1175,6 +1184,7 @@ class GcloudResourceBuilder(object):
                                  disk_info,
                                  network_info,
                                  provisioning=False,
+                                 service_accounts=None,
                                 ):
         '''build instance resources and return them in a list'''
 
@@ -1219,7 +1229,8 @@ class GcloudResourceBuilder(object):
                               metadata,
                               tags,
                               inst_disks,
-                              nics)
+                              nics,
+                              service_accounts)
             results.append(inst)
 
         return results
@@ -1431,7 +1442,8 @@ def main():
                                                              properties['tags'],
                                                              properties['disk_info'],
                                                              properties['network_interfaces'],
-                                                             module.params['provisioning']))
+                                                             module.params['provisioning'],
+                                                             properties['service_accounts']))
 
         # storage buckets
         resources.extend(gcloud.build_storage_buckets(module.params.get('buckets', [])))

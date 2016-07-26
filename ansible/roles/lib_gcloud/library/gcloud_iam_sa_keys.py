@@ -452,11 +452,13 @@ class GcloudIAMServiceAccountKeys(GcloudCLI):
         if results['returncode'] != 0:
             return results
 
-        # we need to dump the private key out and return it
-        from OpenSSL import crypto
-        p12 = crypto.load_pkcs12(open(outputfile, 'rb').read(), 'notasecret')
-        results['results'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, p12.get_privatekey()).strip()
-
+        if self.key_format == 'p12':
+            # we need to dump the private key out and return it
+            from OpenSSL import crypto
+            p12 = crypto.load_pkcs12(open(outputfile, 'rb').read(), 'notasecret')
+            results['results'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, p12.get_privatekey()).strip()
+        else:
+            results['results'] = json.load(open(outputfile))
         return results
 # vim: expandtab:tabstop=4:shiftwidth=4
 

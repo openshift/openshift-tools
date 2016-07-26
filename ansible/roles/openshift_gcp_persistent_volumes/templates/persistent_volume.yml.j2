@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ item.name }}
+  labels:
+    type: pd
+spec:
+  capacity:
+    storage: {{ item.properties.sizeGb }}Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  gcePersistentDisk:
+    pdName: {{ item.name }}
+    fsType: ext4

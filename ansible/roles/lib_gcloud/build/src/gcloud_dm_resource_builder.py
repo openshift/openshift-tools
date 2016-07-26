@@ -28,6 +28,7 @@ class GcloudResourceBuilder(object):
                                  disk_info,
                                  network_info,
                                  provisioning=False,
+                                 service_accounts=None,
                                 ):
         '''build instance resources and return them in a list'''
 
@@ -72,7 +73,8 @@ class GcloudResourceBuilder(object):
                               metadata,
                               tags,
                               inst_disks,
-                              nics)
+                              nics,
+                              service_accounts)
             results.append(inst)
 
         return results
