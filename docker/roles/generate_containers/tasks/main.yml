@@ -28,6 +28,9 @@
     dest: "{{ item.stat.path | regex_replace('.j2', '') }}"
     mode: "{{ item.stat.mode }}"
   with_items: "{{ stat_templates.results }}"
+  when: (not (base_os == "rhel7"
+              and item.stat.path|basename == 'push.sh.j2'
+              and ansible_env['PWD']|basename == 'oso-host-monitoring'))
 
 - name: Remove templates
   file:
