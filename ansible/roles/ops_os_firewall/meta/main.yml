@@ -12,4 +12,4 @@ galaxy_info:
   categories:
   - system
 dependencies:
-- role: tools_roles/lib_os_firewall
+- role: tools_roles/lib_aos_modules
