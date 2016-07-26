@@ -48,6 +48,10 @@
   tags:
   - config_loop
 
+- include_vars: template_zabbix_config.yml
+  tags:
+  - zabbix_config
+
 - name: Include Template Heartbeat
   include: ../../lib_zabbix/tasks/create_template.yml
   vars:
@@ -172,6 +176,16 @@
   include: ../../lib_zabbix/tasks/create_template.yml
   vars:
     template: "{{ g_template_config_loop }}"
+    server: "{{ ozb_server }}"
+    user: "{{ ozb_user }}"
+    password: "{{ ozb_password }}"
+  tags:
+  - config_loop
+
+- name: Include Template Zabbix Config
+  include: ../../lib_zabbix/tasks/create.yml
+  vars:
+    template: "{{ g_template_zabbix_config }}"
     server: "{{ ozb_server }}"
     user: "{{ ozb_user }}"
     password: "{{ ozb_password }}"
