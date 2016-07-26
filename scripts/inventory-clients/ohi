@@ -12,6 +12,7 @@ import argparse
 import sys
 import os
 import ConfigParser
+import json
 
 # openshift-tools python libs not installed on jenkins instance
 # pylint: disable=import-error
@@ -73,16 +74,31 @@ class Ohi(object):
             # We weren't able to determine what they wanted to do
             raise ArgumentError("Invalid combination of arguments")
 
-        if self.args.ip:
-            hosts = self.aws.convert_to_ip(hosts)
+        if self.args.output == None:
+            if self.args.ip:
+                hosts = self.aws.convert_to_ip(hosts)
 
-        for host in sorted(hosts, key=utils.normalize_dnsname):
-            if self.args.user:
-                print "%s@%s" % (self.args.user, host)
-            else:
-                print host
+            for host in sorted(hosts, key=utils.normalize_dnsname):
+                if self.args.user:
+                    print "%s@%s" % (self.args.user, host)
+                else:
+                    print host
+        elif self.args.output == "json":
+            self.json_output(hosts)
+        else:
+            raise ArgumentError("Invalid output format")
 
         return 0
+
+    def json_output(self, hosts):
+        out_hosts = []
+        for host in hosts:
+            temp_host = {
+                'name': host,
+                'ip': self.aws.convert_to_ip(host)
+            }
+            out_hosts.append(temp_host)
+        print json.dumps(out_hosts)
 
     def parse_config_file(self):
         '''
@@ -116,6 +132,8 @@ class Ohi(object):
         parser.add_argument('-s', '--sub-host-type', action="store", help="Which sub host type to use")
 
         parser.add_argument('-l', '--user', action='store', default=None, help='username')
+
+        parser.add_argument('-o', '--output', action='store', default=None, help='output')
 
         parser.add_argument('--cache-only', action='store_true', default=False,
                             help='Retrieve the host inventory by cache only. Default is false.')

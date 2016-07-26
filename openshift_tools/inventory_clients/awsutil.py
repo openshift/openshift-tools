@@ -267,6 +267,9 @@ class AwsUtil(object):
     def convert_to_ip(self, hosts, cached=False):
         """convert a list of host names to ip addresses"""
 
+        if not isinstance(hosts, list):
+            hosts = [hosts]
+
         inv = self.get_inventory(cached=cached)
         ips = []
         for host in hosts:
