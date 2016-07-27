@@ -484,7 +484,7 @@ class Bucket(GCPResource):
 
     def to_resource(self):
         """ return the resource representation"""
-        return {'name': self.name + '-bucket',
+        return {'name': self.name,
                 'type': Bucket.resource_type,
                 'properties': {'name': self.name}
                }

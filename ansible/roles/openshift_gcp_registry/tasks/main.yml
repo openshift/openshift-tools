@@ -1,0 +1,162 @@
+---
+- name: debug masters
+  debug:
+    var: osgreg_master_nodes
+
+- name: create json file
+  copy:
+    content: "{{ g_gcp_docker_registry_creds | to_json }}"
+    dest: /root/creds.json
+
+- name: create gcp registry auth file
+  oc_secret:
+    state: present
+    name: gcs-registry-secret
+    namespace: default
+    files:
+    - name: "{{ osgreg_registry_cred_secret_name }}"
+      path: /root/creds.json
+  register: gcs_sec_out
+
+- name: create the default registry service
+  oc_service:
+    namespace: default
+    name: docker-registry
+    ports:
+    - name: 5000-tcp
+      port: 5000
+      protocol: TCP
+      targetPort: 5000
+    selector:
+      docker-registry: default
+    session_affinity: ClientIP
+    service_type: ClusterIP
+  register: svc_out
+  notify:
+  - restart openshift master services
+
+- name: Create a self-signed cert
+  oadm_ca:
+    cmd: create-server-cert
+    signer_cert: /etc/origin/master/ca.crt
+    signer_key: /etc/origin/master/ca.key
+    signer_serial: /etc/origin/master/ca.serial.txt
+    hostnames: "registry.{{ osgreg_clusterid }}.openshift.com,{{ svc_out.results.clusterip }},docker-registry.default.svc.cluster.local"
+    cert: /etc/origin/master/registry.crt
+    key: /etc/origin/master/registry.key
+  register: caout
+
+- name: create registry certificates
+  oc_secret:
+    state: present
+    name: registry-secret
+    namespace: default
+    files:
+    - name: registry.key
+      path: /etc/origin/master/registry.key
+    - name: registry.crt
+      path: /etc/origin/master/registry.crt
+  register: cert_secret_out
+
+- name: create registry config from template
+  template:
+    src: registry_config.yml.j2
+    dest: /tmp/config.yml
+    owner: root
+    group: root
+    mode: 0600
+  changed_when: False
+
+- name: create secret from registry config file
+  oc_secret:
+    name: docker-registry-config
+    state: present
+    namespace: default
+    files:
+    - name: config.yml
+      path: /tmp/config.yml
+    delete_after: true
+  register: registry_config_out
+
+- name: create registry serviceaccount
+  oc_serviceaccount:
+    name: registry
+    namespace: default
+    secrets:
+    - docker-registry-config
+    - registry-secret
+    - gcs-registry-secret
+  register: sa_out
+
+- name: add secrets to service accounts
+  oc_secret_add:
+    service_account: "{{ item.name }}"
+    secrets: "{{ item.value }}"
+    namespace: default
+  with_items:
+  - name: registry
+    value:
+    - docker-registry-config
+    - registry-secret
+    - gcs-registry-secret
+  - name: default
+    value:
+    - registry-secret
+  register: secret_add_out
+
+- debug:
+    msg: "{{ svc_out.changed or cert_secret_out.changed or registry_config_out.changed or sa_out.changed }}"
+
+- name: create a secure registry
+  oadm_registry:
+    credentials: /etc/origin/master/openshift-registry.kubeconfig
+    name: docker-registry
+    force: "{{ svc_out.changed or cert_secret_out.changed or registry_config_out.changed or sa_out.changed }}"
+    service_account: registry
+    replicas: 2
+    namespace: default
+    selector: type=infra
+    env_vars:
+      REGISTRY_CONFIGURATION_PATH: /etc/registryconfig/config.yml
+      REGISTRY_HTTP_TLS_CERTIFICATE: /etc/secrets/registry.crt
+      REGISTRY_HTTP_TLS_KEY: /etc/secrets/registry.key
+      REGISTRY_HTTP_SECRET: "{{ osgreg_registry_http_secret }}"
+    volume_mounts:
+    - path: /etc/secrets
+      name: dockercerts
+      type: secret
+      secret_name: registry-secret
+    - path: /etc/registryconfig
+      name: dockersecrets
+      type: secret
+      secret_name: docker-registry-config
+    - path: "{{ osgreg_registry_cred_path }}"
+      name: gcs-creds
+      type: secret
+      secret_name: gcs-registry-secret
+    edits:
+        spec#template#spec#containers[0]#livenessProbe#httpGet#scheme: HTTPS
+        spec#template#spec#containers[0]#readinessProbe#httpGet#scheme: HTTPS
+  register: registryout
+
+- name: Pause for race conditions
+  pause:
+    seconds: 60
+  when: registryout.changed
+
+- debug: var=registryout
+
+- name: create route for the registry
+  oc_route:
+    name: registry
+    namespace: default
+    tls_termination: reencrypt
+    cert_content: "{{ osgreg_openshift_cert_content }}"
+    key_content: "{{ osgreg_openshift_key_content }}"
+    cacert_content: "{{ osgreg_cacert_content }}"
+    dest_cacert_path: /etc/origin/master/ca.crt
+    service_name: docker-registry
+    host: "registry.{{ osgreg_clusterid }}.openshift.com"
+  register: routeout
+
+- debug: var=routeout
