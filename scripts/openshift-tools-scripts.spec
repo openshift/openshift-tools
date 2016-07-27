@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.121
+Version:       0.0.123
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -279,6 +279,10 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Wed Jul 27 2016 Wesley Hearn <whearn@redhat.com> 0.0.123-1
+- Print first IP address in json output. convert_to_ip will return 1 ip address
+  in our use case (whearn@redhat.com)
+
 * Wed Jul 27 2016 Wesley Hearn <whearn@redhat.com> 0.0.121-1
 - Added simple json output to ohi, updated awsutil to have convert_to_ip not
   require a list (whearn@redhat.com)

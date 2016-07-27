@@ -1,35 +1,16 @@
 ---
 - name: debug masters
   debug:
-    var: osreg_master_nodes
+    var: osareg_master_nodes
 
 - name: Create S3 bucket
   delegate_to: localhost
   s3:
-    bucket: "{{ osreg_bucket_name }}"
+    bucket: "{{ osareg_bucket_name }}"
     mode: create
-    region: "{{ osreg_region }}"
-    aws_access_key: "{{ osreg_aws_access_key }}"
-    aws_secret_key: "{{ osreg_aws_secret_key }}"
-  run_once: true
-  when: osreg_location == 'aws'
-
-- name: create json file
-  copy:
-    content: "{{ g_gcp_docker_registry_creds | to_json }}"
-    dest: /root/creds.json
-  when: osreg_location == 'gcp'
-
-- name: create gcp registry auth file
-  oc_secret:
-    state: present
-    name: gcs-registry-secret
-    namespace: default
-    files:
-    - name: creds.json
-      path: /root/creds.json
-  register: gcs_sec_out
-  when: osreg_location == 'gcp'
+    region: "{{ osareg_region }}"
+    aws_access_key: "{{ osareg_aws_access_key }}"
+    aws_secret_key: "{{ osareg_aws_secret_key }}"
 
 - name: create the default registry service
   oc_service:
@@ -54,7 +35,7 @@
     signer_cert: /etc/origin/master/ca.crt
     signer_key: /etc/origin/master/ca.key
     signer_serial: /etc/origin/master/ca.serial.txt
-    hostnames: "registry.{{ osreg_clusterid }}.openshift.com,{{ svc_out.results.clusterip }},docker-registry.default.svc.cluster.local"
+    hostnames: "registry.{{ osareg_clusterid }}.openshift.com,{{ svc_out.results.clusterip }},docker-registry.default.svc.cluster.local"
     cert: /etc/origin/master/registry.crt
     key: /etc/origin/master/registry.key
   register: caout
@@ -99,7 +80,6 @@
     - docker-registry-config
     - registry-secret
   register: sa_out
-  when: osreg_location == 'aws'
 
 - name: add secrets to service accounts
   oc_secret_add:
@@ -115,35 +95,6 @@
     value:
     - registry-secret
   register: secret_add_out
-  when: osreg_location == 'aws'
-
-- name: create registry serviceaccount
-  oc_serviceaccount:
-    name: registry
-    namespace: default
-    secrets:
-    - docker-registry-config
-    - registry-secret
-    - gcs-registry-secret
-  register: sa_out
-  when: osreg_location == 'gce'
-
-- name: add secrets to service accounts
-  oc_secret_add:
-    service_account: "{{ item.name }}"
-    secrets: "{{ item.value }}"
-    namespace: default
-  with_items:
-  - name: registry
-    value:
-    - docker-registry-config
-    - registry-secret
-    - gcs-registry-secret
-  - name: default
-    value:
-    - registry-secret
-  register: secret_add_out
-  when: osreg_location == 'gcp'
 
 - debug:
     msg: "{{ svc_out.changed or cert_secret_out.changed or registry_config_out.changed or sa_out.changed }}"
@@ -161,7 +112,7 @@
       REGISTRY_CONFIGURATION_PATH: /etc/registryconfig/config.yml
       REGISTRY_HTTP_TLS_CERTIFICATE: /etc/secrets/registry.crt
       REGISTRY_HTTP_TLS_KEY: /etc/secrets/registry.key
-      REGISTRY_HTTP_SECRET: "{{ osreg_registry_http_secret }}"
+      REGISTRY_HTTP_SECRET: "{{ osareg_registry_http_secret }}"
     volume_mounts:
     - path: /etc/secrets
       name: dockercerts
@@ -182,21 +133,18 @@
   when: registryout.changed
 
 - debug: var=registryout
-  run_once: True
 
 - name: create route for the registry
   oc_route:
     name: registry
     namespace: default
     tls_termination: reencrypt
-    cert_content: "{{ osreg_openshift_cert_content }}"
-    key_content: "{{ osreg_openshift_key_content }}"
-    cacert_content: "{{ osreg_cacert_content }}"
+    cert_content: "{{ osareg_openshift_cert_content }}"
+    key_content: "{{ osareg_openshift_key_content }}"
+    cacert_content: "{{ osareg_cacert_content }}"
     dest_cacert_path: /etc/origin/master/ca.crt
     service_name: docker-registry
-    host: "registry.{{ osreg_clusterid }}.openshift.com"
+    host: "registry.{{ osareg_clusterid }}.openshift.com"
   register: routeout
-  run_once: True
 
 - debug: var=routeout
-  run_once: True
