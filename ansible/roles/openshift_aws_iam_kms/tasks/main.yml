@@ -1,0 +1,39 @@
+---
+- fail:
+    msg: "{{ item }} needs to be defined."
+  when: osaik_alias is undefined
+  with_items:
+  - osaik_alias
+
+- fail:
+    msg: "{{ item }} needs to be defined."
+  when: osaik_region is undefined
+  with_items:
+  - osaik_region
+
+- name: Create IAM KMS key with alias
+  iam_kms:
+    state: present
+    alias: "{{ osaik_alias }}"
+    region: "{{ osaik_region }}"
+  register: created_kms
+
+- debug: var=created_kms.results
+- name: Get KMS arn
+  set_fact:
+    osaik_arn: "{{ created_kms.results['AliasArn'] }}"
+
+- name: Create KMS path
+  file:
+    path: "{{ osaik_kms_directory }}"
+    recurse: yes
+    state: directory
+
+- name: write KMS details to file
+  copy:
+    content: |
+      ---
+      g_aws_iam_kms_alias: {{ osaik_alias }}
+      g_aws_iam_kms_arn: {{ osaik_arn }}
+    dest: "{{ osaik_kms_directory }}/kms.yml"
+  register: kms_file_write
