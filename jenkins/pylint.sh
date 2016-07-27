@@ -6,6 +6,7 @@ exclude_pattern_list=(
  'prometheus_client'
  'ansible/inventory/aws/hosts/ec2.py'
  'ansible/inventory/gce/hosts/gce.py'
+ 'docs/*'
 )
 
 oldrev=$1
@@ -25,7 +26,7 @@ for dfile in  $(/usr/bin/git diff --name-only "$oldrev" "$newrev" --diff-filter=
     fi
   done
 
-  if [ $skip_file == false ] && ! echo $dfile | sed -e 's|.*\.||' | grep -q adoc && file -b $dfile | grep -q -i python; then
+  if [ $skip_file == false ] && ! echo $dfile | sed -e 's|.*\.||' | grep -q -E '(adoc|asciidoc)' && file -b $dfile | grep -q -i python; then
     files_to_test+=("$dfile")
   fi
 done
