@@ -112,7 +112,8 @@ def main():
                                                              properties['tags'],
                                                              properties['disk_info'],
                                                              properties['network_interfaces'],
-                                                             module.params['provisioning']))
+                                                             module.params['provisioning'],
+                                                             properties['service_accounts']))
 
         # storage buckets
         resources.extend(gcloud.build_storage_buckets(module.params.get('buckets', [])))

@@ -18,6 +18,7 @@
       compute: "{{ osgcc_compute_instance_count }}"
     instances: "{{ osgcc_instances }}"
     provisioning: True
+    buckets: "{{ osgcc_bucket_names }}"
   register: dmyaml
 
 - name: run the inventory refresh

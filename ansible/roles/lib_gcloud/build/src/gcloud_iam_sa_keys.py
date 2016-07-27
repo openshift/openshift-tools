@@ -45,13 +45,15 @@ class GcloudIAMServiceAccountKeys(GcloudCLI):
 
     def create_service_account_key(self, outputfile):
         '''create an service account key'''
-        results = self._create_service_account_key(self.service_account_name, outputfile)
+        results = self._create_service_account_key(self.service_account_name, outputfile, self.key_format)
         if results['returncode'] != 0:
             return results
 
-        # we need to dump the private key out and return it
-        from OpenSSL import crypto
-        p12 = crypto.load_pkcs12(open(outputfile, 'rb').read(), 'notasecret')
-        results['results'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, p12.get_privatekey()).strip()
-
+        if self.key_format == 'p12':
+            # we need to dump the private key out and return it
+            from OpenSSL import crypto
+            p12 = crypto.load_pkcs12(open(outputfile, 'rb').read(), 'notasecret')
+            results['results'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, p12.get_privatekey()).strip()
+        else:
+            results['results'] = json.load(open(outputfile))
         return results

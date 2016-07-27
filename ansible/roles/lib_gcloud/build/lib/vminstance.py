@@ -16,10 +16,12 @@ class VMInstance(GCPResource):
                  tags,
                  disks,
                  network_interfaces,
+                 service_accounts=None,
                 ):
         '''constructor for gcp resource'''
         super(VMInstance, self).__init__(rname, VMInstance.resource_type, project, zone)
         self._machine_type = machine_type
+        self._service_accounts = service_accounts
         self._machine_type_url = None
         self._tags = tags
         self._metadata = []
@@ -30,6 +32,11 @@ class VMInstance(GCPResource):
         self._disks = disks
         self._network_interfaces = network_interfaces
         self._properties = None
+
+    @property
+    def service_accounts(self):
+        '''property for resource service accounts '''
+        return self._service_accounts
 
     @property
     def network_interfaces(self):
@@ -74,6 +81,8 @@ class VMInstance(GCPResource):
                                 'disks': self.disks,
                                 'networkInterfaces': self.network_interfaces,
                                }
+            if self.service_accounts:
+                self._properties['serviceAccounts'] = self.service_accounts
         return self._properties
 
     def to_resource(self):

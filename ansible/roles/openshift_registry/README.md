@@ -1,4 +1,4 @@
-openshift_aws_registry
+openshift_registry
 =========
 
 Ansible role for setting up and configuring a registry in Openshift
@@ -23,7 +23,8 @@ osareg_clusterid: clusterid.  The generates the domain name
 osareg_master_nodes: the master nodes that need to be restarted
 osareg_region: region to install the s3 bucket.
 osareg_registry_http_secret: secret for the docker registry needed for load balancing
-osareg_s3_bucket_name: name of the s3 bucket to store the docker registry
+osareg_bucket_name: name of the bucket to store the docker registry
+osareg_cred_path: Path to gcp docker creds
 
 Dependencies
 ------------
