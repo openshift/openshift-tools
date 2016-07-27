@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.120
+Version:       0.0.121
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -279,6 +279,10 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Wed Jul 27 2016 Wesley Hearn <whearn@redhat.com> 0.0.121-1
+- Added simple json output to ohi, updated awsutil to have convert_to_ip not
+  require a list (whearn@redhat.com)
+
 * Mon Jul 25 2016 Joel Diaz <jdiaz@redhat.com> 0.0.120-1
 - add synthetic cluster-wide host support to ops-zagg-client (jdiaz@redhat.com)
 - moving everything from dynamic keys to static zabbix items
