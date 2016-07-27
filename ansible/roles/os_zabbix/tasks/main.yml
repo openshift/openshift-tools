@@ -183,7 +183,7 @@
   - config_loop
 
 - name: Include Template Zabbix Config
-  include: ../../lib_zabbix/tasks/create.yml
+  include: ../../lib_zabbix/tasks/create_template.yml
   vars:
     template: "{{ g_template_zabbix_config }}"
     server: "{{ ozb_server }}"
