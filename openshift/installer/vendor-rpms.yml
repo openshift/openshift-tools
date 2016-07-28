@@ -86,6 +86,15 @@
     - roles/tito
     - roles/yum_repos
 
+  - name: Symlink the filter and lookup plugins (no longer shipped with rpm)
+    file:
+      state: link
+      src: "../../{{ item }}"
+      dest: "{{ vendored_dir }}/playbooks/byo/{{ item }}"
+    with_items:
+    - filter_plugins
+    - lookup_plugins
+
   - name: Symlink the openshift version to the installer
     file:
       state: link
