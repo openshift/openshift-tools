@@ -1,0 +1,8 @@
+---
+- name: restart flanneld
+  become: yes
+  service: name=flanneld state=restarted
+
+- name: restart docker
+  become: yes
+  service: name=docker state=restarted
