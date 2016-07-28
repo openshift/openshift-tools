@@ -1,0 +1,18 @@
+- name: Create persistent volumes
+  hosts: oo_first_master
+  vars:
+    persistent_volumes: "{{ hostvars[groups.oo_first_master.0] | oo_persistent_volumes(groups) }}"
+    persistent_volume_claims: "{{ hostvars[groups.oo_first_master.0] | oo_persistent_volume_claims }}"
+  roles:
+  - role: openshift_persistent_volumes
+    when: persistent_volumes | length > 0 or persistent_volume_claims | length > 0
+
+- name: Create Hosted Resources
+  hosts: oo_first_master
+  pre_tasks:
+  - set_fact:
+      openshift_hosted_router_registryurl: "{{ hostvars[groups.oo_first_master.0].openshift.master.registry_url }}"
+      openshift_hosted_registry_registryurl: "{{ hostvars[groups.oo_first_master.0].openshift.master.registry_url }}"
+    when: "'master' in hostvars[groups.oo_first_master.0].openshift and 'registry_url' in hostvars[groups.oo_first_master.0].openshift.master"
+  roles:
+  - role: openshift_hosted
