@@ -1,15 +1,25 @@
 ---
 - name: Stat the multi_inventory file
   stat:
-    path: "{{ osgcpsa_destination }}/multi_inventory.yaml"
-  register: user_file_stat
+    path: "{{ osgcpsa_destination }}/multi_inventory.yml"
+  register: user_file_stat_multi_inventory
   when: osgcpsa_output_type == "multi_inventory"
-- debug: var=user_file_stat
 
-- name: Check if multi_inventory file exists
+- name: Check if user file exists - multi_invntory
   set_fact:
     user_file_missing: True
-  when: not user_file_stat.stat.exists
+  when: osgcpsa_output_type == "multi_inventory" and not user_file_stat_multi_inventory.stat.exists
+
+- name: Stat the user cred file - json format
+  stat:
+    path: "{{ osgcpsa_destination }}/gcp_user_{{ osgcpsa_username}}.yml"
+  register: user_file_stat_json
+  when: osgcpsa_output_type == "json"
+
+- name: Check if user file exists - json
+  set_fact:
+    user_file_missing: True
+  when: osgcpsa_output_type == "json" and not user_file_stat_json.stat.exists
 
 - name: Delete service account if user file is missing
   gcloud_iam_sa:
@@ -39,17 +49,18 @@
   gcloud_project_policy:
     state: present
     project: "{{ osgcpsa_project }}"
-    role: "{{ osgcpsa_roles }}"
+    role: "{{ item }}"
     member: "{{ sa_user_email }}"
     member_type: serviceAccount
   register: project_policy_out
+  with_items: "{{ osgcpsa_roles }}"
   when: sa_user_email is defined
 
 - name: create service account key
   gcloud_iam_sa_keys:
     state: present
     service_account_name: "{{ sa_user_email }}"
-    key_format: p12
+    key_format: "{{ osgcpsa_output_key_type }}"
   register: sa_key_out
   when: sa_user_create.changed or osgcpsa_force_update
 
@@ -57,10 +68,16 @@
   set_fact:
     private_key: "{{ sa_key_out.results.results }}"
   when: sa_key_out.changed
-- debug: var=private_key
 
 - name: Write out the multi_inventory file
   template:
-    dest: "{{ osgcpsa_destination }}/multi_inventory.yaml"
+    dest: "{{ osgcpsa_destination }}/multi_inventory.yml"
     src: multi_inventory.yml.j2
   when: (private_key is defined) and (osgcpsa_output_type == "multi_inventory")
+
+- name: Write out the user cred file - json
+  yedit:
+    src: "{{ osgcpsa_destination }}/gcp_user_{{ osgcpsa_username}}.yml"
+    key: "g_gcp_user_{{ osgcpsa_username }}"
+    value: "{{ private_key }}"
+  when: (private_key is defined) and (osgcpsa_output_type == "json")
