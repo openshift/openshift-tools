@@ -5,7 +5,7 @@
 
 - name: create json file
   copy:
-    content: "{{ g_gcp_docker_registry_creds | to_json }}"
+    content: "{{ osgreg_registry_creds | to_json }}"
     dest: /root/creds.json
 
 - name: create gcp registry auth file
