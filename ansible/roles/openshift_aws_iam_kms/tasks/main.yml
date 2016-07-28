@@ -19,21 +19,3 @@
   register: created_kms
 
 - debug: var=created_kms.results
-- name: Get KMS arn
-  set_fact:
-    osaik_arn: "{{ created_kms.results['AliasArn'] }}"
-
-- name: Create KMS path
-  file:
-    path: "{{ osaik_kms_directory }}"
-    recurse: yes
-    state: directory
-
-- name: write KMS details to file
-  copy:
-    content: |
-      ---
-      g_aws_iam_kms_alias: {{ osaik_alias }}
-      g_aws_iam_kms_arn: {{ osaik_arn }}
-    dest: "{{ osaik_kms_directory }}/kms.yml"
-  register: kms_file_write
