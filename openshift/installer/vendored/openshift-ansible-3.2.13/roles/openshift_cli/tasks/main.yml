@@ -1,0 +1,34 @@
+---
+- name: Install clients
+  action: "{{ ansible_pkg_mgr }} name={{ openshift.common.service_type }}-clients state=present"
+  when: not openshift.common.is_containerized | bool
+
+- name: Pull CLI Image
+  command: >
+    docker pull {{ openshift.common.cli_image }}:{{ openshift_image_tag }}
+  when: openshift.common.is_containerized | bool
+
+- name: Create /usr/local/bin/openshift cli wrapper
+  template:
+    src: openshift.j2
+    dest: /usr/local/bin/openshift
+    mode: 0755
+  when: openshift.common.is_containerized | bool
+
+- name: Create client symlinks
+  file:
+    path: "{{ item }}"
+    state: link
+    src: /usr/local/bin/openshift
+  with_items:
+    - /usr/local/bin/oadm
+    - /usr/local/bin/oc
+    - /usr/local/bin/kubectl
+  when: openshift.common.is_containerized | bool
+
+- name: Reload facts to pick up installed OpenShift version
+  openshift_facts:
+
+- name: Install bash completion for oc tools
+  action: "{{ ansible_pkg_mgr }} name=bash-completion state=present"
+  when: not openshift.common.is_containerized | bool
