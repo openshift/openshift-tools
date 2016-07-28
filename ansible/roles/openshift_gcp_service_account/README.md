@@ -17,8 +17,8 @@ Role Variables
     osgcpsa_project: GCP Project to use
     osgcpsa_roles: GCP Role to use
     osgcpsa_destination: Path where to write the credentials
-    osgcpsa_output_type: Output type to write the 
-
+    osgcpsa_output_type: Output type to write the file to.  current options: json, multi_inventory
+    osgcpsa_output_key_type: can be one of: p12, json
 
 Dependencies
 ------------
@@ -34,6 +34,7 @@ Example Playbook
     osgcpsa_roles: roles/viewer
     osgcpsa_destination: /tmp/
     osgcpsa_output_type: multi_inventory
+    osgcpsa_output_key_type: p12
 
 License
 -------
