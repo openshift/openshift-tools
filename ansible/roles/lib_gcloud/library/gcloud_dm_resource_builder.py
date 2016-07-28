@@ -297,6 +297,14 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='json')
 
+    def _list_zones(self):
+        '''create service account key '''
+        cmd = ['compute', 'zones', 'list']
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
     def gcloud_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for gcloud '''
         cmds = ['/usr/bin/gcloud']
