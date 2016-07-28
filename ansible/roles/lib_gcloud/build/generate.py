@@ -71,6 +71,10 @@ FILES = {'gcloud_dm_deployments.py': ['lib/base.py',
                                       'src/gcloud_project_policy.py',
                                       'ansible/gcloud_project_policy.py',
                                      ],
+         'gcloud_compute_zones.py': ['lib/base.py',
+                                     'src/gcloud_compute_zones.py',
+                                     'ansible/gcloud_compute_zones.py',
+                                    ],
         }
 
 
