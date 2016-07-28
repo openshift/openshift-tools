@@ -412,26 +412,32 @@ class Utils(object):
 
 
 # pylint: disable=too-many-instance-attributes
-class GcloudDeploymentManagerManifests(GcloudCLI):
-    ''' Class to wrap the gcloud deployment manager '''
+class GcloudComputeZones(GcloudCLI):
+    ''' Class to wrap the gcloud compute zones command'''
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
-    def __init__(self,
-                 deployment,
-                 mname=None,
-                 verbose=False):
-        ''' Constructor for GcloudDeploymentManagerManifests '''
-        super(GcloudDeploymentManagerManifests, self).__init__(verbose=True)
-        self.deployment = deployment
-        self.name = mname
+    def __init__(self, region=None, verbose=False):
+        ''' Constructor for gcloud resource '''
+        super(GcloudComputeZones, self).__init__()
+        self._region = region
         self.verbose = verbose
 
-    def list_manifests(self):
-        '''return manifest'''
-        results = self._list_manifests(self.deployment, self.name)
-        #if results['returncode'] == 0:
-            #results['results'] = yaml.load(results['results'])
+    @property
+    def region(self):
+        '''property for region'''
+        return self._region
+
+    def list_zones(self):
+        '''return a list of zones'''
+        results = self._list_zones()
+
+        if results['returncode'] == 0 and self.region:
+            zones = []
+            for zone in results['results']:
+                if self.region == zone['region']:
+                    zones.append(zone)
+            results['results'] = zones
 
         return results
 
@@ -439,38 +445,36 @@ class GcloudDeploymentManagerManifests(GcloudCLI):
 
 #pylint: disable=too-many-branches
 def main():
-    ''' ansible module for gcloud deployment-manager manifests '''
+    ''' ansible module for gcloud compute zones'''
     module = AnsibleModule(
         argument_spec=dict(
             # credentials
-            state=dict(default='list', type='str', choices=['list']),
-            name=dict(default=None, type='str'),
-            deployment=dict(required=True, default=None),
+            state=dict(default='list', type='str',
+                       choices=['list']),
+            region=dict(default=None, type='str'),
         ),
         supports_check_mode=True,
     )
-    gconfig = GcloudDeploymentManagerManifests(module.params['deployment'],
-                                               module.params['name'])
+
+    gcloud = GcloudComputeZones(module.params['region'])
 
     state = module.params['state']
 
-    api_rval = gconfig.list_manifests()
+    api_rval = gcloud.list_zones()
 
     #####
     # Get
     #####
     if state == 'list':
-        module.exit_json(changed=False, results=api_rval['results'], state="list")
+        if api_rval['returncode'] != 0:
+            module.fail_json(msg=api_rval, state="list")
 
+        module.exit_json(changed=False, results=api_rval['results'], state="list")
 
     module.exit_json(failed=True,
                      changed=False,
                      results='Unknown state passed. %s' % state,
                      state="unknown")
-
-#if __name__ == '__main__':
-#    gcloud = GcloudDeploymentManager('optestgcp')
-#    print gcloud.list_deployments()
 
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
