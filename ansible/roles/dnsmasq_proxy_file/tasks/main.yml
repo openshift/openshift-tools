@@ -1,0 +1,32 @@
+---
+- name: Check if dnsmasq is installed
+  command: /usr/bin/rpm -q dnsmasq
+  register: rpm_check_dnsmasq
+  ignore_errors: True
+  changed_when: False
+
+- name: warn when dnsmasq is not installed
+  debug:
+    msg: Warning, Warning dnsmasq is not installed! No configs will be installed!
+  when: rpm_check_dnsmasq.rc != 0
+
+- name: Install the dnsmasq proxy config
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+  - src: dns_proxy.conf.j2
+    dest: /etc/dnsmasq.d/dns_proxy.conf
+  notify:
+  - restart dnsmasq
+  when: rpm_check_dnsmasq.rc == 0
+
+- name: Ensure dnsmasq is enabled and started
+  service:
+    name: dnsmasq
+    enabled: yes
+    state: started
+  when: rpm_check_dnsmasq.rc == 0
