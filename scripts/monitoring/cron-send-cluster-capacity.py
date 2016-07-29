@@ -126,27 +126,34 @@ class OpenshiftClusterCapacity(object):
     def load_container_limits(pod, containers):
         ''' process/store container limits data '''
 
+        # Some pods may have no limits/requests defined
+        # so we'll force some starting value
+        pod['cpu_limits'] = 0
+        pod['memory_limits'] = 0
+        pod['cpu_requests'] = 0
+        pod['memory_requests'] = 0
+
         for container in containers:
             if 'limits' in container['resources']:
                 cpu = container['resources']['limits'].get('cpu')
                 if cpu:
-                    pod['cpu_limits'] = pod.get('cpu_limits', 0) + \
+                    pod['cpu_limits'] = pod['cpu_limits'] + \
                                         to_milicores(cpu)
 
                 mem = container['resources']['limits'].get('memory')
                 if mem:
-                    pod['memory_limits'] = pod.get('memory_limits', 0) + \
+                    pod['memory_limits'] = pod['memory_limits'] + \
                                            to_bytes(mem)
 
             if 'requests' in container['resources']:
                 cpu = container['resources']['requests'].get('cpu')
                 if cpu:
-                    pod['cpu_requests'] = pod.get('cpu_requests', 0) + \
+                    pod['cpu_requests'] = pod['cpu_requests'] + \
                                           to_milicores(cpu)
 
                 mem = container['resources']['requests'].get('memory')
                 if mem:
-                    pod['memory_requests'] = pod.get('memory_requests', 0) + \
+                    pod['memory_requests'] = pod['memory_requests'] + \
                                              to_bytes(mem)
 
     def load_pods(self):
