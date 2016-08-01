@@ -12,7 +12,7 @@
   - osaik_region
 
 - name: Create IAM KMS key with alias
-  iam_kms:
+  oo_iam_kms:
     state: present
     alias: "{{ osaik_alias }}"
     region: "{{ osaik_region }}"
