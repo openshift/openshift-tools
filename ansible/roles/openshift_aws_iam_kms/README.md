@@ -8,7 +8,7 @@ Requirements
 
 Ansible Modules:
 
-iam_kms
+oo_iam_kms
 
 Role Variables
 --------------
