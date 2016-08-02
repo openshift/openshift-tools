@@ -5,10 +5,11 @@
       user_ids:
       - "{{ osaap_dest_aws_accountid }}"
 
-- name: Add permissions to AMI to new aws account
-  ec2_ami20:
+- name: Add launch and copy permissions to AMI to new aws account
+  oo_ec2_ami20:
     aws_access_key: "{{ osaap_src_ami_access_id }}"
     aws_secret_key: "{{ osaap_src_ami_access_key }}"
     region: "{{ osaap_region }}"
     image_id: "{{ osaap_image_id }}"
     launch_permissions: "{{ dest_account_id }}"
+    copy_permissions: "{{ dest_account_id }}"
