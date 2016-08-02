@@ -75,8 +75,11 @@ FILES = {'gcloud_dm_deployments.py': ['lib/base.py',
                                      'src/gcloud_compute_zones.py',
                                      'ansible/gcloud_compute_zones.py',
                                     ],
+         'gcloud_config.py': ['lib/base.py',
+                              'src/gcloud_config.py',
+                              'ansible/gcloud_config.py',
+                             ],
         }
-
 
 def main():
     ''' combine the necessary files to create the ansible module '''
