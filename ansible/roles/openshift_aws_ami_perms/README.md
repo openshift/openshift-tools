@@ -14,7 +14,7 @@ Role Variables
 
 osaap_src_ami_access_id: AWS Access Key (with permissions to share) of the SRC account
 osaap_src_ami_access_key  AWS Secret Key (with permissions to share) of the SRC account
-osaap_dest_aws_accountid: The account that needs access to the AMI
+osaap_dest_aws_accountid: The account that needs access to the AMI (launch and copy)
 osaap_region: region the ami lives in and will be shared in
 osaap_image_id: AMI id
 
