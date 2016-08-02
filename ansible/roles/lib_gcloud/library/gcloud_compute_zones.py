@@ -298,8 +298,25 @@ class GcloudCLI(object):
         return self.gcloud_cmd(cmd, output=True, output_type='json')
 
     def _list_zones(self):
-        '''create service account key '''
+        ''' list zones '''
         cmd = ['compute', 'zones', 'list']
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _config_set(self, config_param, config_value, config_section):
+        ''' set config params with gcloud config set '''
+        param = config_section + '/' + config_param
+        cmd = ['config', 'set', param, config_value]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _list_config(self):
+        '''return config '''
+        cmd = ['config', 'list']
 
         cmd.extend(['--format', 'json'])
 

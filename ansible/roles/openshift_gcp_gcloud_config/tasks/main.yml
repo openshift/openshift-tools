@@ -1,0 +1,29 @@
+---
+- name: gcloud set project
+  gcloud_config:
+    state: present
+    project: "{{ osggc_project }}"
+  when: osggc_project is defined
+  register: project_set
+
+#- debug: var=project_set
+
+- name: fail is project isn't set correctly
+  fail:
+    msg:  "Project not set properly; Please investigate.\nGcloud Project: [{{ project_set.results.results.core.project }}]\nDesired Value: [{{ osggc_project }}]"
+  when: osggc_project is defined and project_set.results.results.core.project != osggc_project
+
+- name: gcloud set region
+  gcloud_config:
+    state: present
+    region: "{{ osggc_region }}"
+  when: osggc_region is defined
+  register: region_set
+
+#- debug: var=region_set
+
+- name: fail is region isn't set correctly
+  fail:
+    msg:  "Region not set properly; Please investigate.\nGcloud Region: [{{ project_set.results.results.compute.region }}]\nDesired Value: [{{ osggc_region }}]"
+  when: osggc_region is defined and region_set.results.results.compute.region != osggc_region
+

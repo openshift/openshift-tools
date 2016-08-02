@@ -1,0 +1,45 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: localhost
+  gather_facts: no
+
+  tasks:
+  # should support list/absent/present
+  - name: gcloud config list
+    gcloud_config:
+      state: list
+    register: config_list
+
+  - debug: var=config_list
+
+  - name: gcloud set project to testawesomeness
+    gcloud_config:
+      state: present
+      project: testawesomeness
+    register: config_set
+
+  - debug: var=config_set
+
+  - name: gcloud set project to testawesomeness (no change expected)
+    gcloud_config:
+      state: present
+      project: testawesomeness
+    register: config_set
+
+  - debug: var=config_set
+
+  - name: gcloud set project to test2 (should change)
+    gcloud_config:
+      state: present
+      project: test2
+    register: config_set
+
+  - debug: var=config_set
+
+  - name: gcloud set region to us-west1
+    gcloud_config:
+      state: present
+      region: us-west1
+    register: config_set
+
+  - debug: var=config_set
