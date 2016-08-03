@@ -85,3 +85,16 @@
       value: "{{ oso_snapshot_aws_key_id }}"
     - key: aws_secret_access_key
       value: "{{ oso_snapshot_aws_secret_access_key }}"
+
+  - name: create /root/.gce dir
+    file:
+      state: directory
+      dest: /root/.gce
+    when: gcp_volume_user_creds is defined
+
+  - name: add gcp snapshotter creds to /root/.gce/creds.json
+    copy:
+      content: "{{ gcp_volume_user_creds }}"
+      dest: /root/.gce/creds.json
+    when: gcp_volume_user_creds is defined
+

@@ -5,9 +5,11 @@
 oso_cluster_id: "{{ osohm_cluster_id }}"
 oso_host_type: "{{ osohm_host_type }}"
 
-{% if osohm_host_type == 'master' %}
+{% if osohm_host_type == 'master' and osohm_cloud == 'aws' %}
 oso_snapshot_aws_key_id: "{{ osohm_snapshot_aws_access_key_id }}"
 oso_snapshot_aws_secret_access_key: "{{ osohm_snapshot_aws_secret_access_key }}"
+{% elif osohm_host_type == 'master' and osohm_cloud == 'gcp' %}
+gcp_volume_user_creds: '{{ osohm_snapshot_gcp_creds | to_json }}'
 {% endif %}
 
 zagg_client_config:
@@ -214,11 +216,6 @@ host_monitoring_cron:
   minute: "*/2"
   job: ops-runner -f -s 15 -n cspc.openshift.master.etcd.status /usr/bin/cron-send-etcd-status -c /etc/openshift_tools/etcd_metrics.yml
 
-- name: send S3 bucket metrics every day
-  hour: "3"
-  minute: "0"
-  job: ops-runner -f -s 120 -n cssm.aws /usr/bin/cron-send-s3-metrics
-
 - name: send kubeconfig parser check
   minute: "*/5"
   job: ops-runner -f -s 60 -n cskc.openshift.master.kubeconfig.status /usr/bin/cron-send-check-kubeconfig
@@ -265,6 +262,12 @@ host_monitoring_cron:
   minute: "{{ osohm_pruning.cron.minute }}"
   job: "ops-runner -f -s 30 -n cosp.openshift.master.prune /usr/bin/cron-openshift-pruner --image-keep-younger-than {{ osohm_pruning.image_hours_to_keep }} --image-keep-tag-revisions {{ osohm_pruning.image_revisions_to_keep }}"
 
+{% if osohm_cloud == 'aws' %}
+- name: send S3 bucket metrics every day
+  hour: "3"
+  minute: "0"
+  job: ops-runner -f -s 120 -n cssm.aws /usr/bin/cron-send-s3-metrics
+
 - name: "Add snapshot tag to autoprovisioned pv volumes"
   hour: "*"
   minute: "30"
@@ -296,6 +299,7 @@ host_monitoring_cron:
 - name: "Trim EBS Snapshot"
   minute: "10"
   job: ops-runner -f -s 120 -n oetes.trim.snapshots ops-ec2-trim-ebs-snapshots --aws-creds-profile snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
+{% endif %}
 {% endif %}
 
 {# end if host master #}
