@@ -1,0 +1,35 @@
+---
+# tasks file for openshift_master_upgrade
+#- name: Remove Masters from elbs
+
+- name: Find the master's ip address
+
+- name: Stop OpenShift API
+  service: 
+    name: atomic-openshift-master-api
+    state: stopped
+
+- name: Stop OpenShift Controller
+  service: 
+    name: atomic-openshift-master-controllers
+    state: stopped
+
+- name: Remove the current master from the kubnernetes endpoints
+  lineinfile: 
+
+- name: Yum update docker
+  yum:
+    name: docker-1.9.1-40.el7,docker-selinux-1.9.1-40.el7
+    state: present
+
+- name: Ensure no further updates to Docker are allowed
+  lineinfile:
+    dest: /etc/yum.repos.d/oso-rhui-rhel-server-extras.repo
+   
+- name: Upgrade everything else
+  yum:
+    name: *
+    state: latest
+#   exclude: docker #Requires Ansible 2.0 
+
+- name: Reboot
