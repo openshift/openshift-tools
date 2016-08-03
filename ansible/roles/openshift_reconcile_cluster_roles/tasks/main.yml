@@ -5,5 +5,5 @@
 - name: Reconcile cluster role bindings
   command: /usr/bin/oadm --config=/etc/origin/master/admin.kubeconfig policy reconcile-cluster-role-bindings --exclude-groups=system:authenticated --exclude-groups=system:authenticated:oauth --exclude-users=system:anonymous --additive-only=true --confirm
 
-- name: Reconcile SCCs
+- name: Reconcile Security Context Constraints
   command: /usr/bin/oadm policy reconcile-sccs --confirm --additive-only=true

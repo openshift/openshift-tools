@@ -25,7 +25,7 @@ Example Playbook
   gather_facts: no
   user: root
   roles:
-  - role: openshift_reconciler_update
+  - role: openshift_reconcile_cluster_roles
 
 License
 -------
