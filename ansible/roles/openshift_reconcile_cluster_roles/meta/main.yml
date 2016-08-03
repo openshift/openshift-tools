@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Max Whittingham 
+  description: A role to run the OpenShift reconciler on a cluster to update the policies stored in etcd for the cluster during a cluster upgrade.
+  company: Red Hat
+  license: Apache
+  min_ansible_version: 1.9
+  platforms:
+  - name: EL
+    versions:
+    - 7
+  categories:
+  - cloud
+dependencies: []
