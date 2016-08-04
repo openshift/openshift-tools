@@ -19,6 +19,8 @@ osaac_region: region where the AMI is found
 osaac_name: name to assign to new AMI
 osaac_kms_alias: AWS IAM KMS alias name of the key to use for encryption
 osaac_ami_directory: directory for where the role should place the yaml file that records the id of the AMI that was generated
+osaac_tag_name: tag name to apply to AMI
+osaac_tag_value: tag value to apply to AMI
 
 Dependencies
 ------------
