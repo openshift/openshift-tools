@@ -83,6 +83,19 @@ class AwsAmi(object):
                 # just keep trying regardless of these intermitent errors
                 pass
 
+    def tag_ami(self, ami_id, tag_name, tag_value):
+        ''' apply tag to object '''
+
+        if tag_name and tag_value:
+            resources = [ami_id]
+            tags = [{'Key': tag_name, 'Value': tag_value}]
+            response = self.ec2_client.create_tags(Resources=resources,
+                                                   Tags=tags)
+
+            if response['ResponseMetadata']['HTTPStatusCode'] != 200:
+                msg = "Failed to apply tag to AMI {}".format(ami_id)
+                self.module.exit_json(failed=True, changed=True, msg=msg)
+
     def main(self):
         ''' module entrypoint '''
 
@@ -97,6 +110,8 @@ class AwsAmi(object):
                 kms_alias=dict(default=None, type='str'),
                 aws_access_key=dict(default=None, type='str'),
                 aws_secret_key=dict(default=None, type='str'),
+                tag_name=dict(default=None, type='str'),
+                tag_value=dict(default=None, type='str'),
                 wait_sec=dict(default=1200, type='int'),
             ),
             mutually_exclusive=[['kms_arn', 'kms_alias']],
@@ -108,6 +123,9 @@ class AwsAmi(object):
         aws_access_key = self.module.params['aws_access_key']
         aws_secret_key = self.module.params['aws_secret_key']
         wait_sec = self.module.params['wait_sec']
+        tag_name = self.module.params['tag_name']
+        tag_value = self.module.params['tag_value']
+
         if aws_access_key and aws_secret_key:
             boto3.setup_default_session(aws_access_key_id=aws_access_key,
                                         aws_secret_access_key=aws_secret_key,
@@ -155,6 +173,7 @@ class AwsAmi(object):
             else:
                 current_stats = self.wait_for_ami_available(response['ImageId'],
                                                             wait_sec)
+                self.tag_ami(response['ImageId'], tag_name, tag_value)
                 self.module.exit_json(changed=True, results=current_stats)
 
         self.module.exit_json(failed=True,
