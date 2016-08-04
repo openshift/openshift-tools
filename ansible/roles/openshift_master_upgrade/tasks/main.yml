@@ -16,7 +16,7 @@
     state: stopped
 
 - name: Remove the current master from the kubnernetes endpoints #unfinished
-  lineinfile: 
+  # Maybe using https://docs.ansible.com/ansible/kubernetes_module.html
 
 - name: Yum update docker
   yum:
@@ -37,4 +37,5 @@
     state: latest
 #   exclude: docker #Requires Ansible 2.0 
 
-- name: Reboot #unfinished
+- name: Reboot 
+  shell: reboot
