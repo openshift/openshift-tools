@@ -24,6 +24,8 @@ ansible module for copying AWS AMIs
 # Jenkins environment doesn't have all the required libraries
 # pylint: disable=import-error
 import boto3
+import OpenSSL
+import time
 # Ansible modules need this wildcard import
 # pylint: disable=unused-wildcard-import, wildcard-import, redefined-builtin
 from ansible.module_utils.basic import *
@@ -48,9 +50,8 @@ class AwsAmi(object):
         msg = "Did not find key with alias name: {}".format(alias)
         self.module.exit_json(failed=True, msg=msg)
 
-    def ami_already_exists(self):
+    def get_ami_by_name(self, ami_name):
         ''' check whether AMI with same name already exists '''
-        ami_name = self.module.params['name']
         name_filter = [{'Name': 'name',
                         'Values': [ami_name]
                        }]
@@ -58,19 +59,29 @@ class AwsAmi(object):
 
         # if no results, then no AMI by that name
         if len(response['Images']) == 0:
-            return False
+            return None
         else:
-            return True
+            return response['Images'][0]
 
-    def wait_for_ami_available(self, ami_id):
+    def wait_for_ami_available(self, ami_id, wait_sec):
         ''' spin waiting for AMI to enter state 'available' '''
 
+        start_time = time.time()
         while True:
-            time.sleep(30)
-            response = self.ec2_client.describe_images(ImageIds=[ami_id])
-            if len(response['Images']) == 1 \
-               and response['Images'][0]['State'] == 'available':
-                return response['Images'][0]
+            try:
+                time.sleep(10)
+                response = self.ec2_client.describe_images(ImageIds=[ami_id])
+                if len(response['Images']) == 1 \
+                   and response['Images'][0]['State'] == 'available':
+                    return response['Images'][0]
+
+                if time.time() - start_time > wait_sec:
+                    msg = "Timed out waiting for AMI to become 'available'"
+                    self.module.exit_json(failed=True, changed=True, msg=msg)
+
+            except OpenSSL.SSL.Error:
+                # just keep trying regardless of these intermitent errors
+                pass
 
     def main(self):
         ''' module entrypoint '''
@@ -81,11 +92,12 @@ class AwsAmi(object):
                 ami_id=dict(default=None, required=True, type='str'),
                 name=dict(default=None, type='str'),
                 region=dict(default=None, required=True, type='str'),
-                encrypt=dict(default=False),
+                encrypt=dict(default=False, type='bool'),
                 kms_arn=dict(default='', type='str'),
                 kms_alias=dict(default=None, type='str'),
                 aws_access_key=dict(default=None, type='str'),
                 aws_secret_key=dict(default=None, type='str'),
+                wait_sec=dict(default=1200, type='int'),
             ),
             mutually_exclusive=[['kms_arn', 'kms_alias']],
             #supports_check_mode=True
@@ -95,6 +107,7 @@ class AwsAmi(object):
         ami_id = self.module.params['ami_id']
         aws_access_key = self.module.params['aws_access_key']
         aws_secret_key = self.module.params['aws_secret_key']
+        wait_sec = self.module.params['wait_sec']
         if aws_access_key and aws_secret_key:
             boto3.setup_default_session(aws_access_key_id=aws_access_key,
                                         aws_secret_access_key=aws_secret_key,
@@ -121,8 +134,11 @@ class AwsAmi(object):
             if not ami_name:
                 self.module.exit_json(failed=True, changed=False,
                                       msg="No AMI name provided")
-            if self.ami_already_exists():
-                self.module.exit_json(changed=False, msg="AMI already exists")
+
+            exists = self.get_ami_by_name(ami_name)
+            if exists != None:
+                self.module.exit_json(changed=False, msg="AMI already exists",
+                                      results=exists)
 
             if kms_alias:
                 kms_arn = self.get_kms_alias_arn(kms_alias)
@@ -137,7 +153,8 @@ class AwsAmi(object):
                 self.module.exit_json(failed=True, changed=True,
                                       results=response)
             else:
-                current_stats = self.wait_for_ami_available(response['ImageId'])
+                current_stats = self.wait_for_ami_available(response['ImageId'],
+                                                            wait_sec)
                 self.module.exit_json(changed=True, results=current_stats)
 
         self.module.exit_json(failed=True,
