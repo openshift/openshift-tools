@@ -1,0 +1,18 @@
+---
+- fail:
+    msg: "{{ item }} needs to be defined"
+  when: "{{ item }} is not defined"
+  with_items:
+  - osees_directory
+
+- name: create path to store generated yaml
+  file:
+    path: "{{ osees_directory }}"
+    recurse: yes
+    state: directory
+
+- name: Save encrypted storage enablement
+  yedit:
+    src: "{{ osees_directory }}/main.yml"
+    key: "g_encrypted_storage"
+    value: True
