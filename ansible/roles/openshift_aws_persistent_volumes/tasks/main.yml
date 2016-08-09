@@ -52,6 +52,8 @@
     name: "pv-{{ osapv_clusterid }}-{{ item.name }}"
     aws_access_key: "{{ osapv_aws_access_key }}"
     aws_secret_key: "{{ osapv_aws_secret_key }}"
+    encrypted: "{{ osapv_encrypted | bool | default(False) }}"
+    kms_alias: "{{ osapv_kms_alias | default(None) }}"
   with_items:  "{{ osapv_exploded_volumes }}"
   register: volumes
   run_once: true
