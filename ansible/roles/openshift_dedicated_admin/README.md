@@ -12,6 +12,7 @@ Role Variables
 --------------
 
  oda_ded_admin_users: A list of users to set as OpenShift Dedicated Admins
+ oda_skip_projects: A list of projects that OpenShift Dedicated Admins shouldn't have access to. Defaults to default and openshift-infra.
 
 Dependencies
 ------------
@@ -26,7 +27,10 @@ Example Playbook
   - role: openshift_dedicated_admin
     oda_ded_admin_users:
     - user1
-    - user2	
+    - user2
+    oda_skip_projects:
+    - default
+    - openshift-infra
 
 
 License
