@@ -112,7 +112,7 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
-  - key: openshift.master.app.build.time
+  - key: openshift.master.app.build.create.time
     description: "check the time it takes app build"
     value_type: float
     applications:
