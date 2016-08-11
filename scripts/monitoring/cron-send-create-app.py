@@ -18,6 +18,8 @@ import shutil
 import string
 import random
 import argparse
+import datetime
+import sys
 
 # Our jenkins server does not include these rpms.
 # In the future we might move this to a container where these
@@ -212,6 +214,7 @@ def pod_name(name):
 
 def send_zagg_data(build_ran, create_app, http_code, run_time):
     ''' send data to Zagg'''
+    zgs_time = time.time()
     zgs = ZaggSender()
     print "Send data to Zagg"
     if build_ran == 1:
@@ -222,7 +225,12 @@ def send_zagg_data(build_ran, create_app, http_code, run_time):
         zgs.add_zabbix_keys({'openshift.master.app.create': create_app})
         zgs.add_zabbix_keys({'openshift.master.app.create.code': http_code})
         zgs.add_zabbix_keys({'openshift.master.app.create.time': run_time})
-    zgs.send_metrics()
+    try:
+        zgs.send_metrics()
+    except:
+        print "Error sending to Zagg: %s \n %s " % sys.exc_info()[0], sys.exc_info()[1]
+    print "Data sent in %s seconds" % str(time.time() - zgs_time)
+
 
 def handle_fail(run_time, oocmd, pod):
     ''' Print failure info '''
@@ -241,7 +249,7 @@ def main():
     ''' Do the application creation
     '''
     print '################################################################################'
-    print '  Starting App Create'
+    print '  Starting App Create - %s' % datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     print '################################################################################'
     kubeconfig = copy_kubeconfig('/tmp/admin.kubeconfig')
     args = parse_args()
