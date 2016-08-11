@@ -1,2 +1,4 @@
 ---
-# defaults file for openshift_dedicated_admin
+oda_skip_projects:
+- default
+- openshift-infra
