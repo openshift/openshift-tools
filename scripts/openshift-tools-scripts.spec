@@ -55,6 +55,7 @@ cp -p cloud/aws/ops-ec2-add-snapshot-tag-to-ebs-volumes.py %{buildroot}/usr/bin/
 cp -p monitoring/cron-send-cluster-capacity.py %{buildroot}/usr/bin/cron-send-cluster-capacity
 cp -p monitoring/cron-send-connection-count.py %{buildroot}/usr/bin/cron-send-connection-count
 cp -p monitoring/cron-send-cpu-mem-stats.py %{buildroot}/usr/bin/cron-send-cpu-mem-stats
+cp -p monitoring/cron-haproxy-close-wait.py %{buildroot}/usr/bin/cron-haproxy-close-wait
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -119,6 +120,7 @@ OpenShift Tools Monitoring Autoheal Scripts
 
 %files monitoring-autoheal
 /usr/bin/cron-fix-ovs-rules
+/usr/bin/cron-haproxy-close-wait
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-pcp subpackage
