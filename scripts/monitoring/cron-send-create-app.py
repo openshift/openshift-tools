@@ -18,6 +18,7 @@ import shutil
 import string
 import random
 import argparse
+import datetime
 
 # Our jenkins server does not include these rpms.
 # In the future we might move this to a container where these
@@ -241,7 +242,7 @@ def main():
     ''' Do the application creation
     '''
     print '################################################################################'
-    print '  Starting App Create'
+    print '  Starting App Create - %s' % datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     print '################################################################################'
     kubeconfig = copy_kubeconfig('/tmp/admin.kubeconfig')
     args = parse_args()
