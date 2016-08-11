@@ -26,6 +26,12 @@ g_template_openshift_node:
     applications:
     - Openshift Node
 
+  - key: openshift.haproxy.close-wait
+    description: Number of haproxy processes found in CLOSE-WAIT state
+    value_type: int
+    applications:
+    - Openshift Node
+
   - key: openshift.node.registry-pods.healthy_pct
     description: Shows the percentage of healthy registries in the cluster
     value_type: int
