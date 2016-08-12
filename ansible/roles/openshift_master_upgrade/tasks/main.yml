@@ -3,8 +3,6 @@
 #- name: Remove Masters from elbs
 # This is probably best as it's own role since elbs are AWS specific
 
-- name: Find the master's ip address #unfinished
-
 - name: Stop OpenShift API
   service: 
     name: atomic-openshift-master-api
@@ -15,8 +13,9 @@
     name: atomic-openshift-master-controllers
     state: stopped
 
-- name: Remove the current master from the kubnernetes endpoints #unfinished
-  # Maybe using https://docs.ansible.com/ansible/kubernetes_module.html
+- name: Ensure that the Master IP address is out of the Kubernetes endpoint #This will only remove the IP from the enpoint in 3.2.1.9 and later
+  pause:
+    seconds: 5
 
 - name: Yum update docker
   yum:
@@ -35,7 +34,7 @@
   yum:
     name: *
     state: latest
-#   exclude: docker #Requires Ansible 2.0 
+#    exclude: docker #Requires Ansible 2.0 
 
 - name: Reboot 
   shell: reboot
