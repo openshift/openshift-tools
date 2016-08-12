@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.123
+Version:       0.0.124
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -281,6 +281,11 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Fri Aug 12 2016 Joel Diaz <jdiaz@redhat.com> 0.0.124-1
+- script to identify and stop stuck haproxy processes (jdiaz@redhat.com)
+- add try and timestamps around zgs_send (sten@redhat.com)
+- print timestamp on app create start (sten@redhat.com)
+
 * Wed Jul 27 2016 Wesley Hearn <whearn@redhat.com> 0.0.123-1
 - Print first IP address in json output. convert_to_ip will return 1 ip address
   in our use case (whearn@redhat.com)
