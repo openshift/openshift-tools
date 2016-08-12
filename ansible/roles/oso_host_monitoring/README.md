@@ -55,6 +55,10 @@ The name of the host monitoring container
 
 The host type from inventory.
 
+### osohm_sub_host_type
+
+The sub host type from the inventory.
+
 ### osohm_master_ha
 
 Is this master part of a highly available configuration. `True` or `False`
