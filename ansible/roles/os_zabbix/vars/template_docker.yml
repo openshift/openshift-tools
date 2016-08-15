@@ -81,7 +81,7 @@ g_template_docker:
 
   - name: 'docker.container.existing.dns.resolution.failed on {HOST.NAME}'
     expression: '{Template Docker:docker.container.existing.dns.resolution.failed.min(#3)}>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_dns.asciidoc'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_existing_docker_dns.asciidoc'
     priority: average
 
   - name: 'Docker storage is using LOOPBACK on {HOST.NAME}'
