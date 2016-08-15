@@ -11,8 +11,9 @@ None
 Role Variables
 --------------
 
- oda_ded_admin_users: A list of users to set as OpenShift Dedicated Admins
- oda_skip_projects: A list of projects that OpenShift Dedicated Admins shouldn't have access to. Defaults to default and openshift-infra.
+ oda_config: Any changes needed to be made to the config file. Values must be what the config file is expecting (e.g. a comma delimited list of dedicated admin users).
+ oda_service_enabled: Whether or not the openshift-dedicated-role service should be enabled at boot
+ oda_service_started: Whether or not the openshift-dedicated-role service should be running currently
 
 Dependencies
 ------------
@@ -25,12 +26,13 @@ Example Playbook
 - hosts: servers
   roles:
   - role: openshift_dedicated_admin
-    oda_ded_admin_users:
-    - user1
-    - user2
-    oda_skip_projects:
-    - default
-    - openshift-infra
+    oda_service_enabled: true
+    oda_service_running: true
+    oda_config:
+    - key: SKIP_PROJECTS
+      value: default,openshift-infra
+    - key: USERS
+      value: user1,user2
 
 
 License
