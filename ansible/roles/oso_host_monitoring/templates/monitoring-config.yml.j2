@@ -140,7 +140,7 @@ host_monitoring_cron:
   job: ops-runner -f -s 15 -n cspc.openshift.dnsmasq.process.count /usr/bin/cron-send-process-count '^dnsmasq' openshift.dnsmasq.process.count
 
 - name: send openshift-node dnsmasq status every 10 minutes
-  minute: "*/10"
+  minute: "*/15"
   job: ops-runner -f -s 50 -n csosms.openshift.dnsmasq /usr/bin/cron-send-os-dnsmasq-checks
 {# end if dnsmasq #}
 {% endif %}
