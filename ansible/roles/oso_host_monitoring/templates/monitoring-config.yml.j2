@@ -184,7 +184,7 @@ host_monitoring_cron:
 
 {% if osohm_sub_host_type == 'infra' %}
 - name: haproxy pruner
-  minute: "*/15"
+  minute: "*/5"
   job: "ops-runner -f -s 60 -n chcw.openshift.node.infra.haproxy /usr/bin/cron-haproxy-close-wait"
 {% endif %}
 

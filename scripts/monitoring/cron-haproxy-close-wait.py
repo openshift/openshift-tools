@@ -81,7 +81,7 @@ class HAProxy(object):
                 only_close_wait = True
                 process = psutil.Process(proc)
                 for conn in process.connections():
-                    if conn.status != 'CLOSE_WAIT':
+                    if conn.status != 'CLOSE_WAIT' and conn.status != 'FIN_WAIT2':
                         only_close_wait = False
                         break
                 if only_close_wait:
