@@ -82,15 +82,17 @@ zagg_client_config:
 # Generic Linux Checks
 host_monitoring_cron:
 - name: send pcp ping every 5 mintues
-  minute: "*/15"
+  minute: "*/5"
   job: ops-runner -f -s 60 -n cspp.pcp.ping /usr/bin/cron-send-pcp-ping
 
-- name: run pcp checks every 5 minutes
-  minute: "*/5"
+# This is needed every minute for the performance team
+- name: run pcp checks every minute
+  minute: "*"
   job: ops-runner -f -s 15 -n ozpc.send.pcp /usr/bin/ops-zagg-pcp-client
 
-- name: run pcp sampler every 5 minutes
-  minute: "*/5"
+# This is needed every minute for the performance team
+- name: run pcp sampler every minute
+  minute: "*"
   job: ops-runner -f -s 15 -n cspsm.kernal.all.cpu /usr/bin/cron-send-pcp-sampled-metrics -m kernel.all.cpu.idle -m kernel.all.cpu.nice -m kernel.all.cpu.steal -m kernel.all.cpu.sys -m kernel.all.cpu.user -m kernel.all.cpu.wait.total -m kernel.all.cpu.irq.hard -m kernel.all.cpu.irq.soft
 
 - name: Do a full heartbeat
@@ -98,16 +100,19 @@ host_monitoring_cron:
   hour: "*/4"
   job: ops-runner -f -s 300 -n ozc.send.heartbeat.full /usr/bin/ops-zagg-client --send-heartbeat
 
+# This is our heart beater and lets us know when a box is down. Too much time
+# between checks means it'll take longer for us to know a box is down. See
+# heartbeat trigger for details.
 - name: Do a quick heartbeat
-  minute: "*/15"
+  minute: "*/5"
   job: ops-runner -f -s 60 -n ozc.send.heartbeat.quick /usr/bin/ops-zagg-client -k heartbeat.ping -o 1
 
 - name: run filesystem space checks every 10 minutes
   minute: "*/10"
   job: ops-runner -f -s 120 -n csfm.filesys.full /usr/bin/cron-send-filesystem-metrics
 
-- name: run disk TPS checks every 5 minutes
-  minute: "*/5"
+- name: run disk TPS checks every minute
+  minute: "*"
   job: ops-runner -f -s 15 -n csdim.disk.tps /usr/bin/cron-send-disk-metrics
 
 - name: run network checks every 5 minutes
@@ -119,18 +124,22 @@ host_monitoring_cron:
   minute: "*/15"
   job: ops-runner -f -s 120 -n csdm.docker.storage /usr/bin/cron-send-docker-metrics
 
+# This check shows us when docker is in a bad state (either locked up or too
+# slow to respond).
 - name: run docker info timer
-  minute: "*/15"
+  minute: "*/10"
   job: ops-runner -f -s 120 -n csdt.docker.timer /usr/bin/cron-send-docker-timer
 
 {% if osohm_host_type != 'ansible-tower' %}
+# This is an active issue, we need it to run on a frequent basis.
 - name: run docker dns test
-  minute: "*/10"
+  minute: "*/5"
   job: ops-runner -f -s 60 -n csddr.docker.dns.resolution /usr/bin/cron-send-docker-dns-resolution
 {% endif %}
 
+# This is an active issue, we need it to run on a frequent basis.
 - name: run docker dns test on existing containers
-  minute: "*/10"
+  minute: "*/5"
   job: ops-runner -f -s 60 -n csdedr.docker.existing.dns.resolution /usr/bin/cron-send-docker-existing-dns-resolution
 
 {% if osohm_host_type == 'node' and osohm_monitor_dnsmasq|bool %}
