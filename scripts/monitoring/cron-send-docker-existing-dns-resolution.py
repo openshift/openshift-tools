@@ -8,6 +8,8 @@
 # Adding the ignore because it does not like the naming of the script
 # to be different than the class name
 # pylint: disable=invalid-name
+# pylint flags import errors, as the bot doesn't know out openshift-tools libs
+# pylint: disable=import-error
 
 
 from docker import AutoVersionClient
@@ -22,6 +24,7 @@ if __name__ == "__main__":
     bad_dns_count = 0
 
     for ctr in cli.containers():
+        print "Container: {} {}".format(ctr['Id'], ctr['Image'])
         try:
             exec_id = cli.exec_create(container=ctr['Id'], cmd="getent hosts redhat.com")
             results = cli.exec_start(exec_id=exec_id)
@@ -34,12 +37,19 @@ if __name__ == "__main__":
         if exit_code == CMD_NOT_FOUND:
             continue
 
-        print "Container: " + ctr['Image']
         print results
-        print "Exit Code: " + str(exit_code) + "\n"
+        print "Exit Code: " + str(exit_code)
 
         if exit_code != 0:
             bad_dns_count += 1
+            ctr_data = cli.inspect_container(ctr['Id'])
+            print "Additional info: Namespace: {} Name: {} IP: {}".format(
+                ctr['Labels'].get('io.kubernetes.pod.namespace', 'null'),
+                ctr['Labels'].get('io.kubernetes.pod.name', 'null'),
+                ctr_data['NetworkSettings']['IPAddress'])
+
+        # Extra whitespace between output for each container
+        print
 
     zs = ZaggSender()
     zs.add_zabbix_keys({ZBX_KEY: bad_dns_count})
