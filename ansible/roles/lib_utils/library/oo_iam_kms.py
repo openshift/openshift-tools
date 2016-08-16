@@ -24,6 +24,7 @@ ansible module for creating AWS IAM KMS keys
 # Jenkins environment doesn't have all the required libraries
 # pylint: disable=import-error
 import boto3
+import time
 # Ansible modules need this wildcard import
 # pylint: disable=unused-wildcard-import, wildcard-import, redefined-builtin
 from ansible.module_utils.basic import *
@@ -124,6 +125,8 @@ class AwsIamKms(object):
                 kid = response['KeyMetadata']['KeyId']
                 response = self.kms_client.create_alias(AliasName=self.module.params['alias'],
                                                         TargetKeyId=kid)
+                # sleep for a bit so that the KMS data can be queried
+                time.sleep(10)
                 # get details for newly created KMS entry
                 new_alias_list = self.kms_client.list_aliases()['Aliases']
                 user_kms = self.get_kms_entry(self.module.params['alias'],
