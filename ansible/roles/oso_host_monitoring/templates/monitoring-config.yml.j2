@@ -173,6 +173,15 @@ host_monitoring_cron:
 {# end if host master or node #}
 {% endif %}
 
+{% if osohm_host_type == 'master' and osohm_saml_auth|bool %}
+{# Openshift osohm_saml_auth check #}
+- name: check the saml pod status
+  minute: "*/2"
+  job: ops-runner -f -s 15 -n csss.openshift.master.saml.check /usr/bin/cron-send-saml-status
+
+{# end of Openshift osohm_saml_auth check #}
+{% endif %}
+
 {% if osohm_sub_host_type == 'infra' %}
 - name: haproxy pruner
   minute: "*/15"
