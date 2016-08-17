@@ -24,7 +24,7 @@
 
 - name: Upgrade everything else
   yum:
-    name: *
+    name: '*'
     state: latest
     exclude: docker #Requires Ansible 2.0 
 
