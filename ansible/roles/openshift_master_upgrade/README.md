@@ -1,7 +1,7 @@
 Role Name
 =========
 
-A brief description of the role goes here.
+Super simple role to upgrade an OpenShift master, including installing specifically Docker 1.9
 
 Requirements
 ------------
