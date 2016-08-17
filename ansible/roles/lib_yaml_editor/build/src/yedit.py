@@ -297,6 +297,10 @@ class Yedit(object):
 
         if isinstance(entry, dict):
             # pylint: disable=no-member,maybe-no-member
+            if not isinstance(value, dict):
+                raise YeditException('Cannot replace key, value entry in dict with non-dict type.' \
+                                     ' value=[%s]  [%s]' % (value, type(value)))
+
             entry.update(value)
             return (True, self.yaml_dict)
 
@@ -309,10 +313,10 @@ class Yedit(object):
                 except ValueError:
                     return (False, self.yaml_dict)
 
-            elif index:
+            elif index != None:
                 ind = index
 
-            if ind and entry[ind] != value:
+            if ind != None and entry[ind] != value:
                 entry[ind] = value
                 return (True, self.yaml_dict)
 
@@ -325,7 +329,7 @@ class Yedit(object):
                 return (True, self.yaml_dict)
 
             #already exists, return
-            if ind:
+            if ind != None:
                 return (False, self.yaml_dict)
         return (False, self.yaml_dict)
 
