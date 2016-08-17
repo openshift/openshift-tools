@@ -14,6 +14,7 @@ storage:
     region: {{ osareg_region }}
     bucket: {{ osareg_bucket_name }}
     encrypt: true
+    keyid: {{ osareg_kms_arn }}
     secure: true
     v4auth: true
     rootdirectory: /registry

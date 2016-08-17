@@ -52,6 +52,20 @@
       path: /etc/origin/master/registry.crt
   register: cert_secret_out
 
+- name: get ARN of KMS alias
+  oo_iam_kms:
+    region: "{{ osareg_region }}"
+    state: list
+    alias: "alias/{{ osareg_clusterid }}_kms"
+    aws_access_key: "{{ osareg_aws_access_key }}"
+    aws_secret_key: "{{ osareg_aws_secret_key }}"
+  delegate_to: localhost
+  register: kms_arn
+
+- name: set_fact for KMS alias ARN
+  set_fact:
+    osareg_kms_arn: "{{ kms_arn['results']['AliasArn'] }}"
+
 - name: create registry config from template
   template:
     src: registry_config.yml.j2
