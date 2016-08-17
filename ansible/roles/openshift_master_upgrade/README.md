@@ -6,7 +6,7 @@ A brief description of the role goes here.
 Requirements
 ------------
 
-Ansible 2.0 will be required to use the exclude Docker from the updates
+None
 
 Role Variables
 --------------
@@ -25,7 +25,7 @@ Example Playbook
   gather_facts: no
   user: root
   roles:
-  - role: openshift_master_upgrade/ 
+  - role: openshift_master_upgrade
 
 License
 -------

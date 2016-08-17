@@ -22,19 +22,11 @@
     name: docker-1.9.1-40.el7,docker-selinux-1.9.1-40.el7
     state: present
 
-- name: Ensure no further updates to Docker are allowed 
-  lineinfile:
-    dest: /etc/yum.repos.d/oso-rhui-rhel-server-extras.repo
-    backup: yes
-    insertafter: 'enabled=1'
-    line: 'exclude=docker-*'
-    state: present
-   
 - name: Upgrade everything else
   yum:
     name: *
     state: latest
-#    exclude: docker #Requires Ansible 2.0 
+    exclude: docker #Requires Ansible 2.0 
 
 - name: Reboot 
   shell: reboot
