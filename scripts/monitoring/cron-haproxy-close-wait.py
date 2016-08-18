@@ -66,8 +66,8 @@ class HAProxy(object):
 
         # identify most recent haproxy process
         # and remove it from list of haproxy processes
+        youngest_etimes = min(haproxy_procs_etimes.keys())
         try:
-            youngest_etimes = min(haproxy_procs_etimes.keys())
             youngest_pid = haproxy_procs_etimes[youngest_etimes]
             self.dprint("Youngest haproxy PID: {}".format(youngest_pid))
             haproxy_procs_etimes.pop(youngest_etimes)
@@ -76,7 +76,7 @@ class HAProxy(object):
 
         # find processes that have connections only in 'CLOSE-WAIT' state
         kill_list = []
-        for proc in haproxy_procs_etimes.values():
+        for etime, proc in haproxy_procs_etimes.items():
             try:
                 only_close_wait = True
                 process = psutil.Process(proc)
@@ -84,7 +84,7 @@ class HAProxy(object):
                     if conn.status != 'CLOSE_WAIT' and conn.status != 'FIN_WAIT2':
                         only_close_wait = False
                         break
-                if only_close_wait:
+                if only_close_wait or etime > youngest_etimes + 1800:
                     self.dprint("PID: {} marked for removal".format(proc))
                     kill_list.append(proc)
             except psutil.NoSuchProcess:
