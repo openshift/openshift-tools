@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Max Whittingham 
+  description: A role to expose the openshift-node=web port for additional debugging 
+  company: Red Hat
+  license: Apache 
+  min_ansible_version: 1.2
+  platforms:
+  - name: EL
+  - 7
+  categories:
+  - cloud
+dependencies: []
+  

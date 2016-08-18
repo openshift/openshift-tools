@@ -1,0 +1,13 @@
+---
+- name: Ensure that openshift_profile is enabled and set to web
+  lineinfile:
+    dest: /etc/sysconfig/atomic-openshift-node
+    insertbefore: BOF
+    line: 'OPENSHIFT_PROFILE=web'
+    state: present
+    backup: yes
+
+- name: Restart the atomic-openshift-node.service
+  service:
+    name: atomic-openshift-node.service
+    state: restarted
