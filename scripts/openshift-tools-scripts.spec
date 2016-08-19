@@ -57,6 +57,7 @@ cp -p monitoring/cron-send-connection-count.py %{buildroot}/usr/bin/cron-send-co
 cp -p monitoring/cron-send-cpu-mem-stats.py %{buildroot}/usr/bin/cron-send-cpu-mem-stats
 cp -p monitoring/cron-haproxy-close-wait.py %{buildroot}/usr/bin/cron-haproxy-close-wait
 cp -p monitoring/cron-send-saml-status.py %{buildroot}/usr/bin/cron-send-saml-status
+cp -p monitoring/cron-certificate-expirations.py %{buildroot}/usr/bin/cron-certificate-expirations
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -245,6 +246,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-connection-count
 /usr/bin/cron-send-cpu-mem-stats
 /usr/bin/cron-send-saml-status
+/usr/bin/cron-certificate-expirations
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
