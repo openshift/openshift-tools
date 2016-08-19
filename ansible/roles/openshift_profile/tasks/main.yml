@@ -3,7 +3,7 @@
   lineinfile:
     dest: /etc/sysconfig/atomic-openshift-node
     insertbefore: BOF
-    line: OPENSHIFT_PROFILE={{ op_openshift_profile }}
+    line: "OPENSHIFT_PROFILE={{ op_openshift_profile | first }}"
     state: present
     backup: yes
-    notify: restart atomic-openshift-node
+  notify: restart atomic-openshift-node
