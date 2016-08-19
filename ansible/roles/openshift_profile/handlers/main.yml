@@ -1,2 +1,6 @@
 ---
 # handlers file for openshift_profile
+- name: restart atomic-openshift-node.service
+  service:
+    name: atomic-openshift-service
+    state: restarted

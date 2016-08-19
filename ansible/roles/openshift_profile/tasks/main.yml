@@ -3,11 +3,7 @@
   lineinfile:
     dest: /etc/sysconfig/atomic-openshift-node
     insertbefore: BOF
-    line: 'OPENSHIFT_PROFILE=web'
+    line: OPENSHIFT_PROFILE={{ oda_openshift_profile }}
     state: present
     backup: yes
-
-- name: Restart the atomic-openshift-node.service
-  service:
-    name: atomic-openshift-node.service
-    state: restarted
+    notify: restart atomic-openshift-node
