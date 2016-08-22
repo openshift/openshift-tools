@@ -45,7 +45,7 @@ RUN yum install -y origin origin-clients
 
 RUN yum clean metadata && \
     yum install -y python-pip pcp pcp-conf pcp-testsuite \
-        python-requests \
+        python-requests pyOpenSSL \
         python-openshift-tools \
         python-openshift-tools-monitoring-pcp \
         python-openshift-tools-monitoring-docker \
