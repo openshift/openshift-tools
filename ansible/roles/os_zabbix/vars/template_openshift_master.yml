@@ -632,6 +632,11 @@ g_template_openshift_master:
     lifetime: 1
     description: "Dynamically register the Persistent Volumes"
 
+  - name: disc.certificate.expiration
+    key: disc.certificate.expiration
+    lifetime: 1
+    description: "Dynamically register individual certificate expiration days"
+
   zitemprototypes:
   - discoveryrule_key: disc.pv
     name: "disc.pv.count.{#OSO_PV}"
@@ -646,6 +651,14 @@ g_template_openshift_master:
     key: "disc.pv.available[{#OSO_PV}]"
     value_type: int
     description: "Number of PV's of this size that are available"
+    applications:
+    - Openshift Master
+
+  - discoveryrule_key: disc.certificate.expiration
+    name: "disc.certificate.expiration[{#OSO_CERT_NAME}]"
+    key: "disc.certificate.expiration[{#OSO_CERT_NAME}]"
+    value_type: int
+    description: "Days until certificate expires"
     applications:
     - Openshift Master
 
