@@ -65,7 +65,7 @@
   oc_obj:
     state: present
     namespace: openshift-infra
-    name: oline-volume-provisioner
+    name: online-volume-provisioner
     kind: template
     files:
     - "/etc/openshift-online/templates/volume-provisioner.yaml"
