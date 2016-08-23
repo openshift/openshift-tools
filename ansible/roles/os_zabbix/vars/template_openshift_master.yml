@@ -246,6 +246,12 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.smal.status
+    description: Show saml pod status 
+    value_type: int
+    applications:
+    - Openshift Master
+
   - key: openshift.master.etcd.create.success
     description: Show number of successful create actions
     value_type: int
@@ -653,6 +659,16 @@ g_template_openshift_master:
   - name: 'Openshift Master process not running on {HOST.NAME}'
     expression: '{Template Openshift Master:openshift.master.process.count.max(#3)}<1'
     url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc'
+    priority: high
+
+  - name: 'Openshift SAML pod is in bad healthz status on {HOST.NAME}'
+    expression: '{Template Openshift Master:openshift.master.smal.status.last()}>1'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_saml_status.asciidoc'
+    priority: high
+
+  - name: 'Openshift SAML pod is not running on {HOST.NAME}'
+    expression: '{Template Openshift Master:openshift.master.smal.status.last()}<1'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_saml_status.asciidoc'
     priority: high
 
   - name: 'Too many Openshift Master processes running on {HOST.NAME}'
