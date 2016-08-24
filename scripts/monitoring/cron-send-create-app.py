@@ -130,6 +130,11 @@ class OpenShiftOC(object):
 
         return results
 
+    def get_projects_status(self):
+        '''get all projects '''
+        cmd = ['get', 'projects', '--no-headers']
+        return [proj.split()[1] for proj in self.oc_cmd(cmd).split('\n') if proj and len(proj) > 0]
+
     def get_version(self):
         '''get openshift version'''
         return self.oc_cmd(['version'])
@@ -217,14 +222,19 @@ def send_zagg_data(build_ran, create_app, http_code, run_time):
     zgs_time = time.time()
     zgs = ZaggSender()
     print "Send data to Zagg"
-    if build_ran == 1:
+    if build_ran == 99:
+        #0 means bad, 1 means ok
+        zgs.add_zabbix_keys({'openshift.master.project.terminating.status': 0})
+    elif build_ran == 1:
         zgs.add_zabbix_keys({'openshift.master.app.build.create': create_app})
         zgs.add_zabbix_keys({'openshift.master.app.build.create.code': http_code})
         zgs.add_zabbix_keys({'openshift.master.app.build.create.time': run_time})
+        zgs.add_zabbix_keys({'openshift.master.project.terminating.status': 1})
     else:
         zgs.add_zabbix_keys({'openshift.master.app.create': create_app})
         zgs.add_zabbix_keys({'openshift.master.app.create.code': http_code})
         zgs.add_zabbix_keys({'openshift.master.app.create.time': run_time})
+        zgs.add_zabbix_keys({'openshift.master.project.terminating.status': 1})
     try:
         zgs.send_metrics()
     except:
@@ -257,57 +267,71 @@ def main():
     oocmd = OpenShiftOC(namespace, kubeconfig, args, verbose=False)
     app = args.name
 
+    isterminated = 0
+
     start_time = time.time()
     if namespace in  oocmd.get_projects():
-        oocmd.delete_project()
+        procstatus = oocmd.get_projects_status()
 
-    oocmd.new_project()
-
-    oocmd.new_app(app)
-
-    create_app = 1
-    build_ran = 0
-    pod = None
-    http_code = 0
-    run_time = 0
-
-    # Now we wait until the pod comes up
-    for _ in range(120):
-        time.sleep(5)
-        pod = oocmd.get_pod()
-        if pod and pod['status'] and not "build" in pod['metadata']['name']:
-            print 'Polling Pod status: %s' % pod['status']['phase']
-        if pod and pod['status'] and "build" in pod['metadata']['name']:
-            print 'Polling Build Pod status: %s' % pod['status']['phase']
-            build_ran = 1
-        if pod \
-            and pod['status']['phase'] == 'Running' \
-            and pod['status'].has_key('podIP') \
-            and not "build" in pod['metadata']['name']:
-            route = oocmd.get_route()
-            if route['items']:
-                # FIXME: no port in the route object, is 80 a safe assumption?
-                http_code = curl(route['items'][0]['spec']['host'], 80)
-            else:
-                service = oocmd.get_service()
-                http_code = curl(service['items'][0]['spec']['clusterIP'], \
-                    service['items'][0]['spec']['ports'][0]['port'])
-            print 'Finished.'
-            print 'Deploy State: Success'
-            print 'Service HTTP response code: %s' % http_code
-            run_time = str(time.time() - start_time)
-            print 'Time: %s' % run_time
-            create_app = 0
-            break
+        if "Terminating" in oocmd.get_projects_status():
+            isterminated = 1
+        else:
+            oocmd.delete_project()
+        
+    if isterminated == 1:
+        #the project is in Termination status ,so , just send to zabbix said we have some issue
+        #99 means that the Terminating project is appear
+        print 'Project is in Terminating status'
+        send_zagg_data(99, 1, 200, 123)
 
     else:
-        run_time = str(time.time() - start_time)
-        handle_fail(run_time, oocmd, pod)
+        oocmd.new_project()
 
-    if namespace in oocmd.get_projects():
-        oocmd.delete_project()
+        oocmd.new_app(app)
 
-    send_zagg_data(build_ran, create_app, http_code, run_time)
+        create_app = 1
+        build_ran = 0
+        pod = None
+        http_code = 0
+        run_time = 0
+
+        # Now we wait until the pod comes up
+        for _ in range(120):
+            time.sleep(5)
+            pod = oocmd.get_pod()
+            if pod and pod['status'] and not "build" in pod['metadata']['name']:
+                print 'Polling Pod status: %s' % pod['status']['phase']
+            if pod and pod['status'] and "build" in pod['metadata']['name']:
+                print 'Polling Build Pod status: %s' % pod['status']['phase']
+                build_ran = 1
+            if pod \
+                and pod['status']['phase'] == 'Running' \
+                and pod['status'].has_key('podIP') \
+                and not "build" in pod['metadata']['name']:
+                route = oocmd.get_route()
+                if route['items']:
+                    # FIXME: no port in the route object, is 80 a safe assumption?
+                    http_code = curl(route['items'][0]['spec']['host'], 80)
+                else:
+                    service = oocmd.get_service()
+                    http_code = curl(service['items'][0]['spec']['clusterIP'], \
+                        service['items'][0]['spec']['ports'][0]['port'])
+                print 'Finished.'
+                print 'Deploy State: Success'
+                print 'Service HTTP response code: %s' % http_code
+                run_time = str(time.time() - start_time)
+                print 'Time: %s' % run_time
+                create_app = 0
+                break
+
+        else:
+            run_time = str(time.time() - start_time)
+            handle_fail(run_time, oocmd, pod)
+
+        if namespace in oocmd.get_projects():
+            oocmd.delete_project()
+
+        send_zagg_data(build_ran, create_app, http_code, run_time)
 
 if __name__ == "__main__":
     main()
