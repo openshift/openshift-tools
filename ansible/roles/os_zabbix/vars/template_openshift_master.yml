@@ -668,6 +668,17 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  ztriggerprototypes:
+  - name: 'Certificate: {#OSO_CERT_NAME} less than 31 days from expiring on {HOST.NAME}'
+    expression: '{Template Openshift Master:disc.certificate.expiration[{#OSO_CERT_NAME}].last()}<31'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/certificate_expiring.asciidoc'
+    priority: average
+
+  - name: 'Certificate: {#OSO_CERT_NAME} less than 15 days from expiring on {HOST.NAME}'
+    expression: '{Template Openshift Master:disc.certificate.expiration[{#OSO_CERT_NAME}].last()}<15'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/certificate_expiring.asciidoc'
+    priority: high
+
   ztriggers:
   - name: 'Openshift Master process not running on {HOST.NAME}'
     expression: '{Template Openshift Master:openshift.master.process.count.max(#3)}<1'
