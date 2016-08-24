@@ -271,13 +271,11 @@ def main():
 
     start_time = time.time()
     if namespace in  oocmd.get_projects():
-        procstatus = oocmd.get_projects_status()
 
         if "Terminating" in oocmd.get_projects_status():
             isterminated = 1
         else:
             oocmd.delete_project()
-        
     if isterminated == 1:
         #the project is in Termination status ,so , just send to zabbix said we have some issue
         #99 means that the Terminating project is appear
