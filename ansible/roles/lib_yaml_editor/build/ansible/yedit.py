@@ -45,10 +45,10 @@ def main():
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             debug=dict(default=False, type='bool'),
-            src=dict(default=None, required=True, type='str'),
+            src=dict(default=None, type='str'),
             content=dict(default=None),
             content_type=dict(default='dict', choices=['dict', 'str']),
-            key=dict(default=None, type='str'),
+            key=dict(default='', type='str'),
             value=dict(),
             value_type=dict(default='', type='str'),
             update=dict(default=False, type='bool'),
@@ -58,18 +58,21 @@ def main():
             curr_value_format=dict(default='yaml', choices=['yaml', 'json', 'str'], type='str'),
             backup=dict(default=True, type='bool'),
         ),
-        mutually_exclusive=[["curr_value", "index"], ["content", "value"], ['update', "append"]],
+        mutually_exclusive=[["curr_value", "index"], ['update', "append"]],
+        required_one_of=[["content", "src"]],
 
         supports_check_mode=True,
     )
     state = module.params['state']
 
-    yamlfile = Yedit(module.params['src'], backup=module.params['backup'])
+    yamlfile = Yedit(filename=module.params['src'], backup=module.params['backup'])
 
-    rval = yamlfile.load()
-    if not rval and state != 'present':
-        module.fail_json(msg='Error opening file [%s].  Verify that the' + \
-                             ' file exists, that it is has correct permissions, and is valid yaml.')
+    if module.params['src']:
+        rval = yamlfile.load()
+
+        if yamlfile.yaml_dict == None and state != 'present':
+            module.fail_json(msg='Error opening file [%s].  Verify that the' + \
+                                 ' file exists, that it is has correct permissions, and is valid yaml.')
 
     if state == 'list':
         if module.params['key']:
@@ -89,47 +92,50 @@ def main():
 
         module.exit_json(changed=rval[0], results=rval[1], state="absent")
 
-    elif state == 'present' and module.params['value'] != None:
+    elif state == 'present':
+        # check if content is different than what is in the file
+        if module.params['content']:
+            content = None
+            if module.params['content_type'] == 'dict':
+                content = module.params['content']
+            elif module.params['content_type'] == 'str':
+                content = yaml.load(module.params['content'])
 
-        value = parse_value(module.params['value'], module.params['value_type'])
+            # We had no edits to make and the contents are the same
+            if yamlfile.yaml_dict == content and module.params['value'] == None:
+                module.exit_json(changed=False, results=yamlfile.yaml_dict, state="present")
 
-        if rval != None:
+            yamlfile.yaml_dict = content
+
+        # we were passed a value; parse it
+        if module.params['value']:
+            value = parse_value(module.params['value'], module.params['value_type'])
+            key = module.params['key']
             if module.params['update']:
                 curr_value = get_curr_value(parse_value(module.params['curr_value']),
                                             module.params['curr_value_format'])
-                rval = yamlfile.update(module.params['key'], value, index=module.params['index'], curr_value=curr_value)
+                rval = yamlfile.update(key, value, index=module.params['index'], curr_value=curr_value)
             elif module.params['append']:
-                rval = yamlfile.append(module.params['key'], value)
+                rval = yamlfile.append(key, value)
             else:
-                rval = yamlfile.put(module.params['key'], value)
+                rval = yamlfile.put(key, value)
 
-            if rval[0]:
+            if rval[0] and module.params['src']:
                 yamlfile.write()
+
             module.exit_json(changed=rval[0], results=rval[1], state="present")
 
-        rval = yamlfile.put(module.params['key'], value)
-        rval = yamlfile.write()
-        module.exit_json(changed=rval[0], results=rval[1], state="present")
+        # no edits to make
+        if module.params['src']:
+            rval = yamlfile.write()
+            module.exit_json(changed=rval[0], results=rval[1], state="present")
 
-    elif state == 'present' and module.params['content'] != None:
-        content = None
-        if module.params['content_type'] == 'dict':
-            content = module.params['content']
-        elif module.params['content_type'] == 'str':
-            content = yaml.load(module.params['content'])
-
-        if yamlfile.yaml_dict == content:
-            module.exit_json(changed=False, results=yamlfile.yaml_dict, state="present")
-
-        yamlfile.yaml_dict = content
-        rval = yamlfile.write()
-        module.exit_json(changed=rval[0], results=rval[1], state="present")
+        module.exit_json(changed=False, results=yamlfile.yaml_dict, state="present")
 
     module.exit_json(failed=True,
                      changed=False,
                      results='Unknown state passed. %s' % state,
                      state="unknown")
-
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
