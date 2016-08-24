@@ -23,6 +23,9 @@ def parse_value(inc_value, vtype=''):
     if isinstance(inc_value, str) and 'bool' in vtype:
         if inc_value not in true_bools and inc_value not in false_bools:
             raise YeditException('Not a boolean type. str=[%s] vtype=[%s]' % (inc_value, vtype))
+    elif isinstance(inc_value, bool) and 'str' in vtype:
+        inc_value = str(inc_value)
+
     if isinstance(inc_value, str) and 'str' not in vtype:
         if inc_value in true_bools:
             return True
@@ -126,13 +129,6 @@ def main():
                      changed=False,
                      results='Unknown state passed. %s' % state,
                      state="unknown")
-
-# If running unit tests, please uncomment this block
-####
-#if __name__ == '__main__':
-    #from ansible.module_utils.basic import *
-    #main()
-####
 
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
