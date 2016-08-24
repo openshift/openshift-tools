@@ -47,10 +47,7 @@ ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                
            -v /var/run/docker.sock:/var/run/docker.sock                                             \
            -v /var/run/openvswitch:/var/run/openvswitch                                             \
 {% if osohm_host_type == 'master' %}
-           -v /etc/origin/master/admin.kubeconfig:/etc/origin/master/admin.kubeconfig:ro            \
-           -v /etc/origin/master/master.etcd-client.crt:/etc/origin/master/master.etcd-client.crt   \
-           -v /etc/origin/master/master.etcd-client.key:/etc/origin/master/master.etcd-client.key   \
-           -v /etc/origin/master/master-config.yaml:/etc/origin/master/master-config.yaml           \
+           -v /etc/origin:/etc/origin:ro                                                            \
 {% elif osohm_host_type == 'node' %}
            -v /etc/origin/node:/etc/origin/node                                                     \
 {% endif %}
