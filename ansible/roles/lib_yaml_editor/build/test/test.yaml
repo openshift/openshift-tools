@@ -73,3 +73,15 @@
   - debug:
       var: output
 
+  - name: in memory content test
+    yedit:
+      content:
+        a: foo
+        b: bar
+      key: ''
+      value:
+        a: bar
+        b: foo
+    register: output
+  - debug:
+      var: output
