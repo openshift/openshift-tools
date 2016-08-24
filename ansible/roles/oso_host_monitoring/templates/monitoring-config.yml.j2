@@ -277,6 +277,11 @@ host_monitoring_cron:
   minute: "{{ osohm_pruning.cron.minute }}"
   job: "ops-runner -f -s 30 -n cosp.openshift.master.prune /usr/bin/cron-openshift-pruner --image-keep-younger-than {{ osohm_pruning.image_hours_to_keep }} --image-keep-tag-revisions {{ osohm_pruning.image_revisions_to_keep }}"
 
+- name: "Report on certificate expiration dates"
+  hour: "1"
+  minute: "1"
+  job: ops-runner -f -s 30 -n ccexp.openshift.master.certificates /usr/bin/cron-certificate-expirations
+
 {% if osohm_cloud == 'aws' %}
 - name: send S3 bucket metrics every day
   hour: "3"
