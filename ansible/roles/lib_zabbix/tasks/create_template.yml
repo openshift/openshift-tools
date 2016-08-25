@@ -37,6 +37,8 @@
     description: "{{ item.description | default('', True) }}"
     multiplier: "{{ item.multiplier | default('', True) }}"
     units: "{{ item.units | default('', True) }}"
+    history: "{{ item.history | default(omit, True) }}"
+    trends: "{{ item.trends | default(omit, True) }}"
     template_name: "{{ template.name }}"
     applications: "{{ item.applications }}"
     zabbix_type: "{{ item.zabbix_type | default('trapper') }}"
