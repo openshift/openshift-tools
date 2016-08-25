@@ -93,6 +93,44 @@
     seconds: 120
   run_once: true
 
+- name: scale down metrics to 0
+  oc_scale:
+    name: hawkular-cassandra-1
+    kind: rc
+    namespace: openshift-infra
+    replicas: 0
+  run_once: true
+
+- name: Wait for cassandra to scale down
+  pause:
+    seconds: 30
+  run_once: true
+
+- name: Add the resource constraints to the metrics RC
+  oc_edit:
+    kind: rc
+    name: hawkular-cassandra-1
+    namespace: openshift-infra
+    content:
+      spec:
+        template:
+          spec:
+            resources: "{{ item }}"
+  with_items:
+  - limits:
+      memory: "{{ osamet_limits_memory }}"
+  - requests:
+      memory: "{{ osamet_requests_memory }}"
+  run_once: true
+
+- name: scale down metrics to 1
+  oc_scale:
+    name: hawkular-cassandra-1
+    kind: rc
+    namespace: openshift-infra
+    replicas: 1
+  run_once: true
+
 - name: get deployer pod status
   oc_obj:
     state: list
