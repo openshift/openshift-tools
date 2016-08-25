@@ -204,7 +204,8 @@ def main():
             delta=dict(default=0, type='int'),
             multiplier=dict(default=None, type='str'),
             units=dict(default=None, type='str'),
-
+            history=dict(default=None, type='int'),
+            trends=dict(default=None, type='int'),
         ),
         #supports_check_mode=True
     )
@@ -263,6 +264,8 @@ def main():
                   'multiplier': use_multiplier,
                   'description': module.params['description'],
                   'units': module.params['units'],
+                  'history': module.params['history'],
+                  'trends': module.params['trends'],
                   'delay': module.params['interval'],
                   'delta': module.params['delta'],
                  }
