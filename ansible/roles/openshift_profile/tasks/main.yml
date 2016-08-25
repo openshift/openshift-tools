@@ -1,0 +1,9 @@
+---
+- name: Ensure that openshift_profile is enabled and set to web
+  lineinfile:
+    dest: /etc/sysconfig/atomic-openshift-node
+    insertbefore: BOF
+    line: "OPENSHIFT_PROFILE={{ op_openshift_profile | first }}"
+    state: present
+    backup: yes
+  notify: restart atomic-openshift-node
