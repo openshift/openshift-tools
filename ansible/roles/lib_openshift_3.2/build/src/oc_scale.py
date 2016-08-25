@@ -43,6 +43,9 @@ class OCScale(OpenShiftCLI):
             if self.kind == 'dc':
                 self.resource = DeploymentConfig(content=vol['results'][0])
                 vol['results'] = [self.resource.get_replicas()]
+            if self.kind == 'rc':
+                self.resource = ReplicationController(content=vol['results'][0])
+                vol['results'] = [self.resource.get_replicas()]
 
         return vol
 
