@@ -1,97 +1,97 @@
 ---
-- name: get cert's basename
-  set_fact:
-    cert_basename: "{{ osamet_default_metrics_cert | basename }}"
-    key_basename: "{{ osamet_default_metrics_key | basename }}"
-    cacert_basename: "{{ osamet_default_metrics_cacert | basename }}"
-
-- name: copy metrics certs to masters
-  copy:
-    src: "{{ item }}"
-    dest: /etc/origin/master/named_certificates/
-  with_items:
-  - "{{ osamet_default_metrics_cert }}"
-  - "{{ osamet_default_metrics_key }}"
-  - "{{ osamet_default_metrics_cacert }}"
-
-- name: create project
-  oadm_project:
-    name: openshift-infra
-    description: openshift-infra
-    node_selector: type=infra
-    display_name: openshift-infra
-  register: projectout
-  run_once: true
-- debug: var=projectout
-
-- name: create secret
-  oc_secret:
-    namespace: openshift-infra
-    name: metrics-deployer
-    files:
-    - name: nothing
-      path: /dev/null
-  register: secretout
-  run_once: true
-- debug: var=secretout
-
-- name: create serviceaccount
-  oc_serviceaccount:
-    name: metrics-deployer
-    namespace: openshift-infra
-    secrets:
-    - metrics-deployer
-  register: saout
-  run_once: true
-- debug: var=saout
-
-- name: create role binding to metrics-deployer service account
-  oadm_policy_user:
-    namespace: openshift-infra
-    user: system:serviceaccount:openshift-infra:metrics-deployer
-    resource_kind: role
-    resource_name: edit
-  register: policyout
-  run_once: true
-- debug: var=policyout
-
-- name: add cluster role binding to heapster service account
-  oadm_policy_user:
-    namespace: openshift-infra
-    user: system:serviceaccount:openshift-infra:heapster
-    resource_kind: cluster-role
-    resource_name: cluster-reader
-  register: policyout
-  run_once: true
-- debug: var=policyout
-
-- name: create metrics deployer template
-  oc_obj:
-    state: present
-    namespace: openshift-infra
-    name: metrics-deployer-template
-    kind: template
-    files:
-    - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/infrastructure-templates/enterprise/metrics-deployer.yaml"
-  register: templateout
-  run_once: true
-
-- name: create template
-  oc_process:
-    namespace: openshift-infra
-    template_name: metrics-deployer-template
-    create: True
-    params:
-      HAWKULAR_METRICS_HOSTNAME: "metrics.{{ osamet_clusterid }}.openshift.com"
-      CASSANDRA_PV_SIZE: "{{ osamet_pv_size }}"
-  register: processout
-  run_once: true
-- debug: var=processout
-
-- name: wait for deployment to finish
-  pause:
-    seconds: 120
-  run_once: true
+#- name: get cert's basename
+#  set_fact:
+#    cert_basename: "{{ osamet_default_metrics_cert | basename }}"
+#    key_basename: "{{ osamet_default_metrics_key | basename }}"
+#    cacert_basename: "{{ osamet_default_metrics_cacert | basename }}"
+#
+#- name: copy metrics certs to masters
+#  copy:
+#    src: "{{ item }}"
+#    dest: /etc/origin/master/named_certificates/
+#  with_items:
+#  - "{{ osamet_default_metrics_cert }}"
+#  - "{{ osamet_default_metrics_key }}"
+#  - "{{ osamet_default_metrics_cacert }}"
+#
+#- name: create project
+#  oadm_project:
+#    name: openshift-infra
+#    description: openshift-infra
+#    node_selector: type=infra
+#    display_name: openshift-infra
+#  register: projectout
+#  run_once: true
+#- debug: var=projectout
+#
+#- name: create secret
+#  oc_secret:
+#    namespace: openshift-infra
+#    name: metrics-deployer
+#    files:
+#    - name: nothing
+#      path: /dev/null
+#  register: secretout
+#  run_once: true
+#- debug: var=secretout
+#
+#- name: create serviceaccount
+#  oc_serviceaccount:
+#    name: metrics-deployer
+#    namespace: openshift-infra
+#    secrets:
+#    - metrics-deployer
+#  register: saout
+#  run_once: true
+#- debug: var=saout
+#
+#- name: create role binding to metrics-deployer service account
+#  oadm_policy_user:
+#    namespace: openshift-infra
+#    user: system:serviceaccount:openshift-infra:metrics-deployer
+#    resource_kind: role
+#    resource_name: edit
+#  register: policyout
+#  run_once: true
+#- debug: var=policyout
+#
+#- name: add cluster role binding to heapster service account
+#  oadm_policy_user:
+#    namespace: openshift-infra
+#    user: system:serviceaccount:openshift-infra:heapster
+#    resource_kind: cluster-role
+#    resource_name: cluster-reader
+#  register: policyout
+#  run_once: true
+#- debug: var=policyout
+#
+#- name: create metrics deployer template
+#  oc_obj:
+#    state: present
+#    namespace: openshift-infra
+#    name: metrics-deployer-template
+#    kind: template
+#    files:
+#    - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/infrastructure-templates/enterprise/metrics-deployer.yaml"
+#  register: templateout
+#  run_once: true
+#
+#- name: create template
+#  oc_process:
+#    namespace: openshift-infra
+#    template_name: metrics-deployer-template
+#    create: True
+#    params:
+#      HAWKULAR_METRICS_HOSTNAME: "metrics.{{ osamet_clusterid }}.openshift.com"
+#      CASSANDRA_PV_SIZE: "{{ osamet_pv_size }}"
+#  register: processout
+#  run_once: true
+#- debug: var=processout
+#
+#- name: wait for deployment to finish
+#  pause:
+#    seconds: 120
+#  run_once: true
 
 - name: scale down metrics to 0
   oc_scale:
@@ -116,7 +116,7 @@
       spec#template#spec#containers[0]#resources#requests#memory: "{{ osamet_requests_memory }}"
   run_once: true
 
-- name: scale down metrics to 1
+- name: scale up metrics to 1
   oc_scale:
     name: hawkular-cassandra-1
     kind: rc
