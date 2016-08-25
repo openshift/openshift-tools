@@ -112,15 +112,8 @@
     name: hawkular-cassandra-1
     namespace: openshift-infra
     content:
-      spec:
-        template:
-          spec:
-            resources: "{{ item }}"
-  with_items:
-  - limits:
-      memory: "{{ osamet_limits_memory }}"
-  - requests:
-      memory: "{{ osamet_requests_memory }}"
+      spec#template#spec#containers[0]#resources#limits#memory: "{{ osamet_limits_memory }}"
+      spec#template#spec#containers[0]#resources#requests#memory: "{{ osamet_requests_memory }}"
   run_once: true
 
 - name: scale down metrics to 1

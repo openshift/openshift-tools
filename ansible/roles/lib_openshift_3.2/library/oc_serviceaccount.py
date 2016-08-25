@@ -12,11 +12,12 @@
 # pylint: disable=too-many-lines
 
 import atexit
+import copy
 import json
 import os
+import re
 import shutil
 import subprocess
-import re
 
 import yaml
 # This is here because of a bug that causes yaml
