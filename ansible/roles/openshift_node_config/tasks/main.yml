@@ -1,0 +1,10 @@
+---
+# tasks file for openshift_node_config
+- name: Edit OpenShift node config
+  lineinfile:
+    dest: /etc/sysconfig/atomic-openshift-node
+    line: "{{item.key }}={{ item.value }}"
+    state: present
+    backup: yes
+  with_items: onc_openshift_node_config
+  notify: restart atomic-openshift-node

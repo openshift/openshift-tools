@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Max Whittingham
+  description: A role to make configuration file changes to OpenShift node configs.
+  company: Red Hat
+  license: Apache 
+  min_ansible_version: 1.2
+  platforms:
+  - name: EL
+    versions:
+    - 7
+  categories:
+  - cloud
+dependencies: []
