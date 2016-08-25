@@ -16,6 +16,7 @@ def main():
             kind=dict(required=True,
                       type='str',
                       choices=['dc', 'deploymentconfig',
+                               'rc', 'replicationcontroller',
                                'svc', 'service',
                                'scc', 'securitycontextconstraints',
                                'ns', 'namespace', 'project', 'projects',

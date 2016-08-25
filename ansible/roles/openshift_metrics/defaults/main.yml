@@ -1,0 +1,3 @@
+---
+osamet_limits_memory: 2G
+osamet_requests_memory: 2G

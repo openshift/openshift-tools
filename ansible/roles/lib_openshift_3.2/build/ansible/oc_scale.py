@@ -12,7 +12,7 @@ def main():
             state=dict(default='present', type='str',
                        choices=['present', 'list']),
             debug=dict(default=False, type='bool'),
-            kind=dict(default='dc', choices=['dc'], type='str'),
+            kind=dict(default='dc', choices=['dc', 'rc'], type='str'),
             namespace=dict(default='default', type='str'),
             replicas=dict(default=None, type='int'),
             name=dict(default=None, type='str'),
