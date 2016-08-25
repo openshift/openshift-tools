@@ -89,6 +89,9 @@ g_template_docker:
     url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_loopback.asciidoc'
     priority: high
 
+  # The storage checks run every 10 minutes. Trigering on two item values
+  # means pages will begin after 30 minutes same as the previous interval
+  # of 10 minutes.
   - name: 'Critically low docker storage data space on {HOST.NAME}'
     expression: '{Template Docker:docker.storage.data.space.percent_available.max(#3)}<5 or {Template Docker:docker.storage.data.space.available.max(#3)}<5' # < 5% or < 5GB
     url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_storage.asciidoc'
@@ -113,4 +116,3 @@ g_template_docker:
     dependencies:
     - 'Critically low docker storage metadata space on {HOST.NAME}'
     priority: average
-
