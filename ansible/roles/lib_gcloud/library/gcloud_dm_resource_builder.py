@@ -11,17 +11,26 @@
    GcloudCLI class that wraps the oc commands in a subprocess
 '''
 
-import string
-import random
+import atexit
 import json
 import os
-import yaml
+import random
+# Not all genearated modules use this.
+# pylint: disable=unused-import
+import re
 import shutil
+import string
 import subprocess
-import atexit
+import tempfile
+import yaml
 # Not all genearated modules use this.
 # pylint: disable=unused-import
 import copy
+# pylint: disable=import-error
+from apiclient.discovery import build
+# pylint: disable=import-error
+from oauth2client.client import GoogleCredentials
+
 
 
 class GcloudCLIError(Exception):
@@ -33,7 +42,19 @@ class GcloudCLI(object):
     ''' Class to wrap the command line tools '''
     def __init__(self, credentials=None, verbose=False):
         ''' Constructor for OpenshiftCLI '''
-        self.credentials = credentials
+        self.scope = None
+
+        if not credentials:
+            self.credentials = GoogleCredentials.get_application_default()
+        else:
+            tmp = tempfile.NamedTemporaryFile()
+            tmp.write(json.dumps(credentials))
+            tmp.seek(0)
+            self.credentials = GoogleCredentials.from_stream(tmp.name)
+            tmp.close()
+
+        self.scope = build('compute', 'beta', credentials=self.credentials)
+
         self.verbose = verbose
 
     def _create_image(self, image_name, image_info):
@@ -322,6 +343,35 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='json')
 
+    def list_disks(self, zone=None, disk_name=None):
+        '''return a list of disk objects in this project and zone'''
+        cmd = ['beta', 'compute', 'disks']
+        if disk_name and zone:
+            cmd.extend(['describe', disk_name, '--zone', zone])
+        else:
+            cmd.append('list')
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    # disabling too-many-arguments as these are all required for the disk labels
+    # pylint: disable=too-many-arguments
+    def _set_disk_labels(self, project, zone, dname, labels, finger_print):
+        '''create service account key '''
+        if labels == None:
+            labels = {}
+
+        self.scope = build('compute', 'beta', credentials=self.credentials)
+        body = {'labels': labels, 'labelFingerprint': finger_print}
+        result = self.scope.disks().setLabels(project=project,
+                                              zone=zone,
+                                              resource=dname,
+                                              body=body,
+                                             ).execute()
+
+        return result
+
     def gcloud_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for gcloud '''
         cmds = ['/usr/bin/gcloud']
@@ -519,7 +569,7 @@ class Bucket(GCPResource):
 class Disk(GCPResource):
     '''Object to represent a gcp disk'''
 
-    resource_type = "compute.v1.disk"
+    resource_type = "compute.beta.disk"
 
     # pylint: disable=too-many-arguments
     def __init__(self,
@@ -533,6 +583,9 @@ class Disk(GCPResource):
                  boot=False,
                  device_name=None,
                  image=None,
+                 labels=None,
+                 label_finger_print=None,
+                 index=None,
                 ):
         '''constructor for gcp resource'''
         super(Disk, self).__init__(rname,
@@ -551,11 +604,19 @@ class Disk(GCPResource):
         self._disk_type = disk_type
         self._disk_url = None
         self._auto_delete = auto_delete
+        self._labels = labels
+        self._label_finger_print = label_finger_print
+        self._index = index
 
     @property
     def persistent(self):
         '''property for resource if boot device is persistent'''
         return self._persistent
+
+    @property
+    def index(self):
+        '''property for index of disk'''
+        return self._index
 
     @property
     def device_name(self):
@@ -590,6 +651,20 @@ class Disk(GCPResource):
         return self._size
 
     @property
+    def labels(self):
+        '''property for labels on a disk'''
+        if self._labels == None:
+            self._labels = {}
+        return self._labels
+
+    @property
+    def label_finger_print(self):
+        '''property for label_finger_print on a disk'''
+        if self._labels == None:
+            self._label_finger_print = '42WmSpB8rSM='
+        return self._label_finger_print
+
+    @property
     def auto_delete(self):
         '''property for resource disk auto delete'''
         return self._auto_delete
@@ -605,27 +680,50 @@ class Disk(GCPResource):
                                      'sourceImage': Utils.global_compute_url(self.project,
                                                                              'images',
                                                                              self.image)
-                                    }
+                                    },
+                'labels': self.labels,
                }
 
     def get_supplement_disk(self):
         '''return in vminstance format'''
-        return {'deviceName': self.device_name,
+        disk = {'deviceName': self.device_name,
                 'type': self.persistent,
                 'source': '$(ref.%s.selfLink)' % self.name,
                 'autoDelete': self.auto_delete,
+                'labels': self.labels,
                }
+
+        if self.label_finger_print:
+            disk['labelFingerprint'] = self.label_finger_print
+
+        if self.index:
+            disk['index'] = self.index
+
+        if self.boot:
+            disk['boot'] = self.boot
+
+        return disk
 
     def to_resource(self):
         """ return the resource representation"""
-        return {'name': self.name,
+        disk = {'name': self.name,
                 'type': Disk.resource_type,
                 'properties': {'zone': self.zone,
                                'sizeGb': self.size,
                                'type': self.disk_url,
                                'autoDelete': self.auto_delete,
+                               'labels': self.labels,
+                               #'labelFingerprint': self.label_finger_print,
                               }
                }
+
+        if self.label_finger_print:
+            disk['properties']['labelFingerprint'] = self.label_finger_print
+
+        if self.boot:
+            disk['properties']['sourceImage'] = Utils.global_compute_url(self.project, 'images', self.image)
+
+        return disk
 
 
 # pylint: disable=too-many-instance-attributes
@@ -1222,15 +1320,15 @@ class GcloudResourceBuilder(object):
                           disk.get('disk_type', 'pd-standard'),
                           boot=disk.get('boot', False),
                           device_name=disk['device_name'],
-                          image=disk.get('image', None)) for disk in disk_info]
+                          image=disk.get('image', None),
+                          labels=disk.get('labels', None),
+                          label_finger_print=disk.get('label_finger_print', None),
+                          index=disk.get('index', None)) for disk in disk_info]
 
             inst_disks = []
             for disk in disks:
-                if disk.boot:
-                    inst_disks.append(disk.get_instance_disk())
-                else:
-                    inst_disks.append(disk.get_supplement_disk())
-                    results.append(disk)
+                inst_disks.append(disk.get_supplement_disk())
+                results.append(disk)
 
             nics = []
             for nic in network_info:
@@ -1320,7 +1418,10 @@ class GcloudResourceBuilder(object):
                                 disk.get('disk_type', 'pd-standard'),
                                 boot=disk.get('boot', False),
                                 device_name=disk['device_name'],
-                                image=disk.get('image', None)))
+                                image=disk.get('image', None),
+                                labels=disk.get('labels', None),
+                                label_finger_print=disk.get('label_finger_print', None)
+                               ))
         return results
 
     def build_pv_disks(self, disk_size_info):
@@ -1344,7 +1445,12 @@ class GcloudResourceBuilder(object):
                                     disk_type=d_type,
                                     boot=False,
                                     device_name='pv_%dg%d' % (size, idx),
-                                    image=None))
+                                    image=None,
+                                    labels={'purpose': 'customer-persistent-volume',
+                                            'clusterid': self.project,
+                                            'snaphost': 'daily',
+                                           },
+                                   ))
         return results
 
     def build_storage_buckets(self, bucket_names):

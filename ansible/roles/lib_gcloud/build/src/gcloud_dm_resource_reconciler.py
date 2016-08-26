@@ -63,8 +63,7 @@ class GcloudResourceReconciler(object):
         # name:
         replace_name = resource['name']
         resource['name'] = resource['name'].replace(replace_name, rname)
-        resource['properties']['disks'][0]['initializeParams']['diskName'] = \
-          resource['properties']['disks'][0]['initializeParams']['diskName'].replace(replace_name, rname)
+        os_name_to_replace = resource['properties']['disks'][0]['source'].split('.')[1]
         docker_name_to_replace = resource['properties']['disks'][1]['source'].split('.')[1]
 
         resource['properties']['disks'][1]['source'] = \
@@ -75,7 +74,7 @@ class GcloudResourceReconciler(object):
         # - target pool instance names
         for resource in self.resources:
             # update dockerdisk name
-            if docker_name_to_replace == resource['name']:
+            if docker_name_to_replace == resource['name'] or os_name_to_replace == resource['name']:
                 resource['name'] = resource['name'].replace(replace_name, rname)
 
             # Update targetpool

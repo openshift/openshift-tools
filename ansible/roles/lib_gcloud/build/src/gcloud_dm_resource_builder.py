@@ -41,15 +41,15 @@ class GcloudResourceBuilder(object):
                           disk.get('disk_type', 'pd-standard'),
                           boot=disk.get('boot', False),
                           device_name=disk['device_name'],
-                          image=disk.get('image', None)) for disk in disk_info]
+                          image=disk.get('image', None),
+                          labels=disk.get('labels', None),
+                          label_finger_print=disk.get('label_finger_print', None),
+                          index=disk.get('index', None)) for disk in disk_info]
 
             inst_disks = []
             for disk in disks:
-                if disk.boot:
-                    inst_disks.append(disk.get_instance_disk())
-                else:
-                    inst_disks.append(disk.get_supplement_disk())
-                    results.append(disk)
+                inst_disks.append(disk.get_supplement_disk())
+                results.append(disk)
 
             nics = []
             for nic in network_info:
@@ -139,7 +139,10 @@ class GcloudResourceBuilder(object):
                                 disk.get('disk_type', 'pd-standard'),
                                 boot=disk.get('boot', False),
                                 device_name=disk['device_name'],
-                                image=disk.get('image', None)))
+                                image=disk.get('image', None),
+                                labels=disk.get('labels', None),
+                                label_finger_print=disk.get('label_finger_print', None)
+                               ))
         return results
 
     def build_pv_disks(self, disk_size_info):
@@ -163,7 +166,12 @@ class GcloudResourceBuilder(object):
                                     disk_type=d_type,
                                     boot=False,
                                     device_name='pv_%dg%d' % (size, idx),
-                                    image=None))
+                                    image=None,
+                                    labels={'purpose': 'customer-persistent-volume',
+                                            'clusterid': self.project,
+                                            'snaphost': 'daily',
+                                           },
+                                   ))
         return results
 
     def build_storage_buckets(self, bucket_names):
