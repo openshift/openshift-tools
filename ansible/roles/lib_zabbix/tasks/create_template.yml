@@ -106,6 +106,7 @@
     description: "{{ item.description | default('', True) }}"
     multiplier: "{{ item.multiplier | default('', True) }}"
     units: "{{ item.units | default('', True) }}"
+    history: "{{ item.history | default(omit, True) }}"
     interval: "{{ item.interval | default(60, True) }}"
     delta: "{{ item.delta | default(0, True) }}"
   with_items: template.zitemprototypes
