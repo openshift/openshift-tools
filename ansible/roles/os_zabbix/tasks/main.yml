@@ -7,6 +7,9 @@
     state: list
   register: templates
 
+- include_vars: template_openshift_cluster.yml
+  tags:
+  - clusterwide
 - include_vars: template_heartbeat.yml
   tags:
   - heartbeat
@@ -51,6 +54,16 @@
 - include_vars: template_zabbix_config.yml
   tags:
   - zabbix_config
+
+- name: Include Template OpenShift Cluster
+  include: ../../lib_zabbix/tasks/create_template.yml
+  vars:
+    template: "{{ g_template_openshift_cluster }}"
+    server: "{{ ozb_server }}"
+    user: "{{ ozb_user }}"
+    password: "{{ ozb_password }}"
+  tags:
+  - clusterwide
 
 - name: Include Template Heartbeat
   include: ../../lib_zabbix/tasks/create_template.yml
