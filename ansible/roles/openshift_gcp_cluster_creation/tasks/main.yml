@@ -114,19 +114,10 @@
     creds: "{{ osgcc_creds }}"
   with_items:
   - name: "{{ osgcc_clusterid }}-master-.*-os"
-    labels:
-      purpose: root-volume
-      snapshot: hourly
+    labels: "{{ osgcc_master_os_disk_labels }}"
   - name: "{{ osgcc_clusterid }}-master-.*-docker"
-    labels:
-      purpose: docker-storage-volume
-      snapshot: never
+    labels: "{{ osgcc_default_docker_disk_labels }}"
   - name: "{{ osgcc_clusterid }}-node-.*-os"
-    labels:
-      purpose: root-volume
-      snapshot: never
+    labels: "{{ osgcc_node_os_disk_labels }}"
   - name: "{{ osgcc_clusterid }}-node-.*-docker"
-    labels:
-      purpose: docker-storage-volume
-      snapshot: never
-
+    labels: "{{ osgcc_default_docker_disk_labels }}"
