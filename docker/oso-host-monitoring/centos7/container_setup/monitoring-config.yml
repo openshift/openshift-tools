@@ -79,9 +79,18 @@ host_monitoring_cron:
   hour: "*"
   job: ops-runner -f -s 15 -s 3600 -n ozc.send.heartbeat.full /usr/bin/ops-zagg-client --send-heartbeat
 
+- name: Do a full heartbeat for synthetic host
+  minute: "10"
+  hour: "*"
+  job: ops-runner -f -s 15 -s 3600 -n ozc.send.synthetic.heartbeat.full /usr/bin/ops-zagg-client --send-heartbeat --synthetic
+
 - name: Do a quick heartbeat
   minute: "*/5"
   job: ops-runner -f -s 15 -n ozc.send.heartbeat.quick /usr/bin/ops-zagg-client -k heartbeat.ping -o 1
+
+- name: Do a quick heartbeat for synthetic host
+  minute: "*/5"
+  job: ops-runner -f -s 15 -n ozc.send.synthetic.heartbeat.quick /usr/bin/ops-zagg-client -k heartbeat.ping -o 1 --synthetic
 
 - name: run filesystem space checks every 10 minutes
   minute: "*/10"
