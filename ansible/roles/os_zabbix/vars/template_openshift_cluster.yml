@@ -1,0 +1,19 @@
+---
+g_template_openshift_cluster:
+  name: Template OpenShift Cluster
+  zitems:
+  - key: openshift.cluster.configloop.exitcode
+    applications:
+    - OpenShift Cluster
+    value_type: int
+
+  - key: openshift.cluster.configloop.runtime
+    applications:
+    - OpenShift Cluster
+    value_type: int
+
+  ztriggers:
+  - name: 'Config loop failed on {HOST.NAME}'
+    expression: '{Template OpenShift Cluster:openshift.cluster.configloop.exitcode.min(#3)}>0'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_config_loop.asciidoc'
+    priority: average
