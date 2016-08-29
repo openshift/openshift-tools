@@ -4,17 +4,26 @@
    GcloudCLI class that wraps the oc commands in a subprocess
 '''
 
-import string
-import random
+import atexit
 import json
 import os
-import yaml
+import random
+# Not all genearated modules use this.
+# pylint: disable=unused-import
+import re
 import shutil
+import string
 import subprocess
-import atexit
+import tempfile
+import yaml
 # Not all genearated modules use this.
 # pylint: disable=unused-import
 import copy
+# pylint: disable=import-error
+from apiclient.discovery import build
+# pylint: disable=import-error
+from oauth2client.client import GoogleCredentials
+
 
 
 class GcloudCLIError(Exception):
@@ -26,7 +35,19 @@ class GcloudCLI(object):
     ''' Class to wrap the command line tools '''
     def __init__(self, credentials=None, verbose=False):
         ''' Constructor for OpenshiftCLI '''
-        self.credentials = credentials
+        self.scope = None
+
+        if not credentials:
+            self.credentials = GoogleCredentials.get_application_default()
+        else:
+            tmp = tempfile.NamedTemporaryFile()
+            tmp.write(json.dumps(credentials))
+            tmp.seek(0)
+            self.credentials = GoogleCredentials.from_stream(tmp.name)
+            tmp.close()
+
+        self.scope = build('compute', 'beta', credentials=self.credentials)
+
         self.verbose = verbose
 
     def _create_image(self, image_name, image_info):
@@ -314,6 +335,35 @@ class GcloudCLI(object):
         cmd.extend(['--format', 'json'])
 
         return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def list_disks(self, zone=None, disk_name=None):
+        '''return a list of disk objects in this project and zone'''
+        cmd = ['beta', 'compute', 'disks']
+        if disk_name and zone:
+            cmd.extend(['describe', disk_name, '--zone', zone])
+        else:
+            cmd.append('list')
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    # disabling too-many-arguments as these are all required for the disk labels
+    # pylint: disable=too-many-arguments
+    def _set_disk_labels(self, project, zone, dname, labels, finger_print):
+        '''create service account key '''
+        if labels == None:
+            labels = {}
+
+        self.scope = build('compute', 'beta', credentials=self.credentials)
+        body = {'labels': labels, 'labelFingerprint': finger_print}
+        result = self.scope.disks().setLabels(project=project,
+                                              zone=zone,
+                                              resource=dname,
+                                              body=body,
+                                             ).execute()
+
+        return result
 
     def gcloud_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for gcloud '''
