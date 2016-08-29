@@ -8,6 +8,13 @@ oso_master_ha: True
 
 oso_master_primary: True
 
+container_metrics_config:
+  usage_checks:
+  - name_match_regex: '^oso-.*-(host-monitoring)$'
+    name_format_regex: '\\1'
+  - name_match_regex: '^oso-.*-zaio$'
+
+
 zagg_client_config:
   host:
     name: "host-monitoring-{{ lookup('env', 'container_uuid')[0:4] }}"
@@ -107,3 +114,7 @@ host_monitoring_cron:
 - name: run docker dns test on existing containers
   minute: "*/5"
   job: ops-runner -f -s 15 -n csdedr.docker.existing.dns.resolution /usr/bin/cron-send-docker-existing-dns-resolution
+
+- name: run docker conatiner usage collector
+  minute: "*"
+  job: ops-runner -f -s 15 -n csdcu.disc.docker.container /usr/bin/cron-send-docker-containers-usage
