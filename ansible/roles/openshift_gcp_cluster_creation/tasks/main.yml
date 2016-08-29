@@ -104,3 +104,29 @@
     record_fqdn: "{{ item.fqdn }}"
     record_ttl: 120
   with_items: "{{ g_gcp_infra_lb_dns_cnames }}"
+
+- name: Ensure disks are labeled
+  gcloud_compute_disk_labels:
+    name_match: "{{ item.name }}"
+    labels: "{{ item.labels }}"
+    zone: "{{ osgcc_zone }}"
+    project: "{{ osgcc_project }}"
+    creds: "{{ osgcc_creds }}"
+  with_items:
+  - name: "{{ osgcc_clusterid }}-master-.*-os"
+    labels:
+      purpose: root-volume
+      snapshot: hourly
+  - name: "{{ osgcc_clusterid }}-master-.*-docker"
+    labels:
+      purpose: docker-storage-volume
+      snapshot: never
+  - name: "{{ osgcc_clusterid }}-node-.*-os"
+    labels:
+      purpose: root-volume
+      snapshot: never
+  - name: "{{ osgcc_clusterid }}-node-.*-docker"
+    labels:
+      purpose: docker-storage-volume
+      snapshot: never
+

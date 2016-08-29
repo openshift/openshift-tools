@@ -479,123 +479,138 @@ class Utils(object):
 
 
 # pylint: disable=too-many-instance-attributes
-class GcloudDeploymentManager(GcloudCLI):
-    ''' Class to wrap the gcloud deployment manager '''
+class GcloudComputeDisk(GcloudCLI):
+    ''' Class to wrap the gcloud compute images command'''
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
     def __init__(self,
-                 dname,
-                 config=None,
-                 opts=None,
+                 project,
+                 zone,
+                 disk_info,
                  credentials=None,
                  verbose=False):
         ''' Constructor for gcloud resource '''
-        super(GcloudDeploymentManager, self).__init__()
-        self.dname = dname
-        self.opts = opts
-        self.config = config
-        self.credentials = credentials
+        super(GcloudComputeDisk, self).__init__(credentials)
+        self.project = project
+        self.zone = zone
+        self.disk_info = disk_info
+        self.verbose = verbose
 
-    def list_deployments(self):
-        '''return deployment'''
-        results = self._list_deployments()
-        if results['returncode'] == 0:
-            results['results'] = results['results'].strip().split('\n')
+    def set_labels(self, labels=None):
+        '''set the labels for a disk'''
+        return self._set_disk_labels(self.project,
+                                     self.zone,
+                                     self.disk_info['name'],
+                                     labels,
+                                     self.disk_info['labelFingerprint'])
 
-        return results
+    def delete_labels(self):
+        ''' remove labels from a disk '''
+        return self.set_labels(labels={})
 
-    def exists(self):
-        ''' return whether a deployment exists '''
-        deployments = self.list_deployments()
-        if deployments['returncode'] != 0:
-            raise GcloudCLIError('Something went wrong.  Results: %s' % deployments['stderr'])
-        return self.dname in deployments['results']
+    def has_labels(self, labels):
+        '''does disk have labels set'''
+        if not self.disk_info.has_key('labels'):
+            return False
+        if len(self.disk_info['labels']) == 0:
+            return False
 
+        if len(labels.keys()) != len(self.disk_info['labels'].keys()):
+            return False
 
-    def delete(self):
-        '''delete a deployment'''
-        return self._delete_deployment(self.dname)
+        for key, val in labels.items():
+            if not self.disk_info['labels'].has_key(key) or self.disk_info['labels'][key] != val:
+                return False
 
-    def create_deployment(self):
-        '''create a deployment'''
-        return self._create_deployment(self.dname, self.config, self.opts)
+        return True
 
-    def update_deployment(self):
-        '''update a deployment'''
-        return self._update_deployment(self.dname, self.config, self.opts)
+    def __str__(self):
+        '''to str'''
+        return "GcloudComputeDisk: %s" % self.disk_info['name']
 
 # vim: expandtab:tabstop=4:shiftwidth=4
 
 #pylint: disable=too-many-branches
 def main():
-    ''' ansible module for gcloud deployment-manager deployments '''
+    ''' ansible module for gcloud compute disk labels'''
     module = AnsibleModule(
         argument_spec=dict(
             # credentials
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
-            name=dict(default=None, type='str'),
-            config=dict(default=None),
-            opts=dict(default=None, type='dict'),
+            disk_name=dict(default=None, type='str'),
+            name_match=dict(default=None, type='str'),
+            labels=dict(default=None, type='dict'),
+            project=dict(default=False, type='str'),
+            zone=dict(default=False, type='str'),
+            creds=dict(default=None, type='dict'),
         ),
+        required_one_of=[['disk_name', 'name_match']],
         supports_check_mode=True,
     )
-    gconfig = GcloudDeploymentManager(module.params['name'],
-                                      module.params['config'],
-                                      module.params['opts'])
+    if module.params['disk_name']:
+        disks = GcloudCLI().list_disks(zone=module.params['zone'], disk_name=module.params['disk_name'])['results']
+        disks = [GcloudComputeDisk(module.params['project'],
+                                   module.params['zone'],
+                                   disk,
+                                   module.params['creds']) for disk in disks]
+
+    elif module.params['name_match']:
+        regex = re.compile(module.params['name_match'])
+        disks = []
+        for disk in GcloudCLI().list_disks(zone=module.params['zone'])['results']:
+            if regex.findall(disk['name']):
+                gdisk = GcloudComputeDisk(module.params['project'],
+                                          module.params['zone'],
+                                          disk,
+                                          module.params['creds'])
+                disks.append(gdisk)
+
+    else:
+        module.fail_json(changed=False, msg='Please specify disk_name or name_match.')
 
     state = module.params['state']
-
-    api_rval = gconfig.list_deployments()
 
     #####
     # Get
     #####
     if state == 'list':
-        module.exit_json(changed=False, results=api_rval['results'], state="list")
+        module.exit_json(changed=False, results=disks, state="list")
 
     ########
     # Delete
     ########
     if state == 'absent':
-        if gconfig.exists():
+        if len(disks) > 0:
+            if not all([disk.has_labels(module.params['labels']) for disk in disks]):
+                module.exit_json(changed=False, state="absent")
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a delete.')
+            results = []
+            for disk in disks:
+                results.append(disk.delete_labels())
+            module.exit_json(changed=True, results=results, state="absent")
 
-            api_rval = gconfig.delete()
-
-            module.exit_json(changed=True, results=api_rval, state="absent")
-        module.exit_json(changed=False, state="absent")
+        module.exit_json(changed=False, msg='No disks found.', state="absent")
 
     if state == 'present':
         ########
         # Create
         ########
-        if not gconfig.exists():
+        if not all([disk.has_labels(module.params['labels']) for disk in disks]):
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a create.')
-
             # Create it here
-            api_rval = gconfig.create_deployment()
+            results = []
+            for disk in disks:
+                results.append(disk.set_labels(module.params['labels']))
 
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
+            module.exit_json(changed=True, results=results, state="present")
 
-            module.exit_json(changed=True, results=api_rval, state="present")
-
-        ########
-        # Update
-        ########
-        api_rval = gconfig.update_deployment()
-
-        if api_rval['returncode'] != 0:
-            module.fail_json(msg=api_rval)
-
-        module.exit_json(changed=True, results=api_rval, state="present")
-
+        module.exit_json(changed=False, state="present")
 
     module.exit_json(failed=True,
                      changed=False,
@@ -603,8 +618,8 @@ def main():
                      state="unknown")
 
 #if __name__ == '__main__':
-#    gcloud = GcloudDeploymentManager('optestgcp')
-#    print gcloud.list_deployments()
+#    gcloud = GcloudComputeImage('rhel-7-base-2016-06-10')
+#    print gcloud.list_images()
 
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
