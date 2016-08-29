@@ -49,6 +49,8 @@ class OpenShiftOC(object):
     def __init__(self, namespace, kubeconfig, args, verbose=False):
         ''' Constructor for OpenShiftOC '''
         self.namespace = namespace
+        # used to delete the project ES index
+        self.run_date = datetime.datetime.now().strftime("%Y.%m.%d")
         self.verbose = verbose
         self.kubeconfig = kubeconfig
         self.args = args
@@ -172,6 +174,37 @@ class OpenShiftOC(object):
 
         return "Error: %s.  Return: %s" % (proc.returncode, stderr)
 
+    def delete_es_index(self):
+        """ delete elasticsearch index """
+        # find project uuid
+        get_project_uid_cmd = ['get', 'project', '-o', 'json', self.namespace]
+        project = json.loads(self.oc_cmd(get_project_uid_cmd))
+        if project:
+            project_uid = project['metadata']['uid']
+        else:
+            print "Failed finding project uid!"
+            return 0
+        # find logging pod
+        get_log_pods_cmd = ['get', 'pods', '-o', 'json', '-n', 'logging']
+        pods = json.loads(self.oc_cmd(get_log_pods_cmd))
+        regex = re.compile('logging-es-*')
+        for pod in pods['items']:
+            pod_found = regex.search(pod['metadata']['name'])
+            if pod_found:
+                project_es_uuid = self.namespace + "." + project_uid + "." + self.run_date
+                curl_cmd = ['curl', '-X', 'DELETE', \
+                    '--key', '/etc/elasticsearch/keys/admin-key', \
+                    '--cert', '/etc/elasticsearch/keys/admin-cert', \
+                    '--cacert', '/etc/elasticsearch/keys/admin-ca', \
+                    'https://localhost:9200/' + project_es_uuid]
+                delete_cmd = ['exec', pod['metadata']['name'], '-n', 'logging', '--'] + curl_cmd
+                delete_results = self.oc_cmd(delete_cmd)
+                if self.verbose:
+                    print delete_results
+                return delete_results
+        print "Failed finding logging pod"
+        return 0
+
 def curl(ip_addr, port):
     ''' Open an http connection to the url and read
     '''
@@ -210,7 +243,6 @@ def pod_name(name):
     if ':' in name:
         name = name.split(':')[0]
     return name
-
 
 def send_zagg_data(build_ran, create_app, http_code, run_time):
     ''' send data to Zagg'''
@@ -305,6 +337,7 @@ def main():
         handle_fail(run_time, oocmd, pod)
 
     if namespace in oocmd.get_projects():
+        oocmd.delete_es_index()
         oocmd.delete_project()
 
     send_zagg_data(build_ran, create_app, http_code, run_time)
