@@ -272,6 +272,15 @@ host_monitoring_cron:
 {% endif %}
 
 {% if osohm_master_primary | default(False) | bool %}
+- name: Do a full heartbeat for synthetic host
+  minute: "10"
+  hour: "*/4"
+  job: ops-runner -f -s 300 -n ozc.send.synthetic.heartbeat.full /usr/bin/ops-zagg-client --send-heartbeat --synthetic
+
+- name: Do a quick heartbeat for synthetic host
+  minute: "*/5"
+  job: ops-runner -f -s 60 -n ozc.send.synthetic.heartbeat.quick /usr/bin/ops-zagg-client -k heartbeat.ping -o 1 --synthetic
+
 - name: "Prune builds/deployments/images"
   hour: "{{ osohm_pruning.cron.hour }}"
   minute: "{{ osohm_pruning.cron.minute }}"
