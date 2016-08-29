@@ -122,7 +122,13 @@ objects:
       to:
         kind: ImageStreamTag
         name: oso-rhel7-zagg-web:latest
-    resources: {}
+    resources: 
+      limits:
+        cpu: 1000m
+        memory: 512Mi
+      requests:
+        cpu: 1000m
+        memory: 512Mi
     source:
       contextDir: docker/oso-zagg-web/rhel7
       git:
