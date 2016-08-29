@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.127
+Version:       0.0.128
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -286,6 +286,10 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Mon Aug 29 2016 Joel Diaz <jdiaz@redhat.com> 0.0.128-1
+- Added cron-send-docker-containers-usage.py (twiest@redhat.com)
+- grab the actual docker-timer script (jdiaz@redhat.com)
+
 * Tue Aug 23 2016 Joel Diaz <jdiaz@redhat.com> 0.0.127-1
 - script to report on age of certificates (jdiaz@redhat.com)
 
