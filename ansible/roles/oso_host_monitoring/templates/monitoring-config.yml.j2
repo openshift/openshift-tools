@@ -148,8 +148,8 @@ host_monitoring_cron:
   minute: "*/5"
   job: ops-runner -f -s 15 -n cspc.openshift.dnsmasq.process.count /usr/bin/cron-send-process-count '^dnsmasq' openshift.dnsmasq.process.count
 
-- name: send openshift-node dnsmasq status every 10 minutes
-  minute: "*/15"
+- name: send openshift-node dnsmasq status every 5 minutes
+  minute: "*/5"
   job: ops-runner -f -s 50 -n csosms.openshift.dnsmasq /usr/bin/cron-send-os-dnsmasq-checks
 {# end if dnsmasq #}
 {% endif %}
@@ -169,11 +169,11 @@ host_monitoring_cron:
   job: ops-runner -f -s 60 -n cfor.openshift.node.ovs.stray.rules /usr/bin/cron-fix-ovs-rules
 
 - name: send cluster docker registry checks
-  minute: "*/5"
+  minute: "*/2"
   job: ops-runner -f -s 15 -n csrc.openshift.node.registry.checks /usr/bin/cron-send-registry-checks
 
 - name: send openshift-node cpu mem per process stats
-  minute: "*/10"
+  minute: "*/5"
   job: ops-runner -f -s 60 -n cscpm.openshift.node.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start node' openshift.node.process
 
 - name: send docker daemon cpu mem per process stats
@@ -199,8 +199,8 @@ host_monitoring_cron:
 
 {% if osohm_host_type == 'master' %}
 {# Openshift Master checks #}
-- name: run create app every 15 minutes
-  minute: "*/15"
+- name: run create app every 5 minutes
+  minute: "*/5"
   job: "export ZAGG_CLIENT_HOSTNAME={{ osohm_host_name }}; ops-runner -f -t 180 -s 60 -n csca.openshift.master.app.create /usr/bin/cron-send-create-app &>> /var/log/create_app.log"
 
 - name: run create app with build process every 30 minutes
@@ -232,12 +232,12 @@ host_monitoring_cron:
   minute: "*/5"
   job: ops-runner -f -s 60 -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --local
 
-- name: send openshift-master SkyDNS status every 10 minutes
-  minute: "*/10"
+- name: send openshift-master SkyDNS status every 5 minutes
+  minute: "*/5"
   job: ops-runner -f -s 50 -n csosms.openshift.master.skydns /usr/bin/cron-send-os-skydns-checks
 
 - name: send openshift-master etcd status
-  minute: "*/5"
+  minute: "*/2"
   job: ops-runner -f -s 15 -n cspc.openshift.master.etcd.status /usr/bin/cron-send-etcd-status -c /etc/openshift_tools/etcd_metrics.yml
 
 - name: send kubeconfig parser check
@@ -257,20 +257,20 @@ host_monitoring_cron:
   job: ops-runner -f -s 60 -n cscc.openshift.master.api.connections.443 /usr/bin/cron-send-connection-count openshift 443 openshift.master.api.port_443.connections.established
 
 - name: send openshift master api cpu mem per process stats
-  minute: "*/10"
+  minute: "*/5"
   job: ops-runner -f -s 60 -n cscpm.openshift.master.api.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start master api' openshift.master.api.process
 
 - name: send openshift master controllers cpu mem per process stats
-  minute: "*/10"
+  minute: "*/5"
   job: ops-runner -f -s 60 -n cscpm.openshift.master.controllers.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start master controllers' openshift.master.controllers.process
 
 - name: send etcd cpu mem per process stats
-  minute: "*/10"
+  minute: "*/5"
   job: ops-runner -f -s 60 -n cscpm.openshift.etcd.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats etcd openshift.etcd.process
 
 - name: "OpenShift event watcher"
   hour: "*"
-  minute: "*/10"
+  minute: "*/2"
   job: ops-runner --flock-no-fail -n oscew.event.watcher /usr/bin/cron-event-watcher --watch-for FailedScheduling
 
 {% if osohm_enable_cluster_capacity_reporting|bool %}
