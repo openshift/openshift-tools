@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.72
+Version:       0.0.73
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -258,6 +258,9 @@ Adds Aws specific python modules
 
 
 %changelog
+* Mon Aug 29 2016 Joel Diaz <jdiaz@redhat.com> 0.0.73-1
+- Added cron-send-docker-containers-usage.py (twiest@redhat.com)
+
 * Wed Jul 27 2016 Wesley Hearn <whearn@redhat.com> 0.0.72-1
 - Added simple json output to ohi, updated awsutil to have convert_to_ip not
   require a list (whearn@redhat.com)
