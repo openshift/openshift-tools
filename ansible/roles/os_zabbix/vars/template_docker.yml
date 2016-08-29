@@ -14,12 +14,12 @@ g_template_docker:
 
   - key: docker.container.dns.resolution
     applications:
-    - Docker Daemon
+    - Docker Container
     value_type: int
 
   - key: docker.container.existing.dns.resolution.failed
     applications:
-    - Docker Daemon
+    - Docker Container
     value_type: int
 
   - key: docker.storage.is_loopback
@@ -116,3 +116,59 @@ g_template_docker:
     dependencies:
     - 'Critically low docker storage metadata space on {HOST.NAME}'
     priority: average
+
+  zdiscoveryrules:
+  - name: disc.docker.container
+    key: disc.docker.container
+    lifetime: 1
+    description: "Dynamically register docker container metrics"
+
+  zitemprototypes:
+  - discoveryrule_key: disc.docker.container
+    name: "disc.docker.container.cpu.used_pct[{#CTR_NAME}]"
+    key: "disc.docker.container.cpu.used_pct[{#CTR_NAME}]"
+    value_type: float
+    units: '%'
+    description: "Amount of CPU used by the container"
+    history: 14
+    applications:
+    - Docker Container
+
+  - discoveryrule_key: disc.docker.container
+    name: "disc.docker.container.mem.used[{#CTR_NAME}]"
+    key: "disc.docker.container.mem.used[{#CTR_NAME}]"
+    value_type: int
+    units: B
+    description: "Amount of Memory used by the container"
+    history: 14
+    applications:
+    - Docker Container
+
+  - discoveryrule_key: disc.docker.container
+    name: "disc.docker.container.mem.limit[{#CTR_NAME}]"
+    key: "disc.docker.container.mem.limit[{#CTR_NAME}]"
+    value_type: int
+    units: B
+    description: "Amount of Memory the container is allowed to use"
+    history: 14
+    applications:
+    - Docker Container
+
+  - discoveryrule_key: disc.docker.container
+    name: "disc.docker.container.mem.limit_used_pct[{#CTR_NAME}]"
+    key: "disc.docker.container.mem.limit_used_pct[{#CTR_NAME}]"
+    value_type: float
+    units: '%'
+    description: "The percentage of memory used of the container's limit."
+    history: 14
+    applications:
+    - Docker Container
+
+  - discoveryrule_key: disc.docker.container
+    name: "disc.docker.container.mem.failcnt[{#CTR_NAME}]"
+    key: "disc.docker.container.mem.failcnt[{#CTR_NAME}]"
+    value_type: int
+    description: "The number of times the container has tried to allocated memory and failed"
+    history: 14
+    applications:
+    - Docker Container

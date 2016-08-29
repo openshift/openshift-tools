@@ -38,6 +38,7 @@ cp -p monitoring/cron-send-s3-metrics.py %{buildroot}/usr/bin/cron-send-s3-metri
 cp -p monitoring/cron-send-os-master-metrics.py %{buildroot}/usr/bin/cron-send-os-master-metrics
 cp -p monitoring/cron-send-docker-metrics.py %{buildroot}/usr/bin/cron-send-docker-metrics
 cp -p monitoring/cron-send-docker-timer.py %{buildroot}/usr/bin/cron-send-docker-timer
+cp -p monitoring/cron-send-docker-containers-usage.py %{buildroot}/usr/bin/cron-send-docker-containers-usage
 cp -p monitoring/cron-send-docker-dns-resolution.py %{buildroot}/usr/bin/cron-send-docker-dns-resolution
 cp -p monitoring/cron-send-docker-existing-dns-resolution.py %{buildroot}/usr/bin/cron-send-docker-existing-dns-resolution
 cp -p monitoring/cron-send-registry-checks.py %{buildroot}/usr/bin/cron-send-registry-checks
@@ -160,6 +161,7 @@ OpenShift Tools Docker Monitoring Scripts
 %files monitoring-docker
 /usr/bin/cron-send-docker-metrics
 /usr/bin/cron-send-docker-timer
+/usr/bin/cron-send-docker-containers-usage
 /usr/bin/cron-send-docker-dns-resolution
 /usr/bin/cron-send-docker-existing-dns-resolution
 
