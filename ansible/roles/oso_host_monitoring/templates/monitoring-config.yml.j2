@@ -77,7 +77,8 @@ zagg_client_config:
       name: "{{ osohm_cluster_id }}-synthetic"
     heartbeat:
       templates:
-      - Template Heartbeat        # So we can send hearbeats
+      - Template Heartbeat         # So we can send hearbeats
+      - Template OpenShift Cluster # So we can hold clusterwide items
 
 # Generic Linux Checks
 host_monitoring_cron:
