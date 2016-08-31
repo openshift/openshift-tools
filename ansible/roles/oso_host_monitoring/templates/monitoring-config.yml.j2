@@ -131,6 +131,13 @@ host_monitoring_cron:
   minute: "*/10"
   job: ops-runner -f -s 120 -n csdt.docker.timer /usr/bin/cron-send-docker-timer
 
+# This needs to be run every minute so that we can see accurate depictions of
+# relevant container's usage. Otherwise we might miss CPU or Memory spikes.
+- name: send conatiner usage metrics
+  minute: "*"
+  job: ops-runner -f -s 15 -n csdcu.docker.containers.usage /usr/bin/cron-send-docker-containers-usage
+
+
 {% if osohm_host_type != 'ansible-tower' %}
 # This is an active issue, we need it to run on a frequent basis.
 - name: run docker dns test
