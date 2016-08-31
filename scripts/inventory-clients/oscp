@@ -122,7 +122,7 @@ class Oscp(object):
         if refresh_cache:
             self.host_inventory = self.aws.get_inventory({'refresh_cache': '--refresh-cache'})['_meta']['hostvars']
         else:
-            self.host_inventory = self.aws.get_inventory()['_meta']['hostvars']
+            self.host_inventory = self.aws.get_inventory(cached=True)['_meta']['hostvars']
 
     def select_host(self):
         '''select host attempts to match the host specified
