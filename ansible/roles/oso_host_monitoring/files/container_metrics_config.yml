@@ -5,10 +5,11 @@ container_metrics_config:
   - name_match_regex: 'oso-.*-host-monitoring'
 
 
-
-  # Fluentd
-  - name_match_regex: '^k8s_(fluentd-elasticsearch)\.[\w\d]+_(logging-fluentd-\d+-[a-zA-Z\d-]+)_(logging)_.*$'
-    name_format_regex: 'k8s::\\3::\\2::\\1'
+# twiest: This one isn't required and it's causing issues for some reason.
+# TODO: figure out why this is causing issues.
+#  # Fluentd
+#  - name_match_regex: '^k8s_(fluentd-elasticsearch)\.[\w\d]+_(logging-fluentd-\d+-[a-zA-Z\d-]+)_(logging)_.*$'
+#    name_format_regex: 'k8s::\\3::\\2::\\1'
 
   # Curator
   - name_match_regex: '^k8s_(curator)\.[\w\d]+_(logging-curator-\d+-[a-zA-Z\d-]+)_(logging)_.*$'
