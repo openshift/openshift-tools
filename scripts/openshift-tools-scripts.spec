@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.129
+Version:       0.0.130
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -286,6 +286,9 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Wed Aug 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.130-1
+- Moving default behavoir to use cache for ossh and oscp (kwoodson@redhat.com)
+
 * Mon Aug 29 2016 Sten Turpin <sten@redhat.com> 0.0.129-1
 - added function to delete ES index after app create (sten@redhat.com)
 
