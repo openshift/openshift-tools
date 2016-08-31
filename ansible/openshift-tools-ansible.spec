@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.13
+Version:        0.0.14
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,172 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Wed Aug 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.14-1
+- add OpenShift Cluster(wide) templates/items/triggers (jdiaz@redhat.com)
+- Incorporate changes from arch meeting (rharriso@redhat.com)
+- Make sure the checks aleart after the same time now that their interval has
+  been increased (rharriso@redhat.com)
+- Changes from Ops arch meeting (rharriso@redhat.com)
+- don't need dnsmasq checks more than every 15 minutes (rharriso@redhat.com)
+- Increase the interval for Zabbix checks to save on both DB load and space
+  (rharriso@redhat.com)
+- Added specific labels to host types. (kwoodson@redhat.com)
+- have primary master heartbeat for synthetic host (jdiaz@redhat.com)
+- Added cron-send-docker-containers-usage.py (twiest@redhat.com)
+- Adding disk labels to deployment manager (kwoodson@redhat.com)
+- changed rc to inherit from dc (mwoodson@redhat.com)
+- removed comments (mwoodson@redhat.com)
+- more updates to oc scale (mwoodson@redhat.com)
+- more fixes for the metrics, included the copy (mwoodson@redhat.com)
+- added some options to openshift ansible tools, added mem constraints for
+  metrics (mwoodson@redhat.com)
+- Add history and trends parameters to the zbx_item and zbx_itemprototype
+  modules (rharriso@redhat.com)
+- Comments to explain changes in the trigger logic (rharriso@redhat.com)
+- Adding in-memory updates. (kwoodson@redhat.com)
+- add triggers for iminent certificate expirations (jdiaz@redhat.com)
+- add daily cron to report on certificate expirations (jdiaz@redhat.com)
+- Minor fix for bool str (kwoodson@redhat.com)
+- bind all of /etc/origin into host-monitoring (so we can see certificates)
+  (jdiaz@redhat.com)
+- fixed spelling error in volume provisioner (mwoodson@redhat.com)
+- add items to hold certificate expiration data (jdiaz@redhat.com)
+- add trigger and item for saml check (zhizhang@zhizhang-laptop-nay.redhat.com)
+- added the openshift_volume_provisioner role (mwoodson@redhat.com)
+- added urls for remaining pv check (sten@redhat.com)
+- pass in cluster-wide KMS key to generated docker config (jdiaz@redhat.com)
+- Fixed boolean passing as strings (kwoodson@redhat.com)
+- sleep for a moment before getting newly create KMS data (jdiaz@redhat.com)
+- Prune haproxy processes more aggressively (agrimm@redhat.com)
+- add saml check (zhizhang@zhizhang-laptop-nay.redhat.com)
+- run haproxy script every 15 minutes (jdiaz@redhat.com)
+- Changed role openshift_dedicated_admin to explicitly turn off non-primary
+  master dedicated-admin-role services. Added oda_config param.
+  (twiest@redhat.com)
+- add haproxy pruner cron job to infra nodes (jdiaz@redhat.com)
+- add item to hold number of haproxy processes found in CLOSE-WAIT state
+  (jdiaz@redhat.com)
+- Added oda_skip_projects to the openshift_dedicated_admin role.
+  (twiest@redhat.com)
+- changed zabbix key for build time to match key sent by script
+  (sten@redhat.com)
+- enable creating encrypted PVs (jdiaz@redhat.com)
+- allow tagging resulting AMI (jdiaz@redhat.com)
+- add role that can be called during cluster creation (jdiaz@redhat.com)
+- added the role openshift_gcp_add_users_to_project (mwoodson@redhat.com)
+- role doesn't take osaik_kms_directory parameter (jdiaz@redhat.com)
+- add oo_ec2_ami_copy Ansible module (jdiaz@redhat.com)
+- Updating the name of the role to be more clear as to what it does
+  (mwhittingham@redhat.com)
+- GCP support for osohm (kwoodson@redhat.com)
+- Forgot an example in the README (mwhittingham@redhat.com)
+- Being more explicit about the oadm location (mwhittingham@redhat.com)
+- added gcloud config ansible module, created a role with it
+  (mwoodson@redhat.com)
+- Initial commit (mwhittingham@redhat.com)
+- use renamed oo_ec2_ami20 module (jdiaz@redhat.com)
+- rename OpenShift Ops roles to prefix with oo_ ...to indicate that this is our
+  module (not something pulled/backported) iam_kms cat_fact sysconfig_fact
+  (jdiaz@redhat.com)
+- added dnsmasq_proxy and dnsmasq_proxy_file (mwoodson@redhat.com)
+- Fixes for gcp registry (kwoodson@redhat.com)
+- added gcp zone getter (mwoodson@redhat.com)
+- Adding gcp_compute_zones (kwoodson@redhat.com)
+- added support for generic service account in gcp (mwoodson@redhat.com)
+- using common kms names for each cluster (jdiaz@redhat.com)
+- deal with rename of ec2_vol20 library (jdiaz@redhat.com)
+- Separating registries.  Removing bucket from storage bucket name.
+  (kwoodson@redhat.com)
+- Fixed a bug in variable name caused by refactor. (kwoodson@redhat.com)
+- add role to create and save AWS IAM KMS key data (jdiaz@redhat.com)
+- Fix creating the zabbix config template (rharriso@redhat.com)
+- Fixed json output format. (kwoodson@redhat.com)
+- add AWS IAM KMS ansible library for creating/querying KMS entries
+  (jdiaz@redhat.com)
+- Have the Zabbix config run in cron and report results to Zabbix
+  (rharriso@redhat.com)
+- Making openshift_registry work on gcp and aws. Fixed service account keys.
+  Added scopes to vminstances. (kwoodson@redhat.com)
+- fixed dependency name (mwoodson@redhat.com)
+- added ops_os_firewall (mwoodson@redhat.com)
+- added ops_os_firewall (mwoodson@redhat.com)
+- added dirty_os_firewall (mwoodson@redhat.com)
+- Added creating snapshot tag for autoprovisioned PVs to cron.
+  (twiest@redhat.com)
+- added gcp service account, update haproxy passthrough (mwoodson@redhat.com)
+- removed include (mwoodson@redhat.com)
+- Normalizing on oo vars (kwoodson@redhat.com)
+- Adding storage buckets to dm (kwoodson@redhat.com)
+- Adding ability to change from cname to A record. (kwoodson@redhat.com)
+- temporary fix for the wrong file extension issue (ihorvath@redhat.com)
+- fixing yml extension (ihorvath@redhat.com)
+- changing the location of inital config for osohm container
+  (ihorvath@redhat.com)
+- add synthetic cluster-wide host support to ops-zagg-client (jdiaz@redhat.com)
+- added ops-runner timeouts to create-app tests (sten@redhat.com)
+- moving everything from dynamic keys to static zabbix items
+  (ihorvath@redhat.com)
+- Improved nodes_not_schedulable check Check avoids master nodes Reincluded
+  zabbix trigger for check (bshpurke@redhat.com)
+- added tags support for the dm builder in gcp (mwoodson@redhat.com)
+- etcd metrics with dynamic items in zabbix (ihorvath@redhat.com)
+- Added graph for openshift.master.cluster.max_mem_pods_schedulable
+  (twiest@redhat.com)
+- add --timeout to ops-runner and a dynamic item to hold these items
+  (jdiaz@redhat.com)
+- Added more items and graphs for online preview cluster. (twiest@redhat.com)
+- Removed not scheduled check (benpack101@gmail.com)
+- delte the cert before upload (zhizhang@zhizhang-laptop-nay.redhat.com)
+- more gcp roles and changes (mwoodson@redhat.com)
+- Adding pd pv support for gcp dm (kwoodson@redhat.com)
+- Adding request path (kwoodson@redhat.com)
+- Adding service-account keys and policy (kwoodson@redhat.com)
+- Fixed typo with node related zabbix checks(node-not-ready/not-labeled) Added
+  zabbix check for non-schedulable nodes Added proper sop links in zabbix
+  (bshpurke@redhat.com)
+- Added compute node cpu idle and memory available averages items and graphs to
+  zabbix (twiest@redhat.com)
+- handle one case of not being able to remove the docker vg (sten@redhat.com)
+- fixed var name in gcp cluster creation (mwoodson@redhat.com)
+- put docker version to 1.9.1 (mwoodson@redhat.com)
+- updated gcp cluster creation with reconciler (mwoodson@redhat.com)
+- First attempt at the dm reconciler (kwoodson@redhat.com)
+- Change config loop failure to a high alert (agrimm@redhat.com)
+- removed old role git_rebase_upstream (mwoodson@redhat.com)
+- fixed readme files (mwoodson@redhat.com)
+- added new roles for gcp (mwoodson@redhat.com)
+- First attempt at service account (kwoodson@redhat.com)
+- removed warning in temp git dir (mwoodson@redhat.com)
+- Fix param swap (kwoodson@redhat.com)
+- Updating to take into account colons in ssh key hosts (kwoodson@redhat.com)
+- logic fix for ssh key comparison (kwoodson@redhat.com)
+- ProjectInfo added for sshkey support (kwoodson@redhat.com)
+- Added graphs for scheduled and oversubscribed. (twiest@redhat.com)
+- run event watch to catch/report FailedScheduling events (jdiaz@redhat.com)
+- have all masters report cluster stats (not just primary master)
+  (jdiaz@redhat.com)
+- gcloud manifest added (kwoodson@redhat.com)
+- add more generous random sleeping for various cron jobs (jdiaz@redhat.com)
+- Update the docs for oso_host_monitoring (rharriso@redhat.com)
+- Fixed the executable path of gcloud (kwoodson@redhat.com)
+- Install the gcloud package which has gcloud cli (kwoodson@redhat.com)
+- Added gcloud_compute_image ansible module (kwoodson@redhat.com)
+- Added cluster capacity items. (twiest@redhat.com)
+- Adding provisioning flag for metadata (kwoodson@redhat.com)
+- Updating openshift-tools to use our own pylintrc.  disabling too-many-lines
+  (kwoodson@redhat.com)
+- Add basic dnsmasq monitoring template and cron configuration
+  (rharriso@redhat.com)
+- use --node-checks instead of --nodes-checks (jdiaz@redhat.com)
+- Added check for nodes without labels (bshpurke@redhat.com)
+- First attempt at resource builder for gcp (kwoodson@redhat.com)
+- ensuring /var/log/rootlog directories get created (dedgar@redhat.com)
+- ironed out ansible style issues and ensured profile directory gets created
+  (dedgar@redhat.com)
+- cleaning up rootlog portion (dedgar@redhat.com)
+- cleaning up formatting (dedgar@redhat.com)
+- adding initial rootlog configuration (dedgar@redhat.com)
+
 * Wed Jul 06 2016 Joel Smith <joesmith@redhat.com> 0.0.13-1
 - page out when app builds fail >2hr or app creates fail >1hr (sten@redhat.com)
 - Add ops_map_format filter to the ops_filters plugin (joesmith@redhat.com)
