@@ -61,7 +61,19 @@
     owner: root
     group: root
     mode: 0644
-  
+  notify:
+  - "Restart the {{ osohm_host_monitoring }} service"
+
+- name: "Copy container metrics config file"
+  copy:
+    src: container_metrics_config.yml
+    dest: /etc/openshift_tools/container_metrics_config.yml
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - "Restart the {{ osohm_host_monitoring }} service"
+
 - name: "Copy {{ osohm_host_monitoring }} systemd file"
   template:
     src: "{{ osohm_host_monitoring }}.service.j2"
