@@ -289,10 +289,10 @@ def main():
     oocmd = OpenShiftOC(namespace, kubeconfig, args, verbose=False)
     app = args.name
 
-    start_time = time.time()
     if namespace in  oocmd.get_projects():
         oocmd.delete_project()
 
+    start_time = time.time()
     oocmd.new_project()
 
     oocmd.new_app(app)
