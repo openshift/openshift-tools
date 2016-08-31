@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.130
+Version:       0.0.131
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -286,6 +286,9 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Wed Aug 31 2016 Joel Diaz <jdiaz@redhat.com> 0.0.131-1
+- don't include pre-cleanup task in timing of app creates (jdiaz@redhat.com)
+
 * Wed Aug 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.130-1
 - Moving default behavoir to use cache for ossh and oscp (kwoodson@redhat.com)
 
