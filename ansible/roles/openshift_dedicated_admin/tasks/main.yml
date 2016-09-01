@@ -9,7 +9,7 @@
     dest: /etc/sysconfig/openshift-dedicated-role
     regexp: "^\\s*{{ item.key }}="
     line: "{{ item.key }}={{ item.value }}"
-  with_items: oda_config
+  with_items: "{{ oda_config }}"
   notify: restart openshift-dedicated-role
 
 - name: Enable and start the Dedicated Admin scripts
