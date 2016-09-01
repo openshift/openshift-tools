@@ -177,10 +177,6 @@ class OpenShiftOC(object):
             return stdout
 
         return "Error: %s.  Return: %s" % (proc.returncode, stderr)
-
-    
-
-
 def parse_args():
     """ parse the args from the cli """
 
@@ -239,10 +235,9 @@ def main():
     args = parse_args()
     namespace = 'ops-project-info-check'
     oocmd = OpenShiftOC(namespace, kubeconfig, args, verbose=False)
-    
 
     start_time = time.time()
-    
+
     projects_info = oocmd.get_projects_json()
     #deletionTimestamp
     print 'start checking'
@@ -251,7 +246,6 @@ def main():
     try:
         for pro in projects_info['items']:
             #print pro['status']['phase']
-            
             if 'Terminating' == pro['status']['phase']:
                 print 'found it '
                 print pro['metadata']['deletionTimestamp']
@@ -266,12 +260,9 @@ def main():
                 if time_keeps_max < (current_time - old_time).seconds:
                     time_keeps_max = (current_time - old_time).seconds
 
-
-
     except Exception, e:
         print 'something wrong when try to check the project one by one:', e
-
-    
+            
     send_zagg_data(time_keeps_max)
     print 'the logest Terminating project is there for %s seconds' % time_keeps_max
 
