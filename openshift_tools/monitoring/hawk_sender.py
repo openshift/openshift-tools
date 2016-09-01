@@ -11,11 +11,11 @@ Examples:
     from openshift_tools.monitoring.hawk_sender import HawkSender
     HOSTNAME = 'use-tower1.ops.rhcloud.com'
 
-    ZAGGCONN = HawkConnection(host='https://172.17.0.151', user='admin', password='pass')
+    ZAGGCONN = HawkConnection(url='https://172.17.0.151', user='admin', password='pass')
     ZAGGHEARTBEAT = HawkHeartbeat(templates=['template1', 'template2'], hostgroups=['hostgroup1', 'hostgroup2'])
 
     zs = HawkSender(host=HOSTNAME, hawk_connection=ZAGGCONN)
-    #zs.add_heartbeat(ZAGGHEARTBEAT) # add_heartbeat not supported yet
+    zs.add_heartbeat(ZAGGHEARTBEAT)
     zs.add_zabbix_keys({ 'test.key' : '1' })
     zs.send_metrics()
 """
