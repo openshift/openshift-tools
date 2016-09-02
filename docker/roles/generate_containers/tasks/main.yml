@@ -16,24 +16,43 @@
     src: ./src/
     dest: ./{{ base_os }}/
 
-- name: get stat for templates
+- name: get stat for templates (ansible 1.x)
   stat:
     path: "{{ item }}"
   with_fileglob: "../../../{{ base_os }}/*.j2"
   register: stat_templates
+  when: ansible_version.major == 1
+
+
+- name: save stat output
+  set_fact:
+    template_list: "{{ stat_templates }}"
+  when: not stat_templates|skipped
+
+- name: get stat for templates (ansible 2.x)
+  stat:
+    path: "{{ item }}"
+  with_fileglob: "{{ base_os }}/*.j2"
+  register: stat_templates
+  when: ansible_version.major > 1
+
+- name: save stat output
+  set_fact:
+    template_list: "{{ stat_templates }}"
+  when: not stat_templates|skipped
 
 - name: create templates
   template:
     src: "{{ item.stat.path }}"
     dest: "{{ item.stat.path | regex_replace('.j2', '') }}"
     mode: "{{ item.stat.mode }}"
-  with_items: "{{ stat_templates.results }}"
+  with_items: "{{ template_list.results }}"
 
 - name: Remove templates
   file:
     path: "{{ item.stat.path }}"
     state: absent
-  with_items: "{{ stat_templates.results }}"
+  with_items: "{{ template_list.results }}"
 
 - name: Insert auto-generated readme
   copy:
