@@ -11,7 +11,6 @@ import subprocess
 import json
 import time
 import re
-import urllib2
 import os
 import atexit
 import shutil
@@ -236,8 +235,6 @@ def main():
     namespace = 'ops-project-info-check'
     oocmd = OpenShiftOC(namespace, kubeconfig, args, verbose=False)
 
-    start_time = time.time()
-
     projects_info = oocmd.get_projects_json()
     #deletionTimestamp
     print 'start checking'
@@ -249,20 +246,21 @@ def main():
             if 'Terminating' == pro['status']['phase']:
                 print 'found it '
                 print pro['metadata']['deletionTimestamp']
-                old_time = datetime.datetime.strptime(pro['metadata']['deletionTimestamp'].replace('T', ' ').replace('Z', ''), '%Y-%m-%d %H:%M:%S')
+                temp_t = pro['metadata']['deletionTimestamp'].replace('T', ' ').replace('Z', '')
+                old_time = datetime.datetime.strptime(temp_t, '%Y-%m-%d %H:%M:%S')
                 #current_time = datetime.datetime.strptime(time.strftime('%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S')
                 #current_time = datetime.datetime.strptime(time.strftime('%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S')
                 current_time = datetime.datetime.now()
                 time_keeps = current_time - old_time
                 print 'the project in Terminating status for %s' % time_keeps
-                print (current_time - old_time).seconds
 
-                if time_keeps_max < (current_time - old_time).seconds:
-                    time_keeps_max = (current_time - old_time).seconds
+                time_keeps_max = max(time_keeps_max, (current_time - old_time).seconds)
 
-    except Exception, e:
+                print time_keeps_max
+
+    except ValueError, e:
         print 'something wrong when try to check the project one by one:', e
-            
+
     send_zagg_data(time_keeps_max)
     print 'the logest Terminating project is there for %s seconds' % time_keeps_max
 
