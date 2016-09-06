@@ -29,15 +29,12 @@ def to_bytes(num):
         num_bytes = int(num.rstrip(string.ascii_letters)) * (1000 ** 3)
     elif num.endswith('Mi'):
         num_bytes = int(num.rstrip(string.ascii_letters)) * 1024 * 1024
-    elif num.endswith('M'):
+    elif num.endswith('M') or num.endswith('m'):
         num_bytes = int(num.rstrip(string.ascii_letters)) * 1000 * 1000
     elif num.endswith('Ki'):
         num_bytes = int(num.rstrip(string.ascii_letters)) * 1024
-    elif num.endswith('K'):
+    elif num.endswith('K') or num.endswith('k'):
         num_bytes = int(num.rstrip(string.ascii_letters)) * 1000
-    elif num.endswith('m'):
-        # what's an 'm' value??
-        raise ConversionException("Found byte ending with 'm' value")
     else:
         num_bytes = int(num)
 
