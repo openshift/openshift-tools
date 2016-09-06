@@ -128,22 +128,26 @@ class OpenshiftClusterCapacity(object):
 
         for container in containers:
             if 'limits' in container['resources']:
+                pod['cpu_limits'] = pod.get('cpu_limits', default=0) # in case below if is never true
                 cpu = container['resources']['limits'].get('cpu')
                 if cpu:
                     pod['cpu_limits'] = pod.get('cpu_limits', 0) + \
                                         to_milicores(cpu)
 
+                pod['memory_limits'] = pod.get('memory_limits', default=0) # in case below if is never true
                 mem = container['resources']['limits'].get('memory')
                 if mem:
                     pod['memory_limits'] = pod.get('memory_limits', 0) + \
                                            to_bytes(mem)
 
             if 'requests' in container['resources']:
+                pod['cpu_requests'] = pod.get('cpu_requests', default=0) # in case below if is never true
                 cpu = container['resources']['requests'].get('cpu')
                 if cpu:
                     pod['cpu_requests'] = pod.get('cpu_requests', 0) + \
                                           to_milicores(cpu)
 
+                pod['memory_requests'] = pod.get('memory_requests', default=0) # in case below if is never true
                 mem = container['resources']['requests'].get('memory')
                 if mem:
                     pod['memory_requests'] = pod.get('memory_requests', 0) + \
@@ -216,6 +220,7 @@ class OpenshiftClusterCapacity(object):
 
         schedulable = 0
         for node in nodes.keys():
+            # TODO: Some containers from `oc get pods --all-namespaces -o json` don't have resources scheduled, causing memory_scheduled == 0
             available = nodes[node]['max_memory'] - \
                         nodes[node]['memory_scheduled']
             num = available / node_size
