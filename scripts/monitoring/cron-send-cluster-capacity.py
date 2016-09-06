@@ -208,7 +208,8 @@ class OpenshiftClusterCapacity(object):
 
         schedulable = 0
         for node in nodes.keys():
-            # TODO: Some containers from `oc get pods --all-namespaces -o json` don't have resources scheduled, causing memory_scheduled == 0
+            # TODO: Some containers from `oc get pods --all-namespaces -o json`
+            # don't have resources scheduled, causing memory_scheduled == 0
             available = nodes[node]['max_memory'] - \
                         nodes[node]['memory_scheduled']
             num = available / node_size
