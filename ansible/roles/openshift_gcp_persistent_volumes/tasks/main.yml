@@ -2,7 +2,7 @@
 - fail:
     msg: "Value {{ item }} is not set!"
   with_items:
-  - "{{ osapv_volumes }}"
+  - "{{ osgpv_volumes }}"
   when: item is undefined
 
 - name: Change restriced scc fsgroup to MustRunAs
