@@ -1,6 +1,6 @@
 ---
 - debug:
-    var: "{{ item }}"
+    msg: "{{ item }}"
     verbosity: 2
   with_items:
   - "{{ osaic_iam_certname }}"
