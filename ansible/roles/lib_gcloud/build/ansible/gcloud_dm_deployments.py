@@ -10,13 +10,21 @@ def main():
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list']),
             name=dict(default=None, type='str'),
-            config=dict(default=None),
+            config=dict(default=None, type='dict'),
+            config_path=dict(default=None, type='str'),
             opts=dict(default=None, type='dict'),
         ),
         supports_check_mode=True,
+        required_one_of=[['config', 'config_path']],
     )
+    config = None
+    if module.params['config'] != None:
+        config = module.params['config']
+    else:
+        config = module.params['config_path']
+
     gconfig = GcloudDeploymentManager(module.params['name'],
-                                      module.params['config'],
+                                      config,
                                       module.params['opts'])
 
     state = module.params['state']
