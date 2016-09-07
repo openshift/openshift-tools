@@ -128,26 +128,18 @@ class OpenshiftClusterCapacity(object):
 
         for container in containers:
             if 'limits' in container['resources']:
-                cpu = container['resources']['limits'].get('cpu')
-                if cpu:
-                    pod['cpu_limits'] = pod.get('cpu_limits', 0) + \
-                                        to_milicores(cpu)
+                pod['cpu_limits'] = int(pod.get('cpu_limits', 0)) \
+                    + int(to_milicores(container['resources']['limits'].get('cpu', '0')))
 
-                mem = container['resources']['limits'].get('memory')
-                if mem:
-                    pod['memory_limits'] = pod.get('memory_limits', 0) + \
-                                           to_bytes(mem)
+                pod['memory_limits'] = int(pod.get('memory_limits', 0)) \
+                    + int(to_bytes(container['resources']['limits'].get('memory', '0')))
 
             if 'requests' in container['resources']:
-                cpu = container['resources']['requests'].get('cpu')
-                if cpu:
-                    pod['cpu_requests'] = pod.get('cpu_requests', 0) + \
-                                          to_milicores(cpu)
+                pod['cpu_requests'] = int(pod.get('cpu_requests', 0)) \
+                    + int(to_milicores(container['resources']['requests'].get('cpu', '0')))
 
-                mem = container['resources']['requests'].get('memory')
-                if mem:
-                    pod['memory_requests'] = pod.get('memory_requests', 0) + \
-                                             to_bytes(mem)
+                pod['memory_requests'] = int(pod.get('memory_requests', 0)) \
+                    + int(to_bytes(container['resources']['requests'].get('memory', '0')))
 
     def load_pods(self):
         ''' put pod details into db '''
@@ -216,6 +208,8 @@ class OpenshiftClusterCapacity(object):
 
         schedulable = 0
         for node in nodes.keys():
+            # TODO: Some containers from `oc get pods --all-namespaces -o json`
+            # don't have resources scheduled, causing memory_scheduled == 0
             available = nodes[node]['max_memory'] - \
                         nodes[node]['memory_scheduled']
             num = available / node_size
