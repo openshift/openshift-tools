@@ -18,7 +18,7 @@ officially supported by Red Hat.  Use at your own risk.
 
 The repository layout is designed for use with http://rm-rf.ca/tito/[Tito]
 
-See our https://github.com/openshift/openshift-tools/blob/master/docs/build.adoc[Build instructions] for more information.
+See our https://github.com/openshift/openshift-tools/blob/prod/docs/build.adoc[Build instructions] for more information.
 
 == Builds
 RPMs from this repo can be found on our https://copr.fedoraproject.org/coprs/g/OpenShiftOnlineOps/openshift-tools/[Copr Project].
