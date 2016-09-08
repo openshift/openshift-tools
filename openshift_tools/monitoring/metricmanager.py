@@ -41,12 +41,17 @@
         mm.remove_metrics([zbx_metric, hb_metric]) # this can be a single metric too!
 '''
 
+# Reason: disable pylint import-error because our libs aren't loaded on jenkins.
+# Status: temporary until we start testing in a container where our stuff is installed.
+# pylint: disable=import-error
 import yaml
 import os
 import uuid
 import calendar
 import time
 import zbxsend
+import random
+import scandir
 
 
 # Reason: disable pylint too-few-public-methods because this is
@@ -74,17 +79,22 @@ class UniqueMetric(zbxsend.Metric):
             unique_id -- the unique id of this metric (default: generate one)
         '''
 
-        if clock == None:
-            clock = calendar.timegm(time.gmtime())
+        self.host = host
+        self.key = key
+        self.value = value
+        self.clock = clock
 
-        if unique_id == None:
+        if self.clock is None:
+            self.clock = calendar.timegm(time.gmtime())
+
+        if unique_id is None:
             self.unique_id = str(uuid.uuid4()).replace('-', '')
         else:
             self.unique_id = unique_id
 
         self.filename = self.unique_id + '.yml'
 
-        super(UniqueMetric, self).__init__(host, key, value, clock)
+        zbxsend.Metric.__init__(self, self.host, self.key, self.value, self.clock)
 
     @staticmethod
     def create_heartbeat(host, templates, hostgroups, clock=None, unique_id=None):
@@ -166,7 +176,9 @@ class MetricManager(object):
             Keyword arguments:
             filename -- the filename of the metric.
         '''
-        return os.path.join(self.metrics_directory, filename)
+        # to make disk read easier, decision was made to shard the data files based on their
+        # first 2 characters, hence the filename slice
+        return os.path.join(self.metrics_directory, filename[:2], filename)
 
     def write_metrics(self, metrics):
         ''' write one or more metrics to disk
@@ -199,19 +211,38 @@ class MetricManager(object):
             Keyword arguments:
             None
         '''
+        badfiles = []
         metrics = []
+        metrics_folders = []
+        for metfold in scandir.scandir(self.metrics_directory):
+            metrics_folders.append(metfold.name)
+        # removing the dnd folder from the list of shards, we don't want to process those
+        metrics_folders.remove('dnd')
+        random.shuffle(metrics_folders)
 
-        for filename in os.listdir(self.metrics_directory):
-            ext = os.path.splitext(filename)[-1][1:].lower().strip()
+        for shardname in metrics_folders:
+            for yamlfile in scandir.scandir(os.path.join(self.metrics_directory, shardname)):
+                ext = os.path.splitext(yamlfile.name)[-1][1:].lower().strip()
 
-            # We only want to load yaml files
-            if ext not in ['yml', 'yaml']:
-                continue
+                # We only want to load yaml files, anything else will be banished to dnd
+                if ext not in ['yml', 'yaml']:
+                    badfiles.append(yamlfile.name)
+                    continue
 
-            with open(self.metric_full_path(filename), 'r') as metric_file:
-                doc = yaml.load(metric_file)
-                metrics.append(UniqueMetric(doc['host'], doc['key'], doc['value'],
-                                            doc['clock'], doc['unique_id']))
+                with open(self.metric_full_path(yamlfile.name), 'r') as metric_file:
+                    try:
+                        doc = yaml.load(metric_file)
+                        metrics.append(UniqueMetric(doc['host'], doc['key'], doc['value'],
+                                                    doc['clock'], doc['unique_id']))
+                    except (TypeError, yaml.YAMLError) as ex:
+                        print 'Yaml file {0} failed to parse: {1}'.format(yamlfile.name, ex)
+                        badfiles.append(yamlfile.name)
+
+        # move the files that cannot be processed, then a human can look at it later
+        # TODO: maybe we need to report this to Zabbix at one point?
+        for badfile in badfiles:
+            os.rename(self.metric_full_path(badfile), os.path.join(self.metrics_directory, 'dnd', badfile))
+
         return metrics
 
     @staticmethod
