@@ -17,7 +17,7 @@ echo user:x:$(id -u):0:USER:/root:/bin/bash >> /etc/passwd
 # Configure the container on startup
 ansible-playbook /root/config.yml
 
-
+/usr/local/bin/createfoldershards.py
 # Temporary until we get cron working
 # Send the heartbeat every 5 minutes
 echo -n "Starting heartbeat loop... "
