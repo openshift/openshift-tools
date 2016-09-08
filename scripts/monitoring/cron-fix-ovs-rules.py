@@ -15,6 +15,7 @@ from subprocess import CalledProcessError
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 
 class OVS(object):
     ''' Class to hold details of finding and removing bad OVS rules '''
@@ -122,6 +123,7 @@ ZBX_KEY = "openshift.node.ovs.stray.rules"
 if __name__ == "__main__":
     ovs_fixer = OVS()
     zgs = ZaggSender()
+    hgs = HawkSender()
 
     # Dev says rules before ports since OpenShift will set up ports, then rules
     ovs_fixer.get_rule_list()
@@ -131,7 +133,9 @@ if __name__ == "__main__":
 
     # Report bad/stray rules count before removing
     zgs.add_zabbix_keys({ZBX_KEY: len(ovs_bad_rules)})
+    hgs.add_zabbix_keys({ZBX_KEY: len(ovs_bad_rules)})
     zgs.send_metrics()
+    hgs.send_metrics()
 
     print "Good ports: {0}".format(str(ovs_ports))
     print "Bad rules: {0}".format(str(ovs_bad_rules))
@@ -146,4 +150,6 @@ if __name__ == "__main__":
 
     # Report new bad/stray rule count after removal
     zgs.add_zabbix_keys({ZBX_KEY: len(ovs_bad_rules)})
+    hgs.add_zabbix_keys({ZBX_KEY: len(ovs_bad_rules)})
     zgs.send_metrics()
+    hgs.send_metrics()

@@ -23,6 +23,7 @@
 
 import argparse
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 from openshift_tools.monitoring import pminfo
 
 def parse_args():
@@ -47,6 +48,7 @@ def main():
 
     args = parse_args()
     zagg_sender = ZaggSender(verbose=args.verbose, debug=args.debug)
+    hawk_sender = HawkSender(verbose=args.verbose, debug=args.debug)
 
     filesys_full_metric = ['filesys.full']
     filesys_inode_derived_metrics = {'filesys.inodes.pused' :
@@ -66,8 +68,10 @@ def main():
     filtered_filesys_metrics = filter_out_docker_filesystems(filesys_full_metrics, 'filesys.full.')
 
     zagg_sender.add_zabbix_dynamic_item(discovery_key_fs, item_prototype_macro_fs, filtered_filesys_metrics.keys())
+    #TODO: implement zagg_sender.add_zabbix_dynamic_item
     for filesys_name, filesys_full in filtered_filesys_metrics.iteritems():
         zagg_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_full, filesys_name): filesys_full})
+        hawk_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_full, filesys_name): filesys_full})
 
 
     # Get filesytem inode metrics
@@ -76,9 +80,11 @@ def main():
     filtered_filesys_inode_metrics = filter_out_docker_filesystems(filesys_inode_metrics, 'filesys.inodes.pused.')
     for filesys_name, filesys_inodes in filtered_filesys_inode_metrics.iteritems():
         zagg_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_inode, filesys_name): filesys_inodes})
+        hawk_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_inode, filesys_name): filesys_inodes})
 
 
     zagg_sender.send_metrics()
+    hawk_sender.send_metrics()
 
 if __name__ == '__main__':
     main()

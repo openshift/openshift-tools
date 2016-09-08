@@ -27,6 +27,7 @@
 
 import argparse
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 import yaml
 import urllib2
@@ -39,6 +40,7 @@ class OpenshiftWebServiceChecker(object):
         self.args = None
         self.ora = None
         self.zagg_sender = None
+        self.hawk_sender = None
         self.service_ip = None
         self.service_port = '443'
 
@@ -48,6 +50,7 @@ class OpenshiftWebServiceChecker(object):
         self.parse_args()
         self.ora = OpenshiftRestApi()
         self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.hawk_sender = HawkSender(verbose=self.args.verbose, debug=self.args.debug)
 
         try:
             self.get_service()
@@ -60,6 +63,11 @@ class OpenshiftWebServiceChecker(object):
             "openshift.webservice.{}.status".format(self.args.pod) : status})
 
         self.zagg_sender.send_metrics()
+
+        self.hawk_sender.add_zabbix_keys({
+            "openshift.webservice.{}.status".format(self.args.pod) : status})
+
+        self.hawk_sender.send_metrics()
 
     def get_service(self):
         """ Gets the service for a pod """

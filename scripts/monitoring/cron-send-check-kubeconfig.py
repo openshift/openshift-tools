@@ -27,6 +27,7 @@
 
 import argparse
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 import yaml
 
 class OpenshiftKubeconfigChecker(object):
@@ -35,19 +36,24 @@ class OpenshiftKubeconfigChecker(object):
     def __init__(self):
         self.args = None
         self.zagg_sender = None
+        self.hawk_sender = None
 
     def run(self):
         """  Main function to run the check """
 
         self.parse_args()
         self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.hawk_sender = HawkSender(verbose=self.args.verbose, debug=self.args.debug)
 
         status = self.parse_config()
 
         self.zagg_sender.add_zabbix_keys({
             "openshift.kubeconfig.status" : status})
+        self.hawk_sender.add_zabbix_keys({
+            "openshift.kubeconfig.status" : status})
 
         self.zagg_sender.send_metrics()
+        self.hawk_sender.send_metrics()
 
     def parse_config(self):
         """ Load the kubeconfig """

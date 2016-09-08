@@ -8,6 +8,7 @@
 
 import subprocess
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 
 def get_vswitch_ports():
     ''' Get list of ports from ovs
@@ -50,9 +51,13 @@ def main():
     zs = ZaggSender()
     zs.add_zabbix_keys({'openshift.node.ovs.ports.count' : vswitch_ports_count})
     zs.add_zabbix_keys({'openshift.node.ovs.pids.count' : vswitch_pids_count})
+    hs = HawkSender()
+    hs.add_zabbix_keys({'openshift.node.ovs.ports.count' : vswitch_ports_count})
+    hs.add_zabbix_keys({'openshift.node.ovs.pids.count' : vswitch_pids_count})
 
     # Finally, sent them to zabbix
     zs.send_metrics()
+    hs.send_metrics()
 
 if __name__ == '__main__':
     main()

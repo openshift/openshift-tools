@@ -5,7 +5,7 @@ hawk_common contains common data structures and utils
 Example usage:
     from openshift_tools.monitoring.hawk_common import HawkConnection, HawkHeartbeat
 
-    ZAGGCONN = HawkConnection(host='172.17.0.151', user='admin', password='pass')
+    ZAGGCONN = HawkConnection(url='172.17.0.151', user='admin', password='pass')
     ZAGGHEARTBEAT = HawkHeartbeat(templates=['template1', 'template2'], hostgroups=['hostgroup1', 'hostgroup2'])
 
 """
@@ -20,12 +20,13 @@ class HawkConnection(object):
     '''
     # pylint: disable=too-many-arguments
     # This now supports ssl and need a couple of extra params
-    def __init__(self, url, user, password, ssl_verify=False, debug=False):
+    def __init__(self, url, user, password, ssl_verify=False, debug=False, inactive=False):
         self.url = url if url.startswith('http') else 'http://' + url
         self.username = user
         self.password = password
         self.ssl_verify = ssl_verify
         self.debug = debug
+        self.inactive = inactive # We do not want this lib to work ansless explisitly activated
 
         url_params = urlparse(self.url)
         self.host = url_params.hostname

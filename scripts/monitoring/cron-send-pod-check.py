@@ -27,6 +27,7 @@
 
 import argparse
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 import yaml
 
@@ -37,6 +38,7 @@ class OpenshiftPodChecker(object):
         self.args = None
         self.ora = None
         self.zagg_sender = None
+        self.hawk_sender = None
 
     def run(self):
         """  Main function to run the check """
@@ -44,6 +46,7 @@ class OpenshiftPodChecker(object):
         self.parse_args()
         self.ora = OpenshiftRestApi()
         self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.hawk_sender = HawkSender(verbose=self.args.verbose, debug=self.args.debug)
 
         try:
             self.get_pods()
@@ -52,6 +55,7 @@ class OpenshiftPodChecker(object):
             print "Problem retreiving pod data: %s " % ex.message
 
         self.zagg_sender.send_metrics()
+        self.hawk_sender.send_metrics()
 
     def get_pods(self):
         """ Gets pod data """
@@ -80,6 +84,8 @@ class OpenshiftPodChecker(object):
                 pass
 
         self.zagg_sender.add_zabbix_keys(
+            {"service.pod.{}.count".format(self.args.pod): pod_count})
+        self.hawk_sender.add_zabbix_keys(
             {"service.pod.{}.count".format(self.args.pod): pod_count})
 
 

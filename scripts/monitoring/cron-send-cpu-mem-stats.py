@@ -23,6 +23,7 @@ import psutil
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 
 def parse_args():
     """ parse the args from the cli """
@@ -81,6 +82,9 @@ def main():
         zgs = ZaggSender(debug=argz.debug)
         zgs.add_zabbix_keys(zagg_data)
         zgs.send_metrics()
+        hgs = HawkSender(debug=argz.debug)
+        hgs.add_zabbix_keys(zagg_data)
+        hgs.send_metrics()
 
 if __name__ == '__main__':
     main()

@@ -16,6 +16,7 @@ from stat import S_ISDIR, S_ISREG
 # Status: temporary until we start testing in a container where our stuff is ins talled.
 # pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 
 
 CERT_DISC_KEY = 'disc.certificate.expiration'
@@ -31,6 +32,7 @@ class CertificateReporting(object):
         self.current_date = datetime.datetime.today()
         self.parse_args()
         self.zsend = ZaggSender(debug=self.args.debug)
+        self.hsend = HawkSender(debug=self.args.debug)
 
     def dprint(self, msg):
         ''' debug printer '''
@@ -81,14 +83,17 @@ class CertificateReporting(object):
 
         # now push out all queued up item(s) to zabbix
         self.zsend.send_metrics()
+        self.hsend.send_metrics()
 
     def add_to_zabbix(self, certificate, days_to_expiration):
         ''' queue up item for submission to zabbix '''
 
         self.zsend.add_zabbix_dynamic_item(CERT_DISC_KEY, CERT_DISC_MACRO,
                                            [certificate])
+        #TODO: implement self.hsend.add_zabbix_dynamic_item
         zbx_key = "{}[{}]".format(CERT_DISC_KEY, certificate)
         self.zsend.add_zabbix_keys({zbx_key: days_to_expiration})
+        self.hsend.add_zabbix_keys({zbx_key: days_to_expiration})
 
     def all_certs_in_dir(self, directory):
         ''' recursively go through all *.crt files in 'directory' '''
