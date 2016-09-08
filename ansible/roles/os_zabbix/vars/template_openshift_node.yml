@@ -83,32 +83,32 @@ g_template_openshift_node:
     - Openshift Node
 
   ztriggers:
-  - name: 'One or more Docker Registries is unhealthy according to {HOST.NAME}'
-    expression: '{Template Openshift Node:openshift.node.registry-pods.healthy_pct.last(#2)}<100 and {Template Openshift Node:openshift.node.registry-pods.healthy_pct.last(#1)}<100'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_registry.asciidoc'
+  - name: "One or more Docker Registries is unhealthy according to {HOST.NAME}"
+    expression: "{Template Openshift Node:openshift.node.registry-pods.healthy_pct.last(#2)}<100 and {Template Openshift Node:openshift.node.registry-pods.healthy_pct.last(#1)}<100"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_registry.asciidoc"
     priority: avg
 
-  - name: 'Docker Registry service is unhealthy according to {HOST.NAME}'
-    expression: '{Template Openshift Node:openshift.node.registry.service.ping.last(#2)}<1 and {Template Openshift Node:openshift.node.registry.service.ping.last(#1)}<1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_registry.asciidoc'
+  - name: "Docker Registry service is unhealthy according to {HOST.NAME}"
+    expression: "{Template Openshift Node:openshift.node.registry.service.ping.last(#2)}<1 and {Template Openshift Node:openshift.node.registry.service.ping.last(#1)}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_registry.asciidoc"
     priority: avg
 
-  - name: 'Openshift Node process not running on {HOST.NAME}'
-    expression: '{Template Openshift Node:openshift.node.process.count.max(#3)}<1'
-    url: 'https://github.com/openshift/ops-sop/blob/node/V3/Alerts/openshift_node.asciidoc'
+  - name: "Openshift Node process not running on {HOST.NAME}"
+    expression: "{Template Openshift Node:openshift.node.process.count.max(#3)}<1"
+    url: "https://github.com/openshift/ops-sop/blob/node/V3/Alerts/openshift_node.asciidoc"
     priority: high
 
-  - name: 'Too many Openshift Node processes running on {HOST.NAME}'
-    expression: '{Template Openshift Node:openshift.node.process.count.min(#3)}>1'
-    url: 'https://github.com/openshift/ops-sop/blob/node/V3/Alerts/openshift_node.asciidoc'
+  - name: "Too many Openshift Node processes running on {HOST.NAME}"
+    expression: "{Template Openshift Node:openshift.node.process.count.min(#3)}>1"
+    url: "https://github.com/openshift/ops-sop/blob/node/V3/Alerts/openshift_node.asciidoc"
     priority: high
 
-  - name: '[Heal] OVS may not be running on {HOST.NAME}'
-    expression: '{Template Openshift Node:openshift.node.ovs.pids.count.last(#1)}<>4 and {Template Openshift Node:openshift.node.ovs.pids.count.last(#2)}<>4'
-    url: 'https://github.com/openshift/ops-sop/blob/node/V3/Alerts/openshift_node.asciidoc'
+  - name: "[Heal] OVS may not be running on {HOST.NAME}"
+    expression: "{Template Openshift Node:openshift.node.ovs.pids.count.last(#1)}<>4 and {Template Openshift Node:openshift.node.ovs.pids.count.last(#2)}<>4"
+    url: "https://github.com/openshift/ops-sop/blob/node/V3/Alerts/openshift_node.asciidoc"
     priority: high
 
-  - name: 'Number of OVS ports is 0 on {HOST.NAME}'
-    expression: '{Template Openshift Node:openshift.node.ovs.ports.count.last()}=0'
-    url: 'https://github.com/openshift/ops-sop/blob/node/V3/Alerts/openshift_node.asciidoc'
+  - name: "Number of OVS ports is 0 on {HOST.NAME}"
+    expression: "{Template Openshift Node:openshift.node.ovs.ports.count.last()}=0"
+    url: "https://github.com/openshift/ops-sop/blob/node/V3/Alerts/openshift_node.asciidoc"
     priority: high

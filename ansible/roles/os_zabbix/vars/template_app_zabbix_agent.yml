@@ -16,8 +16,8 @@ g_template_app_zabbix_agent:
      zabbix_type: agent
 
    ztriggers:
-   - name: '[Reboot] Zabbix agent on {HOST.NAME} is unreachable for 15 minutes'
+   - name: "[Reboot] Zabbix agent on {HOST.NAME} is unreachable for 15 minutes"
      description: Zabbix agent is unreachable for 15 minutes.
-     expression: '{Template App Zabbix Agent:agent.ping.nodata(15m)}=1'
+     expression: "{Template App Zabbix Agent:agent.ping.nodata(15m)}=1"
      priority: high
      url: https://github.com/openshift/ops-sop/blob/master/Alerts/check_ping.asciidoc
