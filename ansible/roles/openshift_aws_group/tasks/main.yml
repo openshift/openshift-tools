@@ -10,5 +10,5 @@
     iam_type: group
     iam_name: "{{ osagr_name }}"
     policy_name: "{{ osagr_policy_name }}"
-    policy_json: "{{ osagr_json_policy }}"
+    policy_json: "{{ osagr_json_policy|to_json }}"
     state: present
