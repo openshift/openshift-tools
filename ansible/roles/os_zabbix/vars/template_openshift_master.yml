@@ -553,7 +553,7 @@ g_template_openshift_master:
     units: B
     zabbix_type: calculated
     interval: 3600
-    params: '( last("mem.physmem") - min("mem.util.available", 86400) ) /  last("openshift.master.user.count")'
+    params: "( last(\"mem.physmem\") - min(\"mem.util.available\", 86400) ) /  last(\"openshift.master.user.count\")"
     applications:
     - Openshift Cluster
 
@@ -562,7 +562,7 @@ g_template_openshift_master:
     value_type: int
     zabbix_type: calculated
     interval: 3600
-    params: '( 0.70 * avg("mem.util.available", 3600) ) / last("openshift.master.mem.used_per_user")'
+    params: "( 0.70 * avg(\"mem.util.available\", 3600) ) / last(\"openshift.master.mem.used_per_user\")"
     applications:
     - Openshift Cluster
 
@@ -572,7 +572,7 @@ g_template_openshift_master:
     units: "%"
     zabbix_type: calculated
     interval: 3600
-    params: '( 100 - avg("kernel.all.cpu.idle", 3600) ) / last("openshift.master.user.count")'
+    params: "( 100 - avg(\"kernel.all.cpu.idle\", 3600) ) / last(\"openshift.master.user.count\")"
     applications:
     - Openshift Cluster
 
@@ -581,7 +581,7 @@ g_template_openshift_master:
     value_type: int
     zabbix_type: calculated
     interval: 3600
-    params: 'avg("kernel.all.cpu.idle", 3600) / last("openshift.master.cpu.used_per_user")'
+    params: "avg(\"kernel.all.cpu.idle\", 3600) / last(\"openshift.master.cpu.used_per_user\")"
     applications:
     - Openshift Master
 
@@ -590,7 +590,7 @@ g_template_openshift_master:
     value_type: float
     zabbix_type: calculated
     interval: 3600
-    params: 'last("openshift.master.pod.user.running.count") / last("openshift.master.user.count")'
+    params: "last(\"openshift.master.pod.user.running.count\") / last(\"openshift.master.user.count\")"
     applications:
     - Openshift Master
 
@@ -645,221 +645,221 @@ g_template_openshift_master:
 
   zitemprototypes:
   - discoveryrule_key: disc.pv
-    name: "disc.pv.count.{#OSO_PV}"
-    key: "disc.pv.count[{#OSO_PV}]"
+    name: "{% raw %}disc.pv.count.{{ '{#' }}OSO_PV}{% endraw %}"
+    key: "{% raw %}disc.pv.count[{{ '{#' }}OSO_PV}]{% endraw %}"
     value_type: int
     description: "Number of PV's of this size"
     applications:
     - Openshift Master
 
   - discoveryrule_key: disc.pv
-    name: "disc.pv.available.{#OSO_PV}"
-    key: "disc.pv.available[{#OSO_PV}]"
+    name: "{% raw %}disc.pv.available.{{ '{#' }}OSO_PV}{% endraw %}"
+    key: "{% raw %}disc.pv.available[{{ '{#' }}OSO_PV}]{% endraw %}"
     value_type: int
     description: "Number of PV's of this size that are available"
     applications:
     - Openshift Master
 
   - discoveryrule_key: disc.certificate.expiration
-    name: "disc.certificate.expiration[{#OSO_CERT_NAME}]"
-    key: "disc.certificate.expiration[{#OSO_CERT_NAME}]"
+    name: "{% raw %}disc.certificate.expiration[{{ '{#' }}OSO_CERT_NAME}]{% endraw %}"
+    key: "{% raw %}disc.certificate.expiration[{{ '{#' }}OSO_CERT_NAME}]{% endraw %}"
     value_type: int
     description: "Days until certificate expires"
     applications:
     - Openshift Master
 
   ztriggerprototypes:
-  - name: 'Certificate: {#OSO_CERT_NAME} less than 31 days from expiring on {HOST.NAME}'
-    expression: '{Template Openshift Master:disc.certificate.expiration[{#OSO_CERT_NAME}].last()}<31'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/certificate_expiring.asciidoc'
+  - name: "{% raw %}Certificate: {{ '{#' }}OSO_CERT_NAME} less than 31 days from expiring on {HOST.NAME}{% endraw %}"
+    expression: "{% raw %}{Template Openshift Master:disc.certificate.expiration[{{ '{#' }}OSO_CERT_NAME}].last()}<31{% endraw %}"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/certificate_expiring.asciidoc"
     priority: average
 
-  - name: 'Certificate: {#OSO_CERT_NAME} less than 15 days from expiring on {HOST.NAME}'
-    expression: '{Template Openshift Master:disc.certificate.expiration[{#OSO_CERT_NAME}].last()}<15'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/certificate_expiring.asciidoc'
+  - name: "{% raw %}Certificate: {{ '{#' }}OSO_CERT_NAME} less than 15 days from expiring on {HOST.NAME}{% endraw %}"
+    expression: "{% raw %}{Template Openshift Master:disc.certificate.expiration[{{ '{#' }}OSO_CERT_NAME}].last()}<15{% endraw %}"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/certificate_expiring.asciidoc"
     priority: high
 
   ztriggers:
-  - name: 'Openshift Master process not running on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.process.count.max(#3)}<1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc'
+  - name: "Openshift Master process not running on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.process.count.max(#3)}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
     priority: high
 
-  - name: 'Openshift SAML pod is in bad healthz status on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.smal.status.last()}>1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_saml_status.asciidoc'
+  - name: "Openshift SAML pod is in bad healthz status on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.smal.status.last()}>1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_saml_status.asciidoc"
     priority: high
 
-  - name: 'Openshift SAML pod is not running on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.smal.status.last()}<1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_saml_status.asciidoc'
+  - name: "Openshift SAML pod is not running on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.smal.status.last()}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_saml_status.asciidoc"
     priority: high
 
-  - name: 'Too many Openshift Master processes running on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.process.count.min(#3)}>1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc'
+  - name: "Too many Openshift Master processes running on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.process.count.min(#3)}>1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
     priority: high
 
-  - name: 'Etcd ping failed on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.etcd.ping.last(#1)}=0 and {Template Openshift Master:openshift.master.etcd.ping.last(#2)}=0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_etcd.asciidoc'
+  - name: "Etcd ping failed on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.etcd.ping.last(#1)}=0 and {Template Openshift Master:openshift.master.etcd.ping.last(#2)}=0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_etcd.asciidoc"
     priority: high
 
-  - name: 'Number of users for Openshift Master on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.user.count.last()}=0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc'
+  - name: "Number of users for Openshift Master on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.user.count.last()}=0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
     priority: info
 
-  - name: 'There are no projects running on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.project.count.last()}=0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc'
+  - name: "There are no projects running on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.project.count.last()}=0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
     priority: info
 
-  - name: 'Failed Persistent Volumes on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.pv.failed.count.min(#2)}>0'
+  - name: "Failed Persistent Volumes on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.pv.failed.count.min(#2)}>0"
     priority: info
 
-  - name: 'Less than 10 Available Persistent Volumes on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.pv.available.count.max(#2)}<10'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pv_remaining.asciidoc'
+  - name: "Less than 10 Available Persistent Volumes on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.pv.available.count.max(#2)}<10"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pv_remaining.asciidoc"
     priority: info
 
-  - name: 'Less than 5 Available Persistent Volumes on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.pv.available.count.max(#2)}<5'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pv_remaining.asciidoc'
+  - name: "Less than 5 Available Persistent Volumes on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.pv.available.count.max(#2)}<5"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pv_remaining.asciidoc"
     priority: warn
 
   # Put triggers that depend on other triggers here (deps must be created first)
-  - name: 'Application creation has failed on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.app.create.last(#1)}=1 and {Template Openshift Master:openshift.master.app.create.last(#2)}=1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_create_app.asciidoc'
+  - name: "Application creation has failed on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.app.create.last(#1)}=1 and {Template Openshift Master:openshift.master.app.create.last(#2)}=1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_create_app.asciidoc"
     dependencies:
-    - 'Openshift Master process not running on {HOST.NAME}'
+    - "Openshift Master process not running on {HOST.NAME}"
     priority: avg
 
-  - name: 'Application creation with build has failed on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.app.build.create.last(#1)}=1 and {Template Openshift Master:openshift.master.app.build.create.last(#2)}=1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_create_app.asciidoc'
+  - name: "Application creation with build has failed on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.app.build.create.last(#1)}=1 and {Template Openshift Master:openshift.master.app.build.create.last(#2)}=1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_create_app.asciidoc"
     dependencies:
-    - 'Openshift Master process not running on {HOST.NAME}'
+    - "Openshift Master process not running on {HOST.NAME}"
     priority: avg
 
-  - name: 'Application creation has failed multiple times in the last hour on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.app.create.sum(1h)}>3'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_create_app.asciidoc'
+  - name: "Application creation has failed multiple times in the last hour on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.app.create.sum(1h)}>3"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_create_app.asciidoc"
     dependencies:
-    - 'Openshift Master process not running on {HOST.NAME}'
+    - "Openshift Master process not running on {HOST.NAME}"
     description: The application create loop has failed 4 or more times in the last hour
     priority: high
 
-  - name: 'Application with build creation has failed multiple times in the last 2 hour on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.app.build.create.sum(2h)}>3'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_create_app.asciidoc'
+  - name: "Application with build creation has failed multiple times in the last 2 hour on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.app.build.create.sum(2h)}>3"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_create_app.asciidoc"
     dependencies:
-    - 'Openshift Master process not running on {HOST.NAME}'
+    - "Openshift Master process not running on {HOST.NAME}"
     description: The application create loop has failed 4 or more times in the last hour
     priority: high
 
-  - name: 'Openshift Master API health check is failing on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.api.healthz.max(#3)}<1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc'
+  - name: "Openshift Master API health check is failing on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.api.healthz.max(#3)}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
     priority: high
 
-  - name: 'Openshift Master Local API health check is failing on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.local.api.healthz.max(#3)}<1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc'
+  - name: "Openshift Master Local API health check is failing on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.local.api.healthz.max(#3)}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
     dependencies:
-    - 'Openshift Master process not running on {HOST.NAME}'
+    - "Openshift Master process not running on {HOST.NAME}"
     priority: high
 
-  - name: 'Openshift Master API PING check is failing on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.api.ping.max(#3)}<1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc'
+  - name: "Openshift Master API PING check is failing on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.api.ping.max(#3)}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
     priority: high
 
-  - name: 'Openshift Master Local API PING check is failing on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.local.api.ping.max(#3)}<1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc'
+  - name: "Openshift Master Local API PING check is failing on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.local.api.ping.max(#3)}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
     dependencies:
-    - 'Openshift Master process not running on {HOST.NAME}'
+    - "Openshift Master process not running on {HOST.NAME}"
     priority: high
 
-  - name: 'Openshift Master metric PING check is failing on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.metric.ping.max(#3)}<1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc'
+  - name: "Openshift Master metric PING check is failing on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.metric.ping.max(#3)}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
     dependencies:
-    - 'Openshift Master process not running on {HOST.NAME}'
+    - "Openshift Master process not running on {HOST.NAME}"
     priority: avg
 
-  - name: 'SkyDNS port not listening on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.skydns.port.open.max(#3)}<1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc'
+  - name: "SkyDNS port not listening on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.skydns.port.open.max(#3)}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
     dependencies:
-    - 'Openshift Master process not running on {HOST.NAME}'
+    - "Openshift Master process not running on {HOST.NAME}"
     priority: high
 
-  - name: 'SkyDNS query failed on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.skydns.query.max(#3)}<1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc'
+  - name: "SkyDNS query failed on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.skydns.query.max(#3)}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
     dependencies:
-    - 'Openshift Master API health check is failing on {HOST.NAME}'
+    - "Openshift Master API health check is failing on {HOST.NAME}"
     priority: high
 
-  - name: 'Hosts not schedulable according to {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.nodesnotschedulable.count.min(#2)}>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node_not_schedulable.asciidoc'
+  - name: "Hosts not schedulable according to {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.nodesnotschedulable.count.min(#2)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node_not_schedulable.asciidoc"
     dependencies:
-    - 'Openshift Master process not running on {HOST.NAME}'
-    priority: high
-  
-  - name: 'Hosts not ready according to {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.nodesnotready.count.min(#2)}>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node_not_ready.asciidoc'
-    dependencies:
-    - 'Openshift Master process not running on {HOST.NAME}'
+    - "Openshift Master process not running on {HOST.NAME}"
     priority: high
 
-  - name: 'Hosts not labeled according to {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.nodesnotlabeled.count.min(#2)}>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node_not_labeled.asciidoc' 
+  - name: "Hosts not ready according to {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.nodesnotready.count.min(#2)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node_not_ready.asciidoc"
     dependencies:
-    - 'Openshift Master process not running on {HOST.NAME}'
+    - "Openshift Master process not running on {HOST.NAME}"
     priority: high
 
-  - name: 'Critically large number of connections on etcd public port on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.etcd.port_2379.connections.established.last()}>1200'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/etcd_connections.asciidoc'
+  - name: "Hosts not labeled according to {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.nodesnotlabeled.count.min(#2)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_node_not_labeled.asciidoc"
+    dependencies:
+    - "Openshift Master process not running on {HOST.NAME}"
     priority: high
 
-  - name: 'Large number of connections on etcd public port on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.etcd.port_2379.connections.established.last()}>1000'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/etcd_connections.asciidoc'
+  - name: "Critically large number of connections on etcd public port on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.etcd.port_2379.connections.established.last()}>1200"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/etcd_connections.asciidoc"
+    priority: high
+
+  - name: "Large number of connections on etcd public port on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.etcd.port_2379.connections.established.last()}>1000"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/etcd_connections.asciidoc"
     dependencies:
-    - 'Critically large number of connections on etcd public port on {HOST.NAME}'
+    - "Critically large number of connections on etcd public port on {HOST.NAME}"
     priority: avg
 
-  - name: 'Critically large number of connections on etcd peer port on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.etcd.port_2380.connections.established.last()}>20'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/etcd_connections.asciidoc'
+  - name: "Critically large number of connections on etcd peer port on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.etcd.port_2380.connections.established.last()}>20"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/etcd_connections.asciidoc"
     priority: high
 
-  - name: 'Large number of connections on etcd peer port on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.etcd.port_2380.connections.established.last()}>16'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/etcd_connections.asciidoc'
+  - name: "Large number of connections on etcd peer port on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.etcd.port_2380.connections.established.last()}>16"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/etcd_connections.asciidoc"
     dependencies:
-    - 'Critically large number of connections on etcd peer port on {HOST.NAME}'
+    - "Critically large number of connections on etcd peer port on {HOST.NAME}"
     priority: avg
 
-  - name: 'Critically large number of connections on openshift master api server on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.api.port_443.connections.established.last()}>8000'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/master_api_connections.asciidoc'
+  - name: "Critically large number of connections on openshift master api server on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.api.port_443.connections.established.last()}>8000"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/master_api_connections.asciidoc"
     priority: high
 
-  - name: 'Large number of connections on openshift master api server on {HOST.NAME}'
-    expression: '{Template Openshift Master:openshift.master.api.port_443.connections.established.last()}>7500'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/master_api_connections.asciidoc'
+  - name: "Large number of connections on openshift master api server on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.api.port_443.connections.established.last()}>7500"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/master_api_connections.asciidoc"
     dependencies:
-    - 'Critically large number of connections on openshift master api server on {HOST.NAME}'
+    - "Critically large number of connections on openshift master api server on {HOST.NAME}"
     priority: avg
 
   zgraphs:

@@ -67,54 +67,54 @@ g_template_docker:
     - Docker Storage
     value_type: float
   ztriggers:
-  - name: 'docker.ping failed on {HOST.NAME}'
-    expression: '{Template Docker:docker.ping.max(#3)}<1'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_ping.asciidoc'
+  - name: "docker.ping failed on {HOST.NAME}"
+    expression: "{Template Docker:docker.ping.max(#3)}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_ping.asciidoc"
     priority: high
 
   # Re-enable for OpenShift 3.1.1 (https://bugzilla.redhat.com/show_bug.cgi?id=1292971#c6)
-  - name: 'docker.container.dns.resolution failed on {HOST.NAME}'
-    expression: '{Template Docker:docker.container.dns.resolution.min(#3)}>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_dns.asciidoc'
+  - name: "docker.container.dns.resolution failed on {HOST.NAME}"
+    expression: "{Template Docker:docker.container.dns.resolution.min(#3)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_dns.asciidoc"
     priority: average
     status: disabled
 
-  - name: 'docker.container.existing.dns.resolution.failed on {HOST.NAME}'
-    expression: '{Template Docker:docker.container.existing.dns.resolution.failed.min(#3)}>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_existing_docker_dns.asciidoc'
+  - name: "docker.container.existing.dns.resolution.failed on {HOST.NAME}"
+    expression: "{Template Docker:docker.container.existing.dns.resolution.failed.min(#3)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_existing_docker_dns.asciidoc"
     priority: average
 
-  - name: 'Docker storage is using LOOPBACK on {HOST.NAME}'
-    expression: '{Template Docker:docker.storage.is_loopback.last()}<>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_loopback.asciidoc'
+  - name: "Docker storage is using LOOPBACK on {HOST.NAME}"
+    expression: "{Template Docker:docker.storage.is_loopback.last()}<>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_loopback.asciidoc"
     priority: high
 
   # The storage checks run every 10 minutes. Trigering on two item values
   # means pages will begin after 30 minutes same as the previous interval
   # of 10 minutes.
-  - name: 'Critically low docker storage data space on {HOST.NAME}'
-    expression: '{Template Docker:docker.storage.data.space.percent_available.max(#2)}<5 or {Template Docker:docker.storage.data.space.available.max(#2)}<5' # < 5% or < 5GB
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_storage.asciidoc'
+  - name: "Critically low docker storage data space on {HOST.NAME}"
+    expression: "{Template Docker:docker.storage.data.space.percent_available.max(#2)}<5 or {Template Docker:docker.storage.data.space.available.max(#2)}<5" # < 5% or < 5GB
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_storage.asciidoc"
     priority: high
 
-  - name: 'Critically low docker storage metadata space on {HOST.NAME}'
-    expression: '{Template Docker:docker.storage.metadata.space.percent_available.max(#2)}<5 or {Template Docker:docker.storage.metadata.space.available.max(#2)}<0.005' # < 5% or < 5MB
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_storage.asciidoc'
+  - name: "Critically low docker storage metadata space on {HOST.NAME}"
+    expression: "{Template Docker:docker.storage.metadata.space.percent_available.max(#2)}<5 or {Template Docker:docker.storage.metadata.space.available.max(#2)}<0.005" # < 5% or < 5MB
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_storage.asciidoc"
     priority: high
 
   # Put triggers that depend on other triggers here (deps must be created first)
-  - name: 'Low docker storage data space on {HOST.NAME}'
-    expression: '{Template Docker:docker.storage.data.space.percent_available.max(#2)}<10 or {Template Docker:docker.storage.data.space.available.max(#2)}<10' # < 10% or < 10GB
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_storage.asciidoc'
+  - name: "Low docker storage data space on {HOST.NAME}"
+    expression: "{Template Docker:docker.storage.data.space.percent_available.max(#2)}<10 or {Template Docker:docker.storage.data.space.available.max(#2)}<10" # < 10% or < 10GB
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_storage.asciidoc"
     dependencies:
-    - 'Critically low docker storage data space on {HOST.NAME}'
+    - "Critically low docker storage data space on {HOST.NAME}"
     priority: average
 
-  - name: 'Low docker storage metadata space on {HOST.NAME}'
-    expression: '{Template Docker:docker.storage.metadata.space.percent_available.max(#2)}<10 or {Template Docker:docker.storage.metadata.space.available.max(#2)}<0.01' # < 10% or < 10MB
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_storage.asciidoc'
+  - name: "Low docker storage metadata space on {HOST.NAME}"
+    expression: "{Template Docker:docker.storage.metadata.space.percent_available.max(#2)}<10 or {Template Docker:docker.storage.metadata.space.available.max(#2)}<0.01" # < 10% or < 10MB
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_storage.asciidoc"
     dependencies:
-    - 'Critically low docker storage metadata space on {HOST.NAME}'
+    - "Critically low docker storage metadata space on {HOST.NAME}"
     priority: average
 
   zdiscoveryrules:
@@ -125,18 +125,18 @@ g_template_docker:
 
   zitemprototypes:
   - discoveryrule_key: disc.docker.container
-    name: "disc.docker.container.cpu.used_pct[{#CTR_NAME}]"
-    key: "disc.docker.container.cpu.used_pct[{#CTR_NAME}]"
+    name: "{% raw %}disc.docker.container.cpu.used_pct[{{ '{#' }}CTR_NAME}]{% endraw %}"
+    key: "{% raw %}disc.docker.container.cpu.used_pct[{{ '{#' }}CTR_NAME}]{% endraw %}"
     value_type: float
-    units: '%'
+    units: "%"
     description: "Amount of CPU used by the container"
     history: 14
     applications:
     - Docker Container
 
   - discoveryrule_key: disc.docker.container
-    name: "disc.docker.container.mem.used[{#CTR_NAME}]"
-    key: "disc.docker.container.mem.used[{#CTR_NAME}]"
+    name: "{% raw %}disc.docker.container.mem.used[{{ '{#' }}CTR_NAME}]{% endraw %}"
+    key: "{% raw %}disc.docker.container.mem.used[{{ '{#' }}CTR_NAME}]{% endraw %}"
     value_type: int
     units: B
     description: "Amount of Memory used by the container"
@@ -145,8 +145,8 @@ g_template_docker:
     - Docker Container
 
   - discoveryrule_key: disc.docker.container
-    name: "disc.docker.container.mem.limit[{#CTR_NAME}]"
-    key: "disc.docker.container.mem.limit[{#CTR_NAME}]"
+    name: "{% raw %}disc.docker.container.mem.limit[{{ '{#' }}CTR_NAME}]{% endraw %}"
+    key: "{% raw %}disc.docker.container.mem.limit[{{ '{#' }}CTR_NAME}]{% endraw %}"
     value_type: int
     units: B
     description: "Amount of Memory the container is allowed to use"
@@ -155,18 +155,18 @@ g_template_docker:
     - Docker Container
 
   - discoveryrule_key: disc.docker.container
-    name: "disc.docker.container.mem.limit_used_pct[{#CTR_NAME}]"
-    key: "disc.docker.container.mem.limit_used_pct[{#CTR_NAME}]"
+    name: "{% raw %}disc.docker.container.mem.limit_used_pct[{{ '{#' }}CTR_NAME}]{% endraw %}"
+    key: "{% raw %}disc.docker.container.mem.limit_used_pct[{{ '{#' }}CTR_NAME}]{% endraw %}"
     value_type: float
-    units: '%'
+    units: "%"
     description: "The percentage of memory used of the container's limit."
     history: 14
     applications:
     - Docker Container
 
   - discoveryrule_key: disc.docker.container
-    name: "disc.docker.container.mem.failcnt[{#CTR_NAME}]"
-    key: "disc.docker.container.mem.failcnt[{#CTR_NAME}]"
+    name: "{% raw %}disc.docker.container.mem.failcnt[{{ '{#' }}CTR_NAME}]{% endraw %}"
+    key: "{% raw %}disc.docker.container.mem.failcnt[{{ '{#' }}CTR_NAME}]{% endraw %}"
     value_type: int
     description: "The number of times the container has tried to allocated memory and failed"
     history: 14

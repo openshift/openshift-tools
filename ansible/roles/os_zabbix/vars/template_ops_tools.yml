@@ -9,15 +9,15 @@ g_template_ops_tools:
 
   zitemprototypes:
   - discoveryrule_key: disc.ops.runner
-    name: "Exit code of ops-runner[{#OSO_COMMAND}]"
-    key: "disc.ops.runner.command.exitcode[{#OSO_COMMAND}]"
+    name: "{% raw %}Exit code of ops-runner[{{ '{#' }}OSO_COMMAND}]{% endraw %}"
+    key: "{% raw %}disc.ops.runner.command.exitcode[{{ '{#' }}OSO_COMMAND}]{% endraw %}"
     value_type: int
     description: "The exit code of the command run from ops-runner"
     applications:
     - Ops Runner
   - discoveryrule_key: disc.ops.runner
-    name: "Timeout of ops-runner[{#OSO_COMMAND}]"
-    key: "disc.ops.runner.command.timeout[{#OSO_COMMAND}]"
+    name: "{% raw %}Timeout of ops-runner[{{ '{#' }}OSO_COMMAND}]{% endraw %}"
+    key: "{% raw %}disc.ops.runner.command.timeout[{{ '{#' }}OSO_COMMAND}]{% endraw %}"
     value_type: int
     description: "The number of seconds waited before timing out"
     applications:
@@ -25,18 +25,18 @@ g_template_ops_tools:
 
 
   ztriggerprototypes:
-  - name: 'ops-runner[{#OSO_COMMAND}]: non-zero exit code on {HOST.NAME}'
-    expression: '{Template Operations Tools:disc.ops.runner.command.exitcode[{#OSO_COMMAND}].last()}<>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ops_runner_command.asciidoc'
+  - name: "{% raw %}ops-runner[{{ '{#' }}OSO_COMMAND}]: non-zero exit code on {HOST.NAME}{% endraw %}"
+    expression: "{% raw %}{Template Operations Tools:disc.ops.runner.command.exitcode[{{ '{#' }}OSO_COMMAND}].last()}<>0{% endraw %}"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ops_runner_command.asciidoc"
     priority: average
-  - name: 'ops-runner[{#OSO_COMMAND}]: timeout on {HOST.NAME}'
-    expression: '{Template Operations Tools:disc.ops.runner.command.timeout[{#OSO_COMMAND}].last()}<>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ops_runner_command.asciidoc'
+  - name: "{% raw %}ops-runner[{{ '{#' }}OSO_COMMAND}]: timeout on {HOST.NAME}{% endraw %}"
+    expression: "{% raw %}{Template Operations Tools:disc.ops.runner.command.timeout[{{ '{#' }}OSO_COMMAND}].last()}<>0{% endraw %}"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ops_runner_command.asciidoc"
     priority: average
 
 
   zactions:
-  - name: 'Remote command for [Heal] triggers'
+  - name: "Remote command for [Heal] triggers"
     status: enabled
     escalation_time: 60
     conditions_filter:
@@ -56,12 +56,12 @@ g_template_ops_tools:
       esc_period: 0
       operationtype: remote command
       opcommand:
-        command: 'ssh -i /etc/openshift_tools/scriptrunner_id_rsa {{ ozb_scriptrunner_user }}@{{ ozb_scriptrunner_bastion_host }} remote-healer --host \"{HOST.NAME}\" --trigger \"{TRIGGER.NAME}\" --trigger-val \"{TRIGGER.VALUE}\"'
+        command: "ssh -i /etc/openshift_tools/scriptrunner_id_rsa {{ ozb_scriptrunner_user }}@{{ ozb_scriptrunner_bastion_host }} remote-healer --host \"{HOST.NAME}\" --trigger \"{TRIGGER.NAME}\" --trigger-val \"{TRIGGER.VALUE}\""
         execute_on: "zabbix server"
-        type: 'custom script'
+        type: "custom script"
       target_hosts:
-      - target_type: 'zabbix server'
+      - target_type: "zabbix server"
       opconditions:
-      - conditiontype: 'event acknowledged'
-        operator: '='
-        value: 'not acknowledged'
+      - conditiontype: "event acknowledged"
+        operator: "="
+        value: "not acknowledged"
