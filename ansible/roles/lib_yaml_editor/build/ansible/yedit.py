@@ -32,6 +32,14 @@ def parse_value(inc_value, vtype=''):
         elif inc_value in false_bools:
             return False
 
+    # If type is unknown then go ahead and attempt to yaml load it.
+    if isinstance(inc_value, str):
+        try:
+            inc_value = yaml.load(inc_value)
+        except Exception as _:
+            raise YeditException('Could not determine type of incoming value. value=[%s] vtype=[%s]' \
+                                 % (type(inc_value), vtype))
+
     return inc_value
 
 # pylint: disable=too-many-branches
