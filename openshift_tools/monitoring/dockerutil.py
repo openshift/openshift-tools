@@ -10,13 +10,10 @@
 # pylint: disable=invalid-name
 
 
-from collections import namedtuple
 from openshift_tools.timeout import timeout
+from openshift_tools.cgrouputil import CgroupUtil
 import re
 
-
-MemoryStats = namedtuple('MemoryStats', ['used', 'limit', 'limit_used_pct', 'failcnt'])
-CpuStats = namedtuple('CpuStats', ['used_pct'])
 
 class DockerDiskStats(object):
     ''' Class to store docker storage information
@@ -181,49 +178,21 @@ class DockerUtil(object):
         return retval
 
     @staticmethod
-    def _get_memory_stats(stats):
-        ''' Returns the memory stats in an easy to consume fashion.
-        '''
-        mem_stats = stats['memory_stats']
-
-        mem_used = mem_stats['usage']
-        mem_limit = mem_stats['limit']
-        mem_failcnt = mem_stats['failcnt']
-
-        mem_limit_used_pct = (float(mem_used) / float(mem_limit)) * 100
-
-        return MemoryStats(used=mem_used,
-                           limit=mem_limit,
-                           limit_used_pct=mem_limit_used_pct,
-                           failcnt=mem_failcnt
-                          )
-
-    @staticmethod
-    def _get_cpu_stats(stats):
-        ''' Calculates and returns the cpu stats in an easy to consume fashion.
-        '''
-        previous_cpu_stats = stats['precpu_stats']
-        cpu_stats = stats['cpu_stats']
-
-        cpu_used_pct = 0.0
-        cpu_delta = cpu_stats['cpu_usage']['total_usage'] - previous_cpu_stats['cpu_usage']['total_usage']
-
-        system_delta = cpu_stats['system_cpu_usage'] - previous_cpu_stats['system_cpu_usage']
+    def _get_cgroup_entity_name(docker_id):
+        ''' Takes a docker id and returns the cgroup name for that container. '''
+        return "docker-%s.scope" % docker_id
 
 
-        if system_delta > 0.0 and cpu_delta > 0.0:
-            cpu_used_pct = ((float(cpu_delta) / float(system_delta)) * \
-                           len(cpu_stats['cpu_usage']['percpu_usage'])) * 100
-
-        return CpuStats(used_pct=cpu_used_pct)
-
-
-    def get_ctr_stats(self, ctr):
+    def get_ctr_stats(self, ctr, use_cgroups=False):
         ''' Gathers and returns the container stats in an easy to consume fashion.
         '''
-        stats = self._docker.stats(ctr['Id'], stream=False)
 
-        mem_stats = DockerUtil._get_memory_stats(stats)
-        cpu_stats = DockerUtil._get_cpu_stats(stats)
+        raw_stats = None
+        if use_cgroups:
+            cgroup_name = DockerUtil._get_cgroup_entity_name(ctr['Id'])
+            cgu = CgroupUtil(cgroup_name)
+            raw_stats = cgu.raw_stats()
+        else:
+            raw_stats = self._docker.stats(ctr['Id'], stream=False)
 
-        return (cpu_stats, mem_stats)
+        return CgroupUtil.raw_stats_to_dtos(raw_stats)
