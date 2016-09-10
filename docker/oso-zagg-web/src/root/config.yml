@@ -29,9 +29,9 @@
     file:
       path: "{{ item.path }}"
       state: directory
-      owner: user
-      group: root
-      mode: "777" # This is on purpose, we have to have the perms totally open here.
+      owner: apache
+      group: apache
+      mode: "2777" # This is on purpose, we have to have the perms totally open here.
     with_items: "{{ g_zagg_server_config.targets }}"
 
   - name: Generate the zagg_server.yaml config file
