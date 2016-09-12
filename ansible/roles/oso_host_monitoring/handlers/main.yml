@@ -1,5 +1,5 @@
 ---
-- name: "Restart the {{ osohm_host_monitoring }} service"
+- name: "Restart the host monitoring service"
   service:
     name: "{{ osohm_host_monitoring }}"
     state: restarted
