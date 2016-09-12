@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.131
+Version:       0.0.132
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -288,6 +288,19 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Mon Sep 12 2016 Matt Woodson <mwoodson@redhat.com> 0.0.132-1
+- don't need string defaults here, only in the to_* functions
+  (dranders@redhat.com)
+- pylint fail - line too long (on a comment, really?) :-( (dranders@redhat.com)
+- underlying to_* functions require strings as defaults (dranders@redhat.com)
+- misunderstood how defaults work with dict.get(key, default)
+  (dranders@redhat.com)
+- re-written to remove the if and just use math (dranders@redhat.com)
+- set defaults in case if is never true (dranders@redhat.com)
+- fix a max method (zhizhang@zhizhang-laptop-nay.redhat.com)
+- use random project name, delete always at the end (sten@redhat.com)
+- add Terminating project check (zhizhang@zhizhang-laptop-nay.redhat.com)
+
 * Wed Aug 31 2016 Joel Diaz <jdiaz@redhat.com> 0.0.131-1
 - don't include pre-cleanup task in timing of app creates (jdiaz@redhat.com)
 
