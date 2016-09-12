@@ -2,8 +2,8 @@
 # tasks file for rootlog scripts, rpm, and logrotate
 
 - name: make sure rootlog rpm is installed
-  yum: 
-    name: rootlog 
+  yum:
+    name: rootlog
     state: latest
   register: install_result
   tags:
@@ -18,7 +18,7 @@
     group: root
 
 - name: create root profile directory
-  file: 
+  file:
     path: "/root/.profile.d"
     state: directory
     mode: "0700"
@@ -51,6 +51,14 @@
     mode: "0700"
     owner: root
     group: root
+
+- name: create fake log file for session log rotation
+  copy:
+    content: ""
+    dest: "/var/log/rootlog/sessions/logrotate_fakelog"
+    group: root
+    owner: root
+    mode: "0600"
 
 - name: setup ssh log rotate
   copy:
