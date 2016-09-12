@@ -9,6 +9,7 @@ oso_master_ha: True
 oso_master_primary: True
 
 container_metrics_config:
+  use_cgroups: True
   usage_checks:
   - name_match_regex: '^oso-.*-(host-monitoring)$'
     name_format_regex: '\\1'
