@@ -30,6 +30,10 @@ cp -p cloud/*.py %{buildroot}%{python_sitelib}/openshift_tools/cloud
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/cloud/aws
 cp -p cloud/aws/*.py %{buildroot}%{python_sitelib}/openshift_tools/cloud/aws
 
+# openshift_tools/cloud/gcp install
+mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/cloud/gcp
+cp -p cloud/gcp/*.py %{buildroot}%{python_sitelib}/openshift_tools/cloud/gcp
+
 # openshift_tools/monitoring install
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/monitoring
 cp -p monitoring/*.py %{buildroot}%{python_sitelib}/openshift_tools/monitoring
