@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.74
+Version:       0.0.75
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -258,6 +258,10 @@ Adds Aws specific python modules
 
 
 %changelog
+* Mon Sep 12 2016 Thomas Wiest <twiest@redhat.com> 0.0.75-1
+- Added cgrouputil.py and changed dockerutil to be able to use it if requested.
+  (twiest@redhat.com)
+
 * Thu Sep 08 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.74-1
 - adding sharding based on first 2 character to zagg data files
   (ihorvath@redhat.com)
