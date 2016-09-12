@@ -19,5 +19,7 @@ for target in CONFIG['targets']:
         fullpath = os.path.join(target['path'], '{0:02x}'.format(i))
         if not os.path.isdir(fullpath):
             os.makedirs(fullpath)
+            os.chmod(fullpath, 0o2777)
 
     os.makedirs(os.path.join(target['path'], 'dnd'))
+    os.chmod(os.path.join(target['path'], 'dnd'), 0o2777)
