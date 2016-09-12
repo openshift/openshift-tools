@@ -1,5 +1,6 @@
 ---
 container_metrics_config:
+  use_cgroups: True
   usage_checks:
   # Host monitoring
   - name_match_regex: 'oso-.*-host-monitoring'

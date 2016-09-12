@@ -83,12 +83,13 @@ class DockerContainerUsageCli(object):
     def main(self):
         ''' The main entrypoint of the cli '''
         ctr_regexes = [uchk['name_match_regex'] for uchk in self.config['usage_checks']]
+        use_cgroups = self.config.get('use_cgroups', False)
 
         ctrs = self.docker_util.get_ctrs_matching_names(ctr_regexes)
 
 
         for ctr_name, ctr in ctrs.iteritems():
-            (cpu_stats, mem_stats) = self.docker_util.get_ctr_stats(ctr)
+            (cpu_stats, mem_stats) = self.docker_util.get_ctr_stats(ctr, use_cgroups=use_cgroups)
 
             formatted_ctr_name = self.format_ctr_name(ctr_name)
 

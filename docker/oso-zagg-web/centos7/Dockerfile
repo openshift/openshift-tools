@@ -28,8 +28,6 @@ RUN yum clean metadata && \
         telnet bind-utils net-tools iproute && \
     yum clean all
 
-RUN mkdir /tmp/metrics && chown apache.apache /tmp/metrics
-
 ADD root /root
 
 EXPOSE 8000 8443
@@ -52,5 +50,5 @@ RUN sed -i -e 's/^g_default_zabbix_server.*/g_default_zabbix_server: oso-centos7
 # BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
 ADD ssl.conf /etc/httpd/conf.d/
 ADD httpd.conf /etc/httpd/conf/
-RUN chmod -R g+rwX /var/www/zagg /etc/httpd /tmp/metrics /etc/passwd /etc/openshift_tools /etc/ansible /run /var/log /etc/pki/tls/certs/localhost.crt /etc/pki/tls/private/localhost.key &&  \
+RUN chmod -R g+rwX /var/www/zagg /etc/httpd /etc/passwd /etc/openshift_tools /etc/ansible /run /var/log /etc/pki/tls/certs/localhost.crt /etc/pki/tls/private/localhost.key &&  \
     chgrp -R root /run /var/log
