@@ -260,6 +260,22 @@ Adds Aws specific python modules
 %{python_sitelib}/openshift_tools/cloud/aws/*.py
 %{python_sitelib}/openshift_tools/cloud/aws/*.py[co]
 
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-cloud-gcp subpackage
+# ----------------------------------------------------------------------------------
+%package cloud-aws
+Summary:       OpenShift Tools GCP Cloud Python Package
+Requires:      python2,python-openshift-tools-cloud,python-boto
+BuildArch:     noarch
+
+%description cloud-gcp
+Adds GCP specific python modules
+
+# openshift_tools/cloud/gcp files
+%files cloud-gcp
+%dir %{python_sitelib}/openshift_tools/cloud/gcp
+%{python_sitelib}/openshift_tools/cloud/gcp/*.py
+%{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
 * Mon Sep 12 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.76-1
