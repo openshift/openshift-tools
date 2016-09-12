@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.14
+Version:        0.0.15
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,31 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Mon Sep 12 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.15-1
+- Fixing boolean strings for ansible 2.2 (kwoodson@redhat.com)
+- ansible 2.2 task naming (jdiaz@redhat.com)
+- Fix broken root session logrotate (joesmith@redhat.com)
+- Updating from yedit to tools. (kwoodson@redhat.com)
+- Adding documentation. (kwoodson@redhat.com)
+- Added cgrouputil.py and changed dockerutil to be able to use it if requested.
+  (twiest@redhat.com)
+- Updating for 2.2. (kwoodson@redhat.com)
+- changed kibana -> logs (mwoodson@redhat.com)
+- Adding zabbix bits. (kwoodson@redhat.com)
+- ansible 2.2 changes. (kwoodson@redhat.com)
+- Fixed var name. (kwoodson@redhat.com)
+- Adding types to config passed.  This caused an error in 2.2 so I'm explicitly
+  setting them. (kwoodson@redhat.com)
+- add steps to allow a clean system to ansible_tower role successfully
+  (jdiaz@redhat.com)
+- add firewalld rpm (jdiaz@redhat.com)
+- no bare variables (jdiaz@use-tower2.ops.rhcloud.com)
+- add Terminating project check (zhizhang@zhizhang-laptop-nay.redhat.com)
+- commented out the fluentd container usage config as it's causing issues on
+  some boxes and it's not required. (twiest@redhat.com)
+- Added configs for cron-send-docker-containers-usage (twiest@redhat.com)
+- change link for existing DNS alerts (sten@redhat.com)
+
 * Wed Aug 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.14-1
 - add OpenShift Cluster(wide) templates/items/triggers (jdiaz@redhat.com)
 - Incorporate changes from arch meeting (rharriso@redhat.com)
