@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.75
+Version:       0.0.76
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -262,6 +262,9 @@ Adds Aws specific python modules
 
 
 %changelog
+* Mon Sep 12 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.76-1
+- Adding gcp snapshot tooling. (kwoodson@redhat.com)
+
 * Mon Sep 12 2016 Thomas Wiest <twiest@redhat.com> 0.0.75-1
 - Added cgrouputil.py and changed dockerutil to be able to use it if requested.
   (twiest@redhat.com)
