@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.134
+Version:       0.0.135
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -307,6 +307,9 @@ OpenShift Tools GCP specific scripts
 
 
 %changelog
+* Mon Sep 12 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.135-1
+- Adding subpackage for gcp. (kwoodson@redhat.com)
+
 * Mon Sep 12 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.134-1
 - Adding gcp snapshot tooling. (kwoodson@redhat.com)
 
