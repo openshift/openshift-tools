@@ -1,8 +1,5 @@
-'''
-module for managing yaml files
-'''
 
-DOCUMENTATION = '''
+DOCUMENTATION='''
 ---
 module: yedit
 short_description: Create, modify, and idempotently manage yaml files.
