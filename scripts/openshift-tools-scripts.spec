@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.133
+Version:       0.0.134
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -291,6 +291,9 @@ OpenShift Tools AWS specific scripts
 
 
 %changelog
+* Mon Sep 12 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.134-1
+- Adding gcp snapshot tooling. (kwoodson@redhat.com)
+
 * Mon Sep 12 2016 Thomas Wiest <twiest@redhat.com> 0.0.133-1
 - Added cgrouputil.py and changed dockerutil to be able to use it if requested.
   (twiest@redhat.com)
