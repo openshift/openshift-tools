@@ -288,6 +288,22 @@ OpenShift Tools AWS specific scripts
 /usr/bin/ops-ec2-trim-ebs-snapshots
 /usr/bin/ops-ec2-add-snapshot-tag-to-ebs-volumes
 
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-cloud-gcp subpackage
+# ----------------------------------------------------------------------------------
+%package cloud-gcp
+Summary:       OpenShift Tools Cloud tools
+Requires:      python2,python-openshift-tools-cloud-gcp
+BuildRequires: python2-devel
+BuildArch:     noarch
+
+%description cloud-gcp
+OpenShift Tools GCP specific scripts
+
+%files cloud-gcp
+/usr/bin/ops-gcp-add-snapshot-label-to-pd-volumes
+/usr/bin/ops-gcp-snapshot-pd-volumes
+/usr/bin/ops-gcp-trim-pd-snapshots
 
 
 %changelog
