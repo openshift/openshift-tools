@@ -263,7 +263,7 @@ Adds Aws specific python modules
 # ----------------------------------------------------------------------------------
 # python-openshift-tools-cloud-gcp subpackage
 # ----------------------------------------------------------------------------------
-%package cloud-aws
+%package cloud-gcp
 Summary:       OpenShift Tools GCP Cloud Python Package
 Requires:      python2,python-openshift-tools-cloud,python-boto
 BuildArch:     noarch
