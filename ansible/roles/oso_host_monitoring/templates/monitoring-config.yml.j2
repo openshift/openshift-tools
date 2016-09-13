@@ -310,7 +310,7 @@ host_monitoring_cron:
 - name: "Report on certificate expiration dates"
   hour: "1"
   minute: "1"
-  job: ops-runner -f -s 30 -n ccexp.openshift.master.certificates /usr/bin/cron-certificate-expirations
+  job: ops-runner -f -s 30 -n ccexp.openshift.master.certificates /usr/bin/cron-certificate-expirations --cert-list=/etc/origin/master,/etc/origin/node
 
 {% if osohm_cloud == 'aws' %}
 - name: send S3 bucket metrics every day
