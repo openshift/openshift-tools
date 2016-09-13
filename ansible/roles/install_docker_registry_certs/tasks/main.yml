@@ -16,7 +16,7 @@
 
 - name: debug cluster_master
   debug:
-    var: "{{ cluster_master }}"
+    msg: "cluser_master = {{ cluster_master }}"
   run_once: true
 
 - name: get service from master
