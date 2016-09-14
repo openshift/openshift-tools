@@ -118,10 +118,14 @@ class OpenShiftCLI(object):
 
     def _get(self, resource, rname=None, selector=None):
         '''return a secret by name '''
-        cmd = ['get']
+        cmd = ['get', resource]
         if selector:
             cmd.append('--selector=%s' % selector)
-        cmd.extend([resource, '-o', 'json', '-n', self.namespace])
+        if self.namespace:
+            cmd.extend(['-n', self.namespace])
+
+        cmd.extend(['-o', 'json'])
+
         if rname:
             cmd.append(rname)
 
