@@ -27,6 +27,9 @@ import json
 import os
 import yaml
 
+# Add Hawkular sender backend
+from openshift_tools.monitoring.hawk_sender import HawkSender
+
 class ZaggSenderException(Exception):
     '''
         ZabbixSenderException
@@ -39,7 +42,7 @@ class ZaggSender(object):
     collect and create UniqueMetrics and send them to Zagg
     """
 
-    def __init__(self, host=None, zagg_connection=None, verbose=False, debug=False):
+    def __init__(self, host=None, zagg_connection=None, verbose=False, debug=False, hawk_connection=None):
         """
         set up the zagg client and unique_metrics
         """
@@ -57,6 +60,10 @@ class ZaggSender(object):
 
         self.host = host
         self.zaggclient = ZaggClient(zagg_connection=zagg_connection)
+
+        # Add Hawkular sender backend (inactive by default)
+        # When inactive will not try to send data to Hawkular.
+        self.hawk_sender = HawkSender(host, hawk_connection, verbose, debug)
 
     def print_unique_metrics_key_value(self):
         """
@@ -135,6 +142,9 @@ class ZaggSender(object):
                                                  )
         self.unique_metrics.append(hb_metric)
 
+        # Add Hawkular backend
+        self.hawk_sender.add_heartbeat(heartbeat, host)
+
     def add_zabbix_keys(self, zabbix_keys, host=None, synthetic=False):
         """ create unique metric from zabbix key value pair """
 
@@ -150,6 +160,9 @@ class ZaggSender(object):
             zabbix_metrics.append(zabbix_metric)
 
         self.unique_metrics += zabbix_metrics
+
+        # Add Hawkular backend
+        self.hawk_sender.add_zabbix_keys(zabbix_keys, host, synthetic)
 
     # Allow for 6 arguments (including 'self')
     # pylint: disable=too-many-arguments
@@ -182,6 +195,8 @@ class ZaggSender(object):
 
         self.unique_metrics.append(zabbix_dynamic_item)
 
+        # FIXME: do we need a Hawkular backend here ?
+
     def send_metrics(self):
         """
         Send list of Unique Metrics to Zagg
@@ -195,3 +210,6 @@ class ZaggSender(object):
 
         self.zaggclient.add_metric(self.unique_metrics)
         self.unique_metrics = []
+
+        # Add Hawkular backend
+        self.hawk_sender.send_metrics()
