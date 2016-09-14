@@ -213,7 +213,7 @@ host_monitoring_cron:
 
 - name: run Terminating status project every 5 minutes
   minute: "*/5"
-  job: "ops-runner -f -t 180 -s 60 -n csps.openshift.master.app.create /usr/bin/cron-send-project-stats"
+  job: "ops-runner -f -t 180 -s 60 -n csps.openshift.master.project.terminating.status /usr/bin/cron-send-project-stats"
 
 - name: run create app with build process every 30 minutes
   minute: "*/30"
