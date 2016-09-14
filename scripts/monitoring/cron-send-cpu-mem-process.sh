@@ -13,6 +13,8 @@ echo "the mem usage of openshift.node process is $MemUsagenode%"
 
 ops-zagg-client -k "openshift.nodeprocess.cpu" -o "$CpuUsagenode"
 ops-zagg-client -k "openshift.nodeprocess.mem" -o "$MemUsagenode"
+ops-hawk-client -k "openshift.nodeprocess.cpu" -o "$CpuUsagenode"
+ops-hawk-client -k "openshift.nodeprocess.mem" -o "$MemUsagenode"
 
 #the cpu use of master api process usage
 
@@ -31,6 +33,8 @@ then
 
     ops-zagg-client -k "openshift.master.api.cpu" -o "$CpuUsagenode"
     ops-zagg-client -k "openshift.master.api.mem" -o "$MemUsagenode"
+    ops-hawk-client -k "openshift.master.api.cpu" -o "$CpuUsagenode"
+    ops-hawk-client -k "openshift.master.api.mem" -o "$MemUsagenode"
 else
     echo 
 fi
@@ -52,6 +56,8 @@ then
 
     ops-zagg-client -k "openshift.etcd.cpu" -o "$CpuUsageetcd"
     ops-zagg-client -k "openshift.etcd.mem" -o "$MemUsageetcd"
+    ops-hawk-client -k "openshift.etcd.cpu" -o "$CpuUsageetcd"
+    ops-hawk-client -k "openshift.etcd.mem" -o "$MemUsageetcd"
 else
     echo 
 fi
@@ -71,5 +77,5 @@ echo "the mem usage of docker daemon is $MemUsagedocker%"
 
 ops-zagg-client -k "openshift.docker.daemon.cpu" -o "$CpuUsageetcd"
 ops-zagg-client -k "openshift.docker.daemon.mem" -o "$MemUsageetcd"
-
-
+ops-hawk-client -k "openshift.docker.daemon.cpu" -o "$CpuUsageetcd"
+ops-hawk-client -k "openshift.docker.daemon.mem" -o "$MemUsageetcd"

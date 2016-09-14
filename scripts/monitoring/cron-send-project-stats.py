@@ -25,6 +25,7 @@ import sys
 # libs might exist
 #pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 
 # pylint: disable=bare-except
 def cleanup_file(inc_file):
@@ -202,10 +203,13 @@ def send_zagg_data(keep_time):
     ''' send data to Zagg'''
     zgs_time = time.time()
     zgs = ZaggSender()
+    hgs = HawkSender()
     print "Send data to Zagg"
     zgs.add_zabbix_keys({'openshift.master.project.terminating.time': keep_time})
+    hgs.add_zabbix_keys({'openshift.master.project.terminating.time': keep_time})
     try:
         zgs.send_metrics()
+        hgs.send_metrics()
     except:
         print "Error sending to Zagg: %s \n %s " % sys.exc_info()[0], sys.exc_info()[1]
     print "Data sent in %s seconds" % str(time.time() - zgs_time)

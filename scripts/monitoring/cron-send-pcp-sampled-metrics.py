@@ -14,6 +14,7 @@ import argparse
 import collections
 from openshift_tools.monitoring import pminfo
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 
 def parse_args():
     '''Parse the arguments for this script'''
@@ -79,6 +80,9 @@ def main():
         zgs = ZaggSender(verbose=args.debug)
         zgs.add_zabbix_keys(zab_results)
         zgs.send_metrics()
+        hgs = HawkSender(verbose=args.debug)
+        hgs.add_zabbix_keys(zab_results)
+        hgs.send_metrics()
 
 
 if __name__ == '__main__':

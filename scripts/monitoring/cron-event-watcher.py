@@ -25,6 +25,7 @@
 
 import argparse
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 import json
 from Queue import Queue
 import re
@@ -68,10 +69,14 @@ class OpenshiftEventConsumer(object):
             if not self.args.dry_run:
                 zagg_sender = ZaggSender(verbose=self.args.verbose,
                                          debug=self.args.debug)
+                hawk_sender = HawkSender(verbose=self.args.verbose,
+                                         debug=self.args.debug)
                 for event in event_counts.keys():
                     key = ZBX_KEY + event.lower()
                     zagg_sender.add_zabbix_keys({key: event_counts[event]})
+                    hawk_sender.add_zabbix_keys({key: event_counts[event]})
                 zagg_sender.send_metrics()
+                hawk_sender.send_metrics()
 
             time.sleep(self.args.reporting_period)
 

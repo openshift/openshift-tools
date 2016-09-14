@@ -24,6 +24,7 @@ import argparse
 # libs might exist
 #pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 
 # pylint: disable=bare-except
 def cleanup_file(inc_file):
@@ -214,6 +215,9 @@ def send_zagg_data(key_zabbix, result):
     zgs = ZaggSender()
     zgs.add_zabbix_keys({key_zabbix: result})
     zgs.send_metrics()
+    hgs = HawkSender()
+    hgs.add_zabbix_keys({key_zabbix: result})
+    hgs.send_metrics()
 
 def handle_fail(run_time, oocmd, pod):
     ''' Print failure info '''

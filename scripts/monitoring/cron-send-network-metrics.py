@@ -24,6 +24,7 @@
 
 import argparse
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 from openshift_tools.monitoring import pminfo
 
 def parse_args():
@@ -49,6 +50,7 @@ def main():
 
     args = parse_args()
     zagg_sender = ZaggSender(verbose=args.verbose, debug=args.debug)
+    hawk_sender = HawkSender(verbose=args.verbose, debug=args.debug)
 
     discovery_key_network = 'disc.network'
     pcp_network_dev_metrics = ['network.interface.in.bytes', 'network.interface.out.bytes']
@@ -68,10 +70,12 @@ def main():
 
     # Add dynamic items
     zagg_sender.add_zabbix_dynamic_item(discovery_key_network, item_proto_macro_network, filtered_network_totals.keys())
+    #TODO: hawk_sender.add_zabbix_dynamic_item(discovery_key_network, item_proto_macro_network, filtered_network_totals.keys())
 
     # Report Network IN bytes; them to the ZaggSender
     for interface, total in filtered_network_totals.iteritems():
         zagg_sender.add_zabbix_keys({'%s[%s]' % (item_proto_key_in_bytes, interface): total})
+        hawk_sender.add_zabbix_keys({'%s[%s]' % (item_proto_key_in_bytes, interface): total})
 
     # Report Network OUT Bytes;  use network.interface.out.bytes
     filtered_network_totals = clean_up_metric_dict(pcp_metrics_divided[pcp_network_dev_metrics[1]],
@@ -81,8 +85,10 @@ def main():
     for interface, total in filtered_network_totals.iteritems():
 
         zagg_sender.add_zabbix_keys({'%s[%s]' % (item_proto_key_out_bytes, interface): total})
+        hawk_sender.add_zabbix_keys({'%s[%s]' % (item_proto_key_out_bytes, interface): total})
 
     zagg_sender.send_metrics()
+    hawk_sender.send_metrics()
 
 if __name__ == '__main__':
     main()

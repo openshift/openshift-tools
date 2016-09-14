@@ -52,6 +52,7 @@ from dns import resolver
 from dns import exception as dns_exception
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 import socket
 import sys
 
@@ -61,6 +62,7 @@ class OpenshiftSkyDNSZaggClient(object):
     def __init__(self):
         self.args = None
         self.zagg_sender = None
+        self.hawk_sender = None
         self.ora = OpenshiftRestApi()
         self.dns_host = ''
         self.dns_port = 53
@@ -71,6 +73,7 @@ class OpenshiftSkyDNSZaggClient(object):
 
         self.parse_args()
         self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.hawk_sender = HawkSender(verbose=self.args.verbose, debug=self.args.debug)
 
         self.get_openshift_services()
         dns_host = [i for i in self.openshift_services if i['name'] == 'kubernetes' and i['namespace'] == 'default']
@@ -86,6 +89,7 @@ class OpenshiftSkyDNSZaggClient(object):
             self.do_dns_check()
 
         self.zagg_sender.send_metrics()
+        self.hawk_sender.send_metrics()
 
     def parse_args(self):
         """ parse the args from the cli """
@@ -110,6 +114,7 @@ class OpenshiftSkyDNSZaggClient(object):
             print "\nOpenshift SkyDNS host: %s, port: %s is OPEN" % (self.dns_host, self.dns_port)
             print "================================================\n"
             self.zagg_sender.add_zabbix_keys({'openshift.master.skydns.port.open' : 1})
+            self.hawk_sender.add_zabbix_keys({'openshift.master.skydns.port.open' : 1})
 
             return True
 
@@ -118,6 +123,7 @@ class OpenshiftSkyDNSZaggClient(object):
             print "Python Error: %s" % e
             print "================================================\n"
             self.zagg_sender.add_zabbix_keys({'openshift.master.skydns.port.open' : 0})
+            self.hawk_sender.add_zabbix_keys({'openshift.master.skydns.port.open' : 0})
 
             return False
 
@@ -177,6 +183,7 @@ class OpenshiftSkyDNSZaggClient(object):
         print "================================================\n"
 
         self.zagg_sender.add_zabbix_keys({'openshift.master.skydns.query' : dns_check})
+        self.hawk_sender.add_zabbix_keys({'openshift.master.skydns.query' : dns_check})
 
 if __name__ == '__main__':
     OMSZC = OpenshiftSkyDNSZaggClient()

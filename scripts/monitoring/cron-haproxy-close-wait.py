@@ -15,6 +15,7 @@ import time
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 
 ZABBIX_KEY = "openshift.haproxy.close-wait"
 
@@ -104,8 +105,11 @@ class HAProxy(object):
         print "Stopped {} haproxy processes".format(kill_count)
 
         zgs = ZaggSender()
+        hgs = HawkSender()
         zgs.add_zabbix_keys({ZABBIX_KEY : kill_count})
+        hgs.add_zabbix_keys({ZABBIX_KEY : kill_count})
         zgs.send_metrics()
+        hgs.send_metrics()
 
 if __name__ == '__main__':
     hap = HAProxy()

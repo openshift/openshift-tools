@@ -28,6 +28,7 @@
 import argparse
 import os
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 from openshift_tools.monitoring.ocutil import OCUtil
 import socket
 import urllib2
@@ -39,6 +40,7 @@ class OpenshiftDockerRegigtryChecker(object):
     def __init__(self):
         self.args = None
         self.zagg_sender = None
+        self.hawk_sender = None
 
         self.docker_hosts = []
         self.docker_port = None
@@ -70,6 +72,7 @@ class OpenshiftDockerRegigtryChecker(object):
         self.get_kubeconfig()
         ocutil = OCUtil(config_file=self.kubeconfig, verbose=self.args.verbose)
         self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.hawk_sender = HawkSender(verbose=self.args.verbose, debug=self.args.debug)
 
         try:
             oc_yaml = ocutil.get_service('docker-registry')
@@ -83,6 +86,7 @@ class OpenshiftDockerRegigtryChecker(object):
         self.registry_health_check()
 
         self.zagg_sender.send_metrics()
+        self.hawk_sender.send_metrics()
 
     def parse_args(self):
         """ parse the args from the cli """
@@ -174,6 +178,7 @@ class OpenshiftDockerRegigtryChecker(object):
         print "\nDocker Registry service status: {}".format(status)
 
         self.zagg_sender.add_zabbix_keys({'openshift.node.registry.service.ping' : status})
+        self.hawk_sender.add_zabbix_keys({'openshift.node.registry.service.ping' : status})
 
     def registry_health_check(self):
         """
@@ -197,6 +202,7 @@ class OpenshiftDockerRegigtryChecker(object):
                                                          len(self.docker_hosts))
 
         self.zagg_sender.add_zabbix_keys({'openshift.node.registry-pods.healthy_pct' : healthy_pct})
+        self.hawk_sender.add_zabbix_keys({'openshift.node.registry-pods.healthy_pct' : healthy_pct})
 
 if __name__ == '__main__':
     ODRC = OpenshiftDockerRegigtryChecker()

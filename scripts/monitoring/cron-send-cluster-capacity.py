@@ -26,6 +26,7 @@
 import argparse
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 import sqlite3
 import yaml
 from openshift_tools.conversions import to_bytes, to_milicores
@@ -46,6 +47,8 @@ class OpenshiftClusterCapacity(object):
         self.parse_args()
         self.zagg_sender = ZaggSender(verbose=self.args.verbose,
                                       debug=self.args.debug)
+        self.hawk_sender = HawkSender(verbose=self.args.verbose,
+                                      debug=self.args.debug)
 
         master_cfg = []
         with open(self.args.master_config, 'r') as yml:
@@ -57,6 +60,7 @@ class OpenshiftClusterCapacity(object):
 
         if not self.args.dry_run:
             self.zagg_sender.send_metrics()
+            self.hawk_sender.send_metrics()
 
     def parse_args(self):
         ''' parse the args from the cli '''
@@ -316,6 +320,8 @@ class OpenshiftClusterCapacity(object):
         max_schedulable_cpu = self.get_compute_nodes_max_schedulable_cpu()
         self.zagg_sender.add_zabbix_keys({zbx_key_max_schedulable_cpu:
                                           max_schedulable_cpu})
+        self.hawk_sender.add_zabbix_keys({zbx_key_max_schedulable_cpu:
+                                          max_schedulable_cpu})
 
         scheduled_cpu, scheduled_cpu_pct, unscheduled_cpu, unscheduled_cpu_pct = self.get_compute_nodes_scheduled_cpu()
         oversub_cpu_pct = self.get_oversub_cpu()
@@ -340,6 +346,14 @@ class OpenshiftClusterCapacity(object):
                                           int(unscheduled_cpu_pct)})
         self.zagg_sender.add_zabbix_keys({zbx_key_oversub_cpu_pct:
                                           int(oversub_cpu_pct)})
+        self.hawk_sender.add_zabbix_keys({zbx_key_scheduled_cpu: scheduled_cpu})
+        self.hawk_sender.add_zabbix_keys({zbx_key_scheduled_cpu_pct:
+                                          int(scheduled_cpu_pct)})
+        self.hawk_sender.add_zabbix_keys({zbx_key_unscheduled_cpu: unscheduled_cpu})
+        self.hawk_sender.add_zabbix_keys({zbx_key_unscheduled_cpu_pct:
+                                          int(unscheduled_cpu_pct)})
+        self.hawk_sender.add_zabbix_keys({zbx_key_oversub_cpu_pct:
+                                          int(oversub_cpu_pct)})
 
     def do_mem_stats(self):
         ''' gather and report memory statistics '''
@@ -354,6 +368,8 @@ class OpenshiftClusterCapacity(object):
         print "\nMemory Stats:"
         max_schedulable_mem = self.get_compute_nodes_max_schedulable_mem()
         self.zagg_sender.add_zabbix_keys({zbx_key_max_schedulable_mem:
+                                          max_schedulable_mem})
+        self.hawk_sender.add_zabbix_keys({zbx_key_max_schedulable_mem:
                                           max_schedulable_mem})
 
         scheduled_mem, scheduled_mem_pct, unscheduled_mem, unscheduled_mem_pct = self.get_compute_nodes_scheduled_mem()
@@ -377,6 +393,14 @@ class OpenshiftClusterCapacity(object):
         self.zagg_sender.add_zabbix_keys({zbx_key_unscheduled_mem_pct:
                                           int(unscheduled_mem_pct)})
         self.zagg_sender.add_zabbix_keys({zbx_key_oversub_mem_pct:
+                                          int(oversub_mem_pct)})
+        self.hawk_sender.add_zabbix_keys({zbx_key_scheduled_mem: scheduled_mem})
+        self.hawk_sender.add_zabbix_keys({zbx_key_scheduled_mem_pct:
+                                          int(scheduled_mem_pct)})
+        self.hawk_sender.add_zabbix_keys({zbx_key_unscheduled_mem: unscheduled_mem})
+        self.hawk_sender.add_zabbix_keys({zbx_key_unscheduled_mem_pct:
+                                          int(unscheduled_mem_pct)})
+        self.hawk_sender.add_zabbix_keys({zbx_key_oversub_mem_pct:
                                           int(oversub_mem_pct)})
 
 
@@ -402,6 +426,7 @@ class OpenshiftClusterCapacity(object):
         schedulable = self.how_many_schedulable(largest)
         print "  Number of max-size nodes schedulable:\t\t\t\t{}".format(schedulable)
         self.zagg_sender.add_zabbix_keys({zbx_key_max_pods: schedulable})
+        self.hawk_sender.add_zabbix_keys({zbx_key_max_pods: schedulable})
 
 if __name__ == '__main__':
     OCC = OpenshiftClusterCapacity()

@@ -26,6 +26,7 @@ import sys
 # libs might exist
 #pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 
 # pylint: disable=bare-except
 def cleanup_file(inc_file):
@@ -248,17 +249,25 @@ def send_zagg_data(build_ran, create_app, http_code, run_time):
     ''' send data to Zagg'''
     zgs_time = time.time()
     zgs = ZaggSender()
+    hgs = HawkSender()
     print "Send data to Zagg"
     if build_ran == 1:
         zgs.add_zabbix_keys({'openshift.master.app.build.create': create_app})
         zgs.add_zabbix_keys({'openshift.master.app.build.create.code': http_code})
         zgs.add_zabbix_keys({'openshift.master.app.build.create.time': run_time})
+        hgs.add_zabbix_keys({'openshift.master.app.build.create': create_app})
+        hgs.add_zabbix_keys({'openshift.master.app.build.create.code': http_code})
+        hgs.add_zabbix_keys({'openshift.master.app.build.create.time': run_time})
     else:
         zgs.add_zabbix_keys({'openshift.master.app.create': create_app})
         zgs.add_zabbix_keys({'openshift.master.app.create.code': http_code})
         zgs.add_zabbix_keys({'openshift.master.app.create.time': run_time})
+        hgs.add_zabbix_keys({'openshift.master.app.create': create_app})
+        hgs.add_zabbix_keys({'openshift.master.app.create.code': http_code})
+        hgs.add_zabbix_keys({'openshift.master.app.create.time': run_time})
     try:
         zgs.send_metrics()
+        hgs.send_metrics()
     except:
         print "Error sending to Zagg: %s \n %s " % sys.exc_info()[0], sys.exc_info()[1]
     print "Data sent in %s seconds" % str(time.time() - zgs_time)

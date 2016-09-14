@@ -27,6 +27,7 @@ import base64
 from openshift_tools.monitoring.awsutil import AWSUtil
 from openshift_tools.monitoring.ocutil import OCUtil
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 import sys
 import yaml
 
@@ -105,14 +106,19 @@ def main():
         print "Test-only. Received results: " + str(bucket_stats)
     else:
         zgs = ZaggSender(verbose=args.debug)
+        hgs = HawkSender(verbose=args.debug)
         zgs.add_zabbix_dynamic_item(discovery_key, discovery_macro, bucket_list)
+        #TODO: hgs.add_zabbix_dynamic_item(discovery_key, discovery_macro, bucket_list)
         for bucket in bucket_stats.keys():
             zab_key = "{}[{}]".format(prototype_s3_size, bucket)
             zgs.add_zabbix_keys({zab_key: int(round(bucket_stats[bucket]["size"]))})
+            hgs.add_zabbix_keys({zab_key: int(round(bucket_stats[bucket]["size"]))})
 
             zab_key = "{}[{}]".format(prototype_s3_count, bucket)
             zgs.add_zabbix_keys({zab_key: bucket_stats[bucket]["objects"]})
+            hgs.add_zabbix_keys({zab_key: bucket_stats[bucket]["objects"]})
         zgs.send_metrics()
+        hgs.send_metrics()
 
 if __name__ == '__main__':
     main()

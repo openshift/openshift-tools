@@ -14,3 +14,4 @@ fi
 
 # Send results to zabbix
 ops-zagg-client -k "pcp.ping" -o "$PING_RETURN"
+ops-hawk-client -k "pcp.ping" -o "$PING_RETURN"

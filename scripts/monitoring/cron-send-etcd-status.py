@@ -19,6 +19,7 @@ import requests
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.hawk_sender import HawkSender
 from prometheus_client.parser import text_string_to_metric_families
 
 class EtcdStatusZaggSender(object):
@@ -32,6 +33,7 @@ class EtcdStatusZaggSender(object):
         self.etcd_ping = 0
         self.default_config = '/etc/openshift_tools/etcd_metrics.yaml'
         self.zagg_sender = ZaggSender()
+        self.hawk_sender = ZaggSender()
 
     def parse_args(self):
         '''Parse the arguments for this script'''
@@ -124,8 +126,10 @@ class EtcdStatusZaggSender(object):
         for metric in self.config['etcd_info']['metrics']:
             if metric['type'] == 'text':
                 self.zagg_sender.add_zabbix_keys(self.text_metric(metric))
+                self.hawk_sender.add_zabbix_keys(self.text_metric(metric))
             elif metric['type'] == 'json':
                 self.zagg_sender.add_zabbix_keys(self.json_metric(metric))
+                self.hawk_sender.add_zabbix_keys(self.json_metric(metric))
 
         self.send_zagg_data()
 
@@ -133,11 +137,14 @@ class EtcdStatusZaggSender(object):
         ''' Sending the data to zagg or displaying it in console when test option is used
         '''
         self.zagg_sender.add_zabbix_keys({'openshift.master.etcd.ping' : self.etcd_ping})
+        self.hawk_sender.add_zabbix_keys({'openshift.master.etcd.ping' : self.etcd_ping})
 
         if not self.args.test:
             self.zagg_sender.send_metrics()
+            self.hawk_sender.send_metrics()
         else:
             self.zagg_sender.print_unique_metrics()
+            self.hawk_sender.print_unique_metrics()
 
 if __name__ == '__main__':
     ESZS = EtcdStatusZaggSender()

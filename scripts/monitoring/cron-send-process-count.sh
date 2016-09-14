@@ -13,4 +13,5 @@ echo "Number of processes matching [$1]: $COUNT"
 echo
 echo "Running: ops-zagg-client -k '$2' -o '$COUNT'"
 ops-zagg-client -k "$2" -o "$COUNT"
+ops-hawk-client -k "$2" -o "$COUNT"
 echo
