@@ -20,6 +20,7 @@ OpenShift Tools Scripts
 # openshift-tools-scripts-monitoring install
 mkdir -p %{buildroot}/usr/bin
 cp -p monitoring/ops-zagg-client.py %{buildroot}/usr/bin/ops-zagg-client
+cp -p monitoring/ops-hawk-client.py %{buildroot}/usr/bin/ops-hawk-client
 cp -p monitoring/ops-zagg-pcp-client.py %{buildroot}/usr/bin/ops-zagg-pcp-client
 cp -p monitoring/ops-zagg-metric-processor.py %{buildroot}/usr/bin/ops-zagg-metric-processor
 cp -p monitoring/ops-zagg-heartbeat-processor.py %{buildroot}/usr/bin/ops-zagg-heartbeat-processor
@@ -66,6 +67,7 @@ cp -p monitoring/cron-certificate-expirations.py %{buildroot}/usr/bin/cron-certi
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
+cp -p monitoring/hawk_client.yaml.example %{buildroot}/etc/openshift_tools/hawk_client.yaml
 cp -p monitoring/zagg_server.yaml.example %{buildroot}/etc/openshift_tools/zagg_server.yaml
 cp -p remote-heal/remote_healer.conf.example %{buildroot}/etc/openshift_tools/remote_healer.conf
 

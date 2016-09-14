@@ -1,0 +1,26 @@
+---
+host:
+    name: hostname.example.com
+hawk:
+    url: https://172.17.0.164
+    user: admin
+    pass: XXXXXX
+    verbose: False
+    debug: False
+    ssl_verify: False
+    inactive: True
+pcp:
+    metrics:
+        - kernel.all
+        - swap.free
+        - swap.length
+        - swap.used
+heartbeat:
+    templates:
+        - template1
+        - template2
+        - template3
+    hostgroups:
+        - hostgroup1
+        - hostgroup2
+        - hostgroup3
