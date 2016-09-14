@@ -6,5 +6,6 @@
     line: "{{item.key }}={{ item.value }}"
     state: present
     backup: yes
+    regexp: "^{{ item.key }}="
   with_items: onc_openshift_node_config
   notify: restart atomic-openshift-node
