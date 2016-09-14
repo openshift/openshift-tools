@@ -43,23 +43,23 @@ def check_arguments():
                         action="store_true")
     parser.add_argument("-p", "--profile",
                         help="change the password for the specified profile")
-    parser.parse_args()
+    args = parser.parse_args()
 
-    if len(sys.argv) < 2:
+    if not args.all and not args.profile:
         print ('Specify an account ID or profile name. \
         To change the password for all accounts on file, use \"--all\"')
         print('Usage:')
-        print('example: %s <account-id-number>' % sys.argv[0])
-        print('example: %s --all' % sys.argv[0])
+        print('example: %s <account-id-number>' % parser.prog)
+        print('example: %s --all' % parser.prog)
         sys.exit(10)
     else:
-        return True
+        return args
 
 
 def get_all_profiles():
     """ if -a is specified, generate a list of all profiles found in ~/.aws/credentials """
 
-    path = os.path.expanduser('~') + '/.aws/credentials'
+    path = os.path.join(os.path.expanduser('~'), '.aws/credentials')
     profile_list = []
 
     if os.path.isfile(path):
@@ -92,7 +92,7 @@ def change_password(aws_account, old_password, new_password):
 def main():
     """ main function """
 
-    check_arguments()
+    args = check_arguments()
 
     current_password = getpass.getpass('Old Password:')
     new_password = getpass.getpass('New Password:')
@@ -102,11 +102,11 @@ def main():
         raise ValueError('New password does not match confirmation')
 
     else:
-        if sys.argv[1] == '-p' and sys.argv[2] or sys.argv[1] == '--profile' and sys.argv[2]:
-            aws_account = sys.argv[2]
+        if args.profile:
+            aws_account = args.profile
             change_password(aws_account, current_password, confirm_password)
 
-        elif sys.argv[1] == '-a' or sys.argv[1] == '--all':
+        elif args.all:
             for aws_account in get_all_profiles():
                 change_password(aws_account, current_password, confirm_password)
 
