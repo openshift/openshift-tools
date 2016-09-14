@@ -58,6 +58,10 @@ RUN yum clean metadata && \
         openshift-tools-scripts-monitoring-openshift \
         openshift-tools-scripts-monitoring-autoheal \
         pcp-manager pcp-webapi python-pcp \
+        pcp-manager pcp-webapi python-pcp \
+        python-uri-templates google-api-python-client \
+        python-httplib2 python-oauth2client \
+        python-pyasn1 python-pyasn1-modules python-rsa \
         openvswitch \
         python-psutil \
         docker-python && \
