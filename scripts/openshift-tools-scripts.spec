@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.137
+Version:       0.0.138
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -307,6 +307,10 @@ OpenShift Tools GCP specific scripts
 
 
 %changelog
+* Thu Sep 15 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.138-1
+- changing the zagg-*-processor scripts to use multiprocessing in hope of
+  speedups (ihorvath@redhat.com)
+
 * Thu Sep 15 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.137-1
 - 
 
