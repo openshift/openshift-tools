@@ -38,13 +38,12 @@ class ZaggMetricProcessor(object):
         self.metric_manager = metric_manager
         self.zagg_client = zagg_client
 
-    def process_metrics(self):
+    def process_metrics(self, shard):
         """Processes all metrics provided by metric_manager"""
         # Read metrics from disk
-        metrics = self.metric_manager.read_metrics()
+        metrics = self.metric_manager.read_metrics(shard)
 
         if not metrics:
-            print "nothing to do!"
             return True # we successfully sent 0 metrics to zagg
 
         status, _ = self.zagg_client.add_metric(metrics)
