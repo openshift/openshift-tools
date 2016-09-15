@@ -8,13 +8,9 @@
  snapshot: daily
  snapshot: weekly
 
- This assumes that your AWS credentials are loaded in the ENV variables:
-  AWS_ACCESS_KEY_ID=xxxx
-  AWS_SECRET_ACCESS_KEY=xxxx
-
  Usage:
 
- ops-ec2-snapshot-ebs-volumes.py --with-schedule weekly
+ ops-gcp-snapshot-pd-volumes.py --with-schedule weekly --gcp-creds-file /root/.gce/creds.json
 
 """
 # Ignoring module name
@@ -31,11 +27,11 @@ from openshift_tools.cloud.gcp import gcp_snapshotter
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 
 
-EBS_SNAPSHOTTER_DISC_KEY = 'disc.gcp.pd.snapshotter'
-EBS_SNAPSHOTTER_DISC_SCHEDULE_MACRO = '#OSO_SNAP_SCHEDULE'
-EBS_SNAPSHOTTER_SNAPSHOTTABLE_VOLUMES_KEY = 'disc.gcp.pd.snapshotter.snapshottable_volumes'
-EBS_SNAPSHOTTER_SNAPSHOTS_CREATED_KEY = 'disc.gcp.pd.snapshotter.snapshots_created'
-EBS_SNAPSHOTTER_SNAPSHOT_CREATION_ERRORS_KEY = 'disc.gcp.pd.snapshotter.snapshot_creation_errors'
+PD_SNAPSHOTTER_DISC_KEY = 'disc.gcp.pd.snapshotter'
+PD_SNAPSHOTTER_DISC_SCHEDULE_MACRO = '#OSO_SNAP_SCHEDULE'
+PD_SNAPSHOTTER_SNAPSHOTTABLE_VOLUMES_KEY = 'disc.gcp.pd.snapshotter.snapshottable_volumes'
+PD_SNAPSHOTTER_SNAPSHOTS_CREATED_KEY = 'disc.gcp.pd.snapshotter.snapshots_created'
+PD_SNAPSHOTTER_SNAPSHOT_CREATION_ERRORS_KEY = 'disc.gcp.pd.snapshotter.snapshot_creation_errors'
 
 class SnapshotterCli(object):
     """ Responsible for parsing cli args and running the snapshotter. """
@@ -47,7 +43,7 @@ class SnapshotterCli(object):
 
     def parse_args(self):
         """ parse the args from the cli """
-        parser = argparse.ArgumentParser(description='EBS Snapshotter')
+        parser = argparse.ArgumentParser(description='PD Snapshotter')
         parser.add_argument('--with-schedule', choices=gcp_snapshotter.SUPPORTED_SCHEDULES,
                             required=True,
                             help='The schedule for the PD volumes to be snapshotted ' + \
@@ -102,29 +98,27 @@ class SnapshotterCli(object):
         if self.args.dry_run:
             print "  *** DRY RUN, NO ACTION TAKEN ***"
         else:
-            #TODO: uncomment
-            pass
-            #self.report_to_zabbix(total_snapshottable_vols, total_snapshots_created, total_snapshot_creation_errors)
+            self.report_to_zabbix(total_snapshottable_vols, total_snapshots_created, total_snapshot_creation_errors)
 
     def report_to_zabbix(self, total_snapshottable_vols, total_snapshots_created, total_snapshot_creation_errors):
         """ Sends the commands exit code to zabbix. """
         zs = ZaggSender(verbose=True)
 
 
-        # Populate EBS_SNAPSHOTTER_DISC_SCHEDULE_MACRO with the schedule
-        zs.add_zabbix_dynamic_item(EBS_SNAPSHOTTER_DISC_KEY, EBS_SNAPSHOTTER_DISC_SCHEDULE_MACRO, \
+        # Populate PD_SNAPSHOTTER_DISC_SCHEDULE_MACRO with the schedule
+        zs.add_zabbix_dynamic_item(PD_SNAPSHOTTER_DISC_KEY, PD_SNAPSHOTTER_DISC_SCHEDULE_MACRO, \
                                    [self.args.with_schedule])
 
         # Send total_snapshottable_vols prototype item key and value
-        zs.add_zabbix_keys({'%s[%s]' % (EBS_SNAPSHOTTER_SNAPSHOTTABLE_VOLUMES_KEY, self.args.with_schedule): \
+        zs.add_zabbix_keys({'%s[%s]' % (PD_SNAPSHOTTER_SNAPSHOTTABLE_VOLUMES_KEY, self.args.with_schedule): \
                            total_snapshottable_vols})
 
         # Send total_snapshots_created prototype item key and value
-        zs.add_zabbix_keys({'%s[%s]' % (EBS_SNAPSHOTTER_SNAPSHOTS_CREATED_KEY, self.args.with_schedule): \
+        zs.add_zabbix_keys({'%s[%s]' % (PD_SNAPSHOTTER_SNAPSHOTS_CREATED_KEY, self.args.with_schedule): \
                            total_snapshots_created})
 
         # Send total_snapshot_creation_errors prototype item key and value
-        zs.add_zabbix_keys({'%s[%s]' % (EBS_SNAPSHOTTER_SNAPSHOT_CREATION_ERRORS_KEY, self.args.with_schedule): \
+        zs.add_zabbix_keys({'%s[%s]' % (PD_SNAPSHOTTER_SNAPSHOT_CREATION_ERRORS_KEY, self.args.with_schedule): \
                            total_snapshot_creation_errors})
 
 

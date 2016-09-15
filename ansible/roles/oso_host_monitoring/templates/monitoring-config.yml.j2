@@ -350,7 +350,38 @@ host_monitoring_cron:
   minute: "10"
   job: ops-runner -f -s 120 -n oetes.trim.snapshots ops-ec2-trim-ebs-snapshots --aws-creds-profile snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
 {% endif %}
-{% endif %}
+{% if osohm_cloud == 'gcp' %}
+- name: "Add snapshot tag to autoprovisioned pv volumes"
+  hour: "*"
+  minute: "30"
+  job: ops-runner -f -s 120 -n ogasttpv.add.snapshot.tag.autopv ops-gcp-add-snapshot-tag-to-pd-volumes --autoprovisioned-pv-volumes daily --set-purpose-tag --gcp-creds-file /root/.gce/creds.json
 
+- name: "Snapshot volumes tagged with hourly"
+  hour: "*"
+  minute: "0"
+  job: ops-runner -f -s 120 -n ogspv.snapshot.hourly ops-gcp-snapshot-pd-volumes --gcp-creds-file /root/.gce/creds.json --with-schedule hourly
+
+- name: "Snapshot pd volumes tagged with daily"
+  hour: "0"
+  minute: "0"
+  job: ops-runner -f -s 120 -n ogspv.snapshot.daily ops-gcp-snapshot-pd-volumes --gcp-creds-file /root/.gce/creds.json --with-schedule daily
+
+- name: "Snapshot pd volumes tagged with weekly"
+  weekday: "0"
+  hour: "0"
+  minute: "0"
+  job: ops-runner -f -s 120 -n ogspv.snapshot.weekly ops-gcp-snapshot-pd-volumes --gcp-creds-file /root/.gce/creds.json --with-schedule weekly
+
+- name: "Snapshot pd volumes tagged with monthly"
+  day: "1"
+  hour: "0"
+  minute: "0"
+  job: ops-runner -f -s 120 -n ogspv.snapshot.monthly ops-gcp-snapshot-pd-volumes --gcp-creds-file /root/.gce/creds.json --with-schedule monthly
+
+- name: "Trim pd Snapshot"
+  minute: "10"
+  job: ops-runner -f -s 120 -n ogtps.trim.snapshots ops-gcp-trim-pd-snapshots --gcp-creds-file snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
+
+{% endif %}
 {# end if host master #}
 {% endif %}

@@ -159,7 +159,7 @@ class Base(object):
 
     def get_snapshot_by_name(self, snap_name):
         '''return a snap by its name'''
-        for snap in self.snapshots:
+        for snap in self.get_all_snapshots():
             if snap['name'] == snap_name:
                 return snap
 

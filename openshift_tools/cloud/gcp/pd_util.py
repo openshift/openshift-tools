@@ -110,7 +110,7 @@ class PDUtil(Base):
             if vol['name'] in skip_volume_names:
                 continue
 
-            if "kubernetes.io/created-for" in vol['description']:
+            if vol.has_key('description') and "kubernetes.io/created-for" in vol['description']:
                 autoprovisioned_pv_volume_names.add(vol['name'])
 
         return autoprovisioned_pv_volume_names
@@ -161,7 +161,7 @@ class PDUtil(Base):
         skip_volume_names = skip_volume_names.union(mpnames)
 
         # These are all of the rest of the volumes. aka "unidentified"
-        unames = [v['name'] for v in self.instances  if v['name'] not in skip_volume_names]
+        unames = [v['name'] for v in self.volumes if v['name'] not in skip_volume_names]
 
         return OpenShiftVolumeTypes(master_root=mnames,
                                     node_root=nnames,
