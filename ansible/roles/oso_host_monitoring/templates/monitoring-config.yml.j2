@@ -381,7 +381,8 @@ host_monitoring_cron:
 - name: "Trim pd Snapshot"
   minute: "10"
   job: ops-runner -f -s 120 -n ogtps.trim.snapshots ops-gcp-trim-pd-snapshots --gcp-creds-file snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
-
 {% endif %}
+{% endif %}
+
 {# end if host master #}
 {% endif %}
