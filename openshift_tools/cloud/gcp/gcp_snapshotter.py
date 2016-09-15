@@ -45,6 +45,7 @@ from dateutil import parser
 from datetime import datetime
 from datetime import timedelta
 import os
+import time
 
 SNAP_TAG_KEY = 'snapshot'
 
@@ -119,9 +120,9 @@ class PDSnapshotter(Base):
                     # create the snapshot
                     #new_snapshot = volume.create_snapshot(description=description)
                     #inst_id = volume.attach_data.instance_id
-                    inst_name = None
+                    inst_name = 'detached'
 
-                    if volume['users']:
+                    if volume.has_key('users') and isinstance(volume['users'], list):
                         inst_name = os.path.basename(volume['users'][0])
 
                     attach_data = "%s--%s" % (str('true' if inst_name else 'false'), \
@@ -149,6 +150,8 @@ class PDSnapshotter(Base):
                                                                     ).execute()
 
                     snapshots.append(new_snapshot)
+                    # let the snapshot get created before we proceed to label
+                    time.sleep(5)
                     # Currently the API for disks().createSnapshot does not apply the
                     # labels to the snapshot.  We must label the snapshot
                     _ = self.set_snapshot_label(snapshot_name, snap_labels)
@@ -400,3 +403,4 @@ class PDSnapshotter(Base):
         self.verbose_print()
 
         return (all_expired_snapshots, deleted_snapshots, errors)
+
