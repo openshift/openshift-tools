@@ -50,8 +50,8 @@ import uuid
 import calendar
 import time
 import zbxsend
-import random
 import scandir
+import logging
 
 
 # Reason: disable pylint too-few-public-methods because this is
@@ -168,6 +168,7 @@ class MetricManager(object):
             Keyword arguments:
             metrics_directory -- the directory where the metrics should be stored
         '''
+        self.logger = logging.getLogger(__name__)
         self.metrics_directory = metrics_directory
 
     def metric_full_path(self, filename):
@@ -186,6 +187,7 @@ class MetricManager(object):
             Keyword arguments:
             metrics -- a single metric, or a list of metrics to be written to disk
         '''
+
         if not isinstance(metrics, list):
             metrics = [metrics]
 
@@ -203,9 +205,14 @@ class MetricManager(object):
             metrics = [metrics]
 
         for metric in metrics:
-            os.unlink(self.metric_full_path(metric.filename))
+            try:
+                os.unlink(self.metric_full_path(metric.filename))
+            except IOError as ex:
+                self.logger.error('remove_metrics: Attempt to delete file %s failed with %s',
+                                  metric.filename,
+                                  ex)
 
-    def read_metrics(self):
+    def read_metrics(self, shard):
         ''' read in all of the metrics contained in the disk cache
 
             Keyword arguments:
@@ -213,30 +220,25 @@ class MetricManager(object):
         '''
         badfiles = []
         metrics = []
-        metrics_folders = []
-        for metfold in scandir.scandir(self.metrics_directory):
-            metrics_folders.append(metfold.name)
-        # removing the dnd folder from the list of shards, we don't want to process those
-        metrics_folders.remove('dnd')
-        random.shuffle(metrics_folders)
 
-        for shardname in metrics_folders:
-            for yamlfile in scandir.scandir(os.path.join(self.metrics_directory, shardname)):
-                ext = os.path.splitext(yamlfile.name)[-1][1:].lower().strip()
+        for yamlfile in scandir.scandir(os.path.join(self.metrics_directory, shard)):
+            ext = os.path.splitext(yamlfile.name)[-1][1:].lower().strip()
 
-                # We only want to load yaml files, anything else will be banished to dnd
-                if ext not in ['yml', 'yaml']:
+            # We only want to load yaml files, anything else will be banished to dnd
+            if ext not in ['yml', 'yaml']:
+                badfiles.append(yamlfile.name)
+                continue
+
+            with open(self.metric_full_path(yamlfile.name), 'r') as metric_file:
+                try:
+                    doc = yaml.load(metric_file)
+                    metrics.append(UniqueMetric(doc['host'], doc['key'], doc['value'],
+                                                doc['clock'], doc['unique_id']))
+                except (TypeError, yaml.YAMLError, IOError) as ex:
+                    self.logger.error('Yaml file %s failed to parse: %s',
+                                      yamlfile.name,
+                                      ex)
                     badfiles.append(yamlfile.name)
-                    continue
-
-                with open(self.metric_full_path(yamlfile.name), 'r') as metric_file:
-                    try:
-                        doc = yaml.load(metric_file)
-                        metrics.append(UniqueMetric(doc['host'], doc['key'], doc['value'],
-                                                    doc['clock'], doc['unique_id']))
-                    except (TypeError, yaml.YAMLError) as ex:
-                        print 'Yaml file {0} failed to parse: {1}'.format(yamlfile.name, ex)
-                        badfiles.append(yamlfile.name)
 
         # move the files that cannot be processed, then a human can look at it later
         # TODO: maybe we need to report this to Zabbix at one point?
