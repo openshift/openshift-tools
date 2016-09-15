@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.15
+Version:        0.0.16
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,25 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Sep 15 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.16-1
+- Fixing code for snapshots. (kwoodson@redhat.com)
+- First attempt at zabbix maintenance. (kwoodson@redhat.com)
+- fix a the name typo (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fixed debug to use a msg instead of var (mwoodson@redhat.com)
+- First attempt at maintenance (kwoodson@redhat.com)
+- updated some code docs (mwoodson@redhat.com)
+- updated oc_label to handle selectors and multiple labels at a time
+  (mwoodson@redhat.com)
+- First attempt at zabbix maintenance. (kwoodson@redhat.com)
+- fix a the name typo (zhizhang@zhizhang-laptop-nay.redhat.com)
+- router doens't support edits yet (mwoodson@redhat.com)
+- made edits to router/registry to use registry.ops (mwoodson@redhat.com)
+- added config changes to registry deployer (mwoodson@redhat.com)
+- fixed debug to use a msg instead of var (mwoodson@redhat.com)
+- check for certs in /etc/origin/{master,node} (jdiaz@redhat.com)
+- raise severity on config loop trigger to high (jdiaz@redhat.com)
+- First attempt at maintenance (kwoodson@redhat.com)
+
 * Mon Sep 12 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.15-1
 - Fixing boolean strings for ansible 2.2 (kwoodson@redhat.com)
 - ansible 2.2 task naming (jdiaz@redhat.com)
