@@ -8,30 +8,26 @@
  snapshot: daily
  snapshot: weekly
 
- This assumes that your AWS credentials are loaded in the ENV variables:
-  AWS_ACCESS_KEY_ID=xxxx
-  AWS_SECRET_ACCESS_KEY=xxxx
-
  Usage:
 
- ops-ec2-snapshot-ebs-volumes.py --with-schedule weekly
+ ops-gcp-trim-pd-snapshots.py --keep-hourly 10 --gcp-creds-file /root/.gce/creds.json
 
 """
 # Ignoring module name
 # pylint: disable=invalid-name
 
-import os
+import json
 import argparse
-from openshift_tools.cloud.aws import ebs_snapshotter
+from openshift_tools.cloud.gcp import gcp_snapshotter
 
 # Reason: disable pylint import-error because our libs aren't loaded on jenkins.
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 
-EXPIRED_SNAPSHOTS_KEY = 'aws.ebs.snapshotter.expired_snapshots'
-DELETED_SNAPSHOTS_KEY = 'aws.ebs.snapshotter.deleted_snapshots'
-DELETION_ERRORS_KEY = 'aws.ebs.snapshotter.deletion_errors'
+EXPIRED_SNAPSHOTS_KEY = 'gcp.pd.snapshotter.expired_snapshots'
+DELETED_SNAPSHOTS_KEY = 'gcp.pd.snapshotter.deleted_snapshots'
+DELETION_ERRORS_KEY = 'gcp.pd.snapshotter.deletion_errors'
 
 class TrimmerCli(object):
     """ Responsible for parsing cli args and running the trimmer. """
@@ -42,7 +38,7 @@ class TrimmerCli(object):
 
     def parse_args(self):
         """ parse the args from the cli """
-        parser = argparse.ArgumentParser(description='EBS Snapshot Trimmer')
+        parser = argparse.ArgumentParser(description='PD Snapshot Trimmer')
         parser.add_argument('--keep-hourly', required=True, type=int,
                             help='The number of hourly snapshots to keep. 0 is infinite.')
         parser.add_argument('--keep-daily', required=True, type=int,
@@ -51,8 +47,8 @@ class TrimmerCli(object):
                             help='The number of weekly snapshots to keep. 0 is infinite.')
         parser.add_argument('--keep-monthly', required=True, type=int,
                             help='The number of monthly snapshots to keep. 0 is infinite.')
-        parser.add_argument('--aws-creds-profile', required=False,
-                            help='The AWS credentials profile to use.')
+        parser.add_argument('--gcp-creds-file', required=False,
+                            help='The gcp credentials file to use.')
         parser.add_argument('--dry-run', action='store_true', default=False,
                             help='Say what would have been done, but don\'t actually do it.')
 
@@ -66,14 +62,16 @@ class TrimmerCli(object):
         total_deleted_snapshots = 0
         total_deletion_errors = 0
 
-        if self.args.aws_creds_profile:
-            os.environ['AWS_PROFILE'] = self.args.aws_creds_profile
+        creds = json.loads(open(self.args.gcp_creds_file).read())
 
-        regions = ebs_snapshotter.EbsSnapshotter.get_supported_regions()
+        regions = gcp_snapshotter.PDSnapshotter.get_supported_regions(creds['project_id'], self.args.gcp_creds_file)
 
         for region in regions:
             print "Region: %s:" % region
-            ss = ebs_snapshotter.EbsSnapshotter(region.name, verbose=True)
+            ss = gcp_snapshotter.PDSnapshotter(creds['project_id'],
+                                               region['name'],
+                                               self.args.gcp_creds_file,
+                                               verbose=True)
 
             expired_snapshots, deleted_snapshots, snapshot_deletion_errors = \
                 ss.trim_snapshots(hourly_backups=self.args.keep_hourly, \
