@@ -3,7 +3,7 @@
 
 """
  This script can be used to reset the passwords for your AWS IAM user accounts.
- It can be used for an individual account or for all your accounts at once.
+ It can be used for individual accounts or for all your accounts at once.
 
  This assumes that the AWS credentials for the account(s) are present in "~/.aws/credentials"
  The credentials entry must also be labeled with a name:
@@ -14,10 +14,9 @@
 
  Usage:
 
-  for an individual account:
- change_iam_password.py -p ded-stage-aws
- or
- change_iam_password.py -p 123456789012
+ For individual accounts:
+ change_iam_password.py -p ded-stage-aws -p ded-int-aws -p <some-other-account>
+
 
  For all accounts found in ~/.aws/credentials:
  change_iam_password.py --all
@@ -42,11 +41,12 @@ def check_arguments():
                         help="change the password for every profile in ~/.aws/credentials",
                         action="store_true")
     parser.add_argument("-p", "--profile",
-                        help="change the password for the specified profile")
+                        help="change the password for the specified profile",
+                        action='append')
     args = parser.parse_args()
 
     if not args.all and not args.profile:
-        print ('Specify an account ID or profile name. \
+        print('Specify an account ID or profile name. \
         To change the password for all accounts on file, use \"--all\"')
         print('Usage:')
         print('example: %s <account-id-number>' % parser.prog)
@@ -74,15 +74,15 @@ def get_all_profiles():
         raise ValueError(path + 'does not exist')
 
 
-def change_password(aws_account, old_password, new_password):
+def change_password(aws_account, user_name, new_password):
     """ change the password for the specified account"""
 
     session = boto3.Session(profile_name=aws_account)
     client = session.client('iam')
 
-    response = client.change_password(
-        OldPassword=old_password,
-        NewPassword=new_password
+    response = client.update_login_profile(
+        UserName=user_name,
+        Password=new_password
         )
 
     print('Password successfully changed for:', aws_account)
@@ -94,7 +94,7 @@ def main():
 
     args = check_arguments()
 
-    current_password = getpass.getpass('Old Password:')
+    user_name = raw_input('Username: ')
     new_password = getpass.getpass('New Password:')
     confirm_password = getpass.getpass('Confirm New Password:')
 
@@ -103,12 +103,12 @@ def main():
 
     else:
         if args.profile:
-            aws_account = args.profile
-            change_password(aws_account, current_password, confirm_password)
+            for aws_account in args.profile:
+                change_password(aws_account, user_name, confirm_password)
 
         elif args.all:
             for aws_account in get_all_profiles():
-                change_password(aws_account, current_password, confirm_password)
+                change_password(aws_account, user_name, confirm_password)
 
         else:
             raise ValueError('No suitable arguments provided')
