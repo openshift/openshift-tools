@@ -18,17 +18,18 @@
 
 """zabbix_metric_processor Module
 The purpose of this module is to process metrics and send them to Zabbix.
+
 """
-
-# This is the size of each chunk that we send to zabbix. We're defaulting to
-# the size that the zabbix sender uses.
-CHUNK_SIZE = 250
-
+import logging
 from openshift_tools.monitoring.metricmanager import UniqueMetric
 # Reason: disable pylint import-error because it does not exist in the buildbot
 # Status: permanently disabled
 # pylint: disable=import-error
 from zbxsend import send_to_zabbix
+
+# This is the size of each chunk that we send to zabbix. We're defaulting to
+# the size that the zabbix sender uses.
+CHUNK_SIZE = 250
 
 # Reason: disable pylint too-few-public-methods because this class is a simple
 #     helper / wrapper class.
@@ -81,6 +82,7 @@ class ZabbixMetricProcessor(object):
         self.zbxsender = zbxsender
         self._verbose = verbose
         self._hostname = hostname
+        self.logger = logging.getLogger(__name__)
 
     # TODO: change this over to use real logging.
     def _log(self, message):
@@ -96,7 +98,7 @@ class ZabbixMetricProcessor(object):
         if self._verbose:
             print message
 
-    def process_zbx_metrics(self):
+    def process_zbx_metrics(self, shard):
         """Processes zbx metrics provided by metric_manager
 
         Args: None
@@ -105,7 +107,7 @@ class ZabbixMetricProcessor(object):
         """
 
         # Read metrics from disk
-        all_metrics = self.metric_manager.read_metrics()
+        all_metrics = self.metric_manager.read_metrics(shard)
 
         # Process the zbx metrics
         zbx_metrics = self.metric_manager.filter_zbx_metrics(all_metrics)
@@ -121,11 +123,9 @@ class ZabbixMetricProcessor(object):
         # We write them to disk so that we can retry sending if there's an error
         self.metric_manager.write_metrics(zagg_metrics)
 
-        zagg_metrics_errors = self._process_normal_metrics(zagg_metrics)
+        return zbx_errors
 
-        return zbx_errors + zagg_metrics_errors
-
-    def process_hb_metrics(self):
+    def process_hb_metrics(self, shard):
         """Processes heartbeat metrics provided by metric_manager
 
         Args: None
@@ -134,7 +134,7 @@ class ZabbixMetricProcessor(object):
         """
 
         # Read metrics from disk
-        all_metrics = self.metric_manager.read_metrics()
+        all_metrics = self.metric_manager.read_metrics(shard)
 
         # Process heartbeat metrics First (this ordering is important)
         # This ensures a host in zabbix has been created.
@@ -151,9 +151,7 @@ class ZabbixMetricProcessor(object):
         # We write them to disk so that we can retry sending this on error
         self.metric_manager.write_metrics(zagg_metrics)
 
-        zagg_metrics_errors = self._process_normal_metrics(zagg_metrics)
-
-        return hb_errors + zagg_metrics_errors
+        return hb_errors
 
 
     def _handle_templates(self, all_templates):
@@ -177,7 +175,7 @@ class ZabbixMetricProcessor(object):
         # Status: permanently disabled
         # pylint: disable=broad-except
         except Exception as error:
-            self._log("Failed creating templates: %s" % error.message)
+            self.logger.error("Failed creating templates: %s", error.message)
             errors.append(error)
 
         return errors
@@ -203,7 +201,7 @@ class ZabbixMetricProcessor(object):
         # Status: permanently disabled
         # pylint: disable=broad-except
         except Exception as error:
-            self._log("Failed creating hostgroups: %s" % error.message)
+            self.logger.error("Failed creating hostgroups: %s", error.message)
             errors.append(error)
 
         return errors
@@ -220,8 +218,6 @@ class ZabbixMetricProcessor(object):
 
         Returns: a list of errors, if any
         """
-
-        self._log("\nTotal Heartbeat Metrics to Send: %s\n" % len(hb_metrics))
 
         errors = []
         all_templates = []
@@ -253,8 +249,8 @@ class ZabbixMetricProcessor(object):
 
                 # Remove the metric if we were able to successfully heartbeat
                 if host_res and hb_res:
-                    self._log("Sending heartbeat metric %s for host [%s] to Zabbix: success" % \
-                                 (i + 1, hb_metric.host))
+                    self.logger.info("Sending heartbeat metric %s for host [%s] to Zabbix: success",
+                                     i + 1, hb_metric.host)
 
                     # We've successfuly sent the heartbeat, so remove it from disk
                     self.metric_manager.remove_metrics(hb_metric)
@@ -265,8 +261,8 @@ class ZabbixMetricProcessor(object):
             # Status: permanently disabled
             # pylint: disable=broad-except
             except Exception as error:
-                self._log("Sending heartbeat metric %s for host [%s] to Zabbix: FAILED: %s" % \
-                             (i + 1, hb_metric.host, error.message))
+                self.logger.info("Sending heartbeat metric %s for host [%s] to Zabbix: FAILED: %s",
+                                 i + 1, hb_metric.host, error.message)
 
                 errors.append(error)
 
@@ -283,10 +279,6 @@ class ZabbixMetricProcessor(object):
 
         Returns: a list of errors, if any
         """
-
-        self._log("\nTotal Normal Metrics to Send: %s" % len(metrics))
-        self._log("                  Chunk Size: %s\n" % CHUNK_SIZE)
-
         if not metrics:
             return [] # we successfully sent 0 metrics to zabbix
 
@@ -299,8 +291,8 @@ class ZabbixMetricProcessor(object):
 
             try:
                 if self.zbxsender.send(chunk):
-                    self._log("Sending normal metrics chunk %s to Zabbix (size %s): success" % \
-                                 (i + 1, len(chunk)))
+                    self.logger.info("Sending normal metrics chunk %s to Zabbix (size %s): success",
+                                     i + 1, len(chunk))
 
                     # We've successfuly sent the metrics chunk, so remove them from disk
                     self.metric_manager.remove_metrics(chunk)
@@ -312,7 +304,7 @@ class ZabbixMetricProcessor(object):
             # pylint: disable=broad-except
             except Exception as error:
                 errors.append(error)
-                self._log("Sending normal metrics chunk %s to Zabbix (size %s): FAILED: %s" % \
-                             (i + 1, len(chunk), error.message))
+                self.logger.error("Sending normal metrics chunk %s to Zabbix (size %s): FAILED: %s",
+                                  i + 1, len(chunk), error.message)
 
         return errors
