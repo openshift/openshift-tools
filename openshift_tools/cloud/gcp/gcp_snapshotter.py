@@ -28,14 +28,14 @@
     dry_run = False
     for region in PDSnapshotter.get_supported_regions(project, creds_path):
 
-	    ss = gcp_snapshotter.PDSnapshotter(project, region, creds_path, verbose=True)
+        ss = gcp_snapshotter.PDSnapshotter(project, region, creds_path, verbose=True)
 
-	    expired_snapshots, deleted_snapshots, snapshot_deletion_errors = \
-		  ss.trim_snapshots(hourly_backups=25, \
-				    daily_backups=30, \
-				    weekly_backups=10, \
-				    monthly_backups=12, \
-				    dry_run=dry_run)
+        expired_snapshots, deleted_snapshots, snapshot_deletion_errors = \
+          ss.trim_snapshots(hourly_backups=25, \
+                    daily_backups=30, \
+                    weekly_backups=10, \
+                    monthly_backups=12, \
+                    dry_run=dry_run)
 """
 
 from openshift_tools.cloud.gcp.base import Base
@@ -97,13 +97,21 @@ class PDSnapshotter(Base):
 
         return vols_w_sched
 
+    def delete_snapshot(self, snapshot_name):
+        """delete a snapshot by name"""
+        return self.scope.snapshots().delete(project=self.project, snapshot=snapshot_name).execute()
+
     def create_snapshots(self, schedule, dry_run=False):
         """ Creates a snapshot for volumes labeled with the given schedule. """
         if schedule not in SUPPORTED_SCHEDULES:
             raise NotImplementedError
 
         date = datetime.now()
-        dateformat = '{year}{month:02d}{day:02d}'.format(year=date.year, month=date.month, day=date.day)
+        dateformat = '{year}{month:02d}{day:02d}-{hour:02d}{minute:02d}'.format(year=date.year,
+                                                                                month=date.month,
+                                                                                day=date.day,
+                                                                                hour=date.hour,
+                                                                                minute=date.minute)
         snapshots = []
         errors = []
         volumes = self.get_volumes_with_schedule(schedule)
@@ -151,7 +159,7 @@ class PDSnapshotter(Base):
 
                     snapshots.append(new_snapshot)
                     # let the snapshot get created before we proceed to label
-                    time.sleep(5)
+                    time.sleep(3)
                     # Currently the API for disks().createSnapshot does not apply the
                     # labels to the snapshot.  We must label the snapshot
                     _ = self.set_snapshot_label(snapshot_name, snap_labels)
@@ -233,6 +241,8 @@ class PDSnapshotter(Base):
 
         snaps_to_trim = []
 
+        # Need to ensure these are aware/naive
+        # setting to naive
         now = datetime.utcnow()
         last_hour = datetime(now.year, now.month, now.day, now.hour)
         last_midnight = datetime(now.year, now.month, now.day)
@@ -293,7 +303,8 @@ class PDSnapshotter(Base):
         for snap in tmpsnaps:
             check_this_snap = True
             while check_this_snap and time_period_number < target_backup_times.__len__():
-                snap_date = parser.parse(snap['creationTimestamp'])
+                # replace tzinfo so that it is unaware
+                snap_date = parser.parse(snap['creationTimestamp']).replace(tzinfo=None)
                 if snap_date < target_backup_times[time_period_number]:
                     # the snap date is before the cutoff date.
                     # Figure out if it's the first snap in this
@@ -302,7 +313,7 @@ class PDSnapshotter(Base):
                     # are sorted chronologically, we know this
                     #snapshot isn't in an earlier date range):
                     if snap_found_for_this_time_period == True:
-                        if not snap['label'].get('preserve_snapshot'):
+                        if snap.has_key('labels') and not snap['labels'].get('preserve_snapshot'):
                             # as long as the snapshot wasn't marked
                             # with the 'preserve_snapshot' label, delete it:
                             snaps_to_trim.append(snap)
@@ -322,7 +333,7 @@ class PDSnapshotter(Base):
                     snap_found_for_this_time_period = False
 
         # We want to make sure we're only sending back 1 copy of each snapshot to trim.
-        return list(set(snaps_to_trim))
+        return list(snaps_to_trim)
 
     @staticmethod
     def get_volume_snapshots(volume, all_snapshots):
@@ -383,12 +394,13 @@ class PDSnapshotter(Base):
                     if dry_run:
                         self.print_dry_run_msg(prefix="          ")
                     else:
-                        exp_snap.delete()
+                        self.delete_snapshot(exp_snap['name'])
                         deleted_snapshots.append(exp_snap)
                 # Reason: disable pylint broad-except because we want to continue on error.
                 # Status: permanently disabled
                 # pylint: disable=broad-except
                 except Exception as ex:
+                    print ex
                     #if isinstance(ex, EC2ResponseError) and ex.error_code == "InvalidSnapshot.NotFound":
                         # This message means that the snapshot is gone, which is what we
                         # were trying to do anyway. So, count this snap among the deleted.
@@ -403,4 +415,5 @@ class PDSnapshotter(Base):
         self.verbose_print()
 
         return (all_expired_snapshots, deleted_snapshots, errors)
+
 

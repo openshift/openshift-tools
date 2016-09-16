@@ -12,6 +12,7 @@ from oauth2client.client import GoogleCredentials
 # Specifically exclude certain regions
 DRY_RUN_MSG = "*** DRY RUN, NO ACTION TAKEN ***"
 
+# pylint: disable=too-many-instance-attributes
 class Base(object):
     """ Class that provides base methods for other gcp utility classes """
 
@@ -32,11 +33,13 @@ class Base(object):
         self.region_name = region_name
         self._region = None
         self.verbose = verbose
+        self.volumes = None
+        self.snapshots = None
 
     @property
     def volumes(self):
         '''property for all volumes in a region'''
-        if Base._volumes == None:
+        if not Base._volumes:
             Base._volumes = self.get_all_volumes()
 
         return Base._volumes
@@ -50,7 +53,7 @@ class Base(object):
     @property
     def snapshots(self):
         '''property for all snapshots'''
-        if Base._snapshots == None:
+        if not Base._snapshots:
             Base._snapshots = self.get_all_snapshots()
 
         return Base._snapshots
@@ -253,6 +256,4 @@ class Base(object):
         fresh_snap = self.refresh_snapshot(snapshot['name'])
         self.update_snapshots(fresh_snap)
 
-        print 'snapshot result'
-        print result
         return result
