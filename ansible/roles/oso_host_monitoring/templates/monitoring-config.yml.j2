@@ -354,7 +354,7 @@ host_monitoring_cron:
 - name: "Add snapshot tag to autoprovisioned pv volumes"
   hour: "*"
   minute: "30"
-  job: ops-runner -f -s 120 -n ogasttpv.add.snapshot.tag.autopv ops-gcp-add-snapshot-tag-to-pd-volumes --autoprovisioned-pv-volumes daily --set-purpose-tag --gcp-creds-file /root/.gce/creds.json
+  job: ops-runner -f -s 120 -n ogasttpv.add.snapshot.tag.autopv ops-gcp-add-snapshot-label-to-pd-volumes --autoprovisioned-pv-volumes daily --set-purpose-label --gcp-creds-file /root/.gce/creds.json
 
 - name: "Snapshot volumes tagged with hourly"
   hour: "*"
@@ -380,7 +380,7 @@ host_monitoring_cron:
 
 - name: "Trim pd Snapshot"
   minute: "10"
-  job: ops-runner -f -s 120 -n ogtps.trim.snapshots ops-gcp-trim-pd-snapshots --gcp-creds-file snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
+  job: ops-runner -f -s 120 -n ogtps.trim.snapshots ops-gcp-trim-pd-snapshots --gcp-creds-file /root/.gce/creds.json --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
 {% endif %}
 {% endif %}
 
