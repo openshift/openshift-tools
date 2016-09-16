@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.17
+Version:        0.0.18
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,10 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Fri Sep 16 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.18-1
+- Fixes for labeling, snapshotting, and trimming snapshots.
+  (kwoodson@redhat.com)
+
 * Thu Sep 15 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.17-1
 - fixed monitoring template (mwoodson@redhat.com)
 
