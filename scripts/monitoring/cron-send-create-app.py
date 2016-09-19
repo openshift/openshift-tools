@@ -107,10 +107,10 @@ class OpenShiftOC(object):
 
 
     def clean_project(self, namespace_front):
-	'''clean all the project before run the check '''
-	cmd = ['get', 'projects', '--no-headers']
-	projects = [proj.split()[0] for proj in self.oc_cmd(cmd).split('\n') if proj and len(proj) > 0]
-	for pro in projects:
+        '''clean all the project before run the check '''
+        cmd = ['get', 'projects', '--no-headers']
+        projects = [proj.split()[0] for proj in self.oc_cmd(cmd).split('\n') if proj and len(proj) > 0]
+        for pro in projects:
             pattern = re.compile(r'^'+namespace_front)
             match = pattern.match(pro)
             if match:
