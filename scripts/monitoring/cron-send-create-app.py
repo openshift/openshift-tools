@@ -88,7 +88,7 @@ class OpenShiftOC(object):
         time.sleep(5)
         return results
 
-    def delete_project_with_givename(self,projectname):
+    def delete_project_with_givename(self, projectname):
         '''delete project '''
         cmd = ['delete', 'project', projectname]
         results = self.oc_cmd(cmd)
@@ -104,15 +104,15 @@ class OpenShiftOC(object):
         else:
             rval = self.oc_cmd(cmd)
         return rval
-	
-    def clean_project(self,namespace_front):
+
+
+    def clean_project(self, namespace_front):
 	'''clean all the project before run the check '''
 	cmd = ['get', 'projects', '--no-headers']
 	projects = [proj.split()[0] for proj in self.oc_cmd(cmd).split('\n') if proj and len(proj) > 0]
 	for pro in projects:
             pattern = re.compile(r'^'+namespace_front)
             match = pattern.match(pro)
-            #print 'start comapre the name with',namespace_front 
             if match:
                 print 'found old monitor project ****:', pro
                 print 'deleting the project', pro
