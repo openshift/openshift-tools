@@ -62,6 +62,7 @@ RUN yum clean metadata && \
         python-uri-templates google-api-python-client \
         python-httplib2 python-oauth2client \
         python-pyasn1 python-pyasn1-modules python-rsa \
+        gcloud \
         openvswitch \
         python-psutil \
         docker-python && \
