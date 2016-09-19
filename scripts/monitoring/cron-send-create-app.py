@@ -88,6 +88,13 @@ class OpenShiftOC(object):
         time.sleep(5)
         return results
 
+    def delete_project_with_givename(self,projectname):
+        '''delete project '''
+        cmd = ['delete', 'project', projectname]
+        results = self.oc_cmd(cmd)
+        time.sleep(5)
+        return results
+
     def new_project(self):
         '''create new project '''
         version = self.get_version()
@@ -97,6 +104,19 @@ class OpenShiftOC(object):
         else:
             rval = self.oc_cmd(cmd)
         return rval
+	
+    def clean_project(self,namespace_front):
+	'''clean all the project before run the check '''
+	cmd = ['get', 'projects', '--no-headers']
+	projects = [proj.split()[0] for proj in self.oc_cmd(cmd).split('\n') if proj and len(proj) > 0]
+	for pro in projects:
+            pattern = re.compile(r'^'+namespace_front)
+            match = pattern.match(pro)
+            #print 'start comapre the name with',namespace_front 
+            if match:
+                print 'found old monitor project ****:',pro
+                print 'deleting the project',pro
+                self.delete_project_with_givename(pro)
 
     def get_logs(self):
         '''get all pod logs'''
@@ -287,10 +307,13 @@ def main():
     args = parse_args()
     namespace = 'ops-' + pod_name(args.name) + '-' + os.environ['ZAGG_CLIENT_HOSTNAME'] \
         + '-' + ''.join(random.choice(string.lowercase) for i in range(6))
+    namespace_front = 'ops-' + pod_name(args.name) + '-' + os.environ['ZAGG_CLIENT_HOSTNAME'] \
+        + '-' 
     oocmd = OpenShiftOC(namespace, kubeconfig, args, verbose=False)
     app = args.name
 
     start_time = time.time()
+    oocmd.clean_project(namespace_front)
     oocmd.new_project()
     oocmd.new_app(app)
 
@@ -339,3 +362,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
