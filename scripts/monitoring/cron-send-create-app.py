@@ -114,8 +114,8 @@ class OpenShiftOC(object):
             match = pattern.match(pro)
             #print 'start comapre the name with',namespace_front 
             if match:
-                print 'found old monitor project ****:',pro
-                print 'deleting the project',pro
+                print 'found old monitor project ****:', pro
+                print 'deleting the project', pro
                 self.delete_project_with_givename(pro)
 
     def get_logs(self):
@@ -308,7 +308,7 @@ def main():
     namespace = 'ops-' + pod_name(args.name) + '-' + os.environ['ZAGG_CLIENT_HOSTNAME'] \
         + '-' + ''.join(random.choice(string.lowercase) for i in range(6))
     namespace_front = 'ops-' + pod_name(args.name) + '-' + os.environ['ZAGG_CLIENT_HOSTNAME'] \
-        + '-' 
+        + '-'
     oocmd = OpenShiftOC(namespace, kubeconfig, args, verbose=False)
     app = args.name
 
