@@ -116,7 +116,6 @@ Docker Python libraries developed for monitoring OpenShift.
 %{python_sitelib}/openshift_tools/monitoring/dockerutil.py[co]
 
 
-
 # ----------------------------------------------------------------------------------
 # python-openshift-tools-monitoring-zagg subpackage
 # ----------------------------------------------------------------------------------
@@ -151,6 +150,20 @@ AWS Python libraries developed for monitoring OpenShift.
 %{python_sitelib}/openshift_tools/monitoring/awsutil.py
 %{python_sitelib}/openshift_tools/monitoring/awsutil.py[co]
 
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-monitoring-gcp subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-gcp
+Summary:       OpenShift Tools GCP Python Libraries Package
+Requires:      python2,python-openshift-tools
+BuildArch:     noarch
+
+%description monitoring-gcp
+GCP Python libraries developed for monitoring OpenShift.
+
+%files monitoring-gcp
+%{python_sitelib}/openshift_tools/monitoring/gcputil.py
+%{python_sitelib}/openshift_tools/monitoring/gcputil.py[co]
 
 # ----------------------------------------------------------------------------------
 # python-openshift-tools-monitoring-openshift subpackage
