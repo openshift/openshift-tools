@@ -35,6 +35,7 @@ cp -p monitoring/cron-send-etcd-status.py %{buildroot}/usr/bin/cron-send-etcd-st
 cp -p monitoring/cron-send-disk-metrics.py %{buildroot}/usr/bin/cron-send-disk-metrics
 cp -p monitoring/cron-send-network-metrics.py %{buildroot}/usr/bin/cron-send-network-metrics
 cp -p monitoring/cron-send-s3-metrics.py %{buildroot}/usr/bin/cron-send-s3-metrics
+cp -p monitoring/cron-send-gcs-metrics.py %{buildroot}/usr/bin/cron-send-gcs-metrics
 cp -p monitoring/cron-send-os-master-metrics.py %{buildroot}/usr/bin/cron-send-os-master-metrics
 cp -p monitoring/cron-send-docker-metrics.py %{buildroot}/usr/bin/cron-send-docker-metrics
 cp -p monitoring/cron-send-docker-timer.py %{buildroot}/usr/bin/cron-send-docker-timer
@@ -223,6 +224,21 @@ OpenShift Tools AWS Monitoring Scripts
 
 %files monitoring-aws
 /usr/bin/cron-send-s3-metrics
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-monitoring-gcp subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-gcp
+Summary:       OpenShift Tools GCP Monitoring Scripts
+Requires:      python2,python-openshift-tools-monitoring-gcp,python-openshift-tools-monitoring-openshift,python-openshift-tools-monitoring-zagg
+BuildRequires: python2-devel
+BuildArch:     noarch
+
+%description monitoring-gcp
+OpenShift Tools GCP Monitoring Scripts
+
+%files monitoring-gcp
+/usr/bin/cron-send-gcs-metrics
 
 
 # ----------------------------------------------------------------------------------
