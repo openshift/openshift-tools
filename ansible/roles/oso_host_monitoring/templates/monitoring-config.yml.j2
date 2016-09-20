@@ -351,6 +351,11 @@ host_monitoring_cron:
   job: ops-runner -f -s 120 -n oetes.trim.snapshots ops-ec2-trim-ebs-snapshots --aws-creds-profile snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
 {% endif %}
 {% if osohm_cloud == 'gcp' %}
+- name: send gcs bucket metrics
+  hour: "3"
+  minute: "0"
+  job: ops-runner -f -s 120 -n csgm.gcp /usr/bin/cron-send-gcs-metrics
+
 - name: "Add snapshot tag to autoprovisioned pv volumes"
   hour: "*"
   minute: "30"
