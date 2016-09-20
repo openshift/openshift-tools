@@ -717,6 +717,7 @@ g_template_openshift_master:
 
   - name: "Failed Persistent Volumes on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.pv.failed.count.min(#2)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pv_failed.asciidoc"
     priority: info
 
   - name: "Less than 10 Available Persistent Volumes on {HOST.NAME}"
