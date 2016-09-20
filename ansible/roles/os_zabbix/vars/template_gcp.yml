@@ -1,0 +1,83 @@
+---
+g_template_gcp:
+  name: Template GCP
+
+  zitems:
+  - key: gcp.pd.snapshotter.expired_snapshots
+    applications:
+    - PD Snapshotter
+    value_type: int
+
+  - key: gcp.pd.snapshotter.deleted_snapshots
+    applications:
+    - PD Snapshotter
+    value_type: int
+
+  - key: gcp.pd.snapshotter.deletion_errors
+    applications:
+    - PD Snapshotter
+    value_type: int
+
+  ztriggers:
+  - name: "PD Snapshot deletion failed on {HOST.NAME}"
+    expression: "{Template GCP:gcp.pd.snapshotter.deletion_errors.min(#3)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pd_snapshotter.asciidoc"
+    priority: average
+
+  zdiscoveryrules:
+  - name: disc.gcp
+    key: disc.gcp
+    lifetime: 14
+    description: "Dynamically register GCP bucket info"
+
+  - name: disc.gcp.pd.snapshotter
+    key: disc.gcp.pd.snapshotter
+    lifetime: 1
+    description: "Dynamically register PD Snapshotter items"
+
+  zitemprototypes:
+  - discoveryrule_key: disc.gcp
+    name: "{% raw %}GCS bucket size (GB) [{{ '{#' }}GCS_BUCKET}]{% endraw %}"
+    key: "{% raw %}disc.gcp.size[{{ '{#' }}GCS_BUCKET}]{% endraw %}"
+    value_type: int
+    description: "Size of storage bucket"
+    applications:
+    - GCP
+
+  - discoveryrule_key: disc.gcp
+    name: "{% raw %}GCS bucket object count [{{ '{#' }}GCS_BUCKET}]{% endraw %}"
+    key: "{% raw %}disc.gcp.objects[{{ '{#' }}GCS_BUCKET}]{% endraw %}"
+    value_type: int
+    description: "Objects in gcs bucket"
+    applications:
+    - GCP
+
+  - discoveryrule_key: disc.gcp.pd.snapshotter
+    name: "{% raw %}Total snapshottable volumes [{{ '{#' }}OSO_SNAP_SCHEDULE}]{% endraw %}"
+    key: "{% raw %}disc.gcp.pd.snapshotter.snapshottable_volumes[{{ '{#' }}OSO_SNAP_SCHEDULE}]{% endraw %}"
+    value_type: int
+    description: "Total number of snapshottable volumes"
+    applications:
+    - PD Snapshotter
+
+  - discoveryrule_key: disc.gcp.pd.snapshotter
+    name: "{% raw %}Total number of snapshots created [{{ '{#' }}OSO_SNAP_SCHEDULE}]{% endraw %}"
+    key: "{% raw %}disc.gcp.pd.snapshotter.snapshots_created[{{ '{#' }}OSO_SNAP_SCHEDULE}]{% endraw %}"
+    value_type: int
+    description: "Total number of snapshots created"
+    applications:
+    - PD Snapshotter
+
+  - discoveryrule_key: disc.gcp.pd.snapshotter
+    name: "{% raw %}Total number of snapshot creation errors [{{ '{#' }}OSO_SNAP_SCHEDULE}]{% endraw %}"
+    key: "{% raw %}disc.gcp.pd.snapshotter.snapshot_creation_errors[{{ '{#' }}OSO_SNAP_SCHEDULE}]{% endraw %}"
+    value_type: int
+    description: "Total number of snapshot creation errors"
+    applications:
+    - PD Snapshotter
+
+  ztriggerprototypes:
+  - name: "{% raw %}PD Snapshotter[{{ '{#' }}OSO_SNAP_SCHEDULE}]: error creating pd snapshots on {HOST.NAME}{% endraw %}"
+    expression: "{% raw %}{Template GCP:disc.gcp.pd.snapshotter.snapshot_creation_errors[{{ '{#' }}OSO_SNAP_SCHEDULE}].min(#3)}>0{% endraw %}"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pd_snapshotter.asciidoc"
+    priority: average

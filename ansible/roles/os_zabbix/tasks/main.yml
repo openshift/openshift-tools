@@ -43,6 +43,9 @@
 - include_vars: template_aws.yml
   tags:
   - aws
+- include_vars: template_gcp.yml
+  tags:
+  - gcp
 - include_vars: template_zagg_server.yml
   tags:
   - zagg_server
@@ -174,6 +177,16 @@
     password: "{{ ozb_password }}"
   tags:
   - aws
+
+- name: Include Template GCP
+  include: ../../lib_zabbix/tasks/create_template.yml
+  vars:
+    template: "{{ g_template_gcp }}"
+    server: "{{ ozb_server }}"
+    user: "{{ ozb_user }}"
+    password: "{{ ozb_password }}"
+  tags:
+  - gcp
 
 - name: Include Template Zagg Server
   include: ../../lib_zabbix/tasks/create_template.yml
