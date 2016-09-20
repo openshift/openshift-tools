@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.18
+Version:        0.0.19
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,11 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Tue Sep 20 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.19-1
+- Added gcs monitoring. (kwoodson@redhat.com)
+- Adding zabbix objects for gcp snapshotting. (kwoodson@redhat.com)
+- fixing aws user role for ansible 2 (mwoodson@redhat.com)
+
 * Fri Sep 16 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.18-1
 - Fixes for labeling, snapshotting, and trimming snapshots.
   (kwoodson@redhat.com)
