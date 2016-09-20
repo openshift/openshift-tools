@@ -61,7 +61,11 @@ zagg_client_config:
     - Template Performance Copilot # So we can report PCP metrics
 {% if osohm_host_type == 'master' %}
     - Template Openshift Master # So we can send master related metrics
+{%   if osohm_cloud == 'gcp' %}
+    - Template GCP
+{%   elif osohm_cloud == 'aws' %}
     - Template AWS
+{%   endif %}
 {% endif %}
 {% if osohm_host_type == 'ansible-tower' %}
     - Template Config Loop      # So we can send config loop related metrics
