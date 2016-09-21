@@ -222,8 +222,13 @@ host_monitoring_cron:
 - name: "clean project created by app create check daily"
   hour: "0"
   minute: "0"
-  job: "ops-runner -f -s 120 -n cscp.openshift.master.project.useless.clean /usr/bin/cron-send-clean-project"
+  job: "export ZAGG_CLIENT_HOSTNAME={{ osohm_host_name }};ops-runner -f -s 120 -n cscp.openshift.master.project.useless.clean /usr/bin/cron-send-clean-project --name https://github.com/openshift/nodejs-ex"
 
+
+- name: "clean project created by app create check daily"
+  hour: "0"
+  minute: "10"
+  job: "export ZAGG_CLIENT_HOSTNAME={{ osohm_host_name }};ops-runner -f -s 120 -n cscp.openshift.master.project.useless.clean /usr/bin/cron-send-clean-project"
 
 - name: run create app with build process every 30 minutes
   minute: "*/30"
