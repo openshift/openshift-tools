@@ -17,7 +17,7 @@
 - name: Check if zone exists
   set_fact:
     zone_exists: False
-  when: not stat_zone_file.stat.exists or not existing_zone_var.results
+  when: not stat_zone_file.stat.exists or not existing_zone_var.result
 
 - name: Get list of zones in region
   gcloud_compute_zones:
