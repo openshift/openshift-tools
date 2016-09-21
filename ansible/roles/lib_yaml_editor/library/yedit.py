@@ -7,7 +7,7 @@
 #   | |) | (_) | | .` | (_) || |   | _|| |) | |  | |
 #   |___/ \___/  |_|\_|\___/ |_|   |___|___/___| |_|
 
-DOCUMENTATION='''
+DOCUMENTATION = '''
 ---
 module: yedit
 short_description: Create, modify, and idempotently manage yaml files.
@@ -518,7 +518,7 @@ def get_curr_value(invalue, val_type):
     if invalue == None:
         return None
 
-    curr_value = None
+    curr_value = invalue
     if val_type == 'yaml':
         curr_value = yaml.load(invalue)
     elif val_type == 'json':
@@ -650,9 +650,6 @@ def main():
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
-# IF RUNNING UNIT TESTS, COMMENT OUT THIS SECTION
-####
-from ansible.module_utils.basic import *
-
-main()
-####
+if __name__ == '__main__':
+    from ansible.module_utils.basic import *
+    main()
