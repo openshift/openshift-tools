@@ -331,7 +331,6 @@ def main():
     namespace_front = 'ops-' + pod_name(args.name) + '-' + os.environ['ZAGG_CLIENT_HOSTNAME'] \
         + '-'
     oocmd = OpenShiftOC(namespace, kubeconfig, args, verbose=False)
-    app = args.name
 
     delete_count = oocmd.clean_project(namespace_front)
     send_zagg_data(delete_count)
