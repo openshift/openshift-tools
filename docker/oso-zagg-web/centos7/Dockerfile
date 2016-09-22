@@ -24,6 +24,7 @@ RUN yum clean metadata && \
         openshift-tools-web-zagg \
         python-openshift-tools-zbxapi \
         openshift-tools-scripts-monitoring-zagg-server \
+        redis python-redis \
         tree httpd mod_ssl mod_wsgi \
         telnet bind-utils net-tools iproute && \
     yum clean all
@@ -33,7 +34,7 @@ ADD root /root
 EXPOSE 8000 8443
 
 # Start apache
-ADD ops-run-in-loop start.sh createfoldershards.py /usr/local/bin/
+ADD ops-run-in-loop start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
 
 # Run apache in mpm_worker mode

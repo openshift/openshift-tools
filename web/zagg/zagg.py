@@ -14,18 +14,17 @@ import yaml
 # Status: When doing python-flask apps as a single small file, globals are used.
 # pylint: disable=invalid-name
 flask_app = Flask(__name__)
+config = yaml.load(file('/etc/openshift_tools/zagg_server.yaml'))
+flask_app.config.update(config)
 
 @flask_app.route('/metric', methods=['GET', 'POST'])
 def process_metric():
     ''' Receive POSTs to the '/metric' URL endpoint and
         process/save them '''
     if request.method == 'POST':
-        config_file = '/etc/openshift_tools/zagg_server.yaml'
-        config = yaml.load(file(config_file))
-
         json = request.get_json()
 
-        for target in config['targets']:
+        for target in flask_app.config['targets']:
             new_metric = UniqueMetric.from_request(json)
             mymm = MetricManager(target['path'])
             mymm.write_metrics(new_metric)
