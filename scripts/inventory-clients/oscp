@@ -41,10 +41,7 @@ class Oscp(object):
         self.aws = awsutil.AwsUtil()
 
         # get a dict of host inventory
-        if self.args.refresh_cache:
-            self.get_hosts(True)
-        else:
-            self.get_hosts()
+        self.get_hosts()
 
         if (self.args.src == '' or self.args.dest == '') and not self.args.list:
             self.parser.print_help()
@@ -117,12 +114,9 @@ class Oscp(object):
                 self.host = search.groups()[0]
                 self.path = search.groups()[1]
 
-    def get_hosts(self, refresh_cache=False):
+    def get_hosts(self):
         '''Query our host inventory and return a dict where the format '''
-        if refresh_cache:
-            self.host_inventory = self.aws.get_inventory({'refresh_cache': '--refresh-cache'})['_meta']['hostvars']
-        else:
-            self.host_inventory = self.aws.get_inventory(cached=True)['_meta']['hostvars']
+        self.host_inventory = self.aws.get_inventory()['_meta']['hostvars']
 
     def select_host(self):
         '''select host attempts to match the host specified
