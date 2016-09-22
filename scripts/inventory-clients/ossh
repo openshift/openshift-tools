@@ -34,10 +34,7 @@ class Ossh(object):
 
         self.aws = awsutil.AwsUtil()
 
-        if self.args.refresh_cache:
-            self.get_hosts(True)
-        else:
-            self.get_hosts()
+        self.get_hosts()
 
         # parse host and user
         self.process_host()
@@ -69,8 +66,6 @@ class Ossh(object):
                             action="store_true", help="debug mode")
         parser.add_argument('-v', '--verbose', default=False,
                             action="store_true", help="Verbose?")
-        parser.add_argument('--refresh-cache', default=False,
-                            action="store_true", help="Force a refresh on the host cache.")
         parser.add_argument('--list', default=False,
                             action="store_true", help="list out hosts")
         parser.add_argument('-c', '--command', action='store',
@@ -105,12 +100,9 @@ class Ossh(object):
                 self.user = self.args.login_name
 
 
-    def get_hosts(self, refresh_cache=False):
+    def get_hosts(self):
         '''Query our host inventory and return a dict where the format '''
-        if refresh_cache:
-            self.host_inventory = self.aws.get_inventory({'refresh_cache': '--refresh-cache'})['_meta']['hostvars']
-        else:
-            self.host_inventory = self.aws.get_inventory(cached=True)['_meta']['hostvars']
+        self.host_inventory = self.aws.get_inventory()['_meta']['hostvars']
 
     def select_host(self):
         '''select host attempts to match the host specified

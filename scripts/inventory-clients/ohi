@@ -67,8 +67,7 @@ class Ohi(object):
                                        host_type=self.args.host_type,
                                        sub_host_type=self.args.sub_host_type,
                                        envs=self.args.env,
-                                       version=version,
-                                       cached=self.args.cache_only)
+                                       version=version)
 
         if hosts is None:
             # We weren't able to determine what they wanted to do
@@ -143,9 +142,6 @@ class Ohi(object):
         parser.add_argument('-l', '--user', action='store', default=None, help='username')
 
         parser.add_argument('-o', '--output', action='store', default=None, help='output')
-
-        parser.add_argument('--cache-only', action='store_true', default=False,
-                            help='Retrieve the host inventory by cache only. Default is false.')
 
         parser.add_argument('--v2', action='store_true', default=True,
                             help='Specify the openshift version. Default is 2')
