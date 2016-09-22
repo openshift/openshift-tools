@@ -17,7 +17,10 @@ echo user:x:$(id -u):0:USER:/root:/bin/bash >> /etc/passwd
 # Configure the container on startup
 ansible-playbook /root/config.yml
 
-/usr/local/bin/createfoldershards.py
+
+echo -n "Starting redis in the background..."
+/usr/bin/redis-server /etc/redis.conf --daemonize yes
+
 # Temporary until we get cron working
 # Send the heartbeat every 5 minutes
 echo -n "Starting heartbeat loop... "
@@ -31,12 +34,12 @@ echo "Done."
 
 # Process and send metrics every minute
 echo -n "Starting metric processing loop... "
-/usr/local/bin/ops-run-in-loop 10 "/usr/bin/flock -n /var/tmp/ops-zagg-metric-processor.lock -c '/usr/bin/timeout -s9 600s /usr/bin/ops-zagg-metric-processor' " &
+/usr/local/bin/ops-run-in-loop 30 "/usr/bin/flock -n /var/tmp/ops-zagg-metric-processor.lock -c '/usr/bin/timeout -s9 600s /usr/bin/ops-zagg-metric-processor' " &
 echo "Done."
 
 # Process heartbeats every minute
 echo -n "Starting heartbeat processing loop... "
-/usr/local/bin/ops-run-in-loop 10 "/usr/bin/flock -n /var/tmp/ops-zagg-heartbeat-processor.lock -c '/usr/bin/timeout -s9 600s /usr/bin/ops-zagg-heartbeat-processor' "  &
+/usr/local/bin/ops-run-in-loop 30 "/usr/bin/flock -n /var/tmp/ops-zagg-heartbeat-processor.lock -c '/usr/bin/timeout -s9 600s /usr/bin/ops-zagg-heartbeat-processor' "  &
 echo "Done."
 
 
