@@ -2,7 +2,7 @@
 - name: Ensure that osvp_provisioner_params is set
   fail:
     msg:  "Please ensure that 'osvp_provisioner_params' is set!"
-  with_dict: osvp_provisioner_params
+  with_dict: "{{ osvp_provisioner_params }}"
   when: osvp_provisioner_params is undefined
 
 - name: install the openshift-scripts-online
@@ -71,7 +71,7 @@
     - "/etc/openshift-online/templates/volume-provisioner.yaml"
   register: templateout
   run_once: true
-- debug: var=templateout
+#- debug: var=templateout
 
 - name: process the cloud volume provisioner template with variables
   oc_process:
