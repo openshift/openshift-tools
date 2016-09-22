@@ -33,7 +33,7 @@
 - name: debug registry_service_ip
   run_once: true
   debug:
-    var: "{{ registry_service_ip }}"
+    msg: "registry service ip = {{ registry_service_ip }}"
 
 - name: create the docker cert dirs
   file:
