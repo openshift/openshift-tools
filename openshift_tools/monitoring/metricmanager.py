@@ -44,15 +44,13 @@
 # Reason: disable pylint import-error because our libs aren't loaded on jenkins.
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
-import yaml
-import os
+import time
 import uuid
 import calendar
-import time
-import zbxsend
-import scandir
+import json
 import logging
-
+import redis
+import zbxsend
 
 # Reason: disable pylint too-few-public-methods because this is
 #     a DTO with a little ctor logic.
@@ -91,8 +89,6 @@ class UniqueMetric(zbxsend.Metric):
             self.unique_id = str(uuid.uuid4()).replace('-', '')
         else:
             self.unique_id = unique_id
-
-        self.filename = self.unique_id + '.yml'
 
         zbxsend.Metric.__init__(self, self.host, self.key, self.value, self.clock)
 
@@ -162,24 +158,16 @@ class MetricManager(object):
     ''' Manages a disk cache of metrics.
     '''
 
-    def __init__(self, metrics_directory):
+    def __init__(self, redis_list):
         ''' Construct object
 
             Keyword arguments:
-            metrics_directory -- the directory where the metrics should be stored
+            redis_list -- the redis list where the items go
         '''
         self.logger = logging.getLogger(__name__)
-        self.metrics_directory = metrics_directory
+        self.redis_list = redis_list
 
-    def metric_full_path(self, filename):
-        ''' generates the full path of a specific metric.
-
-            Keyword arguments:
-            filename -- the filename of the metric.
-        '''
-        # to make disk read easier, decision was made to shard the data files based on their
-        # first 2 characters, hence the filename slice
-        return os.path.join(self.metrics_directory, filename[:2], filename)
+        self.redis = redis.Redis()
 
     def write_metrics(self, metrics):
         ''' write one or more metrics to disk
@@ -191,9 +179,11 @@ class MetricManager(object):
         if not isinstance(metrics, list):
             metrics = [metrics]
 
+        rpipe = self.redis.pipeline()
         for metric in metrics:
-            with open(self.metric_full_path(metric.filename), 'w') as metric_file:
-                yaml.safe_dump(metric.__dict__, metric_file, default_flow_style=False)
+            rpipe.rpush(self.redis_list, json.dumps(metric.__dict__))
+
+        rpipe.execute()
 
     def remove_metrics(self, metrics):
         ''' remove one or more metrics from disk
@@ -205,45 +195,22 @@ class MetricManager(object):
             metrics = [metrics]
 
         for metric in metrics:
-            try:
-                os.unlink(self.metric_full_path(metric.filename))
-            except IOError as ex:
-                self.logger.error('remove_metrics: Attempt to delete file %s failed with %s',
-                                  metric.filename,
-                                  ex)
+            removed = self.redis.lrem(self.redis_list, json.dumps(metric.__dict__))
+            if removed > 1:
+                self.logger.error('Redis claims it deleted more than one of this unique item: %s', metric)
 
-    def read_metrics(self, shard):
+    def read_metrics(self):
         ''' read in all of the metrics contained in the disk cache
 
             Keyword arguments:
             None
         '''
-        badfiles = []
         metrics = []
 
-        for yamlfile in scandir.scandir(os.path.join(self.metrics_directory, shard)):
-            ext = os.path.splitext(yamlfile.name)[-1][1:].lower().strip()
-
-            # We only want to load yaml files, anything else will be banished to dnd
-            if ext not in ['yml', 'yaml']:
-                badfiles.append(yamlfile.name)
-                continue
-
-            with open(self.metric_full_path(yamlfile.name), 'r') as metric_file:
-                try:
-                    doc = yaml.load(metric_file)
-                    metrics.append(UniqueMetric(doc['host'], doc['key'], doc['value'],
-                                                doc['clock'], doc['unique_id']))
-                except (TypeError, yaml.YAMLError, IOError) as ex:
-                    self.logger.error('Yaml file %s failed to parse: %s',
-                                      yamlfile.name,
-                                      ex)
-                    badfiles.append(yamlfile.name)
-
-        # move the files that cannot be processed, then a human can look at it later
-        # TODO: maybe we need to report this to Zabbix at one point?
-        for badfile in badfiles:
-            os.rename(self.metric_full_path(badfile), os.path.join(self.metrics_directory, 'dnd', badfile))
+        for metric in self.redis.lrange(self.redis_list, 0, -1):
+            doc = json.loads(metric)
+            metrics.append(UniqueMetric(doc['host'], doc['key'], doc['value'],
+                                        doc['clock'], doc['unique_id']))
 
         return metrics
 

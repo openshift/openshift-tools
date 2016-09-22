@@ -98,7 +98,7 @@ class ZabbixMetricProcessor(object):
         if self._verbose:
             print message
 
-    def process_zbx_metrics(self, shard):
+    def process_zbx_metrics(self):
         """Processes zbx metrics provided by metric_manager
 
         Args: None
@@ -107,7 +107,7 @@ class ZabbixMetricProcessor(object):
         """
 
         # Read metrics from disk
-        all_metrics = self.metric_manager.read_metrics(shard)
+        all_metrics = self.metric_manager.read_metrics()
 
         # Process the zbx metrics
         zbx_metrics = self.metric_manager.filter_zbx_metrics(all_metrics)
@@ -125,7 +125,7 @@ class ZabbixMetricProcessor(object):
 
         return zbx_errors
 
-    def process_hb_metrics(self, shard):
+    def process_hb_metrics(self):
         """Processes heartbeat metrics provided by metric_manager
 
         Args: None
@@ -134,7 +134,7 @@ class ZabbixMetricProcessor(object):
         """
 
         # Read metrics from disk
-        all_metrics = self.metric_manager.read_metrics(shard)
+        all_metrics = self.metric_manager.read_metrics()
 
         # Process heartbeat metrics First (this ordering is important)
         # This ensures a host in zabbix has been created.
