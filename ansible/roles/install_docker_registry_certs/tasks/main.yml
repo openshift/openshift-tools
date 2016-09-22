@@ -9,19 +9,14 @@
     msg: "/etc/origin/node/ca.crt is not found!"
   when: not ca_cert_stat.stat.exists
 
-- name: get a master node to use laster on
-  set_fact:
-    cluster_master: "{{ groups['oo_hosttype_master'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
-  run_once: true
-
-- name: debug cluster_master
+- name: debug idrc_cluster_master
   debug:
-    msg: "cluser_master = {{ cluster_master }}"
+    msg: "cluser_master = {{ idrc_cluster_master }}"
   run_once: true
 
 - name: get service from master
   run_once: true
-  delegate_to: "{{ cluster_master }}"
+  delegate_to: "{{ idrc_cluster_master }}"
   oc_service:
     namespace: default
     name: docker-registry
@@ -31,7 +26,7 @@
 # In ansible 2.0 we will need to turn on delegate_facts
 - name: set registry_service fact
   run_once: true
-  delegate_to: "{{ cluster_master }}"
+  delegate_to: "{{ idrc_cluster_master }}"
   set_fact:
     registry_service_ip: "{{ registry_service_out.results.clusterip }}"
 

@@ -1,7 +1,7 @@
 install_docker_registry_certs
 =========
 
-Ansible role to create Openshift AWS PV's for Openshift Operations.
+Ansible role to install the cluster registry docker certs
 
 Requirements
 ------------
@@ -10,6 +10,7 @@ Requirements
 Role Variables
 --------------
 
+idrc_cluster_master: master host to get the registry service for
 
 Dependencies
 ------------
