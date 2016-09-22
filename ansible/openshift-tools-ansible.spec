@@ -7,7 +7,7 @@ URL:            https://github.com/openshift/openshift-tools
 Source0:        %{name}-%{version}.tar.gz
 BuildArch:      noarch
 
-Requires:      ansible1.9 >= 1.9.4
+Requires:      ansible
 Requires:      python2
 
 %description
@@ -33,8 +33,8 @@ mkdir -p %{buildroot}%{_datadir}/ansible/inventory/aws
 mkdir -p %{buildroot}%{_datadir}/ansible/inventory/gce
 cp -p inventory/multi_inventory.py %{buildroot}%{_datadir}/ansible/inventory
 cp -p inventory/multi_inventory.yaml.example %{buildroot}/etc/ansible/multi_inventory.yaml
-cp -p inventory/aws/hosts/ec2.py %{buildroot}%{_datadir}/ansible/inventory/aws
-cp -p inventory/gce/hosts/gce.py %{buildroot}%{_datadir}/ansible/inventory/gce
+cp -p inventory/aws/ec2.py %{buildroot}%{_datadir}/ansible/inventory/aws
+cp -p inventory/gce/gce.py %{buildroot}%{_datadir}/ansible/inventory/gce
 
 # openshift-tools-ansible-filter-plugins install
 mkdir -p %{buildroot}%{_datadir}/ansible_plugins/filter_plugins
