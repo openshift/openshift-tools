@@ -246,6 +246,12 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.project.terminating.time
+    description: Show how long the longest Terminating project is there
+    value_type: int
+    applications:
+    - Openshift Master
+
   - key: openshift.master.smal.status
     description: Show saml pod status 
     value_type: int
@@ -689,6 +695,11 @@ g_template_openshift_master:
     expression: "{Template Openshift Master:openshift.master.smal.status.last()}>1"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_saml_status.asciidoc"
     priority: high
+
+  - name: 'Terminating project last more than 5 minutes on {HOST.NAME}'
+    expression: '{Template Openshift Master:openshift.master.project.terminating.time.last()}>300'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master_project_terminating.asciidoc'
+    priority: warn
 
   - name: "Openshift SAML pod is not running on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.smal.status.last()}<1"
