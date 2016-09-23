@@ -2,6 +2,10 @@
 
 import time
 
+class RouterException(Exception):
+    ''' Router exception'''
+    pass
+
 class RouterConfig(OpenShiftCLIConfig):
     ''' RouterConfig is a DTO for the router.  '''
     def __init__(self, rname, namespace, kubeconfig, router_options):
@@ -30,12 +34,29 @@ class Router(OpenShiftCLI):
                              #{'kind': 'endpoints', 'name': self.config.name},
                             ]
 
+        self.__router_prep = None
         self.dconfig = None
         self.svc = None
         self._secret = None
         self._serviceaccount = None
         self._rolebinding = None
         self.get()
+
+    @property
+    def router_prep(self):
+        ''' property deploymentconfig'''
+        if self.__router_prep == None:
+            results = self.prepare_router()
+            if not results:
+                raise RouterException('Could not perform router preparation')
+            self.__router_prep = results
+
+        return self.__router_prep
+
+    @router_prep.setter
+    def router_prep(self, obj):
+        '''set the router prep property'''
+        self.__router_prep = obj
 
     @property
     def deploymentconfig(self):
@@ -91,6 +112,9 @@ class Router(OpenShiftCLI):
         ''' return the self.router_parts '''
         self.service = None
         self.deploymentconfig = None
+        self.serviceaccount = None
+        self.secret = None
+        self.rolebinding = None
         for part in self.router_parts:
             result = self._get(part['kind'], rname=part['name'])
             if result['returncode'] == 0 and part['kind'] == 'dc':
@@ -104,11 +128,16 @@ class Router(OpenShiftCLI):
             elif result['returncode'] == 0 and part['kind'] == 'clusterrolebinding':
                 self.rolebinding = RoleBinding(content=result['results'][0])
 
-        return (self.deploymentconfig, self.service)
+        return {'deploymentconfig': self.deploymentconfig,
+                'service': self.service,
+                'serviceaccount': self.serviceaccount,
+                'secret': self.secret,
+                'clusterrolebinding': self.rolebinding,
+               }
 
     def exists(self):
         '''return a whether svc or dc exists '''
-        if self.deploymentconfig or self.service:
+        if self.deploymentconfig and self.service and self.secret and self.serviceaccount:
             return True
 
         return False
@@ -121,8 +150,21 @@ class Router(OpenShiftCLI):
 
         return parts
 
-    def create(self, dryrun=False, output=False, output_type='json'):
-        '''Create a deploymentconfig '''
+    def add_modifications(self, deploymentconfig):
+        '''modify the deployment config'''
+        # We want modifications in the form of edits coming in from the module.
+        # Let's apply these here
+        edit_results = []
+        for key, value in self.config.config_options['edits']['value'].items():
+            edit_results.append(deploymentconfig.put(key, value))
+
+        if not any([res[0] for res in edit_results]):
+            return None
+
+        return deploymentconfig.yaml_dict
+
+    def prepare_router(self):
+        '''prepare router for instantiation'''
         # We need to create the pem file
         router_pem = '/tmp/router.pem'
         with open(router_pem, 'w') as rfd:
@@ -139,10 +181,62 @@ class Router(OpenShiftCLI):
 
         cmd = ['router', '-n', self.config.namespace]
         cmd.extend(options)
-        if dryrun:
-            cmd.extend(['--dry-run=True', '-o', 'json'])
+        cmd.extend(['--dry-run=True', '-o', 'json'])
 
-        return self.openshift_cmd(cmd, oadm=True, output=output, output_type=output_type)
+        results = self.openshift_cmd(cmd, oadm=True, output=True, output_type='json')
+
+        # pylint: disable=no-member
+        if results['returncode'] != 0 and results['results'].has_key('items'):
+            return results
+
+        oc_objects = {'DeploymentConfig': {'obj': None, 'path': None},
+                      'Secret': {'obj': None, 'path': None},
+                      'ServiceAccount': {'obj': None, 'path': None},
+                      'ClusterRoleBinding': {'obj': None, 'path': None},
+                      'Service': {'obj': None, 'path': None},
+                     }
+        # pylint: disable=invalid-sequence-index
+        for res in results['results']['items']:
+            if res['kind'] == 'DeploymentConfig':
+                oc_objects['DeploymentConfig']['obj'] = DeploymentConfig(res)
+            elif res['kind'] == 'Service':
+                oc_objects['Service']['obj'] = Service(res)
+            elif res['kind'] == 'ServiceAccount':
+                oc_objects['ServiceAccount']['obj'] = ServiceAccount(res)
+            elif res['kind'] == 'Secret':
+                oc_objects['Secret']['obj'] = Secret(res)
+            elif res['kind'] == 'ClusterRoleBinding':
+                oc_objects['ClusterRoleBinding']['obj'] = RoleBinding(res)
+
+        # Currently only deploymentconfig needs updating
+        # Verify we got a deploymentconfig
+        if not oc_objects['DeploymentConfig']['obj']:
+            return results
+
+        # results will need to get parsed here and modifications added
+        tmp_dc = self.add_modifications(oc_objects['DeploymentConfig']['obj'])
+        oc_objects['DeploymentConfig']['obj'] = DeploymentConfig(tmp_dc)
+
+        for oc_type in oc_objects.keys():
+            oc_objects[oc_type]['path'] = Utils.create_file(oc_type, oc_objects[oc_type]['obj'].yaml_dict)
+
+        return oc_objects
+
+    def create(self):
+        '''Create a deploymentconfig '''
+        # generate the objects and prepare for instantiation
+        self.prepare_router()
+
+        results = []
+        for _, oc_data in self.router_prep.items():
+            results.append(self._create(oc_data['path']))
+
+        rval = 0
+        for result in results:
+            if result['returncode'] != 0 and not 'already exist' in result['stderr']:
+                rval = result['returncode']
+
+        return {'returncode': rval, 'results': results}
 
     def update(self):
         '''run update for the router.  This performs a delete and then create '''
@@ -156,7 +250,6 @@ class Router(OpenShiftCLI):
                 # something went wrong
                 return parts
 
-
         # Ugly built in sleep here.
         time.sleep(15)
 
@@ -165,93 +258,77 @@ class Router(OpenShiftCLI):
     # pylint: disable=too-many-return-statements,too-many-branches
     def needs_update(self, verbose=False):
         ''' check to see if we need to update '''
-        if not self.deploymentconfig or not self.service:
+        if not self.deploymentconfig or not self.service or not self.serviceaccount or not self.secret:
             return True
 
-        results = self.create(dryrun=True, output=True, output_type='raw')
-        if results['returncode'] != 0:
-            return results
+        oc_objects_prep = self.prepare_router()
 
         # Since the output from oadm_router is returned as raw
         # we need to parse it.  The first line is the stats_password in 3.1
         # Inside of 3.2, it is just json
-        router_results_split = results['results'].split('\n')
-        # stats_password = user_dc_results[0]
 
-        # password for stats user admin has been set to xxxxxx
-        if 'password for stats user admin has ben set to' in router_results_split[0]:
-            # stats_password = user_dc_results[0]
-            router_results_split = router_results_split[1:]
-
-        json_results = json.loads('\n'.join(router_results_split))
-
-        user_dc = None
-        user_svc = None
-        user_secret = None
-        for item in json_results['items']:
-            if item['kind'] == 'Service':
-                user_svc = Service(content=item)
-            elif item['kind'] == 'DeploymentConfig':
-                user_dc = DeploymentConfig(content=item)
-            elif item['kind'] == 'Secret':
-                user_secret = Secret(content=item)
-            elif item['kind'] == 'ServiceAccount':
-                user_sa = ServiceAccount(content=item)
-
-        # Need to determine the pregenerated ones from the original
-        # Since these are auto generated, we can skip
+        # ServiceAccount:
+        #   Need to determine the pregenerated ones from the original
+        #   Since these are auto generated, we can skip
         skip = ['secrets', 'imagePullSecrets']
-        if not Utils.check_def_equal(user_sa.yaml_dict,
+        if not Utils.check_def_equal(oc_objects_prep['ServiceAccount']['obj'].yaml_dict,
                                      self.serviceaccount.yaml_dict,
                                      skip_keys=skip,
                                      debug=verbose):
             return True
 
-        # In 3.2 oadm router generates a secret volume for certificates
-        # See if one was generated from our dry-run and verify it if needed
-        if user_secret:
+        # Secret:
+        #   In 3.2 oadm router generates a secret volume for certificates
+        #   See if one was generated from our dry-run and verify it if needed
+        if oc_objects_prep['Secret']['obj']:
             if not self.secret:
                 return True
-            if not Utils.check_def_equal(user_secret.yaml_dict,
+            if not Utils.check_def_equal(oc_objects_prep['Secret']['obj'].yaml_dict,
                                          self.secret.yaml_dict,
                                          skip_keys=skip,
                                          debug=verbose):
                 return True
 
-        # Fix the ports to have protocol=TCP
-        for port in user_svc.get('spec#ports'):
+        # Service:
+        #   Fix the ports to have protocol=TCP
+        for port in oc_objects_prep['Service']['obj'].get('spec#ports'):
             port['protocol'] = 'TCP'
 
         skip = ['portalIP', 'clusterIP', 'sessionAffinity', 'type']
-        if not Utils.check_def_equal(user_svc.yaml_dict,
+        if not Utils.check_def_equal(oc_objects_prep['Service']['obj'].yaml_dict,
                                      self.service.yaml_dict,
                                      skip_keys=skip,
                                      debug=verbose):
             return True
 
-        # Router needs some exceptions.
-        # We do not want to check the autogenerated password for stats admin
+        # DeploymentConfig:
+        #   Router needs some exceptions.
+        #   We do not want to check the autogenerated password for stats admin
         if not self.config.config_options['stats_password']['value']:
-            for idx, env_var in enumerate(user_dc.get('spec#template#spec#containers[0]#env') or []):
+            for idx, env_var in enumerate(oc_objects_prep['DeploymentConfig']['obj'].get(\
+                        'spec#template#spec#containers[0]#env') or []):
                 if env_var['name'] == 'STATS_PASSWORD':
                     env_var['value'] = \
                       self.deploymentconfig.get('spec#template#spec#containers[0]#env[%s]#value' % idx)
+                    break
 
-        # dry-run doesn't add the protocol to the ports section.  We will manually do that.
-        for idx, port in enumerate(user_dc.get('spec#template#spec#containers[0]#ports') or []):
+        #   dry-run doesn't add the protocol to the ports section.  We will manually do that.
+        for idx, port in enumerate(oc_objects_prep['DeploymentConfig']['obj'].get(\
+                        'spec#template#spec#containers[0]#ports') or []):
             if not port.has_key('protocol'):
                 port['protocol'] = 'TCP'
 
-        # These are different when generating
+        #   These are different when generating
         skip = ['dnsPolicy',
                 'terminationGracePeriodSeconds',
                 'restartPolicy', 'timeoutSeconds',
                 'livenessProbe', 'readinessProbe',
-                'terminationMessagePath',
-                'rollingParams', 'hostPort',
+                'terminationMessagePath', 'hostPort',
                ]
 
-        return not Utils.check_def_equal(user_dc.yaml_dict,
+        return not Utils.check_def_equal(oc_objects_prep['DeploymentConfig']['obj'].yaml_dict,
                                          self.deploymentconfig.yaml_dict,
                                          skip_keys=skip,
-                                         debug=verbose)
+                                         debug=True)
+
+

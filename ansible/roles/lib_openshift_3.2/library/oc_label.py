@@ -796,14 +796,13 @@ class OCLabel(OpenShiftCLI):
         self.labels = labels
         self.selector = selector
 
-# new
     def get_current_labels(self):
         ''' get the current labels on object '''
 
         return self.get()['results']['labels']
 
     def compare_labels(self, host_labels):
-        ''' compare labels '''
+        ''' compare incoming labels against current labels'''
 
         for label in self.labels:
             if label['key'] not in host_labels or \
