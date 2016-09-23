@@ -2,7 +2,7 @@
 
 def main():
     '''
-    ansible oc module for secrets
+    ansible oc module for router
     '''
 
     module = AnsibleModule(
@@ -42,6 +42,8 @@ def main():
             stats_port=dict(default=1936, type='int'),
             # extra
             cacert_file=dict(default=None, type='str'),
+            # edits
+            edits=dict(default=None, type='dict'),
         ),
         mutually_exclusive=[["router_type", "images"]],
 
@@ -83,6 +85,8 @@ def main():
                             'stats_port': {'value': module.params['stats_port'], 'include': True},
                             # extra
                             'cacert_file': {'value': module.params['cacert_file'], 'include': False},
+                            # edits
+                            'edits': {'value': module.params['edits'], 'include': False},
                            })
 
 
@@ -143,5 +147,6 @@ def main():
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
-from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    from ansible.module_utils.basic import *
+    main()
