@@ -121,7 +121,7 @@ Docker Python libraries developed for monitoring OpenShift.
 # ----------------------------------------------------------------------------------
 %package monitoring-zagg
 Summary:       OpenShift Tools Zagg Python Libraries Package
-Requires:      python2,python-openshift-tools,python-openshift-tools-web,python-zbxsend
+Requires:      python2,python-openshift-tools,python-openshift-tools-web,python-zbxsend,python-redis
 BuildArch:     noarch
 
 %description monitoring-zagg
