@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.83
+Version:       0.0.84
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -291,6 +291,9 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Mon Sep 26 2016 Sten Turpin <sten@redhat.com> 0.0.84-1
+- add python-redis dependency (jdiaz@redhat.com)
+
 * Thu Sep 22 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.83-1
 - change ohi/ossh/etc to just use cache by default (jdiaz@redhat.com)
 
