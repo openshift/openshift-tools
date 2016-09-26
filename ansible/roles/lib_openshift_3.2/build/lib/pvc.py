@@ -43,10 +43,10 @@ class PersistentVolumeClaimConfig(object):
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 class PersistentVolumeClaim(Yedit):
     ''' Class to wrap the oc command line tools '''
-    access_modes_path = "spec#accessModes"
-    volume_capacity_path = "spec#requests#storage"
-    volume_name_path = "spec#volumeName"
-    bound_path = "status#phase"
+    access_modes_path = "spec.accessModes"
+    volume_capacity_path = "spec.requests.storage"
+    volume_name_path = "spec.volumeName"
+    bound_path = "status.phase"
     kind = 'PersistentVolumeClaim'
 
     def __init__(self, content):

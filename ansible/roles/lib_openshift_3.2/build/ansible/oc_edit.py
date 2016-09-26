@@ -31,6 +31,7 @@ def main():
             file_format=dict(default='yaml', type='str'),
             content=dict(default=None, required=True, type='dict'),
             force=dict(default=False, type='bool'),
+            separator=dict(default='.', type='str'),
         ),
         supports_check_mode=True,
     )
@@ -38,6 +39,7 @@ def main():
                   module.params['namespace'],
                   module.params['name'],
                   kubeconfig=module.params['kubeconfig'],
+                  separator=module.params['separator'],
                   verbose=module.params['debug'])
 
     state = module.params['state']

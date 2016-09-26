@@ -2,13 +2,13 @@
 
 class Volume(object):
     ''' Class to wrap the oc command line tools '''
-    volume_mounts_path = {"pod": "spec#containers[0]#volumeMounts",
-                          "dc":  "spec#template#spec#containers[0]#volumeMounts",
-                          "rc":  "spec#template#spec#containers[0]#volumeMounts",
+    volume_mounts_path = {"pod": "spec.containers[0].volumeMounts",
+                          "dc":  "spec.template.spec.containers[0].volumeMounts",
+                          "rc":  "spec.template.spec.containers[0].volumeMounts",
                          }
-    volumes_path = {"pod": "spec#volumes",
-                    "dc":  "spec#template#spec#volumes",
-                    "rc":  "spec#template#spec#volumes",
+    volumes_path = {"pod": "spec.volumes",
+                    "dc":  "spec.template.spec.volumes",
+                    "rc":  "spec.template.spec.volumes",
                    }
 
     @staticmethod
