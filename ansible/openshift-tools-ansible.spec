@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.21
+Version:        0.0.22
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,11 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Mon Sep 26 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.22-1
+- Adding oadm_manage_node. (kwoodson@redhat.com)
+- Adding ability to perform router edits at creation time.
+  (kwoodson@redhat.com)
+
 * Thu Sep 22 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.21-1
 - wrap inventory refresh in ops-runner (to post result to zabbix)
   (jdiaz@redhat.com)

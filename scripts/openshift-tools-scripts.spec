@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.141
+Version:       0.0.142
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -323,6 +323,10 @@ OpenShift Tools GCP specific scripts
 
 
 %changelog
+* Mon Sep 26 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.142-1
+- fixing redis persistence and heartbeater referencing non-existing var
+  (ihorvath@redhat.com)
+
 * Thu Sep 22 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.141-1
 - change ohi/ossh/etc to just use cache by default (jdiaz@redhat.com)
 
