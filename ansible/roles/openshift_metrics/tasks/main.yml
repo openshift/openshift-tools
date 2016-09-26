@@ -84,6 +84,7 @@
     params:
       HAWKULAR_METRICS_HOSTNAME: "metrics.{{ osamet_clusterid }}.openshift.com"
       CASSANDRA_PV_SIZE: "{{ osamet_pv_size }}"
+      CASSANDRA_NODES: "{{ osamet_node | default(omit) }}"
   register: processout
   run_once: true
 - debug: var=processout
