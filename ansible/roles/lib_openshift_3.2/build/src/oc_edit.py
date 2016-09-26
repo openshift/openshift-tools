@@ -33,7 +33,7 @@ class Edit(OpenShiftCLI):
                 data = json.loads(open(file_name).read())
 
             changes = []
-            yed = Yedit(filename=file_name, content=data, separator=separator)
+            yed = Yedit(filename=file_name, content=data, separator=self.separator)
             for key, value in content.items():
                 changes.append(yed.put(key, value))
 
