@@ -34,7 +34,7 @@ def main():
     # Get
     #####
     if state == 'list':
-        module.exit_json(changed=False, results=api_rval['results'], state="list")
+        module.exit_json(changed=False, result=api_rval['results'], state="list")
 
     if state == 'present':
         ########
@@ -52,13 +52,13 @@ def main():
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
 
-            module.exit_json(changed=True, results=api_rval['results'], state="present")
+            module.exit_json(changed=True, result=api_rval['results'], state="present")
 
-        module.exit_json(changed=False, results=api_rval['results'], state="present")
+        module.exit_json(changed=False, result=api_rval['results'], state="present")
 
     module.exit_json(failed=True,
                      changed=False,
-                     results='Unknown state passed. %s' % state,
+                     result='Unknown state passed. %s' % state,
                      state="unknown")
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
