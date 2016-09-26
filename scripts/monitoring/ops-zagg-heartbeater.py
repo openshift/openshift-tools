@@ -18,7 +18,7 @@
 #
 
 #This is not a module, but pylint thinks it is.  This is a command.
-#pylint: disable=invalid-name
+#pylint: disable=invalid-name, import-error
 
 """This is a script that adds a heartbeat to all defined targets in zagg.
 """
@@ -50,12 +50,12 @@ class ZaggHeartbeater(object):
         Returns: None
         """
         for target in self.config['targets']:
-            mm = MetricManager(target['path'])
+            mm = MetricManager(target['name'])
 
             hostname = socket.gethostname()
             myhb = UniqueMetric.create_heartbeat(hostname, self.config['templates'], self.config['hostgroups'])
 
-            print 'Writing heartbeat to %s/%s' % (target['path'], myhb.filename)
+            print 'Writing heartbeat to %s' % (target['name'])
             mm.write_metrics(myhb)
 
 if __name__ == "__main__":
