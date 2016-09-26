@@ -62,7 +62,9 @@ class ServiceConfig(object):
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 class Service(Yedit):
     ''' Class to wrap the oc command line tools '''
-    port_path = "spec#ports"
+    port_path = "spec.ports"
+    portal_ip = "spec.portalIP"
+    cluster_ip = "spec.clusterIP"
     kind = 'Service'
 
     def __init__(self, content):
@@ -115,10 +117,10 @@ class Service(Yedit):
 
     def add_cluster_ip(self, sip):
         '''add cluster ip'''
-        self.put('spec#clusterIP', sip)
+        self.put(Service.cluster_ip, sip)
 
     def add_portal_ip(self, pip):
         '''add cluster ip'''
-        self.put('spec#portalIP', pip)
+        self.put(Service.portal_ip, pip)
 
 

@@ -163,7 +163,7 @@
 - name: add metrics url to master-config.yml
   yedit:
     src: /etc/origin/master/master-config.yaml
-    key: assetConfig#metricsPublicURL
+    key: assetConfig.metricsPublicURL
     value: "https://metrics.{{ osamet_clusterid }}.openshift.com/hawkular/metrics"
   register: yeditout
   notify:

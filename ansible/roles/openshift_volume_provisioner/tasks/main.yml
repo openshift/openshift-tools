@@ -28,9 +28,9 @@
   #notify:
   #- restart openshift master services
   with_items:
-  - key: volumeConfig#dynamicProvisioningEnabled
+  - key: volumeConfig.dynamicProvisioningEnabled
     value: False
-  - key: kubernetesMasterConfig#controllerArguments#pvclaimbinder-sync-period
+  - key: kubernetesMasterConfig.controllerArguments.pvclaimbinder-sync-period
     value:
     - 30s
   register: master_config_changes

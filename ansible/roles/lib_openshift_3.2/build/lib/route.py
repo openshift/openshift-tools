@@ -56,13 +56,13 @@ class RouteConfig(object):
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 class Route(Yedit):
     ''' Class to wrap the oc command line tools '''
-    host_path = "spec#host"
-    service_path = "spec#to#name"
-    cert_path = "spec#tls#certificate"
-    cacert_path = "spec#tls#caCertificate"
-    destcacert_path = "spec#tls#destinationCACertificate"
-    termination_path = "spec#tls#termination"
-    key_path = "spec#tls#key"
+    host_path = "spec.host"
+    service_path = "spec.to.name"
+    cert_path = "spec.tls.certificate"
+    cacert_path = "spec.tls.caCertificate"
+    destcacert_path = "spec.tls.destinationCACertificate"
+    termination_path = "spec.tls.termination"
+    key_path = "spec.tls.key"
     kind = 'route'
 
     def __init__(self, content):
