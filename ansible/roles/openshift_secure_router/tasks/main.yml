@@ -25,7 +25,7 @@
     key_file: "/etc/origin/master/named_certificates/{{ key_basename }}"
     cacert_file: "/etc/origin/master/named_certificates/{{ cacert_basename }}"
 #    edits:
-#        spec#strategy#rollingParams:
+#        spec.strategy.rollingParams:
 #          intervalSeconds: 1
 #          maxSurge: 50%
 #          maxUnavailable: 50%

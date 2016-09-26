@@ -138,13 +138,13 @@
       type: secret
       secret_name: docker-registry-config
     edits:
-        spec#template#spec#containers[0]#livenessProbe#httpGet#scheme: HTTPS
-        spec#template#spec#containers[0]#readinessProbe#httpGet#scheme: HTTPS
-        spec#strategy#rollingParams#intervalSeconds: 1
-        spec#strategy#rollingParams#maxSurge: 50%
-        spec#strategy#rollingParams#maxUnavailable: 50%
-        spec#strategy#rollingParams#timeoutSeconds: 600
-        spec#strategy#rollingParams#updatePeriodSeconds: 1
+        spec.template.spec.containers[0].livenessProbe.httpGet.scheme: HTTPS
+        spec.template.spec.containers[0].readinessProbe.httpGet.scheme: HTTPS
+        spec.strategy.rollingParams.intervalSeconds: 1
+        spec.strategy.rollingParams.maxSurge: 50%
+        spec.strategy.rollingParams.maxUnavailable: 50%
+        spec.strategy.rollingParams.timeoutSeconds: 600
+        spec.strategy.rollingParams.updatePeriodSeconds: 1
   register: registryout
 
 - name: Pause for race conditions
