@@ -187,6 +187,7 @@
     namespace: logging
     content:
       metadata#annotations#openshift.io/node-selector: ''
+    separator: '#'
   register: editout
   run_once: true
 - debug: var=editout
