@@ -26,7 +26,7 @@ def process_metric():
 
         for target in flask_app.config['targets']:
             new_metric = UniqueMetric.from_request(json)
-            mymm = MetricManager(target['path'])
+            mymm = MetricManager(target['name'])
             mymm.write_metrics(new_metric)
 
         return jsonify({"success": True})
