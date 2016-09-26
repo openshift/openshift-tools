@@ -140,6 +140,55 @@ class OpenShiftCLI(object):
 
         raise OpenShiftCLIError('Problem detecting openshift version.')
 
+    def _schedulable(self, node=None, selector=None, schedulable=True):
+        ''' perform oadm manage-node scheduable '''
+        cmd = ['manage-node']
+        if node:
+            cmd.extend(node)
+        else:
+            cmd.append('--selector=%s' % selector)
+
+        cmd.append('--schedulable=%s' % schedulable)
+
+        return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
+
+    def _list_pods(self, node=None, selector=None, pod_selector=None):
+        ''' perform oadm manage-node evacuate '''
+        cmd = ['manage-node']
+        if node:
+            cmd.extend(node)
+        else:
+            cmd.append('--selector=%s' % selector)
+
+        if pod_selector:
+            cmd.append('--pod-selector=%s' % pod_selector)
+
+        cmd.extend(['--list-pods', '-o', 'json'])
+
+        return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
+
+    #pylint: disable=too-many-arguments
+    def _evacuate(self, node=None, selector=None, pod_selector=None, dry_run=False, grace_period=None):
+        ''' perform oadm manage-node evacuate '''
+        cmd = ['manage-node']
+        if node:
+            cmd.extend(node)
+        else:
+            cmd.append('--selector=%s' % selector)
+
+        if dry_run:
+            cmd.append('--dry-run')
+
+        if pod_selector:
+            cmd.append('--pod-selector=%s' % pod_selector)
+
+        if grace_period:
+            cmd.append('--grace-period=%s' % int(grace_period))
+
+        cmd.append('--evacuate')
+
+        return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
+
     def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json'):
         '''Base command for oc '''
         cmds = []

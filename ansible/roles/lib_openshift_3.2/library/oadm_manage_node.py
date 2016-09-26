@@ -820,480 +820,124 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
-# pylint: disable=too-many-public-methods
-class DeploymentConfig(Yedit):
-    ''' Class to wrap the oc command line tools '''
-    default_deployment_config = '''
-apiVersion: v1
-kind: DeploymentConfig
-metadata:
-  name: default_dc
-  namespace: default
-spec:
-  replicas: 0
-  selector:
-    default_dc: default_dc
-  strategy:
-    resources: {}
-    rollingParams:
-      intervalSeconds: 1
-      maxSurge: 0
-      maxUnavailable: 25%
-      timeoutSeconds: 600
-      updatePercent: -25
-      updatePeriodSeconds: 1
-    type: Rolling
-  template:
-    metadata:
-    spec:
-      containers:
-      - env:
-        - name: default
-          value: default
-        image: default
-        imagePullPolicy: IfNotPresent
-        name: default_dc
-        ports:
-        - containerPort: 8000
-          hostPort: 8000
-          protocol: TCP
-          name: default_port
-        resources: {}
-        terminationMessagePath: /dev/termination-log
-      dnsPolicy: ClusterFirst
-      hostNetwork: true
-      nodeSelector:
-        type: compute
-      restartPolicy: Always
-      securityContext: {}
-      serviceAccount: default
-      serviceAccountName: default
-      terminationGracePeriodSeconds: 30
-  triggers:
-  - type: ConfigChange
-'''
-
-    replicas_path = "spec#replicas"
-    env_path = "spec#template#spec#containers[0]#env"
-    volumes_path = "spec#template#spec#volumes"
-    container_path = "spec#template#spec#containers"
-    volume_mounts_path = "spec#template#spec#containers[0]#volumeMounts"
-
-    def __init__(self, content=None):
-        ''' Constructor for OpenshiftOC '''
-        if not content:
-            content = DeploymentConfig.default_deployment_config
-
-        super(DeploymentConfig, self).__init__(content=content)
-
-    # pylint: disable=no-member
-    def add_env_value(self, key, value):
-        ''' add key, value pair to env array '''
-        rval = False
-        env = self.get_env_vars()
-        if env:
-            env.append({'name': key, 'value': value})
-            rval = True
-        else:
-            result = self.put(DeploymentConfig.env_path, {'name': key, 'value': value})
-            rval = result[0]
-
-        return rval
-
-    def exists_env_value(self, key, value):
-        ''' return whether a key, value  pair exists '''
-        results = self.get_env_vars()
-        if not results:
-            return False
-
-        for result in results:
-            if result['name'] == key and result['value'] == value:
-                return True
-
-        return False
-
-    def exists_env_key(self, key):
-        ''' return whether a key, value  pair exists '''
-        results = self.get_env_vars()
-        if not results:
-            return False
-
-        for result in results:
-            if result['name'] == key:
-                return True
-
-        return False
-
-    def get_env_vars(self):
-        '''return a environment variables '''
-        return self.get(DeploymentConfig.env_path) or []
-
-    def delete_env_var(self, keys):
-        '''delete a list of keys '''
-        if not isinstance(keys, list):
-            keys = [keys]
-
-        env_vars_array = self.get_env_vars()
-        modified = False
-        idx = None
-        for key in keys:
-            for env_idx, env_var in enumerate(env_vars_array):
-                if env_var['name'] == key:
-                    idx = env_idx
-                    break
-
-            if idx:
-                modified = True
-                del env_vars_array[idx]
-
-        if modified:
-            return True
-
-        return False
-
-    def update_env_var(self, key, value):
-        '''place an env in the env var list'''
-
-        env_vars_array = self.get_env_vars()
-        idx = None
-        for env_idx, env_var in enumerate(env_vars_array):
-            if env_var['name'] == key:
-                idx = env_idx
-                break
-
-        if idx:
-            env_vars_array[idx]['value'] = value
-        else:
-            self.add_env_value(key, value)
-
-        return True
-
-    def exists_volume_mount(self, volume_mount):
-        ''' return whether a volume mount exists '''
-        exist_volume_mounts = self.get_volume_mounts()
-
-        if not exist_volume_mounts:
-            return False
-
-        volume_mount_found = False
-        for exist_volume_mount in exist_volume_mounts:
-            if exist_volume_mount['name'] == volume_mount['name']:
-                volume_mount_found = True
-                break
-
-        return volume_mount_found
-
-    def exists_volume(self, volume):
-        ''' return whether a volume exists '''
-        exist_volumes = self.get_volumes()
-
-        volume_found = False
-        for exist_volume in exist_volumes:
-            if exist_volume['name'] == volume['name']:
-                volume_found = True
-                break
-
-        return volume_found
-
-    def find_volume_by_name(self, volume, mounts=False):
-        ''' return the index of a volume '''
-        volumes = []
-        if mounts:
-            volumes = self.get_volume_mounts()
-        else:
-            volumes = self.get_volumes()
-        for exist_volume in volumes:
-            if exist_volume['name'] == volume['name']:
-                return exist_volume
-
-        return None
-
-    def get_replicas(self):
-        ''' return replicas setting '''
-        return self.get(DeploymentConfig.replicas_path)
-
-    def get_volume_mounts(self):
-        '''return volume mount information '''
-        return self.get_volumes(mounts=True)
-
-    def get_volumes(self, mounts=False):
-        '''return volume mount information '''
-        if mounts:
-            return self.get(DeploymentConfig.volume_mounts_path) or []
-
-        return self.get(DeploymentConfig.volumes_path) or []
-
-    def delete_volume_by_name(self, volume):
-        '''delete a volume '''
-        modified = False
-        exist_volume_mounts = self.get_volume_mounts()
-        exist_volumes = self.get_volumes()
-        del_idx = None
-        for idx, exist_volume in enumerate(exist_volumes):
-            if exist_volume.has_key('name') and exist_volume['name'] == volume['name']:
-                del_idx = idx
-                break
-
-        if del_idx != None:
-            del exist_volumes[del_idx]
-            modified = True
-
-        del_idx = None
-        for idx, exist_volume_mount in enumerate(exist_volume_mounts):
-            if exist_volume_mount.has_key('name') and exist_volume_mount['name'] == volume['name']:
-                del_idx = idx
-                break
-
-        if del_idx != None:
-            del exist_volume_mounts[idx]
-            modified = True
-
-        return modified
-
-    def add_volume_mount(self, volume_mount):
-        ''' add a volume or volume mount to the proper location '''
-        exist_volume_mounts = self.get_volume_mounts()
-
-        if not exist_volume_mounts and volume_mount:
-            self.put(DeploymentConfig.volume_mounts_path, [volume_mount])
-        else:
-            exist_volume_mounts.append(volume_mount)
-
-    def add_volume(self, volume):
-        ''' add a volume or volume mount to the proper location '''
-        exist_volumes = self.get_volumes()
-        if not volume:
-            return
-
-        if not exist_volumes:
-            self.put(DeploymentConfig.volumes_path, [volume])
-        else:
-            exist_volumes.append(volume)
-
-    def update_replicas(self, replicas):
-        ''' update replicas value '''
-        self.put(DeploymentConfig.replicas_path, replicas)
-
-    def update_volume(self, volume):
-        '''place an env in the env var list'''
-        exist_volumes = self.get_volumes()
-
-        if not volume:
-            return False
-
-        # update the volume
-        update_idx = None
-        for idx, exist_vol in enumerate(exist_volumes):
-            if exist_vol['name'] == volume['name']:
-                update_idx = idx
-                break
-
-        if update_idx != None:
-            exist_volumes[update_idx] = volume
-        else:
-            self.add_volume(volume)
-
-        return True
-
-    def update_volume_mount(self, volume_mount):
-        '''place an env in the env var list'''
-        modified = False
-
-        exist_volume_mounts = self.get_volume_mounts()
-
-        if not volume_mount:
-            return False
-
-        # update the volume mount
-        for exist_vol_mount in exist_volume_mounts:
-            if exist_vol_mount['name'] == volume_mount['name']:
-                if exist_vol_mount.has_key('mountPath') and \
-                   str(exist_vol_mount['mountPath']) != str(volume_mount['mountPath']):
-                    exist_vol_mount['mountPath'] = volume_mount['mountPath']
-                    modified = True
-                break
-
-        if not modified:
-            self.add_volume_mount(volume_mount)
-            modified = True
-
-        return modified
-
-    def needs_update_volume(self, volume, volume_mount):
-        ''' verify a volume update is needed '''
-        exist_volume = self.find_volume_by_name(volume)
-        exist_volume_mount = self.find_volume_by_name(volume, mounts=True)
-        results = []
-        results.append(exist_volume['name'] == volume['name'])
-
-        if volume.has_key('secret'):
-            results.append(exist_volume.has_key('secret'))
-            results.append(exist_volume['secret']['secretName'] == volume['secret']['secretName'])
-            results.append(exist_volume_mount['name'] == volume_mount['name'])
-            results.append(exist_volume_mount['mountPath'] == volume_mount['mountPath'])
-
-        elif volume.has_key('emptyDir'):
-            results.append(exist_volume_mount['name'] == volume['name'])
-            results.append(exist_volume_mount['mountPath'] == volume_mount['mountPath'])
-
-        elif volume.has_key('persistentVolumeClaim'):
-            pvc = 'persistentVolumeClaim'
-            results.append(exist_volume.has_key(pvc))
-            if results[-1]:
-                results.append(exist_volume[pvc]['claimName'] == volume[pvc]['claimName'])
-
-                if volume[pvc].has_key('claimSize'):
-                    results.append(exist_volume[pvc]['claimSize'] == volume[pvc]['claimSize'])
-
-        elif volume.has_key('hostpath'):
-            results.append(exist_volume.has_key('hostPath'))
-            results.append(exist_volume['hostPath']['path'] == volume_mount['mountPath'])
-
-        return not all(results)
-
-    def needs_update_replicas(self, replicas):
-        ''' verify whether a replica update is needed '''
-        current_reps = self.get(DeploymentConfig.replicas_path)
-        return not current_reps == replicas
-
-# pylint: disable=too-many-public-methods
-class ReplicationController(DeploymentConfig):
-    ''' Class to wrap the oc command line tools '''
-    replicas_path = "spec#replicas"
-    env_path = "spec#template#spec#containers[0]#env"
-    volumes_path = "spec#template#spec#volumes"
-    container_path = "spec#template#spec#containers"
-    volume_mounts_path = "spec#template#spec#containers[0]#volumeMounts"
-
-    def __init__(self, content):
-        ''' Constructor for OpenshiftOC '''
-        super(ReplicationController, self).__init__(content=content)
-# vim: expandtab:tabstop=4:shiftwidth=4
-# pylint: skip-file
+class ManageNodeException(Exception):
+    ''' manage-node exception class '''
+    pass
+
+class ManageNodeConfig(OpenShiftCLIConfig):
+    ''' ManageNodeConfig is a DTO for the manage-node command.'''
+    def __init__(self, kubeconfig, node_options):
+        super(ManageNodeConfig, self).__init__(None, None, kubeconfig, node_options)
 
 # pylint: disable=too-many-instance-attributes
-class OCScale(OpenShiftCLI):
+class ManageNode(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
     def __init__(self,
-                 resource_name,
-                 namespace,
-                 replicas,
-                 kind,
-                 kubeconfig='/etc/origin/master/admin.kubeconfig',
+                 config,
                  verbose=False):
-        ''' Constructor for OCScale '''
-        super(OCScale, self).__init__(namespace, kubeconfig)
-        self.kind = kind
-        self.replicas = replicas
-        self.name = resource_name
-        self.namespace = namespace
-        self.kubeconfig = kubeconfig
-        self.verbose = verbose
-        self._resource = None
+        ''' Constructor for OCVolume '''
+        super(ManageNode, self).__init__(None, config.kubeconfig)
+        self.config = config
 
-    @property
-    def resource(self):
-        ''' property function for resource var '''
-        if not self._resource:
-            self.get()
-        return self._resource
+    def evacuate(self):
+        ''' formulate the params and run oadm manage-node '''
+        return self._evacuate(node=self.config.config_options['node']['value'],
+                              selector=self.config.config_options['selector']['value'],
+                              pod_selector=self.config.config_options['pod_selector']['value'],
+                              dry_run=self.config.config_options['dry_run']['value'],
+                             )
 
-    @resource.setter
-    def resource(self, data):
-        ''' setter function for resource var '''
-        self._resource = data
+    def list_pods(self):
+        ''' run oadm manage-node --list-pods'''
+        results = self._list_pods(node=self.config.config_options['node']['value'],
+                                  selector=self.config.config_options['selector']['value'],
+                                  pod_selector=self.config.config_options['pod_selector']['value'],
+                                 )
+        # When a selector or node is matched it is returned along with the json.
+        # We are going to split the results based on the regexp and then
+        # load the json for each matching node.
+        # Before we return we are going to loop over the results and pull out the node names.
+        # {'node': [pod, pod], 'node': [pod, pod]}
+        listing_match = re.compile('\n^Listing matched.*$\n', flags=re.MULTILINE)
+        pods = listing_match.split(results['results'])
+        all_pods = [json.loads(pod)['items'] for pod in pods if pod]
+        rval = {}
+        for i in range(len(all_pods)):
+            rval[all_pods[i][0]['spec']['nodeName']] = all_pods[i]
 
-    def get(self):
-        '''return replicas information '''
-        vol = self._get(self.kind, self.name)
-        if vol['returncode'] == 0:
-            if self.kind == 'dc':
-                self.resource = DeploymentConfig(content=vol['results'][0])
-                vol['results'] = [self.resource.get_replicas()]
-            if self.kind == 'rc':
-                self.resource = ReplicationController(content=vol['results'][0])
-                vol['results'] = [self.resource.get_replicas()]
+        results['results'] = rval
 
-        return vol
+        return results
 
-    def put(self):
-        '''update replicas into dc '''
-        self.resource.update_replicas(self.replicas)
-        #self.resource.get_volumes()
-        #self.resource.update_volume_mount(self.volume_mount)
-        return self._replace_content(self.kind, self.name, self.resource.yaml_dict)
+    def schedulable(self):
+        '''oadm manage-node call for making nodes unschedulable'''
+        return self._schedulable(node=self.config.config_options['node']['value'],
+                                 selector=self.config.config_options['selector']['value'],
+                                 schedulable=self.config.config_options['schedulable']['value'],
+                                )
 
-    def needs_update(self):
-        ''' verify whether an update is needed '''
-        return self.resource.needs_update_replicas(self.replicas)
-# vim: expandtab:tabstop=4:shiftwidth=4
-# pylint: skip-file
 
 def main():
     '''
-    ansible oc module for scaling
+    ansible oadm module for manage-node
     '''
 
     module = AnsibleModule(
         argument_spec=dict(
-            kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
-            state=dict(default='present', type='str',
-                       choices=['present', 'list']),
             debug=dict(default=False, type='bool'),
-            kind=dict(default='dc', choices=['dc', 'rc'], type='str'),
-            namespace=dict(default='default', type='str'),
-            replicas=dict(default=None, type='int'),
-            name=dict(default=None, type='str'),
+            kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
+            node=dict(default=None, type='list'),
+            selector=dict(default=None, type='str'),
+            pod_selector=dict(default=None, type='str'),
+            schedulable=dict(default=None, type='bool'),
+            list_pods=dict(default=False, type='bool'),
+            evacuate=dict(default=False, type='bool'),
+            dry_run=dict(default=False, type='bool'),
+            force=dict(default=False, type='bool'),
+            grace_period=dict(default=None, type='int'),
         ),
+        mutually_exclusive=[["selector", "node"], ['evacuate', 'list_pods'], ['list_pods', 'schedulable']],
+        required_one_of=[["node", "selector"]],
+
         supports_check_mode=True,
     )
-    oc_scale = OCScale(module.params['name'],
-                       module.params['namespace'],
-                       module.params['replicas'],
-                       module.params['kind'],
-                       module.params['kubeconfig'],
-                       verbose=module.params['debug'])
 
-    state = module.params['state']
+    nconfig = ManageNodeConfig(module.params['kubeconfig'],
+                               {'node': {'value': module.params['node'], 'include': True},
+                                'selector': {'value': module.params['selector'], 'include': True},
+                                'pod_selector': {'value': module.params['pod_selector'], 'include': True},
+                                'schedulable': {'value': module.params['schedulable'], 'include': True},
+                                'list_pods': {'value': module.params['list_pods'], 'include': True},
+                                'evacuate': {'value': module.params['evacuate'], 'include': True},
+                                'dry_run': {'value': module.params['dry_run'], 'include': True},
+                                'force': {'value': module.params['force'], 'include': True},
+                                'grace_period': {'value': module.params['grace_period'], 'include': True},
+                               })
 
-    api_rval = oc_scale.get()
 
-    #####
-    # Get
-    #####
-    if state == 'list':
-        module.exit_json(changed=False, results=api_rval['results'], state="list")
+    oadm_mn = ManageNode(nconfig)
+    # Run the oadm manage-node commands
+    results = None
+    changed = False
+    if module.params['schedulable'] != None:
+        results = oadm_mn.schedulable()
+        changed = True
 
-    if state == 'present':
-        ########
-        # Update
-        ########
-        if oc_scale.needs_update():
-            api_rval = oc_scale.put()
+    if module.params['evacuate']:
+        results = oadm_mn.evacuate()
+        changed = True
+    elif module.params['list_pods']:
+        results = oadm_mn.list_pods()
 
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
+    if not results or results['returncode'] != 0:
+        module.fail_json(msg=results)
 
-            # return the created object
-            api_rval = oc_scale.get()
-
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
-
-            module.exit_json(changed=True, results=api_rval['results'], state="present")
-
-        module.exit_json(changed=False, results=api_rval['results'], state="present")
-
-    module.exit_json(failed=True,
-                     changed=False,
-                     results='Unknown state passed. %s' % state,
-                     state="unknown")
+    module.exit_json(changed=changed, results=results, state="present")
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
 from ansible.module_utils.basic import *
-
 main()
