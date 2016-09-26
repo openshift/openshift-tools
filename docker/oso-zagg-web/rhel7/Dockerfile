@@ -46,6 +46,9 @@ RUN sed -i -e 's/^\(LoadModule auth_digest_module modules\/mod_auth_digest.so\)$
 # Set default zabbix-server host
 RUN sed -i -e 's/^g_default_zabbix_server.*/g_default_zabbix_server: oso-rhel7-zaio/g' /root/default_vars.yml
 
+# Disable redis persistence, no use for us, container goes away it's lost anyway
+RUN sed -i -e '/^save/ s/^/#/' /etc/redis.conf
+
 # Temporary fixes until we can run as root
 # Make the container work more consistently in and out of openshift
 # BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
