@@ -461,11 +461,14 @@ class YeditException(Exception):
 
 class Yedit(object):
     ''' Class to modify yaml files '''
-    re_valid_key = r"(((\[-?\d+\])|([0-9a-zA-Z-./_]+)).?)+$"
-    re_key = r"(?:\[(-?\d+)\])|([0-9a-zA-Z-./_]+)"
+    re_valid_key = r"(((\[-?\d+\])|([0-9a-zA-Z%s/_-]+)).?)+$"
+    re_key = r"(?:\[(-?\d+)\])|([0-9a-zA-Z%s/_-]+)"
+    com_sep = set(['.', '#', '|', ':'])
 
-    def __init__(self, filename=None, content=None, content_type='yaml', backup=False):
+    # pylint: disable=too-many-arguments
+    def __init__(self, filename=None, content=None, content_type='yaml', separator='.', backup=False):
         self.content = content
+        self._separator = separator
         self.filename = filename
         self.__yaml_dict = content
         self.content_type = content_type
@@ -473,6 +476,16 @@ class Yedit(object):
         if self.filename and not self.content:
             if not self.load(content_type=self.content_type):
                 self.__yaml_dict = {}
+
+    @property
+    def separator(self):
+        ''' getter method for yaml_dict '''
+        return self._separator
+
+    @separator.setter
+    def separator(self):
+        ''' getter method for yaml_dict '''
+        return self._separator
 
     @property
     def yaml_dict(self):
@@ -485,7 +498,22 @@ class Yedit(object):
         self.__yaml_dict = value
 
     @staticmethod
-    def remove_entry(data, key):
+    def parse_key(key, sep='.'):
+        '''parse the key allowing the appropriate separator'''
+        common_separators = list(Yedit.com_sep - set([sep]))
+        return re.findall(Yedit.re_key % ''.join(common_separators), key)
+
+    @staticmethod
+    def valid_key(key, sep='.'):
+        '''validate the incoming key'''
+        common_separators = list(Yedit.com_sep - set([sep]))
+        if not re.match(Yedit.re_valid_key % ''.join(common_separators), key):
+            return False
+
+        return True
+
+    @staticmethod
+    def remove_entry(data, key, sep='.'):
         ''' remove data at location key '''
         if key == '' and isinstance(data, dict):
             data.clear()
@@ -494,10 +522,10 @@ class Yedit(object):
             del data[:]
             return True
 
-        if not (key and re.match(Yedit.re_valid_key, key) and isinstance(data, (list, dict))):
+        if not (key and Yedit.valid_key(key, sep)) and isinstance(data, (list, dict)):
             return None
 
-        key_indexes = re.findall(Yedit.re_key, key)
+        key_indexes = Yedit.parse_key(key, sep)
         for arr_ind, dict_key in key_indexes[:-1]:
             if dict_key and isinstance(data, dict):
                 data = data.get(dict_key, None)
@@ -520,7 +548,7 @@ class Yedit(object):
                 return True
 
     @staticmethod
-    def add_entry(data, key, item=None):
+    def add_entry(data, key, item=None, sep='.'):
         ''' Get an item from a dictionary with key notation a.b.c
             d = {'a': {'b': 'c'}}}
             key = a#b
@@ -528,10 +556,10 @@ class Yedit(object):
         '''
         if key == '':
             pass
-        elif not (key and re.match(Yedit.re_valid_key, key) and isinstance(data, (list, dict))):
+        elif not (key and Yedit.valid_key(key, sep)) and isinstance(data, (list, dict)):
             return None
 
-        key_indexes = re.findall(Yedit.re_key, key)
+        key_indexes = Yedit.parse_key(key, sep)
         for arr_ind, dict_key in key_indexes[:-1]:
             if dict_key:
                 if isinstance(data, dict) and data.has_key(dict_key) and data[dict_key]:
@@ -564,7 +592,7 @@ class Yedit(object):
         return data
 
     @staticmethod
-    def get_entry(data, key):
+    def get_entry(data, key, sep='.'):
         ''' Get an item from a dictionary with key notation a.b.c
             d = {'a': {'b': 'c'}}}
             key = a.b
@@ -572,10 +600,10 @@ class Yedit(object):
         '''
         if key == '':
             pass
-        elif not (key and re.match(Yedit.re_valid_key, key) and isinstance(data, (list, dict))):
+        elif not (key and Yedit.valid_key(key, sep)) and isinstance(data, (list, dict)):
             return None
 
-        key_indexes = re.findall(Yedit.re_key, key)
+        key_indexes = Yedit.parse_key(key, sep)
         for arr_ind, dict_key in key_indexes:
             if dict_key and isinstance(data, dict):
                 data = data.get(dict_key, None)
@@ -651,7 +679,7 @@ class Yedit(object):
     def get(self, key):
         ''' get a specified key'''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, key)
+            entry = Yedit.get_entry(self.yaml_dict, key, self.separator)
         except KeyError as _:
             entry = None
 
@@ -660,7 +688,7 @@ class Yedit(object):
     def pop(self, path, key_or_item):
         ''' remove a key, value pair from a dict or an item for a list'''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, path)
+            entry = Yedit.get_entry(self.yaml_dict, path, self.separator)
         except KeyError as _:
             entry = None
 
@@ -691,14 +719,14 @@ class Yedit(object):
     def delete(self, path):
         ''' remove path from a dict'''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, path)
+            entry = Yedit.get_entry(self.yaml_dict, path, self.separator)
         except KeyError as _:
             entry = None
 
         if entry == None:
             return  (False, self.yaml_dict)
 
-        result = Yedit.remove_entry(self.yaml_dict, path)
+        result = Yedit.remove_entry(self.yaml_dict, path, self.separator)
         if not result:
             return (False, self.yaml_dict)
 
@@ -707,7 +735,7 @@ class Yedit(object):
     def exists(self, path, value):
         ''' check if value exists at path'''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, path)
+            entry = Yedit.get_entry(self.yaml_dict, path, self.separator)
         except KeyError as _:
             entry = None
 
@@ -734,7 +762,7 @@ class Yedit(object):
     def append(self, path, value):
         '''append value to a list'''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, path)
+            entry = Yedit.get_entry(self.yaml_dict, path, self.separator)
         except KeyError as _:
             entry = None
 
@@ -745,10 +773,11 @@ class Yedit(object):
         entry.append(value)
         return (True, self.yaml_dict)
 
+    # pylint: disable=too-many-arguments
     def update(self, path, value, index=None, curr_value=None):
         ''' put path, value into a dict '''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, path)
+            entry = Yedit.get_entry(self.yaml_dict, path, self.separator)
         except KeyError as _:
             entry = None
 
@@ -793,7 +822,7 @@ class Yedit(object):
     def put(self, path, value):
         ''' put path, value into a dict '''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, path)
+            entry = Yedit.get_entry(self.yaml_dict, path, self.separator)
         except KeyError as _:
             entry = None
 
@@ -801,7 +830,7 @@ class Yedit(object):
             return (False, self.yaml_dict)
 
         tmp_copy = copy.deepcopy(self.yaml_dict)
-        result = Yedit.add_entry(tmp_copy, path, value)
+        result = Yedit.add_entry(tmp_copy, path, value, self.separator)
         if not result:
             return (False, self.yaml_dict)
 
@@ -813,7 +842,7 @@ class Yedit(object):
         ''' create a yaml file '''
         if not self.file_exists():
             tmp_copy = copy.deepcopy(self.yaml_dict)
-            result = Yedit.add_entry(tmp_copy, path, value)
+            result = Yedit.add_entry(tmp_copy, path, value, self.separator)
             if result:
                 self.yaml_dict = tmp_copy
                 return (True, self.yaml_dict)
@@ -822,13 +851,13 @@ class Yedit(object):
 
 class Volume(object):
     ''' Class to wrap the oc command line tools '''
-    volume_mounts_path = {"pod": "spec#containers[0]#volumeMounts",
-                          "dc":  "spec#template#spec#containers[0]#volumeMounts",
-                          "rc":  "spec#template#spec#containers[0]#volumeMounts",
+    volume_mounts_path = {"pod": "spec.containers[0].volumeMounts",
+                          "dc":  "spec.template.spec.containers[0].volumeMounts",
+                          "rc":  "spec.template.spec.containers[0].volumeMounts",
                          }
-    volumes_path = {"pod": "spec#volumes",
-                    "dc":  "spec#template#spec#volumes",
-                    "rc":  "spec#template#spec#volumes",
+    volumes_path = {"pod": "spec.volumes",
+                    "dc":  "spec.template.spec.volumes",
+                    "rc":  "spec.template.spec.volumes",
                    }
 
     @staticmethod
@@ -917,7 +946,9 @@ class ServiceConfig(object):
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 class Service(Yedit):
     ''' Class to wrap the oc command line tools '''
-    port_path = "spec#ports"
+    port_path = "spec.ports"
+    portal_ip = "spec.portalIP"
+    cluster_ip = "spec.clusterIP"
     kind = 'Service'
 
     def __init__(self, content):
@@ -970,11 +1001,11 @@ class Service(Yedit):
 
     def add_cluster_ip(self, sip):
         '''add cluster ip'''
-        self.put('spec#clusterIP', sip)
+        self.put(Service.cluster_ip, sip)
 
     def add_portal_ip(self, pip):
         '''add cluster ip'''
-        self.put('spec#portalIP', pip)
+        self.put(Service.portal_ip, pip)
 
 
 
@@ -1031,11 +1062,11 @@ spec:
   - type: ConfigChange
 '''
 
-    replicas_path = "spec#replicas"
-    env_path = "spec#template#spec#containers[0]#env"
-    volumes_path = "spec#template#spec#volumes"
-    container_path = "spec#template#spec#containers"
-    volume_mounts_path = "spec#template#spec#containers[0]#volumeMounts"
+    replicas_path = "spec.replicas"
+    env_path = "spec.template.spec.containers[0].env"
+    volumes_path = "spec.template.spec.volumes"
+    container_path = "spec.template.spec.containers"
+    volume_mounts_path = "spec.template.spec.containers[0].volumeMounts"
 
     def __init__(self, content=None):
         ''' Constructor for OpenshiftOC '''
@@ -1326,9 +1357,9 @@ class RegistryConfig(OpenShiftCLIConfig):
 class Registry(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
-    volume_mount_path = 'spec#template#spec#containers[0]volumesMounts'
-    volume_path = 'spec#template#spec#volumes'
-    env_path = 'spec#template#spec#containers[0]#env'
+    volume_mount_path = 'spec.template.spec.containers[0].volumeMounts'
+    volume_path = 'spec.template.spec.volumes'
+    env_path = 'spec.template.spec.containers[0].env'
 
     def __init__(self,
                  registry_config,
@@ -1473,9 +1504,9 @@ class Registry(OpenShiftCLI):
 
         # modify service ip
         if self.svc_ip:
-            service.put('spec#clusterIP', self.svc_ip)
+            service.put('spec.clusterIP', self.svc_ip)
         if self.portal_ip:
-            service.put('spec#portalIP', self.portal_ip)
+            service.put('spec.portalIP', self.portal_ip)
 
         # need to create the service and the deploymentconfig
         service_file = Utils.create_file('service', service.yaml_dict)
@@ -1506,10 +1537,10 @@ class Registry(OpenShiftCLI):
 
         self.get()
         if self.service:
-            svcip = self.service.get('spec#clusterIP')
+            svcip = self.service.get('spec.clusterIP')
             if svcip:
                 self.svc_ip = svcip
-            portip = self.service.get('spec#portalIP')
+            portip = self.service.get('spec.portalIP')
             if portip:
                 self.portal_ip = portip
 
@@ -1587,8 +1618,8 @@ class Registry(OpenShiftCLI):
                         'rollingParams',
                         'securityContext',
                         'imagePullPolicy',
-                        'protocol', #ports.portocol: TCP
-                        'type', #strategy: {'type': 'rolling'}
+                        'protocol', # ports.portocol: TCP
+                        'type', # strategy: {'type': 'rolling'}
                        ]
 
         if not Utils.check_def_equal(self.registry_prep['deployment'].yaml_dict,

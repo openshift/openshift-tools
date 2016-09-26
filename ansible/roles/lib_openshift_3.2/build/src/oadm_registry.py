@@ -12,9 +12,9 @@ class RegistryConfig(OpenShiftCLIConfig):
 class Registry(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
-    volume_mount_path = 'spec#template#spec#containers[0]volumesMounts'
-    volume_path = 'spec#template#spec#volumes'
-    env_path = 'spec#template#spec#containers[0]#env'
+    volume_mount_path = 'spec.template.spec.containers[0].volumeMounts'
+    volume_path = 'spec.template.spec.volumes'
+    env_path = 'spec.template.spec.containers[0].env'
 
     def __init__(self,
                  registry_config,
@@ -159,9 +159,9 @@ class Registry(OpenShiftCLI):
 
         # modify service ip
         if self.svc_ip:
-            service.put('spec#clusterIP', self.svc_ip)
+            service.put('spec.clusterIP', self.svc_ip)
         if self.portal_ip:
-            service.put('spec#portalIP', self.portal_ip)
+            service.put('spec.portalIP', self.portal_ip)
 
         # need to create the service and the deploymentconfig
         service_file = Utils.create_file('service', service.yaml_dict)
@@ -192,10 +192,10 @@ class Registry(OpenShiftCLI):
 
         self.get()
         if self.service:
-            svcip = self.service.get('spec#clusterIP')
+            svcip = self.service.get('spec.clusterIP')
             if svcip:
                 self.svc_ip = svcip
-            portip = self.service.get('spec#portalIP')
+            portip = self.service.get('spec.portalIP')
             if portip:
                 self.portal_ip = portip
 
@@ -273,8 +273,8 @@ class Registry(OpenShiftCLI):
                         'rollingParams',
                         'securityContext',
                         'imagePullPolicy',
-                        'protocol', #ports.portocol: TCP
-                        'type', #strategy: {'type': 'rolling'}
+                        'protocol', # ports.portocol: TCP
+                        'type', # strategy: {'type': 'rolling'}
                        ]
 
         if not Utils.check_def_equal(self.registry_prep['deployment'].yaml_dict,
