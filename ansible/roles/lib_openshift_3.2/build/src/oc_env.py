@@ -4,9 +4,9 @@
 class OCEnv(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
-    container_path = {"pod": "spec#containers[0]#env",
-                      "dc":  "spec#template#spec#containers[0]#env",
-                      "rc":  "spec#template#spec#containers[0]#env",
+    container_path = {"pod": "spec.containers[0].env",
+                      "dc":  "spec.template.spec.containers[0].env",
+                      "rc":  "spec.template.spec.containers[0].env",
                      }
 
     # pylint allows 5. we need 6

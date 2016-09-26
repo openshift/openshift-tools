@@ -873,11 +873,11 @@ spec:
   - type: ConfigChange
 '''
 
-    replicas_path = "spec#replicas"
-    env_path = "spec#template#spec#containers[0]#env"
-    volumes_path = "spec#template#spec#volumes"
-    container_path = "spec#template#spec#containers"
-    volume_mounts_path = "spec#template#spec#containers[0]#volumeMounts"
+    replicas_path = "spec.replicas"
+    env_path = "spec.template.spec.containers[0].env"
+    volumes_path = "spec.template.spec.volumes"
+    container_path = "spec.template.spec.containers"
+    volume_mounts_path = "spec.template.spec.containers[0].volumeMounts"
 
     def __init__(self, content=None):
         ''' Constructor for OpenshiftOC '''
@@ -1160,9 +1160,9 @@ spec:
 class OCEnv(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
-    container_path = {"pod": "spec#containers[0]#env",
-                      "dc":  "spec#template#spec#containers[0]#env",
-                      "rc":  "spec#template#spec#containers[0]#env",
+    container_path = {"pod": "spec.containers[0].env",
+                      "dc":  "spec.template.spec.containers[0].env",
+                      "rc":  "spec.template.spec.containers[0].env",
                      }
 
     # pylint allows 5. we need 6

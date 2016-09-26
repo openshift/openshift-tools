@@ -882,7 +882,9 @@ class ServiceConfig(object):
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 class Service(Yedit):
     ''' Class to wrap the oc command line tools '''
-    port_path = "spec#ports"
+    port_path = "spec.ports"
+    portal_ip = "spec.portalIP"
+    cluster_ip = "spec.clusterIP"
     kind = 'Service'
 
     def __init__(self, content):
@@ -935,11 +937,11 @@ class Service(Yedit):
 
     def add_cluster_ip(self, sip):
         '''add cluster ip'''
-        self.put('spec#clusterIP', sip)
+        self.put(Service.cluster_ip, sip)
 
     def add_portal_ip(self, pip):
         '''add cluster ip'''
-        self.put('spec#portalIP', pip)
+        self.put(Service.portal_ip, pip)
 
 
 
@@ -994,7 +996,7 @@ class OCService(OpenShiftCLI):
         result = self._get(self.kind, self.config.name)
         if result['returncode'] == 0:
             self.service = Service(content=result['results'][0])
-            result['clusterip'] = self.service.get('spec#clusterIP')
+            result['clusterip'] = self.service.get('spec.clusterIP')
         elif 'services \"%s\" not found' % self.config.name  in result['stderr']:
             result['clusterip'] = ''
 
@@ -1012,8 +1014,8 @@ class OCService(OpenShiftCLI):
         '''create a service '''
         # Need to copy over the portalIP and the serviceIP settings
 
-        self.user_svc.add_cluster_ip(self.service.get('spec#clusterIP'))
-        self.user_svc.add_portal_ip(self.service.get('spec#portalIP'))
+        self.user_svc.add_cluster_ip(self.service.get('spec.clusterIP'))
+        self.user_svc.add_portal_ip(self.service.get('spec.portalIP'))
         return self._replace_content(self.kind, self.config.name, self.user_svc.yaml_dict)
 
     def needs_update(self):

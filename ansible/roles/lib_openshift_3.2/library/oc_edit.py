@@ -829,6 +829,7 @@ class Edit(OpenShiftCLI):
                  namespace,
                  resource_name=None,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
+                 separator='.',
                  verbose=False):
         ''' Constructor for OpenshiftOC '''
         super(Edit, self).__init__(namespace, kubeconfig)
@@ -836,6 +837,7 @@ class Edit(OpenShiftCLI):
         self.kind = kind
         self.name = resource_name
         self.kubeconfig = kubeconfig
+        self.separator = separator
         self.verbose = verbose
 
     def get(self):
@@ -851,7 +853,7 @@ class Edit(OpenShiftCLI):
                 data = json.loads(open(file_name).read())
 
             changes = []
-            yed = Yedit(file_name, data)
+            yed = Yedit(filename=file_name, content=data, separator=separator)
             for key, value in content.items():
                 changes.append(yed.put(key, value))
 
@@ -899,6 +901,7 @@ def main():
             file_format=dict(default='yaml', type='str'),
             content=dict(default=None, required=True, type='dict'),
             force=dict(default=False, type='bool'),
+            separator=dict(default='.', type='str'),
         ),
         supports_check_mode=True,
     )
@@ -906,6 +909,7 @@ def main():
                   module.params['namespace'],
                   module.params['name'],
                   kubeconfig=module.params['kubeconfig'],
+                  separator=module.params['separator'],
                   verbose=module.params['debug'])
 
     state = module.params['state']

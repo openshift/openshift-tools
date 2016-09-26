@@ -214,7 +214,7 @@
 - name: add kibana url to master-config.yml
   yedit:
     src: /etc/origin/master/master-config.yaml
-    key: assetConfig#loggingPublicURL
+    key: assetConfig.loggingPublicURL
     value: "https://logs.{{ osalog_clusterid }}.openshift.com"
   register: yeditout
   notify:

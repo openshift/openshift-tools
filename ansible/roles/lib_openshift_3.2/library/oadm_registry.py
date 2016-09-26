@@ -822,13 +822,13 @@ class Yedit(object):
 
 class Volume(object):
     ''' Class to wrap the oc command line tools '''
-    volume_mounts_path = {"pod": "spec#containers[0]#volumeMounts",
-                          "dc":  "spec#template#spec#containers[0]#volumeMounts",
-                          "rc":  "spec#template#spec#containers[0]#volumeMounts",
+    volume_mounts_path = {"pod": "spec.containers[0].volumeMounts",
+                          "dc":  "spec.template.spec.containers[0].volumeMounts",
+                          "rc":  "spec.template.spec.containers[0].volumeMounts",
                          }
-    volumes_path = {"pod": "spec#volumes",
-                    "dc":  "spec#template#spec#volumes",
-                    "rc":  "spec#template#spec#volumes",
+    volumes_path = {"pod": "spec.volumes",
+                    "dc":  "spec.template.spec.volumes",
+                    "rc":  "spec.template.spec.volumes",
                    }
 
     @staticmethod
@@ -917,7 +917,9 @@ class ServiceConfig(object):
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 class Service(Yedit):
     ''' Class to wrap the oc command line tools '''
-    port_path = "spec#ports"
+    port_path = "spec.ports"
+    portal_ip = "spec.portalIP"
+    cluster_ip = "spec.clusterIP"
     kind = 'Service'
 
     def __init__(self, content):
@@ -970,11 +972,11 @@ class Service(Yedit):
 
     def add_cluster_ip(self, sip):
         '''add cluster ip'''
-        self.put('spec#clusterIP', sip)
+        self.put(Service.cluster_ip, sip)
 
     def add_portal_ip(self, pip):
         '''add cluster ip'''
-        self.put('spec#portalIP', pip)
+        self.put(Service.portal_ip, pip)
 
 
 
@@ -1031,11 +1033,11 @@ spec:
   - type: ConfigChange
 '''
 
-    replicas_path = "spec#replicas"
-    env_path = "spec#template#spec#containers[0]#env"
-    volumes_path = "spec#template#spec#volumes"
-    container_path = "spec#template#spec#containers"
-    volume_mounts_path = "spec#template#spec#containers[0]#volumeMounts"
+    replicas_path = "spec.replicas"
+    env_path = "spec.template.spec.containers[0].env"
+    volumes_path = "spec.template.spec.volumes"
+    container_path = "spec.template.spec.containers"
+    volume_mounts_path = "spec.template.spec.containers[0].volumeMounts"
 
     def __init__(self, content=None):
         ''' Constructor for OpenshiftOC '''
@@ -1326,9 +1328,9 @@ class RegistryConfig(OpenShiftCLIConfig):
 class Registry(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
-    volume_mount_path = 'spec#template#spec#containers[0]volumesMounts'
-    volume_path = 'spec#template#spec#volumes'
-    env_path = 'spec#template#spec#containers[0]#env'
+    volume_mount_path = 'spec.template.spec.containers[0].volumeMounts'
+    volume_path = 'spec.template.spec.volumes'
+    env_path = 'spec.template.spec.containers[0].env'
 
     def __init__(self,
                  registry_config,
@@ -1473,9 +1475,9 @@ class Registry(OpenShiftCLI):
 
         # modify service ip
         if self.svc_ip:
-            service.put('spec#clusterIP', self.svc_ip)
+            service.put('spec.clusterIP', self.svc_ip)
         if self.portal_ip:
-            service.put('spec#portalIP', self.portal_ip)
+            service.put('spec.portalIP', self.portal_ip)
 
         # need to create the service and the deploymentconfig
         service_file = Utils.create_file('service', service.yaml_dict)
@@ -1506,10 +1508,10 @@ class Registry(OpenShiftCLI):
 
         self.get()
         if self.service:
-            svcip = self.service.get('spec#clusterIP')
+            svcip = self.service.get('spec.clusterIP')
             if svcip:
                 self.svc_ip = svcip
-            portip = self.service.get('spec#portalIP')
+            portip = self.service.get('spec.portalIP')
             if portip:
                 self.portal_ip = portip
 
@@ -1587,8 +1589,8 @@ class Registry(OpenShiftCLI):
                         'rollingParams',
                         'securityContext',
                         'imagePullPolicy',
-                        'protocol', #ports.portocol: TCP
-                        'type', #strategy: {'type': 'rolling'}
+                        'protocol', # ports.portocol: TCP
+                        'type', # strategy: {'type': 'rolling'}
                        ]
 
         if not Utils.check_def_equal(self.registry_prep['deployment'].yaml_dict,
