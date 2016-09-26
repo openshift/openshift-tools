@@ -1,0 +1,53 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: "oo_clusterid_opstest:&oo_master_primary"
+  gather_facts: no
+  user: root
+
+  tasks:
+  - name: list pods
+    oadm_manage_node:
+      list_pods: True
+#selector: type=infra
+#selector: type=infra
+      node:
+      - ip-172-31-55-114.ec2.internal
+    register: podout
+  - debug: var=podout
+#- debug: var=podout.results.results.keys()
+#
+#  - name: scheduable false
+#    oadm_manage_node:
+#      schedulable: False
+#      node:
+#      - ip-172-31-55-122.ec2.internal
+#      - ip-172-31-55-123.ec2.internal
+##selector: type=compute
+#    register: schedout
+#  - debug: var=schedout
+#
+#  - name: scheduable false
+#    oadm_manage_node:
+#      schedulable: True
+#      node:
+#      - ip-172-31-55-122.ec2.internal
+#      - ip-172-31-55-123.ec2.internal
+#    register: schedout
+#  - debug: var=schedout
+
+#  - name: evacuate
+#    oadm_manage_node:
+#      schedulable: False
+#      evacuate: True
+#      node:
+#      - ip-172-31-55-113.ec2.internal
+#    register: evacout
+#  - debug: var=evacout
+
+#  - name: evacuate
+#    oadm_manage_node:
+#      schedulable: True
+#      node:
+#      - ip-172-31-55-113.ec2.internal
+#    register: evacout
+#  - debug: var=evacout
