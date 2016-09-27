@@ -395,3 +395,16 @@ host_monitoring_cron:
 
 {# end if host master #}
 {% endif %}
+
+event_watcher_config:
+  # EventName:
+  #   - pattern: 'regex pattern to match on the event's 'message' value'
+  #     zbx_key: <zabbix key to report this 'event' on>
+  #   - pattern: 'regex for a different event subtype'
+  #     zbx_key: <zabbix key for event subtype>
+  # OtherEvent:
+  #   - pattern: 'regex for OtherEvent'
+  #     zbx_key: <zabbix key to report>
+  FailedScheduling:
+    - pattern: failed to fit in any node
+      zbx_key: openshift.master.cluster.event.failedscheduling
