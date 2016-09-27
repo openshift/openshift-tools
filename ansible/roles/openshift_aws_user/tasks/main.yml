@@ -67,7 +67,7 @@
 - name: write credentials to file (yaml format)
   yedit:
     src: "{{ osau_credentials_dir }}/{{ item.item[0].username }}.yml"
-    content_type: str
+    content_type: dict
     content: |
       ---
       g_aws_{{ item.item[0].username }}_account_username: {{ item.item[0].username }}
