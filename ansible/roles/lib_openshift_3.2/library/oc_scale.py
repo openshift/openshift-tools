@@ -143,7 +143,15 @@ class OpenShiftCLI(object):
         ''' return the version of openshift '''
         results = self.openshift_cmd(['version'], output=True, output_type='raw')
         if results['returncode'] == 0:
-            return results['stdout'].split('\n')[0].strip()
+            versions = {}
+            for line in results['results'].strip().split('\n'):
+                name, version = line.split()
+                versions[name] = version
+
+            rval = {}
+            rval['returncode'] = results['returncode']
+            rval.update(versions)
+            return rval
 
         raise OpenShiftCLIError('Problem detecting openshift version.')
 
