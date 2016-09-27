@@ -2236,7 +2236,7 @@ def main():
                             # extra
                             'cacert_file': {'value': module.params['cacert_file'], 'include': False},
                             # edits
-                            'edits': {'value': module.params['edits'], 'include': False},
+                            'edits': {'value': module.params.get('edits', {}), 'include': False},
                            })
 
 
