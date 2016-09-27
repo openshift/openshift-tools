@@ -158,10 +158,10 @@ class Router(OpenShiftCLI):
         for key, value in self.config.config_options['edits'].get('value', {}).items():
             edit_results.append(deploymentconfig.put(key, value))
 
-        if not any([res[0] for res in edit_results]):
+        if edit_results and not any([res[0] for res in edit_results]):
             return None
 
-        return deploymentconfig.yaml_dict
+        return deploymentconfig
 
     def prepare_router(self):
         '''prepare router for instantiation'''
@@ -214,8 +214,7 @@ class Router(OpenShiftCLI):
             return results
 
         # results will need to get parsed here and modifications added
-        tmp_dc = self.add_modifications(oc_objects['DeploymentConfig']['obj'])
-        oc_objects['DeploymentConfig']['obj'] = DeploymentConfig(tmp_dc)
+        oc_objects['DeploymentConfig']['obj'] = self.add_modifications(oc_objects['DeploymentConfig']['obj'])
 
         for oc_type in oc_objects.keys():
             oc_objects[oc_type]['path'] = Utils.create_file(oc_type, oc_objects[oc_type]['obj'].yaml_dict)
@@ -329,6 +328,6 @@ class Router(OpenShiftCLI):
         return not Utils.check_def_equal(oc_objects_prep['DeploymentConfig']['obj'].yaml_dict,
                                          self.deploymentconfig.yaml_dict,
                                          skip_keys=skip,
-                                         debug=True)
+                                         debug=False)
 
 
