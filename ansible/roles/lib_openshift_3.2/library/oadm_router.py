@@ -1972,7 +1972,7 @@ class Router(OpenShiftCLI):
         # We want modifications in the form of edits coming in from the module.
         # Let's apply these here
         edit_results = []
-        for key, value in self.config.config_options['edits']['value'].items():
+        for key, value in self.config.config_options['edits'].get('value', {}).items():
             edit_results.append(deploymentconfig.put(key, value))
 
         if not any([res[0] for res in edit_results]):
@@ -2193,7 +2193,7 @@ def main():
             # extra
             cacert_file=dict(default=None, type='str'),
             # edits
-            edits=dict(default=None, type='dict'),
+            edits=dict(default={}, type='dict'),
         ),
         mutually_exclusive=[["router_type", "images"]],
 
@@ -2236,7 +2236,7 @@ def main():
                             # extra
                             'cacert_file': {'value': module.params['cacert_file'], 'include': False},
                             # edits
-                            'edits': {'value': module.params.get('edits', {}), 'include': False},
+                            'edits': {'value': module.params['edits'], 'include': False},
                            })
 
 
