@@ -155,7 +155,7 @@ class Router(OpenShiftCLI):
         # We want modifications in the form of edits coming in from the module.
         # Let's apply these here
         edit_results = []
-        for key, value in self.config.config_options['edits']['value'].items():
+        for key, value in self.config.config_options['edits'].get('value', {}).items():
             edit_results.append(deploymentconfig.put(key, value))
 
         if not any([res[0] for res in edit_results]):
