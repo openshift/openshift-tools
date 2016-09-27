@@ -43,7 +43,7 @@ def main():
             # extra
             cacert_file=dict(default=None, type='str'),
             # edits
-            edits=dict(default=None, type='dict'),
+            edits=dict(default={}, type='dict'),
         ),
         mutually_exclusive=[["router_type", "images"]],
 
@@ -86,7 +86,7 @@ def main():
                             # extra
                             'cacert_file': {'value': module.params['cacert_file'], 'include': False},
                             # edits
-                            'edits': {'value': module.params.get('edits', {}), 'include': False},
+                            'edits': {'value': module.params['edits'], 'include': False},
                            })
 
 
