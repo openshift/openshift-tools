@@ -24,13 +24,13 @@
     cert_file: "/etc/origin/master/named_certificates/{{ cert_basename }}"
     key_file: "/etc/origin/master/named_certificates/{{ key_basename }}"
     cacert_file: "/etc/origin/master/named_certificates/{{ cacert_basename }}"
-#    edits:
-#        spec.strategy.rollingParams:
-#          intervalSeconds: 1
-#          maxSurge: 50%
-#          maxUnavailable: 50%
-#          timeoutSeconds: 600
-#          updatePeriodSeconds: 1
+    edits:
+        spec.strategy.rollingParams:
+          intervalSeconds: 1
+          maxSurge: 50%
+          maxUnavailable: 50%
+          timeoutSeconds: 600
+          updatePeriodSeconds: 1
   register: router_out
   run_once: true
 

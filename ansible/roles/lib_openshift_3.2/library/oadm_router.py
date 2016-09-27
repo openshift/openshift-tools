@@ -481,9 +481,9 @@ class Yedit(object):
         self.__yaml_dict = content
         self.content_type = content_type
         self.backup = backup
-        if self.filename and not self.content:
-            if not self.load(content_type=self.content_type):
-                self.__yaml_dict = {}
+        self.load(content_type=self.content_type)
+        if self.__yaml_dict == None:
+            self.__yaml_dict = {}
 
     @property
     def separator(self):
@@ -647,9 +647,9 @@ class Yedit(object):
         return (True, self.yaml_dict)
 
     def read(self):
-        ''' write to file '''
+        ''' read from file '''
         # check if it exists
-        if not self.file_exists():
+        if self.filename == None or not self.file_exists():
             return None
 
         contents = None
@@ -669,14 +669,21 @@ class Yedit(object):
         ''' return yaml file '''
         contents = self.read()
 
-        if not contents:
+        if not contents and not self.content:
             return None
+
+        if self.content:
+            if isinstance(self.content, dict):
+                self.yaml_dict = self.content
+                return self.yaml_dict
+            elif isinstance(self.content, str):
+                contents = self.content
 
         # check if it is yaml
         try:
-            if content_type == 'yaml':
+            if content_type == 'yaml' and contents:
                 self.yaml_dict = yaml.load(contents)
-            elif content_type == 'json':
+            elif content_type == 'json' and contents:
                 self.yaml_dict = json.loads(contents)
         except yaml.YAMLError as err:
             # Error loading yaml or json
@@ -1975,10 +1982,10 @@ class Router(OpenShiftCLI):
         for key, value in self.config.config_options['edits'].get('value', {}).items():
             edit_results.append(deploymentconfig.put(key, value))
 
-        if not any([res[0] for res in edit_results]):
+        if edit_results and not any([res[0] for res in edit_results]):
             return None
 
-        return deploymentconfig.yaml_dict
+        return deploymentconfig
 
     def prepare_router(self):
         '''prepare router for instantiation'''
@@ -2031,8 +2038,7 @@ class Router(OpenShiftCLI):
             return results
 
         # results will need to get parsed here and modifications added
-        tmp_dc = self.add_modifications(oc_objects['DeploymentConfig']['obj'])
-        oc_objects['DeploymentConfig']['obj'] = DeploymentConfig(tmp_dc)
+        oc_objects['DeploymentConfig']['obj'] = self.add_modifications(oc_objects['DeploymentConfig']['obj'])
 
         for oc_type in oc_objects.keys():
             oc_objects[oc_type]['path'] = Utils.create_file(oc_type, oc_objects[oc_type]['obj'].yaml_dict)
@@ -2146,7 +2152,7 @@ class Router(OpenShiftCLI):
         return not Utils.check_def_equal(oc_objects_prep['DeploymentConfig']['obj'].yaml_dict,
                                          self.deploymentconfig.yaml_dict,
                                          skip_keys=skip,
-                                         debug=True)
+                                         debug=False)
 
 
 
