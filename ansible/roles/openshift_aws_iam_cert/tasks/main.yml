@@ -10,14 +10,6 @@
   - "{{ osaic_chain_cert }}"
   - "{{ osaic_dest_file }}"
 
-- name: remove the old  cert if any
-  iam_cert20:
-    name: "{{ osaic_iam_certname }}"
-    state: absent
-    cert: "{{ osaic_cert }}"
-    key: "{{ osaic_key }}"
-    cert_chain: "{{ osaic_chain_cert | default(omit, True) }}"
-
 - name: upload a cert with cert chain
   iam_cert20:
     name: "{{ osaic_iam_certname }}"
