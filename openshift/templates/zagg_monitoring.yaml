@@ -27,12 +27,6 @@ objects:
           name: rhel7:latest
       type: Docker
     triggers:
-    - github:
-        secret: omDbv56tz1WfjnJXBd8-
-      type: GitHub
-    - generic:
-        secret: omZTVJ1ypJZG6scTRTXB
-      type: Generic
     - imageChange: {}
       type: ImageChange
 - apiVersion: v1
@@ -59,12 +53,6 @@ objects:
           name: oso-rhel7-ops-base:latest
       type: Docker
     triggers:
-    - github:
-        secret: kYu3zNQsSXBO55eJ3lAW
-      type: GitHub
-    - generic:
-        secret: NZcPQKFcxQHhLQjMkXoq
-      type: Generic
     - imageChange: {}
       type: ImageChange
 - apiVersion: v1
