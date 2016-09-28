@@ -113,7 +113,7 @@
     name: docker-registry
     force: "{{ svc_out.changed or cert_secret_out.changed or registry_config_out.changed or sa_out.changed }}"
     service_account: registry
-    replicas: 2
+    replicas: "{{ osgreg_replica_count }}"
     namespace: default
     selector: type=infra
     images: "registry.ops.openshift.com/openshift3/ose-${component}:${version}"
@@ -151,6 +151,13 @@
   when: registryout.changed
 
 - debug: var=registryout
+
+- name: scale dc
+  oc_scale:
+    namespace: default
+    name: docker-registry
+    kind: dc
+    replicas: "{{ osgreg_replica_count }}"
 
 - name: create route for the registry
   oc_route:
