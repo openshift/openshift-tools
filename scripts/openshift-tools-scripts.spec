@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.145
+Version:       0.0.146
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -323,6 +323,9 @@ OpenShift Tools GCP specific scripts
 
 
 %changelog
+* Wed Sep 28 2016 Joel Diaz <jdiaz@redhat.com> 0.0.146-1
+- update event watcher with regex ability (jdiaz@redhat.com)
+
 * Mon Sep 26 2016 Sten Turpin <sten@redhat.com> 0.0.145-1
 -  add redis dep
 
