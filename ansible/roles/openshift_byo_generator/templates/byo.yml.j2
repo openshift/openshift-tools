@@ -200,16 +200,16 @@ openshift_master_scheduler_predicates={{ obg_openshift_scheduler_predicates }}
 [new_nodes]
 {%     for infra in obg_new_infra_nodes %}
 {%         if obg_location == 'gcp' %}
-{{ hostvars[infra].oo_public_ip }}        openshift_hostname={{ infra }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'ops_node': 'new'}"
+{{ hostvars[infra].oo_public_ip }}        openshift_hostname={{ infra }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'ops_node': 'new'}" openshift_schedulable=false
 {%         else %}
-{{ hostvars[infra].oo_public_ip }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'hostname': '{{ infra }}, 'ops_node': 'new''}"
+{{ hostvars[infra].oo_public_ip }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'hostname': '{{ infra }}, 'ops_node': 'new'}" openshift_schedulable=false
 {%         endif %}
 {%     endfor %}
 {%     for compute in obg_new_compute_nodes %}
 {%         if obg_location == 'gcp' %}
-{{ hostvars[compute].oo_public_ip }}       openshift_hostname={{ compute }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'ops_node': 'new'}"
+{{ hostvars[compute].oo_public_ip }}       openshift_hostname={{ compute }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'ops_node': 'new'}" openshift_schedulable=false
 {%         else %}
-{{ hostvars[compute].oo_public_ip }}       openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'hostname': '{{ compute }}', 'ops_node': 'new'}"
+{{ hostvars[compute].oo_public_ip }}       openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'hostname': '{{ compute }}', 'ops_node': 'new'}" openshift_schedulable=false
 {%         endif %}
 {%     endfor %}
 {% endif %}
