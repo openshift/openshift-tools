@@ -1,0 +1,21 @@
+---
+- include_vars: "{{aal_multi_inventory_location}}"
+  tags:
+  - inventory
+
+- name: Create list of AWS accounts from ansible inventory
+  copy:
+    content: |
+      {% for name, account in accounts.iteritems() %}
+      {%   if 'extra_vars' in account and 'oo_accountid' in account.extra_vars %}
+      {%     if 'oo_location' in account.extra_vars and account.extra_vars.oo_location == 'aws' %}
+               {{- name }}:{{ account.extra_vars.oo_accountid }}
+      {%     endif %}
+      {%   endif %}
+      {% endfor %}
+    dest: /etc/openshift_tools/aws_accounts.txt
+    owner: root
+    group: awx
+    mode: 0640
+  tags:
+  - inventory
