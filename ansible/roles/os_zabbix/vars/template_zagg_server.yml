@@ -34,12 +34,12 @@ g_template_zagg_server:
     priority: average
 
   - name: "Critically large number of metrics in Zagg queue {HOST.NAME}"
-    expression: "{Template Zagg Server:zagg.server.metrics.count.min(#3)}>10000"
+    expression: "{Template Zagg Server:zagg.server.metrics.count.min(#3)}>100000"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/zagg_server.asciidoc"
     priority: high
 
   - name: "Large number of metrics in Zagg queue {HOST.NAME}"
-    expression: "{Template Zagg Server:zagg.server.metrics.count.min(#3)}>5000"
+    expression: "{Template Zagg Server:zagg.server.metrics.count.min(#3)}>70000"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/zagg_server.asciidoc"
     dependencies:
     - "Critically large number of metrics in Zagg queue {HOST.NAME}"
