@@ -287,7 +287,7 @@ host_monitoring_cron:
 - name: "OpenShift event watcher"
   hour: "*"
   minute: "*/2"
-  job: ops-runner --flock-no-fail -n oscew.event.watcher /usr/bin/cron-event-watcher --watch-for FailedScheduling
+  job: ops-runner --flock-no-fail -n oscew.event.watcher /usr/bin/cron-event-watcher
 
 {% if osohm_enable_cluster_capacity_reporting|bool %}
 - name: "Cluster capacity reporting"
