@@ -971,8 +971,8 @@ def main():
                                'imagestreamimages', 'isimage',
                                'bc', 'buildconfigs',
                                'routes',
-                               'builds'
-                               'nodes', 'no',
+                               'builds',
+                               'node', 'no',
                                'pods', 'po',
                                'replicationcontrollers', 'rc',
                                'daemonsets', 'ds',
