@@ -31,12 +31,6 @@ objects:
         noCache: true
       type: Docker
     triggers:
-    - github:
-        secret: omDbv56tz1WfjnJXBd8-
-      type: GitHub
-    - generic:
-        secret: omZTVJ1ypJZG6scTRTXB
-      type: Generic
     - imageChange: {}
       type: ImageChange
 - apiVersion: v1
@@ -67,12 +61,6 @@ objects:
         noCache: true
       type: Docker
     triggers:
-    - github:
-        secret: emr1MvjYjWNkEWUI_q6S
-      type: GitHub
-    - generic:
-        secret: yXX-a_vZDwurwsEHzn4U
-      type: Generic
     - imageChange: {}
       type: ImageChange
 - apiVersion: v1
@@ -103,12 +91,6 @@ objects:
         noCache: true
       type: Docker
     triggers:
-    - github:
-        secret: bxBBfQa-snFN2325yUq4
-      type: GitHub
-    - generic:
-        secret: vAIA7QI9jD3k9DWXbsIi
-      type: Generic
     - imageChange: {}
       type: ImageChange
 - apiVersion: v1
@@ -139,12 +121,6 @@ objects:
         noCache: true
       type: Docker
     triggers:
-    - github:
-        secret: kYu3zNQsSXBO55eJ3lAW
-      type: GitHub
-    - generic:
-        secret: NZcPQKFcxQHhLQjMkXoq
-      type: Generic
     - imageChange: {}
       type: ImageChange
 - apiVersion: v1
