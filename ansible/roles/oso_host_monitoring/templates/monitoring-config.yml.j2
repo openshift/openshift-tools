@@ -61,6 +61,9 @@ zagg_client_config:
     - Template Performance Copilot # So we can report PCP metrics
 {% if osohm_host_type == 'master' %}
     - Template Openshift Master # So we can send master related metrics
+{%   if osohm_enable_cluster_capacity_triggers | bool %}
+    - Template Openshift Master Capacity Checks # To notify on low capacity
+{%   endif %}
 {%   if osohm_cloud == 'gcp' %}
     - Template GCP
 {%   elif osohm_cloud == 'aws' %}

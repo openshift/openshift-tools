@@ -25,6 +25,10 @@
 - include_vars: template_openshift_master.yml
   tags:
   - openshift_master
+- include_vars: template_openshift_master_capacity.yml
+  tags:
+  - openshift_master
+  - openshift_master_capacity
 - include_vars: template_openshift_node.yml
   tags:
   - openshift_node
@@ -117,6 +121,17 @@
     password: "{{ ozb_password }}"
   tags:
   - openshift_master
+
+- name: Include Template Openshift Master Capacity
+  include: ../../lib_zabbix/tasks/create_template.yml
+  vars:
+    template: "{{ g_template_openshift_master_capacity }}"
+    server: "{{ ozb_server }}"
+    user: "{{ ozb_user }}"
+    password: "{{ ozb_password }}"
+  tags:
+  - openshift_master
+  - openshift_master_capacity
 
 - name: Include Template Openshift Node
   include: ../../lib_zabbix/tasks/create_template.yml
