@@ -20,14 +20,16 @@ RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 ADD zabbix.repo /etc/yum.repos.d/
 
 # Install zabbix (and supporting tools) from zabbix repo
-RUN yum install -y mod_ssl zabbix-server-mysql zabbix-sender zabbix-agent \
+
+# By default docker recommends to install packages with tsflags=nodocs for space saving
+# but in this case, we need it for this one package, because the DB schema is coming from the docs
+RUN yum install -y --setopt=tsflags='' zabbix-server-mysql
+RUN yum install -y mod_ssl zabbix-sender zabbix-agent \
     zabbix-web-mysql mariadb mariadb-server openssh-clients openshift-tools-scripts-monitoring-zabbix-heal && \
     yum -y update && \
     yum clean all
 
 ADD root/ /root/
-# WORK AROUND FOR SQL SCRIPTS ARE MISSING
-ADD zabbix/db_create/zdata /usr/share/doc/zabbix-server-mysql-2.4.5/create/
 
 # Add mysql files
 ADD mariadb-prepare-db-dir /usr/libexec/
@@ -43,7 +45,7 @@ ADD zabbix/conf/zabbix_agentd.conf /etc/zabbix/
 ADD zabbix/conf/zabbix_agent.conf /etc/zabbix/
 
 # Set the timezone in the php.ini file
-RUN sed -r -ie 's/^;(date.timezone).*/\1 = America\/New_York/g' /etc/php.ini
+RUN sed -r -i -e 's/^;(date.timezone).*/\1 = America\/New_York/g' /etc/php.ini
 
 # Zabbix web
 ADD zabbix/conf/zabbix.conf.php /etc/zabbix/web/
