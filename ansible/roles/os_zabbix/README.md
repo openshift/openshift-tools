@@ -14,6 +14,11 @@ Role Variables
 zab_server
 zab_username
 zab_password
+### osohm_enable_cluster_capacity_triggers
+
+Should the triggers for cluster capacity monitoring be enabled on this cluster
+
+Default: `False`
 
 Dependencies
 ------------
