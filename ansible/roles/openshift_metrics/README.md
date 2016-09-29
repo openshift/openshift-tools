@@ -15,6 +15,14 @@ Ansible Modules:
 Role Variables
 --------------
 
+### osamet_node
+
+The number of the cassandra node that is being deployed. Each will need its own
+node number to scale up.
+
+Default: `1`
+
+https://github.com/openshift/origin-metrics/blob/master/docs/cassandra_scaling.adoc
 
 Dependencies
 ------------

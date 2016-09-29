@@ -1,3 +1,4 @@
 ---
 osamet_limits_memory: 2G
+osamet_node: 1
 osamet_requests_memory: 2G
