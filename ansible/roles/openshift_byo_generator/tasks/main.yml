@@ -31,6 +31,7 @@
   with_items:
     - obg_openshiftapps_cert
     - obg_openshiftapps_key
+    - obg_openshiftapps_ca
 
 - fail:
     msg: "Please define {{ item }}"

@@ -127,7 +127,7 @@ openshift_master_extension_stylesheets={{ obg_ui_stylesheets }}
 
 {# Install custom certificate in the router for https connections #}
 {% if obg_use_router_certs %}
-openshift_hosted_router_certificate={"certfile": "{{ obg_openshiftapps_cert }}", "keyfile": "{{ obg_openshiftapps_key }}"}
+openshift_hosted_router_certificate={"certfile": "{{ obg_openshiftapps_cert }}", "keyfile": "{{ obg_openshiftapps_key }}", "cafile": "{{ obg_openshiftapps_ca }}"}
 {% endif %}
 
 {# OpenShift Node K8s argument overrides, used for items openshift-ansible does not support #}
