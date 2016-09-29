@@ -185,7 +185,7 @@ openshift_master_scheduler_predicates={{ obg_openshift_scheduler_predicates }}
 {%     if obg_location == 'gcp' %}
 {{ hostvars[infra].oo_public_ip }}        openshift_hostname={{ infra }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'ops_node': 'old'}"
 {%     else %}
-{{ hostvars[infra].oo_public_ip }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'hostname': '{{ infra }}', 'ops_node': 'old''}"
+{{ hostvars[infra].oo_public_ip }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'hostname': '{{ infra }}', 'ops_node': 'old'}"
 {%     endif %}
 {% endfor %}
 {% for compute in obg_compute_nodes %}
