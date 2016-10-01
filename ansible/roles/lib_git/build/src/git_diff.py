@@ -9,7 +9,7 @@ class GitDiff(GitCLI):
                  branch,
                  diff_branch,
                 ):
-        ''' Constructor for GitStatus '''
+        ''' Constructor for GitDiff '''
         super(GitDiff, self).__init__(path)
         self.path = path
         self.branch = branch
@@ -35,7 +35,7 @@ class GitDiff(GitCLI):
         return False
 
     def diff(self):
-        '''perform a git status '''
+        '''perform a git diff '''
 
         if self.checkout_branch():
             diff_results = self._diff(self.diff_branch)

@@ -37,15 +37,17 @@ class GitCLI(object):
 
         return results
 
-    def _status(self, porcelain=False, uno=False):
+    def _status(self, porcelain=False, show_untracked=True):
         ''' Do a git status '''
 
         cmd = ["status"]
         if porcelain:
             cmd.append('--porcelain')
 
-        if uno:
-            cmd.append('-uno')
+        if show_untracked:
+            cmd.append('--untracked-files=normal')
+        else:
+            cmd.append('--untracked-files=no')
 
         results = self.git_cmd(cmd, output=True, output_type='raw')
 

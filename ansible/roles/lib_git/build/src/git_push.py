@@ -49,7 +49,7 @@ class GitPush(GitCLI):
     def need_push(self):
         ''' checks to see if push is needed '''
 
-        git_status_results = self._status(uno=True)
+        git_status_results = self._status(show_untracked=False)
 
         self.debug.append(git_status_results)
         status_msg = "Your branch is ahead of '%s" %self.remote
