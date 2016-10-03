@@ -31,6 +31,7 @@ import re
 import sys
 
 import boto3
+import botocore.exceptions
 
 
 class ChangePassword(object):
@@ -91,10 +92,18 @@ class ChangePassword(object):
         session = boto3.Session(profile_name=aws_account)
         client = session.client('iam')
 
-        self.response = client.update_login_profile(
-            UserName=user_name,
-            Password=new_password
-            )
+        try:
+            self.response = client.update_login_profile(
+                UserName=user_name,
+                Password=new_password
+                )
+
+        except botocore.exceptions.ClientError as client_exception:
+            if client_exception.response['Error']['Code'] == 'NoSuchEntity':
+                client.create_login_profile(
+                    UserName=user_name,
+                    Password=new_password
+                    )
 
         print('Password successfully changed for:', aws_account)
         return self.response
@@ -123,6 +132,7 @@ class ChangePassword(object):
 
             else:
                 raise ValueError('No suitable arguments provided')
+
 
 if __name__ == '__main__':
     CHANGE = ChangePassword()
