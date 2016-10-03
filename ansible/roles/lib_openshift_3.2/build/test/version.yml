@@ -10,3 +10,12 @@
     register: ocversion
   - debug: var=ocversion
 
+- hosts: "oo_clusterid_upgradetest:&oo_version_3:&oo_master_primary"
+  gather_facts: no
+  user: root
+
+  post_tasks:
+  - name: Get version
+    oc_version:
+    register: ocversion
+  - debug: var=ocversion

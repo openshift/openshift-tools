@@ -18,8 +18,8 @@ import os
 import re
 import shutil
 import subprocess
-
 import yaml
+
 # This is here because of a bug that causes yaml
 # to incorrectly handle timezone info on timestamps
 def timestamp_constructor(_, node):
@@ -138,22 +138,6 @@ class OpenShiftCLI(object):
             rval['results'] = [rval['results']]
 
         return rval
-
-    def _get_version(self):
-        ''' return the version of openshift '''
-        results = self.openshift_cmd(['version'], output=True, output_type='raw')
-        if results['returncode'] == 0:
-            versions = {}
-            for line in results['results'].strip().split('\n'):
-                name, version = line.split()
-                versions[name] = version
-
-            rval = {}
-            rval['returncode'] = results['returncode']
-            rval.update(versions)
-            return rval
-
-        raise OpenShiftCLIError('Problem detecting openshift version.')
 
     def _schedulable(self, node=None, selector=None, schedulable=True):
         ''' perform oadm manage-node scheduable '''
@@ -862,6 +846,83 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
+# pylint: disable=too-many-instance-attributes
+class OCVersion(OpenShiftCLI):
+    ''' Class to wrap the oc command line tools '''
+    # pylint allows 5
+    # pylint: disable=too-many-arguments
+    def __init__(self,
+                 config,
+                 debug):
+        ''' Constructor for OCVersion '''
+        super(OCVersion, self).__init__(None, config)
+        self.debug = debug
+
+
+    @staticmethod
+    def openshift_installed():
+        ''' check if openshift is installed '''
+        import yum
+
+        yum_base = yum.YumBase()
+        if yum_base.rpmdb.searchNevra(name='atomic-openshift'):
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def filter_versions(stdout):
+        ''' filter the oc version output '''
+
+        version_dict = {}
+        version_search = ['oc', 'openshift', 'kubernetes']
+
+        for line in stdout.strip().split('\n'):
+            for term in version_search:
+                if not line:
+                    continue
+                if line.startswith(term):
+                    version_dict[term] = line.split()[-1]
+
+        return version_dict
+
+    @staticmethod
+    def add_custom_versions(versions):
+        ''' create custom versions strings '''
+
+        versions_dict = {}
+
+        for tech, version in versions.items():
+            if version.startswith('v'):
+                versions_dict[tech+'_numeric'] = version[1:]
+                # "v3.3.0.33" is what we have, we want "3.3"
+                versions_dict[tech+'_short'] = version[1:4]
+
+        return versions_dict
+
+    def get(self):
+        '''get and return version information '''
+
+        results = {}
+        results["installed"] = OCVersion.openshift_installed()
+
+        if not results["installed"]:
+            return results
+
+        version_results = self.openshift_cmd(['version'], output=True, output_type='raw')
+
+        if version_results['returncode'] == 0:
+            filtered_vers = OCVersion.filter_versions(version_results['results'])
+            custom_vers = OCVersion.add_custom_versions(filtered_vers)
+
+            results['returncode'] = version_results['returncode']
+            results.update(filtered_vers)
+            results.update(custom_vers)
+
+            return results
+
+        raise OpenShiftCLIError('Problem detecting openshift version.')
+
 # pylint: disable=too-many-branches
 def main():
     '''
@@ -872,19 +933,22 @@ def main():
         argument_spec=dict(
             kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
             version=dict(default=True, type='bool'),
+            state=dict(default='list', type='str',
+                       choices=['list']),
             debug=dict(default=False, type='bool'),
         ),
     )
-    ocver = OpenShiftCLI(None, module.params['kubeconfig'], module.params['debug'])
+    oc_version = OCVersion(module.params['kubeconfig'],
+                           module.params['debug'])
 
-    #pylint: disable=protected-access
-    result = ocver._get_version()
+    state = module.params['state']
 
-    if result['returncode'] != 0:
-        module.fail_json(msg=result)
+    if state == 'list':
 
-    module.exit_json(changed=False, result=result)
+        #pylint: disable=protected-access
+        result = oc_version.get()
 
+        module.exit_json(changed=False, result=result)
 
 if __name__ == '__main__':
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled

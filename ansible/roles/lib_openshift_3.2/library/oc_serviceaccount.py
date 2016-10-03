@@ -18,8 +18,8 @@ import os
 import re
 import shutil
 import subprocess
-
 import yaml
+
 # This is here because of a bug that causes yaml
 # to incorrectly handle timezone info on timestamps
 def timestamp_constructor(_, node):
@@ -138,22 +138,6 @@ class OpenShiftCLI(object):
             rval['results'] = [rval['results']]
 
         return rval
-
-    def _get_version(self):
-        ''' return the version of openshift '''
-        results = self.openshift_cmd(['version'], output=True, output_type='raw')
-        if results['returncode'] == 0:
-            versions = {}
-            for line in results['results'].strip().split('\n'):
-                name, version = line.split()
-                versions[name] = version
-
-            rval = {}
-            rval['returncode'] = results['returncode']
-            rval.update(versions)
-            return rval
-
-        raise OpenShiftCLIError('Problem detecting openshift version.')
 
     def _schedulable(self, node=None, selector=None, schedulable=True):
         ''' perform oadm manage-node scheduable '''
