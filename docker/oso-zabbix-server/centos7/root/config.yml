@@ -76,8 +76,8 @@
     copy:
       content: >
         {% set rsa_key = "" %}
-        {%- set key_name = "g_user_" + g_zbx_actions_config.zbx_scriptrunner_user + "_priv_key" %}
-        {%- set rsa_key = hostvars["localhost"][key_name] %}
+        {%- set key_name = "g_user_" + g_zbx_actions_config.zbx_scriptrunner_user %}
+        {%- set rsa_key = hostvars["localhost"][key_name]["priv_key"] %}
         {{- rsa_key -}}
       dest: "{{ g_rsa_key_file }}"
       mode: "400"

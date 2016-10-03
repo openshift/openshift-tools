@@ -19,10 +19,7 @@ RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 
 EXPOSE 8000
 
-# Lay down the zabbix repository
-RUN yum clean metadata && \
-    yum install -y openshift-ops-yum-zabbix && \
-    yum clean all
+ADD zabbix.repo /etc/yum.repos.d/
 
 # Install zabbix from zabbix repo
 RUN yum install -y zabbix-web-mysql mariadb && \
@@ -38,10 +35,16 @@ ADD zabbix.conf.php /etc/zabbix/web/
 ADD httpd.conf /etc/httpd/conf/
 
 # Set the timezone in the php.ini file
-RUN sed -r -ie 's/^;(date.timezone).*/\1 = America\/New_York/g' /etc/php.ini
+RUN sed -r -i -e 's/^;(date.timezone).*/\1 = America\/New_York/g' /etc/php.ini
 
 # RHEL7.2 Fix for mod_auth_digest writing to /run/httpd/authdigest_shm.pid
 RUN sed -i -e 's/^\(LoadModule auth_digest_module modules\/mod_auth_digest.so\)$/#\1/g' /etc/httpd/conf.modules.d/00-base.conf
+
+# increasing the memory limit for php, so big queries have a better chance succeeding
+RUN sed -i -e 's/php_value memory_limit 128M/php_value memory_limit 512M/g' /etc/httpd/conf.d/zabbix.conf
+
+# php installs this with root:apache, but we are not using apache group, so it throws errors on php_session creation
+RUN chown root:root /var/lib/php/session
 
 # Start apache
 ADD start.sh /usr/local/bin/
