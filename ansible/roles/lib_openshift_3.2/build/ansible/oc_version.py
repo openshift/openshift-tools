@@ -10,19 +10,22 @@ def main():
         argument_spec=dict(
             kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
             version=dict(default=True, type='bool'),
+            state=dict(default='list', type='str',
+                       choices=['list']),
             debug=dict(default=False, type='bool'),
         ),
     )
-    ocver = OpenShiftCLI(None, module.params['kubeconfig'], module.params['debug'])
+    oc_version = OCVersion(module.params['kubeconfig'],
+                           module.params['debug'])
 
-    #pylint: disable=protected-access
-    result = ocver._get_version()
+    state = module.params['state']
 
-    if result['returncode'] != 0:
-        module.fail_json(msg=result)
+    if state == 'list':
 
-    module.exit_json(changed=False, result=result)
+        #pylint: disable=protected-access
+        result = oc_version.get()
 
+        module.exit_json(changed=False, result=result)
 
 if __name__ == '__main__':
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
