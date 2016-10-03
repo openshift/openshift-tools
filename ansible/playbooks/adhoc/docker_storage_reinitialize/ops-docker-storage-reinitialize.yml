@@ -87,6 +87,14 @@
   - name: wipe the beginning of the disk (mbr & more!)
     command: "dd if=/dev/zero of='{{ docker_storage_setup.DEVS }}' bs=4096 count=1024"
 
+  - name: Make /var/lib/docker mutable
+    command: chattr -i /var/lib/docker
+    ignore_errors: True
+
+  - name: Remove custom Online docker settings temporarily
+    command: mv /etc/systemd/system/docker.service.d/chattr.conf /root/chattr.conf
+    ignore_errors: True
+
   - name: wipe out /var/lib/docker (current docker graph driver info)
     file:
       path: /var/lib/docker
@@ -108,3 +116,15 @@
       name: docker
       state: started
       enabled: True
+
+  - name: Replace Online docker settings
+    command: mv /root/chattr.conf /etc/systemd/system/docker.service.d/chattr.conf
+    ignore_errors: True
+
+  - name: Reload systemd for unit file to take effect
+    command: systemctl daemon-reload
+
+  - name: restart docker daemon
+    service:
+      name: docker
+      state: restarted
