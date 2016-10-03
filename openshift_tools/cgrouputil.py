@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim: expandtab:tabstop=4:shiftwidth=4
 
 '''
@@ -12,6 +11,8 @@
 # pylint: disable=invalid-name
 
 import os
+import sys
+import multiprocessing
 import time
 from collections import namedtuple
 
@@ -40,22 +41,28 @@ class CgroupUtil(object):
 
         self.slice_type = slice_type
 
+    @staticmethod
+    def _read_cgroup_file_as_int(path):
+        ''' Reads the cgroup file and coverts the contents to an integer '''
+
+        # Check if the cgroup is gone, if it is, return 0.
+        # Returning 0 in this case is so that we're compatible with docker.stat's behavior
+        if not os.path.isfile(path):
+            return 0
+
+        with open(path, 'r') as memfile:
+            return int(memfile.read())
+
     def get_raw_memory_stats(self):
         ''' Reads the raw memory stats from cgroups '''
         path = os.path.join(self.cgroup_basedir, 'memory', self.slice_type, self.cgroup_entity)
 
-        mem_used = None
-        mem_limit = None
-        mem_failcnt = None
+        mem_used = CgroupUtil._read_cgroup_file_as_int(os.path.join(path, 'memory.usage_in_bytes'))
+        mem_limit = CgroupUtil._read_cgroup_file_as_int(os.path.join(path, 'memory.limit_in_bytes'))
+        mem_failcnt = CgroupUtil._read_cgroup_file_as_int(os.path.join(path, 'memory.failcnt'))
 
-        with open(os.path.join(path, 'memory.usage_in_bytes'), 'r') as memfile:
-            mem_used = int(memfile.read())
-
-        with open(os.path.join(path, 'memory.limit_in_bytes'), 'r') as memfile:
-            mem_limit = int(memfile.read())
-
-        with open(os.path.join(path, 'memory.failcnt'), 'r') as memfile:
-            mem_failcnt = int(memfile.read())
+        if mem_limit == 0:
+            mem_limit = sys.maxsize
 
         return {
             'usage': mem_used,
@@ -87,10 +94,13 @@ class CgroupUtil(object):
         ''' Reads the raw cpuacct stats from cgroups '''
         path = os.path.join(self.cgroup_basedir, 'cpuacct', self.slice_type, self.cgroup_entity)
 
+        # The cgroup is gone, return 0. This is to be compatible with docker.
+        if not os.path.isdir(path):
+            return (0, 0, 0, [0] * multiprocessing.cpu_count())
+
         cpu_stat_str = None
         with open(os.path.join(path, 'cpuacct.stat'), 'r') as memfile:
             cpu_stat_str = memfile.read()
-
 
         user_usage = None
         system_usage = None
