@@ -36,17 +36,38 @@ class ManageNode(OpenShiftCLI):
                                   selector=self.config.config_options['selector']['value'],
                                   pod_selector=self.config.config_options['pod_selector']['value'],
                                  )
+        if results['returncode'] != 0:
+            return results
+
         # When a selector or node is matched it is returned along with the json.
         # We are going to split the results based on the regexp and then
         # load the json for each matching node.
         # Before we return we are going to loop over the results and pull out the node names.
         # {'node': [pod, pod], 'node': [pod, pod]}
-        listing_match = re.compile('\n^Listing matched.*$\n', flags=re.MULTILINE)
-        pods = listing_match.split(results['results'])
-        all_pods = [json.loads(pod)['items'] for pod in pods if pod]
+        # 3.2 includes the following lines in stdout: "Listing matched pods on node:"
+        all_pods = []
+        if "Listing matched" in results['results']:
+            listing_match = re.compile('\n^Listing matched.*$\n', flags=re.MULTILINE)
+            pods = listing_match.split(results['results'])
+            all_pods = [json.loads(pod)['items'] for pod in pods if pod]
+
+        # 3.3 specific
+        else:
+            # this is gross but I filed a bug...
+            # build our own json from the output.
+            pods = re.split('\n}\n', results['results'])
+            all_pods = []
+            for pod in pods:
+                if len(pod) == 0:
+                    continue
+                pods = json.loads(pod + "}")
+                all_pods.append(pods['items'])
+
         rval = {}
+
         for i in range(len(all_pods)):
-            rval[all_pods[i][0]['spec']['nodeName']] = all_pods[i]
+            if all_pods[i]:
+                rval[all_pods[i][0]['spec']['nodeName']] = all_pods[i]
 
         results['results'] = rval
 
