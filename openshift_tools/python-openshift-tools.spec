@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.84
+Version:       0.0.85
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -291,6 +291,11 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Wed Oct 05 2016 Thomas Wiest <twiest@redhat.com> 0.0.85-1
+- Added a sleep between AWS API calls. (twiest@redhat.com)
+- Fixed bug in cgrouputil.py where it would throw file not found exceptions
+  when the cgroup had gone away. (twiest@redhat.com)
+
 * Mon Sep 26 2016 Sten Turpin <sten@redhat.com> 0.0.84-1
 - add python-redis dependency (jdiaz@redhat.com)
 
