@@ -53,6 +53,8 @@ class SnapshotterCli(object):
                                  '(i.e. the value of the \'snapshot\' tag on the volumes).')
         parser.add_argument('--aws-creds-profile', required=False,
                             help='The AWS credentials profile to use.')
+        parser.add_argument('--sleep-between-snaps', required=False, type=float,
+                            help='The amount of time to sleep between snapshot API calls.')
         parser.add_argument('--dry-run', action='store_true', default=False,
                             help='Say what would have been done, but don\'t actually do it.')
 
@@ -78,7 +80,8 @@ class SnapshotterCli(object):
             ss = ebs_snapshotter.EbsSnapshotter(region.name, verbose=True)
 
             avail_vols, snapshots_created, snapshot_creation_errors = \
-                ss.create_snapshots(self.args.with_schedule, script_name, dry_run=self.args.dry_run)
+                ss.create_snapshots(self.args.with_schedule, script_name, \
+                    sleep_between_snaps=self.args.sleep_between_snaps, dry_run=self.args.dry_run)
 
             num_creation_errors = len(snapshot_creation_errors)
 
@@ -87,7 +90,7 @@ class SnapshotterCli(object):
             total_snapshot_creation_errors += num_creation_errors
 
             if num_creation_errors > 0:
-                print "  Snapshot Deletion errors (%d):" % num_creation_errors
+                print "  Snapshot Creation errors (%d):" % num_creation_errors
                 for cur_err in snapshot_creation_errors:
                     print "    %s" % cur_err
 

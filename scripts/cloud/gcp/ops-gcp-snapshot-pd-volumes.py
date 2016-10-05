@@ -83,7 +83,7 @@ class SnapshotterCli(object):
             total_snapshot_creation_errors += num_creation_errors
 
             if num_creation_errors > 0:
-                print "  Snapshot Deletion errors (%d):" % num_creation_errors
+                print "  Snapshot Creation errors (%d):" % num_creation_errors
                 for cur_err in snapshot_creation_errors:
                     print "    %s" % cur_err
 
