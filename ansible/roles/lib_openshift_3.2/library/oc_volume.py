@@ -117,7 +117,7 @@ class OpenShiftCLI(object):
         return self.openshift_cmd(['-n', self.namespace, 'create', '-f', fname])
 
     def _get(self, resource, rname=None, selector=None):
-        '''return a secret by name '''
+        '''return a resource by name '''
         cmd = ['get', resource]
         if selector:
             cmd.append('--selector=%s' % selector)
