@@ -48,6 +48,8 @@ from openshift_tools.cloud.aws.instance_util import InstanceUtil
 from datetime import datetime
 from datetime import timedelta
 
+from time import sleep
+
 from boto.exception import EC2ResponseError
 
 SNAP_TAG_KEY = 'snapshot'
@@ -98,7 +100,7 @@ class EbsSnapshotter(Base):
 
         return vols_w_sched
 
-    def create_snapshots(self, schedule, script_name=None, dry_run=False):
+    def create_snapshots(self, schedule, script_name=None, dry_run=False, sleep_between_snaps=0):
         """ Creates a snapshot for volumes tagged with the given schedule. """
 
         if schedule not in SUPPORTED_SCHEDULES:
@@ -118,6 +120,8 @@ class EbsSnapshotter(Base):
 
         for volume in volumes:
             self.print_volume(volume, prefix="    ")
+
+            sleep(sleep_between_snaps)
 
             try:
                 if dry_run:
