@@ -44,7 +44,8 @@ def main():
     changed = False
     if module.params['schedulable'] != None:
         results = oadm_mn.schedulable()
-        changed = True
+        if not results.has_key('changed'):
+            changed = True
 
     if module.params['evacuate']:
         results = oadm_mn.evacuate()
@@ -59,5 +60,6 @@ def main():
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
-from ansible.module_utils.basic import *
-main()
+if __name__ == "__main__":
+    from ansible.module_utils.basic import *
+    main()

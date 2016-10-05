@@ -107,7 +107,7 @@ class ZbxMaintenance(Zbx):
 
         return False
 
-    # pylint: disable=too-many-branches,too-many-statements
+    # pylint: disable=too-many-branches,too-many-statements,too-many-return-statements
     @staticmethod
     def run_ansible(params):
         '''perform the logic and return results'''
@@ -211,8 +211,13 @@ class ZbxMaintenance(Zbx):
             differences[ZbxMaintenance.zbx_id] = zab_results[ZbxMaintenance.zbx_id]
             differences['hostids'] = params.get('hostids', [])
             differences['groupids'] = params.get('groupids', [])
+            differences['active_since'] = params.get('active_since', [])
+            differences['active_till'] = params.get('active_till', [])
 
             content = zbx.update(differences)
+            if content.has_key('error'):
+                return content
+
             rval['changed'] = True
             rval['results'] = content['result']
             return rval
