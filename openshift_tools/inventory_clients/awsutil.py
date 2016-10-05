@@ -60,75 +60,48 @@ class AwsUtil(object):
             minv.run()
         return minv.result
 
+    def _get_tags_(self, regex):
+        """ Searches for tags in the inventory and returns all of the tags
+            found.
+
+            Param: a compiled regular expression
+            Returns: a List of tags
+        """
+
+        tags = []
+        inv = self.get_inventory()
+        for key in inv.keys():
+            matched = regex.match(key)
+            if matched:
+                tags.append(matched.group(1))
+
+        tags.sort()
+        return tags
+
     def get_clusters(self):
         """Searches for cluster tags in the inventory and returns all of the clusters found."""
         pattern = re.compile(r'^oo_clusterid_(.*)')
-
-        clusters = []
-        inv = self.get_inventory()
-        for key in inv.keys():
-            matched = pattern.match(key)
-            if matched:
-                clusters.append(matched.group(1))
-
-        clusters.sort()
-        return clusters
+        return self._get_tags_(pattern)
 
     def get_environments(self):
         """Searches for env tags in the inventory and returns all of the envs found."""
         pattern = re.compile(r'^oo_environment_(.*)')
-
-        envs = []
-        inv = self.get_inventory()
-        for key in inv.keys():
-            matched = pattern.match(key)
-            if matched:
-                envs.append(matched.group(1))
-
-        envs.sort()
-        return envs
+        return self._get_tags_(pattern)
 
     def get_host_types(self):
         """Searches for host-type tags in the inventory and returns all host-types found."""
         pattern = re.compile(r'^oo_hosttype_(.*)')
-
-        host_types = []
-        inv = self.get_inventory()
-        for key in inv.keys():
-            matched = pattern.match(key)
-            if matched:
-                host_types.append(matched.group(1))
-
-        host_types.sort()
-        return host_types
+        return self._get_tags_(pattern)
 
     def get_sub_host_types(self):
         """Searches for sub-host-type tags in the inventory and returns all sub-host-types found."""
         pattern = re.compile(r'^oo_subhosttype_(.*)')
-
-        sub_host_types = []
-        inv = self.get_inventory()
-        for key in inv.keys():
-            matched = pattern.match(key)
-            if matched:
-                sub_host_types.append(matched.group(1))
-
-        sub_host_types.sort()
-        return sub_host_types
+        return self._get_tags_(pattern)
 
     def get_security_groups(self):
         """Searches for security_groups in the inventory and returns all SGs found."""
         pattern = re.compile(r'^security_group_(.*)')
-
-        groups = []
-        inv = self.get_inventory()
-        for key in inv.keys():
-            matched = pattern.match(key)
-            if matched:
-                groups.append(matched.group(1))
-
-        groups.sort()
-        return groups
+        return self._get_tags_(pattern)
 
     def build_host_dict_by_env(self, args=None):
         """Searches the inventory for hosts in an env and returns their hostvars."""
