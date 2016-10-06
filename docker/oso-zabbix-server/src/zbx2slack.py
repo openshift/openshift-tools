@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-#pylint: disable=too-many-instance-attributes
+#pylint: disable=no-name-in-module
 #pylint: disable=too-few-public-methods
+#pylint: disable=too-many-instance-attributes
 
 '''rst
 zbx2slack-alert-notify.py
