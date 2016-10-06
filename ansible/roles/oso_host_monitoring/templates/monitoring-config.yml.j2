@@ -310,7 +310,7 @@ host_monitoring_cron:
   job: ops-runner -f -s 60 -n ozc.send.synthetic.heartbeat.quick /usr/bin/ops-zagg-client -k heartbeat.ping -o 1 --synthetic
 
 - name: Delete stuck projects for bz 1367432
-  minute: "*/5"
+  minute: "*/10"
   job: /usr/bin/delete-stuck-projects &> /var/log/delete-stuck-projects
 
 - name: "Prune builds/deployments/images"
