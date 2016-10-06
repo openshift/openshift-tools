@@ -93,7 +93,7 @@ class ManageKeys(object):
             raise ValueError(path + 'does not exist')
 
 
-    def check_user(self, user_name, client):
+    def check_user(self, aws_account, user_name, client):
         """ check if the user exists locally and in aws. creates aws user if not found """
 
         try:
@@ -109,7 +109,7 @@ class ManageKeys(object):
                     print("User does not have an existing IAM account, \
                     creating  new account for user %s" % user_name)
 
-                response = self.create_user(user_name, client)
+                response = self.create_user(aws_account, user_name, client)
 
                 return response
             else:
@@ -117,7 +117,7 @@ class ManageKeys(object):
 
 
     @staticmethod
-    def create_user(user_name, client):
+    def create_user(aws_account, user_name, client):
         """ create an iam user account """
 
         response = client.create_user(
@@ -125,7 +125,8 @@ class ManageKeys(object):
             )
 
         client.add_user_to_group(GroupName='admin', UserName=user_name)
-        print('A new user account was added. Use change_iam_password.py to set your password')
+        print('A new user account was added.\
+        Use change_iam_password.py -p %s to set your password' % aws_account)
 
         return response
 
@@ -172,7 +173,7 @@ class ManageKeys(object):
 
         creds = saml_aws_creds.get_temp_credentials(
             metadata_id='urn:amazon:webservices:%s' % aws_account,
-            idp_host='joelsmithlogin.rhcloud.com'
+            idp_host='joelsmithlogin.rhcloud.com' #change to login.ops.openshift.com
             )
 
         client = boto3.client(
@@ -188,7 +189,7 @@ class ManageKeys(object):
     @staticmethod
     def create_key(aws_account, user_name, client):
         """ change an API key for the specified account"""
-        # may want to except on AccessKeysPerUser quota exceeded error
+
         response = client.create_access_key(
             UserName=user_name
             )
@@ -279,7 +280,7 @@ class ManageKeys(object):
                 matching = [s for s in ops_accounts if aws_account in s]
                 account_name = matching[0].split(':')[1]
                 client = self.get_token(account_name)
-                self.check_user(args.user, client)
+                self.check_user(aws_account, args.user, client)
                 existing_keys = self.get_keys(args.user, client)
 
                 if existing_keys:
@@ -298,7 +299,7 @@ class ManageKeys(object):
 
             for aws_account in ops_accounts:
                 client = self.get_token(aws_account)
-                self.check_user(args.user, client)
+                self.check_user(aws_account, args.user, client)
                 current_accounts = self.get_all_profiles()
                 existing_keys = self.get_keys(args.user, client)
 
