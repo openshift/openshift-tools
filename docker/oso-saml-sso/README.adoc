@@ -1,0 +1,31 @@
+= simpleSAMLphp SSO application Docker container
+
+This docker container provides an HTTP endpoint and an SSH endpoint
+for single sign-on (SSO) to a SAML2 identity provider (IdP). The SSO
+can be used to authenticate to configured SAML2-enabled service
+providers (SPs).
+
+== Setup
+See https://github.com/openshift/openshift-ops/blob/pr/docker/README.adoc#setup[general setup].
+
+Nothing additional needs to be setup for this container.
+
+== Build
+
+To build this container, simply execute the build script.
+
+.Example:
+[source,bash]
+----
+./[rhel7|centos7]/build.sh
+----
+
+== Run
+
+To run this container, simply execute the run script.
+
+.Example:
+[source,bash]
+----
+./[rhel7|centos7]/run.sh
+----
