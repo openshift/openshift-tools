@@ -1,0 +1,10 @@
+#!/bin/bash -e
+{{ generated_header }}
+
+echo -n "Running oso-{{ base_os }}-zabbix-web... "
+{% if base_os == 'rhel7' %}
+sudo docker run -ti --net=host --rm=true -p 11211:11211 --name oso-memcached-sso oso-rhel7-memcached-sso $@
+{% elif base_os == 'centos7' %}
+sudo docker run -ti --net=host --rm=true -p 11211:11211 --name oso-memcached-sso oso-centos7-memcached-sso $@
+{% endif %}
+echo "Done."
