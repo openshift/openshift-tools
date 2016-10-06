@@ -62,6 +62,7 @@ cp -p monitoring/cron-send-cluster-capacity.py %{buildroot}/usr/bin/cron-send-cl
 cp -p monitoring/cron-send-connection-count.py %{buildroot}/usr/bin/cron-send-connection-count
 cp -p monitoring/cron-send-cpu-mem-stats.py %{buildroot}/usr/bin/cron-send-cpu-mem-stats
 cp -p monitoring/cron-haproxy-close-wait.py %{buildroot}/usr/bin/cron-haproxy-close-wait
+cp -p monitoring/delete-stuck-projects.sh %{buildroot}/usr/bin/delete-stuck-projects
 cp -p monitoring/cron-send-saml-status.py %{buildroot}/usr/bin/cron-send-saml-status
 cp -p monitoring/cron-certificate-expirations.py %{buildroot}/usr/bin/cron-certificate-expirations
 
@@ -129,6 +130,7 @@ OpenShift Tools Monitoring Autoheal Scripts
 %files monitoring-autoheal
 /usr/bin/cron-fix-ovs-rules
 /usr/bin/cron-haproxy-close-wait
+/usr/bin/delete-stuck-projects
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-pcp subpackage
