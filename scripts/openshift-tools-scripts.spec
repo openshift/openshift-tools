@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.148
+Version:       0.0.149
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -323,6 +323,10 @@ OpenShift Tools GCP specific scripts
 
 
 %changelog
+* Thu Oct 06 2016 Thomas Wiest <twiest@redhat.com> 0.0.149-1
+- Fixed bug in ops-ec2-snapshot-ebs-volumes.py when not passing in --sleep-
+  between-snaps. (twiest@redhat.com)
+
 * Thu Oct 06 2016 Joel Diaz <jdiaz@redhat.com> 0.0.148-1
 - migrate to ansible2 (jdiaz@redhat.com)
 
