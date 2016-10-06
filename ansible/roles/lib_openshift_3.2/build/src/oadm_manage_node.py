@@ -28,6 +28,8 @@ class ManageNode(OpenShiftCLI):
                               selector=self.config.config_options['selector']['value'],
                               pod_selector=self.config.config_options['pod_selector']['value'],
                               dry_run=self.config.config_options['dry_run']['value'],
+                              grace_period=self.config.config_options['grace_period']['value'],
+                              force=self.config.config_options['force']['value'],
                              )
     def get_nodes(self, node=None, selector=''):
         '''perform oc get node'''
