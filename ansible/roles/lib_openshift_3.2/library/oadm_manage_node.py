@@ -167,7 +167,7 @@ class OpenShiftCLI(object):
         return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
 
     #pylint: disable=too-many-arguments
-    def _evacuate(self, node=None, selector=None, pod_selector=None, dry_run=False, grace_period=None):
+    def _evacuate(self, node=None, selector=None, pod_selector=None, dry_run=False, grace_period=None, force=False):
         ''' perform oadm manage-node evacuate '''
         cmd = ['manage-node']
         if node:
@@ -183,6 +183,9 @@ class OpenShiftCLI(object):
 
         if grace_period:
             cmd.append('--grace-period=%s' % int(grace_period))
+
+        if force:
+            cmd.append('--force')
 
         cmd.append('--evacuate')
 
@@ -874,6 +877,8 @@ class ManageNode(OpenShiftCLI):
                               selector=self.config.config_options['selector']['value'],
                               pod_selector=self.config.config_options['pod_selector']['value'],
                               dry_run=self.config.config_options['dry_run']['value'],
+                              grace_period=self.config.config_options['grace_period']['value'],
+                              force=self.config.config_options['force']['value'],
                              )
     def get_nodes(self, node=None, selector=''):
         '''perform oc get node'''
