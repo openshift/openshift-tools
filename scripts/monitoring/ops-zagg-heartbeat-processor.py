@@ -25,7 +25,6 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import socket
-import multiprocessing
 import yaml
 
 from openshift_tools.monitoring.zabbix_metric_processor import ZabbixSender, ZabbixMetricProcessor
@@ -82,7 +81,7 @@ if __name__ == "__main__":
     logger.info('Starting ops-zagg-heartbeat-processor...')
 
     CONFIG = yaml.load(file('/etc/openshift_tools/zagg_server.yaml'))
-    pool = multiprocessing.Pool()
     TARGETS = CONFIG['targets']
 
-    pool.map(process_targets, TARGETS)
+    for a_target in TARGETS:
+        process_targets(a_target)
