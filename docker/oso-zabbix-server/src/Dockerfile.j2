@@ -46,6 +46,7 @@ RUN mkdir -p /etc/openshift_tools
 
 # Add zabbix alert script
 ADD smtp_ses.py /usr/lib/zabbix/alertscripts/
+ADD zbx2slack.py /usr/lib/zabbix/alertscripts/
 
 # Start mysqld, zabbix, and apache
 ADD start.sh /usr/local/bin/
