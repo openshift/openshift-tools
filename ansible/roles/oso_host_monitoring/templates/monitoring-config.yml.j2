@@ -311,7 +311,7 @@ host_monitoring_cron:
 
 - name: Delete stuck projects for bz 1367432
   minute: "*/5"
-  job: /usr/bin/delete-stuck-projects
+  job: /usr/bin/delete-stuck-projects &> /var/log/delete-stuck-projects
 
 - name: "Prune builds/deployments/images"
   hour: "{{ osohm_pruning.cron.hour }}"

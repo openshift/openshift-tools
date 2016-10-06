@@ -23,4 +23,4 @@ oc get ns --template='{{ range .items }}{{.metadata.name}}{{ printf "\n" }}{{end
 oc get rolebindings --all-namespaces --template='{{ range .items }}{{.metadata.namespace}}{{ printf "\n" }}{{end}}' | sort -u > /tmp/namespaces_with_rolebindings
 
 # The diff between those are the stuck projects, to be removed on the next run of this script
-diff --changed-group-format='%>' --unchanged-group-format='' /tmp/namespaces_with_rolebindings /tmp/namespaces |grep -v -e kube-system -e default -e openshift-infra > /tmp/stuck_projects
+grep -Fxvf /tmp/namespaces_with_rolebindings /tmp/namespaces |grep -v -e kube-system -e default -e openshift-infra -e openshift > /tmp/stuck_projects
