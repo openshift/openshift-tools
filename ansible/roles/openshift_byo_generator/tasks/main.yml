@@ -1,0 +1,69 @@
+---
+- fail:
+    msg: "Please define {{ item }}"
+  when: "{{ item }} is undefined"
+  with_items:
+  - obg_clusterid
+  - obg_registry_template
+  - obg_inventory_sdn
+  - obg_named_certificates
+  - obg_install_examples
+  - obg_always_show_provider_selection
+  - obg_location
+  - obg_sublocation
+  - obg_cloud_provider
+  - obg_masters
+  - obg_etcd_hosts
+  - obg_infra_nodes
+  - obg_compute_nodes
+  - obg_router_domain
+
+- fail:
+    msg: "Please define {{ item }}"
+  when: "{{ item }} is undefined and obg_cloud_provider == 'aws'"
+  with_items:
+  - obg_aws_provider_access_key
+  - obg_aws_provider_secret_key
+
+- fail:
+    msg: "Please define {{ item }}"
+  when: "{{ item }} is undefined and obg_use_router_certs is defined"
+  with_items:
+    - obg_openshiftapps_cert
+    - obg_openshiftapps_key
+    - obg_openshiftapps_ca
+
+- fail:
+    msg: "Please define {{ item }}"
+  when: "{{ item }} is undefined and obg_customize_webui == true"
+  with_items:
+    - obg_ui_scripts
+    - obg_ui_stylesheets
+
+- fail:
+    msg: "Please define {{ item }}"
+  when: "{{ item }} is undefined and obg_new_nodes == true"
+  with_items:
+    - obg_new_infra_nodes
+    - obg_new_compute_nodes
+
+- fail:
+    msg: "Please define {{ item }}"
+  when: "{{ item }} is undefined and obg_install_metrics == true"
+  with_items:
+    - obg_metrics_url
+
+- fail:
+    msg: "Please define {{ item }}"
+  when: "{{ item }} is undefined and obg_install_logging == true"
+  with_items:
+    - obg_logging_url
+
+- set_fact:
+    obg_new_nodes: false
+  when: obg_new_nodes is not defined
+
+- name: create the byo
+  template:
+    src: byo.yml.j2
+    dest: "{{ obg_output_path }}/{{ obg_clusterid }}-byo-inventory"
