@@ -46,6 +46,9 @@ RUN sed -i -e 's/php_value memory_limit 128M/php_value memory_limit 512M/g' /etc
 # php installs this with root:apache, but we are not using apache group, so it throws errors on php_session creation
 RUN chown root:root /var/lib/php/session
 
+# adding redirect to the main apache config, so it will send every request to the /zabbix folder
+ADD welcome.conf /etc/httpd/conf.d/
+
 # Start apache
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
