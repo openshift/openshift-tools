@@ -22,12 +22,12 @@
 
 import os
 import argparse
-from openshift_tools.cloud.aws import ebs_snapshotter
 
 # Reason: disable pylint import-error because our libs aren't loaded on jenkins.
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.cloud.aws import ebs_snapshotter
 
 
 EBS_SNAPSHOTTER_DISC_KEY = 'disc.aws.ebs.snapshotter'
@@ -53,7 +53,7 @@ class SnapshotterCli(object):
                                  '(i.e. the value of the \'snapshot\' tag on the volumes).')
         parser.add_argument('--aws-creds-profile', required=False,
                             help='The AWS credentials profile to use.')
-        parser.add_argument('--sleep-between-snaps', required=False, type=float,
+        parser.add_argument('--sleep-between-snaps', required=False, type=float, default=0.0,
                             help='The amount of time to sleep between snapshot API calls.')
         parser.add_argument('--dry-run', action='store_true', default=False,
                             help='Say what would have been done, but don\'t actually do it.')
