@@ -17,7 +17,7 @@
 
 # ec2_elb is not idempotent, so this doesn't work properly.  We are going to always
 #  sleep when adding/removing from an ELB
-- name: Sleep so the ELB can stabalize a bit
+- name: Sleep so the ELB can stabilize a bit
   pause:
     #seconds: 15
     seconds: 5

@@ -63,6 +63,12 @@
     obg_new_nodes: false
   when: obg_new_nodes is not defined
 
+- name: Create output directory structure
+  file:
+    path: "{{ obg_output_path }}"
+    state: directory
+    recurse: True
+
 - name: create the byo
   template:
     src: byo.yml.j2
