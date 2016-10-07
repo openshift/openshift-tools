@@ -129,9 +129,7 @@ class GitCLI(object):
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
 
-        proc.wait()
-        stdout = proc.stdout.read()
-        stderr = proc.stderr.read()
+        stdout, stderr = proc.communicate()
         rval = {"returncode": proc.returncode,
                 "results": results,
                 "cmd": ' '.join(cmds),
