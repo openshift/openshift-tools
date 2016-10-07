@@ -11,4 +11,3 @@ obg_master_public_api_url: https://api.example.com
 obg_master_public_console_url: https://console.example.com/console
 obg_router_domain: apps.example.com
 obg_custom_cors_origins: [ 'console.example.com', 'api.example.com' ]
-
