@@ -30,6 +30,7 @@ import os
 import re
 import sys
 
+# pylint: disable=import-error
 import boto3
 import botocore.exceptions
 
