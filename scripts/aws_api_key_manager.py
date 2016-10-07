@@ -31,6 +31,7 @@ import re
 import sys
 import time
 
+# pylint: disable=import-error
 import boto3
 import botocore
 
