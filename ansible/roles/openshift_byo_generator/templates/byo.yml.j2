@@ -71,10 +71,10 @@ openshift_install_examples={{ obg_install_examples }}
    This sets the max life if internal oauth tokens
    Use for logging into oc and the API
 #}
-{% if obg_access_token_life %} 
+{% if obg_access_token_life %}
 openshift_master_access_token_max_seconds={{ obg_access_token_life }}
 {% endif %}
-{% if obg_auth_token_life %} 
+{% if obg_auth_token_life %}
 openshift_master_auth_token_max_seconds={{ obg_auth_token_life }}
 {% endif %}
 {# End OAuth Life #}
@@ -98,7 +98,7 @@ openshift_node_local_quota_per_fsgroup={{ obg_node_local_quota }}
 {% endif %}
 
 {# Max number of requests to the API per api server #}
-{% if obg_max_api_requsts %} 
+{% if obg_max_api_requsts %}
 openshift_master_max_requests_inflight={{ obg_max_api_requsts }}
 {% endif %}
 
