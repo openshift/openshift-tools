@@ -1,0 +1,46 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+
+  - name: remove Listen 80 stanza from httpd.conf
+    lineinfile:
+      dest: /etc/httpd/conf/httpd.conf
+      state: absent
+      regexp: '^Listen 80$'
+
+  - name: 'Change "User apache" to "User user" in httpd.conf'
+    lineinfile:
+      dest: /etc/httpd/conf/httpd.conf
+      state: present
+      regexp: '^User .*$'
+      line: 'User user'
+
+  - name: 'Change "Group apache" to "Group root" in httpd.conf'
+    lineinfile:
+      dest: /etc/httpd/conf/httpd.conf
+      state: present
+      regexp: '^Group .*$'
+      line: 'Group root'
+
+  # do RHEL7.2 Fix for mod_auth_digest writing to /run/httpd/authdigest_shm.pid
+  - name: Disable mod_auth_digest
+    lineinfile:
+      dest: /etc/httpd/conf.modules.d/00-base.conf
+      state: present
+      regexp: '^#?LoadModule auth_digest_module modules/mod_auth_digest.so$'
+      line: '#LoadModule auth_digest_module modules/mod_auth_digest.so'
+
+  - name: Fix PHP timezone
+    lineinfile:
+      dest: /etc/php.ini
+      state: present
+      regexp: '^;?date.timezone = .*$'
+      line: 'date.timezone = America/New_York'
+
+  - name: Disable PHP header banner
+    lineinfile:
+      dest: /etc/php.ini
+      state: present
+      regexp: '^;?expose_php = .*$'
+      line: 'expose_php = Off'
