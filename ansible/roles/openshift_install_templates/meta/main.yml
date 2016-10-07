@@ -10,3 +10,4 @@ galaxy_info:
     versions:
     - 7
 dependencies:
+- tools_roles/lib_openshift_3.2
