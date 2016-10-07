@@ -62,7 +62,7 @@ $> redis-cli llen "local cluster zbx server"
 1341
 ----
 
-The llen command on the http://redis.io/commands page will tell is in detail that it returns the amount of items in the list. This means that monitoring metrics sent to the zagg 1288 and 1341 items that are waiting to be processed. These lists do not need to match, not all items are meant for every target.
+The http://redis.io/commands/LLEN[llen] command on the http://redis.io/commands page will tell is in detail that it returns the amount of items in the list. This means that monitoring metrics sent to the zagg 1288 and 1341 items that are waiting to be processed. These lists do not need to match, not all items are meant for every target.
 
 Processing of said items from these lists usually happens every 30 seconds, one could set up a watch to check on these numbers every few seconds.
 
@@ -71,3 +71,19 @@ $> watch -n 5 'redis-cli llen "zabbix 3.0 zagg"; redis-cli llen "local cluster z
 ----
 
 If the numbers increase and then drop around every 30 seconds or so, that's a good indication that everything is working as it should.
+
+
+Another useful command to know is http://redis.io/commands/LRANGE[lrange], this one will dump the items in the list to screen without removing it from the list. One thing to note is that you can specify greater length than your last index from the list, so even if the list grows or gets emptied by the process the command will display something or will tell you those indexes are empty. In the example below, we'll query for a lot bigger set than what the length of the list tells us, in case new items came in between the llen query and the request for display.
+
+----
+$> redis-cli llen "local cluster zbx server"
+(integer) 211
+$> redis-cli lrange "local cluster zbx server" 205 400
+  1) "{\"unique_id\": \"aa7ba981e88841359673d62ce7e812f6\", \"host\": \"ded-stage-aws-master-df06c\", \"value\": 0, \"key\": \"openshift.master.cluster.event.failedscheduling\", \"clock\": 1475853208}"
+  2) "{\"unique_id\": \"224bf270607f4d4583dd044ab75517ee\", \"host\": \"oso-rhel7-zagg-web-8-qnyjy\", \"value\": 2672, \"key\": \"zagg.server.metrics.count\", \"clock\": 1475853213}"
+  3) "{\"unique_id\": \"67eadb8bb2a540b4a48d6d9c9d275d95\", \"host\": \"oso-rhel7-zagg-web-8-qnyjy\", \"value\": 0, \"key\": \"zagg.server.metrics.errors\", \"clock\": 1475853213}"
+  4) "{\"unique_id\": \"72d21e290da646be87597f437c41f42e\", \"host\": \"prod-inmarsat-master-99ecc\", \"value\": 0, \"key\": \"openshift.master.cluster.event.failedscheduling\", \"clock\": 1475853214}"
+  5) "{\"unique_id\": \"dde23080d74e454fb7e0ecfafac4ce2b\", \"host\": \"oso-rhel7-zagg-web-8-qnyjy\", \"value\": 1, \"key\": \"zagg.server.heartbeat.count\", \"clock\": 1475853216}"
+  6) "{\"unique_id\": \"3d3ed43efce845069a056ad5d552aa1e\", \"host\": \"oso-rhel7-zagg-web-8-qnyjy\", \"value\": 0, \"key\": \"zagg.server.heartbeat.errors\", \"clock\": 1475853216}"
+
+----
