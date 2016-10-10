@@ -28,6 +28,7 @@ import atexit
 import shutil
 import string
 import random
+import yaml
 import subprocess
 
 # pylint: disable=bare-except
@@ -69,15 +70,12 @@ class OCUtil(object):
         if self.verbose:
             print "Running command: {}".format(str(cmd))
 
-        results = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE,
-                                   env={'PATH': os.environ["PATH"]})
+        results = subprocess.check_output(cmd)
 
-        results.wait()
-        if results.returncode != 0:
-            raise Exception("Non-zero exit on command: {}".format(str(cmd)))
-
-        return results.stdout.read()
+        try:
+            return yaml.safe_load(results)
+        except:
+            return results
 
     def get_secrets(self, name):
         ''' Get secrets from object 'name' '''
@@ -111,3 +109,44 @@ class OCUtil(object):
         dc_yaml = self._run_cmd(dc_cmd)
 
         return dc_yaml
+
+    def get_route(self, name):
+        ''' Get routes details '''
+
+        route_cmd = "oc get route {} -n {} -o yaml".format(name, self.namespace)
+        route_yaml = self._run_cmd(route_cmd)
+
+        return route_yaml
+
+    def get_pods(self):
+        ''' Get all the pods in the namespace '''
+
+        pods_cmd = "oc get pods -n {} -o yaml".format(self.namespace)
+        pods_yaml = self._run_cmd(pods_cmd)
+
+        return pods_yaml
+
+    def get_nodes(self):
+        ''' Get all the nodes in the cluster '''
+
+        nodes_cmd = "oc get nodes -o yaml"
+        nodes_yaml = self._run_cmd(nodes_cmd)
+
+        return nodes_yaml
+
+    def get_log(self, name):
+        ''' Gets the log for the specified container '''
+
+        log_cmd = "oc logs {} -n {}".format(name, self.namespace)
+        log_results = self._run_cmd(log_cmd)
+
+        return log_results
+
+    def run_user_cmd(self, command):
+        ''' Runs a custom user command '''
+
+        # At least force the user to use oc
+        user_cmd = "oc {}".format(command)
+        user_results = self._run_cmd(user_cmd)
+
+        return user_results
