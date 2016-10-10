@@ -828,12 +828,12 @@ g_template_openshift_master:
     priority: high
 
   - name: "Critically large number of connections on etcd public port on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.etcd.port_2379.connections.established.last()}>1200"
+    expression: "{Template Openshift Master:openshift.master.etcd.port_2379.connections.established.last()}>3000"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/etcd_connections.asciidoc"
     priority: high
 
   - name: "Large number of connections on etcd public port on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.etcd.port_2379.connections.established.last()}>1000"
+    expression: "{Template Openshift Master:openshift.master.etcd.port_2379.connections.established.last()}>2200"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/etcd_connections.asciidoc"
     dependencies:
     - "Critically large number of connections on etcd public port on {HOST.NAME}"
