@@ -31,7 +31,6 @@ from openshift_tools.monitoring.zagg_sender import ZaggSender
 from openshift_tools.monitoring.ocutil import OCUtil
 import socket
 import urllib2
-import yaml
 
 class OpenshiftDockerRegigtryChecker(object):
     """ Checks for the Openshift Cluster Docker Registry """
@@ -93,14 +92,13 @@ class OpenshiftDockerRegigtryChecker(object):
 
         self.args = parser.parse_args()
 
-    def get_registry_service(self, service_yaml):
+    def get_registry_service(self, service):
         ''' This will get the service IP of the docker registry '''
         print "\nGetting Docker Registry service IP..."
 
-        service = yaml.safe_load(service_yaml)
         self.docker_service_ip = str(service['spec']['clusterIP'])
 
-    def get_registry_endpoints(self, endpoint_yaml):
+    def get_registry_endpoints(self, endpoints):
         """
             This will return the docker registry endpoint IPs that are being served
             inside of kubernetes.
@@ -108,7 +106,6 @@ class OpenshiftDockerRegigtryChecker(object):
 
         print "\nFinding the Docker Registry pods via Openshift API calls..."
 
-        endpoints = yaml.safe_load(endpoint_yaml)
         self.docker_port = str(endpoints['subsets'][0]['ports'][0]['port'])
 
         for address in endpoints['subsets'][0]['addresses']:
