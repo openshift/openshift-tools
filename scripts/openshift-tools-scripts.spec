@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.149
+Version:       0.0.150
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -325,6 +325,13 @@ OpenShift Tools GCP specific scripts
 
 
 %changelog
+* Tue Oct 11 2016 Wesley Hearn <whearn@redhat.com> 0.0.150-1
+- Add openshift metrics checks. Updated ocutil with more features
+  (whearn@redhat.com)
+- save log output, exclude openshift project, use grep instead of diff
+  (sedgar@redhat.com)
+- added cron script to delete stuck projects for bz 1367432 (sedgar@redhat.com)
+
 * Thu Oct 06 2016 Thomas Wiest <twiest@redhat.com> 0.0.149-1
 - Fixed bug in ops-ec2-snapshot-ebs-volumes.py when not passing in --sleep-
   between-snaps. (twiest@redhat.com)
