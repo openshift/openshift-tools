@@ -51,14 +51,16 @@
   copy:
     content: |
       AWS AccountID: {{ osau_aws_accountid }}
-      Username: {{ item.item[0].username }}
-      Password: {{ item.invocation.module_complex_args.password|quote }}
-      Access Key: {{ item.user_meta.access_keys[0].access_key_id }}
-      Secret Access Key: {{ item.user_meta.access_keys[0].secret_access_key }}
+      Username: {{ item[0].item[0].username }}
+      Password: {{ item[1].password | default('') | quote }}
+      Access Key: {{ item[0].user_meta.access_keys[0].access_key_id }}
+      Secret Access Key: {{ item[0].user_meta.access_keys[0].secret_access_key }}
       URL: https://{{ osau_aws_accountid }}.signin.aws.amazon.com/console/ec2\n
-    dest: "{{ osau_credentials_dir }}/{{ item.item[0].username }}"
-  when: osau_user_state == 'present' and osau_output_format == "user_creds" and created_users.changed and item.user_meta is defined
-  with_items: "{{ created_users.results }}"
+    dest: "{{ osau_credentials_dir }}/{{ item[0].item[0].username }}"
+  when: osau_user_state == 'present' and osau_output_format == "user_creds" and created_users.changed and item[0].user_meta is defined
+  with_together:
+    - "{{ created_users.results }}"
+    - "{{ generated.results }}"
   no_log: True
 
 - debug:
