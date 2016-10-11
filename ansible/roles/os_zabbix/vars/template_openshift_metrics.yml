@@ -1,0 +1,42 @@
+---
+g_template_metrics:
+  name: Template OpenShift Metrics
+
+  zitems:
+  - key: openshift.metrics.nodes_reporting
+    applications:
+    - Node Metrics
+    value_type: bool
+
+  zdiscoveryrules:
+  - name: openshift.metrics.hawkular
+    key: openshift.metrics.hawkular
+    lifetime: 7
+    description: "Hawkular metrics"
+ 
+  zitemprototypes:
+  - discoveryrule_key: openshift.metrics.hawkular
+    name: "{% raw %}openshift.metrics.hawkular.status.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.metrics.hawkular.status.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    value_type: int
+    description: "hawkular metrics status"
+    applications:
+    - Hawkular Cassandra
+ 
+  - discoveryrule_key: openshift.metrics.hawkular
+    name: "{% raw %}openshift.metrics.hawkular.starttime.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.metrics.hawkular.starttime.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    value_type: int
+    description: "hawkular metrics start time"
+    applications:
+    - Hawkular Cassandra
+ 
+  - discoveryrule_key: openshift.metrics.hawkular
+    name: "{% raw %}openshift.metrics.hawkular.restarts.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.metrics.hawkular.restarts.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    value_type: int
+    description: "cassandra number of restarts"
+    applications:
+    - Hawkular Cassandra
+
+ 
