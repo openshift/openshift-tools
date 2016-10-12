@@ -95,7 +95,7 @@ class OpenshiftMetricsStatus(object):
 
                 # Since we convert to seconds it is an INT but pylint still complains. Only disable here
                 # pylint: disable=E1101
-                pod_report[pod_pretty_name]['start_time'] = int(pod_start_time.strftime("%s"))
+                pod_report[pod_pretty_name]['starttime'] = int(pod_start_time.strftime("%s"))
                 # pylint: enable=E1101
 
         return pod_report
