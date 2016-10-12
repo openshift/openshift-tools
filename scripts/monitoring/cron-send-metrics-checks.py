@@ -23,14 +23,15 @@
 #If a check throws an exception it is failed and should alert
 #pylint: disable=bare-except
 
-
-import os
 import ssl
 import yaml
 import urllib2
 import argparse
+
+# pylint: disable=import-error
 from openshift_tools.monitoring.ocutil import OCUtil
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+# pylint: enable=import-error
 
 # These are here for a metrics pre 3.4 workaround
 import sys
@@ -45,7 +46,7 @@ class OpenshiftMetricsStatus(object):
     '''
     def __init__(self):
         ''' Initializze OpoenShiftMetricsStatus class '''
-        self.kubeconfig = None
+        self.kubeconfig = '/tmp/admin.kubeconfig'
         self.zagg_sender = None
         self.oc = None
         self.args = None
@@ -60,22 +61,6 @@ class OpenshiftMetricsStatus(object):
         parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
 
         self.args = parser.parse_args()
-
-    def get_kubeconfig(self):
-        ''' Find kubeconfig to use for OCUtil '''
-        # Default master kubeconfig
-        kubeconfig = '/tmp/admin.kubeconfig'
-        non_master_kube_dir = '/etc/origin/node'
-
-        if os.path.isdir(non_master_kube_dir):
-            for my_file in os.listdir(non_master_kube_dir):
-                if my_file.endswith(".kubeconfig"):
-                    kubeconfig = os.path.join(non_master_kube_dir, my_file)
-
-        if self.args.verbose:
-            print "Using kubeconfig: {}".format(kubeconfig)
-
-        self.kubeconfig = kubeconfig
 
     def check_pods(self):
         ''' Check all metrics related pods '''
@@ -225,7 +210,6 @@ class OpenshiftMetricsStatus(object):
         self.parse_args()
         self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
 
-        self.get_kubeconfig()
         self.oc = OCUtil(namespace='openshift-infra', config_file=self.kubeconfig, verbose=self.args.verbose)
 
         pod_report = self.check_pods()
