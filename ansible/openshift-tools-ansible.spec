@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.22
+Version:        0.0.23
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,66 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Wed Oct 12 2016 Wesley Hearn <whearn@redhat.com> 0.0.23-1
+- extension was missing from include_vars file (ihorvath@redhat.com)
+- Add legacy V2 AWS accounts to parsable list of AWS accounts
+  (joesmith@redhat.com)
+- Fix aws user role to work with Ansible 2.2 (joesmith@redhat.com)
+- Add openshift metrics checks. Updated ocutil with more features
+  (whearn@redhat.com)
+- from discussion with devs we are increasing the threshold of etcd connection
+  trigger (ihorvath@redhat.com)
+- Deadlock fix in git module. (kwoodson@redhat.com)
+- disable router and registry in the byo installer (mwoodson@redhat.com)
+- added some fixes for the upgrade steps (mwoodson@redhat.com)
+- added the openshift_aws_elb instance manager role (mwoodson@redhat.com)
+- append to log instead of overwriting (sedgar@redhat.com)
+- run every 10 minutes (sedgar@redhat.com)
+- Added role to generate byo inventory files (whearn@redhat.com)
+- ugrade fixes (mwoodson@redhat.com)
+- save log output, exclude openshift project, use grep instead of diff
+  (sedgar@redhat.com)
+- append now creates array when it does not exist. (kwoodson@redhat.com)
+- added cron script to delete stuck projects for bz 1367432 (sedgar@redhat.com)
+- Force options added to evacuate. (kwoodson@redhat.com)
+- Updated manage node to support empty pod lists. Idempotent schedulable
+  (kwoodson@redhat.com)
+- changing file lock mutex (dranders@redhat.com)
+- Updating to handle the 3.2 to 3.3 upgrade path. (kwoodson@redhat.com)
+- made playbook work with Online nodes (sedgar@redhat.com)
+- updated oc_version (mwoodson@redhat.com)
+- Removing wait in favor of communicate to avoid deadlock.
+  (kwoodson@redhat.com)
+- updated git libs (mwoodson@redhat.com)
+- Add cluster capacity alerts in Zabbix (rharriso@redhat.com)
+- Pass in cafile to openshift_hosted_router_certificate (whearn@redhat.com)
+- Removed extra ' (whearn@redhat.com)
+- Generate easily parsable list of AWS accounts (joesmith@redhat.com)
+- increasing threshold numbers per discussion with twiest (ihorvath@redhat.com)
+- Add missing ' (whearn@redhat.com)
+- Make new nodes with schedulable set to false (whearn@redhat.com)
+- Scale registry to infra node count. (kwoodson@redhat.com)
+- Removing the delete with the latest iam_cert20 module update.
+  (kwoodson@redhat.com)
+- update cron job that launches event watcher (jdiaz@redhat.com)
+- Added role to generate byo inventory files (whearn@redhat.com)
+- Fixed a missing comma. (kwoodson@redhat.com)
+- Fixing router with latest edit code.  Updated yedit to handle content.
+  (kwoodson@redhat.com)
+- Attempting to fix NoneType in edits. (kwoodson@redhat.com)
+- When there are no edits then default to empty dict. (kwoodson@redhat.com)
+- update event watcher with regex ability (jdiaz@redhat.com)
+- Fixing yedit for 2.2 with content_type: str (kwoodson@redhat.com)
+- oc_version (kwoodson@redhat.com)
+- Work around omit not working for dictionaries (rharriso@redhat.com)
+- Add second cassandra node to deployments (rharriso@redhat.com)
+- Fixing return value for ansible 2.2. (kwoodson@redhat.com)
+- Cleaning up from yedit move to periods. (kwoodson@redhat.com)
+- Latest yedit added and generated. (kwoodson@redhat.com)
+- Yedit changed to handle periods.  Moving to periods as default separator.
+  (kwoodson@redhat.com)
+- Allow different separators. (kwoodson@redhat.com)
+
 * Mon Sep 26 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.22-1
 - Adding oadm_manage_node. (kwoodson@redhat.com)
 - Adding ability to perform router edits at creation time.
