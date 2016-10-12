@@ -28,17 +28,24 @@ class GitCLI(object):
         self.path = path
         self.verbose = verbose
 
-    # Pylint allows only 5 arguments to be passed.
-    # pylint: disable=too-many-arguments
-    def _commit(self, msg):
-        ''' git commit with message '''
-        cmd = ["add", "."]
+    def _add(self, files_to_add=None):
+        ''' git add '''
+
+        cmd = ["add"]
+
+        if files_to_add:
+            cmd = cmd + files_to_add
+        else:
+            cmd.append('.')
+
         results = self.git_cmd(cmd)
 
-        if results['returncode'] != 0:
-            return results
+        return results
 
-        cmd = ["commit", "-am", msg]
+    def _commit(self, msg):
+        ''' git commit with message '''
+
+        cmd = ["commit", "-m", msg]
 
         results = self.git_cmd(cmd)
 
