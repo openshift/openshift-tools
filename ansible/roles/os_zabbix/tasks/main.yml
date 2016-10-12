@@ -62,7 +62,7 @@
   tags:
   - zabbix_config
 
-- include_vars: template_openshift_metrics
+- include_vars: template_openshift_metrics.yml
   tags:
   - openshift_metrics
 
