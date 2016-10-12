@@ -69,6 +69,9 @@ zagg_client_config:
 {%   elif osohm_cloud == 'aws' %}
     - Template AWS
 {%   endif %}
+{% if osohm_master_primary | default(False) | bool %}
+    - Template OpenShift Metrics
+{% endif %}
 {% endif %}
 {% if osohm_host_type == 'ansible-tower' %}
     - Template Config Loop      # So we can send config loop related metrics
