@@ -33,6 +33,7 @@ cp -p monitoring/cron-send-ovs-status.py %{buildroot}/usr/bin/cron-send-ovs-stat
 cp -p monitoring/cron-send-pcp-ping.sh %{buildroot}/usr/bin/cron-send-pcp-ping
 cp -p monitoring/cron-send-etcd-status.py %{buildroot}/usr/bin/cron-send-etcd-status
 cp -p monitoring/cron-send-disk-metrics.py %{buildroot}/usr/bin/cron-send-disk-metrics
+cp -p monitoring/cron-send-metrics-checks.py %{buildroot}/usr/bin/cron-send-metrics-checks
 cp -p monitoring/cron-send-network-metrics.py %{buildroot}/usr/bin/cron-send-network-metrics
 cp -p monitoring/cron-send-s3-metrics.py %{buildroot}/usr/bin/cron-send-s3-metrics
 cp -p monitoring/cron-send-gcs-metrics.py %{buildroot}/usr/bin/cron-send-gcs-metrics
@@ -272,6 +273,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-cpu-mem-stats
 /usr/bin/cron-send-saml-status
 /usr/bin/cron-certificate-expirations
+/usr/bin/cron-send-metrics-checks
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
