@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.150
+Version:       0.0.151
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -327,6 +327,10 @@ OpenShift Tools GCP specific scripts
 
 
 %changelog
+* Wed Oct 12 2016 Wesley Hearn <whearn@redhat.com> 0.0.151-1
+- Add cron-send-metrics-checks to openshift-tools-scripts.spec
+  (whearn@redhat.com)
+
 * Tue Oct 11 2016 Wesley Hearn <whearn@redhat.com> 0.0.150-1
 - Add openshift metrics checks. Updated ocutil with more features
   (whearn@redhat.com)
