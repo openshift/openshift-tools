@@ -80,7 +80,7 @@ class OpenshiftMetricsStatus(object):
                 pod_report[pod_pretty_name] = {}
 
                 # Get the pods ready status
-                pod_report[pod_pretty_name]['status'] = pod['status']['containerStatuses'][0]['ready']
+                pod_report[pod_pretty_name]['status'] = int(pod['status']['containerStatuses'][0]['ready'])
 
                 # Number of times a pod has been restarted
                 pod_report[pod_pretty_name]['restarts'] = pod['status']['containerStatuses'][0]['restartCount']
@@ -198,9 +198,9 @@ class OpenshiftMetricsStatus(object):
                     print "%s: Key[%s] Value[%s]" % (pod, key, val)
 
             self.zagg_sender.add_zabbix_keys({
-                "%s[%s]" %(item_prototype_key_status, data['status']) : data['status'],
-                "%s[%s]" %(item_prototype_key_starttime, data['starttime']) : data['starttime'],
-                "%s[%s]" %(item_prototype_key_restarts, data['restarts']) : data['restarts']})
+                "%s.%s" %(item_prototype_key_status, pod) : data['status'],
+                "%s.%s" %(item_prototype_key_starttime, pod) : data['starttime'],
+                "%s.%s" %(item_prototype_key_restarts, pod) : data['restarts']})
 
         self.zagg_sender.add_zabbix_keys({'openshift.metrics.nodes_reporting': node_health})
         self.zagg_sender.send_metrics()

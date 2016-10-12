@@ -5,8 +5,8 @@ g_template_metrics:
   zitems:
   - key: openshift.metrics.nodes_reporting
     applications:
-    - Node Metrics
-    value_type: bool
+    - Hawkular Cassandra
+    value_type: int
 
   zdiscoveryrules:
   - name: openshift.metrics.hawkular
