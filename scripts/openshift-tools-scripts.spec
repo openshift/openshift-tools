@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.149
+Version:       0.0.151
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -33,6 +33,7 @@ cp -p monitoring/cron-send-ovs-status.py %{buildroot}/usr/bin/cron-send-ovs-stat
 cp -p monitoring/cron-send-pcp-ping.sh %{buildroot}/usr/bin/cron-send-pcp-ping
 cp -p monitoring/cron-send-etcd-status.py %{buildroot}/usr/bin/cron-send-etcd-status
 cp -p monitoring/cron-send-disk-metrics.py %{buildroot}/usr/bin/cron-send-disk-metrics
+cp -p monitoring/cron-send-metrics-checks.py %{buildroot}/usr/bin/cron-send-metrics-checks
 cp -p monitoring/cron-send-network-metrics.py %{buildroot}/usr/bin/cron-send-network-metrics
 cp -p monitoring/cron-send-s3-metrics.py %{buildroot}/usr/bin/cron-send-s3-metrics
 cp -p monitoring/cron-send-gcs-metrics.py %{buildroot}/usr/bin/cron-send-gcs-metrics
@@ -272,6 +273,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-cpu-mem-stats
 /usr/bin/cron-send-saml-status
 /usr/bin/cron-certificate-expirations
+/usr/bin/cron-send-metrics-checks
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -325,6 +327,17 @@ OpenShift Tools GCP specific scripts
 
 
 %changelog
+* Wed Oct 12 2016 Wesley Hearn <whearn@redhat.com> 0.0.151-1
+- Add cron-send-metrics-checks to openshift-tools-scripts.spec
+  (whearn@redhat.com)
+
+* Tue Oct 11 2016 Wesley Hearn <whearn@redhat.com> 0.0.150-1
+- Add openshift metrics checks. Updated ocutil with more features
+  (whearn@redhat.com)
+- save log output, exclude openshift project, use grep instead of diff
+  (sedgar@redhat.com)
+- added cron script to delete stuck projects for bz 1367432 (sedgar@redhat.com)
+
 * Thu Oct 06 2016 Thomas Wiest <twiest@redhat.com> 0.0.149-1
 - Fixed bug in ops-ec2-snapshot-ebs-volumes.py when not passing in --sleep-
   between-snaps. (twiest@redhat.com)
