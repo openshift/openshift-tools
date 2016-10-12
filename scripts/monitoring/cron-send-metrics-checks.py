@@ -23,14 +23,15 @@
 #If a check throws an exception it is failed and should alert
 #pylint: disable=bare-except
 
-
-import os
 import ssl
 import yaml
 import urllib2
 import argparse
+
+# pylint: disable=import-error
 from openshift_tools.monitoring.ocutil import OCUtil
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+# pylint: enable=import-error
 
 # These are here for a metrics pre 3.4 workaround
 import sys
