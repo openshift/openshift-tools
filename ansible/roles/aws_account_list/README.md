@@ -12,7 +12,7 @@ Role Variables
 --------------
 
 `aal_multi_inventory_location`:
-    Path to `multi_inventory.cache`
+    Path to `multi_inventory.yaml`
 
 Dependencies
 ------------
@@ -26,6 +26,7 @@ Example Playbook
       roles:
         - role: tools_roles/aws_account_list
           aal_multi_inventory_location: /etc/ansible/multi_inventory.yaml
+          aal_multi_inventory_location_legacy: /etc/ansible/multi_inventory.v2.yaml
 
 License
 -------
