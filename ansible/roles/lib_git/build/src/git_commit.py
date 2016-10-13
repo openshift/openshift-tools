@@ -31,24 +31,22 @@ class GitCommit(GitCLI):
 
         #clean up the data
         for line in git_status_out:
-            file = line[3:]
+            file_name = line[3:]
             if "->" in line:
-                 file = file.split("->")[-1].strip()
-            git_status_files.append(file)
+                file_name = file_name.split("->")[-1].strip()
+            git_status_files.append(file_name)
 
         # Check if the files to be commited are in the git_status_files
-        for file in self.commit_files:
-            file = str(file)
+        for file_name in self.commit_files:
+            file_name = str(file_name)
             for status_file in git_status_files:
-                if status_file.startswith(file):
+                if status_file.startswith(file_name):
                     files_found_to_be_committed.append(status_file)
 
         return files_found_to_be_committed
 
     def have_commits(self):
         ''' do we have files to commit?'''
-
-        #results = self._status(porcelain=True)
 
         # test the results
         if self.status_results['results']:
@@ -60,19 +58,19 @@ class GitCommit(GitCLI):
         '''perform a git commit '''
 
         if self.have_commits():
+            add_results = None
             if self.commit_files:
                 files_to_add = self.get_files_to_commit()
                 if files_to_add:
                     add_results = self._add(files_to_add)
-                    self.debug.append(add_results)
-                    commit_results = self._commit(self.msg)
-                    commit_results['debug'] = self.debug
-                    return commit_results
             else:
                 add_results = self._add()
+
+            if add_results:
                 self.debug.append(add_results)
                 commit_results = self._commit(self.msg)
                 commit_results['debug'] = self.debug
+
                 return commit_results
 
         return {'returncode': 0,

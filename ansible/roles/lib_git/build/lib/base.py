@@ -27,7 +27,7 @@ class GitCLI(object):
         cmd = ["add"]
 
         if files_to_add:
-            cmd = cmd + files_to_add
+            cmd.extend(files_to_add)
         else:
             cmd.append('.')
 
