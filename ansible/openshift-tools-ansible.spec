@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.23
+Version:        0.0.24
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,12 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Oct 13 2016 Wesley Hearn <whearn@redhat.com> 0.0.24-1
+- Add host template to primary masters (whearn@redhat.com)
+- Fix zabbix key names (whearn@redhat.com)
+- Few bug fixes around metrics (whearn@redhat.com)
+- Create metrics template (whearn@redhat.com)
+
 * Wed Oct 12 2016 Wesley Hearn <whearn@redhat.com> 0.0.23-1
 - extension was missing from include_vars file (ihorvath@redhat.com)
 - Add legacy V2 AWS accounts to parsable list of AWS accounts
