@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.152
+Version:       0.0.153
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -327,6 +327,10 @@ OpenShift Tools GCP specific scripts
 
 
 %changelog
+* Thu Oct 13 2016 Wesley Hearn <whearn@redhat.com> 0.0.153-1
+- Few bug fixes around metrics (whearn@redhat.com)
+- The start time key is starttime not start_time (whearn@redhat.com)
+
 * Wed Oct 12 2016 Wesley Hearn <whearn@redhat.com> 0.0.152-1
 - Fix cron-send-metrics-checks imports (whearn@redhat.com)
 - This is only going to run on the master so always make sure to load the admin
