@@ -1,18 +1,19 @@
 #!/usr/bin/env python
-'''
+"""
     Quick and dirty create application check for v3
-'''
+"""
+
+# We just want to see any exception that happens
+# don't want the script to die under any cicumstances
+# script must try to clean itself up
+# pylint: disable=broad-except
+
+# main() function has a lot of setup and error handling
+# pylint: disable=too-many-statements
 
 # Adding the ignore because it does not like the naming of the script
 # to be different than the class name
 # pylint: disable=invalid-name
-
-import logging
-logging.basicConfig(
-    format='%(asctime)s - %(relativeCreated)6d - %(levelname)-8s - %(message)s',
-)
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 
 import subprocess
 import json
@@ -34,27 +35,35 @@ import sys
 #pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 
+import logging
+logging.basicConfig(
+    format='%(asctime)s - %(relativeCreated)6d - %(levelname)-8s - %(message)s',
+)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 # pylint: disable=bare-except
 def cleanup_file(inc_file):
-    ''' clean up '''
+    """ clean up """
     try:
         os.unlink(inc_file)
     except:
         pass
 
 def copy_kubeconfig(config):
-    ''' make a copy of the kubeconfig '''
-    file_name = os.path.join('/tmp',
-                             ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7)))
+    """ make a copy of the kubeconfig """
+    file_name = os.path.join('/tmp', ''.join(
+        random.choice(string.ascii_uppercase + string.digits) for _ in range(7)
+    ))
     shutil.copy(config, file_name)
     atexit.register(cleanup_file, file_name)
 
     return file_name
 
 class OpenShiftOC(object):
-    ''' Class to wrap the oc command line tools '''
+    """ Class to wrap the oc command line tools """
     def __init__(self, namespace, kubeconfig, args, verbose=False):
-        ''' Constructor for OpenShiftOC '''
+        """ Constructor for OpenShiftOC """
         self.namespace = namespace
         # used to delete the project ES index
         self.run_date = datetime.datetime.now().strftime("%Y.%m.%d")
@@ -63,7 +72,7 @@ class OpenShiftOC(object):
         self.args = args
 
     def get_pod(self):
-        '''return a pod by name'''
+        """return a pod by name"""
         pods = self.get_pods()
         podname = pod_name(self.args.name)
         # this will match on build pods but not deploy pods
@@ -77,26 +86,26 @@ class OpenShiftOC(object):
                 else: return pod
 
     def get_pods(self):
-        '''return all pods '''
+        """return all pods """
         cmd = ['get', 'pods', '--no-headers', '-o', 'json', '-n', self.namespace]
         results = self.oc_cmd(cmd)
 
         return json.loads(results)
 
     def new_app(self, path):
-        '''run new-app '''
+        """run new-app """
         cmd = ['new-app', path, '-n', self.namespace]
         return self.oc_cmd(cmd)
 
     def delete_project(self):
-        '''delete project '''
+        """delete project """
         cmd = ['delete', 'project', self.namespace]
         results = self.oc_cmd(cmd)
         time.sleep(5)
         return results
 
     def new_project(self):
-        '''create new project '''
+        """create new project """
         version = self.get_version()
         cmd = ['new-project', self.namespace]
         if "v3.2" in version:  ## remove this after BZ1333049 resolved in OSE
@@ -106,7 +115,7 @@ class OpenShiftOC(object):
         return rval
 
     def get_logs(self):
-        '''get all pod logs'''
+        """get all pod logs"""
         pods = self.get_pods()
         result = ""
         for pod in pods['items']:
@@ -118,33 +127,37 @@ class OpenShiftOC(object):
         return result
 
     def get_route(self):
-        '''get route to check if app is running'''
+        """get route to check if app is running"""
         cmd = ['get', 'route', '--no-headers', '-o', 'json', '-n', self.namespace]
         results = self.oc_cmd(cmd)
         return json.loads(results)
 
     def get_service(self):
-        '''get service to check if app is running'''
-        return json.loads(self.oc_cmd(['get', 'service', '--no-headers', '-n', self.namespace, '-o', 'json']))
+        """get service to check if app is running"""
+        return json.loads(self.oc_cmd(
+            ['get', 'service', '--no-headers', '-n', self.namespace, '-o', 'json']
+        ))
 
     def get_events(self):
-        '''get all events'''
+        """get all events"""
         return self.oc_cmd(['get', 'events', '-n', self.namespace])
 
 
     def get_projects(self):
-        '''get all projects '''
+        """get all projects """
         cmd = ['get', 'projects', '--no-headers']
-        results = [proj.split()[0] for proj in self.oc_cmd(cmd).split('\n') if proj and len(proj) > 0]
+        results = [
+            proj.split()[0] for proj in self.oc_cmd(cmd).split('\n') if proj and len(proj) > 0
+        ]
 
         return results
 
     def get_version(self):
-        '''get openshift version'''
+        """get openshift version"""
         return self.oc_cmd(['version'])
 
     def oc_cmd(self, cmd):
-        '''Base command for oc '''
+        """Base command for oc """
         cmds = ['/usr/bin/oc']
         cmds.extend(cmd)
         logger.debug(' '.join(cmds))
@@ -163,7 +176,7 @@ class OpenShiftOC(object):
         return "Error: %s.  Return: %s" % (proc.returncode, stderr)
 
     def oadm_cmd(self, cmd):
-        '''Base command for oadm '''
+        """Base command for oadm """
         cmds = ['/usr/bin/oadm']
         cmds.extend(cmd)
         logger.debug(' '.join(cmds))
@@ -213,10 +226,9 @@ class OpenShiftOC(object):
         return 0
 
 def curl(ip_addr, port):
+    """ Open an http connection to the url and read """
     logger.debug("curl()")
 
-    ''' Open an http connection to the url and read
-    '''
     code = 0
     timeout = 30 ## only wait this number of seconds for a response
     try:
@@ -225,13 +237,15 @@ def curl(ip_addr, port):
     except urllib2.HTTPError, e:
         code = e.fp.getcode()
     except urllib2.URLError, e:
-        logger.error("timed out in %s seconds opening http://%s:%s" % \
-            (timeout, ip_addr, port))
+        logger.error(
+            "timed out in %s seconds opening http://%s:%s",
+            timeout, ip_addr, port
+        )
     return code
 
 def parse_args():
-    logger.debug("parse_args()")
     """ parse the args from the cli """
+    logger.debug("parse_args()")
 
     parser = argparse.ArgumentParser(description='OpenShift app create end-to-end test')
     parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
@@ -240,9 +254,11 @@ def parse_args():
     return parser.parse_args()
 
 def pod_name(name):
-    logger.debug("pod_name()")
     """ strip pre/suffices from app name to get pod name """
-    # for app deploy "https://github.com/openshift/hello-openshift:latest", pod name is hello-openshift
+    logger.debug("pod_name()")
+
+    # for app deploy "https://github.com/openshift/hello-openshift:latest",
+    # pod name is hello-openshift
     if 'http' in name:
         name = name.rsplit('/')[-1]
     if 'git' in name:
@@ -254,11 +270,13 @@ def pod_name(name):
     return name
 
 def send_zagg_data(build_ran, create_app, http_code, run_time):
+    """ send data to Zagg"""
     logger.debug("send_zagg_data()")
-    ''' send data to Zagg'''
+
     zgs_time = time.time()
     zgs = ZaggSender()
     logger.info("Send data to Zagg")
+
     if build_ran == 1:
         zgs.add_zabbix_keys({'openshift.master.app.build.create': create_app})
         zgs.add_zabbix_keys({'openshift.master.app.build.create.code': http_code})
@@ -267,13 +285,15 @@ def send_zagg_data(build_ran, create_app, http_code, run_time):
         zgs.add_zabbix_keys({'openshift.master.app.create': create_app})
         zgs.add_zabbix_keys({'openshift.master.app.create.code': http_code})
         zgs.add_zabbix_keys({'openshift.master.app.create.time': run_time})
+
     try:
         zgs.send_metrics()
+        logger.info("Data sent to Zagg in %s seconds", str(time.time() - zgs_time))
     except:
-        logger.error("Error sending to Zagg: %s \n %s " % sys.exc_info()[0], sys.exc_info()[1])
-    logger.info("Data sent in %s seconds" % str(time.time() - zgs_time))
+        logger.error("Error sending data to Zagg: %s \n %s ", sys.exc_info()[0], sys.exc_info()[1])
 
 def getPodStatus(pod):
+    """ get pod status for display """
     logger.debug("getPodStatus()")
     if not pod:
         return "no pod"
@@ -284,21 +304,22 @@ def getPodStatus(pod):
     return "%s %s" % (pod['metadata']['name'], pod['status']['phase'])
 
 def setup(config, oocmd=None,):
+    """ global setup for tests """
     logger.info('setup()')
     oocmd.delete_project()
     oocmd.new_project()
 
-    return True
+    return config
 
 def test(config, oocmd=None,):
+    """ run tests """
     logger.info('test()')
+
     oocmd.new_app(config['applicationName'])
 
-    create_app = 1
     build_ran = 0
     pod = None
     http_code = 0
-    run_time = 0
 
     # Now we wait until the pod comes up
     for _ in range(120):
@@ -353,13 +374,17 @@ def test(config, oocmd=None,):
 
 
 def teardown(config, oocmd=None,):
+    """ clean up after testing """
+
     logger.info('teardown()')
     oocmd.delete_es_index()
     oocmd.delete_project()
 
-    return True
+    return config
 
 def main():
+    """ setup / test / teardown with exceptions to ensure teardown """
+
     print '################################################################################'
     print '  Starting App Create - %s' % datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     print '################################################################################'
@@ -382,7 +407,7 @@ def main():
     }
 
     # delete project, make new project
-    setup_response = setup(config, oocmd=oocmd,)
+    setup(config, oocmd=oocmd,)
 
     # start time tracking
     start_time = time.time()
@@ -407,7 +432,7 @@ def main():
     run_time = str(time.time() - start_time)
 
     logger.info('Finished.')
-    logger.info('Time: %s' % run_time)
+    logger.info('Time: %s', run_time)
 
     # send data to zabbix
     try:
@@ -436,12 +461,12 @@ def main():
             logger.critical(e)
     else:
         logger.info('Deploy State: Success')
-        logger.info('Service HTTP response code: %s' % test_response['http_code'])
+        logger.info('Service HTTP response code: %s', test_response['http_code'])
 
 
     # cleanup project
     try:
-        teardown_response = teardown(config, oocmd=oocmd,)
+        teardown(config, oocmd=oocmd,)
     except Exception as e:
         logger.critical('problem cleaning up project')
         logger.critical(e)
