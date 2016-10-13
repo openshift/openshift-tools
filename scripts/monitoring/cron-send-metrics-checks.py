@@ -172,12 +172,12 @@ class OpenshiftMetricsStatus(object):
                 resp = urllib2.build_opener(urllib2.HTTPSHandler(context=ctx)).open(request)
                 result = yaml.load(resp.read())
                 if result[0]['empty']:
-                    return False
+                    return 0
 
             except urllib2.URLError:
-                return False
+                return 0
 
-        return True
+        return 1
 
     def report_to_zabbix(self, pods_status, node_health):
         ''' Report all of our findings to zabbix '''
@@ -198,9 +198,9 @@ class OpenshiftMetricsStatus(object):
                     print "%s: Key[%s] Value[%s]" % (pod, key, val)
 
             self.zagg_sender.add_zabbix_keys({
-                "%s.%s" %(item_prototype_key_status, pod) : data['status'],
-                "%s.%s" %(item_prototype_key_starttime, pod) : data['starttime'],
-                "%s.%s" %(item_prototype_key_restarts, pod) : data['restarts']})
+                "%s[%s]" %(item_prototype_key_status, pod) : data['status'],
+                "%s[%s]" %(item_prototype_key_starttime, pod) : data['starttime'],
+                "%s[%s]" %(item_prototype_key_restarts, pod) : data['restarts']})
 
         self.zagg_sender.add_zabbix_keys({'openshift.metrics.nodes_reporting': node_health})
         self.zagg_sender.send_metrics()
