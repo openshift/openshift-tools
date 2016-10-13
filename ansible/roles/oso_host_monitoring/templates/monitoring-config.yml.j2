@@ -326,6 +326,13 @@ host_monitoring_cron:
   minute: "1"
   job: ops-runner -f -s 30 -n ccexp.openshift.master.certificates /usr/bin/cron-certificate-expirations --cert-list=/etc/origin/master,/etc/origin/node
 
+{% if osohm_metrics_enabled | default(False) | bool %}
+- name: "Report metrics health"
+  hour: "*"
+  minute: "30"
+  job: "ops-runner -f -s 30 -n cosp.openshift.metrics.check cron-send-metrics-checks"
+{% endif %}
+
 {% if osohm_cloud == 'aws' %}
 - name: send S3 bucket metrics every day
   hour: "3"
