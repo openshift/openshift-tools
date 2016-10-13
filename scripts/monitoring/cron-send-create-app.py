@@ -431,8 +431,7 @@ def main():
     # finish time tracking
     run_time = str(time.time() - start_time)
 
-    logger.info('Finished.')
-    logger.info('Time: %s', run_time)
+    logger.info('Test finished. Time to complete test only: %s', run_time)
 
     # send data to zabbix
     try:
