@@ -26,8 +26,8 @@ class GitMerge(GitCLI):
             return True
 
         results = self._checkout(self.branch)
-
         self.debug.append(results)
+
         if results['returncode'] == 0:
             return True
 
