@@ -66,6 +66,10 @@
   tags:
   - openshift_metrics
 
+- include_vars: template_openshift_metrics.yml
+  tags:
+  - openshift_logging
+
 - name: Include Template OpenShift Cluster
   include: ../../lib_zabbix/tasks/create_template.yml
   vars:
@@ -241,6 +245,16 @@
   include: ../../lib_zabbix/tasks/create_template.yml
   vars:
     template: "{{ g_template_metrics }}"
+    server: "{{ ozb_server }}"
+    user: "{{ ozb_user }}"
+    password: "{{ ozb_password }}"
+  tags:
+  - openshift_metrics
+
+- name: Include Template OpenShift Logging
+  include: ../../lib_zabbix/tasks/create_template.yml
+  vars:
+    template: "{{ g_template_logging }}"
     server: "{{ ozb_server }}"
     user: "{{ ozb_user }}"
     password: "{{ ozb_password }}"

@@ -333,6 +333,13 @@ host_monitoring_cron:
   job: "ops-runner -f -s 30 -n cosp.openshift.metrics.check cron-send-metrics-checks"
 {% endif %}
 
+{% if osohm_logging_enabled | default(False) | bool %}
+- name: "Report logging health"
+  hour: "*"
+  minute: "30"
+  job: "ops-runner -f -s 30 -n cosp.openshift.logging.check cron-send-logging-checks"
+{% endif %}
+
 {% if osohm_cloud == 'aws' %}
 - name: send S3 bucket metrics every day
   hour: "3"

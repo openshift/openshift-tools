@@ -45,7 +45,7 @@ class OpenshiftMetricsStatus(object):
         and nodes fluentd can populate data from each node
     '''
     def __init__(self):
-        ''' Initializze OpoenShiftMetricsStatus class '''
+        ''' Initialize OpenShiftMetricsStatus class '''
         self.kubeconfig = '/tmp/admin.kubeconfig'
         self.zagg_sender = None
         self.oc = None
