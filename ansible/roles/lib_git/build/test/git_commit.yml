@@ -6,29 +6,29 @@
   tasks:
   - name: test git_commit
     git_commit:
-      path: /home/mwoodson/tmp/git_test/git_repo2
+      path: /tmp/repo1
       msg: TEST COMMIT 1
       commit_files:
       - 15
       - test/
 
-      - name: test git_merge
-        git_merge:
-          path: /home/mwoodson/tmp/git_test/git_repo
-          branch: stg
-          merge_id: master
-        register: merge
-      - debug:
-          var: merge
+  - name: test git_merge
+    git_merge:
+      path: /temp/repo1
+      branch: stg
+      merge_id: master
+    register: merge
+  - debug:
+      var: merge
 
-      - name: test git_push
-        git_push:
-          path: /home/mwoodson/tmp/git_test/git_repo
-          remote: origin
-          #remote: ''
-          src_branch: ""
-          dest_branch: stg
-        register: push
-        ignore_errors: yes
-      - debug:
-          var: push
+  - name: test git_push
+    git_push:
+      path: /temp/repo1
+      remote: origin
+      #remote: ''
+      src_branch: ""
+      dest_branch: stg
+    register: push
+    ignore_errors: yes
+  - debug:
+      var: push
