@@ -21,6 +21,7 @@ ADD prep_simplesaml.sh start.sh /usr/local/bin/
 RUN yum install -y \
         httpd \
         mod_ssl \
+        openshift-tools-web-simplesamlphp-modules \
         openssh-server \
         oso-simplesamlphp \
         php php-cli \
@@ -29,14 +30,9 @@ RUN yum install -y \
         php-pecl-yaml \
         && \
     yum -y update && yum clean all && \
-    prep_simplesaml.sh
+    prep_simplesaml.sh && \
+    ln -sf /usr/share/simplesamlphp/modules/authorizeyaml/bin/get_saml_token.php /usr/local/bin/get_saml_token
 
-
-# Install our custom authentication module and authorization module
-ADD simplesamlphp/modules/authgoogle/ /usr/share/simplesamlphp/modules/authgoogle/
-ADD simplesamlphp/modules/authorizeyaml/ /usr/share/simplesamlphp/modules/authorizeyaml/
-ADD simplesamlphp/modules/themeoso/ /usr/share/simplesamlphp/modules/themeoso/
-RUN ln -sf /usr/share/simplesamlphp/modules/authorizeyaml/bin/get_saml_token.php /usr/local/bin/get_saml_token
 
 # Copy config files
 ADD sshd_config /etc/ssh/sshd_config
