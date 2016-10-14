@@ -20,6 +20,12 @@ openshift_hosted_manage_router=false
 openshift_hosted_manage_registry=false
 {# End Static options #}
 
+{# set install version if set #}
+{%- if obg_install_version -%}
+openshift_pkg_version=-{{ obg_install_version }}
+{%- endif -%}
+{# end install version #}
+
 cluster_id={{ obg_clusterid }}
 oreg_url={{ obg_registry_template }}
 openshift_master_cluster_hostname={{ obg_master_cluster_hostname }}
