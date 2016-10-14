@@ -251,6 +251,7 @@ def parse_args():
     parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
     parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
     parser.add_argument('--name', default="openshift/hello-openshift:v1.0.6", help='app template')
+    parser.add_argument('--namespace', default="default", help='additional text for namespace')
     return parser.parse_args()
 
 def pod_name(name):
@@ -396,7 +397,12 @@ def main():
         logger.setLevel(logging.DEBUG)
 
     kubeconfig = copy_kubeconfig('/tmp/admin.kubeconfig')
-    namespace = '-'.join(['ops-health', pod_name(args.name), os.environ['ZAGG_CLIENT_HOSTNAME'], ])
+    namespace = '-'.join([
+        'ops-health',
+        args.namespace,
+        pod_name(args.name),
+        os.environ['ZAGG_CLIENT_HOSTNAME'],
+    ])
 
     oocmd = OpenShiftOC(namespace, kubeconfig, args, verbose=False)
 
@@ -461,7 +467,6 @@ def main():
     else:
         logger.info('Deploy State: Success')
         logger.info('Service HTTP response code: %s', test_response['http_code'])
-
 
     # cleanup project
     try:
