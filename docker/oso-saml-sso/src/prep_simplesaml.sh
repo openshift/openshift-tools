@@ -7,22 +7,9 @@
 # any error should cause this script to exit with an error
 set -e -o pipefail
 
-# download and unpack the tarball
-wget --quiet -O - 'https://github.com/simplesamlphp/simplesamlphp/releases/download/v1.14.8/simplesamlphp-1.14.8.tar.gz' | \
-        tar -x -z -C '/usr/share/' -f -
-
-# strip the version number for the dir name
-mv /usr/share/simplesamlphp-* /usr/share/simplesamlphp
-
 # we provide our own config
-rm -rf /usr/share/simplesamlphp/config/*
-# and we want it also accessible as /etc/simplesamlphp
-ln -sf /usr/share/simplesamlphp/config /etc/simplesamlphp
-
-# we provide our own metadata
-rm -rf /usr/share/simplesamlphp/metadata
-mkdir /etc/simplesamlphp/metadata
-ln -sf /etc/simplesamlphp/metadata /usr/share/simplesamlphp/metadata
+rm -rf /etc/simplesamlphp/*.php
+rm -rf /etc/simplesamlphp/metadata/*.php
 
 # this makes it so the simplsaml application is reachable through apache httpd
 ln -sf /usr/share/simplesamlphp/www /var/www/html/saml

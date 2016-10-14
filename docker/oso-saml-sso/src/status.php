@@ -1,5 +1,11 @@
 <?PHP
 
+//FIXME: This entire script should be discarded in favor of a single
+//       python script that does two separate checks
+//         - makes an HTTPS connection to HTTPD
+//         - makes an SSH connection to SSHD
+//       then rolls the status up into a single exit code
+
 function die503($msg)
 {
     header('HTTP/1.1 503 Service Temporarily Unavailable');

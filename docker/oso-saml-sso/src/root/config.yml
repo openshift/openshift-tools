@@ -39,11 +39,13 @@
       - google_api_client_secrets.json
       - authsources.php
 
+  - name: check if original ssl.conf exists
+    stat: path=/etc/httpd/conf.d/ssl.conf
+    register: ssl_conf_stat_result
+
   - name: save original ssl.conf config
-    shell: '[ -f /etc/httpd/conf.d/ssl.conf -a ! -h /etc/httpd/conf.d/ssl.conf ] && \
-            mv /etc/httpd/conf.d/ssl.conf{,.orig} && echo renamed || :'
-    register: command_result
-    changed_when: "command_result.stdout == 'renamed'"
+    command: mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.orig
+    when: 'ssl_conf_stat_result.stat.isreg == True'
 
   - name: symlink to authdata.yml
     file:
