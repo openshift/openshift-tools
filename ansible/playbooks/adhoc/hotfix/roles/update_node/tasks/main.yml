@@ -1,0 +1,72 @@
+---
+
+# Default to False before attempting upgrade
+- set_fact: 
+    update_successful:    False
+    downgrade_successful: False
+  when: "{{ update_needed == True }}" 
+
+- name: Update atomic-openshift-node
+  yum:
+    name: "{{ rpm_wanted }}"
+    state: present
+  when: "{{ update_needed == True }}" 
+
+- name: Check if update is successful
+  command: "rpm -qa atomic-openshift"
+  register: post_upgrade
+  changed_when: False
+
+# ansible will return a '17' if a match is found. '-1' means 'not found'
+- name: Set update_successful=True if upgrade succeeded
+  set_fact: 
+    update_successful: True
+  when: "{{ post_upgrade.stdout.find(version_wanted) != -1 }}"
+
+- name: Debug node vars
+  debug: msg="update_successful={{update_successful}}, rpm_installed={{post_upgrade.stdout}}, version_wanted={{version_wanted}}"
+
+- name: Upgrade failed, so try a downgrade
+  command: "yum -y downgrade atomic-openshift-{{ version_wanted }} atomic-openshift-clients-{{ version_wanted }} atomic-openshift-node-{{ version_wanted }} tuned-profiles-atomic-openshift-node-{{ version_wanted }} atomic-openshift-sdn-ovs-{{ version_wanted }}"
+  when: "{{ update_successful == False }}"
+
+- name: Check if downgrade is successful
+  command: "rpm -qa atomic-openshift"
+  register: post_downgrade
+  changed_when: False
+
+# ansible will return a '17' if a match is found. '-1' means 'not found'
+- name: Set downgrade_successful=True if downgrade succeeded
+  set_fact: 
+    downgrade_successful: True
+    upgrade_successful: True
+  when: "{{ post_downgrade.stdout.find(version_wanted) != -1 }}"
+
+- name: Alert if update is not successful, but continue
+  debug:
+    msg: "[WARNING] The desired rpm version does not match installed version! Upgrade and downgrade failed!"
+  when: "{{ update_successful == False and downgrade_successful == False }}"
+  failed_when: True
+  ignore_errors: True
+
+- name: Restart atomic-openshift-node service if upgrade was successful
+  service:
+    name: atomic-openshift-node
+    state: restarted
+  when: "{{ update_needed == True and update_successful == True }}" 
+
+- name: Ensure node service is running
+  service:
+    name: atomic-openshift-node
+    state: running
+  when: "{{ update_needed == True }}" 
+  ignore_errors: True
+
+- name: Make node schedulable again
+  command: "oadm manage-node {{ hostvars[oo_name].ec2_private_dns_name }} --schedulable=true"
+  register: schedulable
+  until: schedulable.stdout.find("SchedulingDisabled") == -1
+  retries: 10
+  delegate_to: "{{ cluster_master }}"
+  ignore_errors: True
+  when: "{{ update_needed == True }}" 

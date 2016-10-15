@@ -1,6 +1,7 @@
 ---
 # It is necessary to ignore_errors here because the instances are not in 'ready'
 #  state when first added to ELB
+# Also added 'retry' here because API call can sometimes fail.
 - name: "Add or Remove instances to ELB {{ osaeim_elb_name }}"
   ec2_elb:
     instance_id: "{{ item }}"
@@ -14,6 +15,8 @@
   ignore_errors: True
   register: elb_call
   delegate_to: localhost
+  retries: 5
+  until: elb_call|succeeded
 
 # ec2_elb is not idempotent, so this doesn't work properly.  We are going to always
 #  sleep when adding/removing from an ELB
