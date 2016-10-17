@@ -766,7 +766,10 @@ class Yedit(object):
         except KeyError as _:
             entry = None
 
-        if entry == None or not isinstance(entry, list):
+        if entry is None:
+            self.put(path, [])
+            entry = Yedit.get_entry(self.yaml_dict, path, self.separator)
+        if not isinstance(entry, list):
             return (False, self.yaml_dict)
 
         # pylint: disable=no-member,maybe-no-member
@@ -887,7 +890,13 @@ class OCVersion(OpenShiftCLI):
                 if line.startswith(term):
                     version_dict[term] = line.split()[-1]
 
+        # horrible hack to get openshift version in Openshift 3.2
+        #  By default "oc version in 3.2 does not return an "openshift" version
+        if "openshift" not in version_dict:
+            version_dict["openshift"] = version_dict["oc"]
+
         return version_dict
+
 
     @staticmethod
     def add_custom_versions(versions):
@@ -896,6 +905,10 @@ class OCVersion(OpenShiftCLI):
         versions_dict = {}
 
         for tech, version in versions.items():
+            # clean up "-" from version
+            if "-" in version:
+                version = version.split("-")[0]
+
             if version.startswith('v'):
                 versions_dict[tech+'_numeric'] = version[1:]
                 # "v3.3.0.33" is what we have, we want "3.3"
