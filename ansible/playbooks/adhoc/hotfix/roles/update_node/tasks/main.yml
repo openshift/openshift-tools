@@ -62,6 +62,7 @@
   when: "{{ update_needed == True }}" 
   ignore_errors: True
 
+# FIXME: use the oadm_manage_node module instead
 - name: Make node schedulable again
   command: "oadm manage-node {{ hostvars[oo_name].ec2_private_dns_name }} --schedulable=true"
   register: schedulable

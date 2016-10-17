@@ -5,6 +5,7 @@
   run_once: true
   when: "{{ update_needed == True }}" 
 
+# FIXME: use the oadm_manage_node module instead
 - name: Make node unschedulable
   command: "oadm manage-node {{ hostvars[oo_name].ec2_private_dns_name }} --schedulable=false"
   register: unschedulable
