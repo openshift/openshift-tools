@@ -1,0 +1,109 @@
+# In-place rpm upgrade playbook for security hotfixes.
+# Before running, find the exact cli version desired by running
+# 'yum list atomic-openshift --showduplicates' and selecting your version from the list.
+# Usage example:
+#  source ~/.private/ec2/opstest
+#  ansible-playbook hotfix.yml -e cli_version=3.3.0.35-1.git.0.d7bd9b6.el7 -e cli_clusterid=dakinitest
+
+- hosts: localhost
+  gather_facts: no
+  become: no
+  user: root
+
+  tasks:
+
+  - name: Check for required variables
+    fail:
+      msg: "Please define {{ item }}"
+    when: "{{ item }} is undefined"
+    with_items:
+    - cli_clusterid
+    - cli_version
+    run_once: True
+
+##############################################
+# Master upgrade
+##############################################
+
+- hosts: "oo_clusterid_{{ cli_clusterid }}:&oo_hosttype_master"
+  gather_facts: no
+  become: no
+  user: root
+  serial: 1
+
+  vars:
+    version_wanted: "{{ cli_version }}"
+    rpm_wanted:     "atomic-openshift-master-{{ version_wanted }}.x86_64"
+
+  roles:
+  - role: check_update_needed
+  - role: ../../../roles/openshift_aws_elb_instance_manager
+    osaeim_elb_name: "{{ cli_clusterid }}-master"
+    osaeim_state: absent
+    osaeim_instance_ids: "{{ ec2_id }}"
+    osaeim_region: "{{ oo_sublocation }}"
+    osaeim_aws_access_key: "{{ lookup('env', 'ACCESS_KEY_ID') }}"
+    osaeim_aws_secret_key: "{{ lookup('env', 'SECRET_ACCESS_KEY') }}"
+    when: "{{ update_needed == True }}" 
+
+  - role: update_master
+    when: "{{ update_needed == True }}" 
+
+  - role: ../../../roles/openshift_aws_elb_instance_manager
+    osaeim_elb_name: "{{ cli_clusterid }}-master"
+    osaeim_state: present
+    osaeim_instance_ids: "{{ ec2_id }}"
+    osaeim_region: "{{ oo_sublocation }}"
+    osaeim_aws_access_key: "{{ lookup('env', 'ACCESS_KEY_ID') }}"
+    osaeim_aws_secret_key: "{{ lookup('env', 'SECRET_ACCESS_KEY') }}"
+    when: "{{ update_needed == True }}" 
+
+  - role: ../../../roles/openshift_reconcile_cluster_roles
+    when: "{{ update_needed == True }}" 
+    run_once: True
+
+  post_tasks:
+  - name: Restart atomic-openshift-node service on updated masters
+    service:
+      name: atomic-openshift-node
+      state: restarted
+    when: "{{ update_needed == True and update_successful == True }}"
+
+##############################################
+# Infra upgrade
+##############################################
+
+- hosts: "oo_clusterid_{{ cli_clusterid }}:&oo_subhosttype_infra"
+  gather_facts: no
+  become: no
+  user: root
+  serial: 1
+
+  vars:
+    version_wanted: "{{ cli_version }}"
+    rpm_wanted:     "atomic-openshift-node-{{ version_wanted }}.x86_64"
+
+  roles:
+  - role: check_update_needed
+  - role: pre_update_node
+  - role: update_node
+
+
+##############################################
+# Compute upgrade
+##############################################
+
+- hosts: "oo_clusterid_{{ cli_clusterid }}:&oo_subhosttype_compute"
+  gather_facts: no
+  become: no
+  user: root
+  serial: 10%
+
+  vars:
+    version_wanted: "{{ cli_version }}"
+    rpm_wanted:     "atomic-openshift-node-{{ version_wanted }}.x86_64"
+
+  roles:
+  - role: check_update_needed
+  - role: pre_update_node
+  - role: update_node
