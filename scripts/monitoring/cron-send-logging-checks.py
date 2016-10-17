@@ -37,11 +37,11 @@ class OpenshiftLoggingStatus(object):
     '''
     def __init__(self):
         ''' Initialize OpenShiftLoggingStatus class '''
-        self.logging_ns = "logging"
-        self.kubeconfig = '/tmp/admin.kubeconfig'
         self.zagg_sender = None
         self.oc = None
         self.args = None
+        self.es_pods = []
+        self.fluentd_pods = []
 
         es_cert = '/etc/elasticsearch/secret/admin-'
         self.es_curl = "curl --cert {}cert --key {}key --cacert {}ca -XGET ".format(es_cert, es_cert, es_cert)
@@ -54,47 +54,51 @@ class OpenshiftLoggingStatus(object):
 
         self.args = parser.parse_args()
 
+    def get_pods(self):
+        ''' Get all pods and filter them in one pass '''
+        pods = self.oc.get_pods()
+        for pod in pods['items']:
+            if 'component' in pod['metadata']['labels']:
+                # Get ES pods
+                if pod['metadata']['labels']['component'] == 'es':
+                    self.es_pods.append(pod)
+                elif pod['metadata']['labels']['component'] == 'fluentd':
+                    self.fluentd_pods.append(pod)
+
     def check_elasticsearch(self):
         ''' Various checks for elasticsearch '''
         es_status = {}
         es_status['single_master'] = None
         es_master_name = None
-        pods = self.oc.get_pods()
-        es_pods = []
         es_status['pods'] = {}
-        for pod in pods['items']:
-            if 'component' in pod['metadata']['labels']:
-                # Get ES pods
-                if pod['metadata']['labels']['component'] == 'es':
-                    es_pods.append(pod)
-
-                    pod_dc = pod['metadata']['labels']['deploymentconfig']
-                    pod_name = pod['metadata']['name']
-                    es_status['pods'][pod_dc] = {}
+        for pod in self.es_pods:
+            pod_dc = pod['metadata']['labels']['deploymentconfig']
+            pod_name = pod['metadata']['name']
+            es_status['pods'][pod_dc] = {}
 
 
-                    # exec into a pod and get cluster health
-                    curl_cmd = "{} 'https://localhost:9200/_cluster/health?pretty=true'".format(self.es_curl)
-                    cluster_health = "exec -ti {} -- {}".format(pod_name, curl_cmd)
-                    health_res = self.oc.run_user_cmd(cluster_health)
+            # exec into a pod and get cluster health
+            curl_cmd = "{} 'https://localhost:9200/_cluster/health?pretty=true'".format(self.es_curl)
+            cluster_health = "exec -ti {} -- {}".format(pod_name, curl_cmd)
+            health_res = self.oc.run_user_cmd(cluster_health)
 
-                    if health_res['status'] == 'green':
-                        es_status['pods'][pod_dc]['elasticsearch_health'] = 2
-                    elif health_res['status'] == 'yellow':
-                        es_status['pods'][pod_dc]['elasticsearch_health'] = 1
-                    else:
-                        es_status['pods'][pod_dc]['elasticsearch_health'] = 0
+            if health_res['status'] == 'green':
+                es_status['pods'][pod_dc]['elasticsearch_health'] = 2
+            elif health_res['status'] == 'yellow':
+                es_status['pods'][pod_dc]['elasticsearch_health'] = 1
+            else:
+                es_status['pods'][pod_dc]['elasticsearch_health'] = 0
 
-                    # Compare the master across all ES nodes to see if we have split brain
-                    curl_cmd = "{} 'https://localhost:9200/_cat/master'".format(self.es_curl)
-                    es_master = "exec -ti {} -- {}".format(pod_name, curl_cmd)
-                    master_name = self.oc.run_user_cmd(es_master).split(' ')[1]
+            # Compare the master across all ES nodes to see if we have split brain
+            curl_cmd = "{} 'https://localhost:9200/_cat/master'".format(self.es_curl)
+            es_master = "exec -ti {} -- {}".format(pod_name, curl_cmd)
+            master_name = self.oc.run_user_cmd(es_master).split(' ')[1]
 
-                    if es_status['single_master'] == None:
-                        es_status['single_master'] = 1
-                        es_master_name = master_name
-                    elif es_master_name != master_name:
-                        es_status['single_master'] = 0
+            if es_status['single_master'] == None:
+                es_status['single_master'] = 1
+                es_master_name = master_name
+            elif es_master_name != master_name:
+                es_status['single_master'] = 0
 
         # get cluster nodes
         curl_cmd = "{} 'https://localhost:9200/_nodes'".format(self.es_curl)
@@ -106,9 +110,10 @@ class OpenshiftLoggingStatus(object):
         for node, data in cluster_nodes.items():
         # pylint: enable=unused-variable
             has_matched = False
-            for pod in es_pods:
+            for pod in self.es_pods:
                 if data['host'] == pod['metadata']['name']:
                     has_matched = True
+                    break
 
             if has_matched == False:
                 es_status['all_nodes_registered'] = 0
@@ -127,31 +132,28 @@ class OpenshiftLoggingStatus(object):
                 if node['metadata']['labels']['logging-infra-fluentd'] == 'true':
                     fluentd_nodes.append(node)
 
-        # Get all fluentd pods
-        pods = self.oc.get_pods()
-        fluentd_pods = []
-        for pod in pods['items']:
-            if 'component' in pod['metadata']['labels']:
-                if pod['metadata']['labels']['component'] == 'fluentd':
-                    fluentd_pods.append(pod)
-
         # Make sure fluentd is on all the nodes and the pods are running
         fluentd_status['number_expected_pods'] = len(fluentd_nodes)
-        fluentd_status['number_pods'] = len(fluentd_pods)
+        fluentd_status['number_pods'] = len(self.fluentd_pods)
         fluentd_status['node_mismatch'] = 0
-        for node in fluentd_nodes:
+        fluentd_status['running'] = 1
+
+        for pod in self.fluentd_pods:
             node_matched = False
-            for pod in fluentd_pods:
-                if node['metadata']['labels']['kubernetes.io/hostname'] == pod['spec']['host']:
-                    node_matched = True
+
+            if pod['status']['containerStatuses'][0]['ready'] == False:
+                fluentd_status['running'] = 0
+
+            # If there is already a problem don't worry about looping over the remaining pods/nodes
+            if fluentd_status['node_mismatch'] == 0:
+                for node in fluentd_nodes:
+                    if node['metadata']['labels']['kubernetes.io/hostname'] == pod['spec']['host']:
+                        node_matched = True
+                        break
 
             if node_matched == False:
                 fluentd_status['node_mismatch'] = 1
 
-        fluentd_status['running'] = 1
-        for pod in fluentd_pods:
-            if pod['status']['containerStatuses'][0]['ready'] == False:
-                fluentd_status['running'] = 0
 
         return fluentd_status
 
@@ -171,8 +173,8 @@ class OpenshiftLoggingStatus(object):
         # Verify that the url is returning a valid response
         kibana_status['site_up'] = 1
         try:
-            res = urllib2.urlopen(kibana_url, context=ctx)
-            print res
+            # We only care if the url opens
+            urllib2.urlopen(kibana_url, context=ctx)
 
         except urllib2.HTTPError, e:
             if e.code >= 500:
@@ -209,8 +211,9 @@ class OpenshiftLoggingStatus(object):
     def run(self):
         ''' Main function that runs the check '''
         self.parse_args()
+        self.get_pods()
         self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
-        self.oc = OCUtil(namespace='logging', config_file=self.kubeconfig, verbose=self.args.verbose)
+        self.oc = OCUtil(namespace='logging', config_file='/tmp/admin.kubeconfig', verbose=self.args.verbose)
 
         logging_status = {}
         logging_status['elasticsearch'] = self.check_elasticsearch()
