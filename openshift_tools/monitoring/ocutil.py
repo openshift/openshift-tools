@@ -65,7 +65,7 @@ class OCUtil(object):
     def _run_cmd(self, cmd):
         ''' Actually execute the command '''
 
-        cmd = 'oc --config ' + self.config_file + ' ' + cmd
+        cmd = 'oc --config ' + self.config_file + ' -n ' + self.namespace + ' ' + cmd
         cmd = shlex.split(cmd)
         if self.verbose:
             print "Running command: {}".format(str(cmd))
@@ -81,7 +81,7 @@ class OCUtil(object):
         ''' Get secrets from object 'name' '''
 
 
-        secrets_cmd = "get secrets {} -n{} -o yaml".format(name, self.namespace)
+        secrets_cmd = "get secrets {} -o yaml".format(name)
         secrets_yaml = self._run_cmd(secrets_cmd)
 
         return secrets_yaml
@@ -89,7 +89,7 @@ class OCUtil(object):
     def get_endpoint(self, name):
         ''' Get endpoint details '''
 
-        endpoint_cmd = "get endpoints {} -n{} -o yaml".format(name, self.namespace)
+        endpoint_cmd = "get endpoints {} -o yaml".format(name)
         endpoint_yaml = self._run_cmd(endpoint_cmd)
 
         return endpoint_yaml
@@ -97,7 +97,7 @@ class OCUtil(object):
     def get_service(self, name):
         ''' Get service details '''
 
-        service_cmd = "get service {} -n{} -o yaml".format(name, self.namespace)
+        service_cmd = "get service {} -o yaml".format(name)
         service_yaml = self._run_cmd(service_cmd)
 
         return service_yaml
@@ -105,7 +105,7 @@ class OCUtil(object):
     def get_dc(self, name):
         ''' Get deployment config details '''
 
-        dc_cmd = "get dc {} -n{} -o yaml".format(name, self.namespace)
+        dc_cmd = "get dc {} -o yaml".format(name)
         dc_yaml = self._run_cmd(dc_cmd)
 
         return dc_yaml
@@ -113,7 +113,7 @@ class OCUtil(object):
     def get_route(self, name):
         ''' Get routes details '''
 
-        route_cmd = "get route {} -n {} -o yaml".format(name, self.namespace)
+        route_cmd = "get route {} -o yaml".format(name)
         route_yaml = self._run_cmd(route_cmd)
 
         return route_yaml
@@ -121,7 +121,7 @@ class OCUtil(object):
     def get_pods(self):
         ''' Get all the pods in the namespace '''
 
-        pods_cmd = "get pods -n {} -o yaml".format(self.namespace)
+        pods_cmd = "get pods -o yaml"
         pods_yaml = self._run_cmd(pods_cmd)
 
         return pods_yaml
@@ -137,7 +137,7 @@ class OCUtil(object):
     def get_log(self, name):
         ''' Gets the log for the specified container '''
 
-        log_cmd = "logs {} -n {}".format(name, self.namespace)
+        log_cmd = "logs {}".format(name)
         log_results = self._run_cmd(log_cmd)
 
         return log_results
