@@ -257,5 +257,10 @@ CustomLog logs/ssl_request_log \
         Header set Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; style-src 'self' 'unsafe-inline'"
         Header set X-Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; style-src 'self' 'unsafe-inline'"
         </LocationMatch>
+
 </VirtualHost>                                  
 
+# Disable web server banners
+
+ServerSignature off
+ServerTokens prod

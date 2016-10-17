@@ -37,3 +37,10 @@
       state: present
       regexp: '^;?date.timezone = .*$'
       line: 'date.timezone = America/New_York'
+
+  - name: Disable PHP header banner
+    lineinfile:
+      dest: /etc/php.ini
+      state: present
+      regexp: '^;?expose_php = .*$'
+      line: 'expose_php = Off'
