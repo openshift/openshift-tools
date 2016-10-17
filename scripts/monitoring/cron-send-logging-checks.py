@@ -78,15 +78,19 @@ class OpenshiftLoggingStatus(object):
 
 
             # exec into a pod and get cluster health
-            curl_cmd = "{} 'https://localhost:9200/_cluster/health?pretty=true'".format(self.es_curl)
-            cluster_health = "exec -ti {} -- {}".format(pod_name, curl_cmd)
-            health_res = self.oc.run_user_cmd(cluster_health)
+            try:
+                curl_cmd = "{} 'https://localhost:9200/_cluster/health?pretty=true'".format(self.es_curl)
+                cluster_health = "exec -ti {} -- {}".format(pod_name, curl_cmd)
+                health_res = self.oc.run_user_cmd(cluster_health)
 
-            if health_res['status'] == 'green':
-                es_status['pods'][pod_dc]['elasticsearch_health'] = 2
-            elif health_res['status'] == 'yellow':
-                es_status['pods'][pod_dc]['elasticsearch_health'] = 1
-            else:
+                if health_res['status'] == 'green':
+                    es_status['pods'][pod_dc]['elasticsearch_health'] = 2
+                elif health_res['status'] == 'yellow':
+                    es_status['pods'][pod_dc]['elasticsearch_health'] = 1
+                else:
+                    es_status['pods'][pod_dc]['elasticsearch_health'] = 0
+            except:
+                # The check failed so ES is in a bad state
                 es_status['pods'][pod_dc]['elasticsearch_health'] = 0
 
             # Compare the master across all ES nodes to see if we have split brain
