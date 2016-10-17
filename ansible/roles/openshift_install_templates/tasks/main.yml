@@ -5,7 +5,7 @@
 
 - name: set the kube version
   set_fact:
-    kube_version: oc_version.kubernetes_short
+    kube_version: "{{ oc_version.kubernetes_short }}"
 
 - name: Ensure openshift-ansible-roles is installed
   action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
@@ -15,20 +15,20 @@
 - name: Process and create templates
   command: "/usr/bin/oc --config /etc/origin/master/admin.kubeconfig -n openshift create -f {{ item }}"
   with_fileglob:
-  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/{{ kube_version }}/image-streams/image-streams-rhel7.*"
-  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/{{ kube_version }}/db-templates"
-  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/{{ kube_version }}/quickstart-templates"
-  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/{{ kube_version }}/xpaas*"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/image-streams/image-streams-rhel7.*"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/db-templates"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/quickstart-templates"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/xpaas*"
   ignore_errors: yes
   run_once: yes
 
 - name: Process and replace templates
   command: "/usr/bin/oc --config /etc/origin/master/admin.kubeconfig -n openshift replace -f {{ item }}"
   with_fileglob:
-  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/{{ kube_version }}/image-streams/image-streams-rhel7.*"
-  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/{{ kube_version }}/db-templates"
-  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/{{ kube_version }}/quickstart-templates"
-  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/{{ kube_version }}/xpaas*"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/image-streams/image-streams-rhel7.*"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/db-templates"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/quickstart-templates"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/xpaas*"
   ignore_errors: yes
   run_once: yes
 

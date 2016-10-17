@@ -1,4 +1,12 @@
 ---
+- name: get oc version
+  oc_version:
+  register: oc_version
+
+- name: set the kube version
+  set_fact:
+    kube_version: "{{ oc_version.kubernetes_short }}"
+
 - name: get cert's basename
   set_fact:
     cert_basename: "{{ osamet_default_metrics_cert | basename }}"
@@ -72,7 +80,7 @@
     name: metrics-deployer-template
     kind: template
     files:
-    - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/infrastructure-templates/enterprise/metrics-deployer.yaml"
+    - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/infrastructure-templates/enterprise/metrics-deployer.yaml"
   register: templateout
   run_once: true
 
