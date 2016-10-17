@@ -133,7 +133,7 @@ class OpenshiftMetricsStatus(object):
             temp_file.write(self.hawkular_password)
             temp_file.close()
 
-            self.oc.run_user_cmd("secrets new hawkular-htpasswd {}".format(directory_name))
+            self.oc.run_user_cmd("secrets new hawkular-htpasswd {} -n openshift-infra".format(directory_name))
             shutil.rmtree(directory_name)
 
         if not self.hawkular_username or not self.hawkular_password:
