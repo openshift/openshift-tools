@@ -45,12 +45,11 @@ def get_registry_config_secret(yaml_results):
     ''' Find the docker registry config secret '''
 
     ocutil = OCUtil()
-    volumes = yaml.safe_load(yaml_results)['spec']['template']['spec']['volumes']
+    volumes = yaml_results['spec']['template']['spec']['volumes']
     for volume in volumes:
         if 'emptyDir' in volume:
             continue
-        secret_yaml = ocutil.get_secrets(volume['secret']['secretName'])
-        secret_dict = yaml.safe_load(secret_yaml)
+        secret_dict = ocutil.get_secrets(volume['secret']['secretName'])
         if 'config.yml' in secret_dict['data']:
             return volume['secret']['secretName']
 
@@ -61,7 +60,7 @@ def get_registry_config_secret(yaml_results):
 def get_gcp_info(yaml_results):
     ''' Get bucket name for the docker-registry '''
 
-    base64_text = yaml.safe_load(yaml_results)["data"]["config.yml"]
+    base64_text = yaml_results["data"]["config.yml"]
 
     base64_yaml = base64.b64decode(base64_text)
 
