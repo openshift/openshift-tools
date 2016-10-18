@@ -1,0 +1,43 @@
+`authorizeyaml:Authorize`
+=========================
+
+Decide whether an accout has access to a resource based upon the authorization
+data in a YAML file.
+
+Examples
+--------
+
+Example configuration that tells the SP to decided based upon authdata.yml
+
+  'authproc' => array(
+        // This filter will make sure the user has rights to this resource
+        // and set the role attribute
+        10 => array(
+            'class' => 'authorizeyaml:Authorize',
+            'yaml_authdata_path' => '/etc/simplesamlphp/authdata.yml',
+        ),
+
+Example authdata.yml
+
+    ---
+    groups:
+      - name: ops
+        members:
+          - bob@example.com
+          - george@example.com
+    
+    # override these in resources
+    # for example:
+    #     resources:
+    #       - name: foo
+    #         roles: [ { name: admin, groups: [], members: [ bob ] } ]
+    # would override the default admin role, but not any other default roles
+    default_roles:
+      - name: admin
+        members: []
+        groups: [ ops ]
+    resources:
+      - name: aws_account_1
+        id: "urn:amazon:webservices:123456789012"
+      - name: aws_account_2
+        id: "urn:amazon:webservices:987654321098"

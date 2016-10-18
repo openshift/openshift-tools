@@ -1,6 +1,9 @@
-= Zabbix web Docker container
+= simpleSAMLphp SSO application Docker container
 
-This container runs the zabbix web ui.
+This docker container provides an HTTP endpoint and an SSH endpoint
+for single sign-on (SSO) to a SAML2 identity provider (IdP). The SSO
+can be used to authenticate to configured SAML2-enabled service
+providers (SPs).
 
 == Setup
 See https://github.com/openshift/openshift-tools/blob/prod/docker/README.adoc#setup[general setup].

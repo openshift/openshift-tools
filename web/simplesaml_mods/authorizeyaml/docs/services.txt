@@ -1,0 +1,40 @@
+`authorizeyaml:Services`
+===================
+
+Filter that intercepts the request and redirects to a list of services that the user
+has access to.
+
+Examples
+--------
+
+Create a fake sp such that linking to
+baseurl/saml2/idp/SSOService.php?spentityid=services_list
+will show the user a list of available services.
+
+    // Fake SP that exists only so that we can link off to the
+    // list of the other SPs
+    $metadata['services_list'] = array (
+      'entityid' => 'services_list',
+      'OrganizationName' => array ( 'en' => 'Your Organization Name'),
+      'name' => array ( 'en' => 'Your Organization Single Sign-On'),
+      'OrganizationDisplayName' => array ('en' => 'Your Organization Display Name'),
+      'url' => array ('en' => 'https://yourorg.example.com'),
+      'OrganizationURL' => array ('en' => 'https://yourorg.example.com'),
+      'metadata-set' => 'saml20-sp-remote',
+      'expire' => 1922313600,
+      'AssertionConsumerService' => array ( 0 => array (
+          'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
+          'Location' => '/',
+          'index' => 1,
+          'isDefault' => true,
+        ),
+      ),
+      'authproc' => array(
+          // This filter will redirect the user to a list of services
+          // that s/he has acess to.
+          10 => array(
+              'class' => 'authorizeyaml:Services',
+              'yaml_authdata_path' => '/etc/simplesamlphp/authdata.yml',
+          ),
+      ),
+    );

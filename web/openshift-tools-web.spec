@@ -24,6 +24,11 @@ cp -ap zagg %{buildroot}/var/www/
 mkdir -p %{buildroot}/etc/httpd/conf.d/
 cp -p zagg-httpd.conf %{buildroot}/etc/httpd/conf.d/
 
+# simplesamlphp-modules install
+mkdir -p %{buildroot}/usr/share/simplesamlphp/modules
+cp -a simplesaml_mods/* %{buildroot}/usr/share/simplesamlphp/modules/
+
+
 # ----------------------------------------------------------------------------------
 # openshift-tools-web-zagg subpackage
 # ----------------------------------------------------------------------------------
@@ -39,6 +44,20 @@ OpenShift Tools Zagg REST API
 %files zagg
 /var/www/zagg
 %config(noreplace) /etc/httpd/conf.d/zagg-httpd.conf
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-web-simplesamlphp-modules subpackage
+# ----------------------------------------------------------------------------------
+%package simplesamlphp-modules
+Summary:       Auth and theme modules for SimpleSAMLphp
+Requires:      php,oso-simplesamlphp
+BuildArch:     noarch
+
+%description simplesamlphp-modules
+Custom SimpleSAMLphp modules for oso SSO application
+
+%files simplesamlphp-modules
+/usr/share/simplesamlphp/modules/*
 
 %changelog
 * Mon Sep 26 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.16-1
