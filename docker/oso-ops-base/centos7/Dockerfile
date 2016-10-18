@@ -33,7 +33,7 @@ RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.
 
 RUN yum clean metadata && \
     yum -y update && \
-    yum -y install iputils cronie ansible vim procps less ack tar psmisc python-scandir && \
+    yum -y install iputils cronie ansible vim procps less ack tar psmisc python-scandir lsof && \
     yum clean all
 
 # Setup locales.  It comes broken (probably a size issue) by default in the docker image.
