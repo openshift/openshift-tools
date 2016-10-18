@@ -17,7 +17,7 @@ def main():
             cert_file=dict(default=None, type='str'),
             key_file=dict(default=None, type='str'),
             images=dict(default=None, type='str'), #'openshift3/ose-${component}:${version}'
-            latest_image=dict(default=False, type='bool'),
+            latest_images=dict(default=False, type='bool'),
             labels=dict(default=None, type='list'),
             ports=dict(default=['80:80', '443:443'], type='list'),
             replicas=dict(default=1, type='int'),
@@ -57,7 +57,7 @@ def main():
                             'cert_file': {'value': module.params['cert_file'], 'include': False},
                             'key_file': {'value': module.params['key_file'], 'include': False},
                             'images': {'value': module.params['images'], 'include': True},
-                            'latest_image': {'value': module.params['latest_image'], 'include': True},
+                            'latest_images': {'value': module.params['latest_images'], 'include': True},
                             'labels': {'value': module.params['labels'], 'include': True},
                             'ports': {'value': ','.join(module.params['ports']), 'include': True},
                             'replicas': {'value': module.params['replicas'], 'include': True},
