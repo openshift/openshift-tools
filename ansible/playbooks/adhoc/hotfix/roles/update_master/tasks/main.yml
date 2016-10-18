@@ -6,10 +6,8 @@
     downgrade_successful: False
   when: "{{ update_needed == True }}" 
 
-- name: Update atomic-openshift-master
-  yum:
-    name: "{{ rpm_wanted }}"
-    state: present
+- name: Upgrade master
+  command: "yum -y upgrade atomic-openshift-{{ version_wanted }} atomic-openshift-clients-{{ version_wanted }} atomic-openshift-master-{{ version_wanted }} atomic-openshift-node-{{ version_wanted }} tuned-profiles-atomic-openshift-node-{{ version_wanted }} atomic-openshift-sdn-ovs-{{ version_wanted }}"
   when: "{{ update_needed == True }}" 
 
 - name: Check if update is successful
@@ -36,6 +34,7 @@
 - name: Set downgrade_successful=True if downgrade succeeded
   set_fact: 
     downgrade_successful: True
+    upgrade_successful: True
   when: "{{ post_downgrade.stdout.find(version_wanted) != -1 }}"
 
 - name: Alert if update is not successful, but continue
@@ -56,7 +55,7 @@
   with_items:
   - atomic-openshift-master-api
   - atomic-openshift-master-controllers
-  when: "{{ update_needed == True and update_successful == True }}" 
+  when: "{{ update_needed == True and upgrade_successful == True }}"
 
 - name: Ensure master services are running
   service:

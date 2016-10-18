@@ -6,10 +6,8 @@
     downgrade_successful: False
   when: "{{ update_needed == True }}" 
 
-- name: Update atomic-openshift-node
-  yum:
-    name: "{{ rpm_wanted }}"
-    state: present
+- name: Upgrade failed, so try a downgrade
+  command: "yum -y upgrade atomic-openshift-{{ version_wanted }} atomic-openshift-clients-{{ version_wanted }} atomic-openshift-node-{{ version_wanted }} tuned-profiles-atomic-openshift-node-{{ version_wanted }} atomic-openshift-sdn-ovs-{{ version_wanted }}"
   when: "{{ update_needed == True }}" 
 
 - name: Check if update is successful
@@ -53,7 +51,7 @@
   service:
     name: atomic-openshift-node
     state: restarted
-  when: "{{ update_needed == True and update_successful == True }}" 
+  when: "{{ update_needed == True and upgrade_successful == True }}"
 
 - name: Ensure node service is running
   service:
