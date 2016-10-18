@@ -937,7 +937,7 @@ class Project(Yedit):
 # pylint: disable=too-many-instance-attributes
 class OadmProject(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
-    kind = 'project'
+    kind = 'namespace'
 
     # pylint allows 5
     # pylint: disable=too-many-arguments
@@ -997,7 +997,13 @@ class OadmProject(OpenShiftCLI):
 
         self.project.update_annotation('display-name', self.config.config_options['display_name']['value'])
         self.project.update_annotation('description', self.config.config_options['description']['value'])
-        self.project.update_annotation('node-selector', self.config.config_options['node_selector']['value'])
+
+        # work around for immutable project field
+        if self.config.config_options['node_selector']['value']:
+            self.project.update_annotation('node-selector', self.config.config_options['node_selector']['value'])
+        else:
+            self.project.update_annotation('node-selector', self.project.find_annotation('node-selector'))
+
         return self._replace_content(self.kind, self.config.namespace, self.project.yaml_dict)
 
     def needs_update(self):
@@ -1006,7 +1012,7 @@ class OadmProject(OpenShiftCLI):
         if result != self.config.config_options['display_name']['value']:
             return True
 
-        result = self.project.find_annotation("desription")
+        result = self.project.find_annotation("description")
         if result != self.config.config_options['description']['value']:
             return True
 
@@ -1121,6 +1127,6 @@ def main():
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
-from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    from ansible.module_utils.basic import *
+    main()
