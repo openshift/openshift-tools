@@ -44,7 +44,6 @@ class ZaggMetricProcessor(object):
         metrics = self.metric_manager.read_metrics()
 
         if not metrics:
-            print "nothing to do!"
             return True # we successfully sent 0 metrics to zagg
 
         status, _ = self.zagg_client.add_metric(metrics)

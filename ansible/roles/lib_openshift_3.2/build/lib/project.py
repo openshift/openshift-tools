@@ -8,7 +8,7 @@ class ProjectConfig(OpenShiftCLIConfig):
 
 class Project(Yedit):
     ''' Class to wrap the oc command line tools '''
-    annotations_path = "metadata#annotations"
+    annotations_path = "metadata.annotations"
     kind = 'Service'
     annotation_prefix = 'openshift.io/'
 

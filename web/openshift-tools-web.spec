@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Web Services
 Name:          openshift-tools-web
-Version:       0.0.14
+Version:       0.0.16
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -41,6 +41,12 @@ OpenShift Tools Zagg REST API
 %config(noreplace) /etc/httpd/conf.d/zagg-httpd.conf
 
 %changelog
+* Mon Sep 26 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.16-1
+- zagg web writes to wrong redis list (ihorvath@redhat.com)
+
+* Thu Sep 22 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.15-1
+- zagg uses redis (ihorvath@redhat.com)
+
 * Thu Feb 25 2016 Joel Diaz <jdiaz@redhat.com> 0.0.14-1
 - place wsgi socket file in a place we can write to (jdiaz@redhat.com)
 

@@ -5,13 +5,14 @@
 # pylint: disable=too-many-lines
 
 import atexit
+import copy
 import json
 import os
+import re
 import shutil
 import subprocess
-import re
-
 import yaml
+
 # This is here because of a bug that causes yaml
 # to incorrectly handle timezone info on timestamps
 def timestamp_constructor(_, node):
@@ -109,11 +110,15 @@ class OpenShiftCLI(object):
         return self.openshift_cmd(['-n', self.namespace, 'create', '-f', fname])
 
     def _get(self, resource, rname=None, selector=None):
-        '''return a secret by name '''
-        cmd = ['get']
+        '''return a resource by name '''
+        cmd = ['get', resource]
         if selector:
             cmd.append('--selector=%s' % selector)
-        cmd.extend([resource, '-o', 'json', '-n', self.namespace])
+        if self.namespace:
+            cmd.extend(['-n', self.namespace])
+
+        cmd.extend(['-o', 'json'])
+
         if rname:
             cmd.append(rname)
 
@@ -127,13 +132,57 @@ class OpenShiftCLI(object):
 
         return rval
 
-    def _get_version(self):
-        ''' return the version of openshift '''
-        results = self.openshift_cmd(['version'], output=True, output_type='raw')
-        if results['returncode'] == 0:
-            return results['stdout'].split('\n')[0].strip()
+    def _schedulable(self, node=None, selector=None, schedulable=True):
+        ''' perform oadm manage-node scheduable '''
+        cmd = ['manage-node']
+        if node:
+            cmd.extend(node)
+        else:
+            cmd.append('--selector=%s' % selector)
 
-        raise OpenShiftCLIError('Problem detecting openshift version.')
+        cmd.append('--schedulable=%s' % schedulable)
+
+        return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
+
+    def _list_pods(self, node=None, selector=None, pod_selector=None):
+        ''' perform oadm manage-node evacuate '''
+        cmd = ['manage-node']
+        if node:
+            cmd.extend(node)
+        else:
+            cmd.append('--selector=%s' % selector)
+
+        if pod_selector:
+            cmd.append('--pod-selector=%s' % pod_selector)
+
+        cmd.extend(['--list-pods', '-o', 'json'])
+
+        return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
+
+    #pylint: disable=too-many-arguments
+    def _evacuate(self, node=None, selector=None, pod_selector=None, dry_run=False, grace_period=None, force=False):
+        ''' perform oadm manage-node evacuate '''
+        cmd = ['manage-node']
+        if node:
+            cmd.extend(node)
+        else:
+            cmd.append('--selector=%s' % selector)
+
+        if dry_run:
+            cmd.append('--dry-run')
+
+        if pod_selector:
+            cmd.append('--pod-selector=%s' % pod_selector)
+
+        if grace_period:
+            cmd.append('--grace-period=%s' % int(grace_period))
+
+        if force:
+            cmd.append('--force')
+
+        cmd.append('--evacuate')
+
+        return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
 
     def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json'):
         '''Base command for oc '''
@@ -157,9 +206,7 @@ class OpenShiftCLI(object):
                                 stderr=subprocess.PIPE,
                                 env={'KUBECONFIG': self.kubeconfig})
 
-        proc.wait()
-        stdout = proc.stdout.read()
-        stderr = proc.stderr.read()
+        stdout, stderr = proc.communicate()
         rval = {"returncode": proc.returncode,
                 "results": results,
                 "cmd": ' '.join(cmds),
@@ -389,7 +436,8 @@ class OpenShiftCLIConfig(object):
         ''' return the options hash as cli params in a string '''
         rval = []
         for key, data in self.config_options.items():
-            if data['include'] and data['value']:
+            if data['include'] \
+               and (data['value'] or isinstance(data['value'], int)):
                 rval.append('--%s=%s' % (key.replace('_', '-'), data['value']))
 
         return rval

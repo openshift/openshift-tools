@@ -1,0 +1,40 @@
+---
+g_template_dnsmasq:
+  name: Template dnsmasq
+  zitems:
+  - key: dnsmasq.process.count
+    applications:
+    - dnsmasq
+    value_type: int
+
+  - key: dnsmasq.port.open
+    description: State of the dnsmasq port open and listening
+    value_type: int
+    applications:
+    - dnsmasq
+
+  - key: dnsmasq.query
+    description: dnsmasq can be queried or not
+    value_type: int
+    applications:
+    - dnsmasq
+
+  ztriggers:
+  - name: "dnsmasq process not running on {HOST.NAME}"
+    expression: "{Template dnsmasq:dnsmasq.process.count.max(#3)}<1"
+    url: "https://github.com/openshift/ops-sop/blob/node/V3/Alerts/check_dnsmasq.asciidoc"
+    priority: high
+
+  - name: "dnsmasq port not listening on {HOST.NAME}"
+    expression: "{Template dnsmasq:dnsmasq.port.open.max(#3)}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_dnsmasq.asciidoc"
+    dependencies:
+    - "dnsmasq process not running on {HOST.NAME}"
+    priority: high
+
+  - name: "dnsmasq query failed on {HOST.NAME}"
+    expression: "{Template dnsmasq:dnsmasq.query.max(#3)}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_dnsmasq.asciidoc"
+    dependencies:
+    - "dnsmasq process not running on {HOST.NAME}"
+    priority: high

@@ -94,7 +94,7 @@
     template_name: logging-deployer-template
     create: True
     params:
-      KIBANA_HOSTNAME: "kibana.{{ osalog_clusterid }}.openshift.com"
+      KIBANA_HOSTNAME: "logs.{{ osalog_clusterid }}.openshift.com"
       ES_CLUSTER_SIZE: "{{ osalog_es_cluster_size }}"
       PUBLIC_MASTER_URL: "https://api.{{ osalog_clusterid  }}.openshift.com"
       MASTER_URL: "https://internal.api.{{ osalog_clusterid  }}.openshift.com"
@@ -187,6 +187,7 @@
     namespace: logging
     content:
       metadata#annotations#openshift.io/node-selector: ''
+    separator: '#'
   register: editout
   run_once: true
 - debug: var=editout
@@ -214,8 +215,8 @@
 - name: add kibana url to master-config.yml
   yedit:
     src: /etc/origin/master/master-config.yaml
-    key: assetConfig#loggingPublicURL
-    value: "https://kibana.{{ osalog_clusterid }}.openshift.com"
+    key: assetConfig.loggingPublicURL
+    value: "https://logs.{{ osalog_clusterid }}.openshift.com"
   register: yeditout
   notify:
   - restart openshift master services
@@ -234,7 +235,7 @@
 #    cacert_path: "/etc/origin/master/named_certificates/{{ cacert_basename }}"
 #    dest_cacert_path: "/etc/origin/master/named_certificates/{{ cacert_basename }}"
 #    service_name: logging-kibana
-#    host: "kibana.{{ osalog_clusterid }}.openshift.com"
+#    host: "logs.{{ osalog_clusterid }}.openshift.com"
 #  register: routeout
 #  run_once: True
 #

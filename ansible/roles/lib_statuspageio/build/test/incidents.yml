@@ -1,0 +1,36 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: localhost
+  gather_facts: no
+  user: root
+  vars:
+    api_key:
+    org_id:
+    page_id:
+
+  tasks:
+  - name: list incidents
+    statuspage_incident:
+      state: list
+      api_key: "{{ api_key }}"
+      org_id: "{{ org_id }}"
+      page_id: "{{ page_id }}"
+    register: incout
+  - debug: var=incout
+
+  - name: create an incident
+    statuspage_incident:
+      state: present
+      api_key: "{{ api_key }}"
+      org_id: "{{ org_id }}"
+      page_id: "{{ page_id }}"
+      name: testing
+      message: "Investigating a blip in our service.  Testing."
+      components:
+      - group: opstest
+        component:
+        - name: Etcd Service
+#operational|degraded_performance|partial_outage|major_outage
+          status: degraded_performance
+    register: incout
+  - debug: var=incout

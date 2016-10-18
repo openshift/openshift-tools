@@ -1,16 +1,11 @@
 ---
-- name: Install openshift-tools-scripts-inventory-clients
+- name: Install needed RPMs
   yum:
-    name: openshift-tools-scripts-inventory-clients
+    name: "{{ item }}"
     state: present
-
-- name: Create/update multi_inventory.yaml
-  copy:
-    content: "{{ oo_inventory_accounts | to_nice_yaml }}"
-    dest: /etc/ansible/multi_inventory.yaml
-    group: "{{ oo_inventory_group }}"
-    owner: "{{ oo_inventory_owner }}"
-    mode: "0640"
+  with_items:
+  - openshift-tools-scripts-inventory-clients
+  - openshift-tools-scripts-monitoring-zagg-client
 
 - file:
     state: directory
@@ -31,7 +26,7 @@
   cron:
     name: 'multi_inventory'
     minute: '*/10'
-    job: '/usr/share/ansible/inventory/multi_inventory.py --refresh-cache &> /dev/null'
+    job: '/usr/bin/ops-runner -n cmirc.multi_inventory.refresh -t 60 /usr/share/ansible/inventory/multi_inventory.py --refresh-cache &> /dev/null'
   when: oo_cron_refresh_cache is defined and oo_cron_refresh_cache
 
 - name: Set cache location

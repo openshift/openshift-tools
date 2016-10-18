@@ -27,6 +27,8 @@
 # pylint is flagging import errors, as the bot doesn't know out openshift-tools libs
 #pylint: disable=import-error
 #pylint: disable=line-too-long
+# PV checks have a lot of locals
+#pylint: disable=too-many-locals
 
 import argparse
 from collections import defaultdict
@@ -92,8 +94,10 @@ class OpenshiftMasterZaggClient(object):
             if self.args.pv_info or self.args.all_checks:
                 self.pv_info()
 
-            if self.args.nodes_not_ready or self.args.all_checks:
+            if self.args.node_checks or self.args.all_checks:
+                self.nodes_not_schedulable()
                 self.nodes_not_ready()
+                self.nodes_not_labeled()
 
         except Exception as ex:
             print "Problem Openshift API checks: %s " % ex.message
@@ -143,8 +147,8 @@ class OpenshiftMasterZaggClient(object):
         master_check_group.add_argument('--pv-info', action='store_true', default=None,
                                         help='Query the Openshift Master for Persistent Volumes Info')
 
-        master_check_group.add_argument('--nodes-not-ready', action='store_true', default=None,
-                                        help='Query the Openshift Master for number of nodes not in Ready state')
+        master_check_group.add_argument('--node-checks', action='store_true', default=None,
+                                        help='Query the Openshift Master for node checks')
 
         self.args = parser.parse_args()
 
@@ -335,6 +339,28 @@ class OpenshiftMasterZaggClient(object):
                                               "%s[%s]" %(item_prototype_key_available, size) : dynamic_pv_available[size]})
 
 
+    def nodes_not_schedulable(self):
+        """check the number of nodes in the cluster that are not schedulable"""
+
+        print "\nPerforming nodes not schedulable check..."
+
+        response = self.ora.get('/api/v1/nodes')
+
+        nodes_not_schedulable = []
+
+        for n in response['items']:
+            if n['metadata']['labels']['type'] == 'master':
+                if self.args.verbose:
+                    print "Node: %s is a master\n" % n['metadata']['name']
+            else:
+                if "unschedulable" in n['spec']:
+                    nodes_not_schedulable.append(n['metadata']['name'])
+
+        print "Count of nodes not schedulable: %s" % len(nodes_not_schedulable)
+        print "Nodes not schedulable: %s\n" % nodes_not_schedulable
+
+        self.zagg_sender.add_zabbix_keys(
+            {'openshift.master.nodesnotschedulable.count' : len(nodes_not_schedulable)})
 
 
     def nodes_not_ready(self):
@@ -344,33 +370,51 @@ class OpenshiftMasterZaggClient(object):
 
         response = self.ora.get('/api/v1/nodes')
 
-        nodes_not_schedulable = []
-
-        for n in response['items']:
-            if "unschedulable" in n['spec']:
-                nodes_not_schedulable.append(n)
-
         nodes_not_ready = []
 
         for n in response['items']:
             has_ready_status = False
             for cond in n['status']['conditions']:
-                if cond['reason'] == "KubeletReady":
+                if self.args.verbose:
+                    print "Get ready status of %s" % n['metadata']['name']
+                if cond['type'] == "Ready":
                     has_ready_status = True
                     if cond['status'].lower() != "true":
-                        nodes_not_ready.append(n)
+                        if self.args.verbose:
+                            print "Non-true ready status of %s : %s" % (n['metadata']['name'], cond['status'])
+                        nodes_not_ready.append(n['metadata']['name'])
             if has_ready_status == False:
-                nodes_not_ready.append(n)
+                if self.args.verbose:
+                    print "Did not find ready status for %s" % n['metadata']['name']
+                nodes_not_ready.append(n['metadata']['name'])
 
-
-        print "Count of nodes not schedulable: %s" % len(nodes_not_schedulable)
         print "Count of nodes not ready: %s" % len(nodes_not_ready)
 
         self.zagg_sender.add_zabbix_keys(
             {'openshift.master.nodesnotready.count' : len(nodes_not_ready)})
 
+
+    def nodes_not_labeled(self):
+        """ check the nodes in the cluster that are not labeled
+            Note: This check only searches for nodes with no label keys set"""
+
+        print "\nPerforming nodes not labeled check..."
+
+        response = self.ora.get('/api/v1/nodes')
+
+        nodes_not_labeled = []
+        nodes_labeled = []
+
+        for n in response['items']:
+            if 'labels' in n['metadata']:
+                nodes_labeled.append(n['metadata']['name'])
+            else:
+                nodes_not_labeled.append(n['metadata']['name'])
+
+        print "Nodes not labeled: %s\nNodes labeled: %s \n" % (nodes_not_labeled, nodes_labeled)
         self.zagg_sender.add_zabbix_keys(
-            {'openshift.master.nodesnotschedulable.count' : len(nodes_not_schedulable)})
+            {'openshift.master.nodesnotlabeled.count' : len(nodes_not_labeled)})
+
 
 if __name__ == '__main__':
     OMCZ = OpenshiftMasterZaggClient()

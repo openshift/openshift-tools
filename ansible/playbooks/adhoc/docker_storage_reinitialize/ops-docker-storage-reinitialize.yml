@@ -49,7 +49,7 @@
     when: cli_confirm_run != "yes"
 
   - name: Get the docker storage information from the docker-storage-setup sysconfig file
-    sysconfig_fact:
+    oo_sysconfig_fact:
       name: docker_storage_setup
       src: /etc/sysconfig/docker-storage-setup
 
@@ -62,6 +62,23 @@
   - name: remove docker_vg if present
     command: "vgremove -y '{{ docker_storage_setup.VG }}'"
     ignore_errors: true
+    register: vgremove_output
+
+  - name: dmsetup remove docker devices if vgremove failed
+    shell: "dmsetup table | grep ^docker- | cut -d: -f1-2 | xargs -n1 dmsetup remove"
+    ignore_errors: true
+    register: dmsetup_output
+    when: "'is used by another device' in vgremove_output.stderr"
+   
+  - name: remove docker_vg if present
+    command: "vgremove -y '{{ docker_storage_setup.VG }}'"
+    ignore_errors: true
+    register: vgremove_output
+    when: not dmsetup_output|skipped
+
+  - fail:
+      msg: "Failed to remove the docker VG. You may need to disable the docker and atomic-openshift-node services and reboot the machine. Then re-run this playbook. Once it has been re-initialized, re-enable the atomic-openshift-node service."
+    when: vgremove_output|failed
 
   - name: remove 1st partition from device if present
     command: "parted '{{ docker_storage_setup.DEVS }}' -s 'rm 1'"
@@ -70,9 +87,22 @@
   - name: wipe the beginning of the disk (mbr & more!)
     command: "dd if=/dev/zero of='{{ docker_storage_setup.DEVS }}' bs=4096 count=1024"
 
+  - name: Make /var/lib/docker mutable
+    command: chattr -i /var/lib/docker
+    ignore_errors: True
+
+  - name: Remove custom Online docker settings temporarily
+    command: mv /etc/systemd/system/docker.service.d/chattr.conf /root/chattr.conf
+    ignore_errors: True
+
   - name: wipe out /var/lib/docker (current docker graph driver info)
     file:
       path: /var/lib/docker
+      state: absent
+
+  - name: remove /etc/sysconfig/docker-storage (for any stray references to pools)
+    file:
+      path: /etc/sysconfig/docker-storage
       state: absent
 
   - name: start docker-storage-setup to initialize the docker storage
@@ -86,3 +116,15 @@
       name: docker
       state: started
       enabled: True
+
+  - name: Replace Online docker settings
+    command: mv /root/chattr.conf /etc/systemd/system/docker.service.d/chattr.conf
+    ignore_errors: True
+
+  - name: Reload systemd for unit file to take effect
+    command: systemctl daemon-reload
+
+  - name: restart docker daemon
+    service:
+      name: docker
+      state: restarted

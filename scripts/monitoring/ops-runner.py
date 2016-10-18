@@ -25,6 +25,7 @@ import socket
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.timeout import timeout, TimeoutException
 
 
 
@@ -35,6 +36,7 @@ OPS_RUNNER_LOCK_FILE_PREFIX = "/var/tmp/%s-" % NAME
 OPS_RUNNER_DISC_KEY = 'disc.ops.runner'
 OPS_RUNNER_DISC_MACRO = '#OSO_COMMAND'
 OPS_RUNNER_EXITCODE_KEY = 'disc.ops.runner.command.exitcode'
+OPS_RUNNER_TIMEOUT_KEY = 'disc.ops.runner.command.timeout'
 
 class OpsRunner(object):
     """ class to run a command and report results to zabbix """
@@ -70,32 +72,69 @@ class OpsRunner(object):
         print "ERROR: %s" % msg
         sys.exit(10)
 
+    def check_flock(self):
+        """ wrap details on file locking behavior """
+        if self.args.flock or self.args.flock_no_fail:
+            lock_aquired = self.attempt_to_lock_file()
+            if not lock_aquired:
+                if self.args.flock_no_fail:
+                    self.verbose_print('Process already running. Exit quietly.')
+                    sys.exit(0)
+                else:
+                    self.fail('this process is already running.')
+
+    def check_sleep(self):
+        """ pause for a random number (bounded) of seconds if needed"""
+        if self.args.random_sleep:
+            seconds = random.randrange(int(self.args.random_sleep))
+            self.verbose_print("Sleeping %s seconds..." % seconds)
+            time.sleep(seconds)
+
+    def run_cmd(self):
+        """ run specified command (with a max wait if specified) """
+        timedout = False
+        if self.args.timeout:
+            try:
+                with timeout(self.args.timeout):
+                    exit_code = self.run_cmd_with_output(self.args.rest)
+            except TimeoutException:
+                exit_code = 1
+                timedout = True
+        else:
+            exit_code = self.run_cmd_with_output(self.args.rest)
+
+        return (exit_code, timedout)
+
     def run(self):
         """ main function to run the script """
 
         # Creating a file where all output will be written
         self.create_tmp_file()
 
-        # We want to flock before we potentially sleep, just to keep multiple process
-        # from running at the same time.
-        if self.args.flock:
-            lock_aquired = self.attempt_to_lock_file()
-            if not lock_aquired:
-                self.fail('this process is already running.')
+        # Attempt flock if specified
+        # We want to flock before we potentially sleep, just to
+        # keep multiple process from running at the same time.
+        self.check_flock()
 
         # Random Sleep if specified
-        if self.args.random_sleep:
-            seconds = random.randrange(int(self.args.random_sleep))
-            self.verbose_print("Sleeping %s seconds..." % seconds)
-            time.sleep(seconds)
+        self.check_sleep()
 
-        exit_code = self.run_cmd_with_output(self.args.rest)
+        # Run the specified command
+        exit_code, timedout = self.run_cmd()
 
         if self.args.flock:
             self.unlock_file()
 
-        self.report_to_zabbix(OPS_RUNNER_DISC_KEY, OPS_RUNNER_DISC_MACRO,
-                              OPS_RUNNER_EXITCODE_KEY, exit_code)
+        if timedout:
+            self.report_to_zabbix(OPS_RUNNER_DISC_KEY, OPS_RUNNER_DISC_MACRO,
+                                  OPS_RUNNER_EXITCODE_KEY, exit_code)
+            self.report_to_zabbix(OPS_RUNNER_DISC_KEY, OPS_RUNNER_DISC_MACRO,
+                                  OPS_RUNNER_TIMEOUT_KEY, self.args.timeout)
+        else:
+            self.report_to_zabbix(OPS_RUNNER_DISC_KEY, OPS_RUNNER_DISC_MACRO,
+                                  OPS_RUNNER_EXITCODE_KEY, exit_code)
+            self.report_to_zabbix(OPS_RUNNER_DISC_KEY, OPS_RUNNER_DISC_MACRO,
+                                  OPS_RUNNER_TIMEOUT_KEY, 0)
 
         self.verbose_print("CMD Exit code: %s" % exit_code)
 
@@ -153,14 +192,21 @@ class OpsRunner(object):
         """ parse the args from the cli """
         parser = argparse.ArgumentParser(description='ops-runner - Runs commands and reports results to zabbix.')
         parser.add_argument('-n', '--name', required=True, help='Name identifier for this command.')
-        parser.add_argument('-f', '--flock', default=False, action="store_true",
-                            help='Flock the command so that only one can run at ' + \
-                                 'a time (good for cron jobs).')
         parser.add_argument('-s', '--random-sleep', help='Sleep time, random. Insert a random ' + \
                                                          'sleep between 1 and X number of seconds.')
         parser.add_argument('-v', '--verbose', default=False, action="store_true",
                             help='Makes ops-runner print more invormation.')
+        parser.add_argument('-t', '--timeout', default=0, type=int,
+                            help='Value in seconds to wait for command to complete')
         parser.add_argument('rest', nargs=argparse.REMAINDER)
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument('-f', '--flock', default=False, action="store_true",
+                           help='Flock the command so that only one can run at ' + \
+                                 'a time (good for cron jobs).')
+        group.add_argument('--flock-no-fail', default=False, action="store_true",
+                           help='Flock the command so that only one can run at ' + \
+                                 'a time (good for cron jobs). But do not ' + \
+                                 'return an error.')
 
         self.args = parser.parse_args()
 

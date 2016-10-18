@@ -8,6 +8,8 @@
   - osohm_docker_registry_url
   - osohm_default_zagg_server_user
   - osohm_default_zagg_server_password
+  - osohm_zagg_web_url
+  - osohm_zagg_verify_ssl
 
 - name: create /etc/docker/ops
   file:
@@ -34,6 +36,44 @@
     seuser: system_u
     recurse: True
 
+- name: create /etc/openshift_tools
+  file:
+    path: /etc/openshift_tools
+    state: directory
+    mode: 0775
+    group: root
+    owner: root
+
+- name: "Copy monitoring container config file"
+  template:
+    src: monitoring-config.yml.j2
+    dest: /etc/openshift_tools/monitoring-config.yml
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - "Restart the host monitoring service"
+
+- name: "Copy etcd metrics config file"
+  copy:
+    src: etcd_metrics.yml
+    dest: /etc/openshift_tools/etcd_metrics.yml
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - "Restart the host monitoring service"
+
+- name: "Copy container metrics config file"
+  copy:
+    src: container_metrics_config.yml
+    dest: /etc/openshift_tools/container_metrics_config.yml
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - "Restart the host monitoring service"
+
 - name: "Copy {{ osohm_host_monitoring }} systemd file"
   template:
     src: "{{ osohm_host_monitoring }}.service.j2"
@@ -42,7 +82,7 @@
     group: root
     mode: 0644
   notify:
-  - "Restart the {{ osohm_host_monitoring }} service"
+  - "Restart the host monitoring service"
   register: systemd_host_monitoring
 
 - name: reload systemd

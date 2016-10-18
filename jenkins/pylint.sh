@@ -6,10 +6,8 @@ exclude_pattern_list=(
  'prometheus_client'
  'ansible/inventory/aws/hosts/ec2.py'
  'ansible/inventory/gce/hosts/gce.py'
+ 'docs/*'
 )
-
-# Use the openshift-ansible .pylintrc
-/usr/bin/wget https://raw.githubusercontent.com/openshift/openshift-ansible/master/git/.pylintrc -O jenkins/.pylintrc -q
 
 oldrev=$1
 newrev=$2
@@ -28,7 +26,7 @@ for dfile in  $(/usr/bin/git diff --name-only "$oldrev" "$newrev" --diff-filter=
     fi
   done
 
-  if [ $skip_file == false ] && ! echo $dfile | sed -e 's|.*\.||' | grep -q adoc && file -b $dfile | grep -q -i python; then
+  if [ $skip_file == false ] && ! echo $dfile | sed -e 's|.*\.||' | grep -q -E '(adoc|asciidoc)' && file -b $dfile | grep -q -i python; then
     files_to_test+=("$dfile")
   fi
 done

@@ -53,11 +53,11 @@ spec:
   - type: ConfigChange
 '''
 
-    replicas_path = "spec#replicas"
-    env_path = "spec#template#spec#containers[0]#env"
-    volumes_path = "spec#template#spec#volumes"
-    container_path = "spec#template#spec#containers"
-    volume_mounts_path = "spec#template#spec#containers[0]#volumeMounts"
+    replicas_path = "spec.replicas"
+    env_path = "spec.template.spec.containers[0].env"
+    volumes_path = "spec.template.spec.volumes"
+    container_path = "spec.template.spec.containers"
+    volume_mounts_path = "spec.template.spec.containers[0].volumeMounts"
 
     def __init__(self, content=None):
         ''' Constructor for OpenshiftOC '''

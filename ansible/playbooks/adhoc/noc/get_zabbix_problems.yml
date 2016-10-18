@@ -26,7 +26,7 @@
     - debug: var=problems
 
     - set_fact:
-        problem_hosts: "{{ problems.results | oo_collect(attribute='hosts') | oo_flatten | oo_collect(attribute='host') | difference(['aggregates']) }}"
+        problem_hosts: "{{ problems.results | ops_collect(attribute='hosts') | ops_flatten | ops_collect(attribute='host') | difference(['aggregates']) }}"
 
     - debug: var=problem_hosts
 

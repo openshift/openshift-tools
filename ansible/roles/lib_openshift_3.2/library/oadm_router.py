@@ -12,13 +12,14 @@
 # pylint: disable=too-many-lines
 
 import atexit
+import copy
 import json
 import os
+import re
 import shutil
 import subprocess
-import re
-
 import yaml
+
 # This is here because of a bug that causes yaml
 # to incorrectly handle timezone info on timestamps
 def timestamp_constructor(_, node):
@@ -116,11 +117,15 @@ class OpenShiftCLI(object):
         return self.openshift_cmd(['-n', self.namespace, 'create', '-f', fname])
 
     def _get(self, resource, rname=None, selector=None):
-        '''return a secret by name '''
-        cmd = ['get']
+        '''return a resource by name '''
+        cmd = ['get', resource]
         if selector:
             cmd.append('--selector=%s' % selector)
-        cmd.extend([resource, '-o', 'json', '-n', self.namespace])
+        if self.namespace:
+            cmd.extend(['-n', self.namespace])
+
+        cmd.extend(['-o', 'json'])
+
         if rname:
             cmd.append(rname)
 
@@ -134,13 +139,57 @@ class OpenShiftCLI(object):
 
         return rval
 
-    def _get_version(self):
-        ''' return the version of openshift '''
-        results = self.openshift_cmd(['version'], output=True, output_type='raw')
-        if results['returncode'] == 0:
-            return results['stdout'].split('\n')[0].strip()
+    def _schedulable(self, node=None, selector=None, schedulable=True):
+        ''' perform oadm manage-node scheduable '''
+        cmd = ['manage-node']
+        if node:
+            cmd.extend(node)
+        else:
+            cmd.append('--selector=%s' % selector)
 
-        raise OpenShiftCLIError('Problem detecting openshift version.')
+        cmd.append('--schedulable=%s' % schedulable)
+
+        return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
+
+    def _list_pods(self, node=None, selector=None, pod_selector=None):
+        ''' perform oadm manage-node evacuate '''
+        cmd = ['manage-node']
+        if node:
+            cmd.extend(node)
+        else:
+            cmd.append('--selector=%s' % selector)
+
+        if pod_selector:
+            cmd.append('--pod-selector=%s' % pod_selector)
+
+        cmd.extend(['--list-pods', '-o', 'json'])
+
+        return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
+
+    #pylint: disable=too-many-arguments
+    def _evacuate(self, node=None, selector=None, pod_selector=None, dry_run=False, grace_period=None, force=False):
+        ''' perform oadm manage-node evacuate '''
+        cmd = ['manage-node']
+        if node:
+            cmd.extend(node)
+        else:
+            cmd.append('--selector=%s' % selector)
+
+        if dry_run:
+            cmd.append('--dry-run')
+
+        if pod_selector:
+            cmd.append('--pod-selector=%s' % pod_selector)
+
+        if grace_period:
+            cmd.append('--grace-period=%s' % int(grace_period))
+
+        if force:
+            cmd.append('--force')
+
+        cmd.append('--evacuate')
+
+        return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
 
     def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json'):
         '''Base command for oc '''
@@ -164,9 +213,7 @@ class OpenShiftCLI(object):
                                 stderr=subprocess.PIPE,
                                 env={'KUBECONFIG': self.kubeconfig})
 
-        proc.wait()
-        stdout = proc.stdout.read()
-        stderr = proc.stderr.read()
+        stdout, stderr = proc.communicate()
         rval = {"returncode": proc.returncode,
                 "results": results,
                 "cmd": ' '.join(cmds),
@@ -396,7 +443,8 @@ class OpenShiftCLIConfig(object):
         ''' return the options hash as cli params in a string '''
         rval = []
         for key, data in self.config_options.items():
-            if data['include'] and data['value']:
+            if data['include'] \
+               and (data['value'] or isinstance(data['value'], int)):
                 rval.append('--%s=%s' % (key.replace('_', '-'), data['value']))
 
         return rval
@@ -407,16 +455,31 @@ class YeditException(Exception):
 
 class Yedit(object):
     ''' Class to modify yaml files '''
-    re_valid_key = r"(((\[-?\d+\])|([0-9a-zA-Z-./]+)).?)+$"
-    re_key = r"(?:\[(-?\d+)\])|([0-9a-zA-Z-./]+)"
+    re_valid_key = r"(((\[-?\d+\])|([0-9a-zA-Z%s/_-]+)).?)+$"
+    re_key = r"(?:\[(-?\d+)\])|([0-9a-zA-Z%s/_-]+)"
+    com_sep = set(['.', '#', '|', ':'])
 
-    def __init__(self, filename=None, content=None, content_type='yaml'):
+    # pylint: disable=too-many-arguments
+    def __init__(self, filename=None, content=None, content_type='yaml', separator='.', backup=False):
         self.content = content
+        self._separator = separator
         self.filename = filename
         self.__yaml_dict = content
         self.content_type = content_type
-        if self.filename and not self.content:
-            self.load(content_type=self.content_type)
+        self.backup = backup
+        self.load(content_type=self.content_type)
+        if self.__yaml_dict == None:
+            self.__yaml_dict = {}
+
+    @property
+    def separator(self):
+        ''' getter method for yaml_dict '''
+        return self._separator
+
+    @separator.setter
+    def separator(self):
+        ''' getter method for yaml_dict '''
+        return self._separator
 
     @property
     def yaml_dict(self):
@@ -429,12 +492,34 @@ class Yedit(object):
         self.__yaml_dict = value
 
     @staticmethod
-    def remove_entry(data, key):
+    def parse_key(key, sep='.'):
+        '''parse the key allowing the appropriate separator'''
+        common_separators = list(Yedit.com_sep - set([sep]))
+        return re.findall(Yedit.re_key % ''.join(common_separators), key)
+
+    @staticmethod
+    def valid_key(key, sep='.'):
+        '''validate the incoming key'''
+        common_separators = list(Yedit.com_sep - set([sep]))
+        if not re.match(Yedit.re_valid_key % ''.join(common_separators), key):
+            return False
+
+        return True
+
+    @staticmethod
+    def remove_entry(data, key, sep='.'):
         ''' remove data at location key '''
-        if not (key and re.match(Yedit.re_valid_key, key) and isinstance(data, (list, dict))):
+        if key == '' and isinstance(data, dict):
+            data.clear()
+            return True
+        elif key == '' and isinstance(data, list):
+            del data[:]
+            return True
+
+        if not (key and Yedit.valid_key(key, sep)) and isinstance(data, (list, dict)):
             return None
 
-        key_indexes = re.findall(Yedit.re_key, key)
+        key_indexes = Yedit.parse_key(key, sep)
         for arr_ind, dict_key in key_indexes[:-1]:
             if dict_key and isinstance(data, dict):
                 data = data.get(dict_key, None)
@@ -457,23 +542,26 @@ class Yedit(object):
                 return True
 
     @staticmethod
-    def add_entry(data, key, item=None):
+    def add_entry(data, key, item=None, sep='.'):
         ''' Get an item from a dictionary with key notation a.b.c
             d = {'a': {'b': 'c'}}}
-            key = a.b
+            key = a#b
             return c
         '''
-        if not (key and re.match(Yedit.re_valid_key, key) and isinstance(data, (list, dict))):
+        if key == '':
+            pass
+        elif not (key and Yedit.valid_key(key, sep)) and isinstance(data, (list, dict)):
             return None
 
-        curr_data = data
-
-        key_indexes = re.findall(Yedit.re_key, key)
+        key_indexes = Yedit.parse_key(key, sep)
         for arr_ind, dict_key in key_indexes[:-1]:
             if dict_key:
-                if isinstance(data, dict) and data.has_key(dict_key):
+                if isinstance(data, dict) and data.has_key(dict_key) and data[dict_key]:
                     data = data[dict_key]
                     continue
+
+                elif data and not isinstance(data, dict):
+                    return None
 
                 data[dict_key] = {}
                 data = data[dict_key]
@@ -483,28 +571,33 @@ class Yedit(object):
             else:
                 return None
 
+        if key == '':
+            data = item
+
         # process last index for add
         # expected list entry
-        if key_indexes[-1][0] and isinstance(data, list) and int(key_indexes[-1][0]) <= len(data) - 1:
+        elif key_indexes[-1][0] and isinstance(data, list) and int(key_indexes[-1][0]) <= len(data) - 1:
             data[int(key_indexes[-1][0])] = item
 
         # expected dict entry
         elif key_indexes[-1][1] and isinstance(data, dict):
             data[key_indexes[-1][1]] = item
 
-        return curr_data
+        return data
 
     @staticmethod
-    def get_entry(data, key):
+    def get_entry(data, key, sep='.'):
         ''' Get an item from a dictionary with key notation a.b.c
             d = {'a': {'b': 'c'}}}
             key = a.b
             return c
         '''
-        if not (key and re.match(Yedit.re_valid_key, key) and isinstance(data, (list, dict))):
+        if key == '':
+            pass
+        elif not (key and Yedit.valid_key(key, sep)) and isinstance(data, (list, dict)):
             return None
 
-        key_indexes = re.findall(Yedit.re_key, key)
+        key_indexes = Yedit.parse_key(key, sep)
         for arr_ind, dict_key in key_indexes:
             if dict_key and isinstance(data, dict):
                 data = data.get(dict_key, None)
@@ -520,13 +613,29 @@ class Yedit(object):
         if not self.filename:
             raise YeditException('Please specify a filename.')
 
-        with open(self.filename, 'w') as yfd:
-            yfd.write(yaml.safe_dump(self.yaml_dict, default_flow_style=False))
+        if self.backup and self.file_exists():
+            shutil.copy(self.filename, self.filename + '.orig')
+
+        tmp_filename = self.filename + '.yedit'
+        try:
+            with open(tmp_filename, 'w') as yfd:
+                yml_dump = yaml.safe_dump(self.yaml_dict, default_flow_style=False)
+                for line in yml_dump.strip().split('\n'):
+                    if '{{' in line and '}}' in line:
+                        yfd.write(line.replace("'{{", '"{{').replace("}}'", '}}"') + '\n')
+                    else:
+                        yfd.write(line + '\n')
+        except Exception as err:
+            raise YeditException(err.message)
+
+        os.rename(tmp_filename, self.filename)
+
+        return (True, self.yaml_dict)
 
     def read(self):
-        ''' write to file '''
+        ''' read from file '''
         # check if it exists
-        if not self.file_exists():
+        if self.filename == None or not self.file_exists():
             return None
 
         contents = None
@@ -546,41 +655,79 @@ class Yedit(object):
         ''' return yaml file '''
         contents = self.read()
 
-        if not contents:
+        if not contents and not self.content:
             return None
+
+        if self.content:
+            if isinstance(self.content, dict):
+                self.yaml_dict = self.content
+                return self.yaml_dict
+            elif isinstance(self.content, str):
+                contents = self.content
 
         # check if it is yaml
         try:
-            if content_type == 'yaml':
+            if content_type == 'yaml' and contents:
                 self.yaml_dict = yaml.load(contents)
-            elif content_type == 'json':
+            elif content_type == 'json' and contents:
                 self.yaml_dict = json.loads(contents)
-        except yaml.YAMLError as _:
+        except yaml.YAMLError as err:
             # Error loading yaml or json
-            return None
+            YeditException('Problem with loading yaml file. %s' % err)
 
         return self.yaml_dict
 
     def get(self, key):
         ''' get a specified key'''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, key)
+            entry = Yedit.get_entry(self.yaml_dict, key, self.separator)
         except KeyError as _:
             entry = None
 
         return entry
 
-    def delete(self, path):
-        ''' remove path from a dict'''
+    def pop(self, path, key_or_item):
+        ''' remove a key, value pair from a dict or an item for a list'''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, path)
+            entry = Yedit.get_entry(self.yaml_dict, path, self.separator)
         except KeyError as _:
             entry = None
 
         if entry == None:
             return  (False, self.yaml_dict)
 
-        result = Yedit.remove_entry(self.yaml_dict, path)
+        if isinstance(entry, dict):
+            # pylint: disable=no-member,maybe-no-member
+            if entry.has_key(key_or_item):
+                entry.pop(key_or_item)
+                return (True, self.yaml_dict)
+            return (False, self.yaml_dict)
+
+        elif isinstance(entry, list):
+            # pylint: disable=no-member,maybe-no-member
+            ind = None
+            try:
+                ind = entry.index(key_or_item)
+            except ValueError:
+                return (False, self.yaml_dict)
+
+            entry.pop(ind)
+            return (True, self.yaml_dict)
+
+        return (False, self.yaml_dict)
+
+
+    def delete(self, path):
+        ''' remove path from a dict'''
+        try:
+            entry = Yedit.get_entry(self.yaml_dict, path, self.separator)
+        except KeyError as _:
+            entry = None
+
+        if entry == None:
+            return  (False, self.yaml_dict)
+
+        result = Yedit.remove_entry(self.yaml_dict, path, self.separator)
         if not result:
             return (False, self.yaml_dict)
 
@@ -589,7 +736,7 @@ class Yedit(object):
     def exists(self, path, value):
         ''' check if value exists at path'''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, path)
+            entry = Yedit.get_entry(self.yaml_dict, path, self.separator)
         except KeyError as _:
             entry = None
 
@@ -613,56 +760,96 @@ class Yedit(object):
 
         return entry == value
 
-    def add_item(self, path, inc_dict):
-        ''' put path, value into a dict '''
-        try:
-            entry = Yedit.get_entry(self.yaml_dict, path)
-        except KeyError as _:
-            entry = None
-
-        if entry == None or not isinstance(entry, dict):
-            return (False, self.yaml_dict)
-
-        entry.update(inc_dict)
-
-        return (True, self.yaml_dict)
-
     def append(self, path, value):
-        ''' put path, value into a dict '''
+        '''append value to a list'''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, path)
+            entry = Yedit.get_entry(self.yaml_dict, path, self.separator)
         except KeyError as _:
             entry = None
 
-        if entry == None or not isinstance(entry, list):
+        if entry is None:
+            self.put(path, [])
+            entry = Yedit.get_entry(self.yaml_dict, path, self.separator)
+        if not isinstance(entry, list):
             return (False, self.yaml_dict)
 
-        #pylint: disable=no-member,maybe-no-member
+        # pylint: disable=no-member,maybe-no-member
         entry.append(value)
-
         return (True, self.yaml_dict)
+
+    # pylint: disable=too-many-arguments
+    def update(self, path, value, index=None, curr_value=None):
+        ''' put path, value into a dict '''
+        try:
+            entry = Yedit.get_entry(self.yaml_dict, path, self.separator)
+        except KeyError as _:
+            entry = None
+
+        if isinstance(entry, dict):
+            # pylint: disable=no-member,maybe-no-member
+            if not isinstance(value, dict):
+                raise YeditException('Cannot replace key, value entry in dict with non-dict type.' \
+                                     ' value=[%s]  [%s]' % (value, type(value)))
+
+            entry.update(value)
+            return (True, self.yaml_dict)
+
+        elif isinstance(entry, list):
+            # pylint: disable=no-member,maybe-no-member
+            ind = None
+            if curr_value:
+                try:
+                    ind = entry.index(curr_value)
+                except ValueError:
+                    return (False, self.yaml_dict)
+
+            elif index != None:
+                ind = index
+
+            if ind != None and entry[ind] != value:
+                entry[ind] = value
+                return (True, self.yaml_dict)
+
+            # see if it exists in the list
+            try:
+                ind = entry.index(value)
+            except ValueError:
+                # doesn't exist, append it
+                entry.append(value)
+                return (True, self.yaml_dict)
+
+            #already exists, return
+            if ind != None:
+                return (False, self.yaml_dict)
+        return (False, self.yaml_dict)
 
     def put(self, path, value):
         ''' put path, value into a dict '''
         try:
-            entry = Yedit.get_entry(self.yaml_dict, path)
+            entry = Yedit.get_entry(self.yaml_dict, path, self.separator)
         except KeyError as _:
             entry = None
 
         if entry == value:
             return (False, self.yaml_dict)
 
-        result = Yedit.add_entry(self.yaml_dict, path, value)
+        tmp_copy = copy.deepcopy(self.yaml_dict)
+        result = Yedit.add_entry(tmp_copy, path, value, self.separator)
         if not result:
             return (False, self.yaml_dict)
+
+        self.yaml_dict = tmp_copy
 
         return (True, self.yaml_dict)
 
     def create(self, path, value):
         ''' create a yaml file '''
         if not self.file_exists():
-            self.yaml_dict = {path: value}
-            return (True, self.yaml_dict)
+            tmp_copy = copy.deepcopy(self.yaml_dict)
+            result = Yedit.add_entry(tmp_copy, path, value, self.separator)
+            if result:
+                self.yaml_dict = tmp_copy
+                return (True, self.yaml_dict)
 
         return (False, self.yaml_dict)
 
@@ -728,7 +915,9 @@ class ServiceConfig(object):
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 class Service(Yedit):
     ''' Class to wrap the oc command line tools '''
-    port_path = "spec#ports"
+    port_path = "spec.ports"
+    portal_ip = "spec.portalIP"
+    cluster_ip = "spec.clusterIP"
     kind = 'Service'
 
     def __init__(self, content):
@@ -781,11 +970,11 @@ class Service(Yedit):
 
     def add_cluster_ip(self, sip):
         '''add cluster ip'''
-        self.put('spec#clusterIP', sip)
+        self.put(Service.cluster_ip, sip)
 
     def add_portal_ip(self, pip):
         '''add cluster ip'''
-        self.put('spec#portalIP', pip)
+        self.put(Service.portal_ip, pip)
 
 
 
@@ -842,11 +1031,11 @@ spec:
   - type: ConfigChange
 '''
 
-    replicas_path = "spec#replicas"
-    env_path = "spec#template#spec#containers[0]#env"
-    volumes_path = "spec#template#spec#volumes"
-    container_path = "spec#template#spec#containers"
-    volume_mounts_path = "spec#template#spec#containers[0]#volumeMounts"
+    replicas_path = "spec.replicas"
+    env_path = "spec.template.spec.containers[0].env"
+    volumes_path = "spec.template.spec.volumes"
+    container_path = "spec.template.spec.containers"
+    volume_mounts_path = "spec.template.spec.containers[0].volumeMounts"
 
     def __init__(self, content=None):
         ''' Constructor for OpenshiftOC '''
@@ -1626,6 +1815,10 @@ class RoleBinding(Yedit):
 
 import time
 
+class RouterException(Exception):
+    ''' Router exception'''
+    pass
+
 class RouterConfig(OpenShiftCLIConfig):
     ''' RouterConfig is a DTO for the router.  '''
     def __init__(self, rname, namespace, kubeconfig, router_options):
@@ -1649,17 +1842,34 @@ class Router(OpenShiftCLI):
         self.router_parts = [{'kind': 'dc', 'name': self.config.name},
                              {'kind': 'svc', 'name': self.config.name},
                              {'kind': 'sa', 'name': self.config.name},
-                             {'kind': 'secret', 'name': 'router-certs'},
-                             {'kind': 'clusterrolebinding', 'name': 'router-router-role'},
+                             {'kind': 'secret', 'name': self.config.name + '-certs'},
+                             {'kind': 'clusterrolebinding', 'name': 'router-' + self.config.name + '-role'},
                              #{'kind': 'endpoints', 'name': self.config.name},
                             ]
 
+        self.__router_prep = None
         self.dconfig = None
         self.svc = None
         self._secret = None
         self._serviceaccount = None
         self._rolebinding = None
         self.get()
+
+    @property
+    def router_prep(self):
+        ''' property deploymentconfig'''
+        if self.__router_prep == None:
+            results = self.prepare_router()
+            if not results:
+                raise RouterException('Could not perform router preparation')
+            self.__router_prep = results
+
+        return self.__router_prep
+
+    @router_prep.setter
+    def router_prep(self, obj):
+        '''set the router prep property'''
+        self.__router_prep = obj
 
     @property
     def deploymentconfig(self):
@@ -1715,6 +1925,9 @@ class Router(OpenShiftCLI):
         ''' return the self.router_parts '''
         self.service = None
         self.deploymentconfig = None
+        self.serviceaccount = None
+        self.secret = None
+        self.rolebinding = None
         for part in self.router_parts:
             result = self._get(part['kind'], rname=part['name'])
             if result['returncode'] == 0 and part['kind'] == 'dc':
@@ -1728,11 +1941,16 @@ class Router(OpenShiftCLI):
             elif result['returncode'] == 0 and part['kind'] == 'clusterrolebinding':
                 self.rolebinding = RoleBinding(content=result['results'][0])
 
-        return (self.deploymentconfig, self.service)
+        return {'deploymentconfig': self.deploymentconfig,
+                'service': self.service,
+                'serviceaccount': self.serviceaccount,
+                'secret': self.secret,
+                'clusterrolebinding': self.rolebinding,
+               }
 
     def exists(self):
         '''return a whether svc or dc exists '''
-        if self.deploymentconfig or self.service:
+        if self.deploymentconfig and self.service and self.secret and self.serviceaccount:
             return True
 
         return False
@@ -1745,8 +1963,21 @@ class Router(OpenShiftCLI):
 
         return parts
 
-    def create(self, dryrun=False, output=False, output_type='json'):
-        '''Create a deploymentconfig '''
+    def add_modifications(self, deploymentconfig):
+        '''modify the deployment config'''
+        # We want modifications in the form of edits coming in from the module.
+        # Let's apply these here
+        edit_results = []
+        for key, value in self.config.config_options['edits'].get('value', {}).items():
+            edit_results.append(deploymentconfig.put(key, value))
+
+        if edit_results and not any([res[0] for res in edit_results]):
+            return None
+
+        return deploymentconfig
+
+    def prepare_router(self):
+        '''prepare router for instantiation'''
         # We need to create the pem file
         router_pem = '/tmp/router.pem'
         with open(router_pem, 'w') as rfd:
@@ -1761,12 +1992,63 @@ class Router(OpenShiftCLI):
 
         options = self.config.to_option_list()
 
-        cmd = ['router', '-n', self.config.namespace]
+        cmd = ['router', self.config.name, '-n', self.config.namespace]
         cmd.extend(options)
-        if dryrun:
-            cmd.extend(['--dry-run=True', '-o', 'json'])
+        cmd.extend(['--dry-run=True', '-o', 'json'])
 
-        return self.openshift_cmd(cmd, oadm=True, output=output, output_type=output_type)
+        results = self.openshift_cmd(cmd, oadm=True, output=True, output_type='json')
+
+        # pylint: disable=no-member
+        if results['returncode'] != 0 and results['results'].has_key('items'):
+            return results
+
+        oc_objects = {'DeploymentConfig': {'obj': None, 'path': None},
+                      'Secret': {'obj': None, 'path': None},
+                      'ServiceAccount': {'obj': None, 'path': None},
+                      'ClusterRoleBinding': {'obj': None, 'path': None},
+                      'Service': {'obj': None, 'path': None},
+                     }
+        # pylint: disable=invalid-sequence-index
+        for res in results['results']['items']:
+            if res['kind'] == 'DeploymentConfig':
+                oc_objects['DeploymentConfig']['obj'] = DeploymentConfig(res)
+            elif res['kind'] == 'Service':
+                oc_objects['Service']['obj'] = Service(res)
+            elif res['kind'] == 'ServiceAccount':
+                oc_objects['ServiceAccount']['obj'] = ServiceAccount(res)
+            elif res['kind'] == 'Secret':
+                oc_objects['Secret']['obj'] = Secret(res)
+            elif res['kind'] == 'ClusterRoleBinding':
+                oc_objects['ClusterRoleBinding']['obj'] = RoleBinding(res)
+
+        # Currently only deploymentconfig needs updating
+        # Verify we got a deploymentconfig
+        if not oc_objects['DeploymentConfig']['obj']:
+            return results
+
+        # results will need to get parsed here and modifications added
+        oc_objects['DeploymentConfig']['obj'] = self.add_modifications(oc_objects['DeploymentConfig']['obj'])
+
+        for oc_type in oc_objects.keys():
+            oc_objects[oc_type]['path'] = Utils.create_file(oc_type, oc_objects[oc_type]['obj'].yaml_dict)
+
+        return oc_objects
+
+    def create(self):
+        '''Create a deploymentconfig '''
+        # generate the objects and prepare for instantiation
+        self.prepare_router()
+
+        results = []
+        for _, oc_data in self.router_prep.items():
+            results.append(self._create(oc_data['path']))
+
+        rval = 0
+        for result in results:
+            if result['returncode'] != 0 and not 'already exist' in result['stderr']:
+                rval = result['returncode']
+
+        return {'returncode': rval, 'results': results}
 
     def update(self):
         '''run update for the router.  This performs a delete and then create '''
@@ -1780,7 +2062,6 @@ class Router(OpenShiftCLI):
                 # something went wrong
                 return parts
 
-
         # Ugly built in sleep here.
         time.sleep(15)
 
@@ -1789,100 +2070,84 @@ class Router(OpenShiftCLI):
     # pylint: disable=too-many-return-statements,too-many-branches
     def needs_update(self, verbose=False):
         ''' check to see if we need to update '''
-        if not self.deploymentconfig or not self.service:
+        if not self.deploymentconfig or not self.service or not self.serviceaccount or not self.secret:
             return True
 
-        results = self.create(dryrun=True, output=True, output_type='raw')
-        if results['returncode'] != 0:
-            return results
+        oc_objects_prep = self.prepare_router()
 
         # Since the output from oadm_router is returned as raw
         # we need to parse it.  The first line is the stats_password in 3.1
         # Inside of 3.2, it is just json
-        router_results_split = results['results'].split('\n')
-        # stats_password = user_dc_results[0]
 
-        # password for stats user admin has been set to xxxxxx
-        if 'password for stats user admin has ben set to' in router_results_split[0]:
-            # stats_password = user_dc_results[0]
-            router_results_split = router_results_split[1:]
-
-        json_results = json.loads('\n'.join(router_results_split))
-
-        user_dc = None
-        user_svc = None
-        user_secret = None
-        for item in json_results['items']:
-            if item['kind'] == 'Service':
-                user_svc = Service(content=item)
-            elif item['kind'] == 'DeploymentConfig':
-                user_dc = DeploymentConfig(content=item)
-            elif item['kind'] == 'Secret':
-                user_secret = Secret(content=item)
-            elif item['kind'] == 'ServiceAccount':
-                user_sa = ServiceAccount(content=item)
-
-        # Need to determine the pregenerated ones from the original
-        # Since these are auto generated, we can skip
+        # ServiceAccount:
+        #   Need to determine the pregenerated ones from the original
+        #   Since these are auto generated, we can skip
         skip = ['secrets', 'imagePullSecrets']
-        if not Utils.check_def_equal(user_sa.yaml_dict,
+        if not Utils.check_def_equal(oc_objects_prep['ServiceAccount']['obj'].yaml_dict,
                                      self.serviceaccount.yaml_dict,
                                      skip_keys=skip,
                                      debug=verbose):
             return True
 
-        # In 3.2 oadm router generates a secret volume for certificates
-        # See if one was generated from our dry-run and verify it if needed
-        if user_secret:
+        # Secret:
+        #   In 3.2 oadm router generates a secret volume for certificates
+        #   See if one was generated from our dry-run and verify it if needed
+        if oc_objects_prep['Secret']['obj']:
             if not self.secret:
                 return True
-            if not Utils.check_def_equal(user_secret.yaml_dict,
+            if not Utils.check_def_equal(oc_objects_prep['Secret']['obj'].yaml_dict,
                                          self.secret.yaml_dict,
                                          skip_keys=skip,
                                          debug=verbose):
                 return True
 
-        # Fix the ports to have protocol=TCP
-        for port in user_svc.get('spec#ports'):
+        # Service:
+        #   Fix the ports to have protocol=TCP
+        for port in oc_objects_prep['Service']['obj'].get('spec.ports'):
             port['protocol'] = 'TCP'
 
         skip = ['portalIP', 'clusterIP', 'sessionAffinity', 'type']
-        if not Utils.check_def_equal(user_svc.yaml_dict,
+        if not Utils.check_def_equal(oc_objects_prep['Service']['obj'].yaml_dict,
                                      self.service.yaml_dict,
                                      skip_keys=skip,
                                      debug=verbose):
             return True
 
-        # Router needs some exceptions.
-        # We do not want to check the autogenerated password for stats admin
+        # DeploymentConfig:
+        #   Router needs some exceptions.
+        #   We do not want to check the autogenerated password for stats admin
         if not self.config.config_options['stats_password']['value']:
-            for idx, env_var in enumerate(user_dc.get('spec#template#spec#containers[0]#env') or []):
+            for idx, env_var in enumerate(oc_objects_prep['DeploymentConfig']['obj'].get(\
+                        'spec.template.spec.containers[0].env') or []):
                 if env_var['name'] == 'STATS_PASSWORD':
                     env_var['value'] = \
-                      self.deploymentconfig.get('spec#template#spec#containers[0]#env[%s]#value' % idx)
+                      self.deploymentconfig.get('spec.template.spec.containers[0].env[%s].value' % idx)
+                    break
 
-        # dry-run doesn't add the protocol to the ports section.  We will manually do that.
-        for idx, port in enumerate(user_dc.get('spec#template#spec#containers[0]#ports') or []):
+        #   dry-run doesn't add the protocol to the ports section.  We will manually do that.
+        for idx, port in enumerate(oc_objects_prep['DeploymentConfig']['obj'].get(\
+                        'spec.template.spec.containers[0].ports') or []):
             if not port.has_key('protocol'):
                 port['protocol'] = 'TCP'
 
-        # These are different when generating
+        #   These are different when generating
         skip = ['dnsPolicy',
                 'terminationGracePeriodSeconds',
                 'restartPolicy', 'timeoutSeconds',
                 'livenessProbe', 'readinessProbe',
-                'terminationMessagePath',
-                'rollingParams', 'hostPort',
+                'terminationMessagePath', 'hostPort',
                ]
 
-        return not Utils.check_def_equal(user_dc.yaml_dict,
+        return not Utils.check_def_equal(oc_objects_prep['DeploymentConfig']['obj'].yaml_dict,
                                          self.deploymentconfig.yaml_dict,
                                          skip_keys=skip,
-                                         debug=verbose)
+                                         debug=False)
+
+
 
 def main():
     '''
-    ansible oc module for secrets
+    ansible oc module for router
     '''
 
     module = AnsibleModule(
@@ -1897,7 +2162,7 @@ def main():
             cert_file=dict(default=None, type='str'),
             key_file=dict(default=None, type='str'),
             images=dict(default=None, type='str'), #'openshift3/ose-${component}:${version}'
-            latest_image=dict(default=False, type='bool'),
+            latest_images=dict(default=False, type='bool'),
             labels=dict(default=None, type='list'),
             ports=dict(default=['80:80', '443:443'], type='list'),
             replicas=dict(default=1, type='int'),
@@ -1922,6 +2187,8 @@ def main():
             stats_port=dict(default=1936, type='int'),
             # extra
             cacert_file=dict(default=None, type='str'),
+            # edits
+            edits=dict(default={}, type='dict'),
         ),
         mutually_exclusive=[["router_type", "images"]],
 
@@ -1935,7 +2202,7 @@ def main():
                             'cert_file': {'value': module.params['cert_file'], 'include': False},
                             'key_file': {'value': module.params['key_file'], 'include': False},
                             'images': {'value': module.params['images'], 'include': True},
-                            'latest_image': {'value': module.params['latest_image'], 'include': True},
+                            'latest_images': {'value': module.params['latest_images'], 'include': True},
                             'labels': {'value': module.params['labels'], 'include': True},
                             'ports': {'value': ','.join(module.params['ports']), 'include': True},
                             'replicas': {'value': module.params['replicas'], 'include': True},
@@ -1963,6 +2230,8 @@ def main():
                             'stats_port': {'value': module.params['stats_port'], 'include': True},
                             # extra
                             'cacert_file': {'value': module.params['cacert_file'], 'include': False},
+                            # edits
+                            'edits': {'value': module.params['edits'], 'include': False},
                            })
 
 
@@ -2023,5 +2292,6 @@ def main():
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
-from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    from ansible.module_utils.basic import *
+    main()

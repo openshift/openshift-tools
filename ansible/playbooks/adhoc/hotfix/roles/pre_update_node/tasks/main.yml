@@ -1,0 +1,16 @@
+---
+- name: Choose a single master to run commands on
+  set_fact:
+    cluster_master: "{{ groups['oo_hosttype_master'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
+  run_once: true
+  when: "{{ update_needed == True }}" 
+
+# FIXME: use the oadm_manage_node module instead
+- name: Make node unschedulable
+  command: "oadm manage-node {{ hostvars[oo_name].ec2_private_dns_name }} --schedulable=false"
+  register: unschedulable
+  until: unschedulable.stdout.find("SchedulingDisabled") != -1
+  retries: 10
+  delegate_to: "{{ cluster_master }}"
+  ignore_errors: True
+  when: "{{ update_needed == True }}" 

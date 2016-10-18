@@ -42,45 +42,44 @@
                               dry_run=dry_run)
 """
 
-import boto.ec2
+from openshift_tools.cloud.aws.base import Base
+from openshift_tools.cloud.aws.instance_util import InstanceUtil
 
 from datetime import datetime
 from datetime import timedelta
 
-# Specifically exclude certain regions
-EXCLUDED_REGIONS = ['us-gov-west-1', 'cn-north-1']
+from time import sleep
+
+from boto.exception import EC2ResponseError
 
 SNAP_TAG_KEY = 'snapshot'
 
 SUPPORTED_SCHEDULES = ['hourly', 'daily', 'weekly', 'monthly']
 ALL_SCHEDULES = 'all'
 
-DRY_RUN_MSG = "*** DRY RUN, NO ACTION TAKEN ***"
-
-class EbsSnapshotter(object):
+class EbsSnapshotter(Base):
     """ Class responsible for creating and removing EBS snapshots """
 
     def __init__(self, region, verbose=False):
         """ Initialize the class """
-        self.region = region
-        self.ec2 = boto.ec2.connect_to_region(region)
-        self.verbose = verbose
+        super(EbsSnapshotter, self).__init__(region, verbose)
 
-        # Print the region we're working in
-        self.verbose_print("Region: %s:" % (self.region))
+        self.instance_util = InstanceUtil(region, verbose)
 
-    def verbose_print(self, msg="", prefix="", end="\n"):
-        """ Prints msg using prefix and end IF verbose is set on the class. """
-        if self.verbose:
-            print("%s%s%s") % (prefix, msg, end),
+    def set_volume_snapshot_tag(self, volume_ids, schedule, prefix="", dry_run=False):
+        """ Sets a tag to the EBS volume for snapshotting purposes """
+        self.verbose_print("Setting tag '%s: %s' on %d volume(s): %s" % \
+                           (SNAP_TAG_KEY, schedule, len(volume_ids), volume_ids),
+                           prefix=prefix)
 
-    @staticmethod
-    def get_supported_regions():
-        """ Returns the regions that we support (we're not allowed in all regions). """
-        all_regions = boto.ec2.regions()
+        if dry_run:
+            self.print_dry_run_msg(prefix=prefix + "  ")
+        else:
+            self.ec2.create_tags(list(volume_ids), {SNAP_TAG_KEY: schedule})
 
-        supported_regions = [r for r in all_regions if r.name not in EXCLUDED_REGIONS]
-        return supported_regions
+    def get_already_tagged_volume_ids(self):
+        """ Returns a list of volumes that already have the snapshot tag. """
+        return [v.id for v in self.ec2.get_all_volumes() if v.tags.get(SNAP_TAG_KEY) != None]
 
     def get_volumes_with_schedule(self, schedule):
         """ Returns the volumes that are tagged in AWS with the defined schedule.
@@ -101,15 +100,7 @@ class EbsSnapshotter(object):
 
         return vols_w_sched
 
-    def print_volume(self, volume, prefix=""):
-        """ Prints out the details of the given volume. """
-        self.verbose_print("%s:" % volume.id, prefix=prefix)
-        self.verbose_print("  Tags:", prefix=prefix)
-
-        for tag in volume.tags.iteritems():
-            self.verbose_print("    %s: %s" % (tag[0], tag[1]), prefix=prefix)
-
-    def create_snapshots(self, schedule, script_name=None, dry_run=False):
+    def create_snapshots(self, schedule, script_name=None, dry_run=False, sleep_between_snaps=0):
         """ Creates a snapshot for volumes tagged with the given schedule. """
 
         if schedule not in SUPPORTED_SCHEDULES:
@@ -123,40 +114,65 @@ class EbsSnapshotter(object):
             description += " by %s" % script_name
 
         volumes = self.get_volumes_with_schedule(schedule)
+        all_instances = self.instance_util.get_all_instances_as_dict()
 
         self.verbose_print("Creating %s snapshot for:" % schedule, prefix="  ")
 
         for volume in volumes:
             self.print_volume(volume, prefix="    ")
 
+            sleep(sleep_between_snaps)
+
             try:
                 if dry_run:
-                    self.verbose_print(DRY_RUN_MSG, prefix="    ")
+                    self.print_dry_run_msg(prefix="    ")
                 else:
                     new_snapshot = volume.create_snapshot(description=description)
+                    inst_id = volume.attach_data.instance_id
+                    inst_name = None
+
+                    if inst_id:
+                        inst_name = all_instances[inst_id].tags.get('Name')
+
+                    attach_data = "%s:%s:%s:%s" % (volume.attach_data.status, \
+                                                inst_id, \
+                                                inst_name, \
+                                                volume.attach_data.device)
+
+                    # Take all of the volume's tags (including Name) and add the attachment data.
+                    snap_tags = volume.tags.copy()
+                    snap_tags['attach_data'] = attach_data
+
+                    # We want the snapshot to have as much identifying information as possible.
+                    new_snapshot.add_tags(snap_tags)
+
                     snapshots.append(new_snapshot)
             # Reason: disable pylint broad-except because we want to continue on error.
             # Status: permanently disabled
             # pylint: disable=broad-except
             except Exception as ex:
-                errors.append(ex)
+                if isinstance(ex, EC2ResponseError) and \
+                   ex.error_code == "SnapshotCreationPerVolumeRateExceeded":
+                    # This message means that a snapshot of this volume was recently taken,
+                    # which we're trying to do anyway. So, we can safely ignore this error.
+
+                    # Add that latest snapshot to the list of snapshots.
+                    ex_snaps = volume.snapshots()
+                    self.sort_snapshots(ex_snaps)
+                    snapshots.append(ex_snaps[-1])
+                else:
+                    errors.append(ex)
 
             self.verbose_print()
 
-        self.verbose_print("Number of volumes to snapshot: %d" % len(volumes), prefix="  ")
-        self.verbose_print("Number of snapshots taken: %d" % len(snapshots), prefix="  ")
+        self.verbose_print("Number of volumes to snapshot: %d: %s" % (len(volumes), volumes), \
+                           prefix="  ")
+        self.verbose_print("Number of snapshots taken: %d: %s" % (len(snapshots), snapshots), \
+                           prefix="  ")
         self.verbose_print("Number of snapshot creation errors: %d" % len(errors), prefix="  ")
         self.verbose_print()
 
         return (volumes, snapshots, errors)
-
-    def print_snapshots(self, snapshots, msg=None, prefix=""):
-        """ Prints out the details for the given snapshots. """
-        if msg:
-            self.verbose_print(msg, prefix=prefix)
-
-        for snap in snapshots:
-            self.verbose_print("  %s: start_time %s" % (snap.id, snap.start_time), prefix=prefix)
 
     @staticmethod
     def sort_snapshots(snaps):
@@ -305,7 +321,8 @@ class EbsSnapshotter(object):
                     time_period_number += 1
                     snap_found_for_this_time_period = False
 
-        return snaps_to_trim
+        # We want to make sure we're only sending back 1 copy of each snapshot to trim.
+        return list(set(snaps_to_trim))
 
     @staticmethod
     def get_volume_snapshots(volume, all_snapshots):
@@ -363,7 +380,7 @@ class EbsSnapshotter(object):
                 self.verbose_print(exp_snap.id, prefix="        ")
                 try:
                     if dry_run:
-                        self.verbose_print(DRY_RUN_MSG, prefix="          ")
+                        self.print_dry_run_msg(prefix="          ")
                     else:
                         exp_snap.delete()
                         deleted_snapshots.append(exp_snap)
@@ -371,7 +388,12 @@ class EbsSnapshotter(object):
                 # Status: permanently disabled
                 # pylint: disable=broad-except
                 except Exception as ex:
-                    errors.append(ex)
+                    if isinstance(ex, EC2ResponseError) and ex.error_code == "InvalidSnapshot.NotFound":
+                        # This message means that the snapshot is gone, which is what we
+                        # were trying to do anyway. So, count this snap among the deleted.
+                        deleted_snapshots.append(exp_snap)
+                    else:
+                        errors.append(ex)
                 self.verbose_print()
 
         self.verbose_print("Number of expired snapshots: %d" % len(all_expired_snapshots), prefix="  ")

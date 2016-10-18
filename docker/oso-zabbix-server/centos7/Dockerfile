@@ -22,23 +22,22 @@ EXPOSE 10050 10051
 ADD zabbix.repo /etc/yum.repos.d/
 
 # Install zabbix (and supporting tools) from zabbix repo
-RUN yum install -y zabbix-server-mysql zabbix-agent zabbix-sender crontabs \
+
+# By default docker recommends to install packages with tsflags=nodocs for space saving
+# but in this case, we need it for this one package, because the DB schema is coming from the docs
+RUN yum install -y --setopt=tsflags='' zabbix-server-mysql
+RUN yum install -y zabbix-agent zabbix-sender crontabs \
     mariadb openssh-clients openshift-tools-scripts-monitoring-zabbix-heal && \
     yum -y update && \
     yum clean all
-
 
 # Lay down zabbix conf
 ADD zabbix/conf/zabbix_server.conf /etc/zabbix/
 ADD zabbix/conf/zabbix_agentd.conf /etc/zabbix/
 ADD zabbix/conf/zabbix_agent.conf /etc/zabbix/
 
-# WORK AROUND FOR SQL SCRIPTS ARE MISSING
-ADD zabbix/db_create/zdata /usr/share/doc/zabbix-server-mysql-2.4.5/create/
-
 # DB creation
 ADD zabbix/db_create/createdb.sh /root/zabbix/
-#ADD zabbix/db_create/create_zabbix.sql /root/zabbix/
 
 # Add crontab for root
 # Re-enable once we figure out how to run cron inside of openshift.
@@ -51,6 +50,7 @@ RUN mkdir -p /etc/openshift_tools
 
 # Add zabbix alert script
 ADD smtp_ses.py /usr/lib/zabbix/alertscripts/
+ADD zbx2slack.py /usr/lib/zabbix/alertscripts/
 
 # Start mysqld, zabbix, and apache
 ADD start.sh /usr/local/bin/

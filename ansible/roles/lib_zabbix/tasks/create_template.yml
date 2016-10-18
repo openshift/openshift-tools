@@ -9,8 +9,8 @@
 
 
 - set_fact:
-    lzbx_item_applications: "{{ template.zitems | default([], True) | oo_select_keys_from_list(['applications']) | oo_flatten | unique }}"
-    lzbx_itemprototype_applications: "{{ template.zitemprototypes | default([], True) | oo_select_keys_from_list(['applications']) | oo_flatten | unique }}"
+    lzbx_item_applications: "{{ template.zitems | default([], True) | ops_select_keys_from_list(['applications']) | ops_flatten | unique }}"
+    lzbx_itemprototype_applications: "{{ template.zitemprototypes | default([], True) | ops_select_keys_from_list(['applications']) | ops_flatten | unique }}"
 
 - name: Create Application
   zbx_application:
@@ -23,7 +23,6 @@
   - "{{ lzbx_item_applications }}"
   - "{{ lzbx_itemprototype_applications }}"
   register: created_application
-  when: template.zitems is defined or template.zitemprototypes is defined
 
 - name: Create Items
   zbx_item:
@@ -37,14 +36,16 @@
     description: "{{ item.description | default('', True) }}"
     multiplier: "{{ item.multiplier | default('', True) }}"
     units: "{{ item.units | default('', True) }}"
+    history: "{{ item.history | default(omit, True) }}"
+    trends: "{{ item.trends | default(omit, True) }}"
     template_name: "{{ template.name }}"
     applications: "{{ item.applications }}"
     zabbix_type: "{{ item.zabbix_type | default('trapper') }}"
     interval: "{{ item.interval | default(60, True) }}"
     delta: "{{ item.delta | default(0, True) }}"
-  with_items: template.zitems
+    params: "{{ item.params | default(omit, True) }}"
+  with_items: "{{ template.zitems | default([]) }}"
   register: created_items
-  when: template.zitems is defined
 
 - name: Create Triggers
   zbx_trigger:
@@ -58,8 +59,7 @@
     priority: "{{ item.priority }}"
     url: "{{ item.url | default(None, True) }}"
     status: "{{ item.status | default('', True) }}"
-  with_items: template.ztriggers
-  when: template.ztriggers is defined
+  with_items: "{{ template.ztriggers | default([]) }}"
 
 - name: Create Actions
   zbx_action:
@@ -72,8 +72,7 @@
     escalation_time: "{{ item.escalation_time }}"
     conditions_filter: "{{ item.conditions_filter }}"
     operations: "{{ item.operations }}"
-  with_items: template.zactions
-  when: template.zactions is defined
+  with_items: "{{ template.zactions|default([]) }}"
 
 - name: Create Discoveryrules
   zbx_discoveryrule:
@@ -85,8 +84,7 @@
     lifetime: "{{ item.lifetime }}"
     template_name: "{{ template.name }}"
     description: "{{ item.description | default('', True) }}"
-  with_items: template.zdiscoveryrules
-  when: template.zdiscoveryrules is defined
+  with_items: "{{ template.zdiscoveryrules | default([]) }}"
 
 - name: Create Item Prototypes
   zbx_itemprototype:
@@ -103,10 +101,10 @@
     description: "{{ item.description | default('', True) }}"
     multiplier: "{{ item.multiplier | default('', True) }}"
     units: "{{ item.units | default('', True) }}"
+    history: "{{ item.history | default(omit, True) }}"
     interval: "{{ item.interval | default(60, True) }}"
     delta: "{{ item.delta | default(0, True) }}"
-  with_items: template.zitemprototypes
-  when: template.zitemprototypes is defined
+  with_items: "{{ template.zitemprototypes | default([]) }}"
 
 - name: Create Trigger Prototypes
   zbx_triggerprototype:
@@ -118,8 +116,7 @@
     url: "{{ item.url | default('', True) }}"
     priority: "{{ item.priority | default('average', True) }}"
     description: "{{ item.description | default('', True) }}"
-  with_items: template.ztriggerprototypes
-  when: template.ztriggerprototypes is defined
+  with_items: "{{ template.ztriggerprototypes | default([]) }}"
 
 - name: Create Graphs
   zbx_graph:
@@ -130,8 +127,9 @@
     height: "{{ item.height }}"
     width: "{{ item.width }}"
     graph_items: "{{ item.graph_items }}"
-  with_items: template.zgraphs
-  when: template.zgraphs is defined
+    yaxismin: "{{ item.yaxismin | default(omit, True) }}"
+    ymin_type: "{{ item.ymin_type | default(omit, True) }}"
+  with_items: "{{ template.zgraphs | default([]) }}"
 
 - name: Create Graph Prototypes
   zbx_graphprototype:
@@ -142,5 +140,4 @@
     height: "{{ item.height }}"
     width: "{{ item.width }}"
     graph_items: "{{ item.graph_items }}"
-  with_items: template.zgraphprototypes
-  when: template.zgraphprototypes is defined
+  with_items: "{{ template.zgraphprototypes | default([]) }}"

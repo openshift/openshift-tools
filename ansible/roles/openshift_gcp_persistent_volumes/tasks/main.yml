@@ -1,0 +1,85 @@
+---
+- fail:
+    msg: "Value {{ item }} is not set!"
+  with_items:
+  - "{{ osgpv_volumes }}"
+  when: item is undefined
+
+- name: Change restriced scc fsgroup to MustRunAs
+  oc_edit:
+    kind: scc
+    name: restricted
+    content:
+      fsGroup:
+        type: MustRunAs
+
+- name: Create gcp persistent volumes
+  delegate_to: localhost
+  gcloud_dm_resource_builder:
+    state: present
+    persistent_volumes: "{{ osgpv_volumes }}"
+    clusterid: "{{ osgpv_clusterid }}"
+    account: "{{ osgpv_account }}"
+    sublocation: "{{ osgpv_sublocation }}"
+    zone: "{{ osgpv_zone }}"
+  register: dmyaml
+
+- name: Deploy Generate config for cluster
+  delegate_to: localhost
+  gcloud_dm_deployments:
+    config: "{{ dmyaml.results }}"
+    name: "{{ osgpv_clusterid }}-pv-deployment"
+  register: deployout
+
+- name: fetch latest manifests
+  delegate_to: localhost
+  gcloud_dm_manifest:
+    state: list
+    deployment: "{{ osgpv_clusterid }}-pv-deployment"
+  register: manifest_out
+
+- name: set the pv resource list as fact
+  set_fact:
+    pv_resources: "{{ manifest_out.results[-1].config.content | from_yaml  }}"
+    pv_resource_names: "{{ pv_resources | map(attribute='name') }}"
+
+- name: get persistent volumes
+  oc_obj:
+    state: list
+    kind: pv
+  register: pv_out
+
+- name: set the openshift pv list
+  set_fact:
+    registered_pvs: "{{ pv_out.results.results[0]['items'] | ops_collect(attribute='metadata') | ops_collect(attribute='name') }}"
+
+- name: Create pv file from template
+  template:
+    src: persistent_volume.yml.j2
+    dest: "/tmp/{{ item.name }}.yml"
+    owner: root
+    mode: '0600'
+  when: item.name not in registered_pvs
+  with_items: "{{ pv_resources.resources }}"
+  register: pv_templates
+
+- name: "Create PV in Openshift with oc"
+  shell: "KUBECONFIG=/etc/origin/master/admin.kubeconfig oc create -f /tmp/{{ item.item.name }}.yml"
+  when: item.changed
+  with_items: "{{ pv_templates.results }}"
+  register: oc_output
+  run_once: true
+
+- name: show oc output
+  debug:
+    msg: "{{ oc_output }}"
+  when: oc_output.changed
+  run_once: true
+
+- name: remove pv template file
+  file:
+    state: absent
+    path: "{{ item.item.dest }}"
+  when: item.changed
+  with_items: oc_output.results
+  run_once: true

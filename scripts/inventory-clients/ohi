@@ -12,6 +12,7 @@ import argparse
 import sys
 import os
 import ConfigParser
+import json
 
 # openshift-tools python libs not installed on jenkins instance
 # pylint: disable=import-error
@@ -51,6 +52,10 @@ class Ohi(object):
             self.aws.print_host_types()
             return 0
 
+        if self.args.list_clusters:
+            self.aws.print_cluster_list()
+            return 0
+
         if self.args.v3:
             version = '3'
         elif self.args.all_versions:
@@ -62,13 +67,25 @@ class Ohi(object):
                                        host_type=self.args.host_type,
                                        sub_host_type=self.args.sub_host_type,
                                        envs=self.args.env,
-                                       version=version,
-                                       cached=self.args.cache_only)
+                                       version=version)
 
         if hosts is None:
             # We weren't able to determine what they wanted to do
             raise ArgumentError("Invalid combination of arguments")
 
+        if self.args.output == None:
+            self.default_output(hosts)
+        elif self.args.output == "json":
+            self.json_output(hosts)
+        else:
+            raise ArgumentError("Invalid output format")
+
+        return 0
+
+    def default_output(self, hosts):
+        '''
+            Prints the classic output, useful for generating pssh files
+        '''
         if self.args.ip:
             hosts = self.aws.convert_to_ip(hosts)
 
@@ -78,7 +95,18 @@ class Ohi(object):
             else:
                 print host
 
-        return 0
+    def json_output(self, hosts):
+        '''
+            Prints the name and ip in json format, useful for reading the output into ansible
+        '''
+        out_hosts = []
+        for host in hosts:
+            temp_host = {
+                'name': host,
+                'ip': self.aws.convert_to_ip(host)[0]
+            }
+            out_hosts.append(temp_host)
+        print json.dumps(out_hosts)
 
     def parse_config_file(self):
         '''
@@ -101,6 +129,7 @@ class Ohi(object):
         parser = argparse.ArgumentParser(description='OpenShift Host Inventory')
 
         parser.add_argument('--list-host-types', default=False, action='store_true', help='List all of the host types')
+        parser.add_argument('--list-clusters', default=False, action='store_true', help='List all of the clusters')
         parser.add_argument('--list', default=False, action='store_true', help='List all hosts')
 
         parser.add_argument('-c', '--cluster', action="append", help="Which clusterid to use")
@@ -112,8 +141,7 @@ class Ohi(object):
 
         parser.add_argument('-l', '--user', action='store', default=None, help='username')
 
-        parser.add_argument('--cache-only', action='store_true', default=False,
-                            help='Retrieve the host inventory by cache only. Default is false.')
+        parser.add_argument('-o', '--output', action='store', default=None, help='output')
 
         parser.add_argument('--v2', action='store_true', default=True,
                             help='Specify the openshift version. Default is 2')

@@ -273,9 +273,46 @@ class MultiInventory(object):
         '''
         if keys and "." in keys:
             key, rest = keys.split(".", 1)
-            return self.get_entry(data[key], rest)
+            if data.has_key(key):
+                return self.get_entry(data[key], rest)
+
+            return None
         else:
             return data.get(keys, None)
+
+    def apply_cluster_vars(self, inventory, cluster_vars):
+        ''' Apply the account config cluster vars '''
+        # cluster vars go here
+        # do nothing for accounts that do not have cluster vars
+        if not cluster_vars:
+            return
+
+        cluster_tag = cluster_vars['cluster_tag']
+        synthetic_hosts = cluster_vars.get('synthetic_hosts', False)
+
+        for cluster_name, cluster in cluster_vars['clusters'].items():
+            for host in inventory['_meta']['hostvars'].values():
+                clusterid = self.get_entry(host, cluster_tag)
+
+                if clusterid == cluster_name:
+                    self.add_entry(host, 'oo_clusterid', clusterid)
+
+                    for new_var, value in cluster.items():
+                        self.add_entry(host, new_var, value)
+
+            # Apply synthetic host groups for boot strapping purposes
+            if synthetic_hosts:
+                synth_host = 'synthetic_%s' % cluster_name
+
+                inventory['_meta']['hostvars'][synth_host] = {'oo_clusterid': cluster_name}
+
+                for new_var, value in cluster.items():
+                    inventory['_meta']['hostvars'][synth_host][new_var] = value
+
+                if not inventory.has_key('synthetic_hosts'):
+                    inventory['synthetic_hosts'] = []
+
+                inventory['synthetic_hosts'].append(synth_host)
 
     def apply_extra_vars(self, inventory, extra_vars):
         ''' Apply the account config extra vars '''
@@ -295,13 +332,19 @@ class MultiInventory(object):
         ''' Apply the account config for extra groups '''
         _ = self # Here for pylint.  wanted an instance method instead of static
         for new_var, value in extra_groups.items():
-            for _ in inventory['_meta']['hostvars'].values():
+            for name, _ in inventory['_meta']['hostvars'].items():
+                if 'synthetic_' in name:
+                    continue
+
                 inventory["%s_%s" % (new_var, value)] = copy.copy(inventory['all_hosts'])
 
     def apply_clone_groups(self, inventory, clone_groups):
         ''' Apply the account config for clone groups '''
         for to_name, from_name in clone_groups.items():
             for name, data in inventory['_meta']['hostvars'].items():
+                if 'synthetic_' in name:
+                    continue
+
                 key = '%s_%s' % (to_name, self.get_entry(data, from_name))
                 if not inventory.has_key(key):
                     inventory[key] = []
@@ -335,7 +378,10 @@ class MultiInventory(object):
     def apply_account_config(self, acc_name, acc_config):
         ''' Apply account config settings '''
         results = self.all_inventory_results[acc_name]
+
         results['all_hosts'] = results['_meta']['hostvars'].keys()
+
+        self.apply_cluster_vars(results, acc_config.get('cluster_vars', {}))
 
         self.apply_extra_vars(results['_meta']['hostvars'], acc_config.get('extra_vars', {}))
 

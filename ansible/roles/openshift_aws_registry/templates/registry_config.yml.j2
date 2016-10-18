@@ -12,8 +12,9 @@ storage:
     accesskey: {{ osareg_aws_access_key }}
     secretkey: {{ osareg_aws_secret_key }}
     region: {{ osareg_region }}
-    bucket: {{ osareg_s3_bucket_name }}
+    bucket: {{ osareg_bucket_name }}
     encrypt: true
+    keyid: {{ osareg_kms_arn }}
     secure: true
     v4auth: true
     rootdirectory: /registry

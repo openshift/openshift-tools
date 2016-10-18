@@ -13,14 +13,16 @@ def main():
             state=dict(default='present', type='str',
                        choices=['present', 'absent', 'list', 'add']),
             debug=dict(default=False, type='bool'),
-            kind=dict(default='node', type='str',
+            kind=dict(default=None, type='str', required=True,
                           choices=['node', 'pod']),
-            name=dict(default=None, required=True, type='str'),
-            namespace=dict(default=None, required=True, type='str'),
+            name=dict(default=None, type='str'),
+            namespace=dict(default=None, type='str'),
             labels=dict(default=None, type='list'),
+            selector=dict(default=None, type='str'),
             host=dict(default=None, type='str'),
         ),
         supports_check_mode=True,
+        mutually_exclusive = (['name', 'selector']),
     )
 
     oc_label = OCLabel(module.params['name'],
@@ -28,9 +30,12 @@ def main():
                        module.params['kind'],
                        module.params['kubeconfig'],
                        module.params['labels'],
+                       module.params['selector'],
                        verbose=module.params['debug'])
 
     state = module.params['state']
+    name = module.params['name']
+    selector = module.params['selector']
 
     api_rval = oc_label.get()
 
@@ -44,6 +49,8 @@ def main():
     # Add
     #######
     if state == 'add':
+        if not (name or selector):
+            module.fail_json( msg="Parameter 'name' or 'selector' is required if state == 'add'")
         if not oc_label.all_user_labels_exist():
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed an addition.')
@@ -60,8 +67,10 @@ def main():
     # Delete
     ########
     if state == 'absent':
-        if oc_label.any_label_exists():
+        if not (name or selector):
+            module.fail_json( msg="Parameter 'name' or 'selector' is required if state == 'absent'")
 
+        if oc_label.any_label_exists():
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a delete.')
 
@@ -78,6 +87,8 @@ def main():
         ########
         # Update
         ########
+        if not (name or selector):
+            module.fail_json( msg="Parameter 'name' or 'selector' is required if state == 'present'")
         # if all the labels passed in don't already exist
         # or if there are currently stored labels that haven't
         # been passed in

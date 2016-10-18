@@ -19,9 +19,9 @@ g_template_aws:
     value_type: int
 
   ztriggers:
-  - name: 'EBS Snapshot deletion failed on {HOST.NAME}'
-    expression: '{Template AWS:aws.ebs.snapshotter.deletion_errors.min(#3)}>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ebs_snapshotter.asciidoc'
+  - name: "EBS Snapshot deletion failed on {HOST.NAME}"
+    expression: "{Template AWS:aws.ebs.snapshotter.deletion_errors.min(#3)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ebs_snapshotter.asciidoc"
     priority: average
 
   zdiscoveryrules:
@@ -37,47 +37,47 @@ g_template_aws:
 
   zitemprototypes:
   - discoveryrule_key: disc.aws
-    name: "S3 bucket size (GB) [{#S3_BUCKET}]"
-    key: "disc.aws.size[{#S3_BUCKET}]"
+    name: "{% raw %}S3 bucket size (GB) [{{ '{#' }}S3_BUCKET}]{% endraw %}"
+    key: "{% raw %}disc.aws.size[{{ '{#' }}S3_BUCKET}]{% endraw %}"
     value_type: int
     description: "Size of S3 bucket"
     applications:
     - AWS
 
   - discoveryrule_key: disc.aws
-    name: "S3 bucket object count [{#S3_BUCKET}]"
-    key: "disc.aws.objects[{#S3_BUCKET}]"
+    name: "{% raw %}S3 bucket object count [{{ '{#' }}S3_BUCKET}]{% endraw %}"
+    key: "{% raw %}disc.aws.objects[{{ '{#' }}S3_BUCKET}]{% endraw %}"
     value_type: int
     description: "Objects in S3 bucket"
     applications:
     - AWS
 
   - discoveryrule_key: disc.aws.ebs.snapshotter
-    name: "Total snapshottable volumes [{#OSO_SNAP_SCHEDULE}]"
-    key: "disc.aws.ebs.snapshotter.snapshottable_volumes[{#OSO_SNAP_SCHEDULE}]"
+    name: "{% raw %}Total snapshottable volumes [{{ '{#' }}OSO_SNAP_SCHEDULE}]{% endraw %}"
+    key: "{% raw %}disc.aws.ebs.snapshotter.snapshottable_volumes[{{ '{#' }}OSO_SNAP_SCHEDULE}]{% endraw %}"
     value_type: int
     description: "Total number of snapshottable volumes"
     applications:
     - EBS Snapshotter
 
   - discoveryrule_key: disc.aws.ebs.snapshotter
-    name: "Total number of snapshots created [{#OSO_SNAP_SCHEDULE}]"
-    key: "disc.aws.ebs.snapshotter.snapshots_created[{#OSO_SNAP_SCHEDULE}]"
+    name: "{% raw %}Total number of snapshots created [{{ '{#' }}OSO_SNAP_SCHEDULE}]{% endraw %}"
+    key: "{% raw %}disc.aws.ebs.snapshotter.snapshots_created[{{ '{#' }}OSO_SNAP_SCHEDULE}]{% endraw %}"
     value_type: int
     description: "Total number of snapshots created"
     applications:
     - EBS Snapshotter
 
   - discoveryrule_key: disc.aws.ebs.snapshotter
-    name: "Total number of snapshot creation errors [{#OSO_SNAP_SCHEDULE}]"
-    key: "disc.aws.ebs.snapshotter.snapshot_creation_errors[{#OSO_SNAP_SCHEDULE}]"
+    name: "{% raw %}Total number of snapshot creation errors [{{ '{#' }}OSO_SNAP_SCHEDULE}]{% endraw %}"
+    key: "{% raw %}disc.aws.ebs.snapshotter.snapshot_creation_errors[{{ '{#' }}OSO_SNAP_SCHEDULE}]{% endraw %}"
     value_type: int
     description: "Total number of snapshot creation errors"
     applications:
     - EBS Snapshotter
 
   ztriggerprototypes:
-  - name: 'EBS Snapshotter[{#OSO_SNAP_SCHEDULE}]: error creating ebs snapshots on {HOST.NAME}'
-    expression: '{Template AWS:disc.aws.ebs.snapshotter.snapshot_creation_errors[{#OSO_SNAP_SCHEDULE}].min(#3)}>0'
-    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ebs_snapshotter.asciidoc'
+  - name: "{% raw %}EBS Snapshotter[{{ '{#' }}OSO_SNAP_SCHEDULE}]: error creating ebs snapshots on {HOST.NAME}{% endraw %}"
+    expression: "{% raw %}{Template AWS:disc.aws.ebs.snapshotter.snapshot_creation_errors[{{ '{#' }}OSO_SNAP_SCHEDULE}].min(#3)}>0{% endraw %}"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ebs_snapshotter.asciidoc"
     priority: average

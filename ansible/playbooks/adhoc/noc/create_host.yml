@@ -47,7 +47,7 @@
             port: 10050
           groups:
           - groupid: 1
-          templates: "{{ tmpl_results.results | oo_collect('templateid') | oo_build_zabbix_list_dict('templateid') }}"
+          templates: "{{ tmpl_results.results | ops_collect('templateid') | ops_build_zabbix_list_dict('templateid') }}"
           output: extend
           filter:
             host:

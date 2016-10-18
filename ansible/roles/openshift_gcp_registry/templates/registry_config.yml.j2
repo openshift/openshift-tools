@@ -1,0 +1,22 @@
+version: 0.1
+log:
+  level: debug
+http:
+  addr: :5000
+storage:
+  cache:
+    layerinfo: inmemory
+  delete:
+    enabled: true
+  gcs:
+    bucket: {{ osgreg_bucket_name }}
+    keyfile: {{ osgreg_registry_cred_path }}/{{ osgreg_registry_cred_secret_name }}
+    rootdirectory: /registry
+auth:
+  openshift:
+    realm: openshift
+middleware:
+  repository:
+    - name: openshift
+      options:
+        pullthrough: true

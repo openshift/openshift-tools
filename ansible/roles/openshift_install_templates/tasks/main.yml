@@ -1,41 +1,47 @@
 ---
+- name: get oc version
+  oc_version:
+  register: oc_version
+
+- name: set the kube version
+  set_fact:
+    kube_version: "{{ oc_version.kubernetes_short }}"
+
 - name: Ensure openshift-ansible-roles is installed
   action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
   with_items:
   - openshift-ansible-roles
 
 - name: Process and create templates
-  command: "oc --config /etc/origin/master/admin.kubeconfig -n openshift create -f {{ item }}"
+  command: "/usr/bin/oc --config /etc/origin/master/admin.kubeconfig -n openshift create -f {{ item }}"
   with_fileglob:
-  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/image-streams/image-streams-rhel7.*
-  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/db-templates
-  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/infrastructure-templates
-  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/quickstart-templates
-  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/xpaas*
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/image-streams/image-streams-rhel7.*"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/db-templates"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/quickstart-templates"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/xpaas*"
   ignore_errors: yes
   run_once: yes
 
 - name: Process and replace templates
-  command: "oc --config /etc/origin/master/admin.kubeconfig -n openshift replace -f {{ item }}"
+  command: "/usr/bin/oc --config /etc/origin/master/admin.kubeconfig -n openshift replace -f {{ item }}"
   with_fileglob:
-  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/image-streams/image-streams-rhel7.*
-  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/db-templates
-  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/infrastructure-templates
-  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/quickstart-templates
-  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/xpaas*
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/image-streams/image-streams-rhel7.*"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/db-templates"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/quickstart-templates"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/xpaas*"
   ignore_errors: yes
   run_once: yes
 
-#- name: Process and create templates
-#  oc_process:
-#    namespace: openshift
-#    template_name: "{{ item }}"
-#    create: True
-#  with_items:
-#  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/image-streams/image-streams-rhel7.json
-#  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/db-templates
-#  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/infrastructure-templates
-#  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/quickstart-templates
-#  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/xpaas-streams
-#  - /usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/xpaas-templates
-#  register: processout
+- name: get list of image streams
+  oc_obj:
+    state: list
+    kind: imagestreams
+    namespace: openshift
+  register: imagestreams_out
+  run_once: yes
+
+- name: Import the image stream images
+  command: "/usr/bin/oc --config /etc/origin/master/admin.kubeconfig -n openshift import-image {{ item }}"
+  with_items: "{{ imagestreams_out.results.results[0]['items'] | map(attribute='metadata') | map(attribute='name') | list }}"
+  ignore_errors: yes
+  run_once: yes

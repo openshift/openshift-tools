@@ -2,7 +2,7 @@
 
 def main():
     '''
-    ansible oc module for secrets
+    ansible oc module for router
     '''
 
     module = AnsibleModule(
@@ -17,7 +17,7 @@ def main():
             cert_file=dict(default=None, type='str'),
             key_file=dict(default=None, type='str'),
             images=dict(default=None, type='str'), #'openshift3/ose-${component}:${version}'
-            latest_image=dict(default=False, type='bool'),
+            latest_images=dict(default=False, type='bool'),
             labels=dict(default=None, type='list'),
             ports=dict(default=['80:80', '443:443'], type='list'),
             replicas=dict(default=1, type='int'),
@@ -42,6 +42,8 @@ def main():
             stats_port=dict(default=1936, type='int'),
             # extra
             cacert_file=dict(default=None, type='str'),
+            # edits
+            edits=dict(default={}, type='dict'),
         ),
         mutually_exclusive=[["router_type", "images"]],
 
@@ -55,7 +57,7 @@ def main():
                             'cert_file': {'value': module.params['cert_file'], 'include': False},
                             'key_file': {'value': module.params['key_file'], 'include': False},
                             'images': {'value': module.params['images'], 'include': True},
-                            'latest_image': {'value': module.params['latest_image'], 'include': True},
+                            'latest_images': {'value': module.params['latest_images'], 'include': True},
                             'labels': {'value': module.params['labels'], 'include': True},
                             'ports': {'value': ','.join(module.params['ports']), 'include': True},
                             'replicas': {'value': module.params['replicas'], 'include': True},
@@ -83,6 +85,8 @@ def main():
                             'stats_port': {'value': module.params['stats_port'], 'include': True},
                             # extra
                             'cacert_file': {'value': module.params['cacert_file'], 'include': False},
+                            # edits
+                            'edits': {'value': module.params['edits'], 'include': False},
                            })
 
 
@@ -143,5 +147,6 @@ def main():
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
-from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    from ansible.module_utils.basic import *
+    main()

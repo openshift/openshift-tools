@@ -9,6 +9,7 @@ Requirements
 Ansible Modules:
 
 - tools_roles/lib_openshift_3.2
+- tools_roles/lib_utils
 
 
 Role Variables
@@ -23,7 +24,7 @@ osareg_clusterid: clusterid.  The generates the domain name
 osareg_master_nodes: the master nodes that need to be restarted
 osareg_region: region to install the s3 bucket.
 osareg_registry_http_secret: secret for the docker registry needed for load balancing
-osareg_s3_bucket_name: name of the s3 bucket to store the docker registry
+osareg_bucket_name: name of the bucket to store the docker registry
 
 Dependencies
 ------------

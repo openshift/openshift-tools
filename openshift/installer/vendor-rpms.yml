@@ -42,7 +42,7 @@
     args:
       chdir: "{{ vendored_dir }}"
     with_fileglob:
-    - "{{ rpm_directory }}/openshift-ansible-*-{{ installer_version }}*.rpm"
+    - "{{ rpm_directory }}/openshift-ansible-*{{ installer_version }}*.rpm"
 
   - name: Fix up the extracted contents into a normal ansible layout
     command: "mv {{ item | quote }} {{ vendored_dir }}"
@@ -51,6 +51,7 @@
     - "{{ vendored_dir }}/usr/share/ansible_plugins/lookup_plugins/"
     - "{{ vendored_dir }}/usr/share/ansible/openshift-ansible/playbooks/"
     - "{{ vendored_dir }}/usr/share/ansible/openshift-ansible/roles/"
+    - "{{ vendored_dir }}/usr/share/ansible/openshift-ansible/library/"
 
   # TODO: Figure out a better way to do this, other than maintaining a list of things to delete.
   - name: Make the vendored directory ONLY be the BYO installer
@@ -85,6 +86,24 @@
     - roles/rhel_unsubscribe
     - roles/tito
     - roles/yum_repos
+
+  - name: Symlink the filter and lookup plugins (no longer shipped with rpm) for byo/config
+    file:
+      state: link
+      src: "../../{{ item }}"
+      dest: "{{ vendored_dir }}/playbooks/byo/{{ item }}"
+    with_items:
+    - filter_plugins
+    - lookup_plugins
+
+  - name: Symlink the filter and lookup plugins (no longer shipped with rpm) byo/<subdirs>
+    file:
+      state: link
+      src: "../../../{{ item[0] }}"
+      dest: "{{ vendored_dir }}/playbooks/byo/{{ item[1] }}/{{ item[0] }}"
+    with_nested:
+    - [ 'filter_plugins', 'lookup_plugins' ]
+    - [ 'openshift-cluster', 'openshift-master', 'openshift-node']
 
   - name: Symlink the openshift version to the installer
     file:

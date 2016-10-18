@@ -1,0 +1,59 @@
+---
+- name: stat the files that are going to be encrypted
+  stat:
+    path: "{{ gpges_dir }}/{{ item.username }}"
+  with_items: "{{ gpges_users }}"
+  register: plain_files_stat
+  no_log: True
+
+- name: Encrypt credentials and write to file
+  shell: 'gpg --yes --output {{ gpges_dir }}/{{ item[0].username}}-{{ gpges_file_name }}.gpg --encrypt --recipient {{ item[0].gpgkey }} --trust-model always {{ gpges_dir }}/{{ item[0].username}}'
+  when: item[1].stat.exists
+  with_together:
+  - "{{ gpges_users }}"
+  - "{{ plain_files_stat.results }}"
+  register: encrypted_results
+  no_log: True
+
+- name: stat the gpg encrytped files
+  stat:
+    path: "{{ gpges_dir }}/{{ item.username }}-{{ gpges_file_name }}.gpg"
+  with_items: "{{ gpges_users }}"
+  register: gpg_files_stat
+  no_log: True
+
+- name: Remove unencrypted files
+  file:
+    path: "{{ gpges_dir }}/{{ item[0].username }}"
+    state: absent
+  when: item[1].stat.exists
+  with_together:
+  - "{{ gpges_users }}"
+  - "{{ plain_files_stat.results }}"
+  no_log: True
+
+- name: Send credentials to users
+  mail:
+    host: localhost
+    port: 25
+    to: "{{ item[0].username }}@{{ gpges_email_domain }}"
+    from: libra-ops@redhat.com
+    subject: "{{ gpges_mail_subject }}"
+    body: See attached gpg encrypted file.
+    attach: "{{ gpges_dir }}/{{ item[0].username }}-{{ gpges_file_name }}.gpg"
+  when: item[1].stat.exists
+  with_together:
+  - "{{ gpges_users }}"
+  - "{{ gpg_files_stat.results }}"
+  no_log: True
+  register: emailed_results
+
+- name: Remove encrypted files
+  file:
+    path: "{{ gpges_dir }}/{{ item[0].username }}-{{ gpges_file_name }}.gpg"
+    state: absent
+  with_together:
+  - "{{ gpges_users }}"
+  - "{{ gpg_files_stat.results }}"
+  when: item[1].stat.exists
+  no_log: True

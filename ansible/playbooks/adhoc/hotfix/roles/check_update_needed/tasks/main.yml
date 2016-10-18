@@ -1,0 +1,25 @@
+---
+- name: Set default values for update_needed=False and update_successful=False
+  set_fact: 
+    update_needed: False
+    update_successful: False
+    downgrade_successful: False
+
+- name: Check if update is needed
+  command: "rpm -qa atomic-openshift"
+  register: openshift_rpm_info
+  changed_when: False
+
+- name: The installed version of the rpm didn't match what we wanted. Set update_needed=True
+  set_fact: 
+    update_needed: True
+  when: "{{ openshift_rpm_info.stdout.find(version_wanted) == -1 }}"
+
+- debug:
+    msg: "RPM version wanted {{ rpm_wanted }}"
+
+- debug:
+    msg: "RPM version installed {{ openshift_rpm_info.stdout }}"
+
+- debug:
+    msg: "Update needed? {{ update_needed }}"

@@ -1,0 +1,144 @@
+# pylint: skip-file
+
+# vim: expandtab:tabstop=4:shiftwidth=4
+
+#   Copyright 2016 Red Hat Inc.
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#  Purpose: An ansible module to communicate with zabbix.
+#  Requires Packages on python < 2.7.9:
+#      python-pyasn1 python-ndg_httpsclient pyOpenSSL
+#
+
+DOCUMENTATION = '''
+module: zbx_maintenance
+short_description: Create, modify, and idempotently manage zabbix mainteance.
+description:
+  - Manage zabbix maintenances programmatically.
+options:
+  zbx_server:
+    description:
+    - zabbix server url
+    required: false
+    default: https://localhost/zabbix/api_jsonrpc.php
+    aliases: []
+  zbx_user:
+    description:
+    - zabbix server username
+    required: false
+    default: lookup env var named ZABBIX_USER or None
+    aliases: []
+  zbx_password:
+    description:
+    - zabbix server password
+    required: false
+    default: lookup env var named ZABBIX_PASSWORD or None
+    aliases: []
+  zbx_debug:
+    description:
+    - Turn on zabbix debug messages.
+    required: false
+    default: false
+    aliases: []
+  zbx_sslverify:
+    description:
+    - Turn on/off sslverification
+    required: false
+    default: false
+    aliases: []
+  state:
+    description:
+    - Whether to create, update, delete, or list the desired object
+    required: false
+    default: present
+    aliases: []
+  hosts:
+    description:
+    - A list of hosts to put into maintenance
+    required: false
+    default: None
+    aliases: []
+  hostgroups:
+    description:
+    - A list of hostgroups to put into maintenance
+    required: false
+    default: None
+    aliases: []
+  name:
+    description:
+    - Name of the zabbix maintenance
+    required: false
+    default: None
+    aliases: []
+  description:
+    description:
+    - Description of the zabbix maintenance
+    required: false
+    default: None
+    aliases: []
+  start_time:
+    description:
+    - The epoch representation of the start of the maintenance time
+    required: false
+    default: int(time.time())
+    aliases: []
+  duration:
+    description:
+    - The amount of time you want for maintenance in minutes
+    required: false
+    default: 60
+    aliases: []
+  data_collection:
+    description:
+    - Whether to collect data during the maintenance window
+    required: false
+    default: True
+    aliases: []
+'''
+
+EXAMPLES = '''
+# zabbix maintenance
+  - name: create maintenance
+    zbx_maintenance:
+      zbx_server: 'https://localhost/zabbix/api_jsonrpc.php'
+      zbx_user: Admin
+      zbx_password: zabbix
+      zbx_debug: False
+      zbx_sslverify: True
+      name: maintenance test
+      description: testing my maintenance
+      start_time: 1473861286
+      duration: 15
+      data_collection: False
+      hostgroups:
+      - Int Environment
+
+# Env vars for user / pass and defaults for others
+# lookup for epoch
+# hosts passed as an array
+  - name: create maintenance
+    zbx_maintenance:
+      zbx_server: 'https://localhost/zabbix/api_jsonrpc.php'
+      name: maintenance test
+      description: testing my maintenance
+      start_time: "{{ lookup('pipe', 'date +%s') }}"
+      duration: 15
+      data_collection: False
+      hosts:
+      - host1
+      - host2
+# Note: when creating a maintenance with a variable for start_time it will
+# continue to change when rerunning the module as the time will be different
+# and require an update.
+'''

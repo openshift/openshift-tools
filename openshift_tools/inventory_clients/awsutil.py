@@ -24,13 +24,15 @@ class ArgumentError(Exception):
 class AwsUtil(object):
     """This class contains the AWS utility functions."""
 
-    def __init__(self, host_type_aliases=None):
+    def __init__(self, host_type_aliases=None, use_cache=True):
         """Initialize the AWS utility class.
 
         Keyword arguments:
         host_type_aliases -- a list of aliases to common host-types (e.g. ex-node)
+        use_cache -- rely on cached inventory instead of querying for new inventory
         """
 
+        self.cached = use_cache
         self.alias_lookup = {}
         host_type_aliases = host_type_aliases or {}
 
@@ -45,89 +47,61 @@ class AwsUtil(object):
             for value in values:
                 self.alias_lookup[value] = key
 
-    @staticmethod
-    def get_inventory(args=None, cached=False):
+    def get_inventory(self, args=None):
         """Calls the inventory script and returns a dictionary containing the inventory."
 
         Keyword arguments:
         args -- optional arguments to pass to the inventory script
         """
         minv = multi_inventory.MultiInventory(args)
-        if cached:
+        if self.cached:
             minv.get_inventory_from_cache()
         else:
             minv.run()
         return minv.result
 
+    def _get_tags_(self, regex):
+        """ Searches for tags in the inventory and returns all of the tags
+            found.
+
+            Param: a compiled regular expression
+            Returns: a List of tags
+        """
+
+        tags = []
+        inv = self.get_inventory()
+        for key in inv.keys():
+            matched = regex.match(key)
+            if matched:
+                tags.append(matched.group(1))
+
+        tags.sort()
+        return tags
+
     def get_clusters(self):
         """Searches for cluster tags in the inventory and returns all of the clusters found."""
         pattern = re.compile(r'^oo_clusterid_(.*)')
-
-        clusters = []
-        inv = self.get_inventory()
-        for key in inv.keys():
-            matched = pattern.match(key)
-            if matched:
-                clusters.append(matched.group(1))
-
-        clusters.sort()
-        return clusters
+        return self._get_tags_(pattern)
 
     def get_environments(self):
         """Searches for env tags in the inventory and returns all of the envs found."""
         pattern = re.compile(r'^oo_environment_(.*)')
-
-        envs = []
-        inv = self.get_inventory()
-        for key in inv.keys():
-            matched = pattern.match(key)
-            if matched:
-                envs.append(matched.group(1))
-
-        envs.sort()
-        return envs
+        return self._get_tags_(pattern)
 
     def get_host_types(self):
         """Searches for host-type tags in the inventory and returns all host-types found."""
         pattern = re.compile(r'^oo_hosttype_(.*)')
-
-        host_types = []
-        inv = self.get_inventory()
-        for key in inv.keys():
-            matched = pattern.match(key)
-            if matched:
-                host_types.append(matched.group(1))
-
-        host_types.sort()
-        return host_types
+        return self._get_tags_(pattern)
 
     def get_sub_host_types(self):
         """Searches for sub-host-type tags in the inventory and returns all sub-host-types found."""
         pattern = re.compile(r'^oo_subhosttype_(.*)')
-
-        sub_host_types = []
-        inv = self.get_inventory()
-        for key in inv.keys():
-            matched = pattern.match(key)
-            if matched:
-                sub_host_types.append(matched.group(1))
-
-        sub_host_types.sort()
-        return sub_host_types
+        return self._get_tags_(pattern)
 
     def get_security_groups(self):
         """Searches for security_groups in the inventory and returns all SGs found."""
         pattern = re.compile(r'^security_group_(.*)')
-
-        groups = []
-        inv = self.get_inventory()
-        for key in inv.keys():
-            matched = pattern.match(key)
-            if matched:
-                groups.append(matched.group(1))
-
-        groups.sort()
-        return groups
+        return self._get_tags_(pattern)
 
     def build_host_dict_by_env(self, args=None):
         """Searches the inventory for hosts in an env and returns their hostvars."""
@@ -166,6 +140,13 @@ class AwsUtil(object):
             else:
                 print  ht_format_str % host_type
         print
+
+    def print_cluster_list(self):
+        """Gets the list of clusters and outputs them"""
+        clusters = self.get_clusters()
+
+        for cluster in clusters:
+            print cluster
 
     def resolve_host_type(self, host_type):
         """Converts a host-type alias into a host-type.
@@ -214,13 +195,13 @@ class AwsUtil(object):
 
     # This function uses all of these params to perform a filters on our host inventory.
     # pylint: disable=too-many-arguments
-    def get_host_list(self, clusters=None, host_type=None, sub_host_type=None, envs=None, version=None, cached=False):
+    def get_host_list(self, clusters=None, host_type=None, sub_host_type=None, envs=None, version=None):
         """Get the list of hosts from the inventory using host-type and environment
         """
         retval = set([])
         envs = envs or []
 
-        inv = self.get_inventory(cached=cached)
+        inv = self.get_inventory()
 
         retval.update(inv.get('all_hosts', []))
 
@@ -257,10 +238,13 @@ class AwsUtil(object):
 
         return list(retval)
 
-    def convert_to_ip(self, hosts, cached=False):
+    def convert_to_ip(self, hosts):
         """convert a list of host names to ip addresses"""
 
-        inv = self.get_inventory(cached=cached)
+        if not isinstance(hosts, list):
+            hosts = [hosts]
+
+        inv = self.get_inventory()
         ips = []
         for host in hosts:
             ips.append(inv['_meta']['hostvars'][host]['oo_public_ip'])

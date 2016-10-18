@@ -11,22 +11,18 @@
 #   cron but using systemd timers
 #           -v /run:/run                                     \
 
+CONFIG_SOURCE=$(readlink -f ./container_setup)
 sudo docker run --rm=true -it --name oso-{{ base_os }}-host-monitoring \
            --privileged                                     \
            --pid=host                                       \
            --net=host                                       \
            --ipc=host                                       \
-           -e OSO_CLUSTER_GROUP=localcgrp                   \
-           -e OSO_CLUSTER_ID=localcid                       \
-           -e OSO_ENVIRONMENT=localprod                     \
-           -e OSO_HOST_TYPE=master                          \
-           -e OSO_SUB_HOST_TYPE=default                     \
-           -e OSO_MASTER_HA=True                            \
-           -e OSO_MASTER_PRIMARY=True                       \
            -v /etc/localtime:/etc/localtime:ro              \
            -v /sys:/sys:ro                                  \
            -v /sys/fs/selinux                               \
            -v /var/lib/docker:/var/lib/docker:ro            \
            -v /var/lib/docker/volumes/shared:/shared:rw     \
            -v /var/run/docker.sock:/var/run/docker.sock     \
+           -v ${CONFIG_SOURCE}:/container_setup:ro \
+           --memory 512m \
            oso-{{ base_os }}-host-monitoring $@

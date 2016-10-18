@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.62
+Version:       0.0.87
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -29,6 +29,10 @@ cp -p cloud/*.py %{buildroot}%{python_sitelib}/openshift_tools/cloud
 # openshift_tools/cloud/aws install
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/cloud/aws
 cp -p cloud/aws/*.py %{buildroot}%{python_sitelib}/openshift_tools/cloud/aws
+
+# openshift_tools/cloud/gcp install
+mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/cloud/gcp
+cp -p cloud/gcp/*.py %{buildroot}%{python_sitelib}/openshift_tools/cloud/gcp
 
 # openshift_tools/monitoring install
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/monitoring
@@ -112,13 +116,12 @@ Docker Python libraries developed for monitoring OpenShift.
 %{python_sitelib}/openshift_tools/monitoring/dockerutil.py[co]
 
 
-
 # ----------------------------------------------------------------------------------
 # python-openshift-tools-monitoring-zagg subpackage
 # ----------------------------------------------------------------------------------
 %package monitoring-zagg
 Summary:       OpenShift Tools Zagg Python Libraries Package
-Requires:      python2,python-openshift-tools,python-openshift-tools-web,python-zbxsend
+Requires:      python2,python-openshift-tools,python-openshift-tools-web,python-zbxsend,python-redis
 BuildArch:     noarch
 
 %description monitoring-zagg
@@ -147,6 +150,20 @@ AWS Python libraries developed for monitoring OpenShift.
 %{python_sitelib}/openshift_tools/monitoring/awsutil.py
 %{python_sitelib}/openshift_tools/monitoring/awsutil.py[co]
 
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-monitoring-gcp subpackage
+# ----------------------------------------------------------------------------------
+%package monitoring-gcp
+Summary:       OpenShift Tools GCP Python Libraries Package
+Requires:      python2,python-openshift-tools
+BuildArch:     noarch
+
+%description monitoring-gcp
+GCP Python libraries developed for monitoring OpenShift.
+
+%files monitoring-gcp
+%{python_sitelib}/openshift_tools/monitoring/gcputil.py
+%{python_sitelib}/openshift_tools/monitoring/gcputil.py[co]
 
 # ----------------------------------------------------------------------------------
 # python-openshift-tools-monitoring-openshift subpackage
@@ -174,7 +191,7 @@ Openshift Python libraries developed for monitoring OpenShift.
 %package ansible
 Summary:       OpenShift Tools Ansible Python Package
 # TODO: once the zbxapi ansible module is packaged, add it here as a dep
-Requires:      python2,python-openshift-tools,python-zbxsend,ansible1.9,openshift-tools-ansible-zabbix
+Requires:      python2,python-openshift-tools,python-zbxsend,ansible,openshift-tools-ansible-zabbix
 BuildArch:     noarch
 
 %description ansible
@@ -256,8 +273,117 @@ Adds Aws specific python modules
 %{python_sitelib}/openshift_tools/cloud/aws/*.py
 %{python_sitelib}/openshift_tools/cloud/aws/*.py[co]
 
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-cloud-gcp subpackage
+# ----------------------------------------------------------------------------------
+%package cloud-gcp
+Summary:       OpenShift Tools GCP Cloud Python Package
+Requires:      python2,python-openshift-tools-cloud,python-boto
+BuildArch:     noarch
+
+%description cloud-gcp
+Adds GCP specific python modules
+
+# openshift_tools/cloud/gcp files
+%files cloud-gcp
+%dir %{python_sitelib}/openshift_tools/cloud/gcp
+%{python_sitelib}/openshift_tools/cloud/gcp/*.py
+%{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Tue Oct 11 2016 Wesley Hearn <whearn@redhat.com> 0.0.87-1
+- Add openshift metrics checks. Updated ocutil with more features
+  (whearn@redhat.com)
+
+* Thu Oct 06 2016 Joel Diaz <jdiaz@redhat.com> 0.0.86-1
+- migrate to ansible2 (jdiaz@redhat.com)
+
+* Wed Oct 05 2016 Thomas Wiest <twiest@redhat.com> 0.0.85-1
+- Added a sleep between AWS API calls. (twiest@redhat.com)
+- Fixed bug in cgrouputil.py where it would throw file not found exceptions
+  when the cgroup had gone away. (twiest@redhat.com)
+
+* Mon Sep 26 2016 Sten Turpin <sten@redhat.com> 0.0.84-1
+- add python-redis dependency (jdiaz@redhat.com)
+
+* Thu Sep 22 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.83-1
+- change ohi/ossh/etc to just use cache by default (jdiaz@redhat.com)
+
+* Thu Sep 22 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.82-1
+- zagg uses redis (ihorvath@redhat.com)
+
+* Tue Sep 20 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.81-1
+- Added gcs monitoring. (kwoodson@redhat.com)
+
+* Fri Sep 16 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.80-1
+- Fixes for labeling, snapshotting, and trimming snapshots.
+  (kwoodson@redhat.com)
+
+* Thu Sep 15 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.79-1
+- changing the zagg-*-processor scripts to use multiprocessing in hope of
+  speedups (ihorvath@redhat.com)
+
+* Thu Sep 15 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.78-1
+- Fixing code for snapshots. (kwoodson@redhat.com)
+
+* Mon Sep 12 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.77-1
+- Fixed package name. (kwoodson@redhat.com)
+- Added cloud-gcp to spec. (kwoodson@redhat.com)
+
+* Mon Sep 12 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.76-1
+- Adding gcp snapshot tooling. (kwoodson@redhat.com)
+
+* Mon Sep 12 2016 Thomas Wiest <twiest@redhat.com> 0.0.75-1
+- Added cgrouputil.py and changed dockerutil to be able to use it if requested.
+  (twiest@redhat.com)
+
+* Thu Sep 08 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.74-1
+- adding sharding based on first 2 character to zagg data files
+  (ihorvath@redhat.com)
+- case issues on multipliers (K/k M/m) (dranders@redhat.com)
+
+* Mon Aug 29 2016 Joel Diaz <jdiaz@redhat.com> 0.0.73-1
+- Added cron-send-docker-containers-usage.py (twiest@redhat.com)
+
+* Wed Jul 27 2016 Wesley Hearn <whearn@redhat.com> 0.0.72-1
+- Added simple json output to ohi, updated awsutil to have convert_to_ip not
+  require a list (whearn@redhat.com)
+
+* Mon Jul 25 2016 Joel Diaz <jdiaz@redhat.com> 0.0.71-1
+- add support to ZaggSender to create/send cluster-wide synthetic items
+  (jdiaz@redhat.com)
+- add --list-cluster to ohi (sten@redhat.com)
+
+* Tue Jun 21 2016 Thomas Wiest <twiest@redhat.com> 0.0.70-1
+- Added Name and purpose tagging to ops-ec2-add-snapshot-tag-to-ebs-volumes.py
+  (twiest@redhat.com)
+
+* Mon Jun 13 2016 Thomas Wiest <twiest@redhat.com> 0.0.69-1
+- Made the snapshot and trim operations more error resistant.
+  (twiest@redhat.com)
+
+* Thu Jun 09 2016 Thomas Wiest <twiest@redhat.com> 0.0.68-1
+- Changed root device detection to be more accurate. Added volume tag and
+  attachment data to snapshot tags. (twiest@redhat.com)
+
+* Wed Jun 08 2016 Thomas Wiest <twiest@redhat.com> 0.0.67-1
+- Added more attach names for the root master and node volumes and fixed bug.
+  (twiest@redhat.com)
+
+* Wed Jun 08 2016 Thomas Wiest <twiest@redhat.com> 0.0.66-1
+- Added ops-ec2-add-snapshot-tag-to-ebs-volumes.py (twiest@redhat.com)
+
+* Wed Jun 01 2016 Sten Turpin <sten@redhat.com> 0.0.65-1
+- removed cron-send-build-app, replaced with new capabilities in cron-send-create-app
+
+* Tue May 31 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.64-1
+- 
+
+* Fri May 27 2016 Joel Diaz <jdiaz@redhat.com> 0.0.63-1
+- memory available and max-mem pod schedulable capacity checks plus new
+  'conversions' library and necessary RPM spec updates to include capacity
+  checks into monitoring-openshift.rpm (jdiaz@redhat.com)
+
 * Thu May 19 2016 Matt Woodson <mwoodson@redhat.com> 0.0.62-1
 - fixed the aws s3 check (mwoodson@redhat.com)
 

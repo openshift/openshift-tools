@@ -39,7 +39,7 @@ RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oadm '" >> /root/.bashrc
 
 RUN yum clean metadata && \
     yum install -y python-pip pcp pcp-conf pcp-testsuite \
-        python-requests \
+        python-requests pyOpenSSL \
         python-openshift-tools \
         python-openshift-tools-monitoring-pcp \
         python-openshift-tools-monitoring-docker \
@@ -49,14 +49,22 @@ RUN yum clean metadata && \
         python-openshift-tools-web \
         openshift-tools-scripts \
         openshift-tools-scripts-cloud-aws \
+        openshift-tools-scripts-cloud-gcp \
         openshift-tools-scripts-monitoring-pcp \
         openshift-tools-scripts-monitoring-docker \
         openshift-tools-scripts-monitoring-zagg-client \
         openshift-tools-scripts-monitoring-aws \
+        openshift-tools-scripts-monitoring-gcp \
         openshift-tools-scripts-monitoring-openshift \
         openshift-tools-scripts-monitoring-autoheal \
         pcp-manager pcp-webapi python-pcp \
+        pcp-manager pcp-webapi python-pcp \
+        python-uri-templates google-api-python-client \
+        python-httplib2 python-oauth2client \
+        python-pyasn1 python-pyasn1-modules python-rsa \
+        gcloud \
         openvswitch \
+        python-psutil \
         docker-python && \
     yum -y update && \
     yum clean all
@@ -77,6 +85,9 @@ RUN touch /var/log/ops-runner.log && chmod 664 /var/log/ops-runner.log
 RUN mkdir -p /root/.aws && \
     touch /root/.aws/credentials && \
     chmod g+rw /root/.aws/credentials
+
+# Add container-build-env-fingerprint
+ADD container-build-env-fingerprint.output /etc/oso-container-build-env-fingerprint
 
 # Add the start script and tell the container to run it by default
 ADD start.sh /usr/local/bin/

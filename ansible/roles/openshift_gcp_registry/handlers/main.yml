@@ -1,0 +1,9 @@
+---
+- name: restart openshift master services
+  service:
+    name: "{{ item[1] }}"
+    state: restarted
+  delegate_to: "{{ item[0] }}"
+  with_nested:
+  - "{{ osgreg_master_nodes }}"
+  - [ 'atomic-openshift-master-api', 'atomic-openshift-master-controllers' ]

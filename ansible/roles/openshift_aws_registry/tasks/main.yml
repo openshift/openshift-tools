@@ -6,12 +6,11 @@
 - name: Create S3 bucket
   delegate_to: localhost
   s3:
-    bucket: "{{ osareg_s3_bucket_name }}"
+    bucket: "{{ osareg_bucket_name }}"
     mode: create
     region: "{{ osareg_region }}"
     aws_access_key: "{{ osareg_aws_access_key }}"
     aws_secret_key: "{{ osareg_aws_secret_key }}"
-  run_once: true
 
 - name: create the default registry service
   oc_service:
@@ -52,6 +51,20 @@
     - name: registry.crt
       path: /etc/origin/master/registry.crt
   register: cert_secret_out
+
+- name: get ARN of KMS alias
+  oo_iam_kms:
+    region: "{{ osareg_region }}"
+    state: list
+    alias: "alias/{{ osareg_clusterid }}_kms"
+    aws_access_key: "{{ osareg_aws_access_key }}"
+    aws_secret_key: "{{ osareg_aws_secret_key }}"
+  delegate_to: localhost
+  register: kms_arn
+
+- name: set_fact for KMS alias ARN
+  set_fact:
+    osareg_kms_arn: "{{ kms_arn['results']['AliasArn'] }}"
 
 - name: create registry config from template
   template:
@@ -106,9 +119,10 @@
     name: docker-registry
     force: "{{ svc_out.changed or cert_secret_out.changed or registry_config_out.changed or sa_out.changed }}"
     service_account: registry
-    replicas: 2
+    replicas: "{{ osareg_replica_count }}"
     namespace: default
     selector: type=infra
+    images: "registry.ops.openshift.com/openshift3/ose-${component}:${version}"
     env_vars:
       REGISTRY_CONFIGURATION_PATH: /etc/registryconfig/config.yml
       REGISTRY_HTTP_TLS_CERTIFICATE: /etc/secrets/registry.crt
@@ -124,12 +138,28 @@
       type: secret
       secret_name: docker-registry-config
     edits:
-        spec#template#spec#containers[0]#livenessProbe#httpGet#scheme: HTTPS
-        spec#template#spec#containers[0]#readinessProbe#httpGet#scheme: HTTPS
+        spec.template.spec.containers[0].livenessProbe.httpGet.scheme: HTTPS
+        spec.template.spec.containers[0].readinessProbe.httpGet.scheme: HTTPS
+        spec.strategy.rollingParams.intervalSeconds: 1
+        spec.strategy.rollingParams.maxSurge: 50%
+        spec.strategy.rollingParams.maxUnavailable: 50%
+        spec.strategy.rollingParams.timeoutSeconds: 600
+        spec.strategy.rollingParams.updatePeriodSeconds: 1
   register: registryout
 
+- name: Pause for race conditions
+  pause:
+    seconds: 60
+  when: registryout.changed
+
 - debug: var=registryout
-  run_once: True
+
+- name: scale dc
+  oc_scale:
+    namespace: default
+    name: docker-registry
+    kind: dc
+    replicas: "{{ osareg_replica_count }}"
 
 - name: create route for the registry
   oc_route:
@@ -143,7 +173,5 @@
     service_name: docker-registry
     host: "registry.{{ osareg_clusterid }}.openshift.com"
   register: routeout
-  run_once: True
 
 - debug: var=routeout
-  run_once: True

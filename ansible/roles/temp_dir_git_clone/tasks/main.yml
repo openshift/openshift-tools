@@ -1,0 +1,24 @@
+---
+- fail:
+    msg: "Please define {{ item }}"
+  when: "{{ item }} is undefined"
+  with_items:
+  - tdgc_repo_name
+  - tdgc_repo
+
+- name: Creating temp directory
+  command: mktemp -d -t git_clone_temp_dir-XXXXXX
+  register: tempdir_output
+
+- set_fact:
+    tdgc_dest_dir: "{{ tempdir_output.stdout }}"
+
+- name: Clone the repo
+  git:
+    repo: "{{ tdgc_repo }}"
+    clone: yes
+    dest: "{{ tdgc_dest_dir }}/{{ tdgc_repo_name }}"
+    refspec: "refs/heads/{{ tdgc_branch }}"
+
+- set_fact:
+    tdgc_retval_repo_dir: "{{ tdgc_dest_dir }}/{{ tdgc_repo_name }}"

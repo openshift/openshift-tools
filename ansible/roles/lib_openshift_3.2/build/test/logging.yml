@@ -167,7 +167,7 @@
 #      namespace: logging
 #      kind: dc
 #      content:
-#        spec#template#spec#nodeSelector:
+#        spec.template.spec.nodeSelector:
 #          type: infra
 #    with_items: dcout.results.results[0]['items']
 #    register: editout
@@ -188,6 +188,7 @@
       namespace: logging
       content:
         metadata#annotations#openshift.io/node-selector: ''
+      separator: '#'
     register: editout
   - debug: var=editout
 

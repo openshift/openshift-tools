@@ -21,10 +21,11 @@ ENV USER root
 ENV HOME /root
 ENV TERM xterm
 WORKDIR /root
-ADD bashrc /root/.bashrc
+ADD root/bashrc /root/.bashrc
+ADD root/pdbrc /root/.pdbrc
 
 # Make working in Python nice
-ADD pythonrc /root/.pythonrc
+ADD root/pythonrc /root/.pythonrc
 ENV PYTHONSTARTUP=/root/.pythonrc
 
 # setup epel repo
@@ -32,7 +33,7 @@ RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.
 
 RUN yum clean metadata && \
     yum -y update && \
-    yum -y install iputils cronie ansible1.9 vim procps less ack tar psmisc && \
+    yum -y install iputils cronie ansible vim procps less ack tar psmisc python-scandir && \
     yum clean all
 
 # Setup locales.  It comes broken (probably a size issue) by default in the docker image.

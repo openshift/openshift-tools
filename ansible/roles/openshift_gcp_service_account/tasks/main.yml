@@ -1,0 +1,83 @@
+---
+- name: Stat the multi_inventory file
+  stat:
+    path: "{{ osgcpsa_destination }}/multi_inventory.yml"
+  register: user_file_stat_multi_inventory
+  when: osgcpsa_output_type == "multi_inventory"
+
+- name: Check if user file exists - multi_invntory
+  set_fact:
+    user_file_missing: True
+  when: osgcpsa_output_type == "multi_inventory" and not user_file_stat_multi_inventory.stat.exists
+
+- name: Stat the user cred file - json format
+  stat:
+    path: "{{ osgcpsa_destination }}/gcp_user_{{ osgcpsa_username}}.yml"
+  register: user_file_stat_json
+  when: osgcpsa_output_type == "json"
+
+- name: Check if user file exists - json
+  set_fact:
+    user_file_missing: True
+  when: osgcpsa_output_type == "json" and not user_file_stat_json.stat.exists
+
+- name: Delete service account if user file is missing
+  gcloud_iam_sa:
+    state: absent
+    name: "{{ osgcpsa_username }}"
+  when: user_file_missing
+  register: delete_user
+
+- name: sleep if user was deleted
+  pause:
+    seconds: 5
+  when: delete_user.changed
+
+- name: Ensure service account is present
+  gcloud_iam_sa:
+    state: present
+    name: "{{ osgcpsa_username }}"
+    display_name: "{{ osgcpsa_display_name }}"
+  register: sa_user_create
+
+- name: Get the sa user account email account
+  set_fact:
+    sa_user_email: "{{ sa_user_create.results.results.email }}"
+  when: sa_user_create.results.returncode == 0
+
+- name: add project policy
+  gcloud_project_policy:
+    state: present
+    project: "{{ osgcpsa_project }}"
+    role: "{{ item }}"
+    member: "{{ sa_user_email }}"
+    member_type: serviceAccount
+  register: project_policy_out
+  with_items: "{{ osgcpsa_roles }}"
+  when: sa_user_email is defined
+
+- name: create service account key
+  gcloud_iam_sa_keys:
+    state: present
+    service_account_name: "{{ sa_user_email }}"
+    key_format: "{{ osgcpsa_output_key_type }}"
+  register: sa_key_out
+  when: sa_user_create.changed or osgcpsa_force_update
+
+- name: Set the private key
+  set_fact:
+    private_key: "{{ sa_key_out.results.results }}"
+  when: sa_key_out.changed
+
+- name: Write out the multi_inventory file
+  template:
+    dest: "{{ osgcpsa_destination }}/multi_inventory.yml"
+    src: multi_inventory.yml.j2
+  when: (private_key is defined) and (osgcpsa_output_type == "multi_inventory")
+
+- name: Write out the user cred file - json
+  yedit:
+    src: "{{ osgcpsa_destination }}/gcp_user_{{ osgcpsa_username}}.yml"
+    key: "g_gcp_user_{{ osgcpsa_username }}"
+    value: "{{ private_key }}"
+  when: (private_key is defined) and (osgcpsa_output_type == "json")

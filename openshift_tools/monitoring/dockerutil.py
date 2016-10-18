@@ -11,7 +11,9 @@
 
 
 from openshift_tools.timeout import timeout
+from openshift_tools.cgrouputil import CgroupUtil
 import re
+
 
 class DockerDiskStats(object):
     ''' Class to store docker storage information
@@ -56,8 +58,9 @@ class ParseError(Exception):
     pass
 
 class DockerUtil(object):
-    ''' docker stats storage
+    ''' Utility for interacting with Docker
     '''
+
     def __init__(self, docker_client=None, max_wait=15):
         ''' construct the object
         '''
@@ -142,3 +145,54 @@ class DockerUtil(object):
         dds.metadata_space_percent_available = (dds.metadata_space_available / dds.metadata_space_total) * 100
 
         return dds
+
+    @staticmethod
+    def normalize_ctr_name(docker_name):
+        ''' Docker stores the name of the container with a leading '/'.
+            This method changes the name into what you normally see in Docker output.
+        '''
+        return docker_name[1:]
+
+    @staticmethod
+    def ctr_name_matches_regex(ctr, ctr_name_regex):
+        ''' Returns true or false if the ctr_name_regex is in the list of names
+            Docker is storing for the container.
+        '''
+        result = [ctr_name
+                  for ctr_name in ctr['Names']
+                  if re.match(ctr_name_regex, DockerUtil.normalize_ctr_name(ctr_name))
+                 ]
+
+        return len(result) > 0
+
+    def get_ctrs_matching_names(self, ctr_name_regexes):
+        ''' Returns all of the containers that match any of the regexes passed in.
+        '''
+        retval = {}
+
+        for ctr in self._docker.containers():
+            for ctr_name_regex in ctr_name_regexes:
+                if DockerUtil.ctr_name_matches_regex(ctr, ctr_name_regex):
+                    retval[DockerUtil.normalize_ctr_name(ctr['Names'][0])] = ctr
+
+        return retval
+
+    @staticmethod
+    def _get_cgroup_entity_name(docker_id):
+        ''' Takes a docker id and returns the cgroup name for that container. '''
+        return "docker-%s.scope" % docker_id
+
+
+    def get_ctr_stats(self, ctr, use_cgroups=False):
+        ''' Gathers and returns the container stats in an easy to consume fashion.
+        '''
+
+        raw_stats = None
+        if use_cgroups:
+            cgroup_name = DockerUtil._get_cgroup_entity_name(ctr['Id'])
+            cgu = CgroupUtil(cgroup_name)
+            raw_stats = cgu.raw_stats()
+        else:
+            raw_stats = self._docker.stats(ctr['Id'], stream=False)
+
+        return CgroupUtil.raw_stats_to_dtos(raw_stats)

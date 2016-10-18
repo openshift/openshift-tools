@@ -1,0 +1,21 @@
+---
+- fail:
+    msg: "{{ item }} needs to be defined."
+  when: osaik_alias is undefined
+  with_items:
+  - osaik_alias
+
+- fail:
+    msg: "{{ item }} needs to be defined."
+  when: osaik_region is undefined
+  with_items:
+  - osaik_region
+
+- name: Create IAM KMS key with alias
+  oo_iam_kms:
+    state: present
+    alias: "{{ osaik_alias }}"
+    region: "{{ osaik_region }}"
+  register: created_kms
+
+- debug: var=created_kms.results

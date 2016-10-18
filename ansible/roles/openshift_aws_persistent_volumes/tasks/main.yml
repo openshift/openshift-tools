@@ -43,7 +43,7 @@
 
 - name: Create AWS persistent volumes {{ osapv_name }}
   delegate_to: localhost
-  ec2_vol20:
+  oo_ec2_vol20:
     state: present
     region: "{{ osapv_region }}"
     zone: "{{ osapv_zone }}"
@@ -52,8 +52,24 @@
     name: "pv-{{ osapv_clusterid }}-{{ item.name }}"
     aws_access_key: "{{ osapv_aws_access_key }}"
     aws_secret_key: "{{ osapv_aws_secret_key }}"
+    encrypted: "{{ osapv_encrypted | bool | default(False) }}"
+    kms_alias: "{{ osapv_kms_alias | default(None) }}"
   with_items:  "{{ osapv_exploded_volumes }}"
   register: volumes
+  run_once: true
+
+- name: Tag newly created volumes
+  delegate_to: localhost
+  ec2_tag:
+    region: "{{ osapv_region }}"
+    resource: "{{ item.volume.id }}"
+    aws_access_key: "{{ osapv_aws_access_key }}"
+    aws_secret_key: "{{ osapv_aws_secret_key }}"
+    tags:
+      snapshot: daily
+      purpose: customer persistent volume
+  when: item.changed
+  with_items: "{{ volumes.results }}"
   run_once: true
 
 - name: Create pv file from template

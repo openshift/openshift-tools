@@ -18,10 +18,19 @@
 #
 
 #This is not a module, but pylint thinks it is.  This is a command.
-#pylint: disable=invalid-name
+#pylint: disable=invalid-name, import-error
 
 """This is a script the processes zagg metrics.
 """
+import logging
+from logging.handlers import RotatingFileHandler
+
+import socket
+import multiprocessing
+import signal
+import sys
+import os
+import yaml
 
 from openshift_tools.monitoring.zabbix_metric_processor import ZabbixSender, ZabbixMetricProcessor
 from openshift_tools.monitoring.metricmanager import MetricManager
@@ -31,94 +40,91 @@ from openshift_tools.monitoring.zagg_metric_processor import ZaggMetricProcessor
 from openshift_tools.monitoring.zagg_common import ZaggConnection
 from openshift_tools.monitoring.zagg_client import ZaggClient
 
-import yaml
-import socket
 
-class ZaggProcessor(object):
-    """Processes all targets found in /etc/openshift_tools/zagg_server.yaml
+def process_zabbix(target):
+    """Process a Zabbix target
+
+    Args:
+        target: the config file portion for this specific target.
+
+    Returns: None
+    """
+    mm = MetricManager(target['name'])
+    zbxapi = SimpleZabbix(
+        url=target['api_url'],
+        user=target['api_user'],
+        password=target['api_password'],
+    )
+
+    zbxsender = ZabbixSender(target['trapper_server'], target['trapper_port'])
+
+    hostname = socket.gethostname()
+    zmp = ZabbixMetricProcessor(mm, zbxapi, zbxsender, hostname, verbose=True)
+    return zmp.process_zbx_metrics()
+
+def process_zagg(target):
+    """Process a Zagg target
+
+    Args:
+        target: the config file portion for this specific target.
+
+    Returns: None
     """
 
-    def __init__(self, config_file):
-        """Constructs the object
+    verify = target.get('ssl_verify', False)
 
-        Args:
-            config_file: path to the config file on disk
-        """
+    if isinstance(verify, str):
+        verify = (verify == 'True')
 
-        self.config = yaml.load(file(config_file))
+    mm = MetricManager(target['name'])
+    zagg_conn = ZaggConnection(url=target['url'],
+                               user=target['user'],
+                               password=target['password'],
+                               ssl_verify=verify,
+                              )
+    zc = ZaggClient(zagg_conn)
 
-    def run(self):
-        """Runs through each defined target in the config file and processes it
+    zmp = ZaggMetricProcessor(mm, zc)
+    zmp.process_metrics()
 
-        Args: None
-        Returns: None
-        """
-        for target in self.config['targets']:
-            print
-            print "Sending metrics to target [%s]" % target['name']
-            print
-            if target['type'] == 'zabbix':
-                errors = self.process_zabbix(target)
-                # TODO: add zabbix item and trigger for tracking the number of errors
-                print
-                print "Results: %s errors occurred." % len(errors)
-                if errors:
-                    print errors
-            elif target['type'] == 'zagg':
-                # TODO: add error handling for process_zagg like process_zabbix
-                self.process_zagg(target)
-            else:
-                print "Error: Target Type Not Supported: %s" % target['type']
-                # TODO: add zabbix item and trigger for tracking this failure
+def process_targets(target):
+    ''' process the targets based on their type'''
+    logger.info("Sending metrics to target [%s]", target['name'])
+    if target['type'] == 'zabbix':
+        errors = process_zabbix(target)
+        if errors:
+            logger.error('Results: %s errors occurred.', len(errors))
+    elif target['type'] == 'zagg':
+        process_zagg(target)
+    else:
+        logger.error("Error: Target Type Not Supported: %s", target['type'])
 
-    @staticmethod
-    def process_zabbix(target):
-        """Process a Zabbix target
+def signal_handler():
+    ''' Kill the master process and all the child processes from the pool die too'''
+    logger.info('Catching signal, exiting: %s', os.getpid())
+    os.kill(MASTER_PID, 9)
+    sys.exit(0)
 
-        Args:
-            target: the config file portion for this specific target.
-
-        Returns: None
-        """
-
-        mm = MetricManager(target['path'])
-        zbxapi = SimpleZabbix(
-            url=target['api_url'],
-            user=target['api_user'],
-            password=target['api_password'],
-        )
-
-        zbxsender = ZabbixSender(target['trapper_server'], target['trapper_port'])
-
-        hostname = socket.gethostname()
-        zmp = ZabbixMetricProcessor(mm, zbxapi, zbxsender, hostname, verbose=True)
-        return zmp.process_zbx_metrics()
-
-    @staticmethod
-    def process_zagg(target):
-        """Process a Zagg target
-
-        Args:
-            target: the config file portion for this specific target.
-
-        Returns: None
-        """
-
-        verify = target.get('ssl_verify', False)
-
-        if isinstance(verify, str):
-            verify = (verify == 'True')
-
-        mm = MetricManager(target['path'])
-        zagg_conn = ZaggConnection(url=target['url'],
-                                   user=target['user'],
-                                   password=target['password'],
-                                   ssl_verify=verify,
-                                  )
-        zc = ZaggClient(zagg_conn)
-
-        zmp = ZaggMetricProcessor(mm, zc)
-        zmp.process_metrics()
+signal.signal(signal.SIGINT, signal_handler)
 
 if __name__ == "__main__":
-    ZaggProcessor('/etc/openshift_tools/zagg_server.yaml').run()
+    MASTER_PID = os.getpid()
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    logFormatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
+    logFile = '/var/log/ops-zagg-metric-processor.log'
+
+    logRFH = RotatingFileHandler(logFile, mode='a', maxBytes=2*1024*1024, backupCount=5, delay=0)
+    logRFH.setFormatter(logFormatter)
+    logRFH.setLevel(logging.INFO)
+    logger.addHandler(logRFH)
+
+    logger.info('Starting ops-zagg-metric-processor...')
+
+    CONFIG = yaml.load(file('/etc/openshift_tools/zagg_server.yaml'))
+    pool = multiprocessing.Pool()
+
+    TARGETS = CONFIG['targets']
+
+    pool.map(process_targets, TARGETS)

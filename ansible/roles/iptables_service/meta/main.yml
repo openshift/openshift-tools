@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Openshift Operations
+  description: Enable iptables services
+  company: Red Hat, Inc.
+  license: Apache License, Version 2.0
+  min_ansible_version: 1.7
+  platforms:
+  - name: EL
+    versions:
+    - 7
+  categories:
+  - system
+dependencies:

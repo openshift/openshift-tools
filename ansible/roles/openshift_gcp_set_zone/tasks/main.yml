@@ -1,0 +1,39 @@
+---
+- name: Stat the main.yml file
+  stat:
+    path: "{{ osgcpsz_output_dir }}/main.yml"
+  register: stat_zone_file
+
+- name: check if zone is already set
+  yedit:
+    state: list
+    src: "{{ osgcpsz_output_dir }}/main.yml"
+    key: g_gcp_zone
+  register: existing_zone_var
+  when: stat_zone_file.stat.exists
+
+- debug: var=existing_zone_var
+
+- name: Check if zone exists
+  set_fact:
+    zone_exists: False
+  when: not stat_zone_file.stat.exists or not existing_zone_var.result
+
+- name: Get list of zones in region
+  gcloud_compute_zones:
+    region: "{{ osgcpsz_region }}"
+    state: list
+  register: zone_list
+  when: not zone_exists
+
+- name: Set the zone
+  set_fact:
+    zone_to_use: "{{ zone_list.results | map(attribute='name') | list | first }}"
+  when: not zone_exists
+
+- name: Write out the zone var
+  yedit:
+    src: "{{ osgcpsz_output_dir }}/main.yml"
+    key: g_gcp_zone
+    value: "{{ zone_to_use }}"
+  when: not zone_exists

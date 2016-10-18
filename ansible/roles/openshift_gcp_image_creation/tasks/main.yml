@@ -1,0 +1,7 @@
+---
+- name: create image in GCP project
+  gcloud_compute_image:
+    state: present
+    name: "{{ osgic_image_name }}"
+    source_uri: "gs://image-uploads/{{ osgic_image_name }}.tar.gz"
+  register: imageout

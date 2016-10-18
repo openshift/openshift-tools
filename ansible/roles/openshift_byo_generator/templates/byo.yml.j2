@@ -1,0 +1,223 @@
+[OSEv3:children]
+masters
+nodes
+etcd
+{% if obg_new_nodes %}new_nodes{% endif %}
+
+[OSEv3:vars]
+{# These are static and will be the same for ALL clusters #}
+ansible_ssh_user=root
+deployment_type=online
+openshift_docker_additional_registries=registry.access.redhat.com
+openshift_master_cluster_method=native
+openshift_master_api_port=443
+openshift_master_console_port=443
+openshift_docker_hosted_registry_insecure=false
+osm_default_node_selector='type=compute'
+openshift_router_selector='type=infra'
+openshift_registry_selector='type=infra'
+openshift_hosted_manage_router=false
+openshift_hosted_manage_registry=false
+{# End Static options #}
+
+{# set install version if set #}
+{%- if obg_install_version -%}
+openshift_pkg_version=-{{ obg_install_version }}
+{%- endif -%}
+{# end install version #}
+
+cluster_id={{ obg_clusterid }}
+oreg_url={{ obg_registry_template }}
+openshift_master_cluster_hostname={{ obg_master_cluster_hostname }}
+openshift_master_cluster_public_hostname={{ obg_master_public_hostname }}
+openshift_master_public_api_url={{ obg_master_public_api_url }}
+openshift_master_public_console_url={{ obg_master_public_console_url }}
+
+os_sdn_network_plugin_name={{ obg_inventory_sdn }}
+
+{# start metrics info #}
+{%- if obg_install_metrics -%}
+openshift_master_metrics_public_url={{ obg_metrics_url }}
+{%- endif -%}
+{# end metrics #}
+
+{# start logging info #}
+{%- if obg_install_logging -%}
+openshift_master_logging_public_url={{ obg_logging_url }}
+{%- endif -%}
+{# end logging #}
+
+{# start provisioner info #}
+openshift_master_dynamic_provisioning_enabled={{ obg_install_provisioner }}
+# TODO: Set limits here?
+{# end provisioner #}
+
+osm_default_subdomain={{ obg_router_subdomain }}
+osm_custom_cors_origins={{ obg_custom_cors_origin }}
+
+{# start cloud provider #}
+openshift_cloudprovider_kind={{ obg_cloud_provider }}
+{% if obg_cloud_provider == 'aws' %}
+openshift_cloudprovider_aws_access_key={{ obg_aws_provider_access_key }}
+openshift_cloudprovider_aws_secret_key={{ obg_aws_provider_secret_key }}
+{% elif obg_cloud_provider == 'gcp' %}
+osm_controller_args={'pvclaimbinder-sync-period': ['30s']}
+{% endif %}
+{# end cloud provider #}
+
+{# We setup auth in the post byo so deny all for now #}
+openshift_master_identity_providers=[{'name': 'deny_all', 'login': 'true', 'challenge': 'true', 'kind': 'DenyAllPasswordIdentityProvider'}]
+
+{# Custom domain certs for OpenShift, allows for proper signed certs #}
+openshift_master_named_certificates={{ obg_named_certificates }}
+
+{# Installs the OpenShift example templates. #}
+openshift_install_examples={{ obg_install_examples }}
+
+{#
+   Begin internal OAuth token life time
+   This sets the max life if internal oauth tokens
+   Use for logging into oc and the API
+#}
+{% if obg_access_token_life %}
+openshift_master_access_token_max_seconds={{ obg_access_token_life }}
+{% endif %}
+{% if obg_auth_token_life %}
+openshift_master_auth_token_max_seconds={{ obg_auth_token_life }}
+{% endif %}
+{# End OAuth Life #}
+
+{# Begin oauth page templates #}
+{% if obg_oauth_templates %}
+openshift_master_oauth_templates = {'providerSelection': '{{ obg_oauth_template_providerselection }}', 'error': '{{ obg_oauth_template_error }}'}
+{% endif %}
+{# End oauth templates #}
+
+{# Begin Project Request Template #}
+# Template of a project to create, used for setting project limits and such
+{% if obg_project_request_template %}
+osm_project_request_template={{ obg_project_request_template }}
+{% endif %}
+{# End Project Request Template #}
+
+{# Node Local Quota is for a pods max disk space excluding PVs #}
+{% if obg_node_local_quota %}
+openshift_node_local_quota_per_fsgroup={{ obg_node_local_quota }}
+{% endif %}
+
+{# Max number of requests to the API per api server #}
+{% if obg_max_api_requsts %}
+openshift_master_max_requests_inflight={{ obg_max_api_requsts }}
+{% endif %}
+
+{#
+  Always show the provider selection screen
+  By default is is false with 1 auth provider and true with >1 auth provider
+  Default to true for online type and false for dedicated
+#}
+openshift_master_oauth_always_show_provider_selection={{ obg_always_show_provider_selection }}
+
+{# Addational OpenShift Controller arguments #}
+{% if obg_osm_controller_args %}
+osm_controller_args={{ obg_osm_controller_args }}
+{% endif %}
+
+{# Additional 3rd party repos to enable on all nodes during creation #}
+{% if obg_additional_repos %}
+openshift_additional_repos={{ obg_additional_repos }}
+{% endif %}
+
+{# Custom scripts/stylesheets for the OpenShift Console #}
+{% if obg_customize_webui %}
+openshift_master_extension_scripts={{ obg_ui_scripts }}
+openshift_master_extension_stylesheets={{ obg_ui_stylesheets }}
+{% endif %}
+
+{# Install custom certificate in the router for https connections #}
+{% if obg_use_router_certs %}
+openshift_hosted_router_certificate={"certfile": "{{ obg_openshiftapps_cert }}", "keyfile": "{{ obg_openshiftapps_key }}", "cafile": "{{ obg_openshiftapps_ca }}"}
+{% endif %}
+
+{# OpenShift Node K8s argument overrides, used for items openshift-ansible does not support #}
+openshift_node_kubelet_args={ {%- if obg_extra_node_args -%}{{ obg_extra_node_args }},{%- endif -%}'kube-reserved': ['cpu=500m,memory=512M'],'system-reserved': ['cpu=500m,memory=512M'],'node-labels': '{{ '{{' }} (openshift_node_labels | default({})).items() | map("join", "=") | list  {{ '}}' }}'}
+
+{# Master image pull policies, used for disabling external repo pulls, etc #}
+{% if obg_image_pull_policy %}
+openshift_master_image_policy_config={{ obg_image_pull_policy }}
+{% endif %}
+
+{# K8s plugins load order, defines the order which plugins should be loaded and what order #}
+{% if obg_k8s_plugin_order %}
+openshift_master_kube_admission_plugin_order={{ obg_k8s_plugin_order }}
+{% endif %}
+
+{# K8s plugin options #}
+{% if obg_k8s_plugin_config %}
+openshift_master_kube_admission_plugin_config={{ obg_k8s_plugin_config }}
+{% endif %}
+
+{# Openshift user project limit options, max number of projects, what nodes they can target, etc #}
+{% if obg_openshift_admission_config %}
+openshift_master_admission_plugin_config={{ obg_openshift_admission_config }}
+{% endif %}
+
+{# Openshift pod scheduler options, pod placement options #}
+{% if obg_openshift_scheduler_priorities %}
+openshift_master_scheduler_priorities={{ obg_openshift_scheduler_priorities }}
+{% endif %}
+
+{# OpenShift pod placement requirements #}
+{% if obg_openshift_scheduler_predicates %}
+openshift_master_scheduler_predicates={{ obg_openshift_scheduler_predicates }}
+{% endif %}
+
+[masters]
+{% for master in obg_masters %}
+{{ hostvars[master].oo_public_ip }}
+{% endfor %}
+
+[etcd]
+{% for etcd_host in obg_etcd_hosts %}
+{{ hostvars[etcd_host].oo_public_ip }}
+{% endfor %}
+
+[nodes]
+{% for master in obg_masters %}
+{%     if obg_location == 'gcp' %}
+{{ hostvars[master].oo_public_ip }}        openshift_hostname={{ master }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'master'}"
+{%     else %}
+{{ hostvars[master].oo_public_ip }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'master', 'hostname': '{{ master }}'}"
+{%     endif %}
+{% endfor %}
+{% for infra in obg_infra_nodes %}
+{%     if obg_location == 'gcp' %}
+{{ hostvars[infra].oo_public_ip }}        openshift_hostname={{ infra }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'ops_node': 'old'}"
+{%     else %}
+{{ hostvars[infra].oo_public_ip }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'hostname': '{{ infra }}', 'ops_node': 'old'}"
+{%     endif %}
+{% endfor %}
+{% for compute in obg_compute_nodes %}
+{%     if obg_location == 'gcp' %}
+{{ hostvars[compute].oo_public_ip }}       openshift_hostname={{ compute }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'ops_node': 'old'}"
+{%     else %}
+{{ hostvars[compute].oo_public_ip }}       openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'hostname': '{{ compute }}', 'ops_node': 'old'}"
+{%     endif %}
+{% endfor %}
+
+{% if obg_new_nodes == true %}
+[new_nodes]
+{%     for infra in obg_new_infra_nodes %}
+{%         if obg_location == 'gcp' %}
+{{ hostvars[infra].oo_public_ip }}        openshift_hostname={{ infra }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'ops_node': 'new'}" openshift_schedulable=false
+{%         else %}
+{{ hostvars[infra].oo_public_ip }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'hostname': '{{ infra }}', 'ops_node': 'new'}" openshift_schedulable=false
+{%         endif %}
+{%     endfor %}
+{%     for compute in obg_new_compute_nodes %}
+{%         if obg_location == 'gcp' %}
+{{ hostvars[compute].oo_public_ip }}       openshift_hostname={{ compute }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'ops_node': 'new'}" openshift_schedulable=false
+{%         else %}
+{{ hostvars[compute].oo_public_ip }}       openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'hostname': '{{ compute }}', 'ops_node': 'new'}" openshift_schedulable=false
+{%         endif %}
+{%     endfor %}
+{% endif %}

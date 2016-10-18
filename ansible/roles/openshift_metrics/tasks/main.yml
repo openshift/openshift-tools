@@ -1,4 +1,12 @@
 ---
+- name: get oc version
+  oc_version:
+  register: oc_version
+
+- name: set the kube version
+  set_fact:
+    kube_version: "{{ oc_version.kubernetes_short }}"
+
 - name: get cert's basename
   set_fact:
     cert_basename: "{{ osamet_default_metrics_cert | basename }}"
@@ -72,7 +80,7 @@
     name: metrics-deployer-template
     kind: template
     files:
-    - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/infrastructure-templates/enterprise/metrics-deployer.yaml"
+    - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/infrastructure-templates/enterprise/metrics-deployer.yaml"
   register: templateout
   run_once: true
 
@@ -84,6 +92,7 @@
     params:
       HAWKULAR_METRICS_HOSTNAME: "metrics.{{ osamet_clusterid }}.openshift.com"
       CASSANDRA_PV_SIZE: "{{ osamet_pv_size }}"
+      CASSANDRA_NODES: "{{ osamet_node }}"
   register: processout
   run_once: true
 - debug: var=processout
@@ -91,6 +100,37 @@
 - name: wait for deployment to finish
   pause:
     seconds: 120
+  run_once: true
+
+- name: scale down metrics to 0
+  oc_scale:
+    name: hawkular-cassandra-1
+    kind: rc
+    namespace: openshift-infra
+    replicas: 0
+  run_once: true
+
+- name: Wait for cassandra to scale down
+  pause:
+    seconds: 30
+  run_once: true
+
+- name: Add the resource constraints to the metrics RC
+  oc_edit:
+    kind: rc
+    name: hawkular-cassandra-1
+    namespace: openshift-infra
+    content:
+      spec.template.spec.containers[0].resources.limits.memory: "{{ osamet_limits_memory }}"
+      spec.template.spec.containers[0].resources.requests.memory: "{{ osamet_requests_memory }}"
+  run_once: true
+
+- name: scale up metrics to 1
+  oc_scale:
+    name: hawkular-cassandra-1
+    kind: rc
+    namespace: openshift-infra
+    replicas: 1
   run_once: true
 
 - name: get deployer pod status
@@ -132,7 +172,7 @@
 - name: add metrics url to master-config.yml
   yedit:
     src: /etc/origin/master/master-config.yaml
-    key: assetConfig#metricsPublicURL
+    key: assetConfig.metricsPublicURL
     value: "https://metrics.{{ osamet_clusterid }}.openshift.com/hawkular/metrics"
   register: yeditout
   notify:

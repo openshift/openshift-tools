@@ -20,6 +20,7 @@
 #
 # Disabling invalid-name because pylint doesn't like the naming conention we have.
 # pylint: disable=invalid-name
+# pylint: disable=import-error
 
 import argparse
 import base64
@@ -43,28 +44,23 @@ def parse_args():
 def get_registry_config_secret(yaml_results):
     ''' Find the docker registry config secret '''
 
-    volume_mounts = yaml.safe_load(yaml_results)['spec']['template']['spec']['containers'][0]['volumeMounts']
-    registry_config_volume = [i for i in volume_mounts if i['mountPath'] == '/etc/registryconfig']
+    ocutil = OCUtil()
+    volumes = yaml_results['spec']['template']['spec']['volumes']
+    for volume in volumes:
+        if 'emptyDir' in volume:
+            continue
+        secret_dict = ocutil.get_secrets(volume['secret']['secretName'])
+        if 'config.yml' in secret_dict['data']:
+            return volume['secret']['secretName']
 
-    if len(registry_config_volume) != 1:
-        print "Please run \"oc get dc docker-registry\""
-        print "Unable to find the \"/etc/registryconfig\" volume mount."
-        sys.exit(1)
-
-    volumes = yaml.safe_load(yaml_results)['spec']['template']['spec']['volumes']
-    registry_config_secret = [i for i in volumes if i['name'] == registry_config_volume[0]['name']]
-
-    if len(registry_config_secret) != 1:
-        print "Unable to find the %s volume mount." %registry_config_volume[0]['name']
-        print "Please run \"oc get dc docker-registry\""
-        sys.exit(1)
-
-    return registry_config_secret[0]['secret']['secretName']
+    print "Unable to find the %s the docker registry config"
+    print "Please run \"oc get dc docker-registry\" to investigate"
+    sys.exit(1)
 
 def get_aws_creds(yaml_results):
     ''' Get AWS authentication and S3 bucket name for the docker-registry '''
 
-    base64_text = yaml.safe_load(yaml_results)["data"]["config.yml"]
+    base64_text = yaml_results["data"]["config.yml"]
 
     base64_yaml = base64.b64decode(base64_text)
 

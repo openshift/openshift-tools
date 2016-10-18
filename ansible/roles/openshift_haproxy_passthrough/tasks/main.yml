@@ -1,0 +1,38 @@
+---
+- name: install the haproxy package
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - haproxy
+
+- name: Install haproxy.cfg file
+  copy:
+    src: haproxy.cfg
+    dest: /etc/haproxy/haproxy.cfg
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart haproxy
+
+- name: create the haproxy systemd add on dir
+  file:
+   path: /etc/systemd/system/haproxy.service.d
+   state: directory
+   owner: root
+   group: root
+   mode: 0755
+
+- name: Make systemd restart haproxy if it goes down
+  copy:
+    src: haproxy_systemd_restart.conf
+    dest: /etc/systemd/system/haproxy.service.d/restart.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: start and enable haproxy
+  service:
+    name: haproxy
+    state: started
+    enabled: True

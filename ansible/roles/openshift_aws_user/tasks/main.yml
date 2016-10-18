@@ -1,0 +1,81 @@
+---
+- fail:
+    msg: "{{ item }} needs to be defined."
+  when: osau_users is undefined or osau_users|length == 0
+  with_items:
+  - "{{ osau_users }}"
+
+- fail:
+    msg: "{{ item }} needs to be defined."
+  when: osau_user_state not in [ 'absent', 'present']
+  with_items:
+  - "{{ osau_user_state }}"
+
+- name: Generate a random password conforming to IAM password policy
+  oo_iam_passwd:
+  with_items: "{{ osau_users }}"
+  register: generated
+  when: osau_user_state == 'present'
+  no_log: True
+
+- name: Manage aws users
+  iam20:
+    state: "{{ osau_user_state }}"
+    iam_type: user
+    name: "{{ item[0].username }}"
+    access_key_state: create
+    password: "{{ item[1].password | default(omit) }}"
+    update_password: on_create
+    groups: "{{ osau_groups | default(omit) }}"
+  register: created_users
+  no_log: True
+  with_together:
+    - "{{ osau_users }}"
+    - "{{ generated.results }}"
+
+- name: Get account ID for created user(s)
+  set_fact:
+    osau_aws_accountid: "{{ item.user_meta.created_user.arn | regex_replace('^arn:aws:iam::', '') | regex_replace(':user/.*', '') }}"
+  with_items: "{{ created_users.results }}"
+  when: item|changed and osau_user_state == 'present'
+  no_log: True
+
+- name: Create credentials path
+  file:
+    path: "{{ osau_credentials_dir }}"
+    recurse: yes
+    state: directory
+  when: created_users.changed and osau_user_state == 'present'
+
+- name: write credentials to files (user_cred format)
+  copy:
+    content: |
+      AWS AccountID: {{ osau_aws_accountid }}
+      Username: {{ item[0].item[0].username }}
+      Password: {{ item[1].password | default('') | quote }}
+      Access Key: {{ item[0].user_meta.access_keys[0].access_key_id }}
+      Secret Access Key: {{ item[0].user_meta.access_keys[0].secret_access_key }}
+      URL: https://{{ osau_aws_accountid }}.signin.aws.amazon.com/console/ec2\n
+    dest: "{{ osau_credentials_dir }}/{{ item[0].item[0].username }}"
+  when: osau_user_state == 'present' and osau_output_format == "user_creds" and created_users.changed and item[0].user_meta is defined
+  with_together:
+    - "{{ created_users.results }}"
+    - "{{ generated.results }}"
+  no_log: True
+
+- debug:
+    var: created_users
+
+- name: write credentials to file (yaml format)
+  yedit:
+    src: "{{ osau_credentials_dir }}/{{ item.item[0].username }}.yml"
+    content_type: dict
+    content: |
+      ---
+      g_aws_{{ item.item[0].username }}_account_username: {{ item.item[0].username }}
+      g_aws_{{ item.item[0].username }}_access_key_id: {{ item.user_meta.access_keys[0].access_key_id }}
+      g_aws_{{ item.item[0].username }}_secret_access_key: {{ item.user_meta.access_keys[0].secret_access_key }}
+    state: present
+  when: osau_user_state == 'present' and osau_output_format == "yaml" and created_users.changed and item.user_meta is defined
+  with_items: "{{ created_users.results }}"
+  no_log: True

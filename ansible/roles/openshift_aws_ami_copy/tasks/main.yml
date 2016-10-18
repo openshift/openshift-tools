@@ -1,0 +1,41 @@
+---
+- fail:
+    msg: "{{ item }} needs to be defined"
+  when: "{{ item }} is not defined"
+  with_items:
+  - osaac_ami_directory
+  - osaac_kms_alias
+  - osaac_src_ami
+  - osaac_name
+  - osaac_region
+
+- name: Create copied AMI image
+  oo_ec2_ami_copy:
+    state: present
+    aws_access_key: "{{ osaac_aws_access_key | default(omit) }}"
+    aws_secret_key: "{{ osaac_aws_secret_key | default(omit) }}"
+    region: "{{ osaac_region }}"
+    name: "{{ osaac_name }}"
+    ami_id: "{{ osaac_src_ami }}"
+    encrypt: True
+    kms_alias: "{{ osaac_kms_alias }}"
+    wait_sec: "{{ osaac_wait_sec | default(omit) }}"
+    tag_name: "{{ osaac_tag_name | default(omit) }}"
+    tag_value: "{{ osaac_tag_value | default(omit) }}"
+  register: copy_result
+    
+- debug: var=copy_result
+
+- name: create path to store AMI
+  file:
+    path: "{{ osaac_ami_directory }}"
+    recurse: yes
+    state: directory
+
+- name: Save AMI ID
+  copy:
+    content: |
+      ---
+      g_ec2_image:
+        {{ osaac_region }}: {{ copy_result['results']['ImageId'] }}
+    dest: "{{ osaac_ami_directory }}/ami.yml"
