@@ -443,7 +443,8 @@ class OpenShiftCLIConfig(object):
         ''' return the options hash as cli params in a string '''
         rval = []
         for key, data in self.config_options.items():
-            if data['include'] and data['value']:
+            if data['include'] \
+               and (data['value'] or isinstance(data['value'], int)):
                 rval.append('--%s=%s' % (key.replace('_', '-'), data['value']))
 
         return rval
@@ -1841,8 +1842,8 @@ class Router(OpenShiftCLI):
         self.router_parts = [{'kind': 'dc', 'name': self.config.name},
                              {'kind': 'svc', 'name': self.config.name},
                              {'kind': 'sa', 'name': self.config.name},
-                             {'kind': 'secret', 'name': 'router-certs'},
-                             {'kind': 'clusterrolebinding', 'name': 'router-router-role'},
+                             {'kind': 'secret', 'name': self.config.name + '-certs'},
+                             {'kind': 'clusterrolebinding', 'name': 'router-' + self.config.name + '-role'},
                              #{'kind': 'endpoints', 'name': self.config.name},
                             ]
 
@@ -1991,7 +1992,7 @@ class Router(OpenShiftCLI):
 
         options = self.config.to_option_list()
 
-        cmd = ['router', '-n', self.config.namespace]
+        cmd = ['router', self.config.name, '-n', self.config.namespace]
         cmd.extend(options)
         cmd.extend(['--dry-run=True', '-o', 'json'])
 
@@ -2161,7 +2162,7 @@ def main():
             cert_file=dict(default=None, type='str'),
             key_file=dict(default=None, type='str'),
             images=dict(default=None, type='str'), #'openshift3/ose-${component}:${version}'
-            latest_image=dict(default=False, type='bool'),
+            latest_images=dict(default=False, type='bool'),
             labels=dict(default=None, type='list'),
             ports=dict(default=['80:80', '443:443'], type='list'),
             replicas=dict(default=1, type='int'),
@@ -2201,7 +2202,7 @@ def main():
                             'cert_file': {'value': module.params['cert_file'], 'include': False},
                             'key_file': {'value': module.params['key_file'], 'include': False},
                             'images': {'value': module.params['images'], 'include': True},
-                            'latest_image': {'value': module.params['latest_image'], 'include': True},
+                            'latest_images': {'value': module.params['latest_images'], 'include': True},
                             'labels': {'value': module.params['labels'], 'include': True},
                             'ports': {'value': ','.join(module.params['ports']), 'include': True},
                             'replicas': {'value': module.params['replicas'], 'include': True},

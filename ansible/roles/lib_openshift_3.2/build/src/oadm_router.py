@@ -29,8 +29,8 @@ class Router(OpenShiftCLI):
         self.router_parts = [{'kind': 'dc', 'name': self.config.name},
                              {'kind': 'svc', 'name': self.config.name},
                              {'kind': 'sa', 'name': self.config.name},
-                             {'kind': 'secret', 'name': 'router-certs'},
-                             {'kind': 'clusterrolebinding', 'name': 'router-router-role'},
+                             {'kind': 'secret', 'name': self.config.name + '-certs'},
+                             {'kind': 'clusterrolebinding', 'name': 'router-' + self.config.name + '-role'},
                              #{'kind': 'endpoints', 'name': self.config.name},
                             ]
 
@@ -179,7 +179,7 @@ class Router(OpenShiftCLI):
 
         options = self.config.to_option_list()
 
-        cmd = ['router', '-n', self.config.namespace]
+        cmd = ['router', self.config.name, '-n', self.config.namespace]
         cmd.extend(options)
         cmd.extend(['--dry-run=True', '-o', 'json'])
 

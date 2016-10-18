@@ -436,7 +436,8 @@ class OpenShiftCLIConfig(object):
         ''' return the options hash as cli params in a string '''
         rval = []
         for key, data in self.config_options.items():
-            if data['include'] and data['value']:
+            if data['include'] \
+               and (data['value'] or isinstance(data['value'], int)):
                 rval.append('--%s=%s' % (key.replace('_', '-'), data['value']))
 
         return rval
