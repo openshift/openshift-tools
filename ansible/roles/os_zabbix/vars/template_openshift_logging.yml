@@ -60,3 +60,17 @@ g_template_logging:
     description: "elasticsearch pod health status"
     applications:
     - EFK
+  - discoveryrule_key: openshift.logging.elasticsarch.pods
+    name: "{% raw %}openshift.logging.elasticsarch.disk_used.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.logging.elasticsarch.disk_used[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+    value_type: int
+    description: "elasticsearch pv disk usage"
+    applications:
+    - EFK
+  - discoveryrule_key: openshift.logging.elasticsarch.pods
+    name: "{% raw %}openshift.logging.elasticsarch.disk_free.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.logging.elasticsarch.disk_free[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+    value_type: int
+    description: "elasticsearch pv free space"
+    applications:
+    - EFK

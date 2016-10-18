@@ -65,6 +65,11 @@ class OpenshiftLoggingStatus(object):
                 elif pod['metadata']['labels']['component'] == 'fluentd':
                     self.fluentd_pods.append(pod)
 
+    # Disabling all of these so we do not have to loop over pods again
+    # These will get their own proper setup once we have the sidecar pod
+    #pylint: disable=too-many-locals
+    #pylint: disable=too-many-branches
+    #pylint: disable=too-many-statements
     def check_elasticsearch(self):
         ''' Various checks for elasticsearch '''
         es_status = {}
@@ -92,6 +97,29 @@ class OpenshiftLoggingStatus(object):
             except:
                 # The check failed so ES is in a bad state
                 es_status['pods'][pod_dc]['elasticsearch_health'] = 0
+
+            # Exec into the pod and get diskspace, this will be cleaner once we
+            # have time to build a sidecar pod out of this.
+            try:
+                disk_used = 0
+                disk_free = 0
+                trash_var = 0
+
+                disk_output = self.oc.run_user_cmd("exec -ti logging-es-dy48r5sl-3-1po1n -- df").split(' ')
+                disk_output = [x for x in disk_output if x]
+                for item in disk_output:
+                    if item != "/elasticsearch/persistent":
+                        disk_used = disk_free
+                        disk_free = trash_var
+                        trash_var = item
+                    else:
+                        break
+
+                es_status['pods'][pod_dc]['disk_used'] = int(disk_used)
+                es_status['pods'][pod_dc]['disk_free'] = int(disk_free)
+            except:
+                es_status['pods'][pod_dc]['disk_used'] = int(0)
+                es_status['pods'][pod_dc]['disk_free'] = int(0)
 
             # Compare the master across all ES nodes to see if we have split brain
             curl_cmd = "{} 'https://localhost:9200/_cat/master'".format(self.es_curl)
@@ -123,6 +151,10 @@ class OpenshiftLoggingStatus(object):
                 es_status['all_nodes_registered'] = 0
 
         return es_status
+
+    #pylint: enable=too-many-locals
+    #pylint: enable=too-many-branches
+    #pylint: enable=too-many-statements
 
     def check_fluentd(self):
         ''' Verify fluentd is running '''
@@ -207,9 +239,11 @@ class OpenshiftLoggingStatus(object):
                     'openshift.logging.elasticsearch.all_nodes_registered': data['all_nodes_registered']
                 })
                 for pod, value in data['pods'].iteritems():
-                    self.zagg_sender.add_zabbix_keys(
-                        {"openshift.logging.elasticsarch.pod_health[%s]" %(pod): value['elasticsearch_health']}
-                    )
+                    self.zagg_sender.add_zabbix_keys({
+                        "openshift.logging.elasticsarch.pod_health[%s]" %(pod): value['elasticsearch_health'],
+                        "openshift.logging.elasticsarch.disk_used[%s]" %(pod): value['disk_used'],
+                        "openshift.logging.elasticsarch.disk_free[%s]" %(pod): value['disk_free']
+                    })
         self.zagg_sender.send_metrics()
 
     def run(self):
