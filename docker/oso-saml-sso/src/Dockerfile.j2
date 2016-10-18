@@ -16,8 +16,7 @@ EXPOSE 8443
 
 ADD prep_simplesaml.sh start.sh /usr/local/bin/
 
-# Install zabbix from zabbix repo
-# Also, install simplesaml via our install script and then remove the script
+# Install SimpleSAML and modules from RPMs, then run our setup/hardening script for SimpleSAML
 RUN yum install -y \
         httpd \
         mod_ssl \
