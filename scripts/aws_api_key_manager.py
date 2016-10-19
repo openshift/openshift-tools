@@ -30,6 +30,7 @@ import pwd
 import re
 import sys
 import time
+import yaml
 
 # pylint: disable=import-error
 import boto3
@@ -39,7 +40,7 @@ import saml_aws_creds
 
 
 class ManageKeys(object):
-    """ class to change IAM user account API keys """
+    """ class to create and update IAM user account API keys """
 
 
     def __init__(self):
@@ -51,12 +52,12 @@ class ManageKeys(object):
     def check_arguments():
         """ ensure that an argument was passed in from the command line """
 
-        parser = argparse.ArgumentParser(description='Manage API keys for IAM accounts')
+        parser = argparse.ArgumentParser(description='Create API keys for IAM accounts')
         parser.add_argument("-a", "--all",
-                            help="manage API keys for every profile in ~/.aws/credentials",
+                            help="create API keys for every ops aws account",
                             action="store_true")
         parser.add_argument("-p", "--profile",
-                            help="manage API keys for the specified profile",
+                            help="create new API keys for the specified profile",
                             action='append')
         parser.add_argument("-u", "--user",
                             help="specify a username for the account")
@@ -64,7 +65,7 @@ class ManageKeys(object):
 
         if not args.all and not args.profile:
             print('Specify an account ID or profile name. \
-            To change the password for all accounts on file, use \"--all\"')
+            To generate the keys for all ops accounts, use \"--all\"')
             print('Usage:')
             print('example: %s <account-id-number>' % parser.prog)
             print('example: %s --all' % parser.prog)
@@ -91,11 +92,11 @@ class ManageKeys(object):
                         accounts_list.append(line)
                 return accounts_list
         else:
-            raise ValueError(path + 'does not exist')
+            raise ValueError(path + ' does not exist')
 
 
     def check_user(self, aws_account, user_name, client):
-        """ check if the user exists locally and in aws. creates aws user if not found """
+        """ check if the user exists locally and in aws. creates iam user if not found """
 
         try:
             client.get_user(UserName=user_name)
@@ -107,8 +108,8 @@ class ManageKeys(object):
                     system_users.append(user[0])
 
                 if user_name in system_users and user_name != 'root' and os.getegid() < 1000:
-                    print("User does not have an existing IAM account, \
-                    creating  new account for user %s" % user_name)
+                    print("User does not have an existing IAM account for %s, \
+                    creating  new account for user %s" % (aws_account, user_name))
 
                 response = self.create_user(aws_account, user_name, client)
 
@@ -148,7 +149,7 @@ class ManageKeys(object):
                         profile_list.append(account.group(1))
                 return profile_list
         else:
-            raise ValueError(path + 'does not exist')
+            raise ValueError(path + ' does not exist')
 
 
     @staticmethod
@@ -172,20 +173,31 @@ class ManageKeys(object):
     def get_token(aws_account):
         """ generate temporary SSO access credentials  """
 
-        creds = saml_aws_creds.get_temp_credentials(
-            metadata_id='urn:amazon:webservices:%s' % aws_account,
-            idp_host='joelsmithlogin.rhcloud.com' #change to login.ops.openshift.com
-            )
+        sso_config_path = '/etc/openshift_tools/sso-config.yaml'
 
-        client = boto3.client(
-            'iam',
-            aws_access_key_id=creds['AccessKeyId'],
-            aws_secret_access_key=creds['SecretAccessKey'],
-            aws_session_token=creds['SessionToken']
-            )
+        if os.path.isfile(sso_config_path):
+            with open(sso_config_path, 'r') as sso_config:
+                yaml_config = yaml.load(sso_config)
 
-        return client
+                if yaml_config["idp_host"]:
+                    ops_idp_host = yaml_config["idp_host"]
 
+                creds = saml_aws_creds.get_temp_credentials(
+                    metadata_id='urn:amazon:webservices:%s' % aws_account,
+                    idp_host=ops_idp_host
+                    )
+
+                client = boto3.client(
+                    'iam',
+                    aws_access_key_id=creds['AccessKeyId'],
+                    aws_secret_access_key=creds['SecretAccessKey'],
+                    aws_session_token=creds['SessionToken']
+                    )
+
+                return client
+
+        else:
+            raise ValueError(sso_config_path + 'does not exist')
 
     @staticmethod
     def create_key(aws_account, user_name, client):
@@ -267,7 +279,7 @@ class ManageKeys(object):
                     config.write(configfile)
 
         else:
-            raise ValueError(path + 'does not exist')
+            raise ValueError(path + ' does not exist')
 
 
     def main(self):
@@ -319,5 +331,5 @@ class ManageKeys(object):
 
 
 if __name__ == '__main__':
-    CHANGE = ManageKeys()
-    CHANGE.main()
+    MANAGE = ManageKeys()
+    MANAGE.main()
