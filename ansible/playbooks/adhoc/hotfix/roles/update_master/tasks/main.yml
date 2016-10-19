@@ -63,5 +63,4 @@
   - atomic-openshift-master-api
   - atomic-openshift-master-controllers
   when: "{{ update_needed == True }}" 
-  ignore_errors: True
 

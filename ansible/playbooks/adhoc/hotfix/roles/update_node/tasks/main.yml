@@ -56,7 +56,6 @@
     name: atomic-openshift-node
     state: running
   when: "{{ update_needed == True }}" 
-  ignore_errors: True
 
 # FIXME: use the oadm_manage_node module instead
 - name: Make node schedulable again
