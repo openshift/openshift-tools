@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.154
+Version:       0.0.155
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -327,6 +327,13 @@ OpenShift Tools GCP specific scripts
 
 
 %changelog
+* Wed Oct 19 2016 zhiwliu <zhiwliu@redhat.com> 0.0.155-1
+- Missed a few scripts in commit 1fcf0 (whearn@redhat.com)
+- add namespace to allow us to seperate builds (dranders@redhat.com)
+- "finished" was confusing (dranders@redhat.com)
+- pylinting (dranders@redhat.com)
+- almost-rebuild cron-send-create-app (dranders@redhat.com)
+
 * Thu Oct 13 2016 Wesley Hearn <whearn@redhat.com> 0.0.154-1
 - Few fixes around the metrics check (whearn@redhat.com)
 
