@@ -40,7 +40,7 @@ import saml_aws_creds
 
 
 class ManageKeys(object):
-    """ class to create and update IAM user account API keys """
+    """ Class to create and update IAM user account API keys. """
 
 
     def __init__(self):
@@ -50,7 +50,7 @@ class ManageKeys(object):
 
     @staticmethod
     def check_arguments():
-        """ ensure that an argument was passed in from the command line """
+        """ Ensure that an argument was passed in from the command line. """
 
         parser = argparse.ArgumentParser(description='Create API keys for IAM accounts')
         parser.add_argument("-a", "--all",
@@ -64,24 +64,36 @@ class ManageKeys(object):
         args = parser.parse_args()
 
         if not args.all and not args.profile:
-            print('Specify an account ID or profile name. \
-            To generate the keys for all ops accounts, use \"--all\"')
-            print('Usage:')
-            print('example: %s <account-id-number>' % parser.prog)
-            print('example: %s --all' % parser.prog)
+            print("Specify an account ID or profile name.\n"
+                  "To generate the keys for all ops accounts, use '--all'\n"
+                  "Usage:\n"
+                  "example: %s <account-id-number>\n"
+                  "example: %s --all" % (parser.prog, parser.prog))
             sys.exit(10)
-        else:
-            if args.user is None:
-                if getpass.getuser() != 'root' and os.getegid() < 1000:
-                    args.user = getpass.getuser()
-            return args
+
+        if not args.user:
+            if getpass.getuser() != 'root' and os.getegid() < 1000:
+                args.user = getpass.getuser()
+        return args
 
 
     @staticmethod
     def check_accounts():
-        ''' retrieve the config-managed list of ops AWS accounts '''
+        """ Retrieves a list of the config-managed ops AWS accounts.
 
-        path = '/etc/openshift_tools/aws_accounts.txt'
+        Returns:
+            A list containing each of the lines found in the aws accounts file
+
+        Raises:
+            A ValueError if the path does not exist
+        """
+
+        config_path = '/etc/openshift_tools/sso-config.yaml'
+        config_file = yaml.load(config_path)
+
+        if config_file["aws_account_file"]:
+            path = config_file["aws_account_file"]
+
         accounts_list = []
 
         if os.path.isfile(path):
@@ -92,11 +104,16 @@ class ManageKeys(object):
                         accounts_list.append(line)
                 return accounts_list
         else:
-            raise ValueError(path + ' does not exist')
+            raise ValueError(path + ' does not exist.')
 
 
     def check_user(self, aws_account, user_name, client):
-        """ check if the user exists locally and in aws. creates iam user if not found """
+        """ Check if the user exists locally and in aws. creates iam user if not found.
+
+        Returns:
+            True, after checking if the IAM user exists in the specified AWS account
+            and creating a user account for them if one does not already exist
+        """
 
         try:
             client.get_user(UserName=user_name)
@@ -111,31 +128,36 @@ class ManageKeys(object):
                     print("User does not have an existing IAM account for %s, \
                     creating  new account for user %s" % (aws_account, user_name))
 
-                response = self.create_user(aws_account, user_name, client)
+                self.create_user(aws_account, user_name, client)
 
-                return response
-            else:
-                return True
+        return True
 
 
     @staticmethod
     def create_user(aws_account, user_name, client):
-        """ create an iam user account """
+        """ Create an iam user account. """
 
-        response = client.create_user(
+        client.create_user(
             UserName=user_name
             )
 
         client.add_user_to_group(GroupName='admin', UserName=user_name)
-        print('A new user account was added.\
-        Use change_iam_password.py -p %s to set your password' % aws_account)
+        print("A new user account was added.\n"
+              "Use change_iam_password.py -p %s to set your password" % aws_account)
 
-        return response
+        return True
 
 
     @staticmethod
     def get_all_profiles():
-        """ if -a is specified, generate a list of all profiles found in ~/.aws/credentials """
+        """ If -a is specified, generate a list of all profiles found in ~/.aws/credentials.
+
+        Returns
+            Each profile from the credentials file, stored in a list.
+
+        Raises:
+            A ValueError if path is does not exist.
+        """
 
         path = os.path.join(os.path.expanduser('~'), '.aws/credentials')
         profile_list = []
@@ -149,12 +171,17 @@ class ManageKeys(object):
                         profile_list.append(account.group(1))
                 return profile_list
         else:
-            raise ValueError(path + ' does not exist')
+            raise ValueError(path + ' does not exist.')
 
 
     @staticmethod
     def get_keys(user_name, client):
-        """ get the Access Key IDs of any API keys the user has and return the oldest key"""
+        """ Get the Access Key IDs of the user, and return them in a list.
+
+        Returns:
+            All access keys found for the IAM user, in a list.
+            List will be empty if the user has no keys.
+         """
 
         existing_keys = client.list_access_keys(
             UserName=user_name)
@@ -171,7 +198,16 @@ class ManageKeys(object):
 
     @staticmethod
     def get_token(aws_account):
-        """ generate temporary SSO access credentials  """
+        """ Generate temporary SSO access credentials.
+
+        Requires the config file containing the IDP hostname.
+
+        Returns:
+            A temporary boto3 client created with a session token provided by the IDP host.
+
+        Raises:
+            A ValueError if the config path can not be found.
+        """
 
         sso_config_path = '/etc/openshift_tools/sso-config.yaml'
 
@@ -197,11 +233,18 @@ class ManageKeys(object):
                 return client
 
         else:
-            raise ValueError(sso_config_path + 'does not exist')
+            raise ValueError(sso_config_path + 'does not exist.')
 
     @staticmethod
     def create_key(aws_account, user_name, client):
-        """ change an API key for the specified account"""
+        """ Change an API key for the specified account.
+
+        Returns:
+            A response object from boto3, which contains information about the new IAM key.
+            Their values can be accessed like:
+            ['AccessKey']['AccessKeyId']
+            ['AccessKey']['SecretAccessKey']
+        """
 
         response = client.create_access_key(
             UserName=user_name
@@ -213,20 +256,20 @@ class ManageKeys(object):
 
     @staticmethod
     def delete_key(aws_account, user_name, key, client):
-        """ delete an API key for the specified account"""
+        """ Delete an API key for the specified account. """
 
-        response = client.delete_access_key(
+        client.delete_access_key(
             UserName=user_name,
             AccessKeyId=key
             )
 
         print('key successfully deleted for:', aws_account)
-        return response
+        return True
 
 
     @staticmethod
     def manage_timestamp(update=False):
-        """ create or update expiration file """
+        """ Update the expiration file, or create it if it does not already exist. """
 
         path = os.path.join(os.path.expanduser('~'), '.aws/credentials_expiration')
         exp_date = str(int(time.time())+180*24*60*60)
@@ -242,13 +285,17 @@ class ManageKeys(object):
                 open_file.write(exp_date)
 
         else:
-            print('checked for file and it exists. no write was called. nothing to do here')
+            print('Checked for stamp file and it exists. No write was called, nothing to do here.')
             return True
 
 
     @staticmethod
     def write_credentials(aws_account, key_object):
-        ''' write the profile for the user account to the AWS credentials file '''
+        """ Write the profile for the user account to the AWS credentials file.
+
+        Raise:
+            A ValueError if the path to the credentials file does not exist.
+        """
 
         path = os.path.join(os.path.expanduser('~'), '.aws/credentials')
 
@@ -279,11 +326,11 @@ class ManageKeys(object):
                     config.write(configfile)
 
         else:
-            raise ValueError(path + ' does not exist')
+            raise ValueError(path + ' does not exist.')
 
 
     def main(self):
-        """ main function """
+        """ Main function. """
         args = self.check_arguments()
         ops_accounts = self.check_accounts()
 
@@ -327,7 +374,7 @@ class ManageKeys(object):
             self.manage_timestamp(True)
 
         else:
-            raise ValueError('No suitable arguments provided')
+            raise ValueError('No suitable arguments provided.')
 
 
 if __name__ == '__main__':
