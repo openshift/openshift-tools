@@ -67,8 +67,9 @@ class ManageKeys(object):
             print("Specify an account ID or profile name.\n"
                   "To generate the keys for all ops accounts, use '--all'\n"
                   "Usage:\n"
-                  "example: %s <account-id-number>\n"
-                  "example: %s --all" % (parser.prog, parser.prog))
+                  "example: {0} -p <account-name>\n"
+                  "example: {0} -u <some-other-user> -p <account-name>\n"
+                  "example: {0} --all".format(parser.prog))
             sys.exit(10)
 
         if not args.user:
@@ -89,10 +90,12 @@ class ManageKeys(object):
         """
 
         config_path = '/etc/openshift_tools/sso-config.yaml'
-        config_file = yaml.load(config_path)
+        if os.path.isfile(config_path):
+            with open(config_path, 'r') as sso_config:
+                yaml_config = yaml.load(sso_config)
 
-        if config_file["aws_account_file"]:
-            path = config_file["aws_account_file"]
+                if yaml_config["aws_account_file"]:
+                    path = yaml_config["aws_account_file"]
 
         accounts_list = []
 
@@ -338,8 +341,9 @@ class ManageKeys(object):
 
             for aws_account in args.profile:
                 matching = [s for s in ops_accounts if aws_account in s]
-                account_name = matching[0].split(':')[1]
-                client = self.get_token(account_name)
+                account_name = matching[0].split(':')[0]
+                account_number = matching[0].split(':')[1]
+                client = self.get_token(account_number)
                 self.check_user(aws_account, args.user, client)
                 existing_keys = self.get_keys(args.user, client)
 
@@ -347,18 +351,21 @@ class ManageKeys(object):
                     for key in existing_keys:
                         self.delete_key(aws_account, args.user, key, client)
                         key_object = self.create_key(aws_account, args.user, client)
-                        self.write_credentials(aws_account, key_object)
+                        self.write_credentials(account_name, key_object)
 
                 else:
                     key_object = self.create_key(aws_account, args.user, client)
-                    self.write_credentials(aws_account, key_object)
+                    self.write_credentials(account_name, key_object)
 
             self.manage_timestamp()
 
         elif args.all and args.user:
 
             for aws_account in ops_accounts:
-                client = self.get_token(aws_account)
+                matching = [s for s in ops_accounts if aws_account in s]
+                account_name = matching[0].split(':')[0]
+                account_number = matching[0].split(':')[1]
+                client = self.get_token(account_number)
                 self.check_user(aws_account, args.user, client)
                 current_accounts = self.get_all_profiles()
                 existing_keys = self.get_keys(args.user, client)
@@ -369,7 +376,7 @@ class ManageKeys(object):
 
                 if aws_account not in current_accounts:
                     key_object = self.create_key(aws_account, args.user, client)
-                    self.write_credentials(aws_account, key_object)
+                    self.write_credentials(account_name, key_object)
 
             self.manage_timestamp(True)
 
