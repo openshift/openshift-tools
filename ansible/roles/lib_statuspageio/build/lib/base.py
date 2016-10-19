@@ -35,12 +35,21 @@ class StatusPageIOAPI(object):
 
         return self.client.incidents.list()
 
+    def _delete_component(self, compid):
+        '''delete a component'''
+        return self.client.components.delete(compid)
+
     def _delete_incident(self, incid):
         '''delete a incident'''
         return self.client.incidents.delete(incid)
 
+    def _create_component(self, kwargs):
+        '''create a component'''
+        return self.client.components.create(**kwargs)
+
+
     def _create_incident(self, kwargs, scheduled=False):
-        '''return a list of incidents'''
+        '''create a an incident'''
         if scheduled:
             return self.client.incidents.create_scheduled(**kwargs)
 
@@ -84,8 +93,8 @@ class StatusPageIOAPI(object):
         '''return components'''
         return self.client.components.list()
 
-    def _set_component_status(self, cid, name=None, desc=None, status=None):
-        '''return components'''
+    def _update_component(self, cid, name=None, desc=None, status=None):
+        '''update a component'''
         kwargs = {}
         if name:
             kwargs['name'] = name

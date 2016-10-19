@@ -140,7 +140,7 @@ class StatusPageIncident(StatusPageIOAPI):
 
     def set_component_status(self, cid, name=None, desc=None, status=None):
         '''update a component's status'''
-        return self._set_component_status(cid, name=name, desc=desc, status=status)
+        return self._update_component(cid, name=name, desc=desc, status=status)
 
     def create(self):
         '''create the object'''

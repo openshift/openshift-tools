@@ -24,6 +24,11 @@ FILES = {'statuspage_incident.py': ['doc/incident',
                                     'src/statuspage_incident.py',
                                     'ansible/statuspage_incident.py',
                                    ],
+         'statuspage_component.py': ['doc/component',
+                                     'lib/base.py',
+                                     'src/statuspage_component.py',
+                                     'ansible/statuspage_component.py',
+                                    ],
         }
 
 
