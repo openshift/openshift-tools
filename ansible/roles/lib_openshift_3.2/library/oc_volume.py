@@ -364,6 +364,8 @@ class Utils(object):
                     return False
 
 
+                user_def[key].sort()
+                value.sort()
                 for values in zip(user_def[key], value):
                     if isinstance(values[0], dict) and isinstance(values[1], dict):
                         if debug:
@@ -417,9 +419,12 @@ class Utils(object):
                         print "value not equal; user_def does not have key"
                         print key
                         print value
-                        print user_def[key]
+                        if user_def.has_key(key):
+                            print user_def[key]
                     return False
 
+        if debug:
+            print 'returning true'
         return True
 
 class OpenShiftCLIConfig(object):
