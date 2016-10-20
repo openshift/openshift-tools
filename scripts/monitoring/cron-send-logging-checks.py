@@ -65,11 +65,6 @@ class OpenshiftLoggingStatus(object):
                 elif pod['metadata']['labels']['component'] == 'fluentd':
                     self.fluentd_pods.append(pod)
 
-    # Disabling all of these so we do not have to loop over pods again
-    # These will get their own proper setup once we have the sidecar pod
-    #pylint: disable=too-many-locals
-    #pylint: disable=too-many-branches
-    #pylint: disable=too-many-statements
     def check_elasticsearch(self):
         ''' Various checks for elasticsearch '''
         es_status = {}
@@ -81,45 +76,9 @@ class OpenshiftLoggingStatus(object):
             pod_name = pod['metadata']['name']
             es_status['pods'][pod_dc] = {}
 
+            es_status['pods'][pod_dc]['elasticsearch_health'] = self.check_elasticsearch_cluster_health(pod_name)
+            es_status['pods'][pod_dc]['disk'] = self.check_elasticsearch_diskspace(pod_name)
 
-            # exec into a pod and get cluster health
-            try:
-                curl_cmd = "{} 'https://localhost:9200/_cluster/health?pretty=true'".format(self.es_curl)
-                cluster_health = "exec -ti {} -- {}".format(pod_name, curl_cmd)
-                health_res = self.oc.run_user_cmd(cluster_health)
-
-                if health_res['status'] == 'green':
-                    es_status['pods'][pod_dc]['elasticsearch_health'] = 2
-                elif health_res['status'] == 'yellow':
-                    es_status['pods'][pod_dc]['elasticsearch_health'] = 1
-                else:
-                    es_status['pods'][pod_dc]['elasticsearch_health'] = 0
-            except:
-                # The check failed so ES is in a bad state
-                es_status['pods'][pod_dc]['elasticsearch_health'] = 0
-
-            # Exec into the pod and get diskspace, this will be cleaner once we
-            # have time to build a sidecar pod out of this.
-            try:
-                disk_used = 0
-                disk_free = 0
-                trash_var = 0
-
-                disk_output = self.oc.run_user_cmd("exec -ti logging-es-dy48r5sl-3-1po1n -- df").split(' ')
-                disk_output = [x for x in disk_output if x]
-                for item in disk_output:
-                    if item != "/elasticsearch/persistent":
-                        disk_used = disk_free
-                        disk_free = trash_var
-                        trash_var = item
-                    else:
-                        break
-
-                es_status['pods'][pod_dc]['disk_used'] = int(disk_used)
-                es_status['pods'][pod_dc]['disk_free'] = int(disk_free)
-            except:
-                es_status['pods'][pod_dc]['disk_used'] = int(0)
-                es_status['pods'][pod_dc]['disk_free'] = int(0)
 
             # Compare the master across all ES nodes to see if we have split brain
             curl_cmd = "{} 'https://localhost:9200/_cat/master'".format(self.es_curl)
@@ -152,9 +111,48 @@ class OpenshiftLoggingStatus(object):
 
         return es_status
 
-    #pylint: enable=too-many-locals
-    #pylint: enable=too-many-branches
-    #pylint: enable=too-many-statements
+    def check_elasticsearch_cluster_health(self, es_pod):
+        ''' Exec into the elasticsearch pod and check the cluster health '''
+        try:
+            curl_cmd = "{} 'https://localhost:9200/_cluster/health?pretty=true'".format(self.es_curl)
+            cluster_health = "exec -ti {} -- {}".format(es_pod, curl_cmd)
+            health_res = self.oc.run_user_cmd(cluster_health)
+
+            if health_res['status'] == 'green':
+                return 2
+            elif health_res['status'] == 'yellow':
+                return 1
+            else:
+                return 0
+        except:
+            # The check failed so ES is in a bad state
+            return 0
+
+    def check_elasticsearch_diskspace(self, es_pod):
+        ''' Exec into a elasticsearch pod and query the diskspace '''
+        results = {}
+        try:
+            disk_used = 0
+            disk_free = 0
+            trash_var = 0
+
+            disk_output = self.oc.run_user_cmd("exec -ti {} -- df".format(es_pod)).split(' ')
+            disk_output = [x for x in disk_output if x]
+            for item in disk_output:
+                if item != "/elasticsearch/persistent":
+                    disk_used = disk_free
+                    disk_free = trash_var
+                    trash_var = item
+                else:
+                    break
+
+            results['used'] = int(disk_used)
+            results['free'] = int(disk_free)
+        except:
+            results['used'] = int(0)
+            results['free'] = int(0)
+
+        return results
 
     def check_fluentd(self):
         ''' Verify fluentd is running '''
@@ -241,8 +239,8 @@ class OpenshiftLoggingStatus(object):
                 for pod, value in data['pods'].iteritems():
                     self.zagg_sender.add_zabbix_keys({
                         "openshift.logging.elasticsarch.pod_health[%s]" %(pod): value['elasticsearch_health'],
-                        "openshift.logging.elasticsarch.disk_used[%s]" %(pod): value['disk_used'],
-                        "openshift.logging.elasticsarch.disk_free[%s]" %(pod): value['disk_free']
+                        "openshift.logging.elasticsarch.disk_used[%s]" %(pod): value['disk']['used'],
+                        "openshift.logging.elasticsarch.disk_free[%s]" %(pod): value['disk']['free']
                     })
         self.zagg_sender.send_metrics()
 
