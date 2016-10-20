@@ -248,8 +248,7 @@ def main():
                 print pro['metadata']['deletionTimestamp']
                 temp_t = pro['metadata']['deletionTimestamp'].replace('T', ' ').replace('Z', '')
                 old_time = datetime.datetime.strptime(temp_t, '%Y-%m-%d %H:%M:%S')
-                #current_time = datetime.datetime.strptime(time.strftime('%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S')
-                #current_time = datetime.datetime.strptime(time.strftime('%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S')
+
                 current_time = datetime.datetime.now()
                 time_keeps = current_time - old_time
                 print 'the project in Terminating status for %s' % time_keeps
@@ -257,7 +256,6 @@ def main():
                     time_keeps_max = max(time_keeps_max, (current_time - old_time).seconds)
                 else:
                     print 'something wrong , the pod said its been terminating before created'
-                    #time_keeps_max = -((current_time - old_time).seconds)
                 print time_keeps_max
 
     except ValueError, e:
