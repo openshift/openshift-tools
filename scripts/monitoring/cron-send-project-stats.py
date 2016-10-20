@@ -253,9 +253,11 @@ def main():
                 current_time = datetime.datetime.now()
                 time_keeps = current_time - old_time
                 print 'the project in Terminating status for %s' % time_keeps
-
-                time_keeps_max = max(time_keeps_max, (current_time - old_time).seconds)
-
+                if current_time > old_time:
+                    time_keeps_max = max(time_keeps_max, (current_time - old_time).seconds)
+                else:
+                    print 'something wrong , the pod said its been terminating before created'
+                    #time_keeps_max = -((current_time - old_time).seconds)
                 print time_keeps_max
 
     except ValueError, e:
