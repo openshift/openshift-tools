@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.155
+Version:       0.0.156
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -327,6 +327,12 @@ OpenShift Tools GCP specific scripts
 
 
 %changelog
+* Thu Oct 20 2016 Unknown name 0.0.156-1
+- use new library function (dranders@redhat.com)
+- pylint (dranders@redhat.com)
+- pylint (dranders@redhat.com)
+- reduce scale of script, use library (dranders@redhat.com)
+
 * Wed Oct 19 2016 zhiwliu <zhiwliu@redhat.com> 0.0.155-1
 - Missed a few scripts in commit 1fcf0 (whearn@redhat.com)
 - add namespace to allow us to seperate builds (dranders@redhat.com)
