@@ -126,6 +126,14 @@ class OCUtil(object):
 
         return pods_yaml
 
+    def get_projects(self):
+        ''' Get all projects in the cluster '''
+
+        nodes_cmd = "oc get projects -o yaml"
+        nodes_yaml = self._run_cmd(nodes_cmd)
+
+        return nodes_yaml
+
     def get_nodes(self):
         ''' Get all the nodes in the cluster '''
 
