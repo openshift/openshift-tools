@@ -50,26 +50,30 @@ class ManageKeys(object):
 
     @staticmethod
     def check_arguments():
-        """ Ensure that an argument was passed in from the command line. """
+        """ Ensure that an argument was passed in from the command line.
 
-        parser = argparse.ArgumentParser(description='Create API keys for IAM accounts')
-        parser.add_argument("-a", "--all",
-                            help="create API keys for every ops aws account",
-                            action="store_true")
-        parser.add_argument("-p", "--profile",
-                            help="create new API keys for the specified profile",
+        Returns:
+            Parsed argument(s), if provided
+        """
+
+        parser = argparse.ArgumentParser(description='Create API keys for IAM accounts.')
+        parser.add_argument('-a', '--all',
+                            help='Create API keys for every ops aws account.',
+                            action='store_true')
+        parser.add_argument('-p', '--profile',
+                            help='Create new API keys for the specified profile.',
                             action='append')
-        parser.add_argument("-u", "--user",
-                            help="specify a username for the account")
+        parser.add_argument('-u', '--user',
+                            help='Specify a username for the account.')
         args = parser.parse_args()
 
         if not args.all and not args.profile:
-            print("Specify an account ID or profile name.\n"
-                  "To generate the keys for all ops accounts, use '--all'\n"
-                  "Usage:\n"
-                  "example: {0} -p <account-name>\n"
-                  "example: {0} -u <some-other-user> -p <account-name>\n"
-                  "example: {0} --all".format(parser.prog))
+            print('Specify an account ID or profile name.\n'
+                  'To generate the keys for all ops accounts, use "--all"\n'
+                  'Usage:\n'
+                  'example: {0} -p <account-name>\n'
+                  'example: {0} -u <some-other-user> -p <account-name>\n'
+                  'example: {0} --all'.format(parser.prog))
             sys.exit(10)
 
         if not args.user:
@@ -138,7 +142,7 @@ class ManageKeys(object):
 
     @staticmethod
     def create_user(aws_account, user_name, client):
-        """ Create an iam user account. """
+        """ Create an IAM user account. """
 
         client.create_user(
             UserName=user_name
@@ -266,7 +270,7 @@ class ManageKeys(object):
             AccessKeyId=key
             )
 
-        print('key successfully deleted for:', aws_account)
+        print('Key successfully deleted for:', aws_account)
         return True
 
 
@@ -278,12 +282,12 @@ class ManageKeys(object):
         exp_date = str(int(time.time())+180*24*60*60)
 
         if os.path.isfile(path) and update is True:
-            print('file exists, ready to write')
+            print('File exists, overwriting.')
             with open(path, 'w') as open_file:
                 open_file.write(exp_date)
 
         elif not os.path.isfile(path):
-            print('file does not exist, creating')
+            print('File does not exist, creating.')
             with open(path, 'w') as open_file:
                 open_file.write(exp_date)
 
