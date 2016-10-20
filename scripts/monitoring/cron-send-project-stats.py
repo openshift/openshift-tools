@@ -93,7 +93,7 @@ def main():
     logger.info("Starting")
 
     # TODO: include this in library
-    projects_info = OCUtil()._run_cmd("oc get projects -o yaml")
+    projects_info = OCUtil().get_projects()
 
     maxDelta = testProjects(
         projects_info['items'],
