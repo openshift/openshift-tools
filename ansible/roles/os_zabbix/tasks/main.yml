@@ -66,7 +66,7 @@
   tags:
   - openshift_metrics
 
-- include_vars: template_openshift_metrics.yml
+- include_vars: template_openshift_logging.yml
   tags:
   - openshift_logging
 
@@ -259,4 +259,4 @@
     user: "{{ ozb_user }}"
     password: "{{ ozb_password }}"
   tags:
-  - openshift_metrics
+  - openshift_logging
