@@ -20,7 +20,7 @@ from openshift_tools.monitoring.ocutil import OCUtil
 # Our jenkins server does not include these rpms.
 # In the future we might move this to a container where these
 # libs might exist
-#pylint: disable=import-error
+# pylint: disable=import-error
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 
 import logging
