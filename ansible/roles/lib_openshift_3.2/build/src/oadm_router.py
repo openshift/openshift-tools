@@ -28,7 +28,7 @@ class Router(OpenShiftCLI):
         self.verbose = verbose
         self.router_parts = [{'kind': 'dc', 'name': self.config.name},
                              {'kind': 'svc', 'name': self.config.name},
-                             {'kind': 'sa', 'name': self.config.name},
+                             {'kind': 'sa', 'name': self.config.config_options['service_account']['value']},
                              {'kind': 'secret', 'name': self.config.name + '-certs'},
                              {'kind': 'clusterrolebinding', 'name': 'router-' + self.config.name + '-role'},
                              #{'kind': 'endpoints', 'name': self.config.name},
@@ -155,8 +155,18 @@ class Router(OpenShiftCLI):
         # We want modifications in the form of edits coming in from the module.
         # Let's apply these here
         edit_results = []
-        for key, value in self.config.config_options['edits'].get('value', {}).items():
-            edit_results.append(deploymentconfig.put(key, value))
+        for edit in self.config.config_options['edits'].get('value', []):
+            if edit['action'] == 'put':
+                edit_results.append(deploymentconfig.put(edit['key'],
+                                                         edit['value']))
+            if edit['action'] == 'update':
+                edit_results.append(deploymentconfig.update(edit['key'],
+                                                            edit['value'],
+                                                            edit.get('index', None),
+                                                            edit.get('curr_value', None)))
+            if edit['action'] == 'append':
+                edit_results.append(deploymentconfig.append(edit['key'],
+                                                            edit['value']))
 
         if edit_results and not any([res[0] for res in edit_results]):
             return None

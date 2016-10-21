@@ -1,0 +1,10 @@
+---
+ossr_default_router_edits:
+  - key: spec.strategy.rollingParams
+    value:
+      intervalSeconds: 1
+      maxSurge: 50%
+      maxUnavailable: 50%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    action: put
