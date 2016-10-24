@@ -23,9 +23,11 @@
 from __future__ import print_function
 import sys
 import subprocess
-import boto3
 import base64
 import xml.etree.ElementTree as ET
+
+# pylint: disable=import-error
+import boto3
 from bs4 import BeautifulSoup
 
 def get_temp_credentials(metadata_id, idp_host):
