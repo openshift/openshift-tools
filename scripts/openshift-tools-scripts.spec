@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.158
+Version:       0.0.159
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -347,6 +347,15 @@ OpenShift Tools IAM specific scripts
 
 
 %changelog
+* Mon Oct 24 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.159-1
+- creating subdirectory (dedgar@redhat.com)
+- finished testing on tower (dedgar@redhat.com)
+- style changes (dedgar@redhat.com)
+- updating comments, fixing indentation (dedgar@redhat.com)
+- disabling pylint import error for boto3 (dedgar@redhat.com)
+- updating message to user (dedgar@redhat.com)
+- adding aws_api_key_manager.py (dedgar@redhat.com)
+
 * Mon Oct 24 2016 Wesley Hearn <whearn@redhat.com> 0.0.158-1
 - Some formatting around cron-send-logging-checks (whearn@redhat.com)
 - Added quick and dirty disk check (whearn@redhat.com)
