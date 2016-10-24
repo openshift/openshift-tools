@@ -82,6 +82,9 @@ cp -p inventory-clients/{ohi,opscp,opssh,oscp,ossh} %{buildroot}%{_bindir}
 cp -p inventory-clients/ossh_bash_completion %{buildroot}/etc/bash_completion.d
 cp -p inventory-clients/openshift_tools.conf.example %{buildroot}/etc/openshift_tools/openshift_tools.conf
 
+# openshift-tools-scripts-iam-tools install
+cp -p iam-tools/aws_api_key_manager.py %{buildroot}/usr/local/bin
+
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-inventory-clients subpackage
 # ----------------------------------------------------------------------------------
@@ -324,6 +327,23 @@ OpenShift Tools GCP specific scripts
 /usr/bin/ops-gcp-add-snapshot-label-to-pd-volumes
 /usr/bin/ops-gcp-snapshot-pd-volumes
 /usr/bin/ops-gcp-trim-pd-snapshots
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-iam-tools subpackage
+# ----------------------------------------------------------------------------------
+%package iam-tools
+Summary:       OpenShift Tools IAM tools
+Requires:      python2
+BuildRequires: python2-devel
+BuildArch:     noarch
+
+%description iam-tools
+OpenShift Tools IAM specific scripts
+
+%files iam-tools
+/usr/local/bin/aws_api_key_manager.py
+
+
 
 
 %changelog
