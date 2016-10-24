@@ -308,7 +308,9 @@ def setup(config, oocmd=None,):
     """ global setup for tests """
     logger.info('setup()')
     oocmd.delete_project()
+    time.sleep(5)
     oocmd.new_project()
+    time.sleep(5)
 
     return config
 
@@ -379,6 +381,8 @@ def teardown(config, oocmd=None,):
 
     logger.info('teardown()')
     oocmd.delete_es_index()
+    time.sleep(5)
+
     oocmd.delete_project()
 
     return config
