@@ -62,10 +62,15 @@ class OCUtil(object):
 
         self.config_file = file_name
 
-    def _run_cmd(self, cmd):
+    def _run_cmd(self, cmd, baseCmd='oc', ):
         ''' Actually execute the command '''
 
-        cmd = 'oc --config ' + self.config_file + ' -n ' + self.namespace + ' ' + cmd
+        cmd = " ".join([
+            baseCmd,
+            '--config', self.config_file,
+            '-n', self.namespace,
+            cmd,
+        ])
         cmd = shlex.split(cmd)
         if self.verbose:
             print "Running command: {}".format(str(cmd))
