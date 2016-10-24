@@ -24,8 +24,7 @@ container_fingerprint='./container-build-env-fingerprint.output'
   # Build ourselves
   echo
   echo "Building oso-rhel7-host-monitoring..."
-  sudo time docker build $@ -t oso-rhel7-host-monitoring . && \
-  sudo docker tag -f oso-rhel7-host-monitoring docker-registry.ops.rhcloud.com/ops/oso-rhel7-host-monitoring
+  sudo time docker build $@ -t oso-rhel7-host-monitoring .
 #fi
 
 # cleanup
