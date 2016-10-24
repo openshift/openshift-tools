@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.26
+Version:        0.0.27
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,9 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Mon Oct 24 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.27-1
+- Fixed the library call for the multiinventory (kwoodson@redhat.com)
+
 * Mon Oct 24 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.26-1
 - Separating accounts. (kwoodson@redhat.com)
 - updated git commit module (mwoodson@redhat.com)
