@@ -24,7 +24,7 @@ class GitCLI(object):
     def _add(self, files_to_add=None):
         ''' git add '''
 
-        cmd = ["add"]
+        cmd = ["add", "--no-ignore-removal"]
 
         if files_to_add:
             cmd.extend(files_to_add)
