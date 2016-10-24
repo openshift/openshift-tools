@@ -1,0 +1,76 @@
+---
+g_template_logging:
+  name: Template OpenShift Logging
+
+  zitems:
+  - key: openshift.logging.fluentd.running
+    applications:
+    - EFK
+    value_type: int
+  - key: openshift.logging.fluentd.number_pods
+    applications:
+    - EFK
+    value_type: int
+  - key: openshift.logging.fluentd.node_mismatch
+    applications:
+    - EFK
+    value_type: int
+  - key: openshift.logging.fluentd.number_expected_pods
+    applications:
+    - EFK
+    value_type: int
+  - key: openshift.logging.kibana.site_up
+    applications:
+    - EFK
+    value_type: int
+  - key: openshift.logging.elasticsearch.single_master
+    applications:
+    - EFK
+    value_type: int
+  - key: openshift.logging.elasticsearch.all_numbers_registered
+    applications:
+    - EFK
+    value_type: int
+
+  ztriggers:
+  - name: "ElasticSearch is in split brain on {HOST.NAME}"
+    expression: "{Template OpenShift Logging:openshift.logging.elasticsearch.single_master}==0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/elasticsearch.asciidoc"
+    priority: high
+  - name: "FluentD/Node pod number mismatch on {HOST.NAME}"
+    expression: "{Template OpenShift Logging:openshift.logging.fluentd.number_pods}!={Template OpenShift Logging:openshift.logging.fluentd.number_expected_pods}"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/fluentd.asciidoc"
+    priority: high
+  - name: "FluentD/Node mismatch on {HOST.NAME}"
+    expression: "{Template OpenShift Logging:openshift.logging.fluentd.node_mismatch}!=0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/fluentd.asciidoc"
+    priority: high
+
+  zdiscoveryrules:
+  - name: openshift.logging.elasticsarch.pods
+    key: openshift.logging.elasticsarch.pods
+    lifetime: 7
+    description: "Elasticsearch pods"
+ 
+  zitemprototypes:
+  - discoveryrule_key: openshift.logging.elasticsarch.pods
+    name: "{% raw %}openshift.logging.elasticsarch.pod_health.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.logging.elasticsarch.pod_health[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+    value_type: int
+    description: "elasticsearch pod health status"
+    applications:
+    - EFK
+  - discoveryrule_key: openshift.logging.elasticsarch.pods
+    name: "{% raw %}openshift.logging.elasticsarch.disk_used.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.logging.elasticsarch.disk_used[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+    value_type: int
+    description: "elasticsearch pv disk usage"
+    applications:
+    - EFK
+  - discoveryrule_key: openshift.logging.elasticsarch.pods
+    name: "{% raw %}openshift.logging.elasticsarch.disk_free.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.logging.elasticsarch.disk_free[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+    value_type: int
+    description: "elasticsearch pv free space"
+    applications:
+    - EFK
