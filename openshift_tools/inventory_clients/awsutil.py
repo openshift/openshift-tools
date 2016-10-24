@@ -54,11 +54,12 @@ class AwsUtil(object):
         args -- optional arguments to pass to the inventory script
         """
         minv = multi_inventory.MultiInventory(args)
+        results = {}
         if self.cached:
-            minv.get_inventory_from_cache()
+            results = multi_inventory.MultiInventoryUtils.get_inventory_from_cache(minv.cache_path)
         else:
-            minv.run()
-        return minv.result
+            results = minv.run()
+        return results
 
     def _get_tags_(self, regex):
         """ Searches for tags in the inventory and returns all of the tags
