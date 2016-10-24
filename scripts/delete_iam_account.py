@@ -2,29 +2,23 @@
 # vim: expandtab:tabstop=4:shiftwidth=4
 
 """
- This script can be used to create API keys for your AWS IAM user accounts.
- It can be used for individual accounts or for all your accounts at once.
-
- Note: we have a limit of 2 access keys per user, so by default this will delete the old ones
+ This script can be used to delete unwanted AWS IAM user accounts.
+ It can be used on individual AWS accounts or for all ops accounts at once.
 
  Usage:
 
  For individual accounts:
- aws_api_key_manager.py -p ded-stage-aws -p ded-int-aws -p <some-other-account>
+ delete_iam_account.py -u <user-to-delete> -p ded-stage-aws -p ded-int-aws -p <some-other-account>
 
 
  For all accounts found in /etc/openshift_tools/aws_accounts.txt:
- aws_api_key_manager.py --all
-
- To manage keys for another user, use the '-u' option:
- aws_api_key_manager.py -u <some-other-user> -p ded-stage-aws
+ delete_iam_account.py -u <user-to-delete> --all
 """
 
 from __future__ import print_function
 
 import argparse
 import os
-import pwd
 import sys
 import yaml
 
@@ -36,7 +30,7 @@ import saml_aws_creds
 
 
 class DeleteUser(object):
-    ''' class to delete an iam user from ops acounts'''
+    """ Class to delete an iam user from ops acounts. """
 
 
     def __init__(self):
@@ -46,36 +40,53 @@ class DeleteUser(object):
 
     @staticmethod
     def check_arguments():
-        """ ensure that an argument was passed in from the command line """
+        """ Ensure that an argument was passed in from the command line.
 
-        parser = argparse.ArgumentParser(description='Manage API keys for IAM accounts')
-        parser.add_argument("-a", "--all",
-                            help="manage API keys for every profile in ~/.aws/credentials",
-                            action="store_true")
-        parser.add_argument("-p", "--profile",
-                            help="manage API keys for the specified profile",
+        Returns:
+            Parsed argument(s), if provided
+        """
+
+        parser = argparse.ArgumentParser(description='Delete unwanted IAM accounts')
+        parser.add_argument('-a', '--all',
+                            help='Delete IAM user from every profile in ~/.aws/credentials',
+                            action='store_true')
+        parser.add_argument('-p', '--profile',
+                            help='Delete IAM user from the specified profile',
                             action='append')
-        parser.add_argument("-u", "--user",
-                            help="specify a username for the account")
+        parser.add_argument('-u', '--user',
+                            help='Specify a username for the account')
         args = parser.parse_args()
 
         if not args.all and not args.profile:
-            print('Specify an account ID or profile name. \
-            To change the password for all accounts on file, use \"--all\"')
-            print('Usage:')
-            print('example: %s <account-id-number>' % parser.prog)
-            print('example: %s --all' % parser.prog)
+            print('Specify an account ID or profile name.\n'
+                  'To delete the user\'s IAM account from all AWS accounts on file, use \"--all\"\n'
+                  'Usage:\n'
+                  'example: {0} -u <user-to-delete> -p <account-name>\n'
+                  'example: {0} -u <user-to-delete> --all'.format(parser.prog))
             sys.exit(10)
-        else:
-            if args.user != 'root':
-                return args
+        if args.user != 'root':
+            return args
 
 
     @staticmethod
     def get_ops_accounts():
-        ''' retrieve the config-managed list of ops AWS accounts '''
+        """ Retrieves a list of the config-managed ops AWS accounts.
 
-        path = '/etc/openshift_tools/aws_accounts.txt'
+        Returns:
+            A list containing each of the lines found in the aws accounts file
+
+        Raises:
+            A ValueError if the path does not exist
+        """
+
+        config_path = '/etc/openshift_tools/sso-config.yaml'
+        if os.path.isfile(config_path):
+            with open(config_path, 'r') as sso_config:
+                yaml_config = yaml.load(sso_config)
+
+                if yaml_config["aws_account_file"]:
+                    path = yaml_config["aws_account_file"]
+
         accounts_list = []
 
         if os.path.isfile(path):
@@ -91,7 +102,7 @@ class DeleteUser(object):
 
     @staticmethod
     def delete_user(user_name, client):
-        """ create an iam user account """
+        """ Delete an IAM user account. """
 
         client.remove_user_from_group(GroupName='admin', UserName=user_name)
 
@@ -103,64 +114,100 @@ class DeleteUser(object):
 
 
     def check_user(self, aws_account, user_name, client):
-        """ check if the user exists locally and in aws. deletes iam user if found """
+        """ Check if the user exists locally and in AWS. Deletes the IAM user if found. """
 
         try:
             client.get_user(UserName=user_name)
         except botocore.exceptions.ClientError as client_exception:
             if client_exception.response['Error']['Code'] == 'NoSuchEntity':
+                print('IAM user does not exist in account:', aws_account)
                 return True
 
         else:
-            system_users = []
+            if user_name != 'root':
+                try:
+                    self.delete_login_profile(user_name, client)
+                except botocore.exceptions.ClientError as client_exception:
+                    if client_exception.response['Error']['Code'] == 'NoSuchEntity':
+                        print('IAM user does not have a password for account:', aws_account)
 
-            for user in pwd.getpwall():
-                system_users.append(user[0])
-
-            if user_name in system_users and user_name != 'root' and os.getegid() < 1000:
-                print("Found existing IAM account in %s, \
-                deleting IAM account for user %s" % (aws_account, user_name))
-
+                print("Found existing IAM account in %s\n"
+                      "deleting IAM account for user %s" % (aws_account, user_name))
                 response = self.delete_user(user_name, client)
 
                 return response
             else:
-                print('can\'t delete this user')
+                print('Unable to delete this user. Only ops users can be deleted with this tool.')
 
 
     @staticmethod
-    def get_keys(user_name, client):
-        """ get the Access Key IDs of any API keys the user has and return the oldest key"""
+    def get_keys(user_name, client, aws_account):
+        """ Get the Access Key IDs of the user, and return them in a list.
 
-        existing_keys = client.list_access_keys(
-            UserName=user_name)
+        Returns:
+            All access keys found for the IAM user, in a list.
+            List will be empty if the user has no keys.
+         """
 
-        all_keys = existing_keys['AccessKeyMetadata']
-        keys_list = []
+        try:
+            client.list_access_keys(
+                UserName=user_name)
+        except botocore.exceptions.ClientError as client_exception:
+            if client_exception.response['Error']['Code'] == 'NoSuchEntity':
+                print('IAM user does not have any keys for account:', aws_account)
+                keys_list = []
+                return keys_list
 
-        if all_keys:
-            for ekey in all_keys:
-                keys_list.append(ekey['AccessKeyId'])
+        else:
+            existing_keys = client.list_access_keys(
+                UserName=user_name)
 
-        return keys_list
+            all_keys = existing_keys['AccessKeyMetadata']
+            keys_list = []
+
+            if all_keys:
+                for ekey in all_keys:
+                    keys_list.append(ekey['AccessKeyId'])
+
+            return keys_list
 
 
     @staticmethod
     def delete_key(aws_account, user_name, key, client):
-        """ delete an API key for the specified account"""
+        """ Delete an API key for the specified account. """
 
         response = client.delete_access_key(
             UserName=user_name,
             AccessKeyId=key
             )
 
-        print('found and deleted api key for:', aws_account)
+        print('Found and deleted api key for:', aws_account)
+        return response
+
+
+    @staticmethod
+    def delete_login_profile(user_name, client):
+        """ Delete the login profile from the IAM account. """
+
+        response = client.delete_login_profile(
+            UserName=user_name
+            )
+
         return response
 
 
     @staticmethod
     def get_token(aws_account):
-        """ generate temporary SSO access credentials  """
+        """ Generate temporary SSO access credentials.
+
+        Requires the config file containing the IDP hostname.
+
+        Returns:
+            A temporary boto3 client created with a session token provided by the IDP host.
+
+        Raises:
+            A ValueError if the config path can not be found.
+        """
 
         sso_config_path = '/etc/openshift_tools/sso-config.yaml'
 
@@ -186,11 +233,11 @@ class DeleteUser(object):
                 return client
 
         else:
-            raise ValueError(sso_config_path + 'does not exist')
+            raise ValueError(sso_config_path + 'does not exist.')
 
 
     def main(self):
-        ''' main function '''
+        """ Main function. """
         args = self.check_arguments()
         ops_accounts = self.get_ops_accounts()
 
@@ -198,9 +245,9 @@ class DeleteUser(object):
 
             for aws_account in args.profile:
                 matching = [s for s in ops_accounts if aws_account in s]
-                account_name = matching[0].split(':')[1]
-                client = self.get_token(account_name)
-                existing_keys = self.get_keys(args.user, client)
+                account_number = matching[0].split(':')[1]
+                client = self.get_token(account_number)
+                existing_keys = self.get_keys(args.user, client, aws_account)
 
                 if existing_keys:
                     for key in existing_keys:
@@ -211,9 +258,11 @@ class DeleteUser(object):
         elif args.all and args.user:
 
             for aws_account in ops_accounts:
-                client = self.get_token(aws_account)
+                matching = [s for s in ops_accounts if aws_account in s]
+                account_number = matching[0].split(':')[1]
+                client = self.get_token(account_number)
 
-                existing_keys = self.get_keys(args.user, client)
+                existing_keys = self.get_keys(args.user, client, aws_account)
 
                 if existing_keys:
                     for key in existing_keys:
@@ -222,7 +271,7 @@ class DeleteUser(object):
                 self.check_user(aws_account, args.user, client)
 
         else:
-            raise ValueError('No suitable arguments provided')
+            raise ValueError('No suitable arguments provided.')
 
 
 if __name__ == '__main__':
