@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.87
+Version:       0.0.88
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -291,6 +291,10 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Sun Oct 23 2016 Unknown name 0.0.88-1
+- OCUtil.get_projects() (dranders@redhat.com)
+- dry up some awsutil methods. (blentz@redhat.com)
+
 * Tue Oct 11 2016 Wesley Hearn <whearn@redhat.com> 0.0.87-1
 - Add openshift metrics checks. Updated ocutil with more features
   (whearn@redhat.com)
