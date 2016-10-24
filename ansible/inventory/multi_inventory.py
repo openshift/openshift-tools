@@ -205,7 +205,6 @@ class MultiInventoryAccount(object):
 
     def apply_extra_groups(self):
         """Apply the account config for extra groups """
-        _ = self # Here for pylint.  wanted an instance method instead of static
         for new_var, value in self.config.get('extra_groups', {}).items():
             for name, _ in self.inventory['_meta']['hostvars'].items():
                 if 'synthetic_' in name:
@@ -287,7 +286,6 @@ class MultiInventoryException(Exception):
     '''Exceptions for MultiInventory class'''
     pass
 
-# pylint: disable=too-many-instance-attributes
 # Need to figure out how to reduce the attributes.  Most are used for default settings
 # and determining cache, cache_max_age, results, and storing account data
 class MultiInventory(object):
@@ -312,9 +310,6 @@ class MultiInventory(object):
         # Store each individual restuls by account name in this variable
         self.all_inventory_results = {}
 
-        # Store each individual restuls by account name in this variable
-        self.results = {}
-
     def run(self):
         '''This method checks to see if the local cache is valid for the inventory.
 
@@ -322,6 +317,7 @@ class MultiInventory(object):
            else the credentials are loaded from multi_inventory.yaml or from the env
            and we attempt to get the inventory from the provider specified.
         '''
+        results = {}
 
         # Finish loading configuration files
         self.load_config_settings()
@@ -330,10 +326,12 @@ class MultiInventory(object):
         # Either force a refresh on the cache or validate it
         if self.args.get('refresh_cache', None) or \
            not MultiInventoryUtils.is_cache_valid(self.cache_path, self.cache_max_age):
-            self.results = self.get_inventory()
+            results = self.get_inventory()
         else:
             # get data from disk
-            self.results = MultiInventoryUtils.get_inventory_from_cache(self.cache_path)
+            results = MultiInventoryUtils.get_inventory_from_cache(self.cache_path)
+
+        return results
 
     def load_config_settings(self):
         """Setup the config settings for cache, config file, etc"""
@@ -467,10 +465,6 @@ class MultiInventory(object):
                             help='Wether to print debug')
         self.args = parser.parse_args().__dict__
 
-    def result_str(self):
-        """Return cache string"""
-        return MultiInventoryUtils.json_format_dict(self.results, True)
-
 class MultiInventoryUtils(object):
     """place for shared utilities"""
     @staticmethod
@@ -598,5 +592,4 @@ class MultiInventoryUtils(object):
 if __name__ == "__main__":
     MI2 = MultiInventory()
     MI2.parse_cli_args()
-    MI2.run()
-    print MI2.result_str()
+    print MultiInventoryUtils.json_format_dict(MI2.run(), True)
