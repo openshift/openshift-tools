@@ -139,7 +139,7 @@ class OCUtil(object):
 
     def get_projects(self):
         ''' Get all projects in the cluster '''
-        return self._run_cmd("get projects -o yaml")
+        return self._run_cmd_yaml("get projects")
 
     def get_nodes(self):
         ''' Get all the nodes in the cluster '''
