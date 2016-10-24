@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.157
+Version:       0.0.158
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -327,6 +327,15 @@ OpenShift Tools GCP specific scripts
 
 
 %changelog
+* Mon Oct 24 2016 Wesley Hearn <whearn@redhat.com> 0.0.158-1
+- Some formatting around cron-send-logging-checks (whearn@redhat.com)
+- Added quick and dirty disk check (whearn@redhat.com)
+- Added a catch around the clusterhealth to fail the check if an exception is
+  thrown. (whearn@redhat.com)
+- Only loop over all pods only once and various other changes
+  (whearn@redhat.com)
+- Add logging checks (whearn@redhat.com)
+
 * Sun Oct 23 2016 Unknown name 0.0.157-1
 - this could be required to help ensure things are available for subsequent
   commands (dranders@redhat.com)
