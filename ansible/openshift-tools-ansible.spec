@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.24
+Version:        0.0.25
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,42 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Mon Oct 24 2016 Wesley Hearn <whearn@redhat.com> 0.0.25-1
+- reducing priority on config run, there is no reason for this to page
+  (ihorvath@redhat.com)
+- Fix around oo_zabbix role and logging (whearn@redhat.com)
+- Attempt at making oc_process idempotent. (kwoodson@redhat.com)
+- add support for setting up multiple OpenShift routers (jdiaz@redhat.com)
+- Fix config for container usage to be compatible with ansible 2.x
+  (twiest@redhat.com)
+- Added quick and dirty disk check (whearn@redhat.com)
+- remove ignore_errors (sedgar@redhat.com)
+- fixed the registry options in oadm_registry (mwoodson@redhat.com)
+- improve upgrade-check variables (sedgar@redhat.com)
+- Adding statuspage component (kwoodson@redhat.com)
+- set verbosity (dranders@redhat.com)
+- generated namespace exceeds limit (dranders@redhat.com)
+- Fixed description bug and added workaround for project/namespace issue.
+  (kwoodson@redhat.com)
+- Fixed a couple bugs found by the team (sedgar@redhat.com)
+- pass the name when creating router template output (jdiaz@redhat.com)
+- added kube version to the metrics; cleaned up template installer
+  (mwoodson@redhat.com)
+- added FIXME statements for future improvements (sedgar@redhat.com)
+- Add logging vars file (whearn@redhat.com)
+- Add logging checks (whearn@redhat.com)
+- Add trigger to alert on metrics failing (whearn@redhat.com)
+- updated oc version with a few cleanup steps (mwoodson@redhat.com)
+- added playbook for in-place rpm hotfixes (sedgar@redhat.com)
+- added lib_repoquery (mwoodson@redhat.com)
+- Adding statuspage ansible module. (kwoodson@redhat.com)
+- seperate the builds (dranders@redhat.com)
+- Add metrics check cronjob (whearn@redhat.com)
+- updated the git_commit to have better logic (mwoodson@redhat.com)
+- added git_commit module to take files to commit argument
+  (mwoodson@redhat.com)
+- add Terminating project check (zhizhang@redhat.com)
+
 * Thu Oct 13 2016 Wesley Hearn <whearn@redhat.com> 0.0.24-1
 - Add host template to primary masters (whearn@redhat.com)
 - Fix zabbix key names (whearn@redhat.com)
