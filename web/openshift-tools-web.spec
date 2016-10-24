@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Web Services
 Name:          openshift-tools-web
-Version:       0.0.16
+Version:       0.0.17
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -60,6 +60,9 @@ Custom SimpleSAMLphp modules for oso SSO application
 /usr/share/simplesamlphp/modules/*
 
 %changelog
+* Mon Oct 24 2016 Wesley Hearn <whearn@redhat.com> 0.0.17-1
+- SSO: move simpleSAML modules to rpm (joesmith@redhat.com)
+
 * Mon Sep 26 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.16-1
 - zagg web writes to wrong redis list (ihorvath@redhat.com)
 
