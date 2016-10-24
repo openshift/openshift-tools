@@ -82,6 +82,12 @@ class OCUtil(object):
         except:
             return results
 
+    def _run_cmd_yaml(self, cmd, baseCmd='oc', yamlCmd='-o yaml'):
+        return self._run_cmd(
+            " ".join([cmd, yamlCmd]),
+            baseCmd=baseCmd,
+        )
+
     def get_secrets(self, name):
         ''' Get secrets from object 'name' '''
 
