@@ -23,7 +23,7 @@ class MultiInventoryTest(unittest.TestCase):
         a = {"key1" : 1}
         b = {"key1" : 2}
         result = {}
-        _ = [multi_inventory.MultiInventory.merge_destructively(result, x) for x in [a, b]]
+        _ = [multi_inventory.MultiInventoryUtils.merge_destructively(result, x) for x in [a, b]]
         self.assertEqual(result, {"key1": [1, 2]})
 
     def test_merge_b_empty(self):
@@ -31,7 +31,7 @@ class MultiInventoryTest(unittest.TestCase):
         a = {"key1" : 1}
         b = {}
         result = {}
-        _ = [multi_inventory.MultiInventory.merge_destructively(result, x) for x in [a, b]]
+        _ = [multi_inventory.MultiInventoryUtils.merge_destructively(result, x) for x in [a, b]]
         self.assertEqual(result, {"key1": 1})
 
     def test_merge_a_empty(self):
@@ -39,7 +39,7 @@ class MultiInventoryTest(unittest.TestCase):
         b = {"key1" : 1}
         a = {}
         result = {}
-        _ = [multi_inventory.MultiInventory.merge_destructively(result, x) for x in [a, b]]
+        _ = [multi_inventory.MultiInventoryUtils.merge_destructively(result, x) for x in [a, b]]
         self.assertEqual(result, {"key1": 1})
 
     def test_merge_hash_array(self):
@@ -47,7 +47,7 @@ class MultiInventoryTest(unittest.TestCase):
         a = {"key1" : {"hasha": 1}}
         b = {"key1" : [1, 2]}
         result = {}
-        _ = [multi_inventory.MultiInventory.merge_destructively(result, x) for x in [a, b]]
+        _ = [multi_inventory.MultiInventoryUtils.merge_destructively(result, x) for x in [a, b]]
         self.assertEqual(result, {"key1": [{"hasha": 1}, 1, 2]})
 
     def test_merge_array_hash(self):
@@ -55,7 +55,7 @@ class MultiInventoryTest(unittest.TestCase):
         a = {"key1" : [1, 2]}
         b = {"key1" : {"hasha": 1}}
         result = {}
-        _ = [multi_inventory.MultiInventory.merge_destructively(result, x) for x in [a, b]]
+        _ = [multi_inventory.MultiInventoryUtils.merge_destructively(result, x) for x in [a, b]]
         self.assertEqual(result, {"key1": [1, 2, {"hasha": 1}]})
 
     def test_merge_keys_1(self):
@@ -63,7 +63,7 @@ class MultiInventoryTest(unittest.TestCase):
         a = {"key1" : [1, 2], "key2" : {"hasha": 2}}
         b = {"key2" : {"hashb": 1}}
         result = {}
-        _ = [multi_inventory.MultiInventory.merge_destructively(result, x) for x in [a, b]]
+        _ = [multi_inventory.MultiInventoryUtils.merge_destructively(result, x) for x in [a, b]]
         self.assertEqual(result, {"key1": [1, 2], "key2": {"hasha": 2, "hashb": 1}})
 
     def test_merge_recursive_1(self):
@@ -71,7 +71,7 @@ class MultiInventoryTest(unittest.TestCase):
         a = {"a" : {"b": {"c": 1}}}
         b = {"a" : {"b": {"c": 2}}}
         result = {}
-        _ = [multi_inventory.MultiInventory.merge_destructively(result, x) for x in [a, b]]
+        _ = [multi_inventory.MultiInventoryUtils.merge_destructively(result, x) for x in [a, b]]
         self.assertEqual(result, {"a": {"b": {"c": [1, 2]}}})
 
     def test_merge_recursive_array_item(self):
@@ -79,7 +79,7 @@ class MultiInventoryTest(unittest.TestCase):
         a = {"a" : {"b": {"c": [1]}}}
         b = {"a" : {"b": {"c": 2}}}
         result = {}
-        _ = [multi_inventory.MultiInventory.merge_destructively(result, x) for x in [a, b]]
+        _ = [multi_inventory.MultiInventoryUtils.merge_destructively(result, x) for x in [a, b]]
         self.assertEqual(result, {"a": {"b": {"c": [1, 2]}}})
 
     def test_merge_recursive_hash_item(self):
@@ -87,7 +87,7 @@ class MultiInventoryTest(unittest.TestCase):
         a = {"a" : {"b": {"c": {"d": 1}}}}
         b = {"a" : {"b": {"c": 2}}}
         result = {}
-        _ = [multi_inventory.MultiInventory.merge_destructively(result, x) for x in [a, b]]
+        _ = [multi_inventory.MultiInventoryUtils.merge_destructively(result, x) for x in [a, b]]
         self.assertEqual(result, {"a": {"b": {"c": [{"d": 1}, 2]}}})
 
     def test_merge_recursive_array_hash(self):
@@ -95,7 +95,7 @@ class MultiInventoryTest(unittest.TestCase):
         a = {"a" : [{"b": {"c":  1}}]}
         b = {"a" : {"b": {"c": 1}}}
         result = {}
-        _ = [multi_inventory.MultiInventory.merge_destructively(result, x) for x in [a, b]]
+        _ = [multi_inventory.MultiInventoryUtils.merge_destructively(result, x) for x in [a, b]]
         self.assertEqual(result, {"a": [{"b": {"c": 1}}]})
 
     def test_merge_recursive_hash_array(self):
@@ -103,7 +103,7 @@ class MultiInventoryTest(unittest.TestCase):
         a = {"a" : {"b": {"c": 1}}}
         b = {"a" : [{"b": {"c":  1}}]}
         result = {}
-        _ = [multi_inventory.MultiInventory.merge_destructively(result, x) for x in [a, b]]
+        _ = [multi_inventory.MultiInventoryUtils.merge_destructively(result, x) for x in [a, b]]
         self.assertEqual(result, {"a": [{"b": {"c": 1}}]})
 
 #    def tearDown(self):
