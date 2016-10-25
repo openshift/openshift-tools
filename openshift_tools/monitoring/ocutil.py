@@ -42,7 +42,8 @@ def cleanup_file(inc_file):
 class OCUtil(object):
     ''' Wrapper for interfacing with OpenShift 'oc' utility '''
 
-    def __init__(self, namespace='default', config_file='/tmp/admin.kubeconfig', verbose=False):
+    def __init__(self, namespace='default', config_file='/tmp/admin.kubeconfig',
+                 verbose=False, logger=None):
         '''
         Take initial values for running 'oc'
         Ensure to set non-default namespace if that is what is desired
@@ -51,6 +52,7 @@ class OCUtil(object):
         self.config_file = config_file
         self.verbose = verbose
         self.copy_kubeconfig()
+        self.logger = logger
 
     def copy_kubeconfig(self):
         ''' make a copy of the kubeconfig '''
@@ -66,7 +68,6 @@ class OCUtil(object):
 
     def _run_cmd(self, cmd, baseCmd='oc', ):
         ''' Actually execute the command '''
-
         cmd = " ".join([
             baseCmd,
             '--config', self.config_file,
@@ -74,8 +75,12 @@ class OCUtil(object):
             cmd,
         ])
         cmd = shlex.split(cmd)
+
         if self.verbose:
             print "Running command: {}".format(str(cmd))
+
+        if self.logger:
+            self.logger.debug("Running command: {}".format(str(cmd)))
 
         return subprocess.check_output(cmd)
 
