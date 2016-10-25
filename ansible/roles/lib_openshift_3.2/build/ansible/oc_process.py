@@ -15,6 +15,7 @@ def main():
             template_name=dict(default=None, type='str'),
             params=dict(default=None, type='dict'),
             create=dict(default=False, type='bool'),
+            reconcile=dict(default=True, type='bool'),
         ),
         supports_check_mode=True,
     )
@@ -36,7 +37,7 @@ def main():
         module.exit_json(changed=False, results=api_rval, state="list")
 
     elif state == 'present':
-        if not ocprocess.exists():
+        if not ocprocess.exists() or not module.params['reconcile']:
             # Create it here
             api_rval = ocprocess.process()
             if api_rval['returncode'] != 0:

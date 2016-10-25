@@ -98,6 +98,7 @@
       ES_CLUSTER_SIZE: "{{ osalog_es_cluster_size }}"
       PUBLIC_MASTER_URL: "https://api.{{ osalog_clusterid  }}.openshift.com"
       MASTER_URL: "https://internal.api.{{ osalog_clusterid  }}.openshift.com"
+    reconcile: False
   register: processout
   run_once: true
 - debug: var=processout
@@ -176,6 +177,7 @@
     namespace: logging
     template_name: logging-support-template
     create: True
+    reconcile: False
   register: processout
   run_once: true
 - debug: var=processout
