@@ -54,7 +54,7 @@ ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                
            -v /usr/bin/oc:/usr/bin/oc                                                               \
            -v /usr/bin/oadm:/usr/bin/oadm                                                           \
            -v /etc/openshift_tools:/container_setup:ro                                              \
-           {{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}
+           {{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}:{{ osohm_environment }}
 
 
 ExecReload=-/usr/bin/docker stop "{{ osohm_host_monitoring }}"
