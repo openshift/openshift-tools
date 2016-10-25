@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  author: Nick Hammond
+  author: Nick Hammond & Openshift Ops
   description: Role to configure logrotate scripts
   license: BSD
   min_ansible_version: 1.9
