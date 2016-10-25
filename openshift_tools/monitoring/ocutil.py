@@ -77,17 +77,26 @@ class OCUtil(object):
         if self.verbose:
             print "Running command: {}".format(str(cmd))
 
-        results = subprocess.check_output(cmd)
+        return subprocess.check_output(cmd)
 
-        try:
-            return yaml.safe_load(results)
-        except:
-            return results
-
-    def _run_cmd_yaml(self, cmd, baseCmd='oc', yamlCmd='-o yaml'):
-        return self._run_cmd(
+    def _run_cmd_yaml(self, cmd, baseCmd='oc', yamlCmd='-o yaml', ):
+        return yaml.safe_load(self._run_cmd(
             " ".join([cmd, yamlCmd]),
             baseCmd=baseCmd,
+        ))
+    def run_user_cmd(self, cmd, baseCmd='oc', ):
+        ''' Runs a custom user command '''
+        return self._run_cmd(
+            cmd,
+            baseCmd=baseCmd,
+        )
+
+    def run_user_cmd_yaml(self, cmd, baseCmd='oc', yamlCmd='-o yaml', ):
+        ''' Runs a custom user command and expects yaml '''
+        return self._run_cmd_yaml(
+            cmd,
+            baseCmd=baseCmd,
+            yamlCmd=yamlCmd,
         )
 
     def get_secrets(self, name):
@@ -149,9 +158,3 @@ class OCUtil(object):
         log_results = self._run_cmd(log_cmd)
 
         return log_results
-
-    def run_user_cmd(self, command):
-        ''' Runs a custom user command '''
-
-        user_results = self._run_cmd(command)
-        return user_results
