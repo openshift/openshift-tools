@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.161
+Version:       0.0.162
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -351,6 +351,23 @@ OpenShift Tools IAM specific scripts
 /usr/local/bin/saml_aws_creds.py
 
 %changelog
+* Tue Oct 25 2016 Drew Anderson <dranders@redhat.com> 0.0.162-1
+- Revert "Automatic commit of package [openshift-tools-scripts] release
+  [0.0.162-1]." (dedgar@redhat.com)
+- fixing iam_tools package directory structure (dedgar@redhat.com)
+- addding /usr/local/bin dir to scripts spec (dedgar@redhat.com)
+- Automatic commit of package [openshift-tools-scripts] release [0.0.162-1].
+  (dedgar@redhat.com)
+- updating spec file (dedgar@redhat.com)
+- disabling pylint import error for boto3 (dedgar@redhat.com)
+- making compatible with unconfigured new accounts created by
+  aws_api_key_manager (dedgar@redhat.com)
+- wrapping functions in a class (dedgar@redhat.com)
+- updating spec file (dedgar@redhat.com)
+- fixing pylint errors (dedgar@redhat.com)
+- refactoring and adding saml creds module (dedgar@redhat.com)
+- initial addition of delete iam user tool (dedgar@redhat.com)
+
 * Mon Oct 24 2016 Unknown name 0.0.161-1
 - single-line docs comment (dranders@redhat.com)
 
