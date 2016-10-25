@@ -93,7 +93,6 @@ class OCUtil(object):
     def get_secrets(self, name):
         ''' Get secrets from object 'name' '''
 
-
         secrets_cmd = "get secrets {} -o yaml".format(name)
         secrets_yaml = self._run_cmd(secrets_cmd)
 
@@ -145,11 +144,7 @@ class OCUtil(object):
 
     def get_nodes(self):
         ''' Get all the nodes in the cluster '''
-
-        nodes_cmd = "get nodes -o yaml"
-        nodes_yaml = self._run_cmd(nodes_cmd)
-
-        return nodes_yaml
+        return self._run_cmd_yaml("get nodes")
 
     def get_log(self, name):
         ''' Gets the log for the specified container '''
