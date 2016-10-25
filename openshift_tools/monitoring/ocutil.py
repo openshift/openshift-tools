@@ -42,7 +42,8 @@ def cleanup_file(inc_file):
 class OCUtil(object):
     ''' Wrapper for interfacing with OpenShift 'oc' utility '''
 
-    def __init__(self, namespace='default', config_file='/tmp/admin.kubeconfig', verbose=False):
+    def __init__(self, namespace='default', config_file='/tmp/admin.kubeconfig',
+                 verbose=False, logger=None):
         '''
         Take initial values for running 'oc'
         Ensure to set non-default namespace if that is what is desired
@@ -51,107 +52,98 @@ class OCUtil(object):
         self.config_file = config_file
         self.verbose = verbose
         self.copy_kubeconfig()
+        self.logger = logger
 
     def copy_kubeconfig(self):
         ''' make a copy of the kubeconfig '''
 
-        file_name = os.path.join('/tmp',
-                                 ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7)))
+        file_name = os.path.join(
+            '/tmp',
+            ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7))
+        )
         shutil.copy(self.config_file, file_name)
         atexit.register(cleanup_file, file_name)
 
         self.config_file = file_name
 
-    def _run_cmd(self, cmd):
+    def _run_cmd(self, cmd, baseCmd='oc', ):
         ''' Actually execute the command '''
+        cmd = " ".join([
+            baseCmd,
+            '--config', self.config_file,
+            '-n', self.namespace,
+            cmd,
+        ])
 
-        cmd = 'oc --config ' + self.config_file + ' -n ' + self.namespace + ' ' + cmd
+        if self.logger:
+            self.logger.debug("ocutil._run_cmd( {} )".format(cmd))
+
         cmd = shlex.split(cmd)
+
         if self.verbose:
             print "Running command: {}".format(str(cmd))
 
-        results = subprocess.check_output(cmd)
-
         try:
-            return yaml.safe_load(results)
-        except:
-            return results
+            return subprocess.check_output(cmd)
+        except Exception as e:
+            if self.logger:
+                self.logger.exception('Error from server')
+            raise e
+
+    def _run_cmd_yaml(self, cmd, baseCmd='oc', yamlCmd='-o yaml', ):
+        ''' Actually execute the command and expects yaml '''
+        return yaml.safe_load(self._run_cmd(
+            " ".join([cmd, yamlCmd]),
+            baseCmd=baseCmd,
+        ))
+
+    def run_user_cmd(self, cmd, baseCmd='oc', ):
+        ''' Runs a custom user command '''
+        return self._run_cmd(
+            cmd,
+            baseCmd=baseCmd,
+        )
+
+    def run_user_cmd_yaml(self, cmd, baseCmd='oc', yamlCmd='-o yaml', ):
+        ''' Runs a custom user command and expects yaml '''
+        return self._run_cmd_yaml(
+            cmd,
+            baseCmd=baseCmd,
+            yamlCmd=yamlCmd,
+        )
 
     def get_secrets(self, name):
         ''' Get secrets from object 'name' '''
-
-
-        secrets_cmd = "get secrets {} -o yaml".format(name)
-        secrets_yaml = self._run_cmd(secrets_cmd)
-
-        return secrets_yaml
+        return self._run_cmd_yaml("get secrets {}".format(name))
 
     def get_endpoint(self, name):
         ''' Get endpoint details '''
-
-        endpoint_cmd = "get endpoints {} -o yaml".format(name)
-        endpoint_yaml = self._run_cmd(endpoint_cmd)
-
-        return endpoint_yaml
+        return self._run_cmd_yaml("get endpoints {}".format(name))
 
     def get_service(self, name):
         ''' Get service details '''
-
-        service_cmd = "get service {} -o yaml".format(name)
-        service_yaml = self._run_cmd(service_cmd)
-
-        return service_yaml
+        return self._run_cmd_yaml("get service {}".format(name))
 
     def get_dc(self, name):
         ''' Get deployment config details '''
-
-        dc_cmd = "get dc {} -o yaml".format(name)
-        dc_yaml = self._run_cmd(dc_cmd)
-
-        return dc_yaml
+        return self._run_cmd_yaml("get dc {}".format(name))
 
     def get_route(self, name):
         ''' Get routes details '''
-
-        route_cmd = "get route {} -o yaml".format(name)
-        route_yaml = self._run_cmd(route_cmd)
-
-        return route_yaml
+        return self._run_cmd_yaml("get route {}".format(name))
 
     def get_pods(self):
         ''' Get all the pods in the namespace '''
-
-        pods_cmd = "get pods -o yaml"
-        pods_yaml = self._run_cmd(pods_cmd)
-
-        return pods_yaml
+        return self._run_cmd_yaml("get pods")
 
     def get_projects(self):
         ''' Get all projects in the cluster '''
-
-        nodes_cmd = "oc get projects -o yaml"
-        nodes_yaml = self._run_cmd(nodes_cmd)
-
-        return nodes_yaml
+        return self._run_cmd_yaml("get projects")
 
     def get_nodes(self):
         ''' Get all the nodes in the cluster '''
-
-        nodes_cmd = "get nodes -o yaml"
-        nodes_yaml = self._run_cmd(nodes_cmd)
-
-        return nodes_yaml
+        return self._run_cmd_yaml("get nodes")
 
     def get_log(self, name):
         ''' Gets the log for the specified container '''
-
-        log_cmd = "logs {}".format(name)
-        log_results = self._run_cmd(log_cmd)
-
-        return log_results
-
-    def run_user_cmd(self, command):
-        ''' Runs a custom user command '''
-
-        user_results = self._run_cmd(command)
-        return user_results
+        return self._run_cmd("logs {}".format(name))
