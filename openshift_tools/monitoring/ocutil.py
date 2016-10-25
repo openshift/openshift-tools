@@ -83,7 +83,12 @@ class OCUtil(object):
         if self.verbose:
             print "Running command: {}".format(str(cmd))
 
-        return subprocess.check_output(cmd)
+        try:
+            return subprocess.check_output(cmd)
+        except Exception as e:
+            if self.logger:
+                self.logger.exception('Error from server')
+            raise e
 
     def _run_cmd_yaml(self, cmd, baseCmd='oc', yamlCmd='-o yaml', ):
         return yaml.safe_load(self._run_cmd(
