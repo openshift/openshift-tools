@@ -317,15 +317,20 @@ class MultiInventory(object):
            else the credentials are loaded from multi_inventory.yaml or from the env
            and we attempt to get the inventory from the provider specified.
         '''
-        results = {}
-
         # Finish loading configuration files
         self.load_config_settings()
 
-        # --refresh or --list was called.
+        results = {}
+
+        # --refresh
         # Either force a refresh on the cache or validate it
-        if self.args.get('refresh_cache', None) or \
-           not MultiInventoryUtils.is_cache_valid(self.cache_path, self.cache_max_age):
+        if self.args.get('refresh_cache', None):
+            results = self.get_inventory()
+        #--from-cache was called.
+        elif self.args.get('from_cache', False):
+            results = MultiInventoryUtils.get_inventory_from_cache(self.cache_path)
+        #--list was called.
+        elif not MultiInventoryUtils.is_cache_valid(self.cache_path, self.cache_max_age):
             results = self.get_inventory()
         else:
             # get data from disk
@@ -463,6 +468,8 @@ class MultiInventory(object):
                             help='Refresh an account')
         parser.add_argument('--debug', action='store_true', default=False,
                             help='Wether to print debug')
+        parser.add_argument('--from-cache', action='store_true', default=False,
+                            help='Wether to pull from cache')
         self.args = parser.parse_args().__dict__
 
 class MultiInventoryUtils(object):
