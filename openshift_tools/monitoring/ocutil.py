@@ -84,6 +84,7 @@ class OCUtil(object):
             " ".join([cmd, yamlCmd]),
             baseCmd=baseCmd,
         ))
+
     def run_user_cmd(self, cmd, baseCmd='oc', ):
         ''' Runs a custom user command '''
         return self._run_cmd(
@@ -101,43 +102,23 @@ class OCUtil(object):
 
     def get_secrets(self, name):
         ''' Get secrets from object 'name' '''
-
-        secrets_cmd = "get secrets {} -o yaml".format(name)
-        secrets_yaml = self._run_cmd(secrets_cmd)
-
-        return secrets_yaml
+        return self._run_cmd_yaml("get secrets {}".format(name))
 
     def get_endpoint(self, name):
         ''' Get endpoint details '''
-
-        endpoint_cmd = "get endpoints {} -o yaml".format(name)
-        endpoint_yaml = self._run_cmd(endpoint_cmd)
-
-        return endpoint_yaml
+        return self._run_cmd_yaml("get endpoints {}".format(name))
 
     def get_service(self, name):
         ''' Get service details '''
-
-        service_cmd = "get service {} -o yaml".format(name)
-        service_yaml = self._run_cmd(service_cmd)
-
-        return service_yaml
+        return self._run_cmd_yaml("get service {}".format(name))
 
     def get_dc(self, name):
         ''' Get deployment config details '''
-
-        dc_cmd = "get dc {} -o yaml".format(name)
-        dc_yaml = self._run_cmd(dc_cmd)
-
-        return dc_yaml
+        return self._run_cmd_yaml("get dc {}".format(name))
 
     def get_route(self, name):
         ''' Get routes details '''
-
-        route_cmd = "get route {} -o yaml".format(name)
-        route_yaml = self._run_cmd(route_cmd)
-
-        return route_yaml
+        return self._run_cmd_yaml("get route {}".format(name))
 
     def get_pods(self):
         ''' Get all the pods in the namespace '''
@@ -153,8 +134,4 @@ class OCUtil(object):
 
     def get_log(self, name):
         ''' Gets the log for the specified container '''
-
-        log_cmd = "logs {}".format(name)
-        log_results = self._run_cmd(log_cmd)
-
-        return log_results
+        return self._run_cmd("logs {}".format(name))
