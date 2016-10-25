@@ -84,6 +84,7 @@ cp -p inventory-clients/openshift_tools.conf.example %{buildroot}/etc/openshift_
 
 # openshift-tools-scripts-iam-tools install
 cp -p iam-tools/aws_api_key_manager.py %{buildroot}/usr/local/bin
+cp -p iam-tools/change_iam_password.py %{buildroot}/usr/local/bin
 cp -p iam-tools/delete_iam_account.py %{buildroot}/usr/local/bin
 cp -p iam-tools/saml_aws_creds.py %{buildroot}/usr/local/bin
 
@@ -344,9 +345,9 @@ OpenShift Tools IAM specific scripts
 
 %files iam-tools
 /usr/local/bin/aws_api_key_manager.py
+/usr/local/bin/change_iam_password.py
 /usr/local/bin/delete_iam_account.py
 /usr/local/bin/saml_aws_creds.py
-
 
 %changelog
 * Mon Oct 24 2016 Unknown name 0.0.161-1
