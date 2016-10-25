@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.91
+Version:       0.0.92
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -291,6 +291,9 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Mon Oct 24 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.92-1
+- 
+
 * Mon Oct 24 2016 Unknown name 0.0.91-1
 - pylint missing-docstring (dranders@redhat.com)
 - use logger for error display, then raise further (dranders@redhat.com)
