@@ -91,6 +91,7 @@ class OCUtil(object):
             raise e
 
     def _run_cmd_yaml(self, cmd, baseCmd='oc', yamlCmd='-o yaml', ):
+        ''' Actually execute the command and expects yaml '''
         return yaml.safe_load(self._run_cmd(
             " ".join([cmd, yamlCmd]),
             baseCmd=baseCmd,
