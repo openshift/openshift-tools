@@ -74,13 +74,14 @@ class OCUtil(object):
             '-n', self.namespace,
             cmd,
         ])
+
+        if self.logger:
+            self.logger.debug("ocutil._run_cmd( {} )".format(cmd))
+
         cmd = shlex.split(cmd)
 
         if self.verbose:
             print "Running command: {}".format(str(cmd))
-
-        if self.logger:
-            self.logger.debug("Running command: {}".format(str(cmd)))
 
         return subprocess.check_output(cmd)
 
