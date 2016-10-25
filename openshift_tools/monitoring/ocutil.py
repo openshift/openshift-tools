@@ -55,8 +55,10 @@ class OCUtil(object):
     def copy_kubeconfig(self):
         ''' make a copy of the kubeconfig '''
 
-        file_name = os.path.join('/tmp',
-                                 ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7)))
+        file_name = os.path.join(
+            '/tmp',
+            ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7))
+        )
         shutil.copy(self.config_file, file_name)
         atexit.register(cleanup_file, file_name)
 
