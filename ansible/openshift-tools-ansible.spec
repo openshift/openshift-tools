@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.27
+Version:        0.0.28
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,13 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Tue Oct 25 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.28-1
+- Updating awsutil to handle the refactor. (kwoodson@redhat.com)
+- changing registry url to include environment for host monitoring pulls
+  (ihorvath@redhat.com)
+- change to 7d removal of data if not required, solve daily cert OK alerts
+  (dranders@redhat.com)
+
 * Mon Oct 24 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.27-1
 - Fixed the library call for the multiinventory (kwoodson@redhat.com)
 
