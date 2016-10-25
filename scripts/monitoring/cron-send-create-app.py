@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""
-    Quick and dirty create application check for v3
-"""
+""" Create application check for v3 """
 
 # We just want to see any exception that happens
 # don't want the script to die under any cicumstances
