@@ -23,7 +23,7 @@ Environment=HOME=/etc/docker/ops
 # systemd syntax '=-' ignore errors from return codes.
 ExecStartPre=-/usr/bin/docker kill "{{ osohm_host_monitoring }}"
 ExecStartPre=-/usr/bin/docker rm "{{ osohm_host_monitoring }}"
-ExecStartPre=-/usr/bin/docker pull "{{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}"
+ExecStartPre=-/usr/bin/docker pull "{{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}:{{ osohm_environment }}"
 
 # mwoodson note 1-7-16:
 # pcp recommends mounting /run in their Dockerfile
