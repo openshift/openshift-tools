@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.160
+Version:       0.0.161
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -347,6 +347,9 @@ OpenShift Tools IAM specific scripts
 
 
 %changelog
+* Mon Oct 24 2016 Unknown name 0.0.161-1
+- single-line docs comment (dranders@redhat.com)
+
 * Mon Oct 24 2016 Unknown name 0.0.160-1
 - 
 
