@@ -83,6 +83,7 @@ cp -p inventory-clients/ossh_bash_completion %{buildroot}/etc/bash_completion.d
 cp -p inventory-clients/openshift_tools.conf.example %{buildroot}/etc/openshift_tools/openshift_tools.conf
 
 # openshift-tools-scripts-iam-tools install
+mkdir -p %{buildroot}/usr/local/bin
 cp -p iam-tools/aws_api_key_manager.py %{buildroot}/usr/local/bin
 cp -p iam-tools/change_iam_password.py %{buildroot}/usr/local/bin
 cp -p iam-tools/delete_iam_account.py %{buildroot}/usr/local/bin
