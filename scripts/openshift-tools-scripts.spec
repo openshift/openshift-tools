@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.161
+Version:       0.0.162
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -350,6 +350,11 @@ OpenShift Tools IAM specific scripts
 /usr/local/bin/saml_aws_creds.py
 
 %changelog
+* Tue Oct 25 2016 Doug Edgar <dedgar@redhat.com> 0.0.162-1
+- adding aws_api_key_manager.py (dedgar@redhat.com)
+- adding change_iam_password.py (dedgar@redhat.com)
+- adding delete_iam_account.py (dedgar@redhat.com)
+- adding saml_aws_creds.py (dedgar@redhat.com)
 * Mon Oct 24 2016 Unknown name 0.0.161-1
 - single-line docs comment (dranders@redhat.com)
 
