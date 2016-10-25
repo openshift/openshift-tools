@@ -1,6 +1,8 @@
 # logrotate
 
-![Build Status](https://travis-ci.org/nickhammond/ansible-logrotate.svg?branch=master)
+This is Openshift Ops version of nickhammond.logrotate. This is originally found here:
+
+https://github.com/nickhammond/ansible-logrotate
 
 Installs logrotate and provides an easy way to setup additional logrotate scripts by
 specifying a list of directives.
@@ -21,14 +23,15 @@ None
 ```
 logrotate_scripts:
   - name: rails
-    path: "/srv/current/log/*.log"
+    paths:
+    - "/srv/current/log/*.log"
     options:
-      - weekly
-      - size 25M
-      - missingok
-      - compress
-      - delaycompress
-      - copytruncate
+    - weekly
+    - size 25M
+    - missingok
+    - compress
+    - delaycompress
+    - copytruncate
 ```
 
 ## Dependencies
