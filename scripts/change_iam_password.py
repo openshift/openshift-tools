@@ -36,7 +36,7 @@ import botocore.exceptions
 
 
 class ChangePassword(object):
-    """ class to change IAM user account passwords """
+    """ Class to change IAM user account passwords. """
 
 
     def __init__(self):
@@ -46,31 +46,34 @@ class ChangePassword(object):
 
     @staticmethod
     def check_arguments():
-        """ ensure that an argument was passed in from the command line """
+        """ Ensure that an argument was passed in from the command line.
 
-        parser = argparse.ArgumentParser(description='Change the password for IAM accounts')
-        parser.add_argument("-a", "--all",
-                            help="change the password for every profile in ~/.aws/credentials",
-                            action="store_true")
-        parser.add_argument("-p", "--profile",
-                            help="change the password for the specified profile",
+        Returns:
+            Parsed argument(s), if provided
+        """
+
+        parser = argparse.ArgumentParser(description='Change the password for IAM accounts.')
+        parser.add_argument('-a', '--all',
+                            help='Change your password for every profile in ~/.aws/credentials.',
+                            action='store_true')
+        parser.add_argument('-p', '--profile',
+                            help='Change your password for the specified profile.',
                             action='append')
         args = parser.parse_args()
 
         if not args.all and not args.profile:
-            print('Specify an account ID or profile name. \
-            To change the password for all accounts on file, use \"--all\"')
-            print('Usage:')
-            print('example: %s <account-id-number>' % parser.prog)
-            print('example: %s --all' % parser.prog)
+            print('Specify an account profile name.\n'
+                  'To change the password for all accounts on file, use "--all"\n'
+                  'Usage:\n'
+                  'example: {0} -p <account-name>\n'
+                  'example: {0} --all'.format(parser.prog))
             sys.exit(10)
-        else:
-            return args
+        return args
 
 
     @staticmethod
     def get_all_profiles():
-        """ if -a is specified, generate a list of all profiles found in ~/.aws/credentials """
+        """ If -a is specified, generate a list of all profiles found in ~/.aws/credentials. """
 
         path = os.path.join(os.path.expanduser('~'), '.aws/credentials')
         profile_list = []
@@ -84,11 +87,11 @@ class ChangePassword(object):
                         profile_list.append(account.group(1))
                 return profile_list
         else:
-            raise ValueError(path + 'does not exist')
+            raise ValueError(path + ' does not exist')
 
 
     def change_password(self, aws_account, user_name, new_password):
-        """ change the password for the specified account"""
+        """ Change the password for the specified account. """
 
         session = boto3.Session(profile_name=aws_account)
         client = session.client('iam')
@@ -111,7 +114,7 @@ class ChangePassword(object):
 
 
     def main(self):
-        """ main function """
+        """ Main function. """
 
         args = self.check_arguments()
 
@@ -120,7 +123,7 @@ class ChangePassword(object):
         confirm_password = getpass.getpass('Confirm New Password:')
 
         if new_password != confirm_password:
-            raise ValueError('New password does not match confirmation')
+            raise ValueError('New password does not match confirmation.')
 
         else:
             if args.profile:
@@ -132,7 +135,7 @@ class ChangePassword(object):
                     self.change_password(aws_account, user_name, confirm_password)
 
             else:
-                raise ValueError('No suitable arguments provided')
+                raise ValueError('No suitable arguments provided.')
 
 
 if __name__ == '__main__':
