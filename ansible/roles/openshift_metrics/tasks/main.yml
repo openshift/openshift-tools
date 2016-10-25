@@ -5,7 +5,7 @@
 
 - name: set the kube version
   set_fact:
-    kube_version: "{{ oc_version.kubernetes_short }}"
+    kube_version: "{{ oc_version.result.kubernetes_short }}"
 
 - name: get cert's basename
   set_fact:
