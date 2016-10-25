@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.90
+Version:       0.0.91
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -291,6 +291,22 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Mon Oct 24 2016 Unknown name 0.0.91-1
+- pylint missing-docstring (dranders@redhat.com)
+- use logger for error display, then raise further (dranders@redhat.com)
+- moving up to where the command is setup (dranders@redhat.com)
+- enable logger (dranders@redhat.com)
+- update for yaml (dranders@redhat.com)
+- _run_user_* commands updated (dranders@redhat.com)
+- _run_cmd_yaml("get pods") (dranders@redhat.com)
+- _run_cmd_yaml("get nodes") (dranders@redhat.com)
+- pylint line-too-long (dranders@redhat.com)
+- use _run_cmd_yaml (dranders@redhat.com)
+- _run_cmd_yaml (dranders@redhat.com)
+- _run_cmd gets array join and baseCmd (dranders@redhat.com)
+- removing unnecessary variables (dranders@redhat.com)
+- fix for get_projects (dranders@redhat.com)
+
 * Mon Oct 24 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.90-1
 - Fixed the library call for the multiinventory (kwoodson@redhat.com)
 
