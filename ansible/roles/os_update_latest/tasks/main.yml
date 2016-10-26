@@ -1,3 +1,6 @@
 ---
-- name: Update all packages
-  action: "{{ ansible_pkg_mgr }} name=* state=latest"
+- name: Make room for new kernel on /boot
+  command: package-cleanup --oldkernels --count=2 -y
+
+- name: Update all packages, except for atomic-openshift
+  action: "{{ ansible_pkg_mgr }} name=* state=latest exclude='atomic-openshift* tuned-profiles-atomic-openshift*'"
