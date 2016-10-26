@@ -15,7 +15,7 @@
     replicas: "{{ item.0.replicas | default(2) }}"
     namespace: default
     selector: type=infra
-    ports: "{{ item.0.listeners | default(g_elb_infra_listeners) | ossr_create_port_list() }}"
+    ports: "{{ item.0.listeners | default(ossr_default_listeners) | ossr_create_port_list() }}"
     stats_port: "{{ item.0.stats_port | default(omit) }}"
     images: "registry.ops.openshift.com/openshift3/ose-${component}:${version}"
     cert_file: "/etc/origin/master/named_certificates/{{ item.1 | basename }}"
@@ -23,7 +23,7 @@
     cacert_file: "/etc/origin/master/named_certificates/{{ ossr_default_router_cacert | basename }}"
     edits: "{{ item.0.router_edits | default([]) | union(ossr_default_router_edits) }}"
   with_together:
-  - "{{ g_routers }}" # item.0
+  - "{{ ossr_routers }}" # item.0
   - "{{ ossr_default_router_certs }}" # item.1
   - "{{ ossr_default_router_keys }}" # item.2
   register: router_out
