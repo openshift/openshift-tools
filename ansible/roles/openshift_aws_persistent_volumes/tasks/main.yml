@@ -101,5 +101,5 @@
     state: absent
     path: "{{ item.dest }}"
   when: item.changed
-  with_items: pv_templates.results
+  with_items: "{{ pv_templates.results }}"
   run_once: true
