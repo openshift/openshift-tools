@@ -8,3 +8,9 @@ ossr_default_router_edits:
       timeoutSeconds: 600
       updatePeriodSeconds: 1
     action: put
+
+ossr_default_listeners:
+- instance_port: 80
+- instance_port: 443
+- instance_port: 5000
+
