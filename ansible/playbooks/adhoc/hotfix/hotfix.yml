@@ -21,9 +21,9 @@
     - cli_version
     run_once: True
 
-##############################################
+#############################################
 # Master upgrade
-##############################################
+#############################################
 
 - hosts: "oo_clusterid_{{ cli_clusterid }}:&oo_hosttype_master"
   gather_facts: no
@@ -36,7 +36,7 @@
     rpm_wanted:     "atomic-openshift-master-{{ version_wanted }}.x86_64"
 
   roles:
-  - role: check_update_needed
+  - role: ../../../roles/check_update_needed
   - role: ../../../roles/openshift_aws_elb_instance_manager
     osaeim_elb_name: "{{ cli_clusterid }}-master"
     osaeim_state: absent
@@ -46,7 +46,7 @@
     osaeim_aws_secret_key: "{{ lookup('env', 'SECRET_ACCESS_KEY') }}"
     when: "{{ update_needed == True }}" 
 
-  - role: update_master
+  - role: ../../../roles/update_master
     when: "{{ update_needed == True }}" 
 
   - role: ../../../roles/openshift_aws_elb_instance_manager
@@ -84,9 +84,9 @@
     rpm_wanted:     "atomic-openshift-node-{{ version_wanted }}.x86_64"
 
   roles:
-  - role: check_update_needed
-  - role: pre_update_node
-  - role: update_node
+  - role: ../../../roles/check_update_needed
+  - role: ../../../roles/pre_update_node
+  - role: ../../../roles/update_node
 
 
 ##############################################
@@ -104,6 +104,6 @@
     rpm_wanted:     "atomic-openshift-node-{{ version_wanted }}.x86_64"
 
   roles:
-  - role: check_update_needed
-  - role: pre_update_node
-  - role: update_node
+  - role: ../../../roles/check_update_needed
+  - role: ../../../roles/pre_update_node
+  - role: ../../../roles/update_node

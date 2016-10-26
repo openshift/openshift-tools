@@ -53,6 +53,10 @@
   with_items:
   - atomic-openshift-master-api
   - atomic-openshift-master-controllers
+  register: restart_master_services
+  until: restart_master_services|succeeded
+  retries: 3
+  delay: 10
   when: "{{ update_needed == True and wanted_version_installed == True }}"
 
 - name: Ensure master services are running
