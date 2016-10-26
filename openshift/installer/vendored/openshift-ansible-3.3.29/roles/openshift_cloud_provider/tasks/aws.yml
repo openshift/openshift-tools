@@ -4,3 +4,4 @@
     section: Global
     option: Zone
     value: "{{ openshift.provider.zone }}"
+    create: True
