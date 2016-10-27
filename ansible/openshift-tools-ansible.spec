@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.28
+Version:        0.0.29
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,25 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Oct 27 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.29-1
+- aws_account_list: Pass in path to aws_accounts.txt (joesmith@redhat.com)
+- fix spelling error in multi_inventory (blentz@redhat.com)
+- add synthetic property that ossh can use to filter out synth hosts.
+  (blentz@redhat.com)
+- don't use global variable in role (jdiaz@redhat.com)
+- fixed the openshift_numeric (mwoodson@redhat.com)
+- fixed a bug with pv vars (mwoodson@redhat.com)
+- use current version of docker (mwoodson@redhat.com)
+- moved nickhammond logrotate to logrotate (mwoodson@redhat.com)
+- added nickhammond.logrotate (mwoodson@redhat.com)
+- Bypass templates that are not idempotent. (kwoodson@redhat.com)
+- fixing the call to the tagged image: (ihorvath@redhat.com)
+- fixed oc version issue (mwoodson@redhat.com)
+- fixed oc version issue with metrics (mwoodson@redhat.com)
+- added playbook to detach failed PVs (sedgar@redhat.com)
+- Set up resource constraints for metrics based on how many cassandra nodes we
+  have (whearn@redhat.com)
+
 * Tue Oct 25 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.28-1
 - Updating awsutil to handle the refactor. (kwoodson@redhat.com)
 - changing registry url to include environment for host monitoring pulls
