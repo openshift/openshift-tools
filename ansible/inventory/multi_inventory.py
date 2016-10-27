@@ -179,7 +179,8 @@ class MultiInventoryAccount(object):
             if synthetic_hosts:
                 synth_host = 'synthetic_%s' % cluster_name
 
-                self.inventory['_meta']['hostvars'][synth_host] = {'oo_clusterid': cluster_name}
+                self.inventory['_meta']['hostvars'][synth_host] = {'oo_clusterid': cluster_name,
+                                                                   'synthetic' : True}
 
                 for new_var, value in cluster.items():
                     self.inventory['_meta']['hostvars'][synth_host][new_var] = value
