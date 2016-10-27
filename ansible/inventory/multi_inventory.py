@@ -468,9 +468,9 @@ class MultiInventory(object):
         parser.add_argument('--account', action='store', default=False,
                             help='Refresh an account')
         parser.add_argument('--debug', action='store_true', default=False,
-                            help='Wether to print debug')
+                            help='Whether to print debug')
         parser.add_argument('--from-cache', action='store_true', default=False,
-                            help='Wether to pull from cache')
+                            help='Whether to pull from cache')
         self.args = parser.parse_args().__dict__
 
 class MultiInventoryUtils(object):
