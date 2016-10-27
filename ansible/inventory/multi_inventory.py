@@ -179,7 +179,8 @@ class MultiInventoryAccount(object):
             if synthetic_hosts:
                 synth_host = 'synthetic_%s' % cluster_name
 
-                self.inventory['_meta']['hostvars'][synth_host] = {'oo_clusterid': cluster_name}
+                self.inventory['_meta']['hostvars'][synth_host] = {'oo_clusterid': cluster_name,
+                                                                   'synthetic' : True}
 
                 for new_var, value in cluster.items():
                     self.inventory['_meta']['hostvars'][synth_host][new_var] = value
@@ -467,9 +468,9 @@ class MultiInventory(object):
         parser.add_argument('--account', action='store', default=False,
                             help='Refresh an account')
         parser.add_argument('--debug', action='store_true', default=False,
-                            help='Wether to print debug')
+                            help='Whether to print debug')
         parser.add_argument('--from-cache', action='store_true', default=False,
-                            help='Wether to pull from cache')
+                            help='Whether to pull from cache')
         self.args = parser.parse_args().__dict__
 
 class MultiInventoryUtils(object):
