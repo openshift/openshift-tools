@@ -97,7 +97,7 @@ class Repoquery(RepoqueryCLI):
         if self.match_version:
             self.show_duplicates = True
 
-        self.query_format = "%{name}|%{version}|%{release}|%{arch}|%{repo}"
+        self.query_format = "%{version}|%{release}|%{arch}|%{repo}|%{version}-%{release}"
 
     def build_cmd(self):
         ''' build the repoquery cmd options '''
@@ -115,53 +115,66 @@ class Repoquery(RepoqueryCLI):
         return repo_cmd
 
     @staticmethod
-    def format_packages(query_output):
+    def process_versions(query_output):
         ''' format the package data into something that can be presented '''
 
-        package_dict = defaultdict(list)
+        version_dict = defaultdict(dict)
 
         for version in query_output.split('\n'):
             pkg_info = version.split("|")
+
             pkg_version = {}
-            pkg_version['version'] = pkg_info[1]
-            pkg_version['release'] = pkg_info[2]
-            pkg_version['arch'] = pkg_info[3]
-            pkg_version['repo'] = pkg_info[4]
+            pkg_version['version'] = pkg_info[0]
+            pkg_version['release'] = pkg_info[1]
+            pkg_version['arch'] = pkg_info[2]
+            pkg_version['repo'] = pkg_info[3]
+            pkg_version['version_release'] = pkg_info[4]
 
-            package_dict[pkg_info[0]].append(pkg_version)
+            version_dict[pkg_info[4]] = pkg_version
 
-        return package_dict
+        return version_dict
 
-    def format_versions(self, formatted_packages):
+    def format_versions(self, formatted_versions):
         ''' Gather and present the versions of each package '''
 
         versions_dict = {}
+        versions_dict['available_versions_full'] = formatted_versions.keys()
 
-        for package, info_list in formatted_packages.iteritems():
-            versions_subdict = defaultdict(list)
-            for package_info in info_list:
-                if package_info['version'] not in versions_subdict['available_versions']:
-                    versions_subdict['available_versions'].append(package_info['version'])
+        # set the match version, if called
+        if self.match_version:
+            versions_dict['matched_versions_full'] = []
+            versions_dict['requested_match_version'] = self.match_version
+            versions_dict['matched_versions'] = []
 
-                if self.match_version:
-                    if package_info['version'].startswith(self.match_version):
-                        if package_info['version'] not in versions_subdict['matched_versions']:
-                            versions_subdict['matched_versions'].append(package_info['version'])
+        # get the "full version (version - release)
+        versions_dict['available_versions_full'].sort(key=LooseVersion)
+        versions_dict['latest_full'] = versions_dict['available_versions_full'][-1]
 
-            versions_dict[package] = versions_subdict
-            versions_dict[package]['available_versions'].sort(key=LooseVersion)
-            versions_dict[package]['latest'] = versions_subdict['available_versions'][-1]
+        # get the "short version (version)
+        versions_dict['available_versions'] = []
+        for version in versions_dict['available_versions_full']:
+            versions_dict['available_versions'].append(formatted_versions[version]['version'])
 
             if self.match_version:
-                versions_dict[package]['requested_match_version'] = self.match_version
-                if versions_dict[package]['matched_versions']:
-                    versions_dict[package]['matched_version_found'] = True
-                    versions_dict[package]['matched_versions'].sort(key=LooseVersion)
-                    versions_dict[package]['matched_version_latest'] = versions_dict[package]['matched_versions'][-1]
-                else:
-                    versions_dict[package]['matched_version_found'] = False
-                    versions_dict[package]['matched_versions'] = []
-                    versions_dict[package]['matched_version_latest'] = ""
+                if version.startswith(self.match_version):
+                    versions_dict['matched_versions_full'].append(version)
+                    versions_dict['matched_versions'].append(formatted_versions[version]['version'])
+
+        versions_dict['available_versions'].sort(key=LooseVersion)
+        versions_dict['latest'] = versions_dict['available_versions'][-1]
+
+        # finish up the matched version
+        if self.match_version:
+            if versions_dict['matched_versions_full']:
+                versions_dict['matched_version_found'] = True
+                versions_dict['matched_versions'].sort(key=LooseVersion)
+                versions_dict['matched_version_latest'] = versions_dict['matched_versions'][-1]
+                versions_dict['matched_version_full_latest'] = versions_dict['matched_versions_full'][-1]
+            else:
+                versions_dict['matched_version_found'] = False
+                versions_dict['matched_versions'] = []
+                versions_dict['matched_version_latest'] = ""
+                versions_dict['matched_version_full_latest'] = ""
 
         return versions_dict
 
@@ -172,13 +185,14 @@ class Repoquery(RepoqueryCLI):
 
         rval = self._repoquery_cmd(repoquery_cmd, True, 'raw')
 
-        formatted_packages = Repoquery.format_packages(rval['results'].strip())
-        formatted_versions = self.format_versions(formatted_packages)
+        processed_versions = Repoquery.process_versions(rval['results'].strip())
+        formatted_versions = self.format_versions(processed_versions)
 
         rval['versions'] = formatted_versions
+        rval['package_name'] = self.name
 
         if self.verbose:
-            rval['packages'] = formatted_packages
+            rval['raw_versions'] = processed_versions
         else:
             del rval['results']
 
@@ -192,9 +206,9 @@ def main():
         argument_spec=dict(
             state=dict(default='list', type='str', choices=['list']),
             name=dict(default=None, required=True, type='str'),
-            query_type=dict(default='all', required=False, type='str',
+            query_type=dict(default='repos', required=False, type='str',
                             choices=['installed', 'available', 'recent',
-                                     'updates', 'extras', 'all']
+                                     'updates', 'extras', 'all', 'repos']
                            ),
             verbose=dict(default=False, required=False, type='bool'),
             show_duplicates=dict(default=None, required=False, type='bool'),
@@ -202,7 +216,6 @@ def main():
         ),
         supports_check_mode=False,
         required_if=[('show_duplicates', True, ['name'])],
-
     )
 
     repoquery = Repoquery(module.params['name'],
