@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.162
+Version:       0.0.163
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -351,6 +351,10 @@ OpenShift Tools IAM specific scripts
 /usr/local/bin/saml_aws_creds.py
 
 %changelog
+* Thu Oct 27 2016 Joel Smith <joesmith@redhat.com> 0.0.163-1
+- Make sure IAM scripts are execuatable (joesmith@redhat.com)
+- making scripts executable (dedgar@redhat.com)
+
 * Tue Oct 25 2016 Drew Anderson <dranders@redhat.com> 0.0.162-1
 - Revert "Automatic commit of package [openshift-tools-scripts] release
   [0.0.162-1]." (dedgar@redhat.com)
