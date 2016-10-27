@@ -150,7 +150,7 @@ class ManageKeys(object):
 
         client.add_user_to_group(GroupName='admin', UserName=user_name)
         print("A new user account was added.\n"
-              "Use change_iam_password.py -p %s to set your password" % aws_account)
+              "Use change_iam_password.py -p %s to set your password" % aws_account.split(':')[0])
 
         return True
 
