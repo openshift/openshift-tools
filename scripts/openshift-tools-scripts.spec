@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.163
+Version:       0.0.164
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -351,6 +351,13 @@ OpenShift Tools IAM specific scripts
 /usr/local/bin/saml_aws_creds.py
 
 %changelog
+* Thu Oct 27 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.164-1
+- add synthetic property that ossh can use to filter out synth hosts.
+  (blentz@redhat.com)
+- changing script to find the image instead of hardcoding it
+  (ihorvath@redhat.com)
+- Fix for the metrics check (whearn@redhat.com)
+
 * Thu Oct 27 2016 Joel Smith <joesmith@redhat.com> 0.0.163-1
 - Make sure IAM scripts are execuatable (joesmith@redhat.com)
 - making scripts executable (dedgar@redhat.com)
