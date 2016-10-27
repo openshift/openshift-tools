@@ -152,7 +152,7 @@ host_monitoring_cron:
 # This is an active issue, we need it to run on a frequent basis.
 - name: run docker dns test
   minute: "*/5"
-  job: ops-runner -f -s 60 -n csddr.docker.dns.resolution /usr/bin/cron-send-docker-dns-resolution
+  job: source $HOME/.bashrc; ops-runner -f -s 60 -n csddr.docker.dns.resolution /usr/bin/cron-send-docker-dns-resolution
 {% endif %}
 
 # This is an active issue, we need it to run on a frequent basis.
