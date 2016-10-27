@@ -146,21 +146,6 @@ openshift_node_kubelet_args={ {%- if obg_extra_node_args -%}{{ obg_extra_node_ar
 openshift_master_image_policy_config={{ obg_image_pull_policy }}
 {% endif %}
 
-{# K8s plugins load order, defines the order which plugins should be loaded and what order #}
-{% if obg_k8s_plugin_order %}
-openshift_master_kube_admission_plugin_order={{ obg_k8s_plugin_order }}
-{% endif %}
-
-{# K8s plugin options #}
-{% if obg_k8s_plugin_config %}
-openshift_master_kube_admission_plugin_config={{ obg_k8s_plugin_config }}
-{% endif %}
-
-{# Openshift user project limit options, max number of projects, what nodes they can target, etc #}
-{% if obg_openshift_admission_config %}
-openshift_master_admission_plugin_config={{ obg_openshift_admission_config }}
-{% endif %}
-
 {# Openshift pod scheduler options, pod placement options #}
 {% if obg_openshift_scheduler_priorities %}
 openshift_master_scheduler_priorities={{ obg_openshift_scheduler_priorities }}
