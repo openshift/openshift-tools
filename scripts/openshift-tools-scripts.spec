@@ -84,10 +84,10 @@ cp -p inventory-clients/openshift_tools.conf.example %{buildroot}/etc/openshift_
 
 # openshift-tools-scripts-iam-tools install
 mkdir -p %{buildroot}/usr/local/bin
-cp -p iam-tools/aws_api_key_manager.py %{buildroot}/usr/local/bin
-cp -p iam-tools/change_iam_password.py %{buildroot}/usr/local/bin
-cp -p iam-tools/delete_iam_account.py %{buildroot}/usr/local/bin
-cp -p iam-tools/saml_aws_creds.py %{buildroot}/usr/local/bin
+install -m 755 iam-tools/aws_api_key_manager.py %{buildroot}/usr/local/bin
+install -m 755 iam-tools/change_iam_password.py %{buildroot}/usr/local/bin
+install -m 755 iam-tools/delete_iam_account.py %{buildroot}/usr/local/bin
+install -m 755 iam-tools/saml_aws_creds.py %{buildroot}/usr/local/bin
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-inventory-clients subpackage
