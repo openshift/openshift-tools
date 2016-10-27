@@ -25,7 +25,7 @@
              {{- name }}:{{ account.extra_vars.oo_accountid }}
       {%   endif %}
       {% endfor %}
-    dest: /etc/openshift_tools/aws_accounts.txt
+    dest: "{{aal_aws_account_file}}"
     owner: root
     group: awx
     mode: 0640
