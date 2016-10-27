@@ -100,8 +100,11 @@ class OpenshiftMetricsStatus(object):
 
         return pod_report
 
-    def check_node_metrics(self):
-        ''' Verify that fluentd on all nodes is able to talk to and populate data in hawkular '''
+    def get_hawkular_creds(self):
+        '''
+            Looks up hawkular username and password in a secret.
+            If the secret does not exist parse it out of the deploy log.
+        '''
         # Check to see if secret for htpasswd exists
         try:
             # If so get http password from secret
@@ -140,11 +143,12 @@ class OpenshiftMetricsStatus(object):
             print "Failed to get hawkular username or password"
             sys.exit(1)
 
+    def check_node_metrics(self):
+        ''' Verify that fluentd on all nodes is able to talk to and populate data in hawkular '''
         # Get all nodes
         nodes = self.oc.get_nodes()
         # Get the hawkular route
         route = self.oc.get_route('hawkular-metrics')['status']['ingress'][0]['host']
-
 
         # Setup the URL headers
         auth_header = "Basic {}".format(
@@ -157,6 +161,7 @@ class OpenshiftMetricsStatus(object):
         hawkular_url_start = "https://{}/hawkular/metrics/gauges/data?tags=nodename:".format(route)
         hawkular_url_end = ",type:node,group_id:/memory/usage&buckets=1&start=-1mn"
 
+        result = 1
         # Loop through nodes
         for item in nodes['items']:
             hawkular_url = "{}{}{}".format(hawkular_url_start, item['metadata']['name'], hawkular_url_end)
@@ -172,12 +177,12 @@ class OpenshiftMetricsStatus(object):
                 resp = urllib2.build_opener(urllib2.HTTPSHandler(context=ctx)).open(request)
                 result = yaml.load(resp.read())
                 if result[0]['empty']:
-                    return 0
+                    result = 0
 
             except urllib2.URLError:
-                return 0
+                result = 0
 
-        return 1
+        return result
 
     def report_to_zabbix(self, pods_status, node_health):
         ''' Report all of our findings to zabbix '''
@@ -212,6 +217,7 @@ class OpenshiftMetricsStatus(object):
 
         self.oc = OCUtil(namespace='openshift-infra', config_file=self.kubeconfig, verbose=self.args.verbose)
 
+        self.get_hawkular_creds()
         pod_report = self.check_pods()
         metrics_report = self.check_node_metrics()
 
