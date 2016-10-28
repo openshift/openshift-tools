@@ -165,10 +165,10 @@ class OpenShiftOC(object):
         stdout, stderr = proc.communicate()
         if proc.returncode == 0:
             if self.verbose:
-                print "Stdout:"
-                print stdout
-                print "Stderr:"
-                print stderr
+                logger.debug("Stdout:")
+                logger.debug(stdout)
+                logger.debug("Stderr:")
+                logger.debug(stderr)
             return stdout
 
         return "Error: %s.  Return: %s" % (proc.returncode, stderr)
@@ -184,10 +184,10 @@ class OpenShiftOC(object):
         stdout, stderr = proc.communicate()
         if proc.returncode == 0:
             if self.verbose:
-                print "Stdout:"
-                print stdout
-                print "Stderr:"
-                print stderr
+                logger.debug("Stdout:")
+                logger.debug(stdout)
+                logger.debug("Stderr:")
+                logger.debug(stderr)
             return stdout
 
         return "Error: %s.  Return: %s" % (proc.returncode, stderr)
@@ -247,7 +247,6 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='OpenShift app create end-to-end test')
     parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
-    parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
     parser.add_argument('--name', default="openshift/hello-openshift:v1.0.6", help='app template')
     parser.add_argument('--namespace', default="default", help='additional text for namespace')
     return parser.parse_args()
@@ -320,16 +319,23 @@ def test(config, oocmd=None,):
 
     build_ran = 0
     pod = None
+    lastKnownPod = None
     http_code = 0
 
     # Now we wait until the pod comes up
-    for _ in range(120):
+    for loopCount in range(120):
         time.sleep(5)
         pod = oocmd.get_pod()
 
         if not pod:
+            if not lastKnownPod and loopCount > 6:
+                logger.critical("cannot find pod, fail early")
+                break
+
             logger.debug("cannot find pod")
             continue # cannot test pod further
+
+        lastKnownPod = pod
 
         if not pod['status']:
             logger.error("no pod status")
@@ -376,9 +382,14 @@ def test(config, oocmd=None,):
 
 def teardown(config, oocmd=None,):
     """ clean up after testing """
-
     logger.info('teardown()')
-    oocmd.delete_es_index()
+
+    try:
+        oocmd.delete_es_index()
+    except Exception as e:
+        logger.critical(e)
+        logger.exception('problem with delete_es_index')
+
     time.sleep(5)
 
     oocmd.delete_project()
@@ -388,9 +399,9 @@ def teardown(config, oocmd=None,):
 def main():
     """ setup / test / teardown with exceptions to ensure teardown """
 
-    print '################################################################################'
-    print '  Starting App Create - %s' % datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-    print '################################################################################'
+    logger.info('################################################################################')
+    logger.info('  Starting App Create - %s', datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
+    logger.info('################################################################################')
     logger.debug("main()")
 
     args = parse_args()
@@ -455,9 +466,10 @@ def main():
 
     if test_response['failed']:
         try:
+            oocmd.verbose = True
+            logger.setLevel(logging.DEBUG)
             logger.critical('Deploy State: Fail')
             logger.info('Fetching Events:')
-            oocmd.verbose = True
             logger.info(oocmd.get_events())
             logger.info('Fetching Logs:')
             logger.info(oocmd.get_logs())
