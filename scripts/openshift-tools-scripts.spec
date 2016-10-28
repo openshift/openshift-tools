@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.164
+Version:       0.0.165
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -351,6 +351,15 @@ OpenShift Tools IAM specific scripts
 /usr/local/bin/saml_aws_creds.py
 
 %changelog
+* Fri Oct 28 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.165-1
+- unused-variable (dranders@redhat.com)
+- force teardown if error with es_index (dranders@redhat.com)
+- logging-not-lazy (dranders@redhat.com)
+- fail early if pod not found (dranders@redhat.com)
+- debug not used (dranders@redhat.com)
+- use logger (dranders@redhat.com)
+- updating password change message to user (dedgar@redhat.com)
+
 * Thu Oct 27 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.164-1
 - add synthetic property that ossh can use to filter out synth hosts.
   (blentz@redhat.com)
