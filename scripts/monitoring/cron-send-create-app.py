@@ -382,9 +382,13 @@ def test(config, oocmd=None,):
 
 def teardown(config, oocmd=None,):
     """ clean up after testing """
-
     logger.info('teardown()')
-    oocmd.delete_es_index()
+
+    try:
+        oocmd.delete_es_index()
+    except Exception as e:
+        logger.exception('problem with delete_es_index')
+
     time.sleep(5)
 
     oocmd.delete_project()
