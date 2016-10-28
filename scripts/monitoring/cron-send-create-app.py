@@ -387,6 +387,7 @@ def teardown(config, oocmd=None,):
     try:
         oocmd.delete_es_index()
     except Exception as e:
+        logger.critical(e)
         logger.exception('problem with delete_es_index')
 
     time.sleep(5)
