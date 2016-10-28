@@ -5,11 +5,11 @@
   register: aws_account_info
 
 - debug:
-    var: aws_account_info
+    msg: "{{ aws_account_info }}"
 
 - name: Fail if the returned AWS account doesn't match the passed in account
   fail:
-    msg: |
+    msg: |+
         "The AWS Key being used is part of account: [{{ aws_account_info.iam_user.accountid }}]
         The AWS Account ID specified is [{{ vawsid_accountid }}]"
   when: aws_account_info.iam_user.accountid|int != vawsid_accountid|int
