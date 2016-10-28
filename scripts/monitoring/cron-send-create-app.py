@@ -395,7 +395,7 @@ def main():
     """ setup / test / teardown with exceptions to ensure teardown """
 
     logger.info('################################################################################')
-    logger.info('  Starting App Create - %s' % datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
+    logger.info('  Starting App Create - %s', datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
     logger.info('################################################################################')
     logger.debug("main()")
 
