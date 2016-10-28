@@ -247,7 +247,6 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='OpenShift app create end-to-end test')
     parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
-    parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
     parser.add_argument('--name', default="openshift/hello-openshift:v1.0.6", help='app template')
     parser.add_argument('--namespace', default="default", help='additional text for namespace')
     return parser.parse_args()
