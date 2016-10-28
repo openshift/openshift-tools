@@ -165,10 +165,10 @@ class OpenShiftOC(object):
         stdout, stderr = proc.communicate()
         if proc.returncode == 0:
             if self.verbose:
-                print "Stdout:"
-                print stdout
-                print "Stderr:"
-                print stderr
+                logger.debug("Stdout:")
+                logger.debug(stdout)
+                logger.debug("Stderr:")
+                logger.debug(stderr)
             return stdout
 
         return "Error: %s.  Return: %s" % (proc.returncode, stderr)
@@ -184,10 +184,10 @@ class OpenShiftOC(object):
         stdout, stderr = proc.communicate()
         if proc.returncode == 0:
             if self.verbose:
-                print "Stdout:"
-                print stdout
-                print "Stderr:"
-                print stderr
+                logger.debug("Stdout:")
+                logger.debug(stdout)
+                logger.debug("Stderr:")
+                logger.debug(stderr)
             return stdout
 
         return "Error: %s.  Return: %s" % (proc.returncode, stderr)
@@ -388,9 +388,9 @@ def teardown(config, oocmd=None,):
 def main():
     """ setup / test / teardown with exceptions to ensure teardown """
 
-    print '################################################################################'
-    print '  Starting App Create - %s' % datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-    print '################################################################################'
+    logger.info('################################################################################')
+    logger.info('  Starting App Create - %s' % datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
+    logger.info('################################################################################')
     logger.debug("main()")
 
     args = parse_args()
@@ -455,9 +455,10 @@ def main():
 
     if test_response['failed']:
         try:
+            oocmd.verbose = True
+            logger.setLevel(logging.DEBUG)
             logger.critical('Deploy State: Fail')
             logger.info('Fetching Events:')
-            oocmd.verbose = True
             logger.info(oocmd.get_events())
             logger.info('Fetching Logs:')
             logger.info(oocmd.get_logs())
