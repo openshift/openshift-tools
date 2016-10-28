@@ -319,16 +319,23 @@ def test(config, oocmd=None,):
 
     build_ran = 0
     pod = None
+    lastKnownPod = None
     http_code = 0
 
     # Now we wait until the pod comes up
-    for _ in range(120):
+    for loopCount in range(120):
         time.sleep(5)
         pod = oocmd.get_pod()
 
         if not pod:
+            if not lastKnownPod and loopCount > 6:
+                logger.critical("cannot find pod, fail early")
+                break
+
             logger.debug("cannot find pod")
             continue # cannot test pod further
+
+        lastKnownPod = pod
 
         if not pod['status']:
             logger.error("no pod status")
