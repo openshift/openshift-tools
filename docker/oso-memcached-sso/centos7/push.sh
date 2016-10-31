@@ -11,6 +11,6 @@
 
 
 echo
-echo "Pushing oso-centos7-zabbix-server..."
+echo "Pushing oso-centos7-memcached-sso..."
 echo "Ensure you have successfully authenticated against docker with a 'docker login'"
-sudo docker push openshifttools/oso-centos7-zabbix-server
+sudo docker push openshifttools/oso-centos7-memcached-sso

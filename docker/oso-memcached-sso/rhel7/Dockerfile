@@ -1,15 +1,9 @@
-#     ___ ___ _  _ ___ ___    _ _____ ___ ___         
-#    / __| __| \| | __| _ \  /_\_   _| __|   \        
-#   | (_ | _|| .` | _||   / / _ \| | | _|| |) |       
-#    \___|___|_|\_|___|_|_\/_/_\_\_|_|___|___/_ _____ 
-#   |   \ / _ \  | \| |/ _ \_   _| | __|   \_ _|_   _|
-#   | |) | (_) | | .` | (_) || |   | _|| |) | |  | |  
-#   |___/ \___/  |_|\_|\___/ |_|   |___|___/___| |_|  
-# 
-
 # /usr/local/bin/start.sh will start the memcached service
 
-FROM openshift/base-centos7 
+FROM oso-rhel7-ops-base:latest
+
+# Pause indefinitely if asked to do so.
+RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 
 # Install memcached
 RUN yum -y install memcached && \
@@ -18,6 +12,12 @@ RUN yum -y install memcached && \
 # Expose port 11211
 EXPOSE 11211
 
+# Add root folder
+ADD root/ /root/
+
 # Start memcached
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
+
+# Add necessary permissions to add arbitrary user
+RUN chmod -R g+rwX /etc/passwd /etc/group
