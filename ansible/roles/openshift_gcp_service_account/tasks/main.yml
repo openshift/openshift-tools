@@ -66,7 +66,7 @@
 
 - name: Set the private key
   set_fact:
-    private_key: "{{ sa_key_out.results.results }}"
+    private_key: "{{ sa_key_out.results.results | to_yaml }}"
   when: sa_key_out.changed
 
 - name: Write out the multi_inventory file
