@@ -9,7 +9,6 @@
 # 
 
 
-sudo echo -e "\nTesting sudo works...\n"
-
-echo -n "Running memcached... "
-sudo docker run -ti --rm -p 11211:11211 --name oso-memcached oso-memcached $@ 
+echo -n "Running oso-rhel7-zabbix-web... "
+sudo docker run -ti --net=host --rm=true -p 11211:11211 --name oso-memcached-sso oso-rhel7-memcached-sso $@
+echo "Done."

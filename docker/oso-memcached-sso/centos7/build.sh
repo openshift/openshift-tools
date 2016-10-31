@@ -12,4 +12,5 @@
 sudo echo -e "\nTesting sudo works...\n"
 
 cd $(dirname $0)
-sudo time docker build $@ -t oso-memcached .
+sudo time docker build -t oso-memcached-sso . && \
+sudo docker tag -f oso-memcached-sso openshifttools/oso-centos7-zabbix-web:latest

@@ -16,6 +16,12 @@ RUN yum -y install memcached && \
 # Expose port 11211
 EXPOSE 11211
 
+# Add root folder
+ADD root/ /root/
+
 # Start memcached
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
+
+# Add necessary permissions to add arbitrary user
+RUN chmod -R g+rwX /etc/passwd /etc/group
