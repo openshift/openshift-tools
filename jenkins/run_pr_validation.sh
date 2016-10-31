@@ -8,6 +8,7 @@ GIT_COMMIT=$1
 ghprbTargetBranch=$2
 ghprbActualCommit=$3
 
+echo $(pwd)
 ./yaml_validation.sh "$(/usr/bin/git rev-parse HEAD^)" "$GIT_COMMIT" "$ghprbTargetBranch"
 ./pylint.sh $(/usr/bin/git rev-parse HEAD^) $GIT_COMMIT $ghprbTargetBranch
 ./parent.py $ghprbTargetBranch $ghprbActualCommit
