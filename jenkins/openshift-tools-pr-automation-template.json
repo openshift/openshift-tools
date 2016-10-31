@@ -1,0 +1,107 @@
+{
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "openshift-tools-pr-automation",
+    "annotations": {
+      "openshift.io/display-name": "openshift-tools PR automation",
+      "description": "Validate and build pull requests to the openshift-tools repository",
+      "iconClass": "icon-python"
+    }
+  },
+  "labels": {
+    "template": "openshift-tools-pr-automation"
+  },
+  "objects": [
+    {
+      "kind": "Secret",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${OPENSHIFT_BOT_SECRET_NAME}"
+      },
+      "stringData": {
+        "username": "${OPENSHIFT_BOT_USERNAME}",
+        "token": "${OPENSHIFT_BOT_OAUTH_TOKEN}"
+      }
+    },
+    {
+      "kind": "BuildConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "openshift-tools-test",
+        "annotations": {
+          "description": "Builds the custom builder image for testing pull requests"
+        }
+      },
+      "spec": {
+        "source": {
+            "type": "Git",
+            "git":{
+                "uri": "${SOURCE_REPOSITORY_URL}",
+                "ref": "${SOURCE_REPOSITORY_REF}"
+                },
+            "contextDir": "jenkins/test",
+            "secrets": [
+              {
+                "secret": {
+                  "name": "${OPENSHIFT_BOT_SECRET_NAME}" 
+                },
+                "destinationDir": "openshift-ops-bot"
+              }
+            ]
+        },
+        "strategy": {
+          "type": "Docker",
+	    "dockerStrategy": {
+              "noCache": true,
+	      "env": [
+                {
+                  "name": "GITHUB_WEBHOOK_PAYLOAD",
+                  "value": "{}"
+                },
+                {
+                  "name": "OPENSHIFT_BOT_SECRET_DIR",
+                  "value": "openshift-ops-bot"
+                }
+              ]
+	    }
+        },
+        "output": {
+        },
+        "triggers": [ 
+        ]
+      }
+    }
+  ],
+  "parameters": [
+    {
+      "name": "SOURCE_REPOSITORY_URL",
+      "displayName": "Git Repository URL",
+      "description": "The URL of the repository with your application source code.",
+      "required": true,
+      "value": "https://github.com/openshift/openshift-tools.git"
+    },
+    {
+      "name": "SOURCE_REPOSITORY_REF",
+      "displayName": "Git Reference",
+      "description": "Set this to a branch name, tag or other ref of your repository if you are not using the default branch.",
+      "value": "stg"
+    },
+    {
+      "name": "OPENSHIFT_BOT_USERNAME",
+      "displayName": "Github Bot Username",
+      "required": true
+    },
+    {
+      "name": "OPENSHIFT_BOT_OAUTH_TOKEN",
+      "displayName": "Github Bot Oauth Token",
+      "required": true
+    },
+    {
+      "name": "OPENSHIFT_BOT_SECRET_NAME",
+      "displayName": "Bot Credentials Secret Name",
+      "required": false,
+      "value": "openshift-ops-bot-secret"
+    }
+  ]
+}
