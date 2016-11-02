@@ -94,18 +94,18 @@ options:
     required: false
     default: False
     aliases: []
-  message:
+  msg:
     description:
     - The incident message that gets posted
     required: false
-    default: 60
+    default: None
     aliases: []
   impact_override:
     description:
     - Whether update the impact
     choices: ['none', 'minor', 'major', 'critical']
     required: false
-    default: True
+    default: None
     aliases: []
   components:
     description:
@@ -576,7 +576,7 @@ class StatusPageIncident(StatusPageIOAPI):
                         return True
 
         # Checdk the message is the same
-        if params['message'] != curr_incident.incident_updates[-1].body or  \
+        if params['msg'] != curr_incident.incident_updates[-1].body or  \
            params['status'] != curr_incident.incident_updates[-1].status:
             return True
 
@@ -602,7 +602,7 @@ class StatusPageIncident(StatusPageIOAPI):
                                   params['incident_type'],
                                   params['status'],
                                   params['update_twitter'],
-                                  params['message'],
+                                  params['msg'],
                                   params['components'],
                                   params['scheduled_for'],
                                   params['scheduled_until'],
@@ -656,7 +656,7 @@ def main():
                                  'scheduled', 'in_progress', 'verifying', 'completed'],
                         type='str'),
             update_twitter=dict(default=False, type='bool'),
-            message=dict(default=None, type='str'),
+            msg=dict(default=None, type='str'),
             impact_override=dict(default=None, choices=['none', 'minor', 'major', 'critical'], type='str'),
             components=dict(default=None, type='list'),
             scheduled_for=dict(default=None, type='str'),
