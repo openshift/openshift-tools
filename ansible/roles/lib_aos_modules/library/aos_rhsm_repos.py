@@ -79,7 +79,7 @@ class RHSMRepos(object):
 
         rcode, out, err = self.module.run_command(cmd)
         if rcode != 0:
-            self.module.fail_json(msg={'rc': rcode, 'cmd': cmd, 'err': err})
+            self.module.fail_json(rc=rcode, cmd=cmd, msg=err)
 
         return rcode, out, err
 
@@ -126,9 +126,7 @@ class RHSMRepos(object):
 
         rcode, out, err = self.module.run_command(cmd)
         if rcode != 0:
-            self.module.fail_json(msg={'rc': rcode, 'cmd': cmd,
-                                       'err': 'Error querying repositories: [%s]' % err,
-                                      })
+            self.module.fail_json(rc=rcode, cmd=cmd, msg='Error querying repositories: [%s]' % err)
 
         if 'no available repositories matching' in out:
             return []
@@ -136,7 +134,7 @@ class RHSMRepos(object):
         try:
             return RHSMRepos.parse_repos(out)
         except RHSMError as err:
-            self.module.fail_json(msg=err)
+            self.module.fail_json(msg=err, rc=1)
 
     def needs_update(self):
         """verify that the enabled repos are enabled"""
@@ -155,7 +153,7 @@ class RHSMRepos(object):
         """verify that this system is entitled"""
         rcode, _, _ = self.module.run_command([RHSM_BIN, 'identity'])
         if rcode != 0:
-            self.module.fail_json(msg="command `subscription-manager identity` failed.  exit code non zero.")
+            self.module.fail_json(msg="command `subscription-manager identity` failed.  exit code non zero.", rc=1)
 
     @staticmethod
     def run_ansible(module):
@@ -169,18 +167,18 @@ class RHSMRepos(object):
         if rhsm.module.params['state'] == 'list':
             repos = rhsm.query_repos(qtype=module.params['query'])
 
-            rhsm.module.exit_json(changed=False, repos=repos)
+            rhsm.module.exit_json(changed=False, repos=repos, rc=0)
 
         # Step 2: if we are state=present, check if we need to update
         elif module.params['state'] == 'present':
             update, repos = rhsm.needs_update()
             # No updates needed
             if update == False:
-                module.exit_json(changed=False, repos=repos)
+                module.exit_json(changed=False, repos=repos, rc=0)
 
             # Exit if check mode before we make changes
             if module.check_mode:
-                module.exit_json(changed=True, repos=repos)
+                module.exit_json(changed=True, repos=repos, rc=0)
 
             # Step 3: we need to set our repositories
             rcode, out, err = rhsm.set_repositories()
@@ -190,15 +188,15 @@ class RHSMRepos(object):
 
             # Everything went ok, return the enabled repositories
             if not update:
-                module.exit_json(changed=True, repos=repos)
+                module.exit_json(changed=True, repos=repos, rc=0)
 
             # An error occured while calling set_repositories
             module.fail_json(msg="rhsm repo command failed. Changes not applied.",
-                             rcode=rcode,
+                             rc=rcode,
                              stdout=out,
                              stderr=err)
 
-        module.fail_json(msg="unsupported state.")
+        module.fail_json(msg="unsupported state.", rc=1)
 
 def main():
     """Create the ansible module and run the ansible code"""
