@@ -21,7 +21,7 @@ def main():
                                  'scheduled', 'in_progress', 'verifying', 'completed'],
                         type='str'),
             update_twitter=dict(default=False, type='bool'),
-            message=dict(default=None, type='str'),
+            msg=dict(default=None, type='str'),
             impact_override=dict(default=None, choices=['none', 'minor', 'major', 'critical'], type='str'),
             components=dict(default=None, type='list'),
             scheduled_for=dict(default=None, type='str'),
