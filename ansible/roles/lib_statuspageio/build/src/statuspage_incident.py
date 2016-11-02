@@ -256,7 +256,7 @@ class StatusPageIncident(StatusPageIOAPI):
                         return True
 
         # Checdk the message is the same
-        if params['msg'] != curr_incident.incident_updates[-1].body or  \
+        if params['message'] != curr_incident.incident_updates[-1].body or  \
            params['status'] != curr_incident.incident_updates[-1].status:
             return True
 
