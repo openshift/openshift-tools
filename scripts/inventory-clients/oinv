@@ -111,7 +111,9 @@ class InventoryCli(object):
             Input:
             [ 'col1', 'col2', col3' ]
 
-            [[ 'a', 'b', 'c' ], [ 'aa', 'bb', 'cc' ], [ 'aaa', 'bbb', 'ccc' ]]
+            [{ 'col1':'a',   'col2':'b',   'col3':'c' },
+             { 'col1':'aa',  'col2':'bb',  'col3':'cc' },
+             { 'col1':'aaa', 'col2':'bbb', 'col3':'ccc' }]
 
             Output:
 
