@@ -32,7 +32,9 @@ class InventoryCli(object):
     parser = None
 
     # which inventory fields to display by default
-    default_columns = ['oo_name', 'oo_clusterid', 'oo_environment', 'oo_id']
+    default_columns = ['oo_accountid', 'oo_name',
+                       'oo_clusterid', 'oo_environment',
+                       'oo_id']
 
     def __init__(self):
         self.parse_cli_args()
