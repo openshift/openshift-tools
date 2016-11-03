@@ -33,8 +33,22 @@ g_template_openshift_cluster:
     applications:
     - OpenShift Cluster
 
+  - discoveryrule_key: disc.openshift.cluster.router
+    name: "{% raw %}OpenShift router expected POD count [{{ '{#' }}ROUTER_DC}]{% endraw %}"
+    key: "{% raw %}disc.openshift.cluster.router.expected_pod_count[{{ '{#' }}ROUTER_DC}]{% endraw %}"
+    value_type: int
+    description: "Whether number of running router PODs matches definition in deployment config"
+    applications:
+    - OpenShift Cluster
+
+
   ztriggerprototypes:
   - name: "{% raw %}Router: {{ '{#' }}OS_ROUTER} is failing health checks{% endraw %}"
     expression: "{% raw %}{Template OpenShift Cluster:disc.openshift.cluster.router.health[{{ '{#' }}OS_ROUTER}].max(#3)}<1{% endraw %}"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_filesys_full.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_router.asciidoc"
+    priority: average
+
+  - name: "{% raw %}Router: {{ '{#' }}ROUTER_DC} has unexpected number of running PODs{% endraw %}"
+    expression: "{% raw %}{Template OpenShift Cluster:disc.openshift.cluster.router.expected_pod_count[{{ '{#' }}ROUTER_DC}].max(#3)}<1{% endraw %}"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_router.asciidoc"
     priority: average
