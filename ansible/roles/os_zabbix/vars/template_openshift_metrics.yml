@@ -10,7 +10,7 @@ g_template_metrics:
 
   ztriggers:
   - name: "OpenShift Metrics failed on {HOST.NAME}"
-    expression: "{Template OpenShift Metrics:openshift.metrics.nodes_reporting}<1"
+    expression: "{Template OpenShift Metrics:openshift.metrics.nodes_reporting.last()}<1"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_metrics.asciidoc"
     priority: high
 

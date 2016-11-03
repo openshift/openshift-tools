@@ -34,15 +34,15 @@ g_template_logging:
 
   ztriggers:
   - name: "ElasticSearch is in split brain on {HOST.NAME}"
-    expression: "{Template OpenShift Logging:openshift.logging.elasticsearch.single_master}==0"
+    expression: "{Template OpenShift Logging:openshift.logging.elasticsearch.single_master.last()}=0"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/elasticsearch.asciidoc"
     priority: high
   - name: "FluentD/Node pod number mismatch on {HOST.NAME}"
-    expression: "{Template OpenShift Logging:openshift.logging.fluentd.number_pods}!={Template OpenShift Logging:openshift.logging.fluentd.number_expected_pods}"
+    expression: "{Template OpenShift Logging:openshift.logging.fluentd.number_pods.last()}<>{Template OpenShift Logging:openshift.logging.fluentd.number_expected_pods.last()}"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/fluentd.asciidoc"
     priority: high
   - name: "FluentD/Node mismatch on {HOST.NAME}"
-    expression: "{Template OpenShift Logging:openshift.logging.fluentd.node_mismatch}!=0"
+    expression: "{Template OpenShift Logging:openshift.logging.fluentd.node_mismatch.last()}<>0"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/fluentd.asciidoc"
     priority: high
 
