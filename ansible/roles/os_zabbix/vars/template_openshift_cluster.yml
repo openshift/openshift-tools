@@ -17,3 +17,24 @@ g_template_openshift_cluster:
     expression: "{Template OpenShift Cluster:openshift.cluster.configloop.exitcode.min(#3)}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_config_loop.asciidoc"
     priority: high
+
+  zdiscoveryrules:
+  - name: disc.openshift.cluster.router
+    key: disc.openshift.cluster.router
+    lifetime: 14
+    description: "Hold cluster-wide dynamic router items"
+
+  zitemprototypes:
+  - discoveryrule_key: disc.openshift.cluster.router
+    name: "{% raw %}OpenShift router health [{{ '{#' }}OS_ROUTER}]{% endraw %}"
+    key: "{% raw %}disc.openshift.cluster.router.health[{{ '{#' }}OS_ROUTER}]{% endraw %}"
+    value_type: int
+    description: "Health of OpenShift router"
+    applications:
+    - OpenShift Cluster
+
+  ztriggerprototypes:
+  - name: "{% raw %}Router: {{ '{#' }}OS_ROUTER} is failing health checks{% endraw %}"
+    expression: "{% raw %}{Template OpenShift Cluster:disc.openshift.cluster.router.health[{{ '{#' }}OS_ROUTER}].max(#3)}<1{% endraw %}"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_filesys_full.asciidoc"
+    priority: average
