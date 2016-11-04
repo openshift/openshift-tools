@@ -12,12 +12,6 @@ FROM rhel7:latest
 # Pause indefinitely if asked to do so.
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 
-# get rid of subscript manager (we use our own mirrors)
-RUN touch /var/run/rhsm ; rpm -evh subscription-manager
-
-# setup yum repos
-ADD setup-yum.sh /usr/local/bin/setup-yum.sh
-RUN /usr/local/bin/setup-yum.sh
 
 # creature comforts (make it feel like a normal linux environment)
 ENV LANG en_US.UTF-8
