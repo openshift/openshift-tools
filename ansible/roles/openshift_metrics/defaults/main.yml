@@ -1,4 +1,8 @@
 ---
-osamet_limits_memory: 2G
-osamet_node: 1
-osamet_requests_memory: 2G
+osamet_cassandra_node: 2
+osamet_cassandra_limits_memory: 2G
+osamet_cassandra_requests_memory: 1G
+osamet_hawkular_limits_memory: 2G
+osamet_hawkular_requests_memory: 1G
+osamet_heapster_limits_memory: 3.75G
+osamet_heapster_requests_memory: 0.9375G
