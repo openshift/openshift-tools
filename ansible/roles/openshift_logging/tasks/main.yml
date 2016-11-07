@@ -1,4 +1,12 @@
 ---
+- name: get oc version
+  oc_version:
+  register: oc_version
+
+- name: set the kube version
+  set_fact:
+    kube_version: "{{ oc_version.result.kubernetes_short }}"
+
 - name: get cert's basename
   set_fact:
     cert_basename: "{{ osalog_default_logging_cert | basename }}"
@@ -17,11 +25,18 @@
 - name: create project
   oadm_project:
     name: logging
-    node_selector: ""
     display_name: logging
   register: projectout
   run_once: true
 - debug: var=projectout
+
+- name: Allow logging to deploy to all node types
+  oc_edit:
+    kind: ns
+    name: logging
+    separator: '#'
+    content:
+      metadata#annotations#openshift.io/node-selector: ""
 
 - name: create secret
   oc_secret:
@@ -36,15 +51,35 @@
   run_once: true
 - debug: var=secretout
 
-- name: create serviceaccount
-  oc_serviceaccount:
-    name: logging-deployer
+- name: Generate logging-deployer configmap
+  template:
+    src: logging-deployer.yaml.j2
+    dest: /tmp/logging-deployer.yaml
+
+- name: Create logging-deployer configmap
+  command: oc create -f /tmp/logging-deployer.yaml -n logging
+
+- name: create logging deployer template
+  oc_obj:
+    state: present
     namespace: logging
-    secrets:
-    - logging-deployer
-  register: saout
+    name: logging-deployer-template
+    kind: template
+    files:
+    - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/infrastructure-templates/enterprise/logging-deployer.yaml"
+  register: templateout
   run_once: true
-- debug: var=saout
+- debug: var=templateout
+
+- name: create template
+  oc_process:
+    namespace: logging
+    template_name: logging-deployer-account-template
+    create: True
+    reconcile: False
+  register: processout
+  run_once: true
+- debug: var=processout
 
 - name: create role binding to logging-deployer service account
   oadm_policy_user:
@@ -52,6 +87,16 @@
     user: system:serviceaccount:logging:logging-deployer
     resource_kind: role
     resource_name: edit
+  register: policyout
+  run_once: true
+- debug: var=policyout
+
+- name: add cluster role binding to logging-deployer service account
+  oadm_policy_user:
+    namespace: logging
+    user: system:serviceaccount:logging:logging-deployer
+    resource_kind: cluster-role
+    resource_name: oauth-editor
   register: policyout
   run_once: true
 - debug: var=policyout
@@ -76,42 +121,26 @@
   run_once: true
 - debug: var=policyout
 
-- name: create logging deployer template
-  oc_obj:
-    state: present
-    namespace: logging
-    name: logging-deployer-template
-    kind: template
-    files:
-    - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v1.2/infrastructure-templates/enterprise/logging-deployer.yaml"
-  register: templateout
-  run_once: true
-- debug: var=templateout
-
 - name: create template
   oc_process:
     namespace: logging
     template_name: logging-deployer-template
     create: True
-    params:
-      KIBANA_HOSTNAME: "logs.{{ osalog_clusterid }}.openshift.com"
-      ES_CLUSTER_SIZE: "{{ osalog_es_cluster_size }}"
-      PUBLIC_MASTER_URL: "https://api.{{ osalog_clusterid  }}.openshift.com"
-      MASTER_URL: "https://internal.api.{{ osalog_clusterid  }}.openshift.com"
     reconcile: False
   register: processout
   run_once: true
 - debug: var=processout
 
-# wait 2 minutes for deployer pod to complete
+# wait 3 minutes for deployer pod to complete
 - name: wait until logging deployer pod has completed
   oc_obj:
     state: list
     namespace: logging
     kind: pods
+    selector: logging-infra=deployer
   register: podout
   until: podout.results.results[0]['items'][0].status.phase == 'Succeeded'
-  retries: 24
+  retries: 36
   delay: 5
   run_once: true
 
@@ -120,6 +149,7 @@
     state: list
     namespace: logging
     kind: pods
+    selector: logging-infra=deployer
   register: podout
   run_once: true
 
@@ -158,6 +188,19 @@
   run_once: true
 - debug: var=pvcout
 
+- name: wait until logging deployer pod has completed
+  oc_obj:
+    state: list
+    namespace: logging
+    kind: pvc
+  register: pvcout
+  until:
+  - pvcout.results.results[0]['items'][0].status.phase == 'Bound'
+  - pvcout.results.results[0]['items'][1].status.phase == 'Bound' 
+  retries: 24
+  delay: 5
+  run_once: true
+
 - name: attach storage volumes to instances
   oc_volume:
     namespace: logging
@@ -172,37 +215,26 @@
   run_once: true
 - debug: var=volumeout
 
-- name: create template
-  oc_process:
-    namespace: logging
-    template_name: logging-support-template
-    create: True
-    reconcile: False
-  register: processout
-  run_once: true
-- debug: var=processout
+- name: Remove old logging-fluentd configmap
+  command: oc delete configmap/logging-fluentd -n logging
 
-- name:
-  oc_edit:
-    name: logging
-    kind: project
-    namespace: logging
-    content:
-      metadata#annotations#openshift.io/node-selector: ''
-    separator: '#'
-  register: editout
-  run_once: true
-- debug: var=editout
+- name: Generate logging-fluentd configmap
+  template:
+    src: logging-fluentd.yaml.j2
+    dest: /tmp/logging-fluentd.yaml
+
+- name: Create logging-fluentd configmap
+  command: oc create -f /tmp/logging-fluentd.yaml -n logging
 
 - name: scale fluentd
-  oc_scale:
-    name: logging-fluentd
-    kind: dc
-    namespace: logging
-    replicas: '{{ osalog_node_count }}'
-  register: scaleout
-  run_once: true
-- debug: var=scaleout
+  oc_label:
+    selector: "{{ item }}"
+    state: add
+    kind: node
+    labels:
+      - key: logging-infra-fluentd
+        value: 'true'
+  with_items: osalog_fluentd_nodes
 
 - name: scale kibana frontend
   oc_scale:
@@ -223,6 +255,45 @@
   notify:
   - restart openshift master services
 - debug: var=yeditout
+
+- name: Remove old logging-curator configmap
+  command: oc delete configmap/logging-curator -n logging
+
+- name: Generate logging-curator configmap
+  template:
+    src: logging-curator.yaml.j2
+    dest: /tmp/logging-curator.yaml
+
+- name: Create logging-curator configmap
+  command: oc create -f /tmp/logging-curator.yaml -n logging
+
+- name: Add the resource constraints to the curator
+  oc_edit:
+    kind: dc
+    name: logging-curator
+    namespace: logging
+    content:
+      spec.template.spec.containers[0].resources.limits.memory: "2G"
+      spec.template.spec.containers[0].resources.requests.memory: "1G"
+
+- name: Redeploy curator
+  command: oc deploy --latest dc/logging-curator -n logging
+
+- name: Add the resource constraints to the metrics RC
+  oc_edit:
+    kind: dc
+    name: logging-kibana
+    namespace: logging
+    content:
+      # kibana
+      spec.template.spec.containers[0].resources.limits.memory: "768M"
+      spec.template.spec.containers[0].resources.requests.memory: "96M"
+      # kibana-proxy
+      spec.template.spec.containers[1].resources.limits.memory: "128M"
+      spec.template.spec.containers[1].resources.requests.memory: "32M"
+
+- name: Redeploy kibana
+  command: oc deploy dc/logging-kibana --latest -n logging
 
 #  We may need a reencrypt route in the future
 #  This was tested, but didn't quite work.
