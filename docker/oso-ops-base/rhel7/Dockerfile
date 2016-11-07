@@ -12,6 +12,9 @@ FROM rhel7:latest
 # Pause indefinitely if asked to do so.
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 
+# setup yum repos
+ADD setup-yum.sh /usr/local/bin/setup-yum.sh
+RUN /usr/local/bin/setup-yum.sh
 
 # creature comforts (make it feel like a normal linux environment)
 ENV LANG en_US.UTF-8
