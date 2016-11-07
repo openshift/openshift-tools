@@ -8,7 +8,12 @@ FROM centos:centos7
 # Pause indefinitely if asked to do so.
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 
-{% if base_os == "centos7" %}
+{% if base_os == "rhel7" %}
+# setup yum repos
+ADD setup-yum.sh /usr/local/bin/setup-yum.sh
+RUN /usr/local/bin/setup-yum.sh
+{% elif base_os == "centos7" %}
+
 ADD copr-openshift-tools.repo /etc/yum.repos.d/
 {% endif %}
 
