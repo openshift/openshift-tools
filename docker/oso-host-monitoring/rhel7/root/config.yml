@@ -23,12 +23,6 @@
     - oso_host_type
     - oso_cluster_id
 
-  - name: make openshift_tools dir
-    file:
-      path: /etc/openshift_tools
-      state: directory
-      mode: "0744"
-
   - name: write out the vars coming in container_metrics.yml to a file
     copy:
       content: "{{ container_metrics_config | to_nice_yaml }}"
@@ -98,7 +92,6 @@
       value: "{{ oso_snapshot_aws_key_id }}"
     - key: aws_secret_access_key
       value: "{{ oso_snapshot_aws_secret_access_key }}"
-    ignore_errors: yes
 
   - name: create /root/.gce dir
     file:
