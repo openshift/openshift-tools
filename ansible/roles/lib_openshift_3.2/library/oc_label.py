@@ -45,14 +45,14 @@ class OpenShiftCLI(object):
 
     # Pylint allows only 5 arguments to be passed.
     # pylint: disable=too-many-arguments
-    def _replace_content(self, resource, rname, content, force=False):
+    def _replace_content(self, resource, rname, content, force=False, sep='.'):
         ''' replace the current object with the content '''
         res = self._get(resource, rname)
         if not res['results']:
             return res
 
         fname = '/tmp/%s' % rname
-        yed = Yedit(fname, res['results'][0])
+        yed = Yedit(fname, res['results'][0], separator=sep)
         changes = []
         for key, value in content.items():
             changes.append(yed.put(key, value))
