@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.165
+Version:       0.0.166
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -351,6 +351,13 @@ OpenShift Tools IAM specific scripts
 /usr/local/bin/saml_aws_creds.py
 
 %changelog
+* Tue Nov 08 2016 Joel Diaz <jdiaz@redhat.com> 0.0.166-1
+- use image uuid instead of image name (dranders@redhat.com)
+- router monitoring (jdiaz@redhat.com)
+- oinv - fix method docstring for transpose (blentz@redhat.com)
+- oinv - update default columns (blentz@redhat.com)
+- add oinv cli tool (blentz@redhat.com)
+
 * Fri Oct 28 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.165-1
 - unused-variable (dranders@redhat.com)
 - force teardown if error with es_index (dranders@redhat.com)
