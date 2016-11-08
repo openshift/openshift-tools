@@ -23,7 +23,7 @@ class ZbxMaintenance(Zbx):
 
         self.name = params.get('name', None)
         self.description = params.get('description', None)
-        self.start_time = params.get('start_time', None)
+        self.start_date = params.get('start_date', None)
         self.duration = params.get('duration', None)
         self.data_collection = params.get('data_collection', None)
         self.hosts = params.get('hosts', None)
@@ -50,14 +50,14 @@ class ZbxMaintenance(Zbx):
     def params(self):
         '''return a dictionary that zabbix expects of the params passed'''
         duration = ZbxMaintenance.get_active_till(self.duration)
-        period = self.start_time + duration
+        period = self.start_date + duration
         params = {'groupids': None,
                   'hostids': None,
                   'name': self.name,
                   'description': self.description,
-                  'active_since': self.start_time,
+                  'active_since': self.start_date,
                   'active_till': period,
-                  'timeperiods': [{'start_time': self.start_time, 'period': duration}],
+                  'timeperiods': [{'start_date': self.start_date, 'period': duration}],
                   'maintenance_type': ZbxMaintenance.get_maintenance_type(self.data_collection)
                  }
         if self.hostgroups:
@@ -188,9 +188,17 @@ class ZbxMaintenance(Zbx):
                 elif key == 'timeperiods':
                     # timeperiods is an array of times; We are going to only check the first timeperiod
                     for t_key, t_value in value[0].items():
-                        if str(zab_results[key][0][t_key]) != str(t_value):
+                        # zabbix does not allow seconds in maintenance.  It rounds to minutes.
+                        # compare start_date correctly
+                        if t_key == 'start_date':
+                            if not ZbxMaintenance.compare_epochs_no_seconds(zab_results[key][0][t_key], t_value):
+                                differences[key] = value
+                                break
+
+                        elif str(zab_results[key][0][t_key]) != str(t_value):
                             differences[key] = value
                             break
+
                 elif key in ['active_since', 'active_till']:
                     if not ZbxMaintenance.compare_epochs_no_seconds(zab_results[key], value):
                         differences[key] = value
