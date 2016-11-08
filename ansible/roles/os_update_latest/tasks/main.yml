@@ -1,9 +1,9 @@
 ---
+- name: Make room for new kernel on /boot
+  command: /usr/bin/package-cleanup --oldkernels --count=2 -y
+
 - name: Update all packages
   yum:
     name:  "{{ oul_package_names }}"
     exclude: "{{ oul_exclude }}"
     state: latest
-
-- name: Make room for new kernel on /boot
-  command: /usr/bin/package-cleanup --oldkernels --count=2 -y
