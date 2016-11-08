@@ -12,6 +12,8 @@ RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 # setup yum repos
 ADD setup-yum.sh /usr/local/bin/setup-yum.sh
 RUN /usr/local/bin/setup-yum.sh
+RUN yum repolist --disablerepo=* && \
+    yum-config-manager --enable rhel-7-server-extras-rpms
 {% elif base_os == "centos7" %}
 
 ADD copr-openshift-tools.repo /etc/yum.repos.d/
