@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     container_id = os.environ['container_uuid']
 
-    container = cli.create_container(image=cli.inspect_container(container_id)['Config']['Image'],
+    container = cli.create_container(image=cli.inspect_container(container_id)['Image'],
                                      command='getent hosts redhat.com')
 
     cli.start(container=container.get('Id'))
