@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.29
+Version:        0.0.30
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,33 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Tue Nov 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.30-1
+- Fix for zabbix maintenance. (kwoodson@redhat.com)
+- changed the package cleanup option (mwoodson@redhat.com)
+- Update logging installer (whearn@redhat.com)
+- fixed some output of package_update_needed (mwoodson@redhat.com)
+- router monitoring (jdiaz@redhat.com)
+- Fixing a bug with the yedit separator and _replace_content.
+  (kwoodson@redhat.com)
+- lets update docker, for now (mwoodson@redhat.com)
+- added the openshift_update_packages role (mwoodson@redhat.com)
+- Modifying yum_repos to use yum_repository call. (kwoodson@redhat.com)
+- add items to hold openshift router health status (jdiaz@redhat.com)
+- change/add error handling on zabbix ansible module (jdiaz@redhat.com)
+- fix up some metrics and logging trigger expressions (jdiaz@redhat.com)
+- modify the /usr/bin/cron-send-docker-metrics path (zhiwliu@redhat.com)
+- Fixing an incorrect msg variable. (kwoodson@redhat.com)
+- Ansible 2.2 broke the parameter message.  Updating to msg.
+  (kwoodson@redhat.com)
+- Adding rc for retry loops. (kwoodson@redhat.com)
+- added package_update_needed and os_update_latest (mwoodson@redhat.com)
+- Idempotently add or remove repo ids. (kwoodson@redhat.com)
+- fixed the user writing adding in gcp (mwoodson@redhat.com)
+- updated the verfiy aws role (mwoodson@redhat.com)
+- sadly cron is running without the right environmental vars
+  (ihorvath@redhat.com)
+- updated repoquery (mwoodson@redhat.com)
+
 * Thu Oct 27 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.29-1
 - aws_account_list: Pass in path to aws_accounts.txt (joesmith@redhat.com)
 - fix spelling error in multi_inventory (blentz@redhat.com)
