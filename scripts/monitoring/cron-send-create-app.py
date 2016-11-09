@@ -365,6 +365,7 @@ def test(config, oocmd=None,):
                         service['items'][0]['spec']['ports'][0]['port'])
 
                 if http_code == 200:
+                    logger.debug("curl completed in %d tries", curlCount)
                     break
 
             return {
