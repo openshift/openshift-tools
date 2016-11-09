@@ -167,7 +167,7 @@
   register: podout
   run_once: true
 
-- name: fetch the elastic search dc's with selector
+- name: fetch the elastic search deploymentconfigs with selector
   oc_obj:
     state: list
     namespace: logging
