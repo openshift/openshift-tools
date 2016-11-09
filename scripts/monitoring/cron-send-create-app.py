@@ -350,18 +350,22 @@ def test(config, oocmd=None,):
             and pod['status'].has_key('podIP') \
             and not "build" in pod['metadata']['name']:
 
-            # introduce small delay to give time for route to establish
-            time.sleep(2)
+            for curlCount in range(10):
+                # introduce small delay to give time for route to establish
+                time.sleep(2)
 
-            # test pods http capability
-            route = oocmd.get_route()
-            if route['items']:
-                # FIXME: no port in the route object, is 80 a safe assumption?
-                http_code = curl(route['items'][0]['spec']['host'], 80)
-            else:
-                service = oocmd.get_service()
-                http_code = curl(service['items'][0]['spec']['clusterIP'], \
-                    service['items'][0]['spec']['ports'][0]['port'])
+                # test pods http capability
+                route = oocmd.get_route()
+                if route['items']:
+                    # FIXME: no port in the route object, is 80 a safe assumption?
+                    http_code = curl(route['items'][0]['spec']['host'], 80)
+                else:
+                    service = oocmd.get_service()
+                    http_code = curl(service['items'][0]['spec']['clusterIP'], \
+                        service['items'][0]['spec']['ports'][0]['port'])
+
+                if http_code == 200:
+                    break
 
             return {
                 'build_ran': build_ran,
