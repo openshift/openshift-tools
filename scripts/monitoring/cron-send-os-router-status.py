@@ -186,7 +186,7 @@ class OpenshiftRouterChecks(object):
                 return True
             else:
                 return False
-        except urllib2.HTTPError:
+        except (urllib2.HTTPError, urllib2.URLError):
             return False
 
     def find_router_pods(self):
