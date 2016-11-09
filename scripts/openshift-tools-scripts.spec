@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.168
+Version:       0.0.169
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -353,6 +353,9 @@ OpenShift Tools IAM specific scripts
 /usr/local/bin/saml_aws_creds.py
 
 %changelog
+* Wed Nov 09 2016 Drew Anderson <dranders@redhat.com> 0.0.169-1
+- 
+
 * Tue Nov 08 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.168-1
 - curl function tidy-up (dranders@redhat.com)
 - logger.debug curlCount (dranders@redhat.com)
