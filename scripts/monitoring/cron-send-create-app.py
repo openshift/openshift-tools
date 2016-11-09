@@ -223,22 +223,18 @@ class OpenShiftOC(object):
         logger.error("Failed finding logging pod")
         return 0
 
-def curl(ip_addr, port):
+def curl(ip_addr, port, timeout=30):
     """ Open an http connection to the url and read """
-    logger.debug("curl()")
+    url = 'http://%s:%s' % (ip_addr, port)
+    logger.debug("curl(%s timeout=%ss)", url, timeout)
 
     code = 0
-    timeout = 30 ## only wait this number of seconds for a response
     try:
-        code = urllib2.urlopen( \
-            'http://%s:%s' % (ip_addr, port), timeout=timeout).getcode()
+        code = urllib2.urlopen(url, timeout=timeout).getcode()
     except urllib2.HTTPError, e:
         code = e.fp.getcode()
-    except urllib2.URLError, e:
-        logger.error(
-            "timed out in %s seconds opening http://%s:%s",
-            timeout, ip_addr, port
-        )
+    except Exception as e:
+        logger.exception("Unknown error")
     return code
 
 def parse_args():
