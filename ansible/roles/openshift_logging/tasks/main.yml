@@ -26,6 +26,7 @@
   oadm_project:
     name: logging
     display_name: logging
+    description: Aggregated Logging
   register: projectout
   run_once: true
 - debug: var=projectout
