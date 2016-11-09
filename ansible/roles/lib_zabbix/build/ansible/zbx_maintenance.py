@@ -16,7 +16,7 @@ def main():
             hostgroups=dict(default=None, type='list'),
             name=dict(default=None, type='str'),
             description=dict(default=None, type='str'),
-            start_time=dict(default=int(time.time()), type='int'),
+            start_date=dict(default=int(time.time()), type='int'),
             duration=dict(default=60, type='int'),
             data_collection=dict(default=True, type='bool'),
         ),
