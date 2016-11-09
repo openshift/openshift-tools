@@ -136,7 +136,7 @@
 
 - name: scale down hawkular to 0
   oc_scale:
-    name: "hawkular-metrics"
+    name: hawkular-metrics
     kind: rc
     namespace: openshift-infra
     replicas: 0
@@ -149,7 +149,7 @@
 - name: Add the resource constraints to the hawkular RC
   oc_edit:
     kind: rc
-    name: "hawkular-metrics"
+    name: hawkular-metrics
     namespace: openshift-infra
     content:
       spec.template.spec.containers[0].resources.limits.memory: "{{ osamet_hawkular_limits_memory }}"
@@ -157,14 +157,14 @@
 
 - name: scale up hawkular to 1
   oc_scale:
-    name: "hawkular-metrics"
+    name: hawkular-metrics
     kind: rc
     namespace: openshift-infra
     replicas: 1
 
 - name: scale down heapster to 0
   oc_scale:
-    name: "heapster"
+    name: heapster
     kind: rc
     namespace: openshift-infra
     replicas: 0
@@ -174,18 +174,18 @@
     seconds: 30
   run_once: true
 
-- name: Add the resource constraints to the hawkular RC
+- name: Add the resource constraints to the heapster RC
   oc_edit:
     kind: rc
-    name: "heapster"
+    name: heapster
     namespace: openshift-infra
     content:
       spec.template.spec.containers[0].resources.limits.memory: "{{ osamet_heapster_limits_memory }}"
       spec.template.spec.containers[0].resources.requests.memory: "{{ osamet_heapster_requests_memory }}"
 
-- name: scale up hawkular to 1
+- name: scale up heapster to 1
   oc_scale:
-    name: "heapster"
+    name: heapster
     kind: rc
     namespace: openshift-infra
     replicas: 1
