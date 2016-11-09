@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.167
+Version:       0.0.168
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -353,6 +353,11 @@ OpenShift Tools IAM specific scripts
 /usr/local/bin/saml_aws_creds.py
 
 %changelog
+* Tue Nov 08 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.168-1
+- curl function tidy-up (dranders@redhat.com)
+- logger.debug curlCount (dranders@redhat.com)
+- retry curl of not successful (dranders@redhat.com)
+
 * Tue Nov 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.167-1
 - add router monitoring script to scripts-monitoring-openshift RPM
   (jdiaz@redhat.com)
