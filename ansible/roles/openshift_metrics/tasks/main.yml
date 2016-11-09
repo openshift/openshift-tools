@@ -92,7 +92,7 @@
     params:
       HAWKULAR_METRICS_HOSTNAME: "metrics.{{ osamet_clusterid }}.openshift.com"
       CASSANDRA_PV_SIZE: "{{ osamet_pv_size }}"
-      CASSANDRA_NODES: "{{ osamet_node }}"
+      CASSANDRA_NODES: "{{ osamet_cassandra_node }}"
     reconcile: False
   register: processout
   run_once: true
@@ -103,36 +103,92 @@
     seconds: 120
   run_once: true
 
-- name: scale down metrics to 0
+- name: scale down cassandra to 0
   oc_scale:
     name: "hawkular-cassandra-{{ item }}"
     kind: rc
     namespace: openshift-infra
     replicas: 0
-  with_sequence: "count={{ osamet_node }}"
+  with_sequence: "count={{ osamet_cassandra_node }}"
 
 - name: Wait for cassandra to scale down
   pause:
     seconds: 30
   run_once: true
 
-- name: Add the resource constraints to the metrics RC
+- name: Add the resource constraints to the cassandra RC
   oc_edit:
     kind: rc
     name: "hawkular-cassandra-{{ item }}"
     namespace: openshift-infra
     content:
-      spec.template.spec.containers[0].resources.limits.memory: "{{ osamet_limits_memory }}"
-      spec.template.spec.containers[0].resources.requests.memory: "{{ osamet_requests_memory }}"
-  with_sequence: "count={{ osamet_node }}"
+      spec.template.spec.containers[0].resources.limits.memory: "{{ osamet_cassandra_limits_memory }}"
+      spec.template.spec.containers[0].resources.requests.memory: "{{ osamet_cassandra_requests_memory }}"
+  with_sequence: "count={{ osamet_cassandra_node }}"
 
-- name: scale up metrics to 1
+- name: scale up cassandra to 1
   oc_scale:
     name: "hawkular-cassandra-{{ item }}"
     kind: rc
     namespace: openshift-infra
     replicas: 1
-  with_sequence: "count={{ osamet_node }}"
+  with_sequence: "count={{ osamet_cassandra_node }}"
+
+- name: scale down hawkular to 0
+  oc_scale:
+    name: hawkular-metrics
+    kind: rc
+    namespace: openshift-infra
+    replicas: 0
+
+- name: Wait for hawkular to scale down
+  pause:
+    seconds: 30
+  run_once: true
+
+- name: Add the resource constraints to the hawkular RC
+  oc_edit:
+    kind: rc
+    name: hawkular-metrics
+    namespace: openshift-infra
+    content:
+      spec.template.spec.containers[0].resources.limits.memory: "{{ osamet_hawkular_limits_memory }}"
+      spec.template.spec.containers[0].resources.requests.memory: "{{ osamet_hawkular_requests_memory }}"
+
+- name: scale up hawkular to 1
+  oc_scale:
+    name: hawkular-metrics
+    kind: rc
+    namespace: openshift-infra
+    replicas: 1
+
+- name: scale down heapster to 0
+  oc_scale:
+    name: heapster
+    kind: rc
+    namespace: openshift-infra
+    replicas: 0
+
+- name: Wait for heapster to scale down
+  pause:
+    seconds: 30
+  run_once: true
+
+- name: Add the resource constraints to the heapster RC
+  oc_edit:
+    kind: rc
+    name: heapster
+    namespace: openshift-infra
+    content:
+      spec.template.spec.containers[0].resources.limits.memory: "{{ osamet_heapster_limits_memory }}"
+      spec.template.spec.containers[0].resources.requests.memory: "{{ osamet_heapster_requests_memory }}"
+
+- name: scale up heapster to 1
+  oc_scale:
+    name: heapster
+    kind: rc
+    namespace: openshift-infra
+    replicas: 1
 
 - name: get deployer pod status
   oc_obj:
