@@ -30,7 +30,7 @@ class EtcdStatusZaggSender(object):
         self.parser = None
         self.config = None
         self.etcd_ping = 0
-        self.default_config = '/etc/openshift_tools/etcd_metrics.yaml'
+        self.default_config = '/etc/openshift_tools/etcd_metrics.yml'
         self.zagg_sender = ZaggSender()
 
     def parse_args(self):
