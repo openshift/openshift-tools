@@ -41,15 +41,15 @@ ocutil = OCUtil()
 
 commandDelay = 5 # seconds
 
-def runOCcmd(cmd):
+def runOCcmd(cmd, base_cmd='oc'):
     """ log commands through ocutil """
-    logger.info("oc " + cmd)
-    return ocutil.run_user_cmd(cmd)
+    logger.info(base_cmd + " " + cmd)
+    return ocutil.run_user_cmd(cmd, base_cmd=base_cmd, )
 
-def runOCcmd_yaml(cmd):
+def runOCcmd_yaml(cmd, base_cmd='oc'):
     """ log commands through ocutil """
-    logger.info("oc " + cmd)
-    return ocutil.run_user_cmd_yaml(cmd)
+    logger.info(base_cmd + " " + cmd)
+    return ocutil.run_user_cmd_yaml(cmd, base_cmd=base_cmd, )
 
 def parse_args():
     """ parse the args from the cli """
@@ -135,7 +135,7 @@ def setup(config):
 
     if not project:
         try:
-            runOCcmd("new-project {}".format(config.namespace))
+            runOCcmd("new-project {}".format(config.namespace), base_cmd='oadm')
             time.sleep(commandDelay)
         except Exception:
             logger.exception('error creating new project')
@@ -263,59 +263,64 @@ def main():
             len(args.podname), args.podname
         ))
 
-    setup(args)
-
-    # start time tracking
-    start_time = time.time()
-
     try:
-        test_response = test(args)
-        logger.debug(test_response)
+        setup(args)
     except Exception as e:
-        logger.exception("error during test()")
-        exception = e
-        test_response = {
-            'build_ran': 0,
-            'create_app': 1, # app create failed
-            'http_code': 0,
-            'failed': True,
-            'pod': None,
-        }
-
-    # finish time tracking
-    run_time = str(time.time() - start_time)
-    logger.info('Test finished. Time to complete test only: %s', run_time)
-
-    # send data to zabbix
-    try:
-        send_zagg_data(
-            test_response['build_ran'],
-            test_response['create_app'],
-            test_response['http_code'],
-            run_time
-        )
-    except Exception as e:
-        logger.exception("error sending zabbix data")
+        logger.exception("error during setup()")
         exception = e
 
-    if test_response['failed']:
+    if not exception:
+        # start time tracking
+        start_time = time.time()
+
         try:
-            ocutil.verbose = True
-            logger.setLevel(logging.DEBUG)
-            logger.critical('Deploy State: Fail')
-            logger.info('Fetching Pod:')
-            logger.info(test_response['pod'])
-            logger.info('Fetching Events:')
-            logger.info(runOCcmd('get events'))
-            if test_response['pod']:
-                logger.info('Fetching Logs:')
-                logger.info(ocutil.get_log(test_response['pod']['metadata']['name']))
+            test_response = test(args)
+            logger.debug(test_response)
         except Exception as e:
-            logger.exception("problem fetching additional error data")
+            logger.exception("error during test()")
             exception = e
-    else:
-        logger.info('Deploy State: Success')
-        logger.info('Service HTTP response code: %s', test_response['http_code'])
+            test_response = {
+                'build_ran': 0,
+                'create_app': 1, # app create failed
+                'http_code': 0,
+                'failed': True,
+                'pod': None,
+            }
+
+        # finish time tracking
+        run_time = str(time.time() - start_time)
+        logger.info('Test finished. Time to complete test only: %s', run_time)
+
+        # send data to zabbix
+        try:
+            send_zagg_data(
+                test_response['build_ran'],
+                test_response['create_app'],
+                test_response['http_code'],
+                run_time
+            )
+        except Exception as e:
+            logger.exception("error sending zabbix data")
+            exception = e
+
+        if test_response['failed']:
+            try:
+                ocutil.verbose = True
+                logger.setLevel(logging.DEBUG)
+                logger.critical('Deploy State: Fail')
+                logger.info('Fetching Pod:')
+                logger.info(test_response['pod'])
+                logger.info('Fetching Events:')
+                logger.info(runOCcmd('get events'))
+                if test_response['pod']:
+                    logger.info('Fetching Logs:')
+                    logger.info(ocutil.get_log(test_response['pod']['metadata']['name']))
+            except Exception as e:
+                logger.exception("problem fetching additional error data")
+                exception = e
+        else:
+            logger.info('Deploy State: Success')
+            logger.info('Service HTTP response code: %s', test_response['http_code'])
 
     teardown(args)
 
