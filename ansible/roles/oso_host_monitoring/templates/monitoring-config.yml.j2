@@ -4,6 +4,7 @@
 ---
 oso_cluster_id: "{{ osohm_cluster_id }}"
 oso_host_type: "{{ osohm_host_type }}"
+oso_region: "{{ osohm_region }}"
 
 {% if osohm_host_type == 'master' and osohm_cloud == 'aws' %}
 oso_snapshot_aws_key_id: "{{ osohm_snapshot_aws_access_key_id }}"
