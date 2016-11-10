@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.171
+Version:       0.0.172
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -353,6 +353,10 @@ OpenShift Tools IAM specific scripts
 /usr/local/bin/saml_aws_creds.py
 
 %changelog
+* Wed Nov 09 2016 Drew Anderson <dranders@redhat.com> 0.0.172-1
+- allow use of oadm command for new-project setup(), if not exception: test()
+  (dranders@redhat.com)
+
 * Wed Nov 09 2016 Drew Anderson <dranders@redhat.com> 0.0.171-1
 - V2 app create script: (dranders@redhat.com)
 
