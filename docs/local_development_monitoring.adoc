@@ -25,7 +25,7 @@ In this document, we're going to focus on the monitoring components, but similar
 
 .Fedora:
 ----
-sudo yum -y install docker-io python-ndg_httpsclient-0.3.2-1.fc22.noarch ansible
+sudo dnf -y install docker-io python-ndg_httpsclient ansible
 ----
 
 
