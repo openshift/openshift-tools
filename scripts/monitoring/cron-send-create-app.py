@@ -40,6 +40,9 @@ logger.setLevel(logging.INFO)
 ocutil = OCUtil()
 
 commandDelay = 5 # seconds
+testLoopCountMax = 120 # * commandDelay = 10min
+testCurlCountMax = 12 # * commandDelay = 1min
+testNoPodCountMax = 12 # * commandDelay = 1min
 
 def runOCcmd(cmd, base_cmd='oc'):
     """ log commands through ocutil """
@@ -84,6 +87,18 @@ def send_zagg_data(build_ran, create_app, http_code, run_time):
     zgs.send_metrics()
     logger.info("Data sent to Zagg in %s seconds", str(time.time() - zgs_time))
 
+def writeTmpFile(data, filename=None, outdir="/tmp"):
+    """ write string to file """
+    filename = ''.join([
+        outdir, '/',
+        filename,
+    ])
+
+    with open(filename, 'w') as f:
+        f.write(data)
+
+    logger.info("wrote file: %s", filename)
+
 def curl(ip_addr, port, timeout=30):
     """ Open an http connection to the url and read """
     url = 'http://%s:%s' % (ip_addr, port)
@@ -100,7 +115,7 @@ def curl(ip_addr, port, timeout=30):
 
 def getPodStatus(pod):
     """ get pod status for display """
-    logger.debug("getPodStatus()")
+    #logger.debug("getPodStatus()")
     if not pod:
         return "no pod"
 
@@ -146,6 +161,38 @@ def setup(config):
         config.namespace,
     ))
 
+def testCurl(config):
+    """ run curl and return http_code, have retries """
+    logger.info('testCurl()')
+    logger.debug(config)
+
+    http_code = 0
+
+    # attempt retries
+    for curlCount in range(testCurlCountMax):
+        # introduce small delay to give time for route to establish
+        time.sleep(commandDelay)
+
+        service = ocutil.get_service(config.podname)
+
+        if service:
+            logger.debug("service")
+            logger.debug(service)
+
+            http_code = curl(
+                service['spec']['clusterIP'],
+                service['spec']['ports'][0]['port']
+            )
+
+            logger.debug("http code %s", http_code)
+
+        if http_code == 200:
+            logger.debug("curl completed in %d tries", curlCount)
+            break
+
+    return http_code
+
+
 def test(config):
     """ run tests """
     logger.info('test()')
@@ -153,22 +200,23 @@ def test(config):
 
     build_ran = 0
     pod = None
-    lastKnownPod = None
+    noPodCount = 0
     http_code = 0
 
-    for loopCount in range(120):
+    for _ in range(testLoopCountMax):
         time.sleep(commandDelay)
         pod = getPod(config.podname)
 
         if not pod:
-            if not lastKnownPod and loopCount > 6:
+            noPodCount = noPodCount + 1
+            if noPodCount > testNoPodCountMax:
                 logger.critical("cannot find pod, fail early")
                 break
 
             logger.debug("cannot find pod")
             continue # cannot test pod further
 
-        lastKnownPod = pod
+        noPodCount = 0
 
         if not pod['status']:
             logger.error("no pod status")
@@ -188,27 +236,7 @@ def test(config):
             and pod['status'].has_key('podIP') \
             and not pod['metadata']['name'].endswith("build"):
 
-            # attempt retries
-            for curlCount in range(10):
-                # introduce small delay to give time for route to establish
-                time.sleep(commandDelay)
-
-                service = ocutil.get_service(config.podname)
-
-                if service:
-                    logger.debug("service")
-                    logger.debug(service)
-
-                    http_code = curl(
-                        service['spec']['clusterIP'],
-                        service['spec']['ports'][0]['port']
-                    )
-
-                    logger.debug("http code %s", http_code)
-
-                if http_code == 200:
-                    logger.debug("curl completed in %d tries", curlCount)
-                    break
+            http_code = testCurl(config)
 
             return {
                 'build_ran': build_ran,
@@ -217,6 +245,11 @@ def test(config):
                 'failed': (http_code != 200), # must be 200 to succeed
                 'pod': pod,
             }
+
+    if build_ran:
+        logger.critical("build timed out, please check build log for last messages")
+    else:
+        logger.critical("app create timed out, please check event log for information")
 
     return {
         'build_ran': build_ran,
@@ -254,6 +287,7 @@ def main():
 
     ocutil.namespace = args.namespace
 
+    ############# generate unique podname #############
     args.uid = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(2))
     args.timestamp = datetime.datetime.utcnow().strftime("%m%d%H%Mz")
     args.podname = '-'.join([args.basename, args.timestamp, args.uid]).lower()
@@ -263,12 +297,14 @@ def main():
             len(args.podname), args.podname
         ))
 
+    ############# setup() #############
     try:
         setup(args)
     except Exception as e:
         logger.exception("error during setup()")
         exception = e
 
+    ############# test() #############
     if not exception:
         # start time tracking
         start_time = time.time()
@@ -291,7 +327,7 @@ def main():
         run_time = str(time.time() - start_time)
         logger.info('Test finished. Time to complete test only: %s', run_time)
 
-        # send data to zabbix
+        ############# send data to zabbix #############
         try:
             send_zagg_data(
                 test_response['build_ran'],
@@ -303,18 +339,28 @@ def main():
             logger.exception("error sending zabbix data")
             exception = e
 
+        ############# collect more information if failed #############
         if test_response['failed']:
             try:
                 ocutil.verbose = True
                 logger.setLevel(logging.DEBUG)
                 logger.critical('Deploy State: Fail')
-                logger.info('Fetching Pod:')
-                logger.info(test_response['pod'])
-                logger.info('Fetching Events:')
-                logger.info(runOCcmd('get events'))
+
                 if test_response['pod']:
-                    logger.info('Fetching Logs:')
-                    logger.info(ocutil.get_log(test_response['pod']['metadata']['name']))
+                    logger.info('Fetching Pod:')
+                    logger.info(test_response['pod'])
+                    logger.info('Fetching Logs: showing last 20, see file for full data')
+                    logs = ocutil.get_log(test_response['pod']['metadata']['name'])
+                    writeTmpFile(logs, filename=args.podname+".logs")
+                    logger.info("\n".join(
+                        logs.split("\n")[-20:]
+                    ))
+                logger.info('Fetching Events: see file for full data')
+                events = "\n".join(
+                    [event for event in runOCcmd('get events').split("\n") if args.podname in event]
+                )
+                writeTmpFile(events, filename=args.podname+".events")
+                logger.info(events)
             except Exception as e:
                 logger.exception("problem fetching additional error data")
                 exception = e
@@ -322,8 +368,10 @@ def main():
             logger.info('Deploy State: Success')
             logger.info('Service HTTP response code: %s', test_response['http_code'])
 
+    ############# teardown #############
     teardown(args)
 
+    ############# raise any exceptions discovered #############
     if exception:
         raise exception
 
