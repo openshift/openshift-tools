@@ -183,7 +183,7 @@
     access_modes:
     - ReadWriteOnce
     volume_capacity: "{{ osalog_pv_size }}G"
-  with_items: dcout.results.results[0]['items']
+  with_items: "{{ dcout.results.results[0]['items'] }}"
   register: pvcout
   run_once: true
 - debug: var=pvcout
@@ -196,7 +196,7 @@
   register: pvcout
   until:
   - pvcout.results.results[0]['items'][0].status.phase == 'Bound'
-  - pvcout.results.results[0]['items'][1].status.phase == 'Bound' 
+  - pvcout.results.results[0]['items'][1].status.phase == 'Bound'
   retries: 24
   delay: 5
   run_once: true
@@ -210,7 +210,7 @@
     claim_name: "{{ item['metadata']['name'] }}"
     claim_size: "{{ osalog_pv_size }}G"
     vol_name: elasticsearch-storage
-  with_items: dcout.results.results[0]['items']
+  with_items: " {{ dcout.results.results[0]['items'] }}"
   register: volumeout
   run_once: true
 - debug: var=volumeout
@@ -234,7 +234,7 @@
     labels:
       - key: logging-infra-fluentd
         value: 'true'
-  with_items: osalog_fluentd_nodes
+  with_items: " {{ osalog_fluentd_nodes }}"
 
 - name: scale kibana frontend
   oc_scale:
