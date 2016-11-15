@@ -32,3 +32,15 @@
 - debug:
     var: router_out
   run_once: true
+
+# This is the fix for https://bugzilla.redhat.com/show_bug.cgi?id=1312292
+- name: Make sure bad SSL certs won't break the routers
+  oc_env:
+    state: present
+    kind: dc
+    name: router
+    namespace: default
+    env_vars:
+      EXTENDED_VALIDATION: 'true'
+  run_once: True
+
