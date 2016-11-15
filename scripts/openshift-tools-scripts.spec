@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.172
+Version:       0.0.173
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -353,6 +353,15 @@ OpenShift Tools IAM specific scripts
 /usr/local/bin/saml_aws_creds.py
 
 %changelog
+* Mon Nov 14 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.173-1
+- add region for the s3 check (zhizhang@zhizhang-laptop-nay.redhat.com)
+- * logger.critical on timeout * section heading comments * magic variables
+  bought to top * write logs to file for further review, only show last 20
+  lines * add basename to differentiate between processes * noPodCount should
+  be active even if there's been a pod found (dranders@redhat.com)
+- correcting file name so it matches what we create from the config
+  (ihorvath@redhat.com)
+
 * Wed Nov 09 2016 Drew Anderson <dranders@redhat.com> 0.0.172-1
 - allow use of oadm command for new-project setup(), if not exception: test()
   (dranders@redhat.com)
