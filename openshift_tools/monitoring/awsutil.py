@@ -62,10 +62,13 @@ class AWSUtil(object):
 
         return results.stdout.read()
 
-    def get_bucket_list(self, verbose=False):
+    def get_bucket_list(self, verbose=False, BucketRegion=''):
         ''' Get list of all S3 buckets visible to AWS ID '''
 
-        s3ls_cmd = "aws s3api list-buckets"
+        s3ls_cmd = "aws s3api list-buckets  "
+        if not BucketRegion == '':
+            s3ls_cmd = "aws s3api list-buckets --region " + BucketRegion
+
         buckets = self._run_cmd(s3ls_cmd)
 
         json_list = json.loads(buckets)
@@ -79,10 +82,13 @@ class AWSUtil(object):
 
         return bucket_list
 
-    def get_bucket_info(self, s3_bucket, verbose=False):
+    def get_bucket_info(self, s3_bucket, verbose=False, BucketRegion=''):
         ''' Get size (in GB) and object count for S3 bucket '''
-
         aws_cmd = "aws s3 ls {}".format(s3_bucket)
+
+        if not BucketRegion == '':
+            aws_cmd = "aws s3 ls {}".format(s3_bucket)+" --region " + BucketRegion
+
         output = self._run_cmd(aws_cmd)
 
         # First check whether the bucket is completely empty
@@ -90,9 +96,12 @@ class AWSUtil(object):
         if output == "":
             # Empty bucket, so just return size 0, object count 0
             return [0, 0]
-
-        aws_cmd = ("aws s3api list-objects --bucket {} --output json --query "
-                   "\"[sum(Contents[].Size), length(Contents[])]\"".format(s3_bucket))
+        aws_cmd = ("aws s3api list-objects --bucket {}".format(s3_bucket)+" --query "
+                   "\"[sum(Contents[].Size), length(Contents[])]\"")
+        if not BucketRegion == '':
+            aws_cmd = ("aws s3api list-objects --bucket {}".format(s3_bucket)+
+                       " --output json --region " + BucketRegion + " --query "
+                       "\"[sum(Contents[].Size), length(Contents[])]\"")
 
         s3_json = self._run_cmd(aws_cmd)
 
@@ -107,3 +116,4 @@ class AWSUtil(object):
         s3_size_gb = float(s3_size) / 1024 / 1024 / 1024
 
         return [s3_size_gb, s3_objects]
+
