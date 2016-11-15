@@ -37,11 +37,13 @@ class OpenShiftCLI(object):
     def __init__(self,
                  namespace,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
-                 verbose=False):
+                 verbose=False,
+                 all_namespaces=False):
         ''' Constructor for OpenshiftCLI '''
         self.namespace = namespace
         self.verbose = verbose
         self.kubeconfig = kubeconfig
+        self.all_namespaces = all_namespaces
 
     # Pylint allows only 5 arguments to be passed.
     # pylint: disable=too-many-arguments
@@ -121,7 +123,9 @@ class OpenShiftCLI(object):
         cmd = ['get', resource]
         if selector:
             cmd.append('--selector=%s' % selector)
-        if self.namespace:
+        if self.all_namespaces:
+            cmd.extend(['--all-namespaces'])
+        elif self.namespace:
             cmd.extend(['-n', self.namespace])
 
         cmd.extend(['-o', 'json'])
@@ -869,9 +873,11 @@ class OCObject(OpenShiftCLI):
                  rname=None,
                  selector=None,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
-                 verbose=False):
+                 verbose=False,
+                 all_namespaces=False):
         ''' Constructor for OpenshiftOC '''
-        super(OCObject, self).__init__(namespace, kubeconfig)
+        super(OCObject, self).__init__(namespace, kubeconfig,
+                                       all_namespaces=all_namespaces)
         self.kind = kind
         self.namespace = namespace
         self.name = rname
@@ -950,6 +956,7 @@ def main():
                        choices=['present', 'absent', 'list']),
             debug=dict(default=False, type='bool'),
             namespace=dict(default='default', type='str'),
+            all_namespaces=dict(defaul=False, type='bool'),
             name=dict(default=None, type='str'),
             files=dict(default=None, type='list'),
             kind=dict(required=True,
@@ -1000,7 +1007,8 @@ def main():
                      module.params['name'],
                      module.params['selector'],
                      kubeconfig=module.params['kubeconfig'],
-                     verbose=module.params['debug'])
+                     verbose=module.params['debug'],
+                     all_namespaces=module.params['all_namespaces'])
 
     state = module.params['state']
 
