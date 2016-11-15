@@ -25,6 +25,7 @@
 - name: create project
   oadm_project:
     name: logging
+    description: logging project
     display_name: logging
   register: projectout
   run_once: true
