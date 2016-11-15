@@ -143,6 +143,8 @@
         spec.strategy.rollingParams.maxUnavailable: 50%
         spec.strategy.rollingParams.timeoutSeconds: 600
         spec.strategy.rollingParams.updatePeriodSeconds: 1
+        spec.template.spec.containers[0].resources.limits.memory: 2G
+        spec.template.spec.containers[0].resources.requests.memory: 1G
   register: registryout
 
 - name: Pause for race conditions

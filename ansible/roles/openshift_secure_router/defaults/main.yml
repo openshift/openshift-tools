@@ -8,6 +8,10 @@ ossr_default_router_edits:
       timeoutSeconds: 600
       updatePeriodSeconds: 1
     action: put
+  - key: spec.template.spec.containers[0].resources.limits.memory
+    value: 2G
+  - key: spec.template.spec.containers[0].resources.requests.memory
+    value: 1G
 
 ossr_default_listeners:
 - instance_port: 80
