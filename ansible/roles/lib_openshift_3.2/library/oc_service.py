@@ -37,11 +37,13 @@ class OpenShiftCLI(object):
     def __init__(self,
                  namespace,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
-                 verbose=False):
+                 verbose=False,
+                 all_namespaces=False):
         ''' Constructor for OpenshiftCLI '''
         self.namespace = namespace
         self.verbose = verbose
         self.kubeconfig = kubeconfig
+        self.all_namespaces = all_namespaces
 
     # Pylint allows only 5 arguments to be passed.
     # pylint: disable=too-many-arguments
@@ -121,7 +123,9 @@ class OpenShiftCLI(object):
         cmd = ['get', resource]
         if selector:
             cmd.append('--selector=%s' % selector)
-        if self.namespace:
+        if self.all_namespaces:
+            cmd.extend(['--all-namespaces'])
+        elif self.namespace:
             cmd.extend(['-n', self.namespace])
 
         cmd.extend(['-o', 'json'])

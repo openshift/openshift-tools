@@ -13,6 +13,7 @@ def main():
                        choices=['present', 'absent', 'list']),
             debug=dict(default=False, type='bool'),
             namespace=dict(default='default', type='str'),
+            all_namespaces=dict(defaul=False, type='bool'),
             name=dict(default=None, type='str'),
             files=dict(default=None, type='list'),
             kind=dict(required=True,
@@ -63,7 +64,8 @@ def main():
                      module.params['name'],
                      module.params['selector'],
                      kubeconfig=module.params['kubeconfig'],
-                     verbose=module.params['debug'])
+                     verbose=module.params['debug'],
+                     all_namespaces=module.params['all_namespaces'])
 
     state = module.params['state']
 
