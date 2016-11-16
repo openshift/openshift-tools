@@ -240,10 +240,13 @@ class ManageKeys(object):
                     return client
 
                 except ValueError as client_exception:
-                    if 'Error retrieving SAML token' and 'Metadata not found'\
-                    in client_exception.message:
+                    if 'Error retrieving SAML token' in client_exception.message and \
+                    'Metadata not found' in client_exception.message:
                         print(client_exception)
                         print('Metadata for %s missing or misconfigured, skipping' % aws_account)
+ 
+                    else:
+                        raise
 
         else:
             raise ValueError(sso_config_path + 'does not exist.')
