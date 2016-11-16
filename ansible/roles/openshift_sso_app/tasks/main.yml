@@ -1,0 +1,97 @@
+---
+- name: "create SSO project for {{ osso_namespace }}"
+  oadm_project:
+    name: "{{ osso_namespace }}"
+    display_name: "{{ osso_namespace }}"
+    description: "Single Sign-on Service"
+  register: createout
+
+- name: "Create SSO secrets for {{ osso_namespace }}"
+  oc_secret:
+    namespace: "{{ osso_namespace }}"
+    name: oso-sso-secrets
+    contents:
+    - path: authdata.yml
+      data: "{{ osso_authdata_yml_content }}"
+    - path: authorized-keys
+      data: "{{ osso_authorized_keys_content }}"
+    - path: configdata.yml
+      data: "{{ osso_configdata_yml_content }}"
+    - path: site.cert.crt
+      data: "{{ osso_site_cert_content }}"
+    - path: site.key.pem
+      data: "{{ osso_site_key_content }}"
+    - path: site.ca.cert.pem
+      data: "{{ osso_site_ca_cert_content }}"
+  register: secretout
+
+- name: "Check to see if SSO pods exist in {{ osso_namespace }}"
+  oc_obj:
+    state: list
+    namespace: "{{ osso_namespace }}"
+    kind: pods
+  register: podlist
+
+- set_fact:
+    # look for running pods that match ['oso-memcached-sso1', 'oso-memcached-sso2', 'oso-saml-sso']
+    osso_pods_running: |-
+      {%- set retval = [] -%}
+      {%- if podlist.results is defined and podlist.results.results is defined -%}
+        {%- if podlist.results.results | length >= 1 and podlist.results.results[0]['items'] is defined -%}
+          {%- for pod in podlist.results.results[0]['items'] -%}
+            {%- if pod.status is defined and pod.status.phase is defined and pod.status.phase == "Running" -%}
+              {%- if pod.metadata is defined and pod.metadata.labels is defined -%}
+                {%- if pod.metadata.labels.deploymentconfig is defined -%}
+                  {%- if [ pod.metadata.labels.deploymentconfig ] | intersect(['oso-memcached-sso1', 'oso-memcached-sso2', 'oso-saml-sso']) -%}
+                    {%- if retval.append(pod.metadata.labels.deploymentconfig) -%}{%- endif -%}
+                  {%- endif -%}
+                {%- endif -%}
+              {%- endif -%}
+            {%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+      {%- endif -%}
+      {{- retval -}}
+
+# as of now, this task basically only works for a newly-created project
+# and until oc_process switches from a delete/re-create model to a
+# replace model, don't be surprised if this task breaks things. We
+# try to skip it by only running it if the memcache pods or sso pods aren't
+# running
+- name: "Create bc,is,dc for apps in {{ osso_namespace }} from template"
+  oc_process:
+    namespace: "{{ osso_namespace }}"
+    template_name: oso-saml-sso
+    content: "{{ lookup('file', 'files/openshift_sso_app.yml') }}"
+    create: True
+    reconcile: True
+    params:
+      PLAT: rhel7
+  when: '{{ osso_pods_running | length }} < 5'
+
+- name: "Create route in {{ osso_namespace }}"
+  oc_route:
+    name: sso
+    namespace: "{{ osso_namespace }}"
+    tls_termination: reencrypt
+    cert_content: "{{ osso_site_cert_content }}"
+    key_content: "{{ osso_site_key_content }}"
+    cacert_content: "{{ osso_site_ca_cert_content }}"
+    dest_cacert_content: "{{ osso_dest_ca_cert_content }}"
+    service_name: sso
+    host: "{{ osso_app_domain }}"
+
+- name: "Redeploy SSO app in {{ osso_namespace }} when secrets change or not running"
+  command: "oc deploy --latest -n {{ osso_namespace }} oso-saml-sso"
+  # if we just created the project, we should not try a re-deploy. Otherwise, we'll try if the pods don't seem to be running or if secrets change
+  when: "{{ not createout.changed and (secretout.changed or osso_pods_running | select('match', '^oso-saml-sso$') | list | length < 3) }}"
+
+- name: "Redeploy memcache pod 1 in {{ osso_namespace }} when not running"
+  command: "oc deploy --latest -n {{ osso_namespace }} oso-memcached-sso1"
+  # if we just created the project, we should not try a re-deploy. Otherwise, we'll try if the pod doesn't seem to be running
+  when: "{{ not createout.changed and osso_pods_running | select('match', '^oso-memcached-sso1$') | list | length < 1 }}"
+
+  # if we just created the project, we should not try a re-deploy. Otherwise, we'll try if the pod doesn't seem to be running
+- name: "Redeploy memcache pod 2 in {{ osso_namespace }} when not running"
+  command: "oc deploy --latest -n {{ osso_namespace }} oso-memcached-sso2"
+  when: "{{ not createout.changed and osso_pods_running | select('match', '^oso-memcached-sso2$') | list | length < 1 }}"
