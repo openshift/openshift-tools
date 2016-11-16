@@ -244,7 +244,7 @@ class ManageKeys(object):
                     'Metadata not found' in client_exception.message:
                         print(client_exception)
                         print('Metadata for %s missing or misconfigured, skipping' % aws_account)
- 
+
                     else:
                         raise
 
