@@ -22,3 +22,8 @@
 
 - set_fact:
     tdgc_retval_repo_dir: "{{ tdgc_dest_dir }}/{{ tdgc_repo_name }}"
+
+- name: checkout the desired branch
+  git_checkout:
+    path: "{{ tdgc_retval_repo_dir }}"
+    branch: "{{ tdgc_branch }}"

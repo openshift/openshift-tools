@@ -11,13 +11,15 @@ def main():
             remote=dict(default=None, required=True, type='str'),
             src_branch=dict(default=None, required=True, type='str'),
             dest_branch=dict(default=None, required=True, type='str'),
+            ssh_key=dict(default=None, required=False, type='str'),
         ),
         supports_check_mode=False,
     )
     git = GitPush(module.params['path'],
                   module.params['remote'],
                   module.params['src_branch'],
-                  module.params['dest_branch'])
+                  module.params['dest_branch'],
+                  module.params['ssh_key'])
 
     state = module.params['state']
 

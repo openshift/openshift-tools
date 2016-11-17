@@ -9,6 +9,7 @@ def main():
             state=dict(default='present', type='str', choices=['present']),
             msg=dict(default=None, required=True, type='str'),
             path=dict(default=None, required=True, type='str'),
+            author=dict(default=None, required=False, type='str'),
             commit_files=dict(default=None, required=False, type='list'),
         ),
         supports_check_mode=False,
@@ -16,6 +17,7 @@ def main():
     git = GitCommit(module.params['msg'],
                     module.params['path'],
                     module.params['commit_files'],
+                    module.params['author'],
                    )
 
     state = module.params['state']

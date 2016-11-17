@@ -16,10 +16,23 @@ class GitCLI(object):
     ''' Class to wrap the command line tools '''
     def __init__(self,
                  path,
-                 verbose=False):
+                 verbose=False,
+                 ssh_key=None,
+                 author=None):
         ''' Constructor for GitCLI '''
         self.path = path
         self.verbose = verbose
+        self.ssh_key = ssh_key
+        self.author = author
+        self.environment_vars = os.environ.copy()
+
+        if self.author:
+            author_dict = {}
+            author_list = author.split('<')
+            author_dict['GIT_COMMITTER_NAME'] = author_list[0].strip()
+            author_dict['GIT_COMMITTER_EMAIL'] = author_list[0].strip()
+
+            self.environment_vars.update(author_dict)
 
     def _add(self, files_to_add=None):
         ''' git add '''
@@ -35,10 +48,13 @@ class GitCLI(object):
 
         return results
 
-    def _commit(self, msg):
+    def _commit(self, msg, author=None):
         ''' git commit with message '''
 
         cmd = ["commit", "-m", msg]
+
+        if author:
+            cmd += ["--author", author]
 
         results = self.git_cmd(cmd)
 
@@ -132,15 +148,32 @@ class GitCLI(object):
         if self.verbose:
             print ' '.join(cmds)
 
-        proc = subprocess.Popen(cmds,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+        if self.ssh_key:
+            with SshAgent() as agent:
+                agent.add_key(self.ssh_key)
+                proc = subprocess.Popen(cmds,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        env=self.environment_vars)
 
-        stdout, stderr = proc.communicate()
-        rval = {"returncode": proc.returncode,
-                "results": results,
-                "cmd": ' '.join(cmds),
-               }
+                stdout, stderr = proc.communicate()
+
+                rval = {"returncode": proc.returncode,
+                        "results": results,
+                        "cmd": ' '.join(cmds),
+                       }
+        else:
+            proc = subprocess.Popen(cmds,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    env=self.environment_vars)
+
+            stdout, stderr = proc.communicate()
+            rval = {"returncode": proc.returncode,
+                    "results": results,
+                    "cmd": ' '.join(cmds),
+                   }
+
 
         if proc.returncode == 0:
             if output:

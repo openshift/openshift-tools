@@ -10,12 +10,15 @@ def main():
             path=dict(default=None, required=True, type='str'),
             branch=dict(default=None, required=True, type='str'),
             merge_id=dict(default=None, required=True, type='str'),
+            author=dict(default=None, required=False, type='str'),
         ),
         supports_check_mode=False,
     )
     git = GitMerge(module.params['path'],
                    module.params['merge_id'],
-                   module.params['branch'])
+                   module.params['branch'],
+                   module.params['author']
+                  )
 
     state = module.params['state']
 
