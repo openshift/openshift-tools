@@ -72,6 +72,7 @@ mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
 cp -p monitoring/hawk_client.yaml.example %{buildroot}/etc/openshift_tools/hawk_client.yaml
 cp -p monitoring/zagg_server.yaml.example %{buildroot}/etc/openshift_tools/zagg_server.yaml
+cp -p monitoring/mertic_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
 cp -p remote-heal/remote_healer.conf.example %{buildroot}/etc/openshift_tools/remote_healer.conf
 
 mkdir -p %{buildroot}/var/run/zagg/data

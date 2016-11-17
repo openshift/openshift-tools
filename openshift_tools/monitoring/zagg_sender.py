@@ -20,32 +20,30 @@ Examples:
     zs.send_metrics()
 """
 
+import json
 from openshift_tools.monitoring.metricmanager import UniqueMetric
 from openshift_tools.monitoring.zagg_client import ZaggClient
 from openshift_tools.monitoring.zagg_common import ZaggConnection
-import json
-import os
-import yaml
+from openshift_tools.monitoring.generic_metric_sender import GenericMetricSender
 
-class ZaggSenderException(Exception):
-    '''
-        ZabbixSenderException
-        Exists to propagate errors up from the api
-    '''
-    pass
-
-class ZaggSender(object):
+class ZaggSender(GenericMetricSender):
     """
     collect and create UniqueMetrics and send them to Zagg
     """
 
-    def __init__(self, host=None, zagg_connection=None, verbose=False, debug=False):
+    # Allow for 6 arguments (including 'self')
+    # pylint: disable=too-many-arguments
+    def __init__(self, host=None, zagg_connection=None, verbose=False, debug=False, config_file=None):
         """
         set up the zagg client and unique_metrics
         """
+        super(ZaggSender, self).__init__()
+
+        if not config_file:
+            config_file = '/etc/openshift_tools/zagg_client.yaml'
+
+        self.config_file = config_file
         self.unique_metrics = []
-        self.config = None
-        self.config_file = '/etc/openshift_tools/zagg_client.yaml'
         self.verbose = verbose
         self.debug = debug
 
@@ -53,42 +51,10 @@ class ZaggSender(object):
             host = self.get_default_host()
 
         if not zagg_connection:
-            zagg_connection = self.get_default_zagg_connecton()
+            zagg_connection = self.get_default_zagg_connection()
 
         self.host = host
         self.zaggclient = ZaggClient(zagg_connection=zagg_connection)
-
-    def print_unique_metrics_key_value(self):
-        """
-        This function prints the key/value pairs the UniqueMetrics that ZaggSender
-        currently has stored
-        """
-
-        print "\nZaggSender Key/Value pairs:"
-        print "=============================="
-        for unique_metric in self.unique_metrics:
-            print("%s:  %s") % (unique_metric.key, unique_metric.value)
-        print "==============================\n"
-
-    def print_unique_metrics(self):
-        """
-        This function prints all of the information of the UniqueMetrics that ZaggSender
-        currently has stored
-        """
-
-        print "\nZaggSender UniqueMetrics:"
-        print "=============================="
-        for unique_metric in self.unique_metrics:
-            print unique_metric
-        print "==============================\n"
-
-    def parse_config(self):
-        """ parse default config file """
-
-        if not self.config:
-            if not os.path.exists(self.config_file):
-                raise ZaggSenderException(self.config_file + " does not exist.")
-            self.config = yaml.load(file(self.config_file))
 
     def get_default_host(self):
         """ get the 'host' value from the config file """
@@ -96,7 +62,7 @@ class ZaggSender(object):
 
         return self.config['host']['name']
 
-    def get_default_zagg_connecton(self):
+    def get_default_zagg_connection(self):
         """ get the values and create a zagg_connection """
 
         self.parse_config()
@@ -135,7 +101,7 @@ class ZaggSender(object):
                                                  )
         self.unique_metrics.append(hb_metric)
 
-    def add_zabbix_keys(self, zabbix_keys, host=None, synthetic=False):
+    def add_metric(self, metrics, host=None, synthetic=False):
         """ create unique metric from zabbix key value pair """
 
         if synthetic and not host:
@@ -145,15 +111,21 @@ class ZaggSender(object):
 
         zabbix_metrics = []
 
-        for key, value in zabbix_keys.iteritems():
+        for key, value in metrics.iteritems():
             zabbix_metric = UniqueMetric(host, key, value)
             zabbix_metrics.append(zabbix_metric)
 
         self.unique_metrics += zabbix_metrics
 
+    # Temporary wrapper for add_metric to support old calls to zagg_sender
+    def add_zabbix_keys(self, metrics, host=None, synthetic=False):
+        """ Temporary wrapper for add_metric to support old calls to zagg_sender """
+        self.add_metric(metrics, host, synthetic)
+
+
     # Allow for 6 arguments (including 'self')
     # pylint: disable=too-many-arguments
-    def add_zabbix_dynamic_item(self, discovery_key, macro_string, macro_array, host=None, synthetic=False):
+    def add_dynamic_metric(self, discovery_key, macro_string, macro_array, host=None, synthetic=False):
         """
         This creates a dynamic item prototype that is required
         for low level discovery rules in Zabbix.
@@ -181,6 +153,13 @@ class ZaggSender(object):
         zabbix_dynamic_item = UniqueMetric(host, discovery_key, json_data)
 
         self.unique_metrics.append(zabbix_dynamic_item)
+
+    # Temporary wrapper for add_dynamic_metric to support old calls to zagg_sender.
+    # Allow for 6 arguments (including 'self')
+    # pylint: disable=too-many-arguments
+    def add_zabbix_dynamic_item(self, discovery_key, macro_string, macro_array, host=None, synthetic=False):
+        """ Temporary wrapper for add_dynamic_metric to support old calls to zagg_sender """
+        self.add_dynamic_metric(discovery_key, macro_string, macro_array, host, synthetic)
 
     def send_metrics(self):
         """
