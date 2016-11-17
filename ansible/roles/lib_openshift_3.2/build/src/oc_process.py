@@ -1,5 +1,6 @@
 # pylint: skip-file
 
+# pylint: disable=too-many-instance-attributes
 class OCProcess(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
@@ -52,7 +53,7 @@ class OCProcess(OpenShiftCLI):
         return self._delete(obj['kind'], obj['metadata']['name'])
 
     def create_obj(self, obj):
-        '''delete a resource'''
+        '''create a resource'''
         return self._create_from_content(obj['metadata']['name'], obj)
 
     def process(self, create=None):
@@ -67,6 +68,9 @@ class OCProcess(OpenShiftCLI):
 
     def exists(self):
         '''return whether the template exists'''
+        # Always return true if we're being passed template data
+        if self.data:
+            return True
         t_results = self._get('template', self.name)
 
         if t_results['returncode'] != 0:

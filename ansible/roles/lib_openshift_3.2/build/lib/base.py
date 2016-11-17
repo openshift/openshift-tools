@@ -102,7 +102,7 @@ class OpenShiftCLI(object):
             cmd.append('-v')
             cmd.extend(param_str)
 
-        results = self.openshift_cmd(cmd, output=True, input=template_data)
+        results = self.openshift_cmd(cmd, output=True, input_data=template_data)
 
         if results['returncode'] != 0 or not create:
             return results
@@ -192,7 +192,8 @@ class OpenShiftCLI(object):
 
         return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
 
-    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json', input=None):
+    #pylint: disable=too-many-arguments
+    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json', input_data=None):
         '''Base command for oc '''
         cmds = []
         if oadm:
@@ -215,7 +216,7 @@ class OpenShiftCLI(object):
                                 stderr=subprocess.PIPE,
                                 env={'KUBECONFIG': self.kubeconfig})
 
-        stdout, stderr = proc.communicate(input)
+        stdout, stderr = proc.communicate(input_data)
         rval = {"returncode": proc.returncode,
                 "results": results,
                 "cmd": ' '.join(cmds),

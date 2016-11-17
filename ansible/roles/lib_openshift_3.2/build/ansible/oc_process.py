@@ -40,6 +40,16 @@ def main():
 
     elif state == 'present':
         if not ocprocess.exists() or not module.params['reconcile']:
+            #FIXME: this code will never get run in a way that succeeds when
+            #       module.params['reconcile'] is true. Because oc_process doesn't
+            #       create the actual template, the check of ocprocess.exists()
+            #       is meaningless. Either it's already here and this code
+            #       won't be run, or this code will fail because there is no
+            #       template available for oc process to use. Have we conflated
+            #       the template's existence with the existence of the objects
+            #       it describes?
+
+
             # Create it here
             api_rval = ocprocess.process()
             if api_rval['returncode'] != 0:

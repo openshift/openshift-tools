@@ -109,7 +109,7 @@ class OpenShiftCLI(object):
             cmd.append('-v')
             cmd.extend(param_str)
 
-        results = self.openshift_cmd(cmd, output=True, input=template_data)
+        results = self.openshift_cmd(cmd, output=True, input_data=template_data)
 
         if results['returncode'] != 0 or not create:
             return results
@@ -199,7 +199,8 @@ class OpenShiftCLI(object):
 
         return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
 
-    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json', input=None):
+    #pylint: disable=too-many-arguments
+    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json', input_data=None):
         '''Base command for oc '''
         cmds = []
         if oadm:
@@ -222,7 +223,7 @@ class OpenShiftCLI(object):
                                 stderr=subprocess.PIPE,
                                 env={'KUBECONFIG': self.kubeconfig})
 
-        stdout, stderr = proc.communicate(input)
+        stdout, stderr = proc.communicate(input_data)
         rval = {"returncode": proc.returncode,
                 "results": results,
                 "cmd": ' '.join(cmds),
@@ -867,6 +868,7 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
+# pylint: disable=too-many-instance-attributes
 class OCProcess(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
@@ -919,7 +921,7 @@ class OCProcess(OpenShiftCLI):
         return self._delete(obj['kind'], obj['metadata']['name'])
 
     def create_obj(self, obj):
-        '''delete a resource'''
+        '''create a resource'''
         return self._create_from_content(obj['metadata']['name'], obj)
 
     def process(self, create=None):
@@ -934,6 +936,9 @@ class OCProcess(OpenShiftCLI):
 
     def exists(self):
         '''return whether the template exists'''
+        # Always return true if we're being passed template data
+        if self.data:
+            return True
         t_results = self._get('template', self.name)
 
         if t_results['returncode'] != 0:
@@ -1014,6 +1019,16 @@ def main():
 
     elif state == 'present':
         if not ocprocess.exists() or not module.params['reconcile']:
+            #FIXME: this code will never get run in a way that succeeds when
+            #       module.params['reconcile'] is true. Because oc_process doesn't
+            #       create the actual template, the check of ocprocess.exists()
+            #       is meaningless. Either it's already here and this code
+            #       won't be run, or this code will fail because there is no
+            #       template available for oc process to use. Have we conflated
+            #       the template's existence with the existence of the objects
+            #       it describes?
+
+
             # Create it here
             api_rval = ocprocess.process()
             if api_rval['returncode'] != 0:
