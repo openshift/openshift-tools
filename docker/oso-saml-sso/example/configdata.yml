@@ -23,7 +23,7 @@ idp_auth_module: google
 # the JSON secret for google API, base64-encoded
 google_api_client_secrets_json: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 session_store_type: memcache
-# A lists of lists. Each outer list is a replication set (for HA), each inner list is a load-balance set
+# A lists of lists. The outer list is a replication set (for HA), each inner list is a load-balance set
 # (i.e. sharding instances). This example shows two full replicas with no load balancing (sharding). All
 # data will be written to both servers.
 memcached_servers:
