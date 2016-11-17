@@ -97,15 +97,19 @@ class OpenShiftCLI(object):
 
         return self.openshift_cmd(cmd)
 
-    def _process(self, template_name, create=False, params=None):
+    def _process(self, template_name, create=False, params=None, template_data=None):
         '''return all pods '''
-        cmd = ['process', template_name, '-n', self.namespace]
+        cmd = ['process', '-n', self.namespace]
+        if template_data:
+            cmd.extend(['-f', '-'])
+        else:
+            cmd.append(template_name)
         if params:
             param_str = ["%s=%s" % (key, value) for key, value in params.items()]
             cmd.append('-v')
             cmd.extend(param_str)
 
-        results = self.openshift_cmd(cmd, output=True)
+        results = self.openshift_cmd(cmd, output=True, input=template_data)
 
         if results['returncode'] != 0 or not create:
             return results
@@ -195,7 +199,7 @@ class OpenShiftCLI(object):
 
         return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
 
-    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json'):
+    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json', input=None):
         '''Base command for oc '''
         cmds = []
         if oadm:
@@ -213,11 +217,12 @@ class OpenShiftCLI(object):
             print ' '.join(cmds)
 
         proc = subprocess.Popen(cmds,
+                                stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 env={'KUBECONFIG': self.kubeconfig})
 
-        stdout, stderr = proc.communicate()
+        stdout, stderr = proc.communicate(input)
         rval = {"returncode": proc.returncode,
                 "results": results,
                 "cmd": ' '.join(cmds),
@@ -873,11 +878,13 @@ class OCProcess(OpenShiftCLI):
                  params=None,
                  create=False,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
+                 tdata=None,
                  verbose=False):
         ''' Constructor for OpenshiftOC '''
         super(OCProcess, self).__init__(namespace, kubeconfig)
         self.namespace = namespace
         self.name = tname
+        self.data = tdata
         self.params = params
         self.create = create
         self.kubeconfig = kubeconfig
@@ -888,7 +895,7 @@ class OCProcess(OpenShiftCLI):
     def template(self):
         '''template property'''
         if self._template == None:
-            results = self._process(self.name, False, self.params)
+            results = self._process(self.name, False, self.params, self.data)
             if results['returncode'] != 0:
                 raise OpenShiftCLIError('Error processing template [%s].' % self.name)
             self._template = results['results']['items']
@@ -923,7 +930,7 @@ class OCProcess(OpenShiftCLI):
         else:
             do_create = self.create
 
-        return self._process(self.name, do_create, self.params)
+        return self._process(self.name, do_create, self.params, self.data)
 
     def exists(self):
         '''return whether the template exists'''
@@ -949,7 +956,7 @@ class OCProcess(OpenShiftCLI):
             if obj['kind'] == 'ServiceAccount':
                 skip.extend(['secrets', 'imagePullSecrets'])
 
-             # fetch the current object
+            # fetch the current object
             curr_obj_results = self._get(obj['kind'], obj['metadata']['name'])
             if curr_obj_results['returncode'] != 0:
                 # Does the template exist??
@@ -980,6 +987,7 @@ def main():
             debug=dict(default=False, type='bool'),
             namespace=dict(default='default', type='str'),
             template_name=dict(default=None, type='str'),
+            content=dict(default=None, type='str'),
             params=dict(default=None, type='dict'),
             create=dict(default=False, type='bool'),
             reconcile=dict(default=True, type='bool'),
@@ -991,6 +999,7 @@ def main():
                           module.params['params'],
                           module.params['create'],
                           kubeconfig=module.params['kubeconfig'],
+                          tdata=module.params['content'],
                           verbose=module.params['debug'])
 
     state = module.params['state']
