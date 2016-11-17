@@ -9,7 +9,6 @@ Example usage:
     ZAGGHEARTBEAT = HawkHeartbeat(templates=['template1', 'template2'], hostgroups=['hostgroup1', 'hostgroup2'])
 
 """
-from collections import namedtuple
 from urlparse import urlparse
 import ssl
 
@@ -26,7 +25,7 @@ class HawkConnection(object):
         self.password = password
         self.ssl_verify = ssl_verify
         self.debug = debug
-        self.active = active # We do not want this lib to work ansless explisitly activated
+        self.active = active # We do not want this lib to work unless explicitly activated
 
         url_params = urlparse(self.url)
         self.host = url_params.hostname
@@ -34,5 +33,3 @@ class HawkConnection(object):
         self.port = url_params.port or {'http': 80, 'https': 443}[self.scheme]
         self.context = None if self.ssl_verify else ssl._create_unverified_context()
         self.tenant_id = '_ops'
-
-HawkHeartbeat = namedtuple("HawkHeartbeat", ["templates", "hostgroups"])
