@@ -217,8 +217,8 @@ class OpenshiftMetricsStatus(object):
 
         self.oc = OCUtil(namespace='openshift-infra', config_file=self.kubeconfig, verbose=self.args.verbose)
 
-        self.get_hawkular_creds()
         pod_report = self.check_pods()
+        self.get_hawkular_creds()
         metrics_report = self.check_node_metrics()
 
         self.report_to_zabbix(pod_report, metrics_report)
