@@ -24,12 +24,14 @@ Example usage:
      print zc.add_metric(ml)
 
 """
+import json
+
 #These are not installed on the buildbot, disabling this
-#pylint: disable=no-name-in-module,unused-import
+#pylint: disable=no-name-in-module,unused-import,import-error
 from openshift_tools.monitoring.metricmanager import UniqueMetric, MetricManager
 from openshift_tools.monitoring.zagg_common import ZaggConnection
 from openshift_tools.web.rest import RestApi
-import json
+import zbxsend
 
 #This class implements rest calls. We only have one rest call implemented
 # add-metric.  More could be added here

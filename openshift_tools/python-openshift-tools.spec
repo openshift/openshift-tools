@@ -134,6 +134,12 @@ Zagg Python libraries developed for monitoring OpenShift.
 %{python_sitelib}/openshift_tools/monitoring/zagg*.py[co]
 %{python_sitelib}/openshift_tools/monitoring/zabbix_metric_processor.py
 %{python_sitelib}/openshift_tools/monitoring/zabbix_metric_processor.py[co]
+%{python_sitelib}/openshift_tools/monitoring/generic_metric_sender.py
+%{python_sitelib}/openshift_tools/monitoring/generic_metric_sender.py[co]
+%{python_sitelib}/openshift_tools/monitoring/metric_sender.py
+%{python_sitelib}/openshift_tools/monitoring/metric_sender.py[co]
+%{python_sitelib}/openshift_tools/monitoring/hawk*.py
+%{python_sitelib}/openshift_tools/monitoring/hawk*.py[co]
 
 # ----------------------------------------------------------------------------------
 # python-openshift-tools-monitoring-aws subpackage
