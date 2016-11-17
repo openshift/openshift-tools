@@ -92,6 +92,12 @@ class OCProcess(OpenShiftCLI):
 
             if obj['kind'] == 'ServiceAccount':
                 skip.extend(['secrets', 'imagePullSecrets'])
+            if obj['kind'] == 'BuildConfig':
+                skip.extend(['lastTriggeredImageID'])
+            if obj['kind'] == 'ImageStream':
+                skip.extend(['generation'])
+            if obj['kind'] == 'DeploymentConfig':
+                skip.extend(['lastTriggeredImage'])
 
             # fetch the current object
             curr_obj_results = self._get(obj['kind'], obj['metadata']['name'])
