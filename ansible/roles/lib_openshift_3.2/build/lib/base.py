@@ -90,15 +90,19 @@ class OpenShiftCLI(object):
 
         return self.openshift_cmd(cmd)
 
-    def _process(self, template_name, create=False, params=None):
+    def _process(self, template_name, create=False, params=None, template_data=None):
         '''return all pods '''
-        cmd = ['process', template_name, '-n', self.namespace]
+        cmd = ['process', '-n', self.namespace]
+        if template_data:
+            cmd.extend(['-f', '-'])
+        else:
+            cmd.append(template_name)
         if params:
             param_str = ["%s=%s" % (key, value) for key, value in params.items()]
             cmd.append('-v')
             cmd.extend(param_str)
 
-        results = self.openshift_cmd(cmd, output=True)
+        results = self.openshift_cmd(cmd, output=True, input_data=template_data)
 
         if results['returncode'] != 0 or not create:
             return results
@@ -188,7 +192,8 @@ class OpenShiftCLI(object):
 
         return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
 
-    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json'):
+    #pylint: disable=too-many-arguments
+    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json', input_data=None):
         '''Base command for oc '''
         cmds = []
         if oadm:
@@ -206,11 +211,12 @@ class OpenShiftCLI(object):
             print ' '.join(cmds)
 
         proc = subprocess.Popen(cmds,
+                                stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 env={'KUBECONFIG': self.kubeconfig})
 
-        stdout, stderr = proc.communicate()
+        stdout, stderr = proc.communicate(input_data)
         rval = {"returncode": proc.returncode,
                 "results": results,
                 "cmd": ' '.join(cmds),
