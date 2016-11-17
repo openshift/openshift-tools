@@ -94,13 +94,17 @@ $config = array(
     'metadata.sources' => array(
         array('type' => 'flatfile'),
     ),
-    'store.type'                    => 'phpsession',
+    'store.type'                    => '{{ saml2_sso_configdata.session_store_type | default("phpsession") }}',
     'memcache_store.servers' => array(
+{% for servers in saml2_sso_configdata.memcached_servers | default( [ [ 'localhost' ] ]) %}
         array(
-            array('hostname' => 'localhost'),
+{% for server in servers %}
+            array('hostname' => '{{ server }}'),
+{% endfor %}
         ),
+{% endfor %}
     ),
-    'memcache_store.prefix' => null,
+    'memcache_store.prefix' => '{{ saml2_sso_configdata.memcache_store_prefix | default("") }}',
     'memcache_store.expires' => 36 * (60 * 60), // 36 hours.
     'metadata.sign.enable' => false,
     'metadata.sign.privatekey' => null,
