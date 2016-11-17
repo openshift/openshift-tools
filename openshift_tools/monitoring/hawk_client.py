@@ -25,16 +25,16 @@ Example usage:
     client = HawkClient(connection)
     print client.add_metric(ml)
 """
+# The hawkular client
+from hawkular.metrics import HawkularMetricsClient, MetricType
+
 #These are not installed on the buildbot, disabling this
 #pylint: disable=no-name-in-module,unused-import,import-error
-from openshift_tools.monitoring.metricmanager import UniqueMetric, MetricManager
+from openshift_tools.monitoring.metricmanager import UniqueMetric
 from openshift_tools.monitoring.hawk_common import HawkConnection
 
-# The hawkular client
-from hawkular.metrics import HawkularMetricsClient, MetricType, Availability
-
 #This class implements rest calls. We only have one rest call implemented
-# add-metric.  More could be added here
+# add_metric.  More could be added here
 #pylint: disable=too-few-public-methods
 class HawkClient(object):
     """
@@ -42,8 +42,6 @@ class HawkClient(object):
     """
 
     def __init__(self, hawk_connection):
-        # pylint doesn't know where RestAPI is
-        #pylint: disable=undefined-variable
         self.hawk_conn = hawk_connection
         self.client = None
 
@@ -60,7 +58,8 @@ class HawkClient(object):
                                             tenant_id=self.hawk_conn.tenant_id,
                                            )
 
-    def add_metric(self, unique_metric_list):
+    # pylint: disable=unidiomatic-typecheck
+    def push_metrics(self, unique_metric_list):
         """
         Add a list of UniqueMetrics (unique_metric_list) via hawkular client
         """
@@ -68,11 +67,8 @@ class HawkClient(object):
         if not self.hawk_conn.active:
             return
 
-        # We do not support zabbix heartbeat in hawkular
-        metric_list = [m for m in unique_metric_list if m.key != 'heartbeat']
-
-        for metric in metric_list:
-            # Hawkular metrics support any numeric values
+        for metric in unique_metric_list:
+            # Hawkular metrics support any numeric/string values
             value = metric.value
             # Hawkular metrics use milliseconds
             clock = metric.clock * 1000
@@ -82,9 +78,15 @@ class HawkClient(object):
             _type = 'node'
             _id = metric.host
             key = '{0}/{1}/{2}'.format(_type, _id, metric.key)
-            # Use MetricType.Gauge for numeric metrics data
-            metric_type = MetricType.Gauge
+
+            if type(value) == str:
+                # Use MetricType.String for string metrics data
+                metric_type = MetricType.String
+            else:
+                # Use MetricType.Gauge for numeric metrics data
+                metric_type = MetricType.Gauge
+
             self.client.push(metric_type, key, value, clock)
 
-        status, raw_respons = None, None
-        return (status, raw_respons)
+        status, raw_response = None, None
+        return (status, raw_response)
