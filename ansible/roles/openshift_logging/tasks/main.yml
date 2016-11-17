@@ -27,6 +27,7 @@
     name: logging
     description: logging project
     display_name: logging
+    description: Aggregated Logging
   register: projectout
   run_once: true
 - debug: var=projectout
@@ -167,7 +168,7 @@
   register: podout
   run_once: true
 
-- name: fetch the elastic search dc's with selector
+- name: fetch the elastic search deploymentconfigs with selector
   oc_obj:
     state: list
     namespace: logging
@@ -292,6 +293,11 @@
       # kibana-proxy
       spec.template.spec.containers[1].resources.limits.memory: "128M"
       spec.template.spec.containers[1].resources.requests.memory: "32M"
+
+- name: Wait for kibana to finish
+  pause:
+    seconds: 60
+  run_once: true
 
 - name: Redeploy kibana
   command: oc deploy dc/logging-kibana --latest -n logging
