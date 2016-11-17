@@ -225,19 +225,28 @@ class ManageKeys(object):
                 if yaml_config["idp_host"]:
                     ops_idp_host = yaml_config["idp_host"]
 
-                creds = saml_aws_creds.get_temp_credentials(
-                    metadata_id='urn:amazon:webservices:%s' % aws_account,
-                    idp_host=ops_idp_host
-                    )
+                try:
+                    creds = saml_aws_creds.get_temp_credentials(
+                        metadata_id='urn:amazon:webservices:%s' % aws_account,
+                        idp_host=ops_idp_host
+                        )
 
-                client = boto3.client(
-                    'iam',
-                    aws_access_key_id=creds['AccessKeyId'],
-                    aws_secret_access_key=creds['SecretAccessKey'],
-                    aws_session_token=creds['SessionToken']
-                    )
+                    client = boto3.client(
+                        'iam',
+                        aws_access_key_id=creds['AccessKeyId'],
+                        aws_secret_access_key=creds['SecretAccessKey'],
+                        aws_session_token=creds['SessionToken']
+                        )
+                    return client
 
-                return client
+                except ValueError as client_exception:
+                    if 'Error retrieving SAML token' in client_exception.message and \
+                    'Metadata not found' in client_exception.message:
+                        print(client_exception)
+                        print('Metadata for %s missing or misconfigured, skipping' % aws_account)
+
+                    else:
+                        raise
 
         else:
             raise ValueError(sso_config_path + 'does not exist.')
@@ -257,7 +266,7 @@ class ManageKeys(object):
             UserName=user_name
             )
 
-        print('key successfully created for:', aws_account)
+        print('Key successfully created for:', aws_account)
         return response
 
 
@@ -336,18 +345,41 @@ class ManageKeys(object):
             raise ValueError(path + ' does not exist.')
 
 
-    def main(self):
-        """ Main function. """
-        args = self.check_arguments()
-        ops_accounts = self.check_accounts()
+    def run_all(self, args, ops_accounts):
+        """ Loop through a list of every ops-managed AWS account and create API keys for each. """
 
-        if args.profile and args.user:
+        for aws_account in ops_accounts:
+            matching = [s for s in ops_accounts if aws_account in s]
+            account_name = matching[0].split(':')[0]
+            account_number = matching[0].split(':')[1]
+            client = self.get_token(account_number)
 
-            for aws_account in args.profile:
-                matching = [s for s in ops_accounts if aws_account in s]
-                account_name = matching[0].split(':')[0]
-                account_number = matching[0].split(':')[1]
-                client = self.get_token(account_number)
+            if client:
+                self.check_user(aws_account, args.user, client)
+                current_accounts = self.get_all_profiles()
+                existing_keys = self.get_keys(args.user, client)
+
+                if existing_keys:
+                    for key in existing_keys:
+                        self.delete_key(aws_account, args.user, key, client)
+
+                if aws_account not in current_accounts:
+                    key_object = self.create_key(aws_account, args.user, client)
+                    self.write_credentials(account_name, key_object)
+
+        self.manage_timestamp(True)
+
+
+    def run_one(self, args, ops_accounts):
+        """ Create API keys for only the specified ops-managed AWS accounts. """
+
+        for aws_account in args.profile:
+            matching = [s for s in ops_accounts if aws_account in s]
+            account_name = matching[0].split(':')[0]
+            account_number = matching[0].split(':')[1]
+            client = self.get_token(account_number)
+
+            if client:
                 self.check_user(aws_account, args.user, client)
                 existing_keys = self.get_keys(args.user, client)
 
@@ -361,28 +393,20 @@ class ManageKeys(object):
                     key_object = self.create_key(aws_account, args.user, client)
                     self.write_credentials(account_name, key_object)
 
-            self.manage_timestamp()
+        self.manage_timestamp()
+
+
+    def main(self):
+        """ Main function. """
+
+        args = self.check_arguments()
+        ops_accounts = self.check_accounts()
+
+        if args.profile and args.user:
+            self.run_one(args, ops_accounts)
 
         elif args.all and args.user:
-
-            for aws_account in ops_accounts:
-                matching = [s for s in ops_accounts if aws_account in s]
-                account_name = matching[0].split(':')[0]
-                account_number = matching[0].split(':')[1]
-                client = self.get_token(account_number)
-                self.check_user(aws_account, args.user, client)
-                current_accounts = self.get_all_profiles()
-                existing_keys = self.get_keys(args.user, client)
-
-                if existing_keys:
-                    for key in existing_keys:
-                        self.delete_key(aws_account, args.user, key, client)
-
-                if aws_account not in current_accounts:
-                    key_object = self.create_key(aws_account, args.user, client)
-                    self.write_credentials(account_name, key_object)
-
-            self.manage_timestamp(True)
+            self.run_all(args, ops_accounts)
 
         else:
             raise ValueError('No suitable arguments provided.')
