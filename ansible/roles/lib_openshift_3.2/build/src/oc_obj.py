@@ -1,5 +1,6 @@
 # pylint: skip-file
 
+# pylint: disable=too-many-instance-attributes
 class OCObject(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 

@@ -1,5 +1,6 @@
 # pylint: skip-file
 
+# pylint: disable=too-many-instance-attributes
 class OCProcess(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
@@ -11,11 +12,13 @@ class OCProcess(OpenShiftCLI):
                  params=None,
                  create=False,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
+                 tdata=None,
                  verbose=False):
         ''' Constructor for OpenshiftOC '''
         super(OCProcess, self).__init__(namespace, kubeconfig)
         self.namespace = namespace
         self.name = tname
+        self.data = tdata
         self.params = params
         self.create = create
         self.kubeconfig = kubeconfig
@@ -26,7 +29,7 @@ class OCProcess(OpenShiftCLI):
     def template(self):
         '''template property'''
         if self._template == None:
-            results = self._process(self.name, False, self.params)
+            results = self._process(self.name, False, self.params, self.data)
             if results['returncode'] != 0:
                 raise OpenShiftCLIError('Error processing template [%s].' % self.name)
             self._template = results['results']['items']
@@ -50,7 +53,7 @@ class OCProcess(OpenShiftCLI):
         return self._delete(obj['kind'], obj['metadata']['name'])
 
     def create_obj(self, obj):
-        '''delete a resource'''
+        '''create a resource'''
         return self._create_from_content(obj['metadata']['name'], obj)
 
     def process(self, create=None):
@@ -61,10 +64,13 @@ class OCProcess(OpenShiftCLI):
         else:
             do_create = self.create
 
-        return self._process(self.name, do_create, self.params)
+        return self._process(self.name, do_create, self.params, self.data)
 
     def exists(self):
         '''return whether the template exists'''
+        # Always return true if we're being passed template data
+        if self.data:
+            return True
         t_results = self._get('template', self.name)
 
         if t_results['returncode'] != 0:
@@ -87,7 +93,7 @@ class OCProcess(OpenShiftCLI):
             if obj['kind'] == 'ServiceAccount':
                 skip.extend(['secrets', 'imagePullSecrets'])
 
-             # fetch the current object
+            # fetch the current object
             curr_obj_results = self._get(obj['kind'], obj['metadata']['name'])
             if curr_obj_results['returncode'] != 0:
                 # Does the template exist??
