@@ -97,15 +97,19 @@ class OpenShiftCLI(object):
 
         return self.openshift_cmd(cmd)
 
-    def _process(self, template_name, create=False, params=None):
+    def _process(self, template_name, create=False, params=None, template_data=None):
         '''return all pods '''
-        cmd = ['process', template_name, '-n', self.namespace]
+        cmd = ['process', '-n', self.namespace]
+        if template_data:
+            cmd.extend(['-f', '-'])
+        else:
+            cmd.append(template_name)
         if params:
             param_str = ["%s=%s" % (key, value) for key, value in params.items()]
             cmd.append('-v')
             cmd.extend(param_str)
 
-        results = self.openshift_cmd(cmd, output=True)
+        results = self.openshift_cmd(cmd, output=True, input_data=template_data)
 
         if results['returncode'] != 0 or not create:
             return results
@@ -195,7 +199,8 @@ class OpenShiftCLI(object):
 
         return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
 
-    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json'):
+    #pylint: disable=too-many-arguments
+    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json', input_data=None):
         '''Base command for oc '''
         cmds = []
         if oadm:
@@ -213,11 +218,12 @@ class OpenShiftCLI(object):
             print ' '.join(cmds)
 
         proc = subprocess.Popen(cmds,
+                                stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 env={'KUBECONFIG': self.kubeconfig})
 
-        stdout, stderr = proc.communicate()
+        stdout, stderr = proc.communicate(input_data)
         rval = {"returncode": proc.returncode,
                 "results": results,
                 "cmd": ' '.join(cmds),
@@ -862,6 +868,7 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
+# pylint: disable=too-many-instance-attributes
 class OCProcess(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
@@ -873,11 +880,13 @@ class OCProcess(OpenShiftCLI):
                  params=None,
                  create=False,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
+                 tdata=None,
                  verbose=False):
         ''' Constructor for OpenshiftOC '''
         super(OCProcess, self).__init__(namespace, kubeconfig)
         self.namespace = namespace
         self.name = tname
+        self.data = tdata
         self.params = params
         self.create = create
         self.kubeconfig = kubeconfig
@@ -888,7 +897,7 @@ class OCProcess(OpenShiftCLI):
     def template(self):
         '''template property'''
         if self._template == None:
-            results = self._process(self.name, False, self.params)
+            results = self._process(self.name, False, self.params, self.data)
             if results['returncode'] != 0:
                 raise OpenShiftCLIError('Error processing template [%s].' % self.name)
             self._template = results['results']['items']
@@ -912,7 +921,7 @@ class OCProcess(OpenShiftCLI):
         return self._delete(obj['kind'], obj['metadata']['name'])
 
     def create_obj(self, obj):
-        '''delete a resource'''
+        '''create a resource'''
         return self._create_from_content(obj['metadata']['name'], obj)
 
     def process(self, create=None):
@@ -923,10 +932,13 @@ class OCProcess(OpenShiftCLI):
         else:
             do_create = self.create
 
-        return self._process(self.name, do_create, self.params)
+        return self._process(self.name, do_create, self.params, self.data)
 
     def exists(self):
         '''return whether the template exists'''
+        # Always return true if we're being passed template data
+        if self.data:
+            return True
         t_results = self._get('template', self.name)
 
         if t_results['returncode'] != 0:
@@ -949,7 +961,7 @@ class OCProcess(OpenShiftCLI):
             if obj['kind'] == 'ServiceAccount':
                 skip.extend(['secrets', 'imagePullSecrets'])
 
-             # fetch the current object
+            # fetch the current object
             curr_obj_results = self._get(obj['kind'], obj['metadata']['name'])
             if curr_obj_results['returncode'] != 0:
                 # Does the template exist??
@@ -980,6 +992,7 @@ def main():
             debug=dict(default=False, type='bool'),
             namespace=dict(default='default', type='str'),
             template_name=dict(default=None, type='str'),
+            content=dict(default=None, type='str'),
             params=dict(default=None, type='dict'),
             create=dict(default=False, type='bool'),
             reconcile=dict(default=True, type='bool'),
@@ -991,6 +1004,7 @@ def main():
                           module.params['params'],
                           module.params['create'],
                           kubeconfig=module.params['kubeconfig'],
+                          tdata=module.params['content'],
                           verbose=module.params['debug'])
 
     state = module.params['state']
@@ -1005,6 +1019,16 @@ def main():
 
     elif state == 'present':
         if not ocprocess.exists() or not module.params['reconcile']:
+            #FIXME: this code will never get run in a way that succeeds when
+            #       module.params['reconcile'] is true. Because oc_process doesn't
+            #       create the actual template, the check of ocprocess.exists()
+            #       is meaningless. Either it's already here and this code
+            #       won't be run, or this code will fail because there is no
+            #       template available for oc process to use. Have we conflated
+            #       the template's existence with the existence of the objects
+            #       it describes?
+
+
             # Create it here
             api_rval = ocprocess.process()
             if api_rval['returncode'] != 0:
