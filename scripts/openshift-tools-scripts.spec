@@ -25,6 +25,8 @@ OpenShift Tools Scripts
 
 # openshift-tools-scripts-monitoring install
 mkdir -p %{buildroot}/usr/bin
+cp -p monitoring/ops-metric-client.py %{buildroot}/usr/bin/ops-metric-client
+cp -p monitoring/ops-metric-pcp-client.py %{buildroot}/usr/bin/ops-metric-pcp-client
 cp -p monitoring/ops-zagg-client.py %{buildroot}/usr/bin/ops-zagg-client
 cp -p monitoring/ops-zagg-pcp-client.py %{buildroot}/usr/bin/ops-zagg-pcp-client
 cp -p monitoring/ops-zagg-metric-processor.py %{buildroot}/usr/bin/ops-zagg-metric-processor
