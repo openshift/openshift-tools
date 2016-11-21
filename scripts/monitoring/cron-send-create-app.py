@@ -40,7 +40,7 @@ logger.setLevel(logging.INFO)
 ocutil = OCUtil()
 
 commandDelay = 5 # seconds
-testLoopCountMax = 120 # * commandDelay = 10min
+testLoopCountMax = 180 # * commandDelay = 15min
 testCurlCountMax = 12 # * commandDelay = 1min
 testNoPodCountMax = 12 # * commandDelay = 1min
 
