@@ -175,8 +175,8 @@ class OpenshiftMetricsStatus(object):
             try:
                 request = urllib2.Request(hawkular_url, headers=headers)
                 resp = urllib2.build_opener(urllib2.HTTPSHandler(context=ctx)).open(request)
-                result = yaml.load(resp.read())
-                if result[0]['empty']:
+                res = yaml.load(resp.read())
+                if res[0]['empty']:
                     result = 0
 
             except urllib2.URLError:
