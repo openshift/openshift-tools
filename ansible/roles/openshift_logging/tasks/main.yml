@@ -278,6 +278,11 @@
       spec.template.spec.containers[0].resources.limits.memory: "2G"
       spec.template.spec.containers[0].resources.requests.memory: "1G"
 
+- name: Wait for curator to finish
+  pause:
+    seconds: 60
+  run_once: true
+
 - name: Redeploy curator
   command: oc deploy --latest dc/logging-curator -n logging
 
