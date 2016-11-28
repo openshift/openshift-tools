@@ -10,8 +10,10 @@ ossr_default_router_edits:
     action: put
   - key: spec.template.spec.containers[0].resources.limits.memory
     value: 2G
+    action: update
   - key: spec.template.spec.containers[0].resources.requests.memory
     value: 1G
+    action: update
 
 ossr_default_listeners:
 - instance_port: 80
