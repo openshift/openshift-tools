@@ -11,10 +11,12 @@
 from __future__ import print_function
 
 import os
+import yaml
 
 # Reason: disable pylint import-error because our modules aren't loaded on jenkins.
 # pylint: disable=import-error
 import boto3
+import botocore.exceptions
 
 import saml_aws_creds
 from openshift_tools.monitoring.zagg_sender import ZaggSender
@@ -29,7 +31,7 @@ class CheckIam(object):
 
 
     @staticmethod
-    def check_accounts():
+    def check_accounts(path):
         """ Retrieves a list of the config-managed ops AWS accounts.
 
         Returns:
@@ -39,7 +41,6 @@ class CheckIam(object):
             A ValueError if the path does not exist
         """
 
-        path = '/secrets/aws_accounts.txt'
         accounts_list = []
 
         if os.path.isfile(path):
@@ -55,7 +56,7 @@ class CheckIam(object):
 
 
     @staticmethod
-    def get_token(aws_account):
+    def get_token(aws_account, ops_idp_host):
         """ Generate temporary SSO access credentials.
 
         Requires the config file containing the IDP hostname.
@@ -63,8 +64,6 @@ class CheckIam(object):
         Returns:
             A temporary boto3 client created with a session token provided by the IDP host.
         """
-
-        ops_idp_host = 'login.ops.openshift.com'
 
         try:
             creds = saml_aws_creds.get_temp_credentials(
@@ -84,30 +83,48 @@ class CheckIam(object):
         except ValueError as client_exception:
             if 'Error retrieving SAML token' in client_exception.message and \
             'Metadata not found' in client_exception.message:
-                print(client_exception)
                 print('Metadata for %s missing or misconfigured, skipping' % aws_account)
-
-            else:
-                raise
 
 
     def main(self):
         """ Main function. """
 
+        yaml_config = {}
+        config_path = '/etc/openshift_tools/sso-config.yaml'
+        if os.path.isfile(config_path):
+            with open(config_path, 'r') as sso_config:
+                yaml_config = yaml.load(sso_config)
+
         zag = ZaggSender()
-        ops_accounts = self.check_accounts()
+        ops_accounts = self.check_accounts(yaml_config["aws_account_file"])
         zabbix_key = "sso.iam.not.reachable"
         key_value = 0
 
         for account in ops_accounts:
-            account_number = account[0].split(':')[1]
-            temp_client = self.get_token(account_number)
-            acc_status = temp_client.get_role(RoleName='iam_monitoring')
+            account_name, account_number = account.split(':')
+            temp_client = self.get_token(account_number, yaml_config["idp_host"])
 
-            if acc_status['ResponseMetadata']['HTTPStatusCode'] != 200:
+            if not temp_client:
+                continue
+
+            try:
+                acc_status = temp_client.get_role(RoleName='iam_monitoring')
+
+                if acc_status['ResponseMetadata']['HTTPStatusCode'] != 200:
+                    print("HTTP request failed on account %s (%s)" \
+                    % (account_name, account_number))
+                    key_value += 1
+
+                if not acc_status['Role']['AssumeRolePolicyDocument']:
+                    print("No policy document returned for account %s (%s)" \
+                    % (account_name, account_number))
+                    key_value += 1
+
+            except botocore.exceptions.ClientError as boto_exception:
+                print("Failed on account %s (%s) due to exception: %s" \
+                %(account_name, account_number, str(boto_exception)))
                 key_value += 1
 
-        # or have if key_status > 0 send a 1 to zabbix
         zag.add_zabbix_keys({zabbix_key: key_value})
         zag.send_metrics()
 
