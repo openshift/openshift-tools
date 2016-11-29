@@ -70,6 +70,10 @@
   tags:
   - openshift_logging
 
+- include_vars: template_ops_sso.yml
+  tags:
+  - sso_app
+
 - name: Include Template OpenShift Cluster
   include: ../../lib_zabbix/tasks/create_template.yml
   vars:
@@ -260,3 +264,13 @@
     password: "{{ ozb_password }}"
   tags:
   - openshift_logging
+
+- name: Include Template Ops SSO
+  include: ../../lib_zabbix/tasks/create_template.yml
+  vars:
+    template: "{{ g_template_ops_sso }}"
+    server: "{{ ozb_server }}"
+    user: "{{ ozb_user }}"
+    password: "{{ ozb_password }}"
+  tags:
+  - sso_app
