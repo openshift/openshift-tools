@@ -83,6 +83,7 @@ class OpsMetricClient(object):
         key_value_group = parser.add_argument_group('Sending a Key-Value Pair')
         key_value_group.add_argument('-k', '--key', help='metric key')
         key_value_group.add_argument('-o', '--value', help='metric value')
+        key_value_group.add_argument('-t', '--tags', help='list of space delimited key tags: units=byte ...', nargs='*')
 
         low_level_discovery_group = parser.add_argument_group('Sending a Low Level Discovery Item')
         low_level_discovery_group.add_argument('--discovery-key', help='discovery key')
@@ -129,7 +130,10 @@ class OpsMetricClient(object):
     def add_metric(self):
         """ send key/value pair """
 
-        self.metric_sender.add_metric({self.args.key : self.args.value})
+        # Get tags from command line args
+        tags = dict([i.split("=")[0], i.split("=")[1]] for i in self.args.tags) if self.args.tags else {}
+
+        self.metric_sender.add_metric({self.args.key : self.args.value}, key_tags=tags)
 
     def add_dynamic_metric(self):
         """ send zabbix low level discovery item to zagg """
