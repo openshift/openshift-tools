@@ -15,7 +15,7 @@
   ignore_errors: True
   register: elb_call
   delegate_to: localhost
-  retries: 5
+  retries: 10
   until: elb_call|succeeded
 
 # ec2_elb is not idempotent, so this doesn't work properly.  We are going to always
