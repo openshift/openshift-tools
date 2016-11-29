@@ -4,15 +4,16 @@
     file: "{{ item.file }}"
   tags:
   - inventory
+  - sso_app
   with_items:
-    - file: "{{aal_multi_inventory_location}}"
+    - file: "{{ aal_multi_inventory_location }}"
       name: v3
-    - file: "{{aal_multi_inventory_location_legacy}}"
+    - file: "{{ aal_multi_inventory_location_legacy }}"
       name: v2
 
-- name: Create list of AWS accounts from ansible inventory
-  copy:
-    content: |
+- name: Set retval facts
+  set_fact:
+    aal_retval_aws_account_file_contents: |
       {% for name, account in v3.accounts.iteritems() %}
       {%   if 'extra_vars' in account and 'oo_accountid' in account.extra_vars %}
       {%     if 'oo_location' in account.extra_vars and account.extra_vars.oo_location == 'aws' %}
@@ -25,9 +26,17 @@
              {{- name }}:{{ account.extra_vars.oo_accountid }}
       {%   endif %}
       {% endfor %}
-    dest: "{{aal_aws_account_file}}"
+  tags:
+  - inventory
+  - sso_app
+
+- name: Create list of AWS accounts from ansible inventory
+  copy:
+    content: "{{ aal_retval_aws_account_file_contents }}"
+    dest: "{{ aal_aws_account_file }}"
     owner: root
     group: awx
     mode: 0640
+  when: "{{ aal_aws_account_file_do_write }}"
   tags:
   - inventory
