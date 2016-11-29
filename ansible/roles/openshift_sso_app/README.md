@@ -23,6 +23,9 @@ Role Variables
 - `osso_site_key_content`: The private key corresponding to the certificate specified in `osso_site_cert_content`.
 - `osso_site_ca_cert_content`: The certificate of the certificate authority (CA) that signed the certificate specified in `osso_site_cert_content`.
 - `osso_dest_ca_cert_content`: The CA certificate that the router will use when connecting to the pod for purposes of verification. Should be a self-signed root certificate as OpenShift/HAProxy will not properly validate any other certificate in the trust chain.
+- `osso_monitoring_ssh_private_key`: The private SSH key that can be used to obtain SAML tokens for purposes of monitoring
+- `osso_monitoring_ssh_public_key`: The public SSH key corresponding to `osso_monitoring_ssh_private_key`. Should be installed in `osso_authorized_keys_content`.
+- `osso_aws_accounts_txt_content`: A file with one entry per line. Each line represents a single AWS account and should be in the format `account_name:123456789012`
 
 Dependencies
 ------------
