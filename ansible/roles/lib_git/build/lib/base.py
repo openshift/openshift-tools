@@ -4,8 +4,9 @@
 '''
 # pylint: disable=too-many-lines
 
-import os
-import subprocess
+# these are already imported inside of the ssh library
+#import os
+#import subprocess
 
 class GitCLIError(Exception):
     '''Exception class for openshiftcli'''

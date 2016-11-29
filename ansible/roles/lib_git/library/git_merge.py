@@ -6,8 +6,6 @@
 #   |   \ / _ \  | \| |/ _ \_   _| | __|   \_ _|_   _|
 #   | |) | (_) | | .` | (_) || |   | _|| |) | |  | |
 #   |___/ \___/  |_|\_|\___/ |_|   |___|___/___| |_|
-#!/usr/bin/env python
-
 """Run an ssh agent and set SSH_AUTH_SOCK so that clients will use it
 
 Example:
@@ -89,7 +87,7 @@ class SshAgent(object):
         os.environ["SSH_AUTH_SOCK"] = self.ssh_auth_sock
     def __enter__(self):
         return self
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, tback):
         self.cleanup()
     def __del__(self):
         self.cleanup()
@@ -143,8 +141,9 @@ class SshAgent(object):
 '''
 # pylint: disable=too-many-lines
 
-import os
-import subprocess
+# these are already imported inside of the ssh library
+#import os
+#import subprocess
 
 class GitCLIError(Exception):
     '''Exception class for openshiftcli'''
@@ -437,8 +436,6 @@ def main():
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
-#if __name__ == '__main__':
-#    main()
-from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    from ansible.module_utils.basic import *
+    main()
