@@ -103,7 +103,7 @@ objects:
     - annotations: null
       from:
         kind: DockerImage
-        name: registry.access.redhat.com/rhel7:latest
+        name: "registry.access.redhat.com/${PLAT}:latest"
       importPolicy: {}
       name: latest
 - apiVersion: v1
@@ -303,6 +303,9 @@ objects:
         - name: oso-sso-secrets
           secret:
             secretName: oso-sso-secrets
+        - name: oso-sso-monitoring-secrets
+          secret:
+            secretName: oso-sso-monitoring-secrets
     test: false
     triggers:
     - type: ConfigChange
