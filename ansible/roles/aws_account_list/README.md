@@ -11,12 +11,20 @@ None
 Role Variables
 --------------
 
-`aal_multi_inventory_location`:
+- `aal_multi_inventory_location`:
     Path to `multi_inventory.yaml`
-`aal_multi_inventory_location_legacy`:
+- `aal_multi_inventory_location_legacy`:
     Path to `multi_inventory.yaml` of legacy inventory data
-`aal_aws_account_file`:
-    Path to output file
+- `aal_aws_account_file`:
+    Path to output file. Only required if `aal_aws_account_file_do_write` is `True`.
+- `aal_aws_account_file_do_write`:
+    Whether the file should be written. Defaults to `True`.
+
+Set Facts
+---------
+
+- `aal_retval_aws_account_file_contents`:
+    The contents of the `aal_aws_account_file`
 
 Dependencies
 ------------
