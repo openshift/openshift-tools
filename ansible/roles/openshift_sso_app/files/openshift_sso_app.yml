@@ -26,6 +26,9 @@ objects:
       type: Git
     strategy:
       dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: "false"
         from:
           kind: ImageStreamTag
           name: "${PLAT}:latest"
@@ -55,6 +58,9 @@ objects:
       type: Git
     strategy:
       dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: "false"
         from:
           kind: ImageStreamTag
           name: "oso-${PLAT}-ops-base:latest"
@@ -84,6 +90,9 @@ objects:
       type: Git
     strategy:
       dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: "false"
         from:
           kind: ImageStreamTag
           name: "oso-${PLAT}-ops-base:latest"
@@ -167,7 +176,10 @@ objects:
           deploymentconfig: oso-memcached-sso1
       spec:
         containers:
-        - image: "oso-sso-saml/oso-${PLAT}-memcached-sso:latest"
+        - env:
+          - name: OO_PAUSE_ON_START
+            value: "false"
+          image: "oso-sso-saml/oso-${PLAT}-memcached-sso:latest"
           imagePullPolicy: Always
           name: oso-memcached-sso
           ports:
@@ -212,7 +224,10 @@ objects:
           deploymentconfig: oso-memcached-sso2
       spec:
         containers:
-        - image: "oso-sso-saml/oso-${PLAT}-memcached-sso:latest"
+        - env:
+          - name: OO_PAUSE_ON_START
+            value: "false"
+          image: "oso-sso-saml/oso-${PLAT}-memcached-sso:latest"
           imagePullPolicy: Always
           name: oso-memcached-sso
           ports:
