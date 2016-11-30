@@ -310,6 +310,8 @@ objects:
           volumeMounts:
           - mountPath: /secrets
             name: oso-sso-secrets
+          - mountPath: /configdata
+            name: oso-sso-configdata
         dnsPolicy: ClusterFirst
         restartPolicy: Always
         securityContext: {}
@@ -321,6 +323,12 @@ objects:
         - name: oso-sso-monitoring-secrets
           secret:
             secretName: oso-sso-monitoring-secrets
+        - name: oso-sso-configdata
+          emptyDir:
+            medium: Memory
+        - name: oso-sso-monitoring-configdata
+          emptyDir:
+            medium: Memory
     test: false
     triggers:
     - type: ConfigChange
