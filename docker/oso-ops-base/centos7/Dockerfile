@@ -10,7 +10,7 @@
 FROM centos:centos7
 
 # Pause indefinitely if asked to do so.
-RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
+RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 
 ADD copr-openshift-tools.repo /etc/yum.repos.d/
