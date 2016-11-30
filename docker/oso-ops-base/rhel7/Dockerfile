@@ -10,7 +10,7 @@
 FROM rhel7:latest
 
 # Pause indefinitely if asked to do so.
-RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
+RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 # setup yum repos
 ADD setup-yum.sh /usr/local/bin/setup-yum.sh

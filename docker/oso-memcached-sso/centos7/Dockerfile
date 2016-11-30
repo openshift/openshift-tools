@@ -3,7 +3,7 @@
 FROM openshifttools/oso-centos7-ops-base:latest
 
 # Pause indefinitely if asked to do so.
-RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
+RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 # Install memcached
 RUN yum -y install memcached && \

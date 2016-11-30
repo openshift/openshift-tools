@@ -6,8 +6,8 @@ if [ "$OO_PAUSE_ON_START" = "true" ] ; then
   echo
   echo "This container's startup has been paused indefinitely because OO_PAUSE_ON_START has been set."
   echo
-  while true ; do
-    sleep 10
+  while sleep 10; do
+    true
   done
 fi
 
