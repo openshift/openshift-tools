@@ -85,12 +85,14 @@ cp -p inventory-clients/openshift_tools.conf.example %{buildroot}/etc/openshift_
 
 # openshift-tools-scripts-iam-tools install
 mkdir -p %{buildroot}/usr/local/bin
-install -m 755 iam-tools/aws_api_key_manager.py %{buildroot}/usr/local/bin
-install -m 755 iam-tools/change_iam_password.py %{buildroot}/usr/local/bin
-install -m 755 iam-tools/delete_iam_account.py %{buildroot}/usr/local/bin
-install -m 755 iam-tools/saml_aws_creds.py %{buildroot}/usr/local/bin
-install -m 755 iam-tools/check_sso_service.py %{buildroot}/usr/local/bin
-install -m 755 iam-tools/check_sso_http_status.py %{buildroot}/usr/local/bin
+install -m 755 iam-tools/aws_api_key_manager.py %{buildroot}/usr/local/bin/aws_api_key_manager
+install -m 755 iam-tools/change_iam_password.py %{buildroot}/usr/local/bin/change_iam_password
+install -m 755 iam-tools/delete_iam_account.py %{buildroot}/usr/local/bin/delete_iam_account
+install -m 755 iam-tools/check_sso_service.py %{buildroot}/usr/local/bin/check_sso_service
+install -m 755 iam-tools/check_sso_http_status.py %{buildroot}/usr/local/bin/check_sso_http_status
+mkdir -p %{buildroot}%{python_sitelib}/openshift_tools
+install -m 755 iam-tools/saml_aws_creds.py %{buildroot}%{python_sitelib}/openshift_tools/
+ln -sf %{python_sitelib}/openshift_tools/saml_aws_creds.py %{buildroot}/usr/local/bin/saml_aws_creds
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-inventory-clients subpackage
@@ -349,12 +351,13 @@ BuildArch:     noarch
 OpenShift Tools IAM specific scripts
 
 %files iam-tools
-/usr/local/bin/aws_api_key_manager.py
-/usr/local/bin/change_iam_password.py
-/usr/local/bin/delete_iam_account.py
-/usr/local/bin/saml_aws_creds.py
-/usr/local/bin/check_sso_service.py
-/usr/local/bin/check_sso_http_status.py
+/usr/local/bin/aws_api_key_manager
+/usr/local/bin/change_iam_password
+/usr/local/bin/delete_iam_account
+/usr/local/bin/saml_aws_creds
+/usr/local/bin/check_sso_service
+/usr/local/bin/check_sso_http_status
+%{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
 * Mon Nov 14 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.173-1

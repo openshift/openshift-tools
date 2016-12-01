@@ -35,7 +35,7 @@ def get_temp_credentials(metadata_id, idp_host, ssh_args=None):
     Use SAML SSO to get a set of credentials that can be used for API access to an AWS account.
 
     Example:
-      import saml_aws_creds
+      from openshift_tools import saml_aws_creds
       creds = saml_aws_creds.get_temp_credentials(
           metadata_id='urn:amazon:webservices:123456789012',
           idp_host='login.saml.example.com',
