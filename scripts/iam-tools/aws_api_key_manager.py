@@ -10,14 +10,14 @@
  Usage:
 
  For individual accounts:
- aws_api_key_manager.py -p ded-stage-aws -p ded-int-aws -p <some-other-account>
+ aws_api_key_manager -p ded-stage-aws -p ded-int-aws -p <some-other-account>
 
 
  For all accounts found in /etc/openshift_tools/aws_accounts.txt:
- aws_api_key_manager.py --all
+ aws_api_key_manager --all
 
  To manage keys for another user, use the '-u' option:
- aws_api_key_manager.py -u <some-other-user> -p ded-stage-aws
+ aws_api_key_manager -u <some-other-user> -p ded-stage-aws
 """
 
 from __future__ import print_function
@@ -36,7 +36,7 @@ import yaml
 import boto3
 import botocore
 
-import saml_aws_creds
+from openshift_tools import saml_aws_creds
 
 
 class ManageKeys(object):
@@ -150,7 +150,7 @@ class ManageKeys(object):
 
         client.add_user_to_group(GroupName='admin', UserName=user_name)
         print("A new user account was added.\n"
-              "Use change_iam_password.py -p %s to set your password" % aws_account.split(':')[0])
+              "Use change_iam_password -p %s to set your password" % aws_account.split(':')[0])
 
         return True
 
