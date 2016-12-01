@@ -1,10 +1,27 @@
 ---
 - hosts: localhost
-  gather_facts: no
+  # need this for ansible_nodename
+  gather_facts: yes
   vars_files:
   - /root/default_vars.yml
   vars:
 
   tasks:
-  - name: Placeholder task
-    debug: msg="This task does nothing"
+  - include_vars:
+      file: "{{ item.file }}"
+      name: "{{ item.name }}"
+    with_items:
+      - name: zagg_configdata
+        file: /secrets/zagg-config-values.yaml
+
+  - name: populate templated config files
+    vars:
+      hostname: "{{ ansible_nodename }}"
+    template:
+      src: "/root/templates/{{ item }}.j2"
+      dest: "/configdata/{{ item }}"
+      owner: user
+      group: root
+      mode: 0600
+    with_items:
+      - zagg_client.yaml
