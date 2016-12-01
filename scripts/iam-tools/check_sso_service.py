@@ -18,7 +18,7 @@ import yaml
 import boto3
 import botocore.exceptions
 
-import saml_aws_creds
+from openshift_tools import saml_aws_creds
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 
 
@@ -65,10 +65,16 @@ class CheckIam(object):
             A temporary boto3 client created with a session token provided by the IDP host.
         """
 
+        ssh_args = None
+        # if running in a container (like the monitoring container), use alternate ssh key and known host file
+        if 'CONTAINER' in os.environ:
+            ssh_args = ['-i', '/secrets/ssh-id-rsa', '-o', 'UserKnownHostsFile=/configdata/ssh_known_hosts']
+
         try:
             creds = saml_aws_creds.get_temp_credentials(
                 metadata_id='urn:amazon:webservices:%s' % aws_account,
-                idp_host=ops_idp_host
+                idp_host=ops_idp_host,
+                ssh_args=ssh_args
                 )
 
             client = boto3.client(
