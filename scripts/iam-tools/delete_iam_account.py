@@ -8,11 +8,11 @@
  Usage:
 
  For individual accounts:
- delete_iam_account.py -u <user-to-delete> -p ded-stage-aws -p ded-int-aws -p <some-other-account>
+ delete_iam_account -u <user-to-delete> -p ded-stage-aws -p ded-int-aws -p <some-other-account>
 
 
  For all accounts found in /etc/openshift_tools/aws_accounts.txt:
- delete_iam_account.py -u <user-to-delete> --all
+ delete_iam_account -u <user-to-delete> --all
 """
 
 from __future__ import print_function
@@ -26,7 +26,7 @@ import yaml
 import boto3
 import botocore
 
-import saml_aws_creds
+from openshift_tools import saml_aws_creds
 
 
 class DeleteUser(object):
