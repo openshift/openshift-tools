@@ -34,11 +34,13 @@
       data: "{{ osso_monitoring_ssh_private_key }}"
     - path: ssh-id-rsa.pub
       data: "{{ osso_monitoring_ssh_public_key }}"
-    - path: sso-config.yml
+    - path: sso-config.yaml
       data: |
         ---
         idp_host: "{{ osso_app_domain }}"
         aws_account_file: "/etc/openshift_tools/aws_accounts.txt"
+    - path: zagg-config-values.yaml
+      data: "{{ osso_zagg_config | to_nice_yaml }}"
     - path: aws-accounts.txt
       data: "{{ osso_aws_accounts_txt_content }}"
   register: msecretout
