@@ -10,7 +10,7 @@ toc::[]
 == Description
 This repository uses tito to make building and tracking revisions easy.
 
-For more information on tito, please see the http://rm-rf.ca/tito[Tito home page]
+For more information on tito, please see the https://github.com/dgoodwin/tito[Tito home page]
 
 == One Time Setup
 To build the python-openshift-tools-* and openshift-tools-* rpms, we use http://rm-rf.ca/tito[Tito]
