@@ -30,7 +30,7 @@ import xml.etree.ElementTree as ET
 import boto3
 from bs4 import BeautifulSoup
 
-def get_temp_credentials(metadata_id, idp_host):
+def get_temp_credentials(metadata_id, idp_host, ssh_args=None):
     """
     Use SAML SSO to get a set of credentials that can be used for API access to an AWS account.
 
@@ -38,7 +38,8 @@ def get_temp_credentials(metadata_id, idp_host):
       import saml_aws_creds
       creds = saml_aws_creds.get_temp_credentials(
           metadata_id='urn:amazon:webservices:123456789012',
-          idp_host='login.saml.example.com')
+          idp_host='login.saml.example.com',
+          ssh_args=['-i', '/path/to/id_rsa', '-o', 'StrictHostKeyChecking=no'])
 
       client = boto3.client(
           'iam',
@@ -54,15 +55,13 @@ def get_temp_credentials(metadata_id, idp_host):
     # The SSH service on idp_host is expected to be listening
     # only on 127.0.0.1:2222, so the SSH traffic is tunneled
     # through an HTTPS session to idp_host:443.
-    ssh = subprocess.Popen(
-        (r'''ssh -p 2222 -a \
-                 -o "ProxyCommand=bash -c \"exec openssl s_client -servername %h -connect %h:443 -quiet 2>/dev/null \
-                                          < <(echo -e 'CONNECT 127.0.0.1:%p HTTP/1.1\\nHost: %h:443\\n'; cat -)\"" \
-                 -l {0} {1} {2}''').format('user', idp_host, metadata_id),
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        )
+    ssh_cmd = ['ssh', '-p', '2222', '-a', '-l', 'user', '-o',
+               r'''ProxyCommand=bash -c "exec openssl s_client -servername %h -connect %h:443 -quiet 2>/dev/null \
+                                           < <(echo -e 'CONNECT 127.0.0.1:%p HTTP/1.1\nHost: %h:443\n'; cat -)"''']
+    if ssh_args:
+        ssh_cmd.extend(ssh_args)
+    ssh_cmd.extend([idp_host, metadata_id])
+    ssh = subprocess.Popen(ssh_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     html_saml_assertion, ssh_error = ssh.communicate()
     if ssh.returncode != 0:
         raise ValueError("Error connecting to SAML IdP:\nSTDERR:\n" + ssh_error)
