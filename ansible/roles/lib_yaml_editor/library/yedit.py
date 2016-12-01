@@ -154,16 +154,17 @@ module for managing yaml files
 
 import os
 import re
-import copy
 
 import json
-import yaml
+import ruamel.yaml as yaml
+
 # This is here because of a bug that causes yaml
 # to incorrectly handle timezone info on timestamps
-def timestamp_constructor(_, node):
-    ''' return timestamps as strings'''
-    return str(node.value)
-yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
+#def timestamp_constructor(_, node):
+#    ''' return timestamps as strings'''
+#    return str(node.value)
+#yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
+
 
 
 class YeditException(Exception):
@@ -336,12 +337,7 @@ class Yedit(object):
         tmp_filename = self.filename + '.yedit'
         try:
             with open(tmp_filename, 'w') as yfd:
-                yml_dump = yaml.safe_dump(self.yaml_dict, default_flow_style=False)
-                for line in yml_dump.strip().split('\n'):
-                    if '{{' in line and '}}' in line:
-                        yfd.write(line.replace("'{{", '"{{').replace("}}'", '}}"') + '\n')
-                    else:
-                        yfd.write(line + '\n')
+                yfd.write(yaml.dump(self.yaml_dict, Dumper=yaml.RoundTripDumper))
         except Exception as err:
             raise YeditException(err.message)
 
@@ -385,12 +381,12 @@ class Yedit(object):
         # check if it is yaml
         try:
             if content_type == 'yaml' and contents:
-                self.yaml_dict = yaml.load(contents)
+                self.yaml_dict = yaml.load(contents, yaml.RoundTripLoader)
             elif content_type == 'json' and contents:
                 self.yaml_dict = json.loads(contents)
         except yaml.YAMLError as err:
             # Error loading yaml or json
-            YeditException('Problem with loading yaml file. %s' % err)
+            raise YeditException('Problem with loading yaml file. %s' % err)
 
         return self.yaml_dict
 
@@ -550,7 +546,8 @@ class Yedit(object):
         if entry == value:
             return (False, self.yaml_dict)
 
-        tmp_copy = copy.deepcopy(self.yaml_dict)
+        # deepcopy didn't preserve copy comments
+        tmp_copy = yaml.load(yaml.dump(self.yaml_dict, Dumper=yaml.RoundTripDumper), yaml.RoundTripLoader)
         result = Yedit.add_entry(tmp_copy, path, value, self.separator)
         if not result:
             return (False, self.yaml_dict)
@@ -562,7 +559,8 @@ class Yedit(object):
     def create(self, path, value):
         ''' create a yaml file '''
         if not self.file_exists():
-            tmp_copy = copy.deepcopy(self.yaml_dict)
+            # deepcopy didn't preserve copy comments
+            tmp_copy = yaml.load(yaml.dump(self.yaml_dict, Dumper=yaml.RoundTripDumper), yaml.RoundTripLoader)
             result = Yedit.add_entry(tmp_copy, path, value, self.separator)
             if result:
                 self.yaml_dict = tmp_copy

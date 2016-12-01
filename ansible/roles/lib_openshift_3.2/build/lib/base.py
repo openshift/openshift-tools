@@ -5,20 +5,20 @@
 # pylint: disable=too-many-lines
 
 import atexit
-import copy
 import json
 import os
 import re
 import shutil
 import subprocess
-import yaml
-
-# This is here because of a bug that causes yaml
-# to incorrectly handle timezone info on timestamps
-def timestamp_constructor(_, node):
-    '''return timestamps as strings'''
-    return str(node.value)
-yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
+import ruamel.yaml as yaml
+#import yaml
+#
+## This is here because of a bug that causes yaml
+## to incorrectly handle timezone info on timestamps
+#def timestamp_constructor(_, node):
+#    '''return timestamps as strings'''
+#    return str(node.value)
+#yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
 
 class OpenShiftCLIError(Exception):
     '''Exception class for openshiftcli'''
@@ -260,7 +260,7 @@ class Utils(object):
         path = os.path.join('/tmp', rname)
         with open(path, 'w') as fds:
             if ftype == 'yaml':
-                fds.write(yaml.safe_dump(data, default_flow_style=False))
+                fds.write(yaml.dump(data, Dumper=yaml.RoundTripDumper))
 
             elif ftype == 'json':
                 fds.write(json.dumps(data))
@@ -324,7 +324,7 @@ class Utils(object):
             contents = sfd.read()
 
         if sfile_type == 'yaml':
-            contents = yaml.safe_load(contents)
+            contents = yaml.load(contents, yaml.RoundTripLoader)
         elif sfile_type == 'json':
             contents = json.loads(contents)
 
