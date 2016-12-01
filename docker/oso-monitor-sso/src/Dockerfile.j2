@@ -36,10 +36,13 @@ ADD root/ /root/
 ADD ops-run-in-loop start.sh /usr/local/bin/
 
 # Create ops-runner.log file with proper permissions
-RUN touch /var/log/ops-runner.log && chmod 664 /var/log/ops-runner.log
-
 # Create monitor-sso.log file with proper permissions
-RUN touch /var/log/monitor-sso.log && chmod 664 /var/log/monitor-sso.log
+# Create symlinks to secrets
+RUN touch /var/log/ops-runner.log && chmod 664 /var/log/ops-runner.log && \
+    touch /var/log/monitor-sso.log && chmod 664 /var/log/monitor-sso.log && \
+    ln -sf /secrets/aws-accounts.txt /etc/openshift_tools/aws_accounts.txt && \
+    ln -sf /secrets/sso-config.yaml /etc/openshift_tools/sso-config.yaml && \
+    ln -sf /secrets/zagg-client.yaml /etc/openshift_tools/zagg_client.yaml
 
 # Start memcached
 ADD start.sh /usr/local/bin/

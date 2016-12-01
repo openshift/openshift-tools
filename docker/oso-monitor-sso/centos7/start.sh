@@ -22,8 +22,8 @@ ansible-playbook /root/config.yml
 echo
 echo 'Running SSO functionality check every 24 hours'
 echo '----------------'
-/usr/local/bin/ops-run-in-loop 86400 "ops-runner -f -s 15 -n check.sso.iam.status /usr/local/bin/check_sso_service &>> /var/log/monitor-sso.log'" &
+/usr/local/bin/ops-run-in-loop 86400 ops-runner -f -s 15 -n check.sso.iam.status /usr/local/bin/check_sso_service &>> /var/log/monitor-sso.log &
 echo
 echo 'Running container and HTTP status check every 5 minutes'
 echo '----------------'
-/usr/local/bin/ops-run-in-loop 300 "ops-runner -f -s 15 -n check.sso.container.status /usr/local/bin/check_sso_http_status &>> /var/log/monitor-sso.log'"
+/usr/local/bin/ops-run-in-loop 300 ops-runner -f -s 15 -n check.sso.container.status /usr/local/bin/check_sso_http_status &>> /var/log/monitor-sso.log
