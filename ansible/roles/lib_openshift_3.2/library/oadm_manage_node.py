@@ -12,20 +12,20 @@
 # pylint: disable=too-many-lines
 
 import atexit
-import copy
 import json
 import os
 import re
 import shutil
 import subprocess
-import yaml
-
-# This is here because of a bug that causes yaml
-# to incorrectly handle timezone info on timestamps
-def timestamp_constructor(_, node):
-    '''return timestamps as strings'''
-    return str(node.value)
-yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
+import ruamel.yaml as yaml
+#import yaml
+#
+## This is here because of a bug that causes yaml
+## to incorrectly handle timezone info on timestamps
+#def timestamp_constructor(_, node):
+#    '''return timestamps as strings'''
+#    return str(node.value)
+#yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
 
 class OpenShiftCLIError(Exception):
     '''Exception class for openshiftcli'''
@@ -267,7 +267,7 @@ class Utils(object):
         path = os.path.join('/tmp', rname)
         with open(path, 'w') as fds:
             if ftype == 'yaml':
-                fds.write(yaml.safe_dump(data, default_flow_style=False))
+                fds.write(yaml.dump(data, Dumper=yaml.RoundTripDumper))
 
             elif ftype == 'json':
                 fds.write(json.dumps(data))
@@ -331,7 +331,7 @@ class Utils(object):
             contents = sfd.read()
 
         if sfile_type == 'yaml':
-            contents = yaml.safe_load(contents)
+            contents = yaml.load(contents, yaml.RoundTripLoader)
         elif sfile_type == 'json':
             contents = json.loads(contents)
 
@@ -463,6 +463,7 @@ class OpenShiftCLIConfig(object):
                 rval.append('--%s=%s' % (key.replace('_', '-'), data['value']))
 
         return rval
+
 
 class YeditException(Exception):
     ''' Exception class for Yedit '''
@@ -634,12 +635,7 @@ class Yedit(object):
         tmp_filename = self.filename + '.yedit'
         try:
             with open(tmp_filename, 'w') as yfd:
-                yml_dump = yaml.safe_dump(self.yaml_dict, default_flow_style=False)
-                for line in yml_dump.strip().split('\n'):
-                    if '{{' in line and '}}' in line:
-                        yfd.write(line.replace("'{{", '"{{').replace("}}'", '}}"') + '\n')
-                    else:
-                        yfd.write(line + '\n')
+                yfd.write(yaml.dump(self.yaml_dict, Dumper=yaml.RoundTripDumper))
         except Exception as err:
             raise YeditException(err.message)
 
@@ -683,12 +679,12 @@ class Yedit(object):
         # check if it is yaml
         try:
             if content_type == 'yaml' and contents:
-                self.yaml_dict = yaml.load(contents)
+                self.yaml_dict = yaml.load(contents, yaml.RoundTripLoader)
             elif content_type == 'json' and contents:
                 self.yaml_dict = json.loads(contents)
         except yaml.YAMLError as err:
             # Error loading yaml or json
-            YeditException('Problem with loading yaml file. %s' % err)
+            raise YeditException('Problem with loading yaml file. %s' % err)
 
         return self.yaml_dict
 
@@ -848,7 +844,8 @@ class Yedit(object):
         if entry == value:
             return (False, self.yaml_dict)
 
-        tmp_copy = copy.deepcopy(self.yaml_dict)
+        # deepcopy didn't preserve copy comments
+        tmp_copy = yaml.load(yaml.dump(self.yaml_dict, Dumper=yaml.RoundTripDumper), yaml.RoundTripLoader)
         result = Yedit.add_entry(tmp_copy, path, value, self.separator)
         if not result:
             return (False, self.yaml_dict)
@@ -860,7 +857,8 @@ class Yedit(object):
     def create(self, path, value):
         ''' create a yaml file '''
         if not self.file_exists():
-            tmp_copy = copy.deepcopy(self.yaml_dict)
+            # deepcopy didn't preserve copy comments
+            tmp_copy = yaml.load(yaml.dump(self.yaml_dict, Dumper=yaml.RoundTripDumper), yaml.RoundTripLoader)
             result = Yedit.add_entry(tmp_copy, path, value, self.separator)
             if result:
                 self.yaml_dict = tmp_copy
