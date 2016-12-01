@@ -73,6 +73,16 @@
   run_once: true
 - debug: var=policyout
 
+- name: Set template path if running kube 1.4 or higher
+  set_fact:
+    metrics_deployer_template: "/usr/share/ansible/openshift-ansible/roles/openshift_hosted_templates/files/v{{ kube_version }}/enterprise/metrics-deployer.yaml"
+  when: "{{ kube_version|float }} >= 1.4"
+
+- name: Set template path if running kube 1.3 or lower
+  set_fact:
+    metrics_deployer_template: "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/infrastructure-templates/enterprise/metrics-deployer.yaml"
+  when: "{{ kube_version|float }} <= 1.3"
+
 - name: create metrics deployer template
   oc_obj:
     state: present
@@ -80,7 +90,7 @@
     name: metrics-deployer-template
     kind: template
     files:
-    - "/usr/share/ansible/openshift-ansible/roles/openshift_hosted_templates/files/v{{ kube_version }}/enterprise/metrics-deployer.yaml"
+    - "{{ metrics_deployer_template }}"
   register: templateout
   run_once: true
 
