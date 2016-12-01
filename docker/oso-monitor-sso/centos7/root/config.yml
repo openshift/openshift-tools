@@ -25,3 +25,11 @@
       mode: 0600
     with_items:
       - zagg_client.yaml
+
+  - name: install a copy of the SSH known hosts file
+    copy:
+      dest: /configdata/ssh_known_hosts
+      src: /secrets/ssh-known-hosts
+      user: user
+      group: root
+      mode: 0600

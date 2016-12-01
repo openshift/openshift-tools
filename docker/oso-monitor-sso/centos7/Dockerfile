@@ -13,7 +13,7 @@ RUN yum -y install python-pip \
         python-requests\
         pyOpenSSL \
         openssl \
-        openssh-server \
+        openssh-clients \
         python2-boto3 \
         python-openshift-tools \
         python-openshift-tools-monitoring-zagg \
