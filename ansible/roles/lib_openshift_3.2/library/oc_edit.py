@@ -920,7 +920,7 @@ class Edit(OpenShiftCLI):
 
 def main():
     '''
-    ansible oc module for services
+    ansible oc module for editing objects
     '''
 
     module = AnsibleModule(
@@ -944,6 +944,7 @@ def main():
                                'routes',
                                'node',
                                'secret',
+                               'pv', 'persistentvolume',
                               ]),
             file_name=dict(default=None, type='str'),
             file_format=dict(default='yaml', type='str'),
