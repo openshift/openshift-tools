@@ -22,10 +22,8 @@ ansible-playbook /root/config.yml
 echo
 echo 'Running SSO functionality check every 24 hours'
 echo '----------------'
-/usr/local/bin/ops-run-in-loop 86400 "/usr/bin/flock -n /var/tmp/check_sso_service.lock -c '/usr/bin/timeout -s9 600s /usr/local/bin/check_sso_service.py &>> /var/log/monitor-sso.log'"
+/usr/local/bin/ops-run-in-loop 86400 "ops-runner -f -s 15 -n check.sso.iam.status /usr/local/bin/check_sso_service.py &>> /var/log/monitor-sso.log'" &
 echo
-
-echo
-echo 'Running HTTP status check every 5 minutes'
+echo 'Running container and HTTP status check every 5 minutes'
 echo '----------------'
-/usr/local/bin/ops-run-in-loop 300 "/usr/bin/flock -n /var/tmp/check_sso_http_status.lock -c '/usr/bin/timeout -s9 600s /usr/local/bin/check_sso_http_status.py &>> /var/log/monitor-sso.log'"
+/usr/local/bin/ops-run-in-loop 300 "ops-runner -f -s 15 -n check.sso.container.status /usr/local/bin/check_sso_http_status.py &>> /var/log/monitor-sso.log'"
