@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.173
+Version:       0.0.174
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -362,6 +362,25 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.0.174-1
+- Add aws_creds_check to openshift-tools-scripts-iam-tools RPM
+  (joesmith@redhat.com)
+- Add at-login AWS credential checker script (joesmith@redhat.com)
+- Minor fixes to openshift-tools-scripts-iam-tools RPM (joesmith@redhat.com)
+- adding scripts to iam-tools package (dedgar@redhat.com)
+- saml_aws_creds.py: permit callers to pass additionall ssh options
+  (joesmith@redhat.com)
+- saml_aws_creds.py: switch from shell string to execv array for popen
+  (joesmith@redhat.com)
+- Switch line endings from DOS to UNIX for saml_aws_creds.py
+  (joesmith@redhat.com)
+- updating after initial PR review (dedgar@redhat.com)
+- adding sso service check for the oso-monitor-sso container
+  (dedgar@redhat.com)
+- Get hawkular creds expects to have the deployers pod name which is set in
+  check_pods (whearn@redhat.com)
+- addressing requested changes (dedgar@redhat.com)
+
 * Mon Nov 14 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.173-1
 - add region for the s3 check (zhizhang@zhizhang-laptop-nay.redhat.com)
 - * logger.critical on timeout * section heading comments * magic variables
