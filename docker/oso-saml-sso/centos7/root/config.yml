@@ -14,20 +14,19 @@
         file: /secrets/authdata.yml
 
   - file:
-      path: "/secrets/{{item}}"
+      path: "/configdata/{{item}}"
       state: directory
       mode: 0700
       owner: user
       group: group
     with_items:
     - ssh
-    - config
     - certs
 
   - name: populate templated config files
     template:
       src: "/root/templates/{{ item }}.j2"
-      dest: "/secrets/config/{{ item }}"
+      dest: "/configdata/{{ item }}"
       owner: user
       group: root
       mode: 0600
@@ -55,7 +54,7 @@
 
   - name: symlink to populated config files
     file:
-      src: "/secrets/config/{{ item.name }}"
+      src: "/configdata/{{ item.name }}"
       dest: "{{ item.path }}{{ item.name }}"
       state: link
     with_items:
@@ -73,7 +72,7 @@
   - name: install authorized_keys file
     copy:
       src: /secrets/authorized-keys
-      dest: /secrets/ssh/authorized_keys
+      dest: /configdata/ssh/authorized_keys
       owner: user
       group: group
       mode: 0600
@@ -81,7 +80,7 @@
   - name: install ssh host keys
     copy:
       content: "{{ item.value }}"
-      dest: "/secrets/ssh/{{ item.key }}"
+      dest: "/configdata/ssh/{{ item.key }}"
       owner: user
       group: root
       mode: 0400
@@ -89,14 +88,14 @@
     with_dict: "{{ saml2_sso_configdata.ssh_keys }}"
 
   - file:
-      src: /secrets/certs
+      src: /configdata/certs
       dest: "{{ saml2_sso_configdata.certdir | dirname }}"
       state: link
 
   - name: install IdP SSL Cert/Key
     copy:
       content: "{{ item.content }}"
-      dest: "/secrets/certs/{{ item.name }}"
+      dest: "/configdata/certs/{{ item.name }}"
       owner: user
       group: root
       mode: 0400
