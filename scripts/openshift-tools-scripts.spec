@@ -89,6 +89,8 @@ install -m 755 iam-tools/aws_api_key_manager.py %{buildroot}/usr/local/bin
 install -m 755 iam-tools/change_iam_password.py %{buildroot}/usr/local/bin
 install -m 755 iam-tools/delete_iam_account.py %{buildroot}/usr/local/bin
 install -m 755 iam-tools/saml_aws_creds.py %{buildroot}/usr/local/bin
+install -m 755 iam-tools/check_sso_service.py %{buildroot}/usr/local/bin
+install -m 755 iam-tools/check_sso_http_status.py %{buildroot}/usr/local/bin
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-inventory-clients subpackage
@@ -351,6 +353,8 @@ OpenShift Tools IAM specific scripts
 /usr/local/bin/change_iam_password.py
 /usr/local/bin/delete_iam_account.py
 /usr/local/bin/saml_aws_creds.py
+/usr/local/bin/check_sso_service.py
+/usr/local/bin/check_sso_http_status.py
 
 %changelog
 * Mon Nov 14 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.173-1
