@@ -1,0 +1,96 @@
+---
+- fail:
+    msg: "{{ item }} needs to be defined."
+  when: item is undefined
+  with_items:
+  - osapm_from_az
+  - osapm_to_az
+  - osapm_region
+
+- name: "get all PVs in cluster"
+  oc_obj:
+    state: list
+    kind: pv
+  register: osapm_all_pvs
+
+- debug:
+    var: osapm_all_pvs
+    verbosity: 2
+
+- name: "filter out PVs not in AZ {{ osapm_from_az }}"
+  set_fact:
+    pvs_to_move: "{{ osapm_all_pvs['results']['results'][0]['items'] | osapm_pvs_in_az(osapm_from_az) }}"
+  delegate_to: localhost
+
+- debug:
+    var: pvs_to_move
+    verbosity: 2
+
+- name: get all snapshots
+  ec2_snapshot_facts:
+    aws_access_key: "{{ osapm_aws_access_key | default(omit) }}"
+    aws_secret_key: "{{ osapm_aws_secret_key | default(omit) }}"
+    region: "{{ osapm_region }}"
+  no_log: true
+  register: all_snapshots
+  delegate_to: localhost
+
+- name: print all snaps
+  debug:
+    var: all_snapshots
+    verbosity: 3
+
+- name: filter out PVs that cannot be restored (no snapshot)
+  set_fact:
+    movable_pvs: "{{ pvs_to_move | osapm_movable_pvs(all_snapshots['snapshots']) }}"
+
+- name: save list of PVs that cannot be restored
+  set_fact:
+    unmovable_pvs: "{{ pvs_to_move | difference(movable_pvs) }}"
+
+- name: "create new EBS volumes in target AZ"
+  oo_ec2_elb_migrate:
+    aws_access_key: "{{ osapm_aws_access_key | default(omit) }}"
+    aws_secret_key: "{{ osapm_aws_secret_key | default(omit) }}"
+    region: "{{ osapm_region }}"
+    target_az: "{{ osapm_to_az }}"
+    from_vol: "{{ item['volumeid'] }}"
+  with_items: "{{ movable_pvs }}"
+  register: pvs_moved
+  delegate_to: localhost
+
+- name: print moved PVs
+  debug:
+    var: pvs_moved
+    verbosity: 2
+
+- name: update PV zone metadata
+  oc_edit:
+    state: present
+    kind: pv
+    name: "{{ item['pv_name'] }}"
+    content:
+      metadata|labels|failure-domain.beta.kubernetes.io/zone: "{{ osapm_to_az }}"
+    separator: "|"
+  with_items: "{{ movable_pvs }}"
+
+- name: update PV volume metadata on cluster
+  oc_edit:
+    state: present
+    kind: pv
+    name: "{{ item.0.pv_name }}"
+    content:
+      spec.awsElasticBlockStore.volumeID: "aws://{{ osapm_to_az }}/{{ item.1.results.new_vol.VolumeId }}"
+  with_together:
+  - "{{ movable_pvs }}"
+  - "{{ pvs_moved['results'] }}"
+  register: pvs_updated
+
+- name: print results
+  debug:
+    var: pvs_updated
+    verbosity: 2
+
+- name: show unmoved PVs
+  debug:
+    msg: "THESE PVS WERE NOT ABLE TO BE MOVED!!!!!!!!!!!!!!: {{ unmovable_pvs }}"
