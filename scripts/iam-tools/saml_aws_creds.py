@@ -54,12 +54,10 @@ def get_temp_credentials(metadata_id, idp_host):
     # The SSH service on idp_host is expected to be listening
     # only on 127.0.0.1:2222, so the SSH traffic is tunneled
     # through an HTTPS session to idp_host:443.
-    ssh = subprocess.Popen(
-        (r'''ssh -p 2222 -a \
-                 -o "ProxyCommand=bash -c \"exec openssl s_client -servername %h -connect %h:443 -quiet 2>/dev/null \
-                                          < <(echo -e 'CONNECT 127.0.0.1:%p HTTP/1.1\\nHost: %h:443\\n'; cat -)\"" \
-                 -l {0} {1} {2}''').format('user', idp_host, metadata_id),
-        shell=True,
+    ssh = subprocess.Popen(['ssh', '-p', '2222', '-a', '-o',
+           r'''ProxyCommand=bash -c "exec openssl s_client -servername %h -connect %h:443 -quiet 2>/dev/null \
+                                          < <(echo -e 'CONNECT 127.0.0.1:%p HTTP/1.1\nHost: %h:443\n'; cat -)"''',
+                 '-l', 'user', idp_host, metadata_id],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         )
