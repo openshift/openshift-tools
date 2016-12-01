@@ -90,6 +90,7 @@ install -m 755 iam-tools/change_iam_password.py %{buildroot}/usr/local/bin/chang
 install -m 755 iam-tools/delete_iam_account.py %{buildroot}/usr/local/bin/delete_iam_account
 install -m 755 iam-tools/check_sso_service.py %{buildroot}/usr/local/bin/check_sso_service
 install -m 755 iam-tools/check_sso_http_status.py %{buildroot}/usr/local/bin/check_sso_http_status
+install -m 755 iam-tools/aws_creds_check.sh %{buildroot}/usr/local/bin/aws_creds_check
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools
 install -m 755 iam-tools/saml_aws_creds.py %{buildroot}%{python_sitelib}/openshift_tools/
 ln -sf %{python_sitelib}/openshift_tools/saml_aws_creds.py %{buildroot}/usr/local/bin/saml_aws_creds
@@ -357,6 +358,7 @@ OpenShift Tools IAM specific scripts
 /usr/local/bin/saml_aws_creds
 /usr/local/bin/check_sso_service
 /usr/local/bin/check_sso_http_status
+/usr/local/bin/aws_creds_check
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
