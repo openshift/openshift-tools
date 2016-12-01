@@ -42,7 +42,7 @@ RUN touch /var/log/ops-runner.log && chmod 664 /var/log/ops-runner.log && \
     touch /var/log/monitor-sso.log && chmod 664 /var/log/monitor-sso.log && \
     ln -sf /secrets/aws-accounts.txt /etc/openshift_tools/aws_accounts.txt && \
     ln -sf /secrets/sso-config.yaml /etc/openshift_tools/sso-config.yaml && \
-    ln -sf /secrets/zagg-client.yaml /etc/openshift_tools/zagg_client.yaml
+    ln -sf /configdata/zagg_client.yaml /etc/openshift_tools/zagg_client.yaml
 
 # Start memcached
 ADD start.sh /usr/local/bin/
