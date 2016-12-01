@@ -14,6 +14,11 @@ ossr_default_router_edits:
   - key: spec.template.spec.containers[0].resources.requests.memory
     value: 1G
     action: update
+  - key: spec.template.spec.containers[0].env
+    value:
+      name: EXTENDED_VALIDATION
+      value: 'false'
+    action: update
 
 ossr_default_listeners:
 - instance_port: 80
