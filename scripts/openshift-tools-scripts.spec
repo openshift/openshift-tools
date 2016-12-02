@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.174
+Version:       0.0.175
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -362,6 +362,11 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.0.175-1
+- adding error handling, fixing pylint issues (dedgar@redhat.com)
+- Skip SSL verification step from SSO monitoring container
+  (joesmith@redhat.com)
+
 * Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.0.174-1
 - Add aws_creds_check to openshift-tools-scripts-iam-tools RPM
   (joesmith@redhat.com)
