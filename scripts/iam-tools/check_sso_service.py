@@ -80,9 +80,11 @@ class CheckIam(object):
         """
 
         ssh_args = None
-        # if running in a container (like the monitoring container), use alternate ssh key and known host file
+        # if running in a container (like the monitoring container)
+        # use alternate ssh key and known host file
         if 'CONTAINER' in os.environ:
-            ssh_args = ['-i', '/secrets/ssh-id-rsa', '-o', 'UserKnownHostsFile=/configdata/ssh_known_hosts']
+            ssh_args =\
+            ['-i', '/secrets/ssh-id-rsa', '-o', 'UserKnownHostsFile=/configdata/ssh_known_hosts']
 
         try:
             creds = saml_aws_creds.get_temp_credentials(
@@ -122,7 +124,13 @@ class CheckIam(object):
 
         for account in ops_accounts:
             account_name, account_number = account.split(':')
-            temp_client = self.get_token(account_number, yaml_config["idp_host"])
+            try:
+                temp_client = self.get_token(account_number, yaml_config["idp_host"])
+
+            except botocore.exceptions.ClientError as client_error:
+                if 'Not authorized to perform sts:AssumeRoleWithSAML' in client_error.message:
+                    print('Error: not authorized to use SSO tokens with %s' % account_name)
+                    key_value += 1
 
             if not temp_client:
                 continue
