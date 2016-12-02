@@ -46,7 +46,7 @@ class CheckStatus(object):
         url_path = 'https://' + host + '/status.php'
 
         try:
-            check_status = requests.get(url_path)
+            check_status = requests.get(url_path, verify=False)
             sso_status_code = check_status.status_code
             return sso_status_code
 
@@ -58,6 +58,10 @@ class CheckStatus(object):
     def main(self):
         """ Main function. """
 
+# Reason: disable pylint import-error because urllib3 isn't loaded on jenkins.
+# pylint: disable=no-member
+        requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+# pylint: enable=no-member
         zag = ZaggSender()
         yaml_config = {}
         config_path = '/etc/openshift_tools/sso-config.yaml'
