@@ -19,11 +19,12 @@ echo group:x:$(id -G | awk '{print $2}'):user >> /etc/group
 echo "Running config playbook"
 ansible-playbook /root/config.yml
 
+ts='{ print strftime("%Y-%m-%d %H:%M:%S"), $0; fflush(); }'
 echo
 echo 'Running SSO functionality check every 24 hours'
 echo '----------------'
-/usr/local/bin/ops-run-in-loop 86400 ops-runner -f -s 15 -n check.sso.iam.status /usr/local/bin/check_sso_service &>> /var/log/monitor-sso.log &
+/usr/local/bin/ops-run-in-loop 86400 ops-runner -f -s 15 -n check.sso.iam.status /usr/local/bin/check_sso_service 2>&1 | awk "$ts" | tee /var/log/monitor-sso.log &
 echo
 echo 'Running container and HTTP status check every 5 minutes'
 echo '----------------'
-/usr/local/bin/ops-run-in-loop 300 ops-runner -f -s 15 -n check.sso.container.status /usr/local/bin/check_sso_http_status &>> /var/log/monitor-sso.log
+/usr/local/bin/ops-run-in-loop 300 ops-runner -f -s 15 -n check.sso.container.status /usr/local/bin/check_sso_http_status 2>&1 | awk "$ts" | tee /var/log/monitor-sso.log
