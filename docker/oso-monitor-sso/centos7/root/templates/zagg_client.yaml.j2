@@ -1,0 +1,27 @@
+heartbeat:
+    hostgroups:
+    - ops-aws
+    - prod
+    templates:
+    - Template Heartbeat
+    - Template Ops SSO
+host:
+    name: {{ hostname }}
+pcp:
+    metrics:
+    - sso.iam.not.reachable
+synthetic_clusterwide:
+    heartbeat:
+        templates:
+        - Template Heartbeat
+        - Template OpenShift Cluster
+        - Template Ops SSO
+    host:
+        name: ops-aws-synthetic
+zagg:
+    debug: {{ zagg_configdata.debug | default('False') }}
+    pass: {{ zagg_configdata.password }}
+    ssl_verify: {{ zagg_configdata.ssl_verify | default('True') }}
+    url: {{ zagg_configdata.url }}
+    user: {{ zagg_configdata.user }}
+    verbose: {{ zagg_configdata.verbose | default('False') }}
