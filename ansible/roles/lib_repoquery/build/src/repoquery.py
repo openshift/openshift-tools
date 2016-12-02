@@ -110,15 +110,22 @@ class Repoquery(RepoqueryCLI):
 
         rval = self._repoquery_cmd(repoquery_cmd, True, 'raw')
 
-        processed_versions = Repoquery.process_versions(rval['results'].strip())
-        formatted_versions = self.format_versions(processed_versions)
+        # check to see if there are actual results
+        if rval['results']:
+            processed_versions = Repoquery.process_versions(rval['results'].strip())
+            formatted_versions = self.format_versions(processed_versions)
 
-        rval['versions'] = formatted_versions
-        rval['package_name'] = self.name
+            rval['package_found'] = True
+            rval['versions'] = formatted_versions
+            rval['package_name'] = self.name
 
-        if self.verbose:
-            rval['raw_versions'] = processed_versions
+            if self.verbose:
+                rval['raw_versions'] = processed_versions
+            else:
+                del rval['results']
+
+        # No packages found
         else:
-            del rval['results']
+            rval['package_found'] = False
 
         return rval
