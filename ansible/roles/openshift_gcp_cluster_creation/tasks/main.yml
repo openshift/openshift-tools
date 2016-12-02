@@ -22,7 +22,7 @@
   register: dmyaml
 
 - name: run the inventory refresh
-  command: "/usr/share/ansible/inventory/multi_inventory.py --refresh-cache"
+  command: "/usr/share/ansible/inventory/multi_inventory.py --refresh-cache --cluster={{ osgcc_clusterid }}"
 
 - name: get the master nodes via ohi
   command: "ohi -c {{ osgcc_clusterid }} -t master --v3"
