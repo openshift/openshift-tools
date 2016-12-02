@@ -26,6 +26,7 @@ Role Variables
 - `osso_monitoring_ssh_private_key`: The private SSH key that can be used to obtain SAML tokens for purposes of monitoring
 - `osso_monitoring_ssh_public_key`: The public SSH key corresponding to `osso_monitoring_ssh_private_key`. Should be installed in `osso_authorized_keys_content`.
 - `osso_aws_accounts_txt_content`: A file with one entry per line. Each line represents a single AWS account and should be in the format `account_name:123456789012`
+- `osso_zagg_config`: A dictionary with config data for the ZAGG monitoring client, to populate `zagg_client.yaml`. Expected values: `url`, `user`, `password`, `ssl_verify`, `verbose` and `debug`
 
 Dependencies
 ------------
