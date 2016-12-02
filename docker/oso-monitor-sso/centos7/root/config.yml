@@ -30,6 +30,6 @@
     copy:
       dest: /configdata/ssh_known_hosts
       src: /secrets/ssh-known-hosts
-      user: user
+      owner: user
       group: root
       mode: 0600
