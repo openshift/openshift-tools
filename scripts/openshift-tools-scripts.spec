@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.175
+Version:       0.1.1
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -364,6 +364,15 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Mon Dec 05 2016 Joel Smith <joesmith@redhat.com> 0.1.1-1
+- adding value for aggregate check (dedgar@redhat.com)
+- Add cron-send-logging-checks to the rpm (whearn@redhat.com)
+- increase to 15m (dranders@redhat.com)
+- Fix return code getting overwritten (whearn@redhat.com)
+
+* Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.1.0-1
+- Version bump
+
 * Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.0.175-1
 - adding error handling, fixing pylint issues (dedgar@redhat.com)
 - Skip SSL verification step from SSO monitoring container
