@@ -20,8 +20,7 @@ Examples:
 from collections import namedtuple
 from openshift_tools.monitoring.generic_metric_sender import GenericMetricSender
 from openshift_tools.monitoring.zagg_sender import ZaggSender
-from openshift_tools.monitoring.hawk_sender import HawkSender
-
+# openshift_tools.monitoring.hawk_sender conditionally imported below
 
 class MetricSender(GenericMetricSender):
     """
@@ -46,10 +45,15 @@ class MetricSender(GenericMetricSender):
         if self.is_zagg_active():
             self.active_senders.append(ZaggSender(host=host, verbose=verbose, debug=debug, config_file=config_file))
 
-        if self.is_hawk_active():
-            self.active_senders.append(HawkSender(host=host, verbose=verbose, debug=debug, config_file=config_file))
+        if self._is_hawk_active():
+            try:
+                from openshift_tools.monitoring.hawk_sender import HawkSender
+                self.active_senders.append(HawkSender(host=host, verbose=verbose, debug=debug, config_file=config_file))
+            except ImportError as err:
+                print "ERROR:", err, "(is python-hawkular-client missing?)"
+                print "Skipping sending metrics to hawkular."
 
-    def is_hawk_active(self):
+    def _is_hawk_active(self):
         ''' Check if hawk client is active by configuration'''
         return self.config['hawk'].get('active', True)
 

@@ -26,12 +26,9 @@ Example usage:
     print client.add_metric(ml)
 """
 # The hawkular client
+# hawkular client is not installed on the buildbot, disabling this
+#pylint: disable=import-error
 from hawkular.metrics import HawkularMetricsClient, MetricType
-
-#These are not installed on the buildbot, disabling this
-#pylint: disable=no-name-in-module,unused-import,import-error
-from openshift_tools.monitoring.metricmanager import UniqueMetric
-from openshift_tools.monitoring.hawk_common import HawkConnection
 
 #This class implements rest calls. We only have one rest call implemented
 # add_metric.  More could be added here
