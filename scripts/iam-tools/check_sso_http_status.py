@@ -85,6 +85,12 @@ class CheckStatus(object):
             zag.add_zabbix_keys({zabbix_key: key_value})
             zag.send_metrics()
 
+        running_check = "sso.monitoring.container.running"
+        container_running = 1
+
+        zag.add_zabbix_keys({running_check: container_running})
+        zag.send_metrics()
+
 
 if __name__ == '__main__':
     HTTP_STATUS = CheckStatus()
