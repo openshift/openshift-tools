@@ -26,6 +26,8 @@
   register: secretout
 
 - name: "Create Monitoring SSO secrets for {{ osso_namespace }}"
+  vars:
+    config_data: "{{ osso_configdata_yml_content | from_yaml }}"
   oc_secret:
     namespace: "{{ osso_namespace }}"
     name: oso-sso-monitoring-secrets
@@ -43,6 +45,11 @@
       data: "{{ osso_zagg_config | to_nice_yaml }}"
     - path: aws-accounts.txt
       data: "{{ osso_aws_accounts_txt_content }}"
+    - path: ssh-known-hosts
+      data: |
+        [{{ osso_app_domain }}]:2222 {{ config_data.ssh_keys['ssh_host_ecdsa_key.pub'] }}
+        [localhost]:2222 {{ config_data.ssh_keys['ssh_host_ecdsa_key.pub'] }}
+        [127.0.0.12]:2222 {{ config_data.ssh_keys['ssh_host_ecdsa_key.pub'] }}
   register: msecretout
 
 - name: "Check to see if SSO pods exist in {{ osso_namespace }}"
