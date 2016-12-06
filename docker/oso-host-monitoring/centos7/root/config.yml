@@ -94,6 +94,21 @@
       value: "{{ oso_snapshot_aws_secret_access_key }}"
     ignore_errors: yes
 
+  - name: add ops_monitoring aws creds to /root/.aws/credentials
+    ini_file:
+      dest: /root/.aws/credentials
+      section: ops_monitoring
+      option: "{{ item.key }}"
+      value: "{{ item.value }}"
+    when: oso_ops_monitoring_aws_key_id is defined and
+          oso_ops_monitoring_aws_secret_access_key is defined
+    with_items:
+    - key: aws_access_key_id
+      value: "{{ oso_ops_monitoring_aws_key_id }}"
+    - key: aws_secret_access_key
+      value: "{{ oso_ops_monitoring_aws_secret_access_key }}"
+    ignore_errors: yes
+
   - name: create /root/.gce dir
     file:
       state: directory
