@@ -80,7 +80,7 @@
     name: metrics-deployer-template
     kind: template
     files:
-    - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/infrastructure-templates/enterprise/metrics-deployer.yaml"
+    - "/usr/share/ansible/openshift-ansible/roles/openshift_hosted_templates/files/v{{ kube_version }}/enterprise/metrics-deployer.yaml"
   register: templateout
   run_once: true
 
@@ -93,6 +93,7 @@
       HAWKULAR_METRICS_HOSTNAME: "metrics.{{ osamet_clusterid }}.openshift.com"
       CASSANDRA_PV_SIZE: "{{ osamet_pv_size }}"
       CASSANDRA_NODES: "{{ osamet_cassandra_node }}"
+      IMAGE_PREFIX: registry.ops.openshift.com/openshift3/
     reconcile: False
   register: processout
   run_once: true
@@ -218,7 +219,7 @@
     namespace: openshift-infra
     cert_path: "/etc/origin/master/named_certificates/{{ cert_basename }}"
     key_path: "/etc/origin/master/named_certificates/{{ key_basename }}"
-    cacert_path: /etc/origin/master/ca.crt
+    cacert_path: "/etc/origin/master/named_certificates/{{ cacert_basename }}"
     dest_cacert_content: "{{ hawkout.results.decoded['hawkular-metrics-ca.certificate'] }}"
     service_name: hawkular-metrics
     host: "metrics.{{ osamet_clusterid }}.openshift.com"
