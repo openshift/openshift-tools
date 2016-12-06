@@ -68,7 +68,7 @@
     name: logging-deployer-template
     kind: template
     files:
-    - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/infrastructure-templates/enterprise/logging-deployer.yaml"
+    - "/usr/share/ansible/openshift-ansible/roles/openshift_hosted_templates/files/v{{ kube_version }}/enterprise/logging-deployer.yaml"
   register: templateout
   run_once: true
 - debug: var=templateout
