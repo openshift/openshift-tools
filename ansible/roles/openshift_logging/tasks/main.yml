@@ -216,6 +216,10 @@
   run_once: true
 - debug: var=volumeout
 
+- name: Redeploy elasticsearch
+  command: "oc deploy --latest dc/{{ item['metadata']['name'] }} -n logging"
+  with_items: " {{ dcout.results.results[0]['items'] }}"
+
 - name: Remove old logging-fluentd configmap
   command: oc delete configmap/logging-fluentd -n logging
 
