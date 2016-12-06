@@ -217,9 +217,19 @@
   run_once: true
 - debug: var=volumeout
 
+- name: Wait for elasticsearch first deploy to finish
+  pause:
+    seconds: 60
+  run_once: true
+
 - name: Redeploy elasticsearch
   command: "oc deploy --latest dc/{{ item['metadata']['name'] }} -n logging"
   with_items: " {{ dcout.results.results[0]['items'] }}"
+
+- name: Wait for elasticsearch deploy to finish
+  pause:
+    seconds: 60
+  run_once: true
 
 - name: Remove old logging-fluentd configmap
   command: oc delete configmap/logging-fluentd -n logging
