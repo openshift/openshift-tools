@@ -136,9 +136,6 @@ class SshAgent(object):
                 raise SshAgentException("Unable to add ssh key. Timed out. Does key have a passphrase?")
             time.sleep(0.1)
         os.remove(named_pipe_path)
-'''
-   OpenShiftCLI class that wraps the oc commands in a subprocess
-'''
 # pylint: disable=too-many-lines
 
 # these are already imported inside of the ssh library

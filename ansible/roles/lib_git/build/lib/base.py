@@ -1,7 +1,4 @@
 # pylint: skip-file
-'''
-   OpenShiftCLI class that wraps the oc commands in a subprocess
-'''
 # pylint: disable=too-many-lines
 
 # these are already imported inside of the ssh library
