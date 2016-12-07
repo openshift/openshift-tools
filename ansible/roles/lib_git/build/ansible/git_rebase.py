@@ -2,7 +2,7 @@
 
 def main():
     '''
-    ansible git module for merging
+    ansible git module for rebasing
     '''
     module = AnsibleModule(
         argument_spec=dict(

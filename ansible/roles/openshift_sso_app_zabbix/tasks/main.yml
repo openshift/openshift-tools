@@ -27,7 +27,7 @@
     interval: 900
     delta: 0
     units: ""
-  delegate_to: localhost
+  delegate_to: localhost 
   run_once: true
 
 - name: "Add alert for when not enough SSO containers are running for 30 minutes"

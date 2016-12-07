@@ -2,7 +2,7 @@
 
 def main():
     '''
-    ansible git module for committting
+    ansible git module for committing
     '''
     module = AnsibleModule(
         argument_spec=dict(

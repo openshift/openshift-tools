@@ -81,7 +81,7 @@ function _check_creds()
 
         return 0
     fi
-
+    
     while IFS=: read -r name num; do
         accounts["$name"]="$num"
     done < /etc/openshift_tools/aws_accounts.txt

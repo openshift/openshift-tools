@@ -7,7 +7,7 @@
   - name: Checking build environment
     fail:
       msg: "Unsupported build environment"
-    when: (ansible_distribution == "RedHat" and ansible_distribution_major_version < 7) or
+    when: (ansible_distribution == "RedHat" and ansible_distribution_major_version < 7) or 
           (ansible_distribution == "Fedora" and ansible_distribution_major_version < 22) or
           (ansible_distribution != "RedHat" and ansible_distribution != "Fedora")
 
