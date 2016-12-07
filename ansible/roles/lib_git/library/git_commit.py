@@ -198,6 +198,20 @@ class GitCLI(object):
 
         return results
 
+    def _clone(self, repo, dest, bare=False):
+        ''' git clone '''
+
+        cmd = ["clone"]
+
+        if bare:
+            cmd += ["--bare"]
+
+        cmd += [repo, dest]
+
+        results = self.git_cmd(cmd)
+
+        return results
+
     def _status(self, porcelain=False, show_untracked=True):
         ''' Do a git status '''
 
@@ -273,6 +287,14 @@ class GitCLI(object):
 
         return results
 
+    def _config(self, get_args):
+        ''' Do a git config --get <get_args> '''
+
+        cmd = ["config", '--get', get_args]
+        results = self.git_cmd(cmd, output=True, output_type='raw')
+
+        return results
+
     def git_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for git '''
         cmds = ['/usr/bin/git']
@@ -288,7 +310,9 @@ class GitCLI(object):
 
         if self.ssh_key:
             with SshAgent() as agent:
+                self.environment_vars['SSH_AUTH_SOCK'] = os.environ['SSH_AUTH_SOCK']
                 agent.add_key(self.ssh_key)
+
                 proc = subprocess.Popen(cmds,
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,

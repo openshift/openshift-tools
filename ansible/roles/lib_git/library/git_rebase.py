@@ -198,6 +198,20 @@ class GitCLI(object):
 
         return results
 
+    def _clone(self, repo, dest, bare=False):
+        ''' git clone '''
+
+        cmd = ["clone"]
+
+        if bare:
+            cmd += ["--bare"]
+
+        cmd += [repo, dest]
+
+        results = self.git_cmd(cmd)
+
+        return results
+
     def _status(self, porcelain=False, show_untracked=True):
         ''' Do a git status '''
 
@@ -273,6 +287,14 @@ class GitCLI(object):
 
         return results
 
+    def _config(self, get_args):
+        ''' Do a git config --get <get_args> '''
+
+        cmd = ["config", '--get', get_args]
+        results = self.git_cmd(cmd, output=True, output_type='raw')
+
+        return results
+
     def git_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for git '''
         cmds = ['/usr/bin/git']
@@ -288,7 +310,9 @@ class GitCLI(object):
 
         if self.ssh_key:
             with SshAgent() as agent:
+                self.environment_vars['SSH_AUTH_SOCK'] = os.environ['SSH_AUTH_SOCK']
                 agent.add_key(self.ssh_key)
+
                 proc = subprocess.Popen(cmds,
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
@@ -350,9 +374,10 @@ class GitRebase(GitCLI):
     def __init__(self,
                  path,
                  branch,
-                 rebase_branch):
+                 rebase_branch,
+                 ssh_key=None):
         ''' Constructor for GitPush '''
-        super(GitRebase, self).__init__(path)
+        super(GitRebase, self).__init__(path, ssh_key=ssh_key)
         self.path = path
         self.branch = branch
         self.rebase_branch = rebase_branch
@@ -429,12 +454,14 @@ def main():
             path=dict(default=None, required=True, type='str'),
             branch=dict(default=None, required=True, type='str'),
             rebase_branch=dict(default=None, required=True, type='str'),
+            ssh_key=dict(default=None, required=False, type='str'),
         ),
         supports_check_mode=False,
     )
     git = GitRebase(module.params['path'],
                     module.params['branch'],
-                    module.params['rebase_branch'])
+                    module.params['rebase_branch'],
+                    module.params['ssh_key'])
 
     state = module.params['state']
 

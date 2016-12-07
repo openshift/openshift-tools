@@ -10,12 +10,14 @@ def main():
             path=dict(default=None, required=True, type='str'),
             branch=dict(default=None, required=True, type='str'),
             rebase_branch=dict(default=None, required=True, type='str'),
+            ssh_key=dict(default=None, required=False, type='str'),
         ),
         supports_check_mode=False,
     )
     git = GitRebase(module.params['path'],
                     module.params['branch'],
-                    module.params['rebase_branch'])
+                    module.params['rebase_branch'],
+                    module.params['ssh_key'])
 
     state = module.params['state']
 
