@@ -4,10 +4,9 @@
 module for managing yaml files
 '''
 
+import json
 import os
 import re
-
-import json
 import ruamel.yaml as yaml
 
 # This is here because of a bug that causes yaml
