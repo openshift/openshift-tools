@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.96
+Version:       0.0.97
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -297,6 +297,12 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Wed Dec 07 2016 Joel Diaz <jdiaz@redhat.com> 0.0.97-1
+- Elegant ImportError handling of hawkular-client (zgalor@redhat.com)
+- Add MetricSender to monitoring lib (zgalor@redhat.com)
+- Add a hawkular configuration, client and sender classes to the monitoring lib
+  (kobi.zamir@gmail.com)
+
 * Mon Nov 14 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.96-1
 - add region for the s3 check (zhizhang@zhizhang-laptop-nay.redhat.com)
 
