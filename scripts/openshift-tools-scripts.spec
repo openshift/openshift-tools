@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.1
+Version:       0.1.2
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -71,9 +71,7 @@ cp -p monitoring/cron-send-os-router-status.py %{buildroot}/usr/bin/cron-send-os
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
-cp -p monitoring/hawk_client.yaml.example %{buildroot}/etc/openshift_tools/hawk_client.yaml
 cp -p monitoring/zagg_server.yaml.example %{buildroot}/etc/openshift_tools/zagg_server.yaml
-cp -p monitoring/mertic_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
 cp -p remote-heal/remote_healer.conf.example %{buildroot}/etc/openshift_tools/remote_healer.conf
 
 mkdir -p %{buildroot}/var/run/zagg/data
@@ -366,6 +364,11 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Wed Dec 07 2016 Joel Diaz <jdiaz@redhat.com> 0.1.2-1
+- Add MetricSender to monitoring lib (zgalor@redhat.com)
+- Add a hawkular configuration, client and sender classes to the monitoring lib
+  (kobi.zamir@gmail.com)
+
 * Mon Dec 05 2016 Joel Smith <joesmith@redhat.com> 0.1.1-1
 - adding value for aggregate check (dedgar@redhat.com)
 - Add cron-send-logging-checks to the rpm (whearn@redhat.com)
