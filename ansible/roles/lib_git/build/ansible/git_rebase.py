@@ -2,7 +2,7 @@
 
 def main():
     '''
-    ansible git module for merging
+    ansible git module for rebasing
     '''
     module = AnsibleModule(
         argument_spec=dict(
@@ -10,12 +10,14 @@ def main():
             path=dict(default=None, required=True, type='str'),
             branch=dict(default=None, required=True, type='str'),
             rebase_branch=dict(default=None, required=True, type='str'),
+            ssh_key=dict(default=None, required=False, type='str'),
         ),
         supports_check_mode=False,
     )
     git = GitRebase(module.params['path'],
                     module.params['branch'],
-                    module.params['rebase_branch'])
+                    module.params['rebase_branch'],
+                    module.params['ssh_key'])
 
     state = module.params['state']
 
@@ -37,8 +39,6 @@ def main():
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
-#if __name__ == '__main__':
-#    main()
-from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    from ansible.module_utils.basic import *
+    main()

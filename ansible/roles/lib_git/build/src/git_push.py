@@ -8,9 +8,10 @@ class GitPush(GitCLI):
                  path,
                  remote,
                  src_branch,
-                 dest_branch):
+                 dest_branch,
+                 ssh_key=None):
         ''' Constructor for GitPush '''
-        super(GitPush, self).__init__(path)
+        super(GitPush, self).__init__(path, ssh_key=ssh_key)
         self.path = path
         self.remote = remote
         self.src_branch = src_branch

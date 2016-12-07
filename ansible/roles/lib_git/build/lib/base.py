@@ -4,8 +4,9 @@
 '''
 # pylint: disable=too-many-lines
 
-import os
-import subprocess
+# these are already imported inside of the ssh library
+#import os
+#import subprocess
 
 class GitCLIError(Exception):
     '''Exception class for openshiftcli'''
@@ -16,10 +17,23 @@ class GitCLI(object):
     ''' Class to wrap the command line tools '''
     def __init__(self,
                  path,
-                 verbose=False):
+                 verbose=False,
+                 ssh_key=None,
+                 author=None):
         ''' Constructor for GitCLI '''
         self.path = path
         self.verbose = verbose
+        self.ssh_key = ssh_key
+        self.author = author
+        self.environment_vars = os.environ.copy()
+
+        if self.author:
+            author_dict = {}
+            author_list = author.split('<')
+            author_dict['GIT_COMMITTER_NAME'] = author_list[0].strip()
+            author_dict['GIT_COMMITTER_EMAIL'] = author_list[0].strip()
+
+            self.environment_vars.update(author_dict)
 
     def _add(self, files_to_add=None):
         ''' git add '''
@@ -35,10 +49,27 @@ class GitCLI(object):
 
         return results
 
-    def _commit(self, msg):
+    def _commit(self, msg, author=None):
         ''' git commit with message '''
 
         cmd = ["commit", "-m", msg]
+
+        if author:
+            cmd += ["--author", author]
+
+        results = self.git_cmd(cmd)
+
+        return results
+
+    def _clone(self, repo, dest, bare=False):
+        ''' git clone '''
+
+        cmd = ["clone"]
+
+        if bare:
+            cmd += ["--bare"]
+
+        cmd += [repo, dest]
 
         results = self.git_cmd(cmd)
 
@@ -119,6 +150,14 @@ class GitCLI(object):
 
         return results
 
+    def _config(self, get_args):
+        ''' Do a git config --get <get_args> '''
+
+        cmd = ["config", '--get', get_args]
+        results = self.git_cmd(cmd, output=True, output_type='raw')
+
+        return results
+
     def git_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for git '''
         cmds = ['/usr/bin/git']
@@ -132,15 +171,34 @@ class GitCLI(object):
         if self.verbose:
             print ' '.join(cmds)
 
-        proc = subprocess.Popen(cmds,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+        if self.ssh_key:
+            with SshAgent() as agent:
+                self.environment_vars['SSH_AUTH_SOCK'] = os.environ['SSH_AUTH_SOCK']
+                agent.add_key(self.ssh_key)
 
-        stdout, stderr = proc.communicate()
-        rval = {"returncode": proc.returncode,
-                "results": results,
-                "cmd": ' '.join(cmds),
-               }
+                proc = subprocess.Popen(cmds,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        env=self.environment_vars)
+
+                stdout, stderr = proc.communicate()
+
+                rval = {"returncode": proc.returncode,
+                        "results": results,
+                        "cmd": ' '.join(cmds),
+                       }
+        else:
+            proc = subprocess.Popen(cmds,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    env=self.environment_vars)
+
+            stdout, stderr = proc.communicate()
+            rval = {"returncode": proc.returncode,
+                    "results": results,
+                    "cmd": ' '.join(cmds),
+                   }
+
 
         if proc.returncode == 0:
             if output:
