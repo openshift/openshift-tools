@@ -7,12 +7,14 @@ class GitCommit(GitCLI):
     def __init__(self,
                  msg,
                  path,
-                 commit_files):
+                 commit_files,
+                 author=None):
         ''' Constructor for GitCommit '''
-        super(GitCommit, self).__init__(path)
+        super(GitCommit, self).__init__(path, author=author)
         self.path = path
         self.msg = msg
         self.commit_files = commit_files
+        self.author = author
         self.debug = []
 
         os.chdir(path)
@@ -68,7 +70,7 @@ class GitCommit(GitCLI):
 
             if add_results:
                 self.debug.append(add_results)
-                commit_results = self._commit(self.msg)
+                commit_results = self._commit(self.msg, self.author)
                 commit_results['debug'] = self.debug
 
                 return commit_results

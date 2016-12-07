@@ -2,33 +2,34 @@
 
 def main():
     '''
-    ansible git module for committing
+    ansible git module for cloning
     '''
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(default='present', type='str', choices=['present']),
-            msg=dict(default=None, required=True, type='str'),
-            path=dict(default=None, required=True, type='str'),
-            author=dict(default=None, required=False, type='str'),
-            commit_files=dict(default=None, required=False, type='list'),
+            dest=dict(default=None, required=True, type='str'),
+            repo=dict(default=None, required=True, type='str'),
+            branch=dict(default=None, required=False, type='str'),
+            bare=dict(default=False, required=False, type='bool'),
+            ssh_key=dict(default=None, required=False, type='str'),
         ),
         supports_check_mode=False,
     )
-    git = GitCommit(module.params['msg'],
-                    module.params['path'],
-                    module.params['commit_files'],
-                    module.params['author'],
-                   )
+    git = GitClone(module.params['dest'],
+                   module.params['repo'],
+                   module.params['branch'],
+                   module.params['bare'],
+                   module.params['ssh_key'])
 
     state = module.params['state']
 
     if state == 'present':
-        results = git.commit()
+        results = git.clone()
 
         if results['returncode'] != 0:
             module.fail_json(msg=results)
 
-        if results.has_key('no_commits'):
+        if results['no_clone_needed'] == True:
             module.exit_json(changed=False, results=results, state="present")
 
         module.exit_json(changed=True, results=results, state="present")
