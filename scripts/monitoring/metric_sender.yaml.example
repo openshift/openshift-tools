@@ -1,0 +1,42 @@
+---
+host:
+    name: hostname.example.com
+zagg:
+    active: True
+    url: https://172.17.0.164
+    user: admin
+    pass: XXXXXX
+    verbose: False
+    debug: False
+hawk:
+    active: False
+    url: https://172.17.0.164
+    user: admin
+    pass: XXXXXX
+    verbose: False
+    debug: False
+    ssl_verify: False
+pcp:
+    metrics:
+        - kernel.all
+        - swap.free
+        - swap.length
+        - swap.used
+heartbeat:
+    templates:
+        - template1
+        - template2
+        - template3
+    hostgroups:
+        - hostgroup1
+        - hostgroup2
+        - hostgroup3
+    config_file: /etc/openshift_tools/hawk_client.yaml
+
+synthetic_clusterwide:
+    heartbeat:
+        templates:
+        - Template1
+        - Template2
+    host:
+        name: "hostname.example.com-synthetic"
