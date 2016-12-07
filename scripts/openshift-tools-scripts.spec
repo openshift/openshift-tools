@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.2
+Version:       0.1.3
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -364,6 +364,9 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Wed Dec 07 2016 Joel Diaz <jdiaz@redhat.com> 0.1.3-1
+- remove unpackaged files from rpm spec (jdiaz@redhat.com)
+
 * Wed Dec 07 2016 Joel Diaz <jdiaz@redhat.com> 0.1.2-1
 - Add MetricSender to monitoring lib (zgalor@redhat.com)
 - Add a hawkular configuration, client and sender classes to the monitoring lib
