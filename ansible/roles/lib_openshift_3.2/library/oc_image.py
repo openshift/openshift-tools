@@ -884,198 +884,105 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
-# pylint: disable=too-many-instance-attributes
-class GroupConfig(object):
-    ''' Handle route options '''
-    # pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments
+class OCImage(OpenShiftCLI):
+    ''' Class to wrap the oc command line tools
+    '''
     def __init__(self,
-                 sname,
                  namespace,
-                 kubeconfig):
-        ''' constructor for handling group options '''
-        self.kubeconfig = kubeconfig
-        self.name = sname
-        self.namespace = namespace
-        self.data = {}
-
-        self.create_dict()
-
-    def create_dict(self):
-        ''' return a service as a dict '''
-        self.data['apiVersion'] = 'v1'
-        self.data['kind'] = 'Group'
-        self.data['metadata'] = {}
-        self.data['metadata']['name'] = self.name
-        self.data['users'] = None
-
-
-# pylint: disable=too-many-instance-attributes
-class Group(Yedit):
-    ''' Class to wrap the oc command line tools '''
-    kind = 'group'
-
-    def __init__(self, content):
-        '''Group constructor'''
-        super(Group, self).__init__(content=content)
-# vim: expandtab:tabstop=4:shiftwidth=4
-# pylint: skip-file
-
-# pylint: disable=too-many-instance-attributes
-class OCGroup(OpenShiftCLI):
-    ''' Class to wrap the oc command line tools '''
-    kind = 'group'
-
-    # pylint allows 5
-    # pylint: disable=too-many-arguments
-    def __init__(self,
-                 config,
+                 registry_url,
+                 image_name,
+                 image_tag,
+                 kubeconfig='/etc/origin/master/admin.kubeconfig',
                  verbose=False):
-        ''' Constructor for OCGroup '''
-        super(OCGroup, self).__init__(config.namespace, config.kubeconfig)
-        self.config = config
-        self.namespace = config.namespace
-        self._group = None
-
-    @property
-    def group(self):
-        ''' property function service'''
-        if not self._group:
-            self.get()
-        return self._group
-
-    @group.setter
-    def group(self, data):
-        ''' setter function for yedit var '''
-        self._group = data
-
-    def exists(self):
-        ''' return whether a group exists '''
-        if self.group:
-            return True
-
-        return False
+        ''' Constructor for OpenshiftOC '''
+        super(OCImage, self).__init__(namespace, kubeconfig)
+        self.namespace = namespace
+        self.registry_url = registry_url
+        self.image_name = image_name
+        self.image_tag = image_tag
+        self.kubeconfig = kubeconfig
+        self.verbose = verbose
 
     def get(self):
-        '''return group information '''
-        result = self._get(self.kind, self.config.name)
-        if result['returncode'] == 0:
-            self.group = Group(content=result['results'][0])
-        elif 'groups \"%s\" not found' % self.config.name in result['stderr']:
-            result['returncode'] = 0
-            result['results'] = [{}]
+        '''return a image by name '''
+        results = self._get('imagestream', self.image_name)
+        results['exists'] = False
+        if results['returncode'] == 0 and results['results'][0]:
+            results['exists'] = True
 
-        return result
+        if results['returncode'] != 0 and '"%s" not found' % self.image_name in results['stderr']:
+            results['returncode'] = 0
 
-    def delete(self):
-        '''delete the object'''
-        return self._delete(self.kind, self.config.name)
+        return results
 
-    def create(self):
-        '''create the object'''
-        return self._create_from_content(self.config.name, self.config.data)
+    def create(self, url=None, name=None, tag=None):
+        '''Create an image '''
 
-    def update(self):
-        '''update the object'''
-        # need to update the tls information and the service name
-        return self._replace_content(self.kind, self.config.name, self.config.data)
+        return self._import_image(url, name, tag)
 
-    def needs_update(self):
-        ''' verify an update is needed '''
-        skip = []
-        return not Utils.check_def_equal(self.config.data, self.group.yaml_dict, skip_keys=skip, debug=True)
-# vim: expandtab:tabstop=4:shiftwidth=4
-
-#pylint: disable=too-many-branches
+# pylint: disable=too-many-branches
 def main():
     '''
-    ansible oc module for group
+    ansible oc module for image import
     '''
 
     module = AnsibleModule(
         argument_spec=dict(
             kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
             state=dict(default='present', type='str',
-                       choices=['present', 'absent', 'list']),
+                       choices=['present', 'list']),
             debug=dict(default=False, type='bool'),
-            name=dict(default=None, type='str'),
             namespace=dict(default='default', type='str'),
-            # addind users to a group is handled through the oc_users module
-            #users=dict(default=None, type='list'),
+            registry_url=dict(default=None, type='str'),
+            image_name=dict(default=None, type='str'),
+            image_tag=dict(default=None, type='str'),
+            content_type=dict(default='raw', choices=['yaml', 'json', 'raw'], type='str'),
+            force=dict(default=False, type='bool'),
         ),
+
         supports_check_mode=True,
     )
-
-    gconfig = GroupConfig(module.params['name'],
-                          module.params['namespace'],
-                          module.params['kubeconfig'],
-                         )
-    oc_group = OCGroup(gconfig,
-                       verbose=module.params['debug'])
+    ocimage = OCImage(module.params['namespace'],
+                      module.params['registry_url'],
+                      module.params['image_name'],
+                      module.params['image_tag'],
+                      kubeconfig=module.params['kubeconfig'],
+                      verbose=module.params['debug'])
 
     state = module.params['state']
 
-    api_rval = oc_group.get()
+    api_rval = ocimage.get()
 
     #####
     # Get
     #####
     if state == 'list':
-        module.exit_json(changed=False, results=api_rval['results'], state="list")
+        module.exit_json(changed=False, results=api_rval, state="list")
 
-    ########
-    # Delete
-    ########
-    if state == 'absent':
-        if oc_group.exists():
-
-            if module.check_mode:
-                module.exit_json(changed=False, msg='Would have performed a delete.')
-
-            api_rval = oc_group.delete()
-
-            module.exit_json(changed=True, results=api_rval, state="absent")
-        module.exit_json(changed=False, state="absent")
+    if not module.params['image_name']:
+        module.fail_json(msg='Please specify a name when state is absent|present.')
 
     if state == 'present':
+
         ########
         # Create
         ########
-        if not oc_group.exists():
+        if not Utils.exists(api_rval['results'], module.params['image_name']):
 
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a create.')
 
-            # Create it here
-            api_rval = oc_group.create()
-
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
-
-            # return the created object
-            api_rval = oc_group.get()
+            api_rval = ocimage.create(module.params['registry_url'],
+                                      module.params['image_name'],
+                                      module.params['image_tag'])
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)
 
             module.exit_json(changed=True, results=api_rval, state="present")
 
-        ########
-        # Update
-        ########
-        if oc_group.needs_update():
-            api_rval = oc_group.update()
-
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
-
-            # return the created object
-            api_rval = oc_group.get()
-
-            if api_rval['returncode'] != 0:
-                module.fail_json(msg=api_rval)
-
-            module.exit_json(changed=True, results=api_rval, state="present")
-
+        # image exists, no change
         module.exit_json(changed=False, results=api_rval, state="present")
 
     module.exit_json(failed=True,
@@ -1085,6 +992,6 @@ def main():
 
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
 # import module snippets.  This are required
-from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    from ansible.module_utils.basic import *
+    main()

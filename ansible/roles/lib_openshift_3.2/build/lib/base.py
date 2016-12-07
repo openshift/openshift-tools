@@ -192,6 +192,24 @@ class OpenShiftCLI(object):
 
         return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
 
+    def _import_image(self, url=None, name=None, tag=None):
+        ''' perform image import '''
+        cmd = ['import-image']
+
+        image = '{0}'.format(name)
+        if tag:
+            image += ':{0}'.format(tag)
+
+        cmd.append(image)
+
+        if url:
+            cmd.append('--from={0}/{1}'.format(url, image))
+
+        cmd.append('-n{0}'.format(self.namespace))
+
+        cmd.append('--confirm')
+        return self.openshift_cmd(cmd)
+
     #pylint: disable=too-many-arguments
     def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json', input_data=None):
         '''Base command for oc '''
