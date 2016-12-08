@@ -21,12 +21,19 @@
     owner: root
     group: libra_ops
 
-# This cron uses the above location to call its job
-- name: Cron to keep cache fresh
-  cron:
-    name: 'multi_inventory'
-    minute: '*/10'
-    job: '/usr/bin/ops-runner -n cmirc.multi_inventory.refresh -t 60 /usr/share/ansible/inventory/multi_inventory.py --refresh-cache &> /dev/null'
+- block:
+    - file:
+        src: inventory.sh
+        dest: /usr/local/bin/inventory.sh
+        owner: root
+        group: libra_ops
+
+    # This cron uses the above location to call its job
+    - name: Cron to keep cache fresh
+      cron:
+        name: 'multi_inventory'
+        minute: '*/10'
+        job: '/usr/bin/ops-runner -n cmirc.multi_inventory.refresh -t 120 /usr/local/bin/inventory.sh &> /dev/null'
   when: oo_cron_refresh_cache is defined and oo_cron_refresh_cache
 
 - name: Set cache location
