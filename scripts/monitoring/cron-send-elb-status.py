@@ -43,8 +43,8 @@ def get_aws_creds(creds_file):
     parser = SafeConfigParser()
     parser.read(creds_file)
     
-    aws_access_key = parser.get('elb_monitor','aws_access_key_id')
-    aws_secret_key = parser.get('elb_monitor','aws_secret_access_key')
+    aws_access_key = parser.get('ops_monitoring','aws_access_key_id')
+    aws_secret_key = parser.get('ops_monitoring','aws_secret_access_key')
 
     return [aws_access_key, aws_secret_key]
 
