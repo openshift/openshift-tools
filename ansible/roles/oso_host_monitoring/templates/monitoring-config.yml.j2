@@ -173,6 +173,12 @@ host_monitoring_cron:
 {# end if dnsmasq #}
 {% endif %}
 
+{% if osohm_host_type == 'master' or osohm_host_type == 'infra' %}
+- name: send ELB status
+  minute: "*/15"
+  job: ops-runner -f -s 60 -n cses.openshift.aws.elbd.status /usr/bin/cron-send-elb-status
+{% endif %}
+
 {% if osohm_host_type == 'master' or osohm_host_type == 'node' %}
 {# Openshift node checks #}
 - name: send openshift-node process count

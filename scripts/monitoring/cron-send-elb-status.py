@@ -20,6 +20,13 @@
 #
 # Disabling invalid-name because pylint doesn't like the naming conention we have.
 # pylint: disable=invalid-name
+# Disabling the import-errors
+# pylint: disable=import-error
+# Disabling line too long for one character
+# pylint: disable=line-too-long
+# pylint: disable=pointless-string-statement
+# pylint: disable=deprecated-lambda
+# pylint: disable=bad-builtin
 
 from ConfigParser import SafeConfigParser
 from openshift_tools.monitoring.zagg_sender import ZaggSender
@@ -42,9 +49,9 @@ def get_aws_creds(creds_file):
 
     parser = SafeConfigParser()
     parser.read(creds_file)
-    
-    aws_access_key = parser.get('ops_monitoring','aws_access_key_id')
-    aws_secret_key = parser.get('ops_monitoring','aws_secret_access_key')
+
+    aws_access_key = parser.get('ops_monitoring', 'aws_access_key_id')
+    aws_secret_key = parser.get('ops_monitoring', 'aws_secret_access_key')
 
     return [aws_access_key, aws_secret_key]
 
@@ -74,19 +81,16 @@ def get_instance_name(zagg_client_file):
 def main():
     ''' Gather and examine details about this node within ELBs '''
 
-    AWS_CREDENTIALS = '/root/.aws/credentials'
-    ZAGG_CLIENT_CONFIG = '/etc/openshift_tools/zagg_client.yaml'
-
     args = parse_args()
-    zagg_sender = ZaggSender(verbose=args.verbose, debug=args.debug)
 
-    aws_access, aws_secret = get_aws_creds(AWS_CREDENTIALS)
+    aws_access, aws_secret = get_aws_creds('/root/.aws/credentials')
     instance_region = get_instance_region()
-    elb = boto.ec2.elb.connect_to_region(instance_region, aws_access_key_id=aws_access, aws_secret_access_key=aws_secret)
-    instance_name = get_instance_name(ZAGG_CLIENT_CONFIG)
-
+    elb = boto.ec2.elb.connect_to_region(instance_region, aws_access_key_id=aws_access,
+                                         aws_secret_access_key=aws_secret)
+    instance_name = get_instance_name('/etc/openshift_tools/zagg_client.yaml')
 
     ''' Define what instance type this node is, only master/infra are in ELBs '''
+
     if "master" in instance_name:
         instance_type = "master"
         if args.verbose:
@@ -98,7 +102,6 @@ def main():
     else:
         print "%s is not an infra or master node. Nothing to do."
         exit()
-
 
     ''' Fetch the load balancers and make sure this instance is within them '''
 
@@ -115,7 +118,7 @@ def main():
 
     ''' Now that we know if this instance is missing, feed zabbix '''
     zs = ZaggSender(verbose=args.verbose, debug=args.debug)
-    zs.add_zabbix_keys({'aws.elb.member_missing' : instance_missing})
+    zs.add_zabbix_keys({'openshift.aws.elb.status' : instance_missing})
     zs.send_metrics()
 
 if __name__ == '__main__':
