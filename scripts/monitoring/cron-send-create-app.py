@@ -28,7 +28,7 @@ import urllib2
 # libs might exist
 #pylint: disable=import-error
 from openshift_tools.monitoring.ocutil import OCUtil
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 
 import logging
 logging.basicConfig(
@@ -67,25 +67,25 @@ def parse_args():
                         help='namespace (be careful of using existing namespaces)')
     return parser.parse_args()
 
-def send_zagg_data(build_ran, create_app, http_code, run_time):
-    """ send data to Zagg"""
-    logger.debug("send_zagg_data()")
+def send_metrics(build_ran, create_app, http_code, run_time):
+    """ send data to MetricSender"""
+    logger.debug("send_metrics()")
 
-    zgs_time = time.time()
-    zgs = ZaggSender()
-    logger.info("Send data to Zagg")
+    ms_time = time.time()
+    ms = MetricSender()
+    logger.info("Send data to MetricSender")
 
     if build_ran == 1:
-        zgs.add_zabbix_keys({'openshift.master.app.build.create': create_app})
-        zgs.add_zabbix_keys({'openshift.master.app.build.create.code': http_code})
-        zgs.add_zabbix_keys({'openshift.master.app.build.create.time': run_time})
+        ms.add_metric({'openshift.master.app.build.create': create_app})
+        ms.add_metric({'openshift.master.app.build.create.code': http_code})
+        ms.add_metric({'openshift.master.app.build.create.time': run_time})
     else:
-        zgs.add_zabbix_keys({'openshift.master.app.create': create_app})
-        zgs.add_zabbix_keys({'openshift.master.app.create.code': http_code})
-        zgs.add_zabbix_keys({'openshift.master.app.create.time': run_time})
+        ms.add_metric({'openshift.master.app.create': create_app})
+        ms.add_metric({'openshift.master.app.create.code': http_code})
+        ms.add_metric({'openshift.master.app.create.time': run_time})
 
-    zgs.send_metrics()
-    logger.info("Data sent to Zagg in %s seconds", str(time.time() - zgs_time))
+        ms.send_metrics()
+    logger.info("Data sent to Zagg in %s seconds", str(time.time() - ms_time))
 
 def writeTmpFile(data, filename=None, outdir="/tmp"):
     """ write string to file """
@@ -327,17 +327,17 @@ def main():
         run_time = str(time.time() - start_time)
         logger.info('Test finished. Time to complete test only: %s', run_time)
 
-        ############# send data to zabbix #############
-        try:
-            send_zagg_data(
-                test_response['build_ran'],
-                test_response['create_app'],
-                test_response['http_code'],
-                run_time
-            )
-        except Exception as e:
-            logger.exception("error sending zabbix data")
-            exception = e
+    ############# send data to zabbix #############
+    try:
+        send_metrics(
+            test_response['build_ran'],
+            test_response['create_app'],
+            test_response['http_code'],
+            run_time
+        )
+    except Exception as e:
+        logger.exception("error sending zabbix data")
+        exception = e
 
         ############# collect more information if failed #############
         if test_response['failed']:

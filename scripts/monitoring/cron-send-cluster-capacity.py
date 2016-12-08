@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: expandtab:tabstop=4:shiftwidth=4
 '''
-  Send Openshift cluster capacity to Zagg
+  Send Openshift cluster capacity to MetricSender
 '''
 #
 #   Copyright 2016 Red Hat Inc.
@@ -25,7 +25,7 @@
 
 import argparse
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 import sqlite3
 import yaml
 from openshift_tools.conversions import to_bytes, to_milicores
@@ -35,7 +35,7 @@ class OpenshiftClusterCapacity(object):
 
     def __init__(self):
         self.args = None
-        self.zagg_sender = None
+        self.metric_sender = None
         self.ora = None
         self.sql_conn = None
         self.zbx_key_prefix = "openshift.master.cluster.compute_nodes."
@@ -44,8 +44,8 @@ class OpenshiftClusterCapacity(object):
         '''  Main function to run the check '''
 
         self.parse_args()
-        self.zagg_sender = ZaggSender(verbose=self.args.verbose,
-                                      debug=self.args.debug)
+        self.metric_sender = MetricSender(verbose=self.args.verbose,
+                                          debug=self.args.debug)
 
         master_cfg = []
         with open(self.args.master_config, 'r') as yml:
@@ -56,7 +56,7 @@ class OpenshiftClusterCapacity(object):
         self.cluster_capacity()
 
         if not self.args.dry_run:
-            self.zagg_sender.send_metrics()
+            self.metric_sender.send_metrics()
 
     def parse_args(self):
         ''' parse the args from the cli '''
@@ -314,8 +314,7 @@ class OpenshiftClusterCapacity(object):
 
         print "CPU Stats:"
         max_schedulable_cpu = self.get_compute_nodes_max_schedulable_cpu()
-        self.zagg_sender.add_zabbix_keys({zbx_key_max_schedulable_cpu:
-                                          max_schedulable_cpu})
+        self.metric_sender.add_metric({zbx_key_max_schedulable_cpu: max_schedulable_cpu})
 
         scheduled_cpu, scheduled_cpu_pct, unscheduled_cpu, unscheduled_cpu_pct = self.get_compute_nodes_scheduled_cpu()
         oversub_cpu_pct = self.get_oversub_cpu()
@@ -332,14 +331,11 @@ class OpenshiftClusterCapacity(object):
               "{:.2f}%".format(unscheduled_cpu_pct)
         print "  Percent oversubscribed CPU for compute nodes: \t\t" + \
               "{:.2f}%".format(oversub_cpu_pct)
-        self.zagg_sender.add_zabbix_keys({zbx_key_scheduled_cpu: scheduled_cpu})
-        self.zagg_sender.add_zabbix_keys({zbx_key_scheduled_cpu_pct:
-                                          int(scheduled_cpu_pct)})
-        self.zagg_sender.add_zabbix_keys({zbx_key_unscheduled_cpu: unscheduled_cpu})
-        self.zagg_sender.add_zabbix_keys({zbx_key_unscheduled_cpu_pct:
-                                          int(unscheduled_cpu_pct)})
-        self.zagg_sender.add_zabbix_keys({zbx_key_oversub_cpu_pct:
-                                          int(oversub_cpu_pct)})
+        self.metric_sender.add_metric({zbx_key_scheduled_cpu: scheduled_cpu})
+        self.metric_sender.add_metric({zbx_key_scheduled_cpu_pct: int(scheduled_cpu_pct)})
+        self.metric_sender.add_metric({zbx_key_unscheduled_cpu: unscheduled_cpu})
+        self.metric_sender.add_metric({zbx_key_unscheduled_cpu_pct: int(unscheduled_cpu_pct)})
+        self.metric_sender.add_metric({zbx_key_oversub_cpu_pct: int(oversub_cpu_pct)})
 
     def do_mem_stats(self):
         ''' gather and report memory statistics '''
@@ -353,8 +349,7 @@ class OpenshiftClusterCapacity(object):
 
         print "\nMemory Stats:"
         max_schedulable_mem = self.get_compute_nodes_max_schedulable_mem()
-        self.zagg_sender.add_zabbix_keys({zbx_key_max_schedulable_mem:
-                                          max_schedulable_mem})
+        self.metric_sender.add_metric({zbx_key_max_schedulable_mem: max_schedulable_mem})
 
         scheduled_mem, scheduled_mem_pct, unscheduled_mem, unscheduled_mem_pct = self.get_compute_nodes_scheduled_mem()
         oversub_mem_pct = self.get_oversub_mem()
@@ -370,14 +365,11 @@ class OpenshiftClusterCapacity(object):
               "{:.2f}%".format(unscheduled_mem_pct)
         print "  Percent oversubscribed mem for compute nodes: \t\t" + \
               "{:.2f}%".format(oversub_mem_pct)
-        self.zagg_sender.add_zabbix_keys({zbx_key_scheduled_mem: scheduled_mem})
-        self.zagg_sender.add_zabbix_keys({zbx_key_scheduled_mem_pct:
-                                          int(scheduled_mem_pct)})
-        self.zagg_sender.add_zabbix_keys({zbx_key_unscheduled_mem: unscheduled_mem})
-        self.zagg_sender.add_zabbix_keys({zbx_key_unscheduled_mem_pct:
-                                          int(unscheduled_mem_pct)})
-        self.zagg_sender.add_zabbix_keys({zbx_key_oversub_mem_pct:
-                                          int(oversub_mem_pct)})
+        self.metric_sender.add_metric({zbx_key_scheduled_mem: scheduled_mem})
+        self.metric_sender.add_metric({zbx_key_scheduled_mem_pct: int(scheduled_mem_pct)})
+        self.metric_sender.add_metric({zbx_key_unscheduled_mem: unscheduled_mem})
+        self.metric_sender.add_metric({zbx_key_unscheduled_mem_pct: int(unscheduled_mem_pct)})
+        self.metric_sender.add_metric({zbx_key_oversub_mem_pct: int(oversub_mem_pct)})
 
 
     def cluster_capacity(self):
@@ -401,7 +393,7 @@ class OpenshiftClusterCapacity(object):
 
         schedulable = self.how_many_schedulable(largest)
         print "  Number of max-size nodes schedulable:\t\t\t\t{}".format(schedulable)
-        self.zagg_sender.add_zabbix_keys({zbx_key_max_pods: schedulable})
+        self.metric_sender.add_metric({zbx_key_max_pods: schedulable})
 
 if __name__ == '__main__':
     OCC = OpenshiftClusterCapacity()
