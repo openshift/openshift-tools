@@ -13,7 +13,7 @@
 
 
 from docker import AutoVersionClient
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.monitoring.dockerutil import DockerUtil
 import os
 import yaml
@@ -52,7 +52,7 @@ class DockerContainerUsageCli(object):
 
         self.cli = AutoVersionClient(base_url='unix://var/run/docker.sock', timeout=120)
         self.docker_util = DockerUtil(self.cli)
-        self.zagg_sender = ZaggSender(verbose=True)
+        self.metric_sender = MetricSender(verbose=True)
 
     def parse_config(self):
         """ parse config file """
@@ -94,8 +94,7 @@ class DockerContainerUsageCli(object):
             formatted_ctr_name = self.format_ctr_name(ctr_name)
 
             # Add the container hostnames as macros for the dynamic item.
-            self.zagg_sender.add_zabbix_dynamic_item(ZBX_DOCKER_DISC_KEY, ZBX_DOCKER_DISC_MACRO,
-                                                     [formatted_ctr_name])
+            self.metric_sender.add_dynamic_metric(ZBX_DOCKER_DISC_KEY, ZBX_DOCKER_DISC_MACRO, [formatted_ctr_name])
             data = {
                 '%s[%s]' % (ZBX_CTR_CPU_USED_PCT_KEY, formatted_ctr_name): cpu_stats.used_pct,
                 '%s[%s]' % (ZBX_CTR_MEM_USED_KEY, formatted_ctr_name): mem_stats.used,
@@ -109,10 +108,10 @@ class DockerContainerUsageCli(object):
                 print "  %s: %s" % (k, v)
             print
 
-            self.zagg_sender.add_zabbix_keys(data)
+            self.metric_sender.add_metric(data)
 
         # Actually send the metrics
-        self.zagg_sender.send_metrics()
+        self.metric_sender.send_metrics()
 
 
 if __name__ == "__main__":
