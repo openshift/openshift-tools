@@ -43,6 +43,12 @@
       dest: /etc/openshift_tools/zagg_client.yaml
       mode: "644"
 
+  - name: Generate the metric_sender.yaml config file
+    copy:
+      content: "{{ metric_sender_config | to_nice_yaml }}"
+      dest: /etc/openshift_tools/metric_sender.yaml
+      mode: "644"
+
   - name: Check whether /etc/origin exists
     stat:
       path: /etc/origin
