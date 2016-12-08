@@ -14,7 +14,7 @@ from subprocess import CalledProcessError
 # Reason: disable pylint import-error because our libs aren't loaded on jenkins.
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 
 class OVS(object):
     ''' Class to hold details of finding and removing bad OVS rules '''
@@ -121,7 +121,7 @@ ZBX_KEY = "openshift.node.ovs.stray.rules"
 
 if __name__ == "__main__":
     ovs_fixer = OVS()
-    zgs = ZaggSender()
+    ms = MetricSender()
 
     # Dev says rules before ports since OpenShift will set up ports, then rules
     ovs_fixer.get_rule_list()
@@ -130,8 +130,8 @@ if __name__ == "__main__":
     ovs_bad_rules = ovs_fixer.find_bad_rules()
 
     # Report bad/stray rules count before removing
-    zgs.add_zabbix_keys({ZBX_KEY: len(ovs_bad_rules)})
-    zgs.send_metrics()
+    ms.add_metric({ZBX_KEY: len(ovs_bad_rules)})
+    ms.send_metrics()
 
     print "Good ports: {0}".format(str(ovs_ports))
     print "Bad rules: {0}".format(str(ovs_bad_rules))
@@ -145,5 +145,5 @@ if __name__ == "__main__":
     print "Bad rules after removals: {0}".format(str(ovs_bad_rules))
 
     # Report new bad/stray rule count after removal
-    zgs.add_zabbix_keys({ZBX_KEY: len(ovs_bad_rules)})
-    zgs.send_metrics()
+    ms.add_metric({ZBX_KEY: len(ovs_bad_rules)})
+    ms.send_metrics()
