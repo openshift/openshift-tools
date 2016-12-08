@@ -1,0 +1,14 @@
+---
+# Install ansible client
+
+- name: Install Ansible
+  action: "{{ ansible_pkg_mgr }} name=ansible state=present"
+  when: not openshift.common.is_containerized | bool
+
+- name: modify ansible.cfg
+  lineinfile:
+    dest: /etc/ansible/ansible.cfg
+    backrefs: yes
+    regexp: "^#?({{ item.option }})( *)="
+    line: '\1\2= {{ item.value }}'
+  with_items: "{{ ans_config }}"

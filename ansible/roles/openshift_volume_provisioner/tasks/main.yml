@@ -1,0 +1,84 @@
+---
+- name: Ensure that osvp_provisioner_params is set
+  fail:
+    msg:  "Please ensure that 'osvp_provisioner_params' is set!"
+  with_dict: "{{ osvp_provisioner_params }}"
+  when: osvp_provisioner_params is undefined
+
+- name: install the openshift-scripts-online
+  yum:
+    name: openshift-scripts-online
+    state: installed
+
+- name: ensure the template file from openshift-scripts-online has metadate.name. This should not be needed in the future
+  yedit:
+    src: /etc/openshift-online/templates/volume-provisioner.yaml
+    key: metadata
+    value:
+      name: online-volume-provisioner
+
+# I tried to add a restart handler to this call.  But, when the handler was enabled
+#  the restart of services killed the template deploy. I then added the restarted
+#  as a step right below this one, if needed.  This seems to work much better.
+- name: Configure the master config file with parameters needed for the provisioner pod
+  yedit:
+    src: /etc/origin/master/master-config.yaml
+    key: "{{ item.key }}"
+    value: "{{ item.value }}"
+  #notify:
+  #- restart openshift master services
+  with_items:
+  - key: volumeConfig.dynamicProvisioningEnabled
+    value: False
+  - key: kubernetesMasterConfig.controllerArguments.pvclaimbinder-sync-period
+    value:
+    - 30s
+  register: master_config_changes
+
+- name: restart openshift master services
+  service:
+    name: "{{ item[1] }}"
+    state: restarted
+  delegate_to: "{{ item[0] }}"
+  with_nested:
+  - "{{ osvp_master_nodes }}"
+  - [ 'atomic-openshift-master-api', 'atomic-openshift-master-controllers' ]
+  run_once: true
+  when: master_config_changes.changed
+
+- name: pause 10 seconds when services are restarted
+  pause:
+    seconds: 10
+  when: master_config_changes.changed
+
+- name: create project
+  oadm_project:
+    name: openshift-infra
+    node_selector: type=infra
+    display_name: openshift-infra
+    description: Openshift Infra Pods
+  register: projectout
+  run_once: true
+- debug: var=projectout
+
+- name: create volume provisioner deployer template
+  oc_obj:
+    state: present
+    namespace: openshift-infra
+    name: online-volume-provisioner
+    kind: template
+    files:
+    - "/etc/openshift-online/templates/volume-provisioner.yaml"
+  register: templateout
+  run_once: true
+#- debug: var=templateout
+
+- name: process the cloud volume provisioner template with variables
+  oc_process:
+    namespace: openshift-infra
+    template_name: online-volume-provisioner
+    create: True
+    params: "{{ osvp_provisioner_params }}"
+  register: processout
+  run_once: true
+- debug: var=processout

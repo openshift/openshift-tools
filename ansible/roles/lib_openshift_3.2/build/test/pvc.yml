@@ -1,0 +1,41 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: "oo_clusterid_opstest:&oo_master_primary"
+  gather_facts: no
+  user: root
+  tasks:
+  - name: get pvc
+    oc_pvc:
+      state: list
+      name: test
+      namespace: default
+    register: pvcout
+  - debug: var=pvcout
+
+  - name: delete pvc
+    oc_pvc:
+      state: absent
+      name: test
+      namespace: default
+    register: pvcout
+  - debug: var=pvcout
+
+  - name: create pvc
+    oc_pvc:
+      name: test
+      namespace: default
+      access_modes:
+      - ReadWriteOnce
+      volume_capacity: 1G
+    register: pvcout
+  - debug: var=pvcout
+
+  - name: create pvc
+    oc_pvc:
+      name: test
+      namespace: default
+      access_modes:
+      - ReadWriteOnce
+      volume_capacity: 1G
+    register: pvcout
+  - debug: var=pvcout

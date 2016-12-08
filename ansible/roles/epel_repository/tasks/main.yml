@@ -1,0 +1,19 @@
+---
+# tasks file for epel_repository
+- name: Check if epel-release is installed
+  repoquery:
+    name: epel-release
+    query_type: installed
+  register: repoquery_epel
+
+- name: debug
+  debug:
+    msg: "{{ repoquery_epel }}"
+
+- name: Install EPEL Repo RPM
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+  when: not repoquery_epel.results.package_found

@@ -1,0 +1,28 @@
+= Zabbix web Docker container
+
+This container runs the zabbix web ui.
+
+== Setup
+See https://github.com/openshift/openshift-tools/blob/prod/docker/README.adoc#setup[general setup].
+
+Nothing additional needs to be setup for this container.
+
+== Build
+
+To build this container, simply execute the build script.
+
+.Example:
+[source,bash]
+----
+./[rhel7|centos7]/build.sh
+----
+
+== Run
+
+To run this container, simply execute the run script.
+
+.Example:
+[source,bash]
+----
+./[rhel7|centos7]/run.sh
+----

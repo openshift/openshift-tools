@@ -1,0 +1,112 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: "oo_clusterid_opstest:&oo_version_3:&oo_master_primary"
+  gather_facts: no
+  user: root
+
+  vars:
+
+  post_tasks:
+  - name: delete test user (so future tests work)
+    oc_user:
+      state: absent
+      username: "jdiaz@redhat.com"
+
+  - name: get user list
+    oc_user:
+      state: list
+      username: 'jdiaz@redhat.com'
+    register: user_out
+  #- debug: var=user_out
+  - name: assert user 'jdiaz@redhat.com' (test user) does not exist
+    assert:
+      that: user_out['results'][0] == {}
+
+  - name: get all list
+    oc_user:
+      state: list
+    register: user_out
+  #- debug: var=user_out
+
+  - name: add test user
+    oc_user:
+      state: present
+      username: 'jdiaz@redhat.com'
+      full_name: "joel diaz"
+    register: user_out
+  #- debug: var=user_out
+  - name: assert result set to changed
+    assert:
+      that: user_out['changed'] == True
+
+  - name: check add test user
+    oc_user:
+      state: list
+      username: 'jdiaz@redhat.com'
+    register: user_out
+  #- debug: var=user_out
+  - name: assert user actually added
+    assert:
+      that: user_out['results'][0]['metadata']['name'] == 'jdiaz@redhat.com' and
+            user_out['results'][0]['fullName'] == 'joel diaz'
+
+  - name: re-add test user
+    oc_user:
+      state: present
+      username: 'jdiaz@redhat.com'
+      full_name: "joel diaz"
+    register: user_out
+  #- debug: var=user_out
+  - name: assert re-add result set to not changed
+    assert:
+      that: user_out['changed'] == False
+
+  - name: modify existing user
+    oc_user:
+      state: present
+      username: 'jdiaz@redhat.com'
+      full_name: "Joel Diaz"
+    register: user_out
+  #- debug: var=user_out
+  - name: assert modify existing user result set to changed
+    assert:
+      that: user_out['changed'] == True
+
+  - name: check modify test user
+    oc_user:
+      state: list
+      username: 'jdiaz@redhat.com'
+    register: user_out
+  #- debug: var=user_out
+  - name: assert modification successful
+    assert:
+      that: user_out['results'][0]['metadata']['name'] == 'jdiaz@redhat.com' and
+            user_out['results'][0]['fullName'] == 'Joel Diaz'
+
+  - name: delete test user
+    oc_user:
+      state: absent
+      username: "jdiaz@redhat.com"
+    register: user_out
+  - name: assert delete marked changed
+    assert:
+      that: user_out['changed'] == True
+
+  - name: check delete user
+    oc_user:
+      state: list
+      username: 'jdiaz@redhat.com'
+    register: user_out
+  #- debug: var=user_out
+  - name: assert deletion successful
+    assert:
+      that: user_out['results'][0] == {}
+
+  - name: re-delete test user
+    oc_user:
+      state: absent
+      username: "jdiaz@redhat.com"
+    register: user_out
+  - name: check re-delete marked not changed
+    assert:
+      that: user_out['changed'] == False

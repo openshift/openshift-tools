@@ -1,7 +1,7 @@
 # vim: expandtab:tabstop=4:shiftwidth=4
 
 #
-#   Copyright 2015 Red Hat Inc.
+#   Copyright 2016 Red Hat Inc.
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -17,12 +17,33 @@
 #
 
 """simplezabbix Module
-The purpose of this module is to give a simple interface into zabbix using the
-Ansible Runner and the openshift-ansible zbxapi module.
+The purpose of this module is to give a simple interface into zabbix utilizing
+the existing Ansible zabbix modules.
 """
 
-import ansible.runner
 import json
+from collections import namedtuple
+from ansible.parsing.dataloader import DataLoader
+from ansible.vars import VariableManager
+from ansible.inventory import Inventory
+from ansible.playbook.play import Play
+from ansible.executor.task_queue_manager import TaskQueueManager
+from ansible.plugins.callback import CallbackBase
+
+
+class ResultsCallback(CallbackBase):
+    ''' This class is simply a place to receive the ansible playbook
+        run results '''
+    def __init__(self):
+        super(ResultsCallback, self).__init__()
+        self.result = None
+        self.raw_result = None
+    def v2_runner_on_ok(self, result):
+        ''' Store the result of the play '''
+        self.result = result
+        # want to store the raw json response details
+        # pylint: disable=protected-access
+        self.raw_result = result._result
 
 class InputException(Exception):
     """Used when the input for an operation isn't what is expected.
@@ -35,7 +56,7 @@ class ResultsException(Exception):
     pass
 
 class SimpleZabbixRaw(object):
-    """A raw interface into the zbxapi and ansible runner calls.
+    """A raw interface into the zbxapi using the Ansible Python API.
 
     The purpose of this module is to be a lower level api. It returns exactly
     what ansible returns (no processing done, no evaluations made).
@@ -68,11 +89,41 @@ class SimpleZabbixRaw(object):
         Returns:
             The raw ansible results dictionary.
 
-            {'contacted': {'localhost': {u'changed': True,
-                                         'invocation': {'module_args': '', 'module_name': 'zbx_host'},
-                                         u'results': {u'hostids': [u'10093']},
-                                         u'state': u'present'}},
-             'dark': {}}
+        {
+            "invocation": {
+                "module_name": "zbx_host",
+                "module_args": {
+                    "hostgroup_names": [
+                        "Linux servers"
+                    ],
+                    "zbx_user": "Admin",
+                    "name": "9597190206ab",
+                    "template_names": [
+                        "Template Heartbeat",
+                        "Template Zagg Server"
+                    ],
+                    "state": "present",
+                    ...
+                }
+            },
+            "state": "present",
+            "changed": false,
+            "results": {
+                ...
+                "hostid": "10098",
+                "name": "9597190206ab",
+                "parentTemplates": [
+                    {
+                        "templateid": "10086"
+                    },
+                    {
+                        "templateid": "10095"
+                    }
+                ],
+                ...
+            },
+            "_ansible_no_log": false
+        }
 
         """
         if not interfaces:
@@ -99,6 +150,7 @@ class SimpleZabbixRaw(object):
         }
 
         results = self._run_ansible(args)
+
         return results
 
     def ensure_hostgroup_exists(self, name):
@@ -110,14 +162,25 @@ class SimpleZabbixRaw(object):
         Returns:
             The raw ansible results dictionary.
 
-            {'contacted': {'localhost': {u'changed': False,
-                                         'invocation': {'module_args': '', 'module_name': 'zbx_hostgroup'},
-                                         u'results': {u'flags': u'0',
-                                                      u'groupid': u'2',
-                                                      u'internal': u'0',
-                                                      u'name': u'Linux servers'},
-                                         u'state': u'present'}},
-             'dark': {}}
+        {
+            "invocation": {
+                "module_name": "zbx_hostgroup",
+                "module_args": {
+                    "zbx_user": "Admin",
+                    "name": "Linux servers",
+                    ...
+                }
+            },
+            "state": "present",
+            "changed": false,
+            "results": {
+                "internal": "0",
+                "flags": "0",
+                "groupid": "2",
+                "name": "Linux servers"
+            },
+            "_ansible_no_log": false
+        }
 
         """
         args = {
@@ -129,6 +192,7 @@ class SimpleZabbixRaw(object):
         }
 
         results = self._run_ansible(args)
+
         return results
 
     def ensure_template_exists(self, name):
@@ -140,20 +204,32 @@ class SimpleZabbixRaw(object):
         Returns:
             The raw ansible results dictionary.
 
-            {'contacted': {'localhost': {u'changed': False,
-                             'invocation': {'module_args': '', 'module_name': 'zbx_template'},
-                             u'results': [
-                             "results": [{
-                                 "jsonrpc": "2.0",
-                                 "result": {
-                                     "hostids": [
-                                         "10112"
-                                     ]
-                                 },
-                                 "id": 1
-                             }]
-                             u'state': u'present'}},
-            'dark': {}}
+        {
+            "invocation": {
+                "module_name": "zbx_template",
+                "module_args": {
+                    "zbx_user": "Admin",
+                    "name": "Template Zagg Server",
+                    ...
+                }
+            },
+            "results": [
+                {
+                    "available": "0",
+                    "groups": [
+                        {
+                            "groupid": "1"
+                        }
+                    ],
+                    ...
+                    "templateid": "10095",
+                    "name": "Template Zagg Server",
+                    ...
+                }
+            ],
+            "_ansible_no_log": false
+        }
+
         """
         args = {
             'zbx_server': self.url,
@@ -164,31 +240,71 @@ class SimpleZabbixRaw(object):
         }
 
         results = self._run_ansible(args)
+
         return results
 
     def _run_ansible(self, args):
-        """Actually make the call to the ansible runner."""
+        """Actually build an run an ansible play and return the results"""
         zclass = args.pop('zbx_class')
-        results = ansible.runner.Runner(
-            forks=1,
-            pattern=self.pattern,
-            transport='local',
-            module_name=zclass,
-            complex_args=args,
-        ).run()
 
-        if not results:
+        # The leadup to the TaskQueueManager() call below is
+        # copy pasted from Ansible's example:
+        # https://docs.ansible.com/ansible/developing_api.html#python-api-2-0
+        # pylint: disable=invalid-name
+        Options = namedtuple('Options', ['connection', 'module_path',
+                                         'forks', 'become', 'become_method',
+                                         'become_user', 'check'])
+        variable_manager = VariableManager()
+        loader = DataLoader()
+        options = Options(connection='local', module_path=None,
+                          forks=1, become=None,
+                          become_method=None, become_user=None,
+                          check=False)
+        passwords = dict(vault_pass='secret')
+
+        results_callback = ResultsCallback()
+
+        inventory = Inventory(loader=loader, variable_manager=variable_manager)
+
+        variable_manager.set_inventory(inventory)
+
+        play_source = dict(name="Ansible Play",
+                           hosts=self.pattern,
+                           gather_facts='no',
+                           tasks=[
+                               dict(action=dict(module=zclass, args=args)),
+                           ]
+                          )
+
+        play = Play().load(play_source, variable_manager=variable_manager,
+                           loader=loader)
+
+        tqm = None
+        try:
+            tqm = TaskQueueManager(inventory=inventory,
+                                   variable_manager=variable_manager,
+                                   loader=loader,
+                                   options=options,
+                                   passwords=passwords,
+                                   stdout_callback=results_callback
+                                  )
+            return_code = tqm.run(play)
+        finally:
+            if tqm is not None:
+                tqm.cleanup()
+
+        if return_code != 0:
             raise ResultsException("Ansible module run failed, no results given.")
 
-        if not results['contacted']:
+        if results_callback.result.is_unreachable():
             message = "Ansible module run failed: module output:\n%s" % \
-                      json.dumps(results, indent=4)
+                      json.dumps(results_callback.raw_result, indent=4)
             raise ResultsException(message)
 
-        if results['contacted'].has_key('localhost') and results['contacted']['localhost'].has_key('msg'):
-            raise ResultsException(results['contacted']['localhost'])
+        if results_callback.result.is_failed():
+            raise ResultsException(results_callback.raw_result)
 
-        return results
+        return results_callback.raw_result
 
 class SimpleZabbix(object):
     """A simple interface into the zbxapi and ansible runner calls.
@@ -233,14 +349,15 @@ class SimpleZabbix(object):
         result = self.raw.ensure_host_exists(name, templates, hostgroups)
 
         # Results can be a list of results or can be a dictionary of the created object
-        if result['contacted'][self.raw.pattern]['results']:
+        if result['results']:
            # If its a list, does the first result have a hostid?
-            if isinstance(result['contacted'][self.raw.pattern]['results'], list):
-                if result['contacted'][self.raw.pattern]['results'][0]['hostid']:
+            if isinstance(result['results'], list):
+                if result['results'][0]['hostid']:
                     return True
            # If its a dict, does the result have hostids?
-            if isinstance(result['contacted'][self.raw.pattern]['results'], dict):
-                if result['contacted'][self.raw.pattern]['results'].has_key('hostids'):
+            if isinstance(result['results'], dict):
+                if result['results'].has_key('hostids') or \
+                   result['results'].has_key('hostid'):
                     return True
 
 
@@ -269,16 +386,16 @@ class SimpleZabbix(object):
         result = self.raw.ensure_hostgroup_exists(name)
 
         # Results can be a list of results or can be a dictionary of the created object
-        if result['contacted'][self.raw.pattern]['results']:
+        if result['results']:
            # If its a list, does the first result have a groupid?
-            if isinstance(result['contacted'][self.raw.pattern]['results'], list):
-                if result['contacted'][self.raw.pattern]['results'][0]['groupid']:
+            if isinstance(result['results'], list):
+                if result['results'][0]['groupid']:
                     return True
            # If its a dict, does the result have groupids?
-            if isinstance(result['contacted'][self.raw.pattern]['results'], dict):
-                if result['contacted'][self.raw.pattern]['results'].has_key('groupid'):
+            if isinstance(result['results'], dict):
+                if result['results'].has_key('groupid') or \
+                   result['results'].has_key('groupids'):
                     return True
-
 
         return False # something went wrong
 
@@ -305,14 +422,15 @@ class SimpleZabbix(object):
         result = self.raw.ensure_template_exists(name)
 
         # Results can be a list of results or can be a dictionary of the created object
-        if result['contacted'][self.raw.pattern]['results']:
+        if result['results']:
            # If its a list, does the first result have a templateid?
-            if isinstance(result['contacted'][self.raw.pattern]['results'], list):
-                if result['contacted'][self.raw.pattern]['results'][0]['templateid']:
+            if isinstance(result['results'], list):
+                if result['results'][0]['templateid']:
                     return True
            # If its a dict, does the result have templateids?
-            if isinstance(result['contacted'][self.raw.pattern]['results'], dict):
-                if result['contacted'][self.raw.pattern]['results'].has_key('templateids'):
+            if isinstance(result['results'], dict):
+                if result['results'].has_key('templateids') or \
+                   result['results'].has_key('templateid'):
                     return True
 
         return False # something went wrong

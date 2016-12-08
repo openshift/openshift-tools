@@ -1,0 +1,26 @@
+---
+- name: Ensure docker is installed
+  action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
+  with_items:
+  - docker
+  #- docker-1.9.1
+
+- name: copy the docker-storage-setup config file
+  template:
+    src: docker-storage-setup.j2
+    dest: /etc/sysconfig/docker-storage-setup
+    owner: root
+    group: root
+    mode: 0664
+
+- name: Ensure docker is started
+  service:
+    name: docker
+    state: started
+
+- name: docker info
+  command: docker info
+  register: dockerinfo
+
+- debug:
+    msg: "{{ dockerinfo }}"

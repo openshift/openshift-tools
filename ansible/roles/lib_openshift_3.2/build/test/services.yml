@@ -1,0 +1,88 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: "oo_clusterid_opstest:&oo_master_primary"
+  gather_facts: no
+  user: root
+
+  roles:
+  - roles/lib_yaml_editor
+
+  tasks:
+#  - copy:
+#      dest: "/tmp/{{ item }}"
+#      src: "files/{{ item }}"
+#    with_items:
+#    - router.json
+#    - router-mod.json
+
+  - name: list services
+    oc_service:
+      state: list
+      namespace: default
+      name: router
+    register: service_out
+
+  - debug:
+      var: service_out.results
+
+  - name: absent service
+    oc_service:
+      state: absent
+      namespace: default
+      name: router
+    register: service_out
+
+  - debug:
+      var: service_out
+
+  - name: present service update
+    oc_service:
+      state: present
+      namespace: default
+      name: router
+      ports:
+      - name: 81-tcp
+        port: 81
+        protocol: TCP
+        targetPort: 81
+      selector:
+        router: router
+      session_affinity: None
+    register: service_out
+
+  - debug:
+      var: service_out
+
+  - name: present service create
+    oc_service:
+      state: present
+      namespace: default
+      name: router
+      ports:
+      - name: 80-tcp
+        port: 80
+        protocol: TCP
+        targetPort: 80
+      selector:
+        router: router
+    register: service_out
+
+  - debug:
+      var: service_out
+
+  - name: present service create
+    oc_service:
+      state: present
+      namespace: default
+      name: router
+      ports:
+      - name: 80-tcp
+        port: 80
+        protocol: TCP
+        targetPort: 80
+      selector:
+        router: router
+    register: service_out
+
+  - debug:
+      var: service_out

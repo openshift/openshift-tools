@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Web Services
 Name:          openshift-tools-web
-Version:       0.0.10
+Version:       0.0.17
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -18,11 +18,15 @@ OpenShift Tools Web Services
 %install
 
 # zagg install
-mkdir -p %{buildroot}/opt/rh/zagg
-cp -ap zagg %{buildroot}/opt/rh/
+mkdir -p %{buildroot}/var/www/zagg
+cp -ap zagg %{buildroot}/var/www/
 
 mkdir -p %{buildroot}/etc/httpd/conf.d/
 cp -p zagg-httpd.conf %{buildroot}/etc/httpd/conf.d/
+
+# simplesamlphp-modules install
+mkdir -p %{buildroot}/usr/share/simplesamlphp/modules
+cp -a simplesaml_mods/* %{buildroot}/usr/share/simplesamlphp/modules/
 
 
 # ----------------------------------------------------------------------------------
@@ -30,7 +34,7 @@ cp -p zagg-httpd.conf %{buildroot}/etc/httpd/conf.d/
 # ----------------------------------------------------------------------------------
 %package zagg
 Summary:       OpenShift Tools Zagg REST API Package
-Requires:      python2,python-django,httpd
+Requires:      python2,python-flask,httpd,python-openshift-tools-monitoring-zagg
 BuildRequires: python2-devel
 BuildArch:     noarch
 
@@ -38,10 +42,56 @@ BuildArch:     noarch
 OpenShift Tools Zagg REST API
 
 %files zagg
-/opt/rh/zagg/
-%config(noreplace) /etc/httpd/conf.d/*.conf
+/var/www/zagg
+%config(noreplace) /etc/httpd/conf.d/zagg-httpd.conf
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-web-simplesamlphp-modules subpackage
+# ----------------------------------------------------------------------------------
+%package simplesamlphp-modules
+Summary:       Auth and theme modules for SimpleSAMLphp
+Requires:      php,oso-simplesamlphp
+BuildArch:     noarch
+
+%description simplesamlphp-modules
+Custom SimpleSAMLphp modules for oso SSO application
+
+%files simplesamlphp-modules
+/usr/share/simplesamlphp/modules/*
 
 %changelog
+* Mon Oct 24 2016 Wesley Hearn <whearn@redhat.com> 0.0.17-1
+- SSO: move simpleSAML modules to rpm (joesmith@redhat.com)
+
+* Mon Sep 26 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.16-1
+- zagg web writes to wrong redis list (ihorvath@redhat.com)
+
+* Thu Sep 22 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.15-1
+- zagg uses redis (ihorvath@redhat.com)
+
+* Thu Feb 25 2016 Joel Diaz <jdiaz@redhat.com> 0.0.14-1
+- place wsgi socket file in a place we can write to (jdiaz@redhat.com)
+
+* Thu Feb 25 2016 Joel Diaz <jdiaz@redhat.com> 0.0.13-1
+- move from django zagg to flask (with apache mpm-worker) (jdiaz@redhat.com)
+- Revert "Automatic commit of package [openshift-tools-web] release
+  [0.0.12-1]." (sten@redhat.com)
+- Automatic commit of package [openshift-tools-web] release [0.0.12-1].
+  (sten@redhat.com)
+
+* Thu Feb 25 2016 Joel Diaz <jdiaz@redhat.com>
+- move from django zagg to flask (with apache mpm-worker) (jdiaz@redhat.com)
+- Revert "Automatic commit of package [openshift-tools-web] release
+  [0.0.12-1]." (sten@redhat.com)
+- Automatic commit of package [openshift-tools-web] release [0.0.12-1].
+  (sten@redhat.com)
+
+* Wed Jan 27 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.11-1
+- Revert "Automatic commit of package [openshift-tools-web] release
+  [0.0.11-1]." (gburges@use-ctl1.ops.rhcloud.com)
+- Automatic commit of package [openshift-tools-web] release [0.0.11-1].
+  (gburges@use-ctl1.ops.rhcloud.com)
+
 * Wed Sep 30 2015 Kenny Woodson <kwoodson@redhat.com> 0.0.10-1
 - 
 

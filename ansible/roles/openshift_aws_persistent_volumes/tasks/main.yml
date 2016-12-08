@@ -1,0 +1,105 @@
+---
+- fail:
+    msg: "Value {{ item }} is not set!"
+  with_items:
+  - "{{ osapv_volumes }}"
+  when: item is undefined
+  run_once: true
+
+- name: Change restriced scc fsgroup to MustRunAs
+  run_once: true
+  oc_edit:
+    kind: scc
+    name: restricted
+    content:
+      fsGroup:
+        type: MustRunAs
+
+- name: get aws info from instances
+  run_once: true
+  set_fact:
+    osapv_region: "{{ ec2_region }}"
+    osapv_zone: "{{ ec2_placement }}"
+    osapv_clusterid: "{{ oo_clusterid }}"
+    # filter_plugins per role is not supported in 1.9, but works in 2.0.
+    #  In 2.0, this should work, the jinja part should be removed
+    #osapv_exploded_volumes: "{{ osapv_volumes | explode_size_count_array }}"
+    osapv_exploded_volumes: |
+      {% set rval = [] %}
+      {% for array_item in osapv_volumes: %}
+      {%     for i in range(1, (array_item["count"]|int) + 1): %}
+      {%        set _ = rval.append({"size": (array_item["size"]|int), "name": "%dg-%d" % ((array_item['size']|int), i)}) %}
+      {%     endfor %}
+      {% endfor %}
+      {{- rval -}}
+
+- debug:
+    msg: "{{ item }}"
+  with_items:
+  - "{{ osapv_region }}"
+  - "{{ osapv_zone }}"
+  - "{{ osapv_exploded_volumes }}"
+  run_once: true
+
+- name: Create AWS persistent volumes {{ osapv_name }}
+  delegate_to: localhost
+  oo_ec2_vol20:
+    state: present
+    region: "{{ osapv_region }}"
+    zone: "{{ osapv_zone }}"
+    volume_type: gp2
+    volume_size: "{{ item.size }}"
+    name: "pv-{{ osapv_clusterid }}-{{ item.name }}"
+    aws_access_key: "{{ osapv_aws_access_key }}"
+    aws_secret_key: "{{ osapv_aws_secret_key }}"
+    encrypted: "{{ osapv_encrypted | bool | default(False) }}"
+    kms_alias: "{{ osapv_kms_alias | default(None) }}"
+  with_items:  "{{ osapv_exploded_volumes }}"
+  register: volumes
+  run_once: true
+
+- name: Tag newly created volumes
+  delegate_to: localhost
+  ec2_tag:
+    region: "{{ osapv_region }}"
+    resource: "{{ item.volume.id }}"
+    aws_access_key: "{{ osapv_aws_access_key }}"
+    aws_secret_key: "{{ osapv_aws_secret_key }}"
+    tags:
+      snapshot: daily
+      purpose: customer persistent volume
+  when: item.changed
+  with_items: "{{ volumes.results }}"
+  run_once: true
+
+- name: Create pv file from template
+  template:
+    src: ebs_persistent_volume.yml.j2
+    dest: "/tmp/{{ item.volume.tags['Name'] }}.yml"
+    owner: root
+    mode: '0600'
+  when: item.changed
+  with_items: "{{ volumes.results }}"
+  run_once: true
+  register: pv_templates
+
+- name: "Create PV in Openshift with oc"
+  shell: "KUBECONFIG=/etc/origin/master/admin.kubeconfig oc create -f /tmp/{{ item.volume.tags['Name'] }}.yml"
+  when: item.changed
+  with_items: "{{ volumes.results }}"
+  register: oc_output
+  run_once: true
+
+- name: show oc output
+  debug:
+    msg: "{{ oc_output }}"
+  when: oc_output.changed
+  run_once: true
+
+- name: remove pv template file
+  file:
+    state: absent
+    path: "{{ item.dest }}"
+  when: item.changed
+  with_items: "{{ pv_templates.results }}"
+  run_once: true

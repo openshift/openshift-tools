@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+  - /root/default_vars.yml
+  tasks:
+  - name: placeholder playbook
+    debug:
+      msg: "Just a placeholder for future ansible playbook steps to run on startup"

@@ -1,0 +1,7 @@
+---
+# handlers file for openshift_dedicated_admin
+- name: restart openshift-dedicated-role
+  service:
+    name: openshift-dedicated-role
+    state: restarted
+  when: oda_service_started | bool

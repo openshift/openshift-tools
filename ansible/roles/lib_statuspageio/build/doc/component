@@ -1,0 +1,99 @@
+# pylint: skip-file
+
+# vim: expandtab:tabstop=4:shiftwidth=4
+
+#   Copyright 2016 Red Hat Inc.
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#  Purpose: An ansible module to communicate with statuspageio.
+
+DOCUMENTATION = '''
+module: statuspage_components
+short_description: Create, modify, and idempotently manage statuspage components
+description:
+  - Manage statuspage components
+options:
+  api_key:
+    description:
+    - statuspage api key
+    required: True
+    default: os.environ.get('STATUSPAGE_API_KEY', '')
+    aliases: []
+  page_id:
+    description:
+    - The statuspage page
+    required: True
+    default: None
+    aliases: []
+  org_id:
+    description:
+    - Organization id for the user.  Required when modifying users.
+    required: false
+    default: None
+    aliases: []
+  state:
+    description:
+    - Whether to create, update, delete, or list the desired object
+    required: True
+    default: present
+    aliases: []
+  name:
+    description:
+    - Name of the component
+    required: false
+    default: None
+    aliases: []
+  status:
+    description:
+    - The status of the incident.
+    choices: ['operational', 'degraged_performance', 'partial_outage', 'major_outage']
+    required: false
+    default: None
+    aliases: []
+  description:
+    description:
+    - The componnent description
+    required: false
+    default: None
+    aliases: []
+  group_name:
+    description:
+    - The name of the group this component is a part of
+    required: false
+    default: None
+    aliases: []
+'''
+
+EXAMPLES = '''
+# list indicents
+  - name: list components
+    statuspage_component:
+      state: list
+      api_key: "{{ api_key }}"
+      org_id: "{{ org_id }}"
+      page_id: "{{ page_id }}"
+    register: incout
+
+# create a component
+  - name: create a component
+    statuspage_component:
+      state: present
+      api_key: "{{ api_key }}"
+      org_id: "{{ org_id }}"
+      page_id: "{{ page_id }}"
+      name: DNS
+      status: operational
+    register: incout
+  - debug: var=incout
+'''

@@ -1,0 +1,66 @@
+---
+
+# Default to False before attempting upgrade
+- set_fact: 
+    wanted_version_installed: False
+  when: "{{ update_needed == True }}" 
+
+- name: Upgrade atomic-openshift-master and dependencies
+  command: "yum -y upgrade atomic-openshift-{{ version_wanted }} atomic-openshift-clients-{{ version_wanted }} atomic-openshift-master-{{ version_wanted }} atomic-openshift-node-{{ version_wanted }} tuned-profiles-atomic-openshift-node-{{ version_wanted }} atomic-openshift-sdn-ovs-{{ version_wanted }}"
+  when: "{{ update_needed == True }}" 
+
+- name: Check if update is successful
+  command: "rpm -qa atomic-openshift"
+  register: post_upgrade
+  changed_when: False
+
+# ansible will return a '17' if a match is found. '-1' means 'not found'
+- name: Set wanted_version_installed=True if upgrade succeeded
+  set_fact: 
+    wanted_version_installed: True
+  when: "{{ post_upgrade.stdout.find(version_wanted) != -1 }}"
+
+- name: Upgrade failed, so try a downgrade
+  command: "yum -y downgrade atomic-openshift-{{ version_wanted }} atomic-openshift-clients-{{ version_wanted }} atomic-openshift-master-{{ version_wanted }} atomic-openshift-node-{{ version_wanted }} tuned-profiles-atomic-openshift-node-{{ version_wanted }} atomic-openshift-sdn-ovs-{{ version_wanted }}"
+  when: "{{ wanted_version_installed == False }}"
+
+- name: Check if downgrade is successful
+  command: "rpm -qa atomic-openshift"
+  register: post_downgrade
+  changed_when: False
+
+# ansible will return a '17' if a match is found. '-1' means 'not found'
+- name: Set wanted_version_installed=True if downgrade succeeded
+  set_fact: 
+    wanted_version_installed: True
+  when: "{{ post_downgrade.stdout.find(version_wanted) != -1 }}"
+
+- name: Alert if update is not successful, but continue
+  debug:
+    msg: "[WARNING] The desired rpm version does not match installed version! Upgrade and downgrade failed!"
+  when: "{{ wanted_version_installed == False }}"
+  failed_when: True
+  ignore_errors: True
+
+# Note: at this point, we will have installed a new version of
+# all atomic-openshift* packages. But we do *not* want to restart the node service yet!
+# Restarting the node service must be done after the master's roles are reconciled.
+# Otherwise the node service may fail to restart.
+- name: Restart master services if upgrade was successful
+  service:
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+  - atomic-openshift-master-api
+  - atomic-openshift-master-controllers
+  when: "{{ update_needed == True and wanted_version_installed == True }}"
+
+- name: Ensure master services are running
+  service:
+    name: "{{ item }}"
+    state: running
+  with_items:
+  - atomic-openshift-master-api
+  - atomic-openshift-master-controllers
+  when: "{{ update_needed == True }}" 
+

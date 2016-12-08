@@ -16,23 +16,21 @@ objects:
         name: oso-rhel7-ops-base:latest
     resources: {}
     source:
-      contextDir: docker/oso-rhel7-ops-base
+      contextDir: docker/oso-ops-base/rhel7
       git:
         uri: https://github.com/openshift/openshift-tools
       type: Git
     strategy:
       dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: 'false'
         from:
           kind: ImageStreamTag
-          name: rhel7:latest
+          name: rhel7:7.2-35
+        noCache: true
       type: Docker
     triggers:
-    - github:
-        secret: omDbv56tz1WfjnJXBd8-
-      type: GitHub
-    - generic:
-        secret: omZTVJ1ypJZG6scTRTXB
-      type: Generic
     - imageChange: {}
       type: ImageChange
 - apiVersion: v1
@@ -48,23 +46,21 @@ objects:
         name: oso-rhel7-zabbix-server:latest
     resources: {}
     source:
-      contextDir: docker/oso-rhel7-zabbix-server
+      contextDir: docker/oso-zabbix-server/rhel7
       git:
         uri: https://github.com/openshift/openshift-tools
       type: Git
     strategy:
       dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: 'false'
         from:
           kind: ImageStreamTag
           name: oso-rhel7-ops-base:latest
+        noCache: true
       type: Docker
     triggers:
-    - github:
-        secret: emr1MvjYjWNkEWUI_q6S
-      type: GitHub
-    - generic:
-        secret: yXX-a_vZDwurwsEHzn4U
-      type: Generic
     - imageChange: {}
       type: ImageChange
 - apiVersion: v1
@@ -80,23 +76,21 @@ objects:
         name: oso-rhel7-zabbix-web:latest
     resources: {}
     source:
-      contextDir: docker/oso-rhel7-zabbix-web
+      contextDir: docker/oso-zabbix-web/rhel7
       git:
         uri: https://github.com/openshift/openshift-tools
       type: Git
     strategy:
       dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: 'false'
         from:
           kind: ImageStreamTag
           name: oso-rhel7-ops-base:latest
+        noCache: true
       type: Docker
     triggers:
-    - github:
-        secret: bxBBfQa-snFN2325yUq4
-      type: GitHub
-    - generic:
-        secret: vAIA7QI9jD3k9DWXbsIi
-      type: Generic
     - imageChange: {}
       type: ImageChange
 - apiVersion: v1
@@ -110,35 +104,31 @@ objects:
       to:
         kind: ImageStreamTag
         name: oso-rhel7-zagg-web:latest
-    resources: {}
+    resources: 
+      limits:
+        cpu: 1000m
+        memory: 512Mi
+      requests:
+        cpu: 1000m
+        memory: 512Mi
     source:
-      contextDir: docker/oso-rhel7-zagg-web
+      contextDir: docker/oso-zagg-web/rhel7
       git:
         uri: https://github.com/openshift/openshift-tools
       type: Git
     strategy:
       dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: 'false'
         from:
           kind: ImageStreamTag
           name: oso-rhel7-ops-base:latest
+        noCache: true
       type: Docker
     triggers:
-    - github:
-        secret: kYu3zNQsSXBO55eJ3lAW
-      type: GitHub
-    - generic:
-        secret: NZcPQKFcxQHhLQjMkXoq
-      type: Generic
     - imageChange: {}
       type: ImageChange
-- apiVersion: v1
-  kind: ImageStream
-  metadata:
-    labels:
-      name: oso-rhel7-ops-base
-    name: rhel7
-  spec:
-    dockerImageRepository: library/rhel7:latest
 - apiVersion: v1
   kind: ImageStream
   metadata:
@@ -172,7 +162,15 @@ objects:
       name: oso-rhel7-zagg-web
     name: oso-rhel7-zagg-web
   spec: {}
-- apiVersion: v1beta3
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      name: oso-rhel7-ops-base
+    name: rhel7
+  spec:
+    dockerImageRepository: registry.access.redhat.com/library/rhel7
+- apiVersion: v1
   kind: DeploymentConfig
   metadata:
     labels:
@@ -187,13 +185,11 @@ objects:
       type: Recreate
     template:
       metadata:
-        creationTimestamp: null
         labels:
           name: ${DATABASE_SERVICE_NAME}
       spec:
         containers:
-        - capabilities: {}
-          env:
+        - env:
           - name: MYSQL_USER
             value: ${MYSQL_USER}
           - name: MYSQL_PASSWORD
@@ -207,6 +203,7 @@ objects:
           name: mysql
           ports:
           - containerPort: 3306
+            name: tcp-3306
             protocol: TCP
           resources: {}
           securityContext:
@@ -218,11 +215,14 @@ objects:
             name: ${DATABASE_SERVICE_NAME}-data
         dnsPolicy: ClusterFirst
         restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
         volumes:
         - name: ${DATABASE_SERVICE_NAME}-data
           persistentVolumeClaim:
             claimName: ${DATABASE_SERVICE_NAME}
     triggers:
+    - type: ConfigChange
     - imageChangeParams:
         automatic: true
         containerNames:
@@ -230,10 +230,7 @@ objects:
         from:
           kind: ImageStreamTag
           name: mysql:latest
-          namespace: openshift
-        lastTriggeredImage: ''
       type: ImageChange
-    - type: ConfigChange
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
@@ -254,6 +251,8 @@ objects:
       spec:
         containers:
         - env:
+          - name: OO_PAUSE_ON_START
+            value: 'false'
           - name: MYSQL_USER
             value: ${MYSQL_USER}
           - name: MYSQL_PASSWORD
@@ -282,6 +281,8 @@ objects:
             name: monitoring-secrets
         dnsPolicy: ClusterFirst
         restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
         volumes:
         - name: monitoring-secrets
           secret:
@@ -308,7 +309,13 @@ objects:
       deploymentconfig: oso-rhel7-zabbix-web
     strategy:
       resources: {}
-      type: Recreate
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
     template:
       metadata:
         labels:
@@ -324,6 +331,8 @@ objects:
             value: ${MYSQL_DATABASE}
           - name: MYSQL_HOST
             value: ${DATABASE_SERVICE_NAME}
+          - name: ZABBIX_SERVER_HOSTNAME
+            value: ${ZABBIX_SERVER}
           image: monitoring/oso-rhel7-zabbix-web:latest
           imagePullPolicy: Always
           name: oso-rhel7-zabbix-web
@@ -341,6 +350,8 @@ objects:
           terminationMessagePath: /dev/termination-log
         dnsPolicy: ClusterFirst
         restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
     triggers:
     - type: ConfigChange
     - imageChangeParams:
@@ -358,12 +369,18 @@ objects:
       name: oso-rhel7-zagg-web
     name: oso-rhel7-zagg-web
   spec:
-    replicas: 1
+    replicas: 5
     selector:
       deploymentconfig: oso-rhel7-zagg-web
     strategy:
       resources: {}
-      type: Recreate
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
     template:
       metadata:
         labels:
@@ -383,6 +400,8 @@ objects:
             name: monitoring-secrets
         dnsPolicy: ClusterFirst
         restartPolicy: Always
+        securityContext: {}
+        terminationPeriodSeconds: 30
         volumes:
         - name: monitoring-secrets
           secret:
@@ -400,40 +419,63 @@ objects:
 - apiVersion: v1
   kind: Route
   metadata:
-    name: zabbix-web-route
+    name: zabbix-web-ssl-route
   spec:
     host: ${ZABBIX_WEB_URL}
+    tls:
+      caCertificate: '-----BEGIN CERTIFICATE-----
+        !!! Put ca certificate here
+        -----END CERTIFICATE-----'
+      certificate: '-----BEGIN CERTIFICATE-----
+        !!! Puth certificate here
+        -----END CERTIFICATE-----'
+      key: '-----BEGIN PRIVATE KEY-----
+        !!! Put key here
+        -----END PRIVATE KEY-----'
+      termination: edge
     to:
       kind: Service
       name: oso-rhel7-zabbix-web
 - apiVersion: v1
   kind: Route
   metadata:
-    name: zagg-web-route
+    name: zagg-web-ssl-route
   spec:
     host: ${ZAGG_WEB_URL}
+    tls:
+      caCertificate: |-
+        -----BEGIN CERTIFICATE-----
+        !!! Put ca cert here
+        -----END CERTIFICATE-----
+      certificate: |-
+        -----BEGIN CERTIFICATE-----
+        !!! Put cert here
+        -----END CERTIFICATE-----
+      key: |-
+        -----BEGIN PRIVATE KEY-----
+        !!! Put key here
+        -----END PRIVATE KEY-----
+      termination: edge
     to:
       kind: Service
       name: oso-rhel7-zagg-web
-- apiVersion: v1beta3
+- apiVersion: v1
   kind: Service
   metadata:
-    creationTimestamp: null
+    labels:
+      name: ${DATABASE_SERVICE_NAME}
     name: ${DATABASE_SERVICE_NAME}
   spec:
-    portalIP: ''
+    clusterIP: ''
     ports:
     - name: mysql
-      nodePort: 0
       port: 3306
       protocol: TCP
       targetPort: 3306
     selector:
-      name: ${DATABASE_SERVICE_NAME}
+      deploymentconfig: ${DATABASE_SERVICE_NAME}
     sessionAffinity: None
     type: ClusterIP
-  status:
-    loadBalancer: {}
 - apiVersion: v1
   kind: Service
   metadata:
@@ -443,12 +485,10 @@ objects:
   spec:
     ports:
     - name: tcp-10050
-      nodePort: 0
       port: 10050
       protocol: TCP
       targetPort: 10050
     - name: tcp-10051
-      nodePort: 0
       port: 10051
       protocol: TCP
       targetPort: 10051
@@ -465,12 +505,10 @@ objects:
   spec:
     ports:
     - name: tcp-80
-      nodePort: 0
       port: 80
       protocol: TCP
       targetPort: 8000
     - name: tcp-443
-      nodePort: 0
       port: 443
       protocol: TCP
       targetPort: 8000
@@ -487,12 +525,10 @@ objects:
   spec:
     ports:
     - name: http
-      nodePort: 0
       port: 80
       protocol: TCP
       targetPort: 8000
-    - name: http
-      nodePort: 0
+    - name: https
       port: 443
       protocol: TCP
       targetPort: 8000
@@ -500,7 +536,7 @@ objects:
       deploymentconfig: oso-rhel7-zagg-web
     sessionAffinity: None
     type: ClusterIP
-- apiVersion: v1beta3
+- apiVersion: v1
   kind: PersistentVolumeClaim
   metadata:
     name: ${DATABASE_SERVICE_NAME}

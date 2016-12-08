@@ -1,0 +1,35 @@
+---
+- name: Ensure needed vars are set
+  fail:
+    msg: "Please define {{ item }}"
+  when: "{{ item }} is undefined"
+  with_items:
+  - osgautp_project
+  - osgautp_user_list
+  - osgautp_role
+
+- name: append the email domain to user list if email_domain is defined
+  set_fact:
+    real_user_list: |
+      {% set rval = [] %}
+      {% for user in osgautp_user_list: %}
+      {%     set _ = rval.append(user + '@' + osgautp_email_domain) %}
+      {% endfor %}
+      {{- rval -}}
+  when: osgautp_email_domain is defined
+
+- name: set the user list when domain is not defined
+  set_fact:
+    real_user_list: "{{ osgautp_user_list }}"
+  when: osgautp_email_domain is not defined
+
+- debug: var=real_user_list
+
+- name: add project policy
+  gcloud_project_policy:
+    state: present
+    project: "{{ osgautp_project }}"
+    role: "{{ osgautp_role }}"
+    member: "{{ item }}"
+    member_type: user
+  with_items: "{{ real_user_list }}"

@@ -1,0 +1,28 @@
+---
+# It is necessary to ignore_errors here because the instances are not in 'ready'
+#  state when first added to ELB
+# Also added 'retry' here because API call can sometimes fail.
+- name: "Add or Remove instances to ELB {{ osaeim_elb_name }}"
+  ec2_elb:
+    instance_id: "{{ item }}"
+    ec2_elbs: "{{ osaeim_elb_name }}"
+    state: "{{ osaeim_state }}"
+    region: "{{ osaeim_region }}"
+    wait: False
+    aws_access_key: "{{ osaeim_aws_access_key }}"
+    aws_secret_key: "{{ osaeim_aws_secret_key }}"
+  with_items: "{{ osaeim_instance_ids }}"
+  ignore_errors: True
+  register: elb_call
+  delegate_to: localhost
+  retries: 10
+  until: elb_call|succeeded
+
+# ec2_elb is not idempotent, so this doesn't work properly.  We are going to always
+#  sleep when adding/removing from an ELB
+- name: Sleep so the ELB can stabilize a bit
+  pause:
+    #seconds: 15
+    seconds: 5
+#  when: osaeim_state == "absent" and elb_call.changed
+  delegate_to: localhost

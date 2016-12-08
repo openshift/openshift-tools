@@ -22,11 +22,15 @@
 #pylint: disable=invalid-name
 # Accepting general Exceptions
 #pylint: disable=broad-except
+# oso modules won't be available to pylint in Jenkins
+#pylint: disable=import-error
 
 import argparse
+import os
 from openshift_tools.monitoring.zagg_sender import ZaggSender
-from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
-import requests
+from openshift_tools.monitoring.ocutil import OCUtil
+import socket
+import urllib2
 
 class OpenshiftDockerRegigtryChecker(object):
     """ Checks for the Openshift Cluster Docker Registry """
@@ -34,24 +38,48 @@ class OpenshiftDockerRegigtryChecker(object):
     def __init__(self):
         self.args = None
         self.zagg_sender = None
-        self.ora = OpenshiftRestApi()
 
-        self.docker_host = None
+        self.docker_hosts = []
         self.docker_port = None
-        self.docker_protocol = 'http'
+        # Assume secure registry
+        self.docker_protocol = 'https'
+        self.docker_service_ip = None
+        self.kubeconfig = None
+
+    def get_kubeconfig(self):
+        ''' Find kubeconfig to use for OCUtil '''
+        # Default master kubeconfig
+        kubeconfig = '/tmp/admin.kubeconfig'
+        non_master_kube_dir = '/etc/origin/node'
+
+        if os.path.isdir(non_master_kube_dir):
+            for my_file in os.listdir(non_master_kube_dir):
+                if my_file.endswith(".kubeconfig"):
+                    kubeconfig = os.path.join(non_master_kube_dir, my_file)
+
+        if self.args.debug:
+            print "Using kubeconfig: {}".format(kubeconfig)
+
+        self.kubeconfig = kubeconfig
 
     def run(self):
         """  Main function to run the check """
 
         self.parse_args()
+        self.get_kubeconfig()
+        ocutil = OCUtil(config_file=self.kubeconfig, verbose=self.args.verbose)
         self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
 
         try:
-            self.get_registry_service()
-            self.registry_health_check()
+            oc_yaml = ocutil.get_service('docker-registry')
+            self.get_registry_service(oc_yaml)
+            oc_yaml = ocutil.get_endpoint('docker-registry')
+            self.get_registry_endpoints(oc_yaml)
         except Exception as ex:
-            print "Problem performing registry check: %s " % ex.message
-            self.zagg_sender.add_zabbix_keys({'openshift.master.registry.healthz' : 0})
+            print "Problem retreiving registry IPs: %s " % ex.message
+
+        self.registry_service_check()
+        self.registry_health_check()
 
         self.zagg_sender.send_metrics()
 
@@ -64,51 +92,108 @@ class OpenshiftDockerRegigtryChecker(object):
 
         self.args = parser.parse_args()
 
-    def get_registry_service(self):
+    def get_registry_service(self, service):
+        ''' This will get the service IP of the docker registry '''
+        print "\nGetting Docker Registry service IP..."
+
+        self.docker_service_ip = str(service['spec']['clusterIP'])
+
+    def get_registry_endpoints(self, endpoints):
         """
-            This will return the docker registry service that is being served
+            This will return the docker registry endpoint IPs that are being served
             inside of kubernetes.
         """
 
-        print "\nFinding the Docker Registry via Openshift API calls..."
+        print "\nFinding the Docker Registry pods via Openshift API calls..."
 
-        response = self.ora.get('/api/v1/namespaces/default/services/docker-registry')
+        self.docker_port = str(endpoints['subsets'][0]['ports'][0]['port'])
 
-        self.docker_host = response['spec']['clusterIP']
-        self.docker_port = str(response['spec']['ports'][0]['port'])
+        for address in endpoints['subsets'][0]['addresses']:
+            self.docker_hosts.append(address['ip'])
 
-        response = self.ora.get('/oapi/v1/namespaces/default/deploymentconfigs/docker-registry')
-
-        for env in response['spec']['template']['spec']['containers'][0]['env']:
-            if 'HTTP_TLS' in env['name']:
-                self.docker_protocol = 'https'
-
-    def registry_health_check(self):
-        """
-            Check the registry's /healthz URL
-
-            Currently, in v3.0.2.0, http://registry.url/healthz works. The '/healthz' is
+    def healthy_registry(self, ip_addr, port, secure=True):
+        ''' Test a specific registry URL
+            In v3.0.2.0, http://registry.url/healthz worked. The '/healthz' was
               something added by openshift to the docker registry. This should return a http status
               code of 200 and text of {} (empty json).
 
-            In future versions of the docker registry, '/' should work and return a 200 to
+            In 3.1.1 and on, '/' should work and return a 200 to
               indicate that the registry is up and running. Please see the following url for
               more info.  Look under load balancer health checks:
             https://github.com/docker/distribution/blob/master/docs/deploying.md#running-a-domain-registry
+        '''
+
+        proto = self.docker_protocol
+        if not secure:
+            proto = 'http'
+        url = '{}://{}:{}/'.format(proto, ip_addr, port)
+
+        try:
+            print "Performing Docker Registry check on URL: {}".format(url)
+            response = urllib2.urlopen(url, timeout=20)
+
+            if response.getcode() == 200:
+                return True
+        except urllib2.URLError:
+            print "Received error accessing URL: {}".format(url)
+        except socket.timeout:
+            print "Timed out accessing URL: {}".format(url)
+
+        # Try with /healthz
+        try:
+            url = url + 'healthz'
+            print "Performing Docker Registry check on URL: {}".format(url)
+            response = urllib2.urlopen(url, timeout=20)
+
+            if response.getcode() == 200:
+                return True
+        except urllib2.URLError:
+            print "Received error access URL: {}".format(url)
+        except socket.timeout:
+            print "Timed out accessing URL: {}".format(url)
+
+        # We tried regular and 'healthz' URLs. Registry inaccessible.
+        return False
+
+    def registry_service_check(self):
+        ''' Test and report on health of Docker Registry service '''
+
+        status = '0'
+
+        # Skip if we failed to fetch a valid service IP
+        if self.docker_service_ip != None:
+            if self.healthy_registry(self.docker_service_ip, self.docker_port):
+                status = '1'
+            elif self.healthy_registry(self.docker_service_ip, self.docker_port,
+                                       secure=False):
+                status = '1'
+
+        print "\nDocker Registry service status: {}".format(status)
+
+        self.zagg_sender.add_zabbix_keys({'openshift.node.registry.service.ping' : status})
+
+    def registry_health_check(self):
+        """
+            Check the registry's / URL
         """
 
+        healthy_registries = 0
 
-        docker_registry_url = "%s://%s:%s/healthz" %(self.docker_protocol, self.docker_host, self.docker_port)
+        for host in self.docker_hosts:
+            if self.healthy_registry(host, self.docker_port):
+                healthy_registries += 1
+            elif self.healthy_registry(host, self.docker_port, secure=False):
+                healthy_registries += 1
 
-        print "\nPerforming registry /healthz check on URL: %s\n" % docker_registry_url
+        healthy_pct = 0
 
-        response = requests.get(docker_registry_url, verify=False)
+        if len(self.docker_hosts) > 0:
+            healthy_pct = (healthy_registries / len(self.docker_hosts) *100)
 
-        rval = '0'
-        if response.status_code == 200 and response.text.startswith('{}'):
-            rval = '1'
+        print "\n%s of %s registry PODs are healthy\n" %(healthy_registries,
+                                                         len(self.docker_hosts))
 
-        self.zagg_sender.add_zabbix_keys({'openshift.master.registry.healthz' : rval})
+        self.zagg_sender.add_zabbix_keys({'openshift.node.registry-pods.healthy_pct' : healthy_pct})
 
 if __name__ == '__main__':
     ODRC = OpenshiftDockerRegigtryChecker()

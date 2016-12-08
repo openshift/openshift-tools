@@ -2,12 +2,13 @@
 # vim: expandtab:tabstop=4:shiftwidth=4
 #This is not a module, but pylint thinks it is.  This is a command.
 #pylint: disable=invalid-name
+# pylint flaggs import errors, as the bot doesn't know have openshift-tools libs
+#pylint: disable=import-error
 """
 ops-zagg-client: Script that sends metrics to zagg.
 
 This script will send metrics to Zagg.  This script will send:
 
-pcp metrics
 heartbeat (registration information)
 single zabbix keys.
 
@@ -16,9 +17,6 @@ for information needed to send to zagg.  Some of the settings can be overridden
 from the cli.
 
 Examples
-# Send pcp metrics (looks in a config file to know exactly which metrics to query and send)
-ops-zagg-client --send-pcp-metrics
-
 # Send a heartbeat (looks in a config file for specifics)
 ops-zagg-client --send-heartbeat
 
@@ -47,7 +45,6 @@ class OpsZaggClient(object):
         self.zagg_sender = None
         self.args = None
         self.config = None
-        self.pcp_metrics = []
         self.heartbeat = None
 
     def run(self):
@@ -56,9 +53,6 @@ class OpsZaggClient(object):
         self.parse_args()
         self.parse_config(self.args.config_file)
         self.config_zagg_sender()
-
-        if self.args.send_pcp_metrics:
-            self.add_pcp_metrics()
 
         if self.args.send_heartbeat:
             self.add_heartbeat()
@@ -74,9 +68,14 @@ class OpsZaggClient(object):
     def parse_args(self):
         """ parse the args from the cli """
         parser = argparse.ArgumentParser(description='Zagg metric sender')
-        parser.add_argument('--send-pcp-metrics', help="send pcp metrics to zagg", action="store_true")
         parser.add_argument('--send-heartbeat', help="send heartbeat metric to zagg", action="store_true")
-        parser.add_argument('-s', '--host', help='specify host name as registered in Zabbix')
+
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument('-s', '--host',
+                           help='specify host name as registered in Zabbix')
+        group.add_argument('--synthetic', default=False, action='store_true',
+                           help='send as cluster-wide synthetic host')
+
         parser.add_argument('-z', '--zagg-url', help='url of Zagg server')
         parser.add_argument('--zagg-user', help='username of the Zagg server')
         parser.add_argument('--zagg-pass', help='Password of the Zagg server')
@@ -110,7 +109,12 @@ class OpsZaggClient(object):
         zagg_verbose = self.args.verbose if self.args.verbose else self.config['zagg']['verbose']
         zagg_debug = self.args.debug if self.args.debug else self.config['zagg']['debug']
         zagg_ssl_verify = self.args.zagg_ssl_verify if self.args.zagg_ssl_verify else self.config['zagg']['ssl_verify']
-        host = self.args.host if self.args.host else self.config['host']['name']
+        if self.args.host:
+            host = self.args.host
+        elif self.args.synthetic:
+            host = self.config['synthetic_clusterwide']['host']['name']
+        else:
+            host = self.config['host']['name']
 
         if isinstance(zagg_verbose, str):
             zagg_verbose = (zagg_verbose == 'True')
@@ -132,15 +136,15 @@ class OpsZaggClient(object):
 
     def add_heartbeat(self):
         """ crate a hearbeat metric """
-        heartbeat = ZaggHeartbeat(templates=self.config['heartbeat']['templates'],
-                                  hostgroups=self.config['heartbeat']['hostgroups'],
-                                 )
+        if self.args.synthetic:
+            heartbeat = ZaggHeartbeat(templates=self.config['synthetic_clusterwide']['heartbeat']['templates'],
+                                      hostgroups=self.config['heartbeat']['hostgroups'],
+                                     )
+        else:
+            heartbeat = ZaggHeartbeat(templates=self.config['heartbeat']['templates'],
+                                      hostgroups=self.config['heartbeat']['hostgroups'],
+                                     )
         self.zagg_sender.add_heartbeat(heartbeat)
-
-    def add_pcp_metrics(self):
-        """ collect pcp metrics to send to ZaggSender """
-
-        self.zagg_sender.add_pcp_metrics(self.config['pcp']['metrics'])
 
     def add_zabbix_key(self):
         """ send zabbix key/value pair to zagg """

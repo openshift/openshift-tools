@@ -1,0 +1,237 @@
+---
+- name: get oc version
+  oc_version:
+  register: oc_version
+
+- name: set the kube version
+  set_fact:
+    kube_version: "{{ oc_version.result.kubernetes_short }}"
+
+- name: get cert's basename
+  set_fact:
+    cert_basename: "{{ osamet_default_metrics_cert | basename }}"
+    key_basename: "{{ osamet_default_metrics_key | basename }}"
+    cacert_basename: "{{ osamet_default_metrics_cacert | basename }}"
+
+- name: copy metrics certs to masters
+  copy:
+    src: "{{ item }}"
+    dest: /etc/origin/master/named_certificates/
+  with_items:
+  - "{{ osamet_default_metrics_cert }}"
+  - "{{ osamet_default_metrics_key }}"
+  - "{{ osamet_default_metrics_cacert }}"
+
+- name: create project
+  oadm_project:
+    name: openshift-infra
+    description: openshift-infra
+    node_selector: type=infra
+    display_name: openshift-infra
+  register: projectout
+  run_once: true
+- debug: var=projectout
+
+- name: create secret
+  oc_secret:
+    namespace: openshift-infra
+    name: metrics-deployer
+    files:
+    - name: nothing
+      path: /dev/null
+  register: secretout
+  run_once: true
+- debug: var=secretout
+
+- name: create serviceaccount
+  oc_serviceaccount:
+    name: metrics-deployer
+    namespace: openshift-infra
+    secrets:
+    - metrics-deployer
+  register: saout
+  run_once: true
+- debug: var=saout
+
+- name: create role binding to metrics-deployer service account
+  oadm_policy_user:
+    namespace: openshift-infra
+    user: system:serviceaccount:openshift-infra:metrics-deployer
+    resource_kind: role
+    resource_name: edit
+  register: policyout
+  run_once: true
+- debug: var=policyout
+
+- name: add cluster role binding to heapster service account
+  oadm_policy_user:
+    namespace: openshift-infra
+    user: system:serviceaccount:openshift-infra:heapster
+    resource_kind: cluster-role
+    resource_name: cluster-reader
+  register: policyout
+  run_once: true
+- debug: var=policyout
+
+- name: create metrics deployer template
+  oc_obj:
+    state: present
+    namespace: openshift-infra
+    name: metrics-deployer-template
+    kind: template
+    files:
+    - "/usr/share/ansible/openshift-ansible/roles/openshift_hosted_templates/files/v{{ kube_version }}/enterprise/metrics-deployer.yaml"
+  register: templateout
+  run_once: true
+
+- name: create template
+  oc_process:
+    namespace: openshift-infra
+    template_name: metrics-deployer-template
+    create: True
+    params:
+      HAWKULAR_METRICS_HOSTNAME: "metrics.{{ osamet_clusterid }}.openshift.com"
+      CASSANDRA_PV_SIZE: "{{ osamet_pv_size }}"
+      CASSANDRA_NODES: "{{ osamet_cassandra_node }}"
+      IMAGE_PREFIX: registry.ops.openshift.com/openshift3/
+    reconcile: False
+  register: processout
+  run_once: true
+- debug: var=processout
+
+- name: wait for deployment to finish
+  pause:
+    seconds: 120
+  run_once: true
+
+- name: scale down cassandra to 0
+  oc_scale:
+    name: "hawkular-cassandra-{{ item }}"
+    kind: rc
+    namespace: openshift-infra
+    replicas: 0
+  with_sequence: "count={{ osamet_cassandra_node }}"
+
+- name: Wait for cassandra to scale down
+  pause:
+    seconds: 30
+  run_once: true
+
+- name: Add the resource constraints to the cassandra RC
+  oc_edit:
+    kind: rc
+    name: "hawkular-cassandra-{{ item }}"
+    namespace: openshift-infra
+    content:
+      spec.template.spec.containers[0].resources.limits.memory: "{{ osamet_cassandra_limits_memory }}"
+      spec.template.spec.containers[0].resources.requests.memory: "{{ osamet_cassandra_requests_memory }}"
+  with_sequence: "count={{ osamet_cassandra_node }}"
+
+- name: scale up cassandra to 1
+  oc_scale:
+    name: "hawkular-cassandra-{{ item }}"
+    kind: rc
+    namespace: openshift-infra
+    replicas: 1
+  with_sequence: "count={{ osamet_cassandra_node }}"
+
+- name: scale down hawkular to 0
+  oc_scale:
+    name: hawkular-metrics
+    kind: rc
+    namespace: openshift-infra
+    replicas: 0
+
+- name: Wait for hawkular to scale down
+  pause:
+    seconds: 30
+  run_once: true
+
+- name: Add the resource constraints to the hawkular RC
+  oc_edit:
+    kind: rc
+    name: hawkular-metrics
+    namespace: openshift-infra
+    content:
+      spec.template.spec.containers[0].resources.limits.memory: "{{ osamet_hawkular_limits_memory }}"
+      spec.template.spec.containers[0].resources.requests.memory: "{{ osamet_hawkular_requests_memory }}"
+
+- name: scale up hawkular to 1
+  oc_scale:
+    name: hawkular-metrics
+    kind: rc
+    namespace: openshift-infra
+    replicas: 1
+
+- name: scale down heapster to 0
+  oc_scale:
+    name: heapster
+    kind: rc
+    namespace: openshift-infra
+    replicas: 0
+
+- name: Wait for heapster to scale down
+  pause:
+    seconds: 30
+  run_once: true
+
+- name: Add the resource constraints to the heapster RC
+  oc_edit:
+    kind: rc
+    name: heapster
+    namespace: openshift-infra
+    content:
+      spec.template.spec.containers[0].resources.limits.memory: "{{ osamet_heapster_limits_memory }}"
+      spec.template.spec.containers[0].resources.requests.memory: "{{ osamet_heapster_requests_memory }}"
+
+- name: scale up heapster to 1
+  oc_scale:
+    name: heapster
+    kind: rc
+    namespace: openshift-infra
+    replicas: 1
+
+- name: get deployer pod status
+  oc_obj:
+    state: list
+    namespace: openshift-infra
+    kind: pods
+  register: podout
+  run_once: true
+
+- name: get ca from hawkular
+  oc_secret:
+    state: list
+    namespace: openshift-infra
+    name:  hawkular-metrics-certificate
+    decode: True
+  register: hawkout
+  run_once: true
+
+- fail:
+    msg: hawkular-metrics-certificate not found
+  when: hawkout.results.exists|bool == False
+  run_once: true
+
+- name: reencrypt route
+  oc_route:
+    name: hawkular-metrics
+    namespace: openshift-infra
+    cert_path: "/etc/origin/master/named_certificates/{{ cert_basename }}"
+    key_path: "/etc/origin/master/named_certificates/{{ key_basename }}"
+    cacert_path: "/etc/origin/master/named_certificates/{{ cacert_basename }}"
+    dest_cacert_content: "{{ hawkout.results.decoded['hawkular-metrics-ca.certificate'] }}"
+    service_name: hawkular-metrics
+    host: "metrics.{{ osamet_clusterid }}.openshift.com"
+    tls_termination: reencrypt
+  register: routeout
+  run_once: true
+
+- name: add metrics url to master-config.yml
+  yedit:
+    src: /etc/origin/master/master-config.yaml
+    key: assetConfig.metricsPublicURL
+    value: "https://metrics.{{ osamet_clusterid }}.openshift.com/hawkular/metrics"
+  register: yeditout
+  notify:
+  - restart openshift master services

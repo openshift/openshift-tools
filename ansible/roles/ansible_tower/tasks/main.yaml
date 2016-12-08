@@ -1,0 +1,63 @@
+---
+- name: install some useful packages
+  action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
+  with_items:
+  - git
+  - python-pip
+  - unzip
+  - python-psphere
+  - ansible
+  - telnet
+  - ack
+  - pylint
+  - firewalld
+
+- name: download Tower setup
+  get_url: url=http://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-2.1.1.tar.gz dest=/opt/ force=no
+
+- name: extract Tower
+  unarchive: src=/opt/ansible-tower-setup-2.1.1.tar.gz dest=/opt copy=no creates=ansible-tower-setup-2.1.1
+
+- name: Start up firewalld
+  service:
+    name: firewalld
+    state: started
+
+- name: Open firewalld port for http
+  firewalld: port=80/tcp permanent=true state=enabled
+
+- name: Open firewalld port for https
+  firewalld: port=443/tcp permanent=true state=enabled
+
+- name: Open firewalld port for https
+  firewalld: port=8080/tcp permanent=true state=enabled
+
+- name: Set (httpd_can_network_connect) flag on and keep it persistent across reboots
+  seboolean: name=httpd_can_network_connect state=yes persistent=yes
+
+- name: Set (httpd_can_network_connect_db) flag on and keep it persistent across reboots
+  seboolean: name=httpd_can_network_connect_db state=yes persistent=yes
+
+- name: Ensure /etc/tower exists
+  file:
+    state: directory
+    path: /etc/tower
+    mode: "0755"
+    owner: awx
+    group: awx
+
+- name: Ensure /etc/tower/settings.py exists
+  file:
+    state: touch
+    path: /etc/tower/settings.py
+    mode: "0640"
+    owner: awx
+    group: awx
+
+- name: Setup proot to allow access to /etc/tower/
+  lineinfile:
+    dest: /etc/tower/settings.py
+    backrefs: yes
+    regexp: "^({{ item.option }})( *)="
+    line: '\1\2= {{ item.value }}'
+  with_items: '{{ config_changes | default([], true) }}'

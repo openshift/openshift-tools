@@ -1,0 +1,12 @@
+---
+- name: get the aws account
+  iam_accountid:
+    state: list
+  register: aws_account_info
+
+- debug:
+    var: aws_account_info
+
+- name: set the aws account id
+  set_fact:
+    saaid_retval_accountid: "{{ aws_account_info.iam_user.accountid }}"

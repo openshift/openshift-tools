@@ -1,0 +1,2 @@
+---
+osaic_default_chain_cert: "{{ osaic_chain_cert | default(None, True)  }}"

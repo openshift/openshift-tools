@@ -1,0 +1,123 @@
+---
+- name: generate dm yaml
+  gcloud_dm_resource_builder:
+    clusterid: "{{ osgcc_clusterid }}"
+    account: "{{ osgcc_account }}"
+    sublocation: "{{ osgcc_sublocation }}"
+    zone: "{{ osgcc_zone }}"
+    health_checks: "{{ osgcc_health_checks }}"
+    addresses: "{{ osgcc_addresses }}"
+    target_pools: "{{ osgcc_target_pools }}"
+    forwarding_rules: "{{ osgcc_forwarding_rules }}"
+    firewall_rules: "{{ osgcc_firewall_rules }}"
+    networks: "{{ osgcc_networks }}"
+    subnetworks: "{{ osgcc_subnetworks }}"
+    instance_counts:
+      master: "{{ osgcc_master_instance_count }}"
+      infra: "{{ osgcc_infra_instance_count }}"
+      compute: "{{ osgcc_compute_instance_count }}"
+    instances: "{{ osgcc_instances }}"
+    provisioning: True
+    buckets: "{{ osgcc_bucket_names }}"
+  register: dmyaml
+
+- name: run the inventory refresh
+  command: "/usr/share/ansible/inventory/multi_inventory.py --refresh-cache --cluster={{ osgcc_clusterid }}"
+
+- name: get the master nodes via ohi
+  command: "ohi -c {{ osgcc_clusterid }} -t master --v3"
+  register: master_out
+
+- name: get the infra nodes via ohi
+  command: "ohi -c {{ osgcc_clusterid }} -s infra --v3"
+  register: infra_out
+
+- name: get the compute nodes via ohi
+  command: "ohi -c {{ osgcc_clusterid }} -s compute --v3"
+  register: compute_out
+
+- name: fetch latest manifests
+  gcloud_dm_manifest:
+    state: list
+    deployment: "{{ osgcc_clusterid }}-deployment"
+  register: manifest_out
+
+- set_fact:
+    current_dm_config: "{{ manifest_out.results[-1].config.content | from_yaml}}"
+  when: manifest_out.results|length > 0
+
+- name: reconcile the resources
+  gcloud_dm_resource_reconciler:
+    resources: "{{ dmyaml.results }}"
+    instance_counts:
+      master: "{{ osgcc_master_instance_count  }}"
+      infra: "{{ osgcc_infra_instance_count  }}"
+      compute: "{{ osgcc_compute_instance_count  }}"
+    existing_instance_names:
+      master: "{{ master_out.stdout_lines }}"
+      infra: "{{ infra_out.stdout_lines }}"
+      compute: "{{ compute_out.stdout_lines }}"
+    current_dm_config: "{{ current_dm_config | default({}, True) }}"
+  register: reconcile_out
+
+- name: Deploy Generate config for cluster
+  gcloud_dm_deployments:
+    config: "{{ dmyaml.results }}"
+    name: "{{ osgcc_clusterid }}-deployment"
+  register: deployout
+  when: reconcile_out.run_dm
+
+- name: Get Master LB IP Address
+  gcloud_compute_addresses:
+    state: list
+    name: "{{ osgcc_clusterid }}-master-lb-address"
+  register: master_lb_addrout
+
+- name: Get Infra LB IP Address
+  gcloud_compute_addresses:
+    state: list
+    name: "{{ osgcc_clusterid }}-infra-lb-address"
+  register: infra_lb_addrout
+
+- name: Update DNS for GCP Master LB
+  dyn_record:
+    customer_name: "{{ osgcc_dyn_customer_name }}"
+    user_name: "{{ osgcc_dyn_user_name }}"
+    user_password: "{{ osgcc_dyn_user_password }}"
+    state: present
+    record_type: A
+    zone: "{{ item.zone }}"
+    record_value: "{{ master_lb_addrout.results.address }}"
+    record_fqdn: "{{ item.fqdn }}"
+    record_ttl: 120
+  with_items: "{{ g_gcp_master_lb_dns_cnames }}"
+
+- name: Update DNS for GCP Infra LB
+  dyn_record:
+    customer_name: "{{ osgcc_dyn_customer_name }}"
+    user_name: "{{ osgcc_dyn_user_name }}"
+    user_password: "{{ osgcc_dyn_user_password }}"
+    state: present
+    record_type: A
+    zone: "{{ item.zone }}"
+    record_value: "{{ infra_lb_addrout.results.address }}"
+    record_fqdn: "{{ item.fqdn }}"
+    record_ttl: 120
+  with_items: "{{ g_gcp_infra_lb_dns_cnames }}"
+
+- name: Ensure disks are labeled
+  gcloud_compute_disk_labels:
+    name_match: "{{ item.name }}"
+    labels: "{{ item.labels }}"
+    zone: "{{ osgcc_zone }}"
+    project: "{{ osgcc_project }}"
+    creds: "{{ osgcc_creds }}"
+  with_items:
+  - name: "{{ osgcc_clusterid }}-master-.*-os"
+    labels: "{{ osgcc_master_os_disk_labels }}"
+  - name: "{{ osgcc_clusterid }}-master-.*-docker"
+    labels: "{{ osgcc_default_docker_disk_labels }}"
+  - name: "{{ osgcc_clusterid }}-node-.*-os"
+    labels: "{{ osgcc_node_os_disk_labels }}"
+  - name: "{{ osgcc_clusterid }}-node-.*-docker"
+    labels: "{{ osgcc_default_docker_disk_labels }}"

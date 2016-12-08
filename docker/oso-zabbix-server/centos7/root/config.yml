@@ -1,0 +1,135 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+  - /root/default_vars.yml
+  vars:
+    g_hostname: "{{ lookup('env','HOSTNAME') | default(g_default_hostname, True) }}"
+    g_ses_mail_from: "{{ lookup('env','SES_MAIL_FROM') | default(g_default_ses_mail_from, True) }}"
+    g_ses_smtp_domain: "{{ lookup('env','SES_SMTP_DOMAIN') | default(g_default_ses_smtp_domain, True) }}"
+    g_ses_smtp_server: "{{ lookup('env','SES_SMTP_SERVER') | default(g_default_ses_smtp_server, True) }}"
+    g_ses_user: "{{ lookup('env','SES_USER') | default(g_default_ses_user, True) }}"
+    g_ses_password: "{{ lookup('env','SES_PASSWORD') | default(g_default_ses_password, True) }}"
+    g_mysql_user: "{{ lookup('env','MYSQL_USER') | default(g_default_mysql_user, True) }}"
+    g_mysql_password: "{{ lookup('env','MYSQL_PASSWORD') | default(g_default_mysql_password, True) }}"
+    g_mysql_host: "{{ lookup('env','MYSQL_HOST') | default(g_default_mysql_host, True) }}"
+    g_zbx_scriptrunner_user: "{{ lookup('env', 'ZBX_SCRIPTRUNNER_USER') | default(g_default_zbx_scriptrunner_user, True) }}"
+    g_zbx_scriptrunner_bastion_host: "{{ lookup('env', 'ZBX_SCRIPTRUNNER_BASTION_HOST') | default(g_default_zbx_scriptrunner_bastion_host, True) }}"
+    g_zbx_actions_config:
+      ses_user: "{{ g_ses_user }}"
+      ses_password: "{{ g_ses_password }}"
+      ses_mail_from: "{{ g_ses_mail_from }}"
+      ses_smtp_domain: "{{ g_ses_smtp_domain }}"
+      ses_smtp_server: "{{ g_ses_smtp_server }}"
+      zbx_scriptrunner_user: "{{ g_zbx_scriptrunner_user }}"
+      zbx_scriptrunner_bastion_host: "{{ g_zbx_scriptrunner_bastion_host }}"
+    g_rsa_key_file: "/etc/openshift_tools/scriptrunner_id_rsa"
+    g_process_event_config:
+      scriptrunner_user: "{{ g_zbx_actions_config.zbx_scriptrunner_user }}"
+      bastion_host: "{{ g_zbx_actions_config.zbx_scriptrunner_bastion_host }}"
+      rsa_key: "{{ g_rsa_key_file }}"
+
+  pre_tasks:
+  - stat:
+      path: /secrets/zabbix-server-vars.yml
+    register: g_zabbix_server_vars
+
+  - name: Load variables that will override the defaults
+    include_vars: /secrets/zabbix-server-vars.yml
+    when: g_zabbix_server_vars.stat.exists
+
+  - stat:
+      path: "/secrets/{{ g_zbx_actions_config.zbx_scriptrunner_user }}.yml"
+    register: g_zbx_scriptrunner_vars
+
+  - name: Set default scriptrunner's RSA key
+    set_fact:
+     g_user_scriptuser_priv_key: "{{ g_default_user_scriptuser_priv_key }}"
+
+  - name: Load scriptrunner user's variables
+    include_vars: "{{ g_zbx_scriptrunner_vars.stat.path }}"
+    when: g_zbx_scriptrunner_vars.stat.exists
+
+  - fail: "msg=This playbook requires {{ item }} to be set and not empty."
+    when: "{{ item }} is not defined or {{ item }} == ''"
+    with_items:
+    - g_ses_mail_from
+    - g_ses_smtp_domain
+    - g_ses_smtp_server
+    - g_ses_user
+    - g_ses_password
+    - g_zbx_actions_config
+    - g_mysql_user
+    - g_mysql_password
+    - g_mysql_host
+    - g_zbx_scriptrunner_user
+    - g_zbx_scriptrunner_bastion_host
+
+  tasks:
+  - name: Generate zabbix_actions.yml config file
+    copy:
+      content: "{{ g_zbx_actions_config | to_nice_yaml }}"
+      dest: /etc/openshift_tools/zabbix_actions.yml
+      mode: "644"
+
+  - name: Save scriptrunner's ssh key
+    copy:
+      content: >
+        {% set rsa_key = "" %}
+        {%- set key_name = "g_user_" + g_zbx_actions_config.zbx_scriptrunner_user %}
+        {%- set rsa_key = hostvars["localhost"][key_name]["priv_key"] %}
+        {{- rsa_key -}}
+      dest: "{{ g_rsa_key_file }}"
+      mode: "400"
+
+  - name: create ~/.ssh
+    file:
+      path: /root/.ssh
+      mode: "700"
+      state: directory
+
+  - name: Trust scriptrunner's bastion host
+    copy:
+      content: |
+        Host {{ g_zbx_actions_config.zbx_scriptrunner_bastion_host }}
+          StrictHostKeyChecking no
+      dest: /root/.ssh/config
+      mode: "600"
+
+  - name: Create process-event script config file
+    copy:
+      content: "{{ g_process_event_config | to_nice_yaml }}"
+      dest: /etc/zabbix/ops_zbx_event_processor.yml
+      mode: "0644"
+
+  - name: Setup the zabbix_server.conf file
+    lineinfile:
+      dest: /etc/zabbix/zabbix_server.conf
+      regexp: '^[#\s]*{{ item.key }}\s*='
+      line: "{{ item.key }}={{ item.value }}"
+    with_items:
+    - key: DBUser
+      value: "{{ g_mysql_user }}"
+    - key: DBPassword
+      value: "{{ g_mysql_password }}"
+    - key: DBHost
+      value: "{{ g_mysql_host }}"
+
+  - name: Setup the zabbix_agentd.conf file
+    lineinfile:
+      dest: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^[#\s]*{{ item.key }}\s*='
+      line: "{{ item.key }}={{ item.value }}"
+    with_items:
+    - key: Server
+      value: "{{ g_hostname }}"
+
+  - name: Setup the zabbix_agent.conf file
+    lineinfile:
+      dest: /etc/zabbix/zabbix_agent.conf
+      regexp: '^[#\s]*{{ item.key }}\s*='
+      line: "{{ item.key }}={{ item.value }}"
+    with_items:
+    - key: Server
+      value: "{{ g_hostname }}"
+

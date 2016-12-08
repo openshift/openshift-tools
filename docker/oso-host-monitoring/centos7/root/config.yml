@@ -1,0 +1,108 @@
+---
+- hosts: localhost
+  gather_facts: no
+
+  pre_tasks:
+  - stat:
+      path: /secrets/host_monitoring_vars.yml
+    register: g_host_monitoring_vars
+
+  - name: Grab all content of the yaml files as vars
+    include_vars: "{{ item }}"
+    with_fileglob:
+    - /container_setup/*.yml
+
+  - name: Load variables that will override the defaults
+    include_vars: /secrets/host_monitoring_vars.yml
+    when: g_host_monitoring_vars.stat.exists
+
+  - fail: msg="This playbook requires {{ item }} to be set and not empty."
+    when: "{{ item }} is not defined or not {{ item }}"
+    with_items:
+    - zagg_client_config
+    - oso_host_type
+    - oso_cluster_id
+
+  - name: write out the vars coming in container_metrics.yml to a file
+    copy:
+      content: "{{ container_metrics_config | to_nice_yaml }}"
+      dest: /etc/openshift_tools/container_metrics.yml
+      mode: 0644
+    when: container_metrics_config is defined
+
+  - name: write out the vars coming in etcd_metrics.yml to a file
+    copy:
+      content: "{{ etcd_metrics_config | to_nice_yaml }}"
+      dest: /etc/openshift_tools/etcd_metrics.yml
+      mode: 0644
+    when: etcd_metrics_config is defined
+
+  - name: Generate the zagg_client.yaml config file
+    copy:
+      content: "{{ zagg_client_config | to_nice_yaml }}"
+      dest: /etc/openshift_tools/zagg_client.yaml
+      mode: "644"
+
+  - name: Check whether /etc/origin exists
+    stat:
+      path: /etc/origin
+    register: etc_origin
+
+  - name: Create /etc/origin -> /etc/openshift link if needed
+    file:
+      state: link
+      src: /etc/openshift
+      dest: /etc/origin
+      force: yes
+    when: etc_origin.stat.exists == False and oso_host_type == 'master'
+
+  - name: Setup Cron
+    cron:
+      name: "{{ item.name }}"
+      job: "{{ item.job }}"
+      minute: "{{ item.minute | default('*', True) }}"
+      hour: "{{ item.hour | default('*', True) }}"
+      day: "{{ item.day | default('*', True) }}"
+      month: "{{ item.month | default('*', True) }}"
+      weekday: "{{ item.weekday | default('*', True) }}"
+    with_items: "{{host_monitoring_cron}}"
+
+  - name: stat the kubeconfig
+    stat:
+      path: /etc/origin/master/admin.kubeconfig
+    register: kubepath
+
+  - name: copy kubeconfig to tmp
+    copy:
+      src: /etc/origin/master/admin.kubeconfig
+      dest: /tmp/admin.kubeconfig
+      mode: '0770'
+    when: kubepath.stat.exists
+
+  - name: add snapshotter aws creds to /root/.aws/credentials
+    ini_file:
+      dest: /root/.aws/credentials
+      section: snapshotter
+      option: "{{ item.key }}"
+      value: "{{ item.value }}"
+    when: oso_snapshot_aws_key_id is defined and
+          oso_snapshot_aws_secret_access_key is defined
+    with_items:
+    - key: aws_access_key_id
+      value: "{{ oso_snapshot_aws_key_id }}"
+    - key: aws_secret_access_key
+      value: "{{ oso_snapshot_aws_secret_access_key }}"
+    ignore_errors: yes
+
+  - name: create /root/.gce dir
+    file:
+      state: directory
+      dest: /root/.gce
+    when: gcp_volume_user_creds is defined
+
+  - name: add gcp snapshotter creds to /root/.gce/creds.json
+    copy:
+      content: "{{ gcp_volume_user_creds }}"
+      dest: /root/.gce/creds.json
+    when: gcp_volume_user_creds is defined
+

@@ -1,0 +1,47 @@
+---
+- name: get oc version
+  oc_version:
+  register: oc_version
+
+- name: set the kube version
+  set_fact:
+    kube_version: "{{ oc_version.result.kubernetes_short }}"
+
+- name: Ensure openshift-ansible-roles is installed
+  action: "{{ ansible_pkg_mgr }} name={{ item }} state=latest"
+  with_items:
+  - openshift-ansible-roles
+
+- name: Process and create templates
+  command: "/usr/bin/oc --config /etc/origin/master/admin.kubeconfig -n openshift create -f {{ item }}"
+  with_fileglob:
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/image-streams/image-streams-rhel7.*"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/db-templates"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/quickstart-templates"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/xpaas*"
+  ignore_errors: yes
+  run_once: yes
+
+- name: Process and replace templates
+  command: "/usr/bin/oc --config /etc/origin/master/admin.kubeconfig -n openshift replace -f {{ item }}"
+  with_fileglob:
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/image-streams/image-streams-rhel7.*"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/db-templates"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/quickstart-templates"
+  - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/xpaas*"
+  ignore_errors: yes
+  run_once: yes
+
+- name: get list of image streams
+  oc_obj:
+    state: list
+    kind: imagestreams
+    namespace: openshift
+  register: imagestreams_out
+  run_once: yes
+
+- name: Import the image stream images
+  command: "/usr/bin/oc --config /etc/origin/master/admin.kubeconfig -n openshift import-image {{ item }}"
+  with_items: "{{ imagestreams_out.results.results[0]['items'] | map(attribute='metadata') | map(attribute='name') | list }}"
+  ignore_errors: yes
+  run_once: yes

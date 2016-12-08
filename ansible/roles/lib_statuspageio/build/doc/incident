@@ -1,0 +1,207 @@
+# pylint: skip-file
+
+# vim: expandtab:tabstop=4:shiftwidth=4
+
+#   Copyright 2016 Red Hat Inc.
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#  Purpose: An ansible module to communicate with statuspageio.
+
+DOCUMENTATION = '''
+module: statuspage_incident
+short_description: Create, modify, and idempotently manage statuspage incidents
+description:
+  - Manage statuspage incidents
+options:
+  api_key:
+    description:
+    - statuspage api key
+    required: True
+    default: os.environ.get('STATUSPAGE_API_KEY', '')
+    aliases: []
+  page_id:
+    description:
+    - The statuspage page
+    required: True
+    default: None
+    aliases: []
+  org_id:
+    description:
+    - Organization id for the user.  Required when modifying users.
+    required: false
+    default: None
+    aliases: []
+  state:
+    description:
+    - Whether to create, update, delete, or list the desired object
+    required: True
+    default: present
+    aliases: []
+  name:
+    description:
+    - Name of the incident
+    required: false
+    default: None
+    aliases: []
+  unresolved_only:
+    description:
+    - Filter the incidents on the unresolved_only
+    required: false
+    default: None
+    aliases: []
+  scheduled_only:
+    description:
+    - Filter the incidents on the scheduled_only
+    required: false
+    default: None
+    aliases: []
+  incident_type:
+    description:
+    - The type of incident to create.
+    choices: ['realtime', 'scheduled', 'historical']
+    required: false
+    default: None
+    aliases: []
+  status:
+    description:
+    - The status of the incident.
+    choices: ['investigating', 'identified', 'monitoring', 'resolved', 'scheduled', 'in_progress', 'verifying', 'completed']
+    required: false
+    default: None
+    aliases: []
+  update_twitter:
+    description:
+    - Whether to update the twitters
+    required: false
+    default: False
+    aliases: []
+  msg:
+    description:
+    - The incident message that gets posted
+    required: false
+    default: None
+    aliases: []
+  impact_override:
+    description:
+    - Whether update the impact
+    choices: ['none', 'minor', 'major', 'critical']
+    required: false
+    default: None
+    aliases: []
+  components:
+    description:
+    - An array of the components
+    required: false
+    default: None
+    aliases: []
+  scheduled_for:
+    description:
+    - The date when the maintenance will start
+    required: false
+    default: None
+    aliases: []
+  scheduled_until:
+    description:
+    - The date when the maintenance will end
+    required: false
+    default: None
+    aliases: []
+  scheduled_remind_prior:
+    description:
+    - Whether to remind the subscribers that the maintenance will begin
+    required: false
+    default: None
+    aliases: []
+  scheduled_auto_in_progress:
+    description:
+    - Whether to auto start the maintenance period and transition the status to in_progress
+    required: false
+    default: None
+    aliases: []
+  scheduled_auto_completed:
+    description:
+    - Whether to auto complete the maintenance period and transition the status to completed
+    required: false
+    default: None
+    aliases: []
+'''
+
+EXAMPLES = '''
+# list indicents
+  - name: list incidents
+    statuspage_incident:
+      state: list
+      api_key: "{{ api_key }}"
+      org_id: "{{ org_id }}"
+      page_id: "{{ page_id }}"
+    register: incout
+
+# create an incident
+  - name: create an incident
+    statuspage_incident:
+      api_key: "{{ api_key }}"
+      org_id: "{{ org_id }}"
+      page_id: "{{ page_id }}"
+      name: API Outage
+      message: Investigating an issue with the API
+      components:
+      - group: opstest
+        component:
+        - name: Master API
+          status: partial_outage
+    register: incout
+  - debug: var=incout
+
+# create a scheduled maintenance incident
+  - name: create a scheduled incident
+    statuspage_incident:
+      api_key: "{{ api_key }}"
+      org_id: "{{ org_id }}"
+      page_id: "{{ page_id }}"
+      incident_type: scheduled
+      status: scheduled
+      name: Cluster upgrade
+      message: "Upgrading from 3.2 to 3.3."
+      components:
+      - group: opstest
+        component:
+        - name: Etcd Service
+          status: partial_outage
+        - name: Master API
+          status: partial_outage
+      scheduled_for: '2016-10-14T13:21:00-0400'
+      scheduled_until: '2016-10-14T13:25:00-0400'
+      scheduled_auto_in_progress: True
+	  scheduled_remind_prior: True
+    register: incout
+  - debug: var=incout
+
+#resolve an incident
+  - name: resolve an incident
+    statuspage_incident:
+      api_key: "{{ api_key }}"
+      org_id: "{{ org_id }}"
+      page_id: "{{ page_id }}"
+      status: resolved
+      name: API Outage
+      message: "Fixed and ready to go."
+      components:
+      - group: opstest
+        component:
+        - name: Master API
+          status: operational
+    register: incout
+  - debug: var=incout
+
+'''

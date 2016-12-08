@@ -1,0 +1,118 @@
+// begin header
+ifdef::env-github[]
+:tip-caption: :bulb:
+endif::[]
+:numbered:
+:toc: macro
+:toc-title: pass:[<b>Table of Contents</b>]
+// end header
+
+== Installation
+
+=== Prerequisites
+
+Check out openshift-tools, openshift-ansible-ops and openshift-ansible-private repos
+Verify that there is a certificate for the hostname that you want to use for this zabbix instance
+openshift-ansible-private/private_roles/stat_cert_files/files/<cluster name>
+
+In this example: cluster name is ops-aws and we will be using the
+wildcard.ops-aws.openshift.com.crt
+wildcard.ops-aws.openshift.com.csr
+wildcard.ops-aws.openshift.com.key
+files because we want our zabbix to be accessed through:
+https://zabbix.ops-aws.openshift.com
+
+
+* Go to the dyn site https://manage.dynect.net and login
+* Manage the zone, in our case: openshift.com
+* Navigate to subdomain, in our case ops-aws.openshift.com
+* add new node, in our case zabbix
+* add another new node, this one for zagg, in our case it's just simple zagg
+* select subdomain, then add new cname, you can find that in the AWS console, the one pointing to one of the infra nodes
+* repeat this for the zagg subdomain also
+
+
+
+In the ansible-private repo create files under
+global/<cloud provider>/<account name>/<environment>/<cluster name>/<region>/monitoring_server/
+for example: global/aws/openshiftops/prod/ops-aws/us-east-1/monitoring_server/
+*zabbix-web-ssl-route.yaml
+*zagg-web-ssl-route.yaml
+Cut and paste the certificates into these files, you can find a sample file in the ops-aws cluser
+Make sure the spec.host matches the certificate pattern
+
+=== Template creation
+In openshift-ansible-ops repo run the deploy playbook to create template on one of the master on the cluster where this new zabbix will live
+cd openshift-ansible-ops/playbooks/adhoc/monitoring_template
+./deploy_monitoring_template.yaml -e "clusterid=<the cluster where zabbix goes>"
+
+in my example the clusterid is ops-aws
+
+This will deploy all the necessary files to the master where the next step will happen
+
+=== DB migration
+This will be most likely a manual step, since we don't know at this time what technologies we are going to be using on various clouds
+The plan currently is to run a read replica, then cut it off and promote it to be the new zabbix's DB, this way we won't be missing too much monitoring data
+
+
+=== Deploying zabbix on cluster
+At template creation a master was picked by the playbook where all the files are currently residing
+
+SSH to that host
+The required files are in the /root/monitoring_template folder
+All the info below can also be found in that folder in a README: 
+
+
+create a new project:
+--------------------------------------------------------------------------
+oc new-project monitoring
+--------------------------------------------------------------------------
+
+create the secret package:
+--------------------------------------------------------------------------
+oc secrets new monitoring-secrets monitoring-secrets -o json > monitoring-secrets.json
+--------------------------------------------------------------------------
+
+now create a secret from this json:
+--------------------------------------------------------------------------
+oc create -f monitoring-secrets.json
+--------------------------------------------------------------------------
+
+enable the serviceaccount access to the secrets
+--------------------------------------------------------------------------
+oc secrets add serviceaccount/default secrets/monitoring-secrets --for=mount
+--------------------------------------------------------------------------
+
+create a new app. This will start running the steps
+--------------------------------------------------------------------------
+oc new-app zabbix_monitoring.yaml
+--------------------------------------------------------------------------
+
+create the ssl route for zabbix-web
+--------------------------------------------------------------------------
+oc create -f zabbix-web-ssl-route.yaml
+--------------------------------------------------------------------------
+
+create the ssl route for zagg-web
+--------------------------------------------------------------------------
+oc create -f zagg-web-ssl-route.yaml
+--------------------------------------------------------------------------
+
+
+== zabbix config run
+
+ops-run-zabbix-config.sh on tower can do this
+
+ZABBIX_USER and ZABBIX_PASSWORD needs to be set in environment for this playbook to run
+
+if we change the g_server variable in the
+openshift-ansible-ops repo
+playbooks/jobs/zabbix/config_zabbix.yml file, this needs to be extended to accomodate running against multiple environments
+
+
+== zagg config changes
+To change the global zagg endpoint, so all host_monitoring_containers point to a new zagg address, we need to edit in ansible-private repo
+openshift-ansible-private/private_vars/global/main.yml
+g_zagg_web_url is the variable that will be written out into each host monitoring settings
+in our case that would have to change to zagg.ops-aws.openshift.com
+

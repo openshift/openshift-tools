@@ -1,0 +1,59 @@
+---
+- name: Ensure dnsmasq is installed
+  action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
+  with_items:
+  - dnsmasq
+
+- name: set /etc/resolv.dnsmasq to the system's original nameserver
+  lineinfile:
+    create: yes
+    mode: 0644
+    owner: root
+    group: root
+    dest: /etc/resolv.dnsmasq
+    regexp: ^nameserver
+    line: "nameserver {{ dnsmp_original_nameserver }}"
+  notify:
+  - restart dnsmasq
+
+- name: Install the dnsmasq proxy config
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+  - src: dns_proxy.conf.j2
+    dest: /etc/dnsmasq.d/dns_proxy.conf
+  - src: caching_server.conf.j2
+    dest: /etc/dnsmasq.d/caching_server.conf
+  notify:
+  - restart dnsmasq
+
+- name: Ensure dnsmasq is enabled and started
+  service:
+    name: dnsmasq
+    enabled: yes
+    state: started
+
+# This is needed so that NetworkManager will not overwrite /etc/resolv.conf
+#  FIXME: IF there is more than one ethernet address or it's not eth0, this will fail.
+- name: set PEERDNS=no on eth0
+  lineinfile:
+    mode: 0644
+    owner: root
+    group: root
+    dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+    regexp: ^PEERDNS=
+    line: "PEERDNS=\"no\""
+  notify:
+  - restart NetworkManager
+
+- name: set resolv.conf to use eth0's ip address as nameserver
+  template:
+    src: aws_resolv.conf.j2
+    dest: /etc/resolv.conf
+    owner: root
+    group: root
+    mode: 0644

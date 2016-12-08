@@ -1,0 +1,84 @@
+---
+- name: ensure that the /etc/origin/node/ca.crt is there
+  stat:
+    path: /etc/origin/node/ca.crt
+  register: ca_cert_stat
+
+- name: fail is ca.crt is not found
+  fail:
+    msg: "/etc/origin/node/ca.crt is not found!"
+  when: not ca_cert_stat.stat.exists
+
+- name: debug idrc_cluster_master
+  debug:
+    msg: "cluser_master = {{ idrc_cluster_master }}"
+  run_once: true
+
+- name: get service from master
+  run_once: true
+  delegate_to: "{{ idrc_cluster_master }}"
+  oc_service:
+    namespace: default
+    name: docker-registry
+    state: list
+  register: registry_service_out
+
+# In ansible 2.0 we will need to turn on delegate_facts
+- name: set registry_service fact
+  run_once: true
+  delegate_to: "{{ idrc_cluster_master }}"
+  set_fact:
+    registry_service_ip: "{{ registry_service_out.results.clusterip }}"
+
+- name: debug registry_service_ip
+  run_once: true
+  debug:
+    msg: "registry service ip = {{ registry_service_ip }}"
+
+- name: create the docker cert dirs
+  file:
+    path: "/etc/docker/certs.d/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+  - "{{ registry_service_ip }}:5000"
+  - docker-registry.default.svc.cluster.local:5000
+
+- name: copy the openshift ca.crt into the system cert dir
+  copy20:
+    remote_src: true
+    dest: "/etc/pki/ca-trust/source/anchors/openshift-master-ca.pem"
+    src: /etc/origin/node/ca.crt
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Check if cert is in system tls-ca-bundle.pem
+  command: python -c "import sys; sys.exit(0) if open('/etc/origin/node/ca.crt').read() in open('/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem').read() else sys.exit(1)"
+  ignore_errors: yes
+  changed_when: False
+  register: ca_in_bundle_check
+
+- name: run update-ca-trust if needed
+  command: /usr/bin/update-ca-trust extract
+  when: ca_in_bundle_check.rc != 0
+
+- name: Symlink combined cert to docker certs dir
+  file:
+    src: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+    dest: "/etc/docker/certs.d/{{ item }}/ca.crt"
+    state: link
+  with_items:
+  - docker-registry.default.svc.cluster.local:5000
+  - "{{ registry_service_ip }}:5000"
+
+- name: Remove the '--insecure-registry' option from OPTION line is /etc/sysconfig/docker
+  lineinfile:
+    dest: /etc/sysconfig/docker
+    backrefs: yes
+    regexp: '^OPTIONS=(.*)--insecure-registry=[^ ]*(.*)$'
+    line: OPTIONS=\1 \2
+  notify:
+  - restart docker

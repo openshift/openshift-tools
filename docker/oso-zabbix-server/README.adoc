@@ -1,0 +1,31 @@
+= Zabbix server Docker Container
+
+This container is a zabbix server.
+
+== Setup
+See https://github.com/openshift/openshift-tools/blob/prod/docker/README.adoc#setup[general setup].
+
+Nothing additional needs to be setup for this container.
+
+== Build
+
+To build this container, simply execute the build script.
+
+.Example:
+[source,bash]
+----
+./[rhel7|centos7]/build.sh
+----
+
+== Run
+
+To run this container, simply execute the run script.
+You should provide the needed environment variables
+(ie. mysql server user, pass, etc) or providing them
+through /secrets/*.yml as needed by /root/config.yml.
+
+.Example:
+[source,bash]
+----
+./[rhel7|centos7]/run.sh
+----

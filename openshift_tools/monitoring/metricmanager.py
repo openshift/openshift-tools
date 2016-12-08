@@ -41,13 +41,16 @@
         mm.remove_metrics([zbx_metric, hb_metric]) # this can be a single metric too!
 '''
 
-import yaml
-import os
+# Reason: disable pylint import-error because our libs aren't loaded on jenkins.
+# Status: temporary until we start testing in a container where our stuff is installed.
+# pylint: disable=import-error
+import time
 import uuid
 import calendar
-import time
+import json
+import logging
+import redis
 import zbxsend
-
 
 # Reason: disable pylint too-few-public-methods because this is
 #     a DTO with a little ctor logic.
@@ -74,17 +77,20 @@ class UniqueMetric(zbxsend.Metric):
             unique_id -- the unique id of this metric (default: generate one)
         '''
 
-        if clock == None:
-            clock = calendar.timegm(time.gmtime())
+        self.host = host
+        self.key = key
+        self.value = value
+        self.clock = clock
 
-        if unique_id == None:
+        if self.clock is None:
+            self.clock = calendar.timegm(time.gmtime())
+
+        if unique_id is None:
             self.unique_id = str(uuid.uuid4()).replace('-', '')
         else:
             self.unique_id = unique_id
 
-        self.filename = self.unique_id + '.yml'
-
-        super(UniqueMetric, self).__init__(host, key, value, clock)
+        zbxsend.Metric.__init__(self, self.host, self.key, self.value, self.clock)
 
     @staticmethod
     def create_heartbeat(host, templates, hostgroups, clock=None, unique_id=None):
@@ -152,21 +158,16 @@ class MetricManager(object):
     ''' Manages a disk cache of metrics.
     '''
 
-    def __init__(self, metrics_directory):
+    def __init__(self, redis_list):
         ''' Construct object
 
             Keyword arguments:
-            metrics_directory -- the directory where the metrics should be stored
+            redis_list -- the redis list where the items go
         '''
-        self.metrics_directory = metrics_directory
+        self.logger = logging.getLogger(__name__)
+        self.redis_list = redis_list
 
-    def metric_full_path(self, filename):
-        ''' generates the full path of a specific metric.
-
-            Keyword arguments:
-            filename -- the filename of the metric.
-        '''
-        return os.path.join(self.metrics_directory, filename)
+        self.redis = redis.Redis()
 
     def write_metrics(self, metrics):
         ''' write one or more metrics to disk
@@ -174,12 +175,15 @@ class MetricManager(object):
             Keyword arguments:
             metrics -- a single metric, or a list of metrics to be written to disk
         '''
+
         if not isinstance(metrics, list):
             metrics = [metrics]
 
+        rpipe = self.redis.pipeline()
         for metric in metrics:
-            with open(self.metric_full_path(metric.filename), 'w') as metric_file:
-                yaml.safe_dump(metric.__dict__, metric_file, default_flow_style=False)
+            rpipe.rpush(self.redis_list, json.dumps(metric.__dict__))
+
+        rpipe.execute()
 
     def remove_metrics(self, metrics):
         ''' remove one or more metrics from disk
@@ -191,7 +195,9 @@ class MetricManager(object):
             metrics = [metrics]
 
         for metric in metrics:
-            os.unlink(self.metric_full_path(metric.filename))
+            removed = self.redis.lrem(self.redis_list, json.dumps(metric.__dict__))
+            if removed > 1:
+                self.logger.error('Redis claims it deleted more than one of this unique item: %s', metric)
 
     def read_metrics(self):
         ''' read in all of the metrics contained in the disk cache
@@ -201,17 +207,11 @@ class MetricManager(object):
         '''
         metrics = []
 
-        for filename in os.listdir(self.metrics_directory):
-            ext = os.path.splitext(filename)[-1][1:].lower().strip()
+        for metric in self.redis.lrange(self.redis_list, 0, -1):
+            doc = json.loads(metric)
+            metrics.append(UniqueMetric(doc['host'], doc['key'], doc['value'],
+                                        doc['clock'], doc['unique_id']))
 
-            # We only want to load yaml files
-            if ext not in ['yml', 'yaml']:
-                continue
-
-            with open(self.metric_full_path(filename), 'r') as metric_file:
-                doc = yaml.load(metric_file)
-                metrics.append(UniqueMetric(doc['host'], doc['key'], doc['value'],
-                                            doc['clock'], doc['unique_id']))
         return metrics
 
     @staticmethod

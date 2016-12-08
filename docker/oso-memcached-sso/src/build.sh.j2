@@ -1,0 +1,12 @@
+#!/bin/bash -e
+{{ generated_header }}
+
+sudo echo -e "\nTesting sudo works...\n"
+
+cd $(dirname $0)
+{% if base_os == "rhel7" %}
+sudo time docker build -t oso-memcached-sso .
+{% elif base_os == "centos7" %}
+sudo time docker build -t oso-memcached-sso . && \
+sudo docker tag -f oso-memcached-sso openshifttools/oso-centos7-zabbix-web:latest
+{% endif %}

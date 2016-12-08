@@ -14,7 +14,7 @@ These containers are used for various things, some are specific just to OpenShif
 We hope you find them useful.
 
 == Setup
-All containers in this directory expect a secrets directory to be setup with a structure like:
+The RHEL-based containers in this directory expect a secrets directory to be setup with a structure like:
 
 [source]
 ----
@@ -36,21 +36,47 @@ All containers in this directory expect a secrets directory to be setup with a s
 
 .All containers in this directory should have the following files:
 * README.adoc - Information specific to the container
-* build.sh - a script to make building the container easy
-* run.sh - a script to make running the container easy
+* build.sh - a script to make local building of the container(s) easy
+* run.sh - a script to make local running of the container(s) easy
 
 
 == Directory Structure
 
 ----
 openshift-tools/docker
-├── oso-f22-host-monitoring      # A superprivileged container that runs on the host system (builds on the pcp-base container)
-├── oso-rhel7-ops-base           # Base RHEL7 container that the other RHEL7 containers are based on
-├── oso-rhel7-zabbix-server      # Zabbix server container (doesn't include web, db, etc)
-├── oso-rhel7-zabbix-web         # Zabbix webui container
-├── oso-rhel7-zagg-client        # Connects to host monitoring container and sends data to zagg-web
-├── oso-rhel7-zagg-web           # Exposes REST interface, collects metrics and sends them to zabbix (or another zagg)
-├── oso-rhel7-zaio               # Zabbix All In One container (zabbix server, webui and db)
-├── pcp-base                     # Base container provided by PCP team
+├── oso-host-monitoring/(rhel7|centos7)    # A superprivileged container that runs on the host system (includes pcp and zagg client)
+├── oso-ops-base/(rhel7|centos7)           # Base RHEL/CENTOS7 container that the other containers are based on
+├── oso-zabbix-server/(rhel7|centos7)      # Zabbix server container (doesn't include web, db, etc)
+├── oso-zabbix-web/(rhel7|centos7)         # Zabbix webui container
+├── oso-zagg-web/(rhel7|centos7)           # Exposes REST interface, collects metrics and sends them to zabbix (or another zagg)
+├── oso-rhel7-zaio/(rhel7|centos7)         # Zabbix All In One container (zabbix server, webui and db). Very nice for local development/testing
 ----
 
+The RHEL and CentOS versions of the containers are extremely similar, and the shared information in stored in the 'src' directory (ie openshift-tools/docker/oso-host-monitoring/src/*). When making changes to the files in 'src' be sure to run the appropriate 'generate_containers.yml' Ansible script so that the changes in 'src' propogate out. If you make a change to openshift-tools/docker/oso-ops-base/src/Dockerfile.j2 in the oso-ops-base container, then be sure to run openshift-tools/docker/oso-ops-base/generate-containers.yml to get the changes into the rhel7 and centos7 directories.
+
+[NOTE]
+.*Why are these generated files commited?*
+=====================================================================
+The generated files are commited to the git repo because the BuildConfigs in https://github.com/openshift/openshift-tools/tree/prod/openshift/templates (which are used to bring up and maintain a new monitoring cluster/project) need to be able to point to an already built directory structure with the Dockerfile and all its dependencies.
+
+Here's an example:
+--------------------------------------
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      name: oso-rhel7-ops-base
+    name: oso-rhel7-ops-base
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: oso-rhel7-ops-base:latest
+    resources: {}
+    source:
+      contextDir: docker/oso-ops-base/rhel7
+      git:
+        uri: https://github.com/openshift/openshift-tools
+      type: Git
+--------------------------------------
+=====================================================================

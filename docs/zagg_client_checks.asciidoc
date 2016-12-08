@@ -2,7 +2,7 @@
 
 This document is intended to be used as a reference to write checks in Openshift V3 using the Zagg interface.
 
-*Note:* This document assumes you are using the https://github.com/openshift/openshift-tools/tree/master/docker/oso-rhel7-zagg-client[oso-rhel7-zagg-client] docker container.  This container includes all the required libraries to communicate with a Zagg server.
+*Note:* This document assumes you are using the https://github.com/openshift/openshift-tools/tree/master/docker/oso-rhel7-host-monitoring[oso-rhel7-host-monitoring] docker container.  This container includes all the required libraries to communicate with a Zagg server.
 
 ==== A Note About ZaggClient Checks
 
@@ -51,7 +51,7 @@ Both of these clients read their default settings from the config file: `/etc/op
 
 This is a python API used to create and send data to Zagg.
 
-ZaggSender is maintained in the https://github.com/openshift/openshift-tools/tree/master/openshift_tools/monitoring[openshift-tools] repository.  It is installed via the `python-openshift-tools-monitoring` RPM.
+ZaggSender is maintained in the https://github.com/openshift/openshift-tools/tree/master/openshift_tools/monitoring[openshift-tools] repository.  It is installed via the `python-openshift-tools-monitoring-zagg` RPM.
 
 ZaggSender reads it's default settings from the config file: `/etc/openshift_tools/zagg_client.yaml`.
 
@@ -277,4 +277,72 @@ for f in $FS; do
     FILESYS=$(echo f | awk '{print $2}')
     FILESYS_PERCENT=$(echo f | awk '{print $1}')
     ops-zagg-client -k "filesys.percent_full[$FILESYS]" -o $FILESYS_PERCENT
+----
+
+
+==== Dynamic Items in Zabbix with python
+
+The official documentation was not trivial to understand, so this example seemed much clearer to show how they work and what we need to do in code to make it happen.
+
+Going to use the the cron-send-filesystem-metrics script as an example. On this test environment it finds 2 discs that wants to report, we shall store it in the filesys list
+----
+filesys: ['/dev/mapper/baal-root', '/dev/mapper/baal-var']
+----
+
+Zabbix setup coming from ansible/roles/os_zabbix/vars/template_os_linux.yml creates the required discovery rule named "disc.filesys" and the two (_disc.filesys.full_ and _disc.filesys.inodes.pused_) item prototypes that use a macro used by the script and zabbix for substitution (#OSO_FILESYS). 
+In the script these values are used as
+----
+   discovery_key_fs = 'disc.filesys'
+   item_prototype_macro_fs = '#OSO_FILESYS'
+   item_prototype_key_full = 'disc.filesys.full'
+   item_prototype_key_inode = 'disc.filesys.inodes.pused'
+----
+First, ZaggSender needs to know what dynamic values will be replacing the #OSO_FILESYS  macro in the item prototypes. This is done with the ZaggSender method named add_zabbix_dynamic_items, that looks like the following
+----
+filesys = ['/dev/mapper/baal-root', '/dev/mapper/baal-var']
+zagg_sender.add_zabbix_dynamic_item(discovery_key_fs, item_prototype_macro_fs, filesys)
+----
+The result of this line of code can be seen later on in the ZaggSender unique metrics printout that is included fully at the end, but this code is responsible for adding a data key with the value being the list of filesystems that it should expect once the actual data corresponding to those dynamic values will be sent:
+----
+UniqueMetric('UNNAMED-ZAGG-CLIENT-CTR', 'disc.filesys', '{"data": [{"{#OSO_FILESYS}": "/dev/mapper/baal-root"}, {"{#OSO_FILESYS}": "/dev/mapper/baal-var"}]}', 1468530031, 'a835b16566d6462d81fdfb3b15fc46f9')
+----
+
+Then for each item prototype our script has to match the item's key with what we want to send, in this case disc.filesys.full[{#OSO_FILESYS}] and disc.filesys.inodes.pused[{#OSO_FILESYS}]
+----
+zagg_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_full, "/dev/mapper/baal-root"): 14.753461518016865})
+zagg_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_full, "/dev/mapper/baal-var"): 3.5051553182188537})
+----
+Zabbix thus gets a key named _disc.filesys.full[/dev/mapper/baal-root]_ with the value 14.753461518016865, and that key will match the prototype's key (_disc.filesys.full[{#OSO_FILESYS}]_). Since zabbix knows from the dynamic item setup that #OSO_FILESYS can have the value /dev/mapper/baal-root it will recognize it and therefore it will be filed under the discovery rule and stored.
+
+The other item prototype in this script is filled in the same manner.
+
+The whole output from a ZaggSender.print_unique_metrics() that shows what is sent over when a dynamic item is prepared for zabbix. It shows that basically we want to send a list of values that will be replaced by the macros in prototype items and then actually send those items with values.
+----
+ZaggSender UniqueMetrics:
+==============================
+UniqueMetric('UNNAMED-ZAGG-CLIENT-CTR', 'disc.filesys', '{"data": [{"{#OSO_FILESYS}": "/dev/mapper/baal-root"}, {"{#OSO_FILESYS}": "/dev/mapper/baal-var"}]}', 1468530031, 'a835b16566d6462d81fdfb3b15fc46f9')
+UniqueMetric('UNNAMED-ZAGG-CLIENT-CTR', 'disc.filesys.full[/dev/mapper/baal-root]', 14.753461518016865, 1468530031, '513ec4e3a9444b1b9fc34c4cc3f7860d')
+UniqueMetric('UNNAMED-ZAGG-CLIENT-CTR', 'disc.filesys.full[/dev/mapper/baal-var]', 3.5051553182188537, 1468530031, 'f65dc71418624b089febe9b8e9791e6a')
+UniqueMetric('UNNAMED-ZAGG-CLIENT-CTR', 'disc.filesys.inodes.pused[/dev/mapper/baal-root]', 9.850189208984375, 1468530031, '2be294d5e724445690398c0b451663ff')
+UniqueMetric('UNNAMED-ZAGG-CLIENT-CTR', 'disc.filesys.inodes.pused[/dev/mapper/baal-var]', 0.27045283176943696, 1468530031, '6f8a7f92ad844a94b66762af2ecdba51')
+==============================
+----
+
+If we would want to add an additional metric to this script, let's say random access times on each volume. First we would have to create a new item prototype in the template_os_linux.yml file, that could be named _disc.filesys.rat[{#OSO_FILESYS}]_
+----
+  - discoveryrule_key: disc.filesys
+    name: "disc.filesys.rat.{#OSO_FILESYS}"
+    key: "disc.filesys.rat[{#OSO_FILESYS}]"
+    value_type: float
+    description: "some magical utility that gives us filesys.rat numbers"
+    applications:
+    - Disk
+
+----
+Once we have the random access time numbers, then in the cron send script we would add
+----
+item_prototype_key_rat = 'disc.filesys.rat'
+rat_values = ['110', '117'] #example values
+zagg_sender.add_zabbix_keys{'%s[%s]' % (item_prototype_key_rat, "/dev/mapper/baal-root"): rat_value[0]})
+zagg_sender.add_zabbix_keys{'%s[%s]' % (item_prototype_key_rat, "/dev/mapper/baal-var"): rat_value[1]})
 ----

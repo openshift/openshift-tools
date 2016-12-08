@@ -1,0 +1,84 @@
+---
+- name: fail is version isn't set
+  fail:
+    msg: "Value {{ item }} is not set!"
+  when: "{{ item }} is undefined"
+  with_items:
+  - osup_version
+
+- name: osup_update_type must be "node" or "master"
+  fail:
+    msg: "Value 'osup_update_type' must be set to 'master' or 'node'!"
+  when: osup_update_type not in osup_valid_update_types
+
+- name: Upgrade atomic-openshift packages and dependencies
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - "{{ osup_packages[osup_update_type] }}"
+
+- name: Check if package is installed
+  repoquery:
+    name: atomic-openshift
+    show_duplicates: True
+    query_type: installed
+  register: package_check_out
+
+- name: debug package list
+  debug:
+    msg: "{{ item }}"
+  with_items:
+  - "Wanted Install Version: {{ osup_version }}"
+  - "Package version installed: {{ package_check_out }}"
+
+- name: Set wanted_version_installed=True if upgrade succeeded
+  set_fact:
+    osup_wanted_version_installed: True
+  when: osup_version in package_check_out.results.versions.available_versions_full
+
+- name: Upgrade failed, so try a downgrade
+  command: "/usr/bin/yum -y downgrade {{ item }}"
+  with_items:
+  - "{{ osup_packages[osup_update_type] | join(' ') }}"
+  when: osup_wanted_version_installed == False
+
+- name: Check if package is installed
+  repoquery:
+    name: atomic-openshift
+    show_duplicates: True
+    query_type: installed
+  register: package_check_out
+  when: osup_wanted_version_installed == False
+
+- name: debug package list
+  debug:
+    msg: "{{ item }}"
+  with_items:
+  - "Wanted Install Version: {{ osup_version }}"
+  - "Package version installed: {{ package_check_out }}"
+  when:
+  - osup_wanted_version_installed == False
+
+- name: Set wanted_version_installed=True if upgrade succeeded
+  set_fact:
+    osup_wanted_version_installed: True
+  when:
+  - osup_wanted_version_installed == False
+  - osup_version in package_check_out.results.versions.available_versions_full
+
+- name: Alert if update is not successful, but continue
+  debug:
+    msg: "[WARNING] The desired rpm version does not match installed version! Upgrade and downgrade failed!"
+  failed_when: True
+  ignore_errors: True
+  when: osup_wanted_version_installed == False
+
+- name: Ensure master services are running
+  service:
+    name: "{{ item }}"
+    state: running
+  with_items:
+  - atomic-openshift-master-api
+  - atomic-openshift-master-controllers
+  when: osup_update_type == "master"

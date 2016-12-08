@@ -1,0 +1,105 @@
+---
+# tasks file for rootlog scripts, rpm, and logrotate
+
+- name: make sure rootlog rpm is installed
+  yum:
+    name: rootlog
+    state: latest
+  register: install_result
+  tags:
+    - rootlog
+
+- name: copy 10_root_profile_d script
+  copy:
+    src: 10_root_profile_d.sh
+    dest: /etc/profile.d/10_root_profile_d.sh
+    mode: "0644"
+    owner: root
+    group: root
+
+- name: create root profile directory
+  file:
+    path: "/root/.profile.d"
+    state: directory
+    mode: "0700"
+    owner: root
+    group: root
+
+- name: copy history and session scripts
+  copy:
+    src: "{{ item }}"
+    dest: "/root/.profile.d/{{ item }}"
+    mode: "0600"
+    owner: root
+    group: root
+  with_items:
+    - history.sh
+    - session_record.sh
+
+- name: create rootlog directory
+  file:
+    path: "/var/log/rootlog"
+    state: directory
+    mode: "0700"
+    owner: root
+    group: root
+
+- name: create rootlog sessions directory
+  file:
+    path: "/var/log/rootlog/sessions"
+    state: directory
+    mode: "0700"
+    owner: root
+    group: root
+
+- name: create fake log file for session log rotation
+  copy:
+    content: ""
+    dest: "/var/log/rootlog/sessions/logrotate_fakelog"
+    group: root
+    owner: root
+    mode: "0600"
+
+- name: setup ssh log rotate
+  copy:
+    content: |
+      /var/log/rootlog/ssh.log {
+          copytruncate
+          maxage 365
+          size 30M
+          missingok
+          notifempty
+          compress
+      }
+    dest: /etc/logrotate.d/rootlog_ssh_log
+    mode: "0644"
+    owner: root
+    group: root
+
+- name: setup session log rotate
+  copy:
+    content: |
+      /var/log/rootlog/sessions/logrotate_fakelog {
+          firstaction
+              # compress week-old session files
+              find /var/log/rootlog/sessions -maxdepth 1 -regextype posix-egrep -regex ".*/[0-9.-]{20}[a-zA-Z0-9_]*-[0-9]*(\.timing)?\$" -mtime +7 -exec gzip {} \;
+              # remove year-old sessions
+              year_ago="$(date -d "1 year ago" +%s)"
+              for i in $(find /var/log/rootlog/sessions -maxdepth 1 -regextype posix-egrep -regex ".*/[0-9.-]{20}[a-zA-Z0-9_]*-[0-9]*(\.timing)?\.gz\$"); do
+                date="$(echo "$i" | sed -r "s/^.*\/([0-9-]{10})-([0-9]{2}).([0-9]{2}).([0-9]{2})-.*/\1 \2:\3:\4/")"
+                if [ "$year_ago" -gt "$( date -d "$date" +%s)" ]; then
+                  rm -f "$i"
+                fi
+              done
+          endscript
+          nocopytruncate
+          weekly
+          missingok
+          create
+          rotate 0
+          ifempty
+      }
+    dest: /etc/logrotate.d/rootlog_ssh_sessions
+    mode: "0644"
+    owner: root
+    group: root

@@ -1,0 +1,47 @@
+---
+- name: Ensure firewalld is removed
+  yum:
+    name: firewalld
+    state: absent
+
+- name: Install iptables packages
+  action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
+  with_items:
+  - iptables
+  - iptables-services
+  register: install_result
+
+- name: Reload systemd units
+  command: systemctl daemon-reload
+  when: install_result | changed
+
+# This task and the next can be changed to systemd module in ansible 2.2
+#  see: https://docs.ansible.com/ansible/systemd_module.html
+- name: Determine if iptables service masked
+  command: >
+    systemctl is-enabled {{ item }}
+  with_items:
+  - iptables
+  - ip6tables
+  register: iptables_masked_output
+  changed_when: false
+  failed_when: false
+
+- name: Unmask iptables service
+  command: >
+    systemctl unmask {{ item }}
+  with_items:
+  - iptables
+  - ip6tables
+  when: "'masked' in iptables_masked_output.results | map(attribute='stdout')"
+
+- name: Start and enable iptables service
+  service:
+    name: iptables
+    state: started
+    enabled: yes
+  register: result
+
+- name: need to pause here, otherwise the iptables service starting can sometimes cause ssh to fail
+  pause: seconds=10
+  when: result | changed

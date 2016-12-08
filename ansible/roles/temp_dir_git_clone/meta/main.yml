@@ -1,0 +1,9 @@
+galaxy_info:
+  author: OpenShift Ops
+  description: Clones a git repo to a temp directory
+  company: Red Hat, Inc.
+  issue_tracker_url: https://github.com/openshift/openshift-ansible-ops/issues
+  license: Apache
+  min_ansible_version: 1.9
+dependencies:
+- tools_roles/lib_git

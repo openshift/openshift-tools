@@ -1,0 +1,414 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: ops-centos-zabbix-monitoring
+objects:
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      name: ${DATABASE_SERVICE_NAME}
+    name: ${DATABASE_SERVICE_NAME}
+  spec:
+    replicas: 1
+    selector:
+      name: ${DATABASE_SERVICE_NAME}
+    strategy:
+      resources: {}
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          name: ${DATABASE_SERVICE_NAME}
+      spec:
+        containers:
+        - env:
+          - name: MYSQL_USER
+            value: ${MYSQL_USER}
+          - name: MYSQL_PASSWORD
+            value: ${MYSQL_PASSWORD}
+          - name: MYSQL_DATABASE
+            value: ${MYSQL_DATABASE}
+          - name: MYSQL_ROOT_PASSWORD
+            value: ${MYSQL_PASSWORD}
+          image: openshift/mysql-55-centos7:latest
+          imagePullPolicy: IfNotPresent
+          name: mysql
+          ports:
+          - containerPort: 3306
+            name: tcp-3306
+            protocol: TCP
+          resources: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /var/lib/mysql/data
+            name: ${DATABASE_SERVICE_NAME}-data
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: ${DATABASE_SERVICE_NAME}-data
+          persistentVolumeClaim:
+            claimName: ${DATABASE_SERVICE_NAME}
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - mysql
+        from:
+          kind: ImageStreamTag
+          name: mysql:latest
+      type: ImageChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      name: ${ZABBIX_SERVER}
+    name: ${ZABBIX_SERVER}
+  spec:
+    replicas: 1
+    selector:
+      name: ${ZABBIX_SERVER}
+    strategy:
+      resources: {}
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          name: ${ZABBIX_SERVER}
+      spec:
+        containers:
+        - env:
+          - name: OO_PAUSE_ON_START
+            value: 'false'
+          - name: MYSQL_USER
+            value: ${MYSQL_USER}
+          - name: MYSQL_PASSWORD
+            value: ${MYSQL_PASSWORD}
+          - name: MYSQL_DATABASE
+            value: ${MYSQL_DATABASE}
+          - name: MYSQL_HOST
+            value: ${DATABASE_SERVICE_NAME}
+          image: openshifttools/oso-centos7-zabbix-server:latest
+          imagePullPolicy: Always
+          name: ${ZABBIX_SERVER}
+          ports:
+          - containerPort: 10050
+            name: tcp-10050
+            protocol: TCP
+          - containerPort: 10051
+            name: tcp-10051
+            protocol: TCP
+          resources: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /secrets
+            name: monitoring-secrets
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: monitoring-secrets
+          secret:
+            secretName: monitoring-secrets
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${ZABBIX_SERVER}
+        from:
+          kind: ImageStreamTag
+          name: oso-cent7-zabbix-server:latest
+      type: ImageChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      name: oso-centos7-zabbix-web
+    name: oso-centos7-zabbix-web
+  spec:
+    replicas: 1
+    selector:
+      name: oso-centos7-zabbix-web
+    strategy:
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          name: oso-centos7-zabbix-web
+      spec:
+        containers:
+        - env:
+          - name: ZABBIX_SERVER_HOSTNAME
+            value: ${ZABBIX_SERVER}
+          - name: MYSQL_USER
+            value: ${MYSQL_USER}
+          - name: MYSQL_PASSWORD
+            value: ${MYSQL_PASSWORD}
+          - name: MYSQL_DATABASE
+            value: ${MYSQL_DATABASE}
+          - name: MYSQL_HOST
+            value: ${DATABASE_SERVICE_NAME}
+          image: openshifttools/oso-centos7-zabbix-web:latest
+          imagePullPolicy: Always
+          name: oso-centos7-zabbix-web
+          ports:
+          - containerPort: 80
+            name: tcp-80
+            protocol: TCP
+          - containerPort: 443
+            name: tcp-443
+            protocol: TCP
+          resources: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-centos7-zabbix-web
+        from:
+          kind: ImageStreamTag
+          name: oso-centos7-zabbix-web:latest
+      type: ImageChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      name: oso-centos7-zagg-web
+    name: oso-centos7-zagg-web
+  spec:
+    replicas: 5
+    selector:
+      name: oso-centos7-zagg-web
+    strategy:
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          name: oso-centos7-zagg-web
+      spec:
+        containers:
+        - image: openshifttools/oso-centos7-zagg-web:latest
+          imagePullPolicy: Always
+          name: oso-centos7-zagg-web
+          resources: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /secrets
+            name: monitoring-secrets
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: monitoring-secrets
+          secret:
+            secretName: monitoring-secrets
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-centos7-zagg-web
+        from:
+          kind: ImageStreamTag
+          name: oso-centos7-zagg-web:latest
+      type: ImageChange
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: zabbix-web-ssl-route
+  spec:
+    host: ${ZABBIX_WEB_URL}
+    tls:
+      caCertificate: '-----BEGIN CERTIFICATE-----
+        !!! Put ca certificate here
+        -----END CERTIFICATE-----'
+      certificate: '-----BEGIN CERTIFICATE-----
+        !!! Puth certificate here
+        -----END CERTIFICATE-----'
+      key: '-----BEGIN PRIVATE KEY-----
+        !!! Put key here
+        -----END PRIVATE KEY-----'
+      termination: edge
+    to:
+      kind: Service
+      name: oso-centos7-zabbix-web
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: zagg-web-ssl-route
+  spec:
+    host: ${ZAGG_WEB_URL}
+    tls:
+      caCertificate: |-
+        -----BEGIN CERTIFICATE-----
+        !!! Put ca cert here
+        -----END CERTIFICATE-----
+      certificate: |-
+        -----BEGIN CERTIFICATE-----
+        !!! Put cert here
+        -----END CERTIFICATE-----
+      key: |-
+        -----BEGIN PRIVATE KEY-----
+        !!! Put key here
+        -----END PRIVATE KEY-----
+      termination: edge
+    to:
+      kind: Service
+      name: oso-centos7-zagg-web
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: ${DATABASE_SERVICE_NAME}
+    name: ${DATABASE_SERVICE_NAME}
+  spec:
+    clusterIP: ''
+    ports:
+    - name: mysql
+      port: 3306
+      protocol: TCP
+      targetPort: 3306
+    selector:
+      deploymentconfig: ${DATABASE_SERVICE_NAME}
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: oso-cent7-zabbix-server
+    name: oso-cent7-zabbix-server
+  spec:
+    ports:
+    - name: tcp-10050
+      port: 10050
+      protocol: TCP
+      targetPort: 10050
+    - name: tcp-10051
+      port: 10051
+      protocol: TCP
+      targetPort: 10051
+    selector:
+      deploymentconfig: oso-cent7-zabbix-server
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: oso-centos7-zabbix-web
+    name: oso-centos7-zabbix-web
+  spec:
+    ports:
+    - name: tcp-80
+      port: 80
+      protocol: TCP
+      targetPort: 8000
+    - name: tcp-443
+      port: 443
+      protocol: TCP
+      targetPort: 8000
+    selector:
+      deploymentconfig: oso-centos7-zabbix-web
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: oso-centos7-zagg-web
+    name: oso-centos7-zagg-web
+  spec:
+    ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8000
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 8000
+    selector:
+      deploymentconfig: oso-centos7-zagg-web
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: ${DATABASE_SERVICE_NAME}
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${VOLUME_CAPACITY}
+parameters:
+- description: Database service name
+  name: DATABASE_SERVICE_NAME
+  value: mysql
+- description: Username for MySQL user that will be used for accessing the database
+  from: user[A-Z0-9]{3}
+  generate: expression
+  name: MYSQL_USER
+- description: Password for the MySQL user
+  from: '[a-zA-Z0-9]{16}'
+  generate: expression
+  name: MYSQL_PASSWORD
+- description: Database name
+  name: MYSQL_DATABASE
+  value: zabbix
+- description: Volume space available for data, e.g. 512Mi, 2Gi
+  name: VOLUME_CAPACITY
+  value: 100Gi
+- description: Zabbix web ui URL
+  name: ZABBIX_WEB_URL
+  value: oso-centos7-zabbix-web
+- description: Zagg web URL
+  name: ZAGG_WEB_URL
+  value: oso-centos7-zagg-web
+- description: Zabbix server
+  name: ZABBIX_SERVER
+  value: oso-cent7-zabbix-server
+- description: Zabbix web user
+  name: ZABBIX_WEB_USER
+  value: Admin
+- description: Zabbix web password
+  name: ZABBIX_WEB_PASSWORD
+  value: zabbix

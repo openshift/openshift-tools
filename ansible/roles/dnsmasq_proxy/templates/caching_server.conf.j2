@@ -1,0 +1,43 @@
+#
+# Configuration file for dnsmasq acting as a caching nameserver.
+#
+# Format is one option per line, legal options are the same
+# as the long options legal on the command line. See
+# "/usr/sbin/dnsmasq --help" or "man 8 dnsmasq" for details.
+#
+# Updated versions of this configuration file may be available at:
+#
+#   http://www.g-loaded.eu/2010/09/18/caching-nameserver-using-dnsmasq/
+#
+
+#
+# Basic server configuration
+#
+
+listen-address={{ dnsmp_listen_address }}
+port=53
+bind-interfaces
+pid-file=/var/run/dnsmasq.pid
+
+#
+# Logging
+#
+
+#log-facility=/var/log/dnsmasq.log
+#log-queries
+
+#
+# Name resolution options
+#
+
+domain-needed
+bogus-priv
+no-hosts
+dns-forward-max=150
+cache-size=2000
+#no-negcache
+neg-ttl=3600
+no-poll
+
+# The resolv file for dnsmasq to use (This should contain the orignial DNS server)
+resolv-file=/etc/resolv.dnsmasq

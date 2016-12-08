@@ -1,0 +1,5 @@
+{%- for proxy_dict in dnsmp_proxy_map %}
+    {%- for domain, ns in proxy_dict.iteritems() %}
+server=/{{ domain }}/{{ ns }}
+{% endfor -%}
+{%- endfor %}

@@ -20,13 +20,15 @@
 #
 # Disabling invalid-name because pylint doesn't like the naming conention we have.
 # pylint: disable=invalid-name
+# pylint: disable=import-error
 
 import argparse
 import base64
-import yaml
-from openshift_tools.monitoring.zagg_sender import ZaggSender
 from openshift_tools.monitoring.awsutil import AWSUtil
 from openshift_tools.monitoring.ocutil import OCUtil
+from openshift_tools.monitoring.zagg_sender import ZaggSender
+import sys
+import yaml
 
 def parse_args():
     '''Parse the arguments for this script'''
@@ -39,10 +41,26 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+def get_registry_config_secret(yaml_results):
+    ''' Find the docker registry config secret '''
+
+    ocutil = OCUtil()
+    volumes = yaml_results['spec']['template']['spec']['volumes']
+    for volume in volumes:
+        if 'emptyDir' in volume:
+            continue
+        secret_dict = ocutil.get_secrets(volume['secret']['secretName'])
+        if 'config.yml' in secret_dict['data']:
+            return volume['secret']['secretName']
+
+    print "Unable to find the %s the docker registry config"
+    print "Please run \"oc get dc docker-registry\" to investigate"
+    sys.exit(1)
+
 def get_aws_creds(yaml_results):
     ''' Get AWS authentication and S3 bucket name for the docker-registry '''
 
-    base64_text = yaml.safe_load(yaml_results)["data"]["config.yml"]
+    base64_text = yaml_results["data"]["config.yml"]
 
     base64_yaml = base64.b64decode(base64_text)
 
@@ -52,28 +70,48 @@ def get_aws_creds(yaml_results):
 
     return [aws_access_key, aws_secret_key]
 
-def main():
-    ''' Gather and send details on all visible S3 buckets '''
-
+def send_zagg_data(bucket_list, bucket_stats, args):
+    '''send data to zabbix '''
     discovery_key = "disc.aws"
     discovery_macro = "#S3_BUCKET"
     prototype_s3_size = "disc.aws.size"
     prototype_s3_count = "disc.aws.objects"
 
+    zgs = ZaggSender(verbose=args.debug)
+    zgs.add_zabbix_dynamic_item(discovery_key, discovery_macro, bucket_list)
+    for bucket in bucket_stats.keys():
+        zab_key = "{}[{}]".format(prototype_s3_size, bucket)
+        zgs.add_zabbix_keys({zab_key: int(round(bucket_stats[bucket]["size"]))})
+        zab_key = "{}[{}]".format(prototype_s3_count, bucket)
+        zgs.add_zabbix_keys({zab_key: bucket_stats[bucket]["objects"]})
+    zgs.send_metrics()
+
+def main():
+    ''' Gather and send details on all visible S3 buckets '''
+
+    #get the region
+    with open('/container_setup/monitoring-config.yml', 'r') as f:
+        doc = yaml.load(f)
+    bucket_region = doc['oso_region']
+
     args = parse_args()
 
     ocutil = OCUtil()
-    oc_yaml = ocutil.get_secrets('dockerregistry')
+    dc_yaml = ocutil.get_dc('docker-registry')
+    registry_config_secret = get_registry_config_secret(dc_yaml)
+
+    oc_yaml = ocutil.get_secrets(registry_config_secret)
 
     aws_access, aws_secret = get_aws_creds(oc_yaml)
     awsutil = AWSUtil(aws_access, aws_secret, args.debug)
 
-    bucket_list = awsutil.get_bucket_list(args.debug)
+    bucket_list = awsutil.get_bucket_list(verbose=args.debug, BucketRegion=bucket_region)
 
     bucket_stats = {}
 
     for bucket in bucket_list:
-        s3_size, s3_objects = awsutil.get_bucket_info(bucket, args.debug)
+        #print bucket
+        s3_size, s3_objects = awsutil.get_bucket_info(bucket, verbose=args.debug, BucketRegion=bucket_region)
         bucket_stats[bucket] = {"size": s3_size, "objects": s3_objects}
 
     if args.debug:
@@ -82,15 +120,8 @@ def main():
     if args.test:
         print "Test-only. Received results: " + str(bucket_stats)
     else:
-        zgs = ZaggSender(verbose=args.debug)
-        zgs.add_zabbix_dynamic_item(discovery_key, discovery_macro, bucket_list)
-        for bucket in bucket_stats.keys():
-            zab_key = "{}[{}]".format(prototype_s3_size, bucket)
-            zgs.add_zabbix_keys({zab_key: int(round(bucket_stats[bucket]["size"]))})
-
-            zab_key = "{}[{}]".format(prototype_s3_count, bucket)
-            zgs.add_zabbix_keys({zab_key: bucket_stats[bucket]["objects"]})
-        zgs.send_metrics()
+        send_zagg_data(bucket_list, bucket_stats, args)
 
 if __name__ == '__main__':
     main()
+

@@ -1,0 +1,89 @@
+== Redis Basics for openshift ops/noc 
+
+=== General info
+
+Redis is an in memory key/value data store. For detailed information you may visit http://redis.io/documentation
+
+=== Redis in Zagg container
+
+Tools team is using redis for queueing up metrics in zagg. The metrics are gathered by host monitoring containers and zagg stores them in memory while getting queued for zabbix to consume.
+
+==== Troubleshooting
+
+If we suspect that redis is the cause of a problem, first thing we can do is check if redis is up and running. Inside the zagg-web container
+
+----
+$> redis-cli info
+----
+
+The log file that redis creates can be found at the /var/log/redis/redis.log location.
+
+Zagg gets its targets from the config file under /etc/openshift_tools/zagg_server.yaml, inside this file there is a list that contains one or more targets, when everything is operating properly the name field will match the list inside redis. 
+
+----
+targets:
+-   api_password: 'password'
+    api_url: http://oso-rhel7-zabbix-web/zabbix/api_jsonrpc.php
+    api_user: Admin
+    name: local cluster zbx server
+    path: /tmp/zagg/data/cluster-zbx
+    trapper_port: 10051
+    trapper_server: oso-rhel7-zabbix-server
+    type: zabbix
+-   debug: false
+    name: zabbix 3.0 zagg
+    password: password
+    path: /tmp/zagg/data/ops-aws-zagg
+    ssl_verify: 'True'
+    type: zagg
+    url: https://zagg.ops-aws.openshift.com
+    user: admin
+    verbose: false
+----
+
+Issue the following command to check on each variable that redis keeps track of:
+
+----
+$> redis-cli keys \*
+1) "zabbix 3.0 zagg"
+2) "local cluster zbx server"
+----
+
+In this case we found two lists, and they match our target names, next step is to find out if these lists are getting data.
+
+----
+$> redis-cli llen "zabbix 3.0 zagg"
+1288
+----
+
+
+----
+$> redis-cli llen "local cluster zbx server"
+1341
+----
+
+The http://redis.io/commands/LLEN[llen] command on the http://redis.io/commands page will tell is in detail that it returns the amount of items in the list. This means that monitoring metrics sent to the zagg 1288 and 1341 items that are waiting to be processed. These lists do not need to match, not all items are meant for every target.
+
+Processing of said items from these lists usually happens every 30 seconds, one could set up a watch to check on these numbers every few seconds.
+
+----
+$> watch -n 5 'redis-cli llen "zabbix 3.0 zagg"; redis-cli llen "local cluster zbx server"'
+----
+
+If the numbers increase and then drop around every 30 seconds or so, that's a good indication that everything is working as it should.
+
+
+Another useful command to know is http://redis.io/commands/LRANGE[lrange], this one will dump the items in the list to screen without removing it from the list. One thing to note is that you can specify greater length than your last index from the list, so even if the list grows or gets emptied by the process the command will display something or will tell you those indexes are empty. In the example below, we'll query for a lot bigger set than what the length of the list tells us, in case new items came in between the llen query and the request for display.
+
+----
+$> redis-cli llen "local cluster zbx server"
+(integer) 211
+$> redis-cli lrange "local cluster zbx server" 205 400
+  1) "{\"unique_id\": \"aa7ba981e88841359673d62ce7e812f6\", \"host\": \"ded-stage-aws-master-df06c\", \"value\": 0, \"key\": \"openshift.master.cluster.event.failedscheduling\", \"clock\": 1475853208}"
+  2) "{\"unique_id\": \"224bf270607f4d4583dd044ab75517ee\", \"host\": \"oso-rhel7-zagg-web-8-qnyjy\", \"value\": 2672, \"key\": \"zagg.server.metrics.count\", \"clock\": 1475853213}"
+  3) "{\"unique_id\": \"67eadb8bb2a540b4a48d6d9c9d275d95\", \"host\": \"oso-rhel7-zagg-web-8-qnyjy\", \"value\": 0, \"key\": \"zagg.server.metrics.errors\", \"clock\": 1475853213}"
+  4) "{\"unique_id\": \"72d21e290da646be87597f437c41f42e\", \"host\": \"prod-inmarsat-master-99ecc\", \"value\": 0, \"key\": \"openshift.master.cluster.event.failedscheduling\", \"clock\": 1475853214}"
+  5) "{\"unique_id\": \"dde23080d74e454fb7e0ecfafac4ce2b\", \"host\": \"oso-rhel7-zagg-web-8-qnyjy\", \"value\": 1, \"key\": \"zagg.server.heartbeat.count\", \"clock\": 1475853216}"
+  6) "{\"unique_id\": \"3d3ed43efce845069a056ad5d552aa1e\", \"host\": \"oso-rhel7-zagg-web-8-qnyjy\", \"value\": 0, \"key\": \"zagg.server.heartbeat.errors\", \"clock\": 1475853216}"
+
+----

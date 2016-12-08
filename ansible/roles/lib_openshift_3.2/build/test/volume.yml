@@ -1,0 +1,52 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: "oo_clusterid_opstest:&oo_master_primary"
+  gather_facts: no
+  user: root
+
+  tasks:
+  # should support list/absent/present
+  - name: volume get
+    oc_volume:
+      namespace: default
+      name: router
+      state: list
+    register: volout
+
+  - debug: var=volout
+
+  - name: volume delete
+    oc_volume:
+      state: absent
+      namespace: default
+      name: router
+      vol_name: dockerconfig
+    register: volout
+
+  - debug: var=volout
+
+  - name: create volume
+    oc_volume:
+      namespace: default
+      kind: dc
+      name: router
+      vol_name: dockerconfig
+      mount_path:  /etc/registryconfig
+      mount_type: secret
+      secret_name: dockerconfig
+    register: volout
+
+  - debug: var=volout
+
+  - name: modify volume
+    oc_volume:
+      namespace: default
+      kind: dc
+      name: router
+      vol_name: dockerconfig
+      mount_path:  /etc/registryconfig2
+      mount_type: secret
+      secret_name: dockerconfig
+    register: volout
+
+  - debug: var=volout

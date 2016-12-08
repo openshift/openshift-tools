@@ -1,0 +1,12 @@
+---
+g_multi_inventory_accountid: {{ osgcpsa_project }}
+g_multi_inventory_provider_files:
+- contents: {{ private_key | to_yaml }}
+  name: priv_key.pem
+- contents: |-
+    [gce]
+    gce_service_account_email_address = {{ sa_user_email }}
+    gce_service_account_pem_file_path = ${tmpdir}/priv_key.pem
+    gce_project_id = {{ osgcpsa_project }}
+    instance_states = RUNNING
+  name: gce.ini

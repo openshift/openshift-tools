@@ -1,0 +1,48 @@
+---
+g_template_metrics:
+  name: Template OpenShift Metrics
+
+  zitems:
+  - key: openshift.metrics.nodes_reporting
+    applications:
+    - Hawkular Cassandra
+    value_type: int
+
+  ztriggers:
+  - name: "OpenShift Metrics failed on {HOST.NAME}"
+    expression: "{Template OpenShift Metrics:openshift.metrics.nodes_reporting.last()}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_metrics.asciidoc"
+    priority: high
+
+  zdiscoveryrules:
+  - name: openshift.metrics.hawkular
+    key: openshift.metrics.hawkular
+    lifetime: 7
+    description: "Hawkular metrics"
+ 
+  zitemprototypes:
+  - discoveryrule_key: openshift.metrics.hawkular
+    name: "{% raw %}openshift.metrics.hawkular.status.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.metrics.hawkular.status[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+    value_type: int
+    description: "hawkular metrics status"
+    applications:
+    - Hawkular Cassandra
+ 
+  - discoveryrule_key: openshift.metrics.hawkular
+    name: "{% raw %}openshift.metrics.hawkular.starttime.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.metrics.hawkular.starttime[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+    value_type: int
+    description: "hawkular metrics start time"
+    applications:
+    - Hawkular Cassandra
+ 
+  - discoveryrule_key: openshift.metrics.hawkular
+    name: "{% raw %}openshift.metrics.hawkular.restarts.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.metrics.hawkular.restarts[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+    value_type: int
+    description: "cassandra number of restarts"
+    applications:
+    - Hawkular Cassandra
+
+ 

@@ -1,0 +1,49 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: localhost
+  gather_facts: no
+
+  tasks:
+  - name: repoquery test
+    repoquery:
+      name: bash
+      show_duplicates: True
+    register: bash_out
+  - debug:
+      var: bash_out
+
+  - name: verbose repoquery test
+    repoquery:
+      name: bash
+      show_duplicates: True
+      verbose: True
+    register: bash_out
+  - debug:
+      var: bash_out
+
+  - name: no match version found repoquery test
+    repoquery:
+      name: atomic-openshift
+      show_duplicates: True
+      match_version: 3.2
+    register: openshift_out
+  - debug:
+      var: openshift_out
+
+  - name: matched versions repoquery test
+    repoquery:
+      name: atomic-openshift
+      show_duplicates: True
+      match_version: 3.3
+    register: openshift_out
+  - debug:
+      var: openshift_out
+
+  - name: matched versions repoquery test
+    repoquery:
+      name: atomic-openshift
+      show_duplicates: True
+      match_version: 3.3.1
+    register: openshift_out
+  - debug:
+      var: openshift_out

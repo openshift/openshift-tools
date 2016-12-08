@@ -1,0 +1,54 @@
+{{ generated_header }}
+# This is a systemd file to run this docker container under systemd.
+# To make this work:
+#  * pull the image (probably from ops docker registry)
+#  * place this file in /etc/systemd/system without the .systemd extension
+#  * run the commands:
+#  systemctl daemon-reload
+#  systemctl enable host-monitoring-docker
+#  systemctl start host-monitoring-docker
+#
+#
+[Unit]
+Description=Openshift Host Monitoring Contatainer
+Requires=docker.service
+After=docker.service
+
+
+[Service]
+Type=simple
+TimeoutStartSec=5m
+#Slice=container-small.slice
+
+ExecStartPre=-/usr/bin/docker rm "oso-{{ base_os }}-host-monitoring"
+
+ExecStart=/usr/bin/docker run --name oso-{{ base_os }}-host-monitoring  \
+           --net=host                                       \
+           --pid=host                                       \
+           --ipc=host                                       \
+           -e NAME=oso-{{ base_os }}-host-monitoring        \
+           -e IMAGE=oso-{{ base_os }}-host-monitoring       \
+           -v /etc/localtime:/etc/localtime                 \
+           -v /sys:/sys:ro                                  \
+           -v /var/lib/docker:/var/lib/docker:ro            \
+           -v /run:/run                                     \
+           -v /var/log:/var/log                             \
+           -v /var/lib/docker/volumes/shared:/shared:rw     \
+           -v /etc/origin/master/master.etcd-client.crt:/etc/origin/master/master.etcd-client.crt \
+           -v /etc/origin/master/master.etcd-client.key:/etc/origin/master/master.etcd-client.key \
+           -v /etc/origin/master/master-config.yaml:/etc/origin/master/master-config.yaml \
+{% if base_os == "rhel7" %}
+           docker-registry.ops.rhcloud.com/ops/host-monitoring
+{% elif base_os == "centos7" %}
+           openshift-tools/oso-centos7-host-monitoring
+{% endif %}
+
+
+
+
+ExecReload=-/usr/bin/docker stop "oso-{{ base_os }}-host-monitoring"
+ExecReload=-/usr/bin/docker rm "oso-{{ base_os }}-host-monitoring"
+ExecStop=-/usr/bin/docker stop "oso-{{ base_os }}-host-monitoring"
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,101 @@
+#!/usr/bin/ansible-playbook
+
+- hosts: localhost
+  gather_facts: no
+  vars:
+    vendored_dir_relative: "vendored/openshift-ansible-{{ installer_version }}"
+    vendored_dir: "{{ lookup('env', 'PWD') ~ '/' ~ vendored_dir_relative }}"
+    installer_dirs:
+    - "{{ vendored_dir }}/filter_plugins"
+    - "{{ vendored_dir }}/lookup_plugins"
+  pre_tasks:
+  - fail:
+      msg: "{{ item }} is required."
+    when: "{{ item }} is not defined"
+    with_items:
+    - openshift_version
+    - installer_version
+
+  - name: Remove a current installer directory if it exists
+    file:
+      state: absent
+      path: "{{ vendored_dir }}"
+
+  - name: create the installer directory
+    file:
+      state: directory
+      path: "{{ vendored_dir }}"
+
+  - name: clone the openshift-ansible github repo
+    git:
+      repo: https://github.com/openshift/openshift-ansible.git
+      dest: "{{ vendored_dir }}"
+      clone: true
+
+  # TODO: Figure out a better way to do this, other than maintaining a list of things to delete.
+  - name: Make the vendored directory ONLY be the BYO installer
+    file:
+      state: absent
+      path: "{{ vendored_dir }}/{{ item }}"
+    with_items:
+    - .git
+    - .gitignore
+    - .tito
+    - ansible.cfg.example
+    - ansible-profile
+    - bin
+    - BUILD.md
+    - DEPLOYMENT_TYPES.md
+    - Dockerfile
+    - docs
+    - git
+    - inventory
+    - LICENSE.md
+    - openshift-ansible.spec
+    - README_AEP.md
+    - README_ANSIBLE_CONTAINER.md
+    - README_AWS.md
+    - README_CONTAINERIZED_INSTALLATION.md
+    - README_GCE.md
+    - README_libvirt.md
+    - README.md
+    - README_openstack.md
+    - README_origin.md
+    - README_OSE.md
+    - README_vagrant.md
+    - test
+    - utils
+    - Vagrantfile
+    - usr
+    - playbooks/adhoc
+    - playbooks/aws
+    - playbooks/gce
+    - playbooks/libvirt
+    - playbooks/openstack
+    - roles/ansible
+    - roles/ansible_tower
+    - roles/ansible_tower_cli
+    - roles/chrony
+    - roles/copr_cli
+    - roles/docker_storage
+    - roles/fluentd_master
+    - roles/dns
+    - roles/kube_nfs_volumes
+    - roles/lib_dyn
+    - roles/lib_timedatectl
+    - roles/lib_zabbix
+    - roles/os_ipv6_disable
+    - roles/oso_host_monitoring
+    - roles/oso_monitoring_tools
+    - roles/os_update_latest
+    - roles/os_zabbix
+    - roles/rhel_subscribe
+    - roles/rhel_unsubscribe
+    - roles/tito
+    - roles/yum_repos
+
+  - name: Symlink the openshift version to the installer
+    file:
+      state: link
+      src: "{{ vendored_dir_relative }}"
+      dest: "atomic-openshift-{{ openshift_version }}"

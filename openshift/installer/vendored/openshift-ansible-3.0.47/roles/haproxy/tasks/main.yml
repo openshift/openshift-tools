@@ -1,0 +1,23 @@
+---
+- name: Install haproxy
+  action: "{{ ansible_pkg_mgr }} name=haproxy state=present"
+  when: not openshift.common.is_containerized | bool
+
+- name: Configure haproxy
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart haproxy
+
+- name: Enable and start haproxy
+  service:
+    name: haproxy
+    state: started
+    enabled: yes
+  register: start_result
+
+- set_fact:
+    haproxy_start_result_changed: "{{ start_result | changed }}"

@@ -47,7 +47,7 @@ Implement a rest client with requests for Openshift API
 #
 #   Examples:
 #
-#   # to initiate and use /etc/openshift/master/admin.kubeconfig file for auth
+#   # to initiate and use /etc/origin/master/admin.kubeconfig file for auth
 #   ora = OpenshiftRestApi(kubeconfig='/path/to/user.kubeconfig')
 #
 #   #To get healthz status in text format:
@@ -61,10 +61,15 @@ Implement a rest client with requests for Openshift API
 #  For more on the API, please refer to:
 #    https://docs.openshift.com/enterprise/3.0/rest_api/index.html
 #
+
+# Pylint is being weird about these imports in Jenkins
+# pylint: disable=no-name-in-module,import-error,no-member
+
 import base64
 import requests
 import yaml
 import tempfile
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 class OpenshiftRestApi(object):
     """
@@ -73,16 +78,20 @@ class OpenshiftRestApi(object):
 
     # All args are required
     #pylint: disable=too-many-arguments,too-many-instance-attributes
+
     def __init__(self,
                  host='https://127.0.0.1',
                  user_cert=None,
                  user_key=None,
                  ca_cert=None,
-                 kubeconfig='/etc/openshift/master/admin.kubeconfig',
-                 headers=None):
+                 kubeconfig='/etc/origin/master/admin.kubeconfig',
+                 headers=None,
+                 verify_ssl=False):
 
         self.api_host = host
         self.headers = headers
+        self.verify_ssl = verify_ssl
+
 
         if None in (user_cert, user_key, ca_cert):
             self.kubeconfig = kubeconfig
@@ -122,9 +131,15 @@ class OpenshiftRestApi(object):
     def get(self, api_path, rtype='json'):
         """ Do API query, return requested type """
 
+        ssl_verify = self.verify_ssl
+        if ssl_verify:
+            ssl_verify = self.ca_cert
+        else:
+            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
         response = requests.get(self.api_host + api_path,
                                 cert=(self.user_cert, self.user_key),
-                                verify=self.ca_cert)
+                                verify=ssl_verify)
 
         if rtype == 'text':
             return response.text

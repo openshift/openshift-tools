@@ -1,0 +1,112 @@
+#!/usr/bin/ansible-playbook
+
+- hosts: localhost
+  gather_facts: no
+  vars:
+    vendored_dir_relative: "vendored/openshift-ansible-{{ installer_version }}"
+    vendored_dir: "{{ lookup('env', 'PWD') ~ '/' ~ vendored_dir_relative }}"
+    installer_dirs:
+    - "{{ vendored_dir }}/filter_plugins"
+    - "{{ vendored_dir }}/lookup_plugins"
+  pre_tasks:
+  - fail:
+      msg: "{{ item }} is required."
+    when: "{{ item }} is not defined"
+    with_items:
+    - openshift_version
+    - installer_version
+    - rpm_directory
+
+  - debug: var=rpm_directory
+
+  - stat:
+      path: "{{ rpm_directory }}"
+    register: stat_output
+
+  - fail:
+      msg: "{{ rpm_directory }} doesn't exist, or isn't a directory."
+    when: not stat_output.stat.exists
+
+  - name: Remove a current installer directory if it exists
+    file:
+      state: absent
+      path: "{{ vendored_dir }}"
+
+  - name: create the installer directory
+    file:
+      state: directory
+      path: "{{ vendored_dir }}"
+
+  - name: Extract the contents of the installer RPMs
+    shell: "rpm2cpio {{ item | quote }} | cpio -idmv"
+    args:
+      chdir: "{{ vendored_dir }}"
+    with_fileglob:
+    - "{{ rpm_directory }}/openshift-ansible-*{{ installer_version }}*.rpm"
+
+  - name: Fix up the extracted contents into a normal ansible layout
+    command: "mv {{ item | quote }} {{ vendored_dir }}"
+    with_items:
+    - "{{ vendored_dir }}/usr/share/ansible_plugins/filter_plugins/"
+    - "{{ vendored_dir }}/usr/share/ansible_plugins/lookup_plugins/"
+    - "{{ vendored_dir }}/usr/share/ansible/openshift-ansible/playbooks/"
+    - "{{ vendored_dir }}/usr/share/ansible/openshift-ansible/roles/"
+    - "{{ vendored_dir }}/usr/share/ansible/openshift-ansible/library/"
+
+  # TODO: Figure out a better way to do this, other than maintaining a list of things to delete.
+  - name: Make the vendored directory ONLY be the BYO installer
+    file:
+      state: absent
+      path: "{{ vendored_dir }}/{{ item }}"
+    with_items:
+    - usr
+    - playbooks/adhoc
+    - playbooks/aws
+    - playbooks/gce
+    - playbooks/libvirt
+    - playbooks/openstack
+    - roles/ansible
+    - roles/ansible_tower
+    - roles/ansible_tower_cli
+    - roles/chrony
+    - roles/copr_cli
+    - roles/docker_storage
+    - roles/fluentd_master
+    - roles/dns
+    - roles/kube_nfs_volumes
+    - roles/lib_dyn
+    - roles/lib_timedatectl
+    - roles/lib_zabbix
+    - roles/os_ipv6_disable
+    - roles/oso_host_monitoring
+    - roles/oso_monitoring_tools
+    - roles/os_update_latest
+    - roles/os_zabbix
+    - roles/rhel_subscribe
+    - roles/rhel_unsubscribe
+    - roles/tito
+    - roles/yum_repos
+
+  - name: Symlink the filter and lookup plugins (no longer shipped with rpm) for byo/config
+    file:
+      state: link
+      src: "../../{{ item }}"
+      dest: "{{ vendored_dir }}/playbooks/byo/{{ item }}"
+    with_items:
+    - filter_plugins
+    - lookup_plugins
+
+  - name: Symlink the filter and lookup plugins (no longer shipped with rpm) byo/<subdirs>
+    file:
+      state: link
+      src: "../../../{{ item[0] }}"
+      dest: "{{ vendored_dir }}/playbooks/byo/{{ item[1] }}/{{ item[0] }}"
+    with_nested:
+    - [ 'filter_plugins', 'lookup_plugins' ]
+    - [ 'openshift-cluster', 'openshift-master', 'openshift-node']
+
+  - name: Symlink the openshift version to the installer
+    file:
+      state: link
+      src: "{{ vendored_dir_relative }}"
+      dest: "atomic-openshift-{{ openshift_version }}"

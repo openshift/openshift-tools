@@ -1,0 +1,21 @@
+---
+osup_wanted_version_installed: False
+
+osup_packages:
+  node:
+  - "atomic-openshift-{{ osup_version }}"
+  - "atomic-openshift-clients-{{ osup_version }}"
+  - "tuned-profiles-atomic-openshift-node-{{ osup_version }}"
+  - "atomic-openshift-sdn-ovs-{{ osup_version }}"
+  - "atomic-openshift-node-{{ osup_version }}"
+  master:
+  - "atomic-openshift-master-{{ osup_version }}"
+  - "atomic-openshift-{{ osup_version }}"
+  - "atomic-openshift-clients-{{ osup_version }}"
+  - "tuned-profiles-atomic-openshift-node-{{ osup_version }}"
+  - "atomic-openshift-sdn-ovs-{{ osup_version }}"
+  - "atomic-openshift-node-{{ osup_version }}"
+
+osup_valid_update_types:
+- master
+- node

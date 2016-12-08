@@ -1,0 +1,51 @@
+---
+- name: Verify Ansible version is greater than or equal to 1.9.4 and less than 2.0
+  fail:
+    msg: "Unsupported ansible version: {{ ansible_version }} found"
+  when: ansible_version.full | version_compare('1.9.4', 'lt') or ansible_version.full | version_compare('2.0', 'ge')
+
+- name: Detecting Operating System
+  shell: ls /run/ostree-booted
+  ignore_errors: yes
+  failed_when: false
+  changed_when: false
+  register: ostree_output
+
+# Locally setup containerized facts for now
+- set_fact:
+    l_is_atomic: "{{ ostree_output.rc == 0 }}"
+- set_fact:
+    l_is_containerized: "{{ (l_is_atomic | bool) or (containerized | default(false) | bool) }}"
+
+- name: Ensure PyYaml is installed
+  action: "{{ ansible_pkg_mgr }} name=PyYAML state=present"
+  when: not l_is_atomic | bool
+
+- name: Gather Cluster facts and set is_containerized if needed
+  openshift_facts:
+    role: common
+    local_facts:
+      # TODO: Deprecate deployment_type in favor of openshift_deployment_type
+      deployment_type: "{{ openshift_deployment_type | default(deployment_type) }}"
+      cluster_id: "{{ openshift_cluster_id | default('default') }}"
+      hostname: "{{ openshift_hostname | default(None) }}"
+      ip: "{{ openshift_ip | default(None) }}"
+      is_containerized: "{{ l_is_containerized | default(None) }}"
+      public_hostname: "{{ openshift_public_hostname | default(None) }}"
+      public_ip: "{{ openshift_public_ip | default(None) }}"
+      portal_net: "{{ openshift_portal_net | default(openshift_master_portal_net) | default(None) }}"
+
+# had to be done outside of the above because hostname isn't yet set
+- name: Gather hostnames for proxy configuration
+  openshift_facts:
+    role: common
+    local_facts:
+      http_proxy: "{{ openshift_http_proxy | default(None) }}"
+      https_proxy: "{{ openshift_https_proxy | default(None) }}"
+      no_proxy: "{{ openshift_no_proxy | default(None) }}"
+      generate_no_proxy_hosts: "{{ openshift_generate_no_proxy_hosts | default(True) }}"
+      no_proxy_internal_hostnames: "{{ hostvars | oo_select_keys(groups['oo_nodes_to_config'] 
+                                                   | union(groups['oo_masters_to_config']) 
+                                                   | union(groups['oo_etcd_to_config'] | default([]))) 
+                                               | oo_collect('openshift.common.hostname') | default([]) | join (',')
+                                               }}"

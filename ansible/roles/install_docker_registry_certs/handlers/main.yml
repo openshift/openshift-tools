@@ -1,0 +1,6 @@
+---
+# handlers install_docker_registry_certs
+- name: restart docker
+  service:
+    name: docker
+    state: restarted

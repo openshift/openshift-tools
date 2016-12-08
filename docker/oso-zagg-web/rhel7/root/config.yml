@@ -1,0 +1,44 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+  - /root/default_vars.yml
+  vars:
+    g_zagg_server_config: "{{ lookup('env','ZAGG_SERVER_CONFIG') | default(g_default_zagg_server_config, True) }}"
+    g_zagg_server_user: "{{ lookup('env','ZAGG_SERVER_USER') | default(g_default_zagg_server_user, True) }}"
+    g_zagg_server_password: "{{ lookup('env','ZAGG_SERVER_PASSWORD') | default(g_default_zagg_server_password, True) }}"
+    g_zagg_ssl_verify: "{{ lookup('env','ZAGG_SSL_VERIFY') | default(g_default_zagg_ssl_verify) }}"
+    g_zagg_verbose: "{{ lookup('env','ZAGG_VERBOSE') | default(g_default_zagg_verbose) }}"
+  pre_tasks:
+  - stat:
+      path: /secrets/zagg-server-vars.yml
+    register: g_zagg_server_vars
+
+  - name: Load variables that will override the defaults
+    include_vars: /secrets/zagg-server-vars.yml
+    when: g_zagg_server_vars.stat.exists
+
+  - fail: "msg=This playbook requires {{ item }} to be set."
+    when: "{{ item }} is not defined or {{ item }} == ''"
+    with_items:
+    - g_zagg_server_config
+    - g_zagg_server_user
+    - g_zagg_server_password
+
+  - name: Generate the zagg_server.yaml config file
+    copy:
+      content: "{{ g_zagg_server_config | to_nice_yaml }}"
+      dest: /etc/openshift_tools/zagg_server.yaml
+      mode: "644"
+
+  - name: setup ansible module load path
+    lineinfile:
+      dest: /etc/ansible/ansible.cfg
+      regexp: '^\s*#*\s*library\s*='
+      line: 'library        = /usr/share/ansible/'
+
+  - name: Create htpasswd file
+    htpasswd:
+      path: /var/www/zagg/htpasswd
+      name: "{{ g_zagg_server_user }}"
+      password: "{{ g_zagg_server_password }}"

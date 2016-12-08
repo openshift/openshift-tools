@@ -1,0 +1,8 @@
+---
+- name: install packages
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+  - python-gcloud
+  - gcloud

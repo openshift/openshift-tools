@@ -1,0 +1,36 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: "oo_clusterid_opstest:&oo_master_primary"
+  gather_facts: no
+  user: root
+  tasks:
+  - name: get project
+    oadm_project:
+      state: list
+      name: test
+    register: projectout
+  - debug: var=projectout
+
+  - name: delete project
+    oadm_project:
+      state: absent
+      name: test
+    register: projectout
+  - debug: var=projectout
+
+  - name: create project
+    oadm_project:
+      name: test
+      node_selector: type=infra
+      display_name: testing testing
+    register: projectout
+  - debug: var=projectout
+
+  - name: create project noop
+    oadm_project:
+      name: test
+      node_selector: type=infra
+      display_name: testing testing
+    register: projectout
+  - debug: var=projectout
+

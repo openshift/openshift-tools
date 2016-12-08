@@ -1,0 +1,34 @@
+---
+- name: Verify yr_repo_list is a list
+  assert:
+    that:
+    - yr_yum_repo_list is iterable
+    - yr_yum_repo_list is not string
+    - yr_yum_repo_list is not mapping
+    msg: "yr_yum_repo_list needs to be a list."
+
+- name: copy certs
+  copy:
+    content: "{{ item.content }}"
+    dest: "{{ yr_yum_cert_dir }}/{{ item.filename }}"
+  with_items:
+  - filename: "client-cert.pem"
+    content: "{{ yr_yum_cert_content }}"
+  - filename: "client-key.pem"
+    content: "{{ yr_yum_key_content }}"
+  when: yr_yum_cert_content is defined
+  no_log: true
+
+- name: Create our repositories
+  yum_repository:
+    description: "{{ item.description }}"
+    name: "{{ item.name }}"
+    baseurl: "{{ item.baseurl }}"
+    gpgkey: "{{ item.gpgkey | default(omit)}}"
+    gpgcheck: "{{ item.gpgcheck }}"
+    sslverify: "{{ item.sslverify }}"
+    sslclientkey: "{{ item.sslclientkey }}"
+    sslclientcert: "{{ item.sslclientcert }}"
+    file: "{{ item.file }}"
+    enabled: "{{ item.enabled }}"
+  with_items: "{{ yr_yum_repo_list }}"
