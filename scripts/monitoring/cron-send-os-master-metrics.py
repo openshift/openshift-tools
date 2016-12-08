@@ -34,7 +34,7 @@ import argparse
 from collections import defaultdict
 import math
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 from prometheus_client.parser import text_string_to_metric_families
 import yaml
 
@@ -43,7 +43,7 @@ class OpenshiftMasterZaggClient(object):
 
     def __init__(self):
         self.args = None
-        self.zagg_sender = None
+        self.metric_sender = None
         self.ora = None
         self.zabbix_api_key = None
         self.zabbix_healthz_key = None
@@ -52,7 +52,7 @@ class OpenshiftMasterZaggClient(object):
         """  Main function to run the check """
 
         self.parse_args()
-        self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.metric_sender = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
 
         if self.args.local:
             self.ora = OpenshiftRestApi()
@@ -76,7 +76,7 @@ class OpenshiftMasterZaggClient(object):
 
         except Exception as ex:
             print "Problem performing healthz check: %s " % ex.message
-            self.zagg_sender.add_zabbix_keys({self.zabbix_healthz_key: 'false'})
+            self.metric_sender.add_metric({self.zabbix_healthz_key: 'false'})
 
         try:
             if self.args.api_ping or self.args.all_checks:
@@ -101,7 +101,7 @@ class OpenshiftMasterZaggClient(object):
 
         except Exception as ex:
             print "Problem Openshift API checks: %s " % ex.message
-            self.zagg_sender.add_zabbix_keys({self.zabbix_api_key: 0}) # Openshift API is down
+            self.metric_sender.add_metric({self.zabbix_api_key: 0}) # Openshift API is down
 
         try:
             if self.args.metrics or self.args.all_checks:
@@ -109,9 +109,9 @@ class OpenshiftMasterZaggClient(object):
 
         except Exception as ex:
             print "Problem getting Openshift metrics at /metrics: %s " % ex.message
-            self.zagg_sender.add_zabbix_keys({'openshift.master.metric.ping' : 0}) # Openshift Metrics are down
+            self.metric_sender.add_metric({'openshift.master.metric.ping' : 0}) # Openshift Metrics are down
 
-        self.zagg_sender.send_metrics()
+        self.metric_sender.send_metrics()
 
     def parse_args(self):
         """ parse the args from the cli """
@@ -161,8 +161,7 @@ class OpenshiftMasterZaggClient(object):
         print "\nOpenshift API ping is alive"
         print "Number of nodes in the Openshift cluster: %s" % len(response['items'])
 
-        self.zagg_sender.add_zabbix_keys({self.zabbix_api_key: 1,
-                                          'openshift.master.node.count': len(response['items'])})
+        self.metric_sender.add_metric({self.zabbix_api_key: 1, 'openshift.master.node.count': len(response['items'])})
 
     def healthz_check(self):
         """ check the /healthz API call """
@@ -172,7 +171,7 @@ class OpenshiftMasterZaggClient(object):
         response = self.ora.get('/healthz', rtype='text')
         print "healthz check returns: %s " %response
 
-        self.zagg_sender.add_zabbix_keys({self.zabbix_healthz_key: str('ok' in response).lower()})
+        self.metric_sender.add_metric({self.zabbix_healthz_key: str('ok' in response).lower()})
 
     def metric_check(self):
         """ collect certain metrics from the /metrics API call """
@@ -198,7 +197,7 @@ class OpenshiftMasterZaggClient(object):
                         else:
                             value = sample[2]
 
-                        self.zagg_sender.add_zabbix_keys({curr_key_str.lower(): int(value/1000)})
+                        self.metric_sender.add_metric({curr_key_str.lower(): int(value/1000)})
 
             # Collect the scheduler_e2e_scheduling_latency_microseconds{quantiles in /metrics
             if metric_type.name == 'scheduler_e2e_scheduling_latency_microseconds':
@@ -212,9 +211,9 @@ class OpenshiftMasterZaggClient(object):
                         else:
                             value = sample[2]
 
-                        self.zagg_sender.add_zabbix_keys({curr_key_str.lower(): int(value/1000)})
+                        self.metric_sender.add_metric({curr_key_str.lower(): int(value/1000)})
 
-        self.zagg_sender.add_zabbix_keys({'openshift.master.metric.ping' : 1}) #
+        self.metric_sender.add_metric({'openshift.master.metric.ping' : 1}) #
 
     def project_count(self):
         """ check the number of projects in Openshift """
@@ -229,7 +228,7 @@ class OpenshiftMasterZaggClient(object):
 
         print "Project count: %s" % len(valid_names)
 
-        self.zagg_sender.add_zabbix_keys({'openshift.project.count' : len(valid_names)})
+        self.metric_sender.add_metric({'openshift.project.count' : len(valid_names)})
 
     def pod_count(self):
         """ check the number of pods in Openshift """
@@ -259,9 +258,9 @@ class OpenshiftMasterZaggClient(object):
         print "Running pod count: %s" % running_pod_count
         print "User Running pod count: %s" % running_user_pod_count
 
-        self.zagg_sender.add_zabbix_keys({'openshift.master.pod.running.count' : running_pod_count,
-                                          'openshift.master.pod.user.running.count' : running_user_pod_count,
-                                          'openshift.master.pod.total.count' : len(response['items'])})
+        self.metric_sender.add_metric({'openshift.master.pod.running.count' : running_pod_count,
+                                       'openshift.master.pod.user.running.count' : running_user_pod_count,
+                                       'openshift.master.pod.total.count' : len(response['items'])})
 
     def user_count(self):
         """ check the number of users in Openshift """
@@ -271,7 +270,7 @@ class OpenshiftMasterZaggClient(object):
         response = self.ora.get('/oapi/v1/users')
 
         print "Total user count: %s" % len(response['items'])
-        self.zagg_sender.add_zabbix_keys({'openshift.master.user.count' : len(response['items'])})
+        self.metric_sender.add_metric({'openshift.master.user.count' : len(response['items'])})
 
     def pv_info(self):
         """ Gather info about the persistent volumes in Openshift """
@@ -317,26 +316,26 @@ class OpenshiftMasterZaggClient(object):
         print 'Total Persistent Volume Capacity: %s' % pv_capacity_total
         print 'Total Persisten Volume Available Capacity: %s' % pv_capacity_available
 
-        self.zagg_sender.add_zabbix_keys(
+        self.metric_sender.add_metric(
             {'openshift.master.pv.total.count' : len(response['items']),
              'openshift.master.pv.space.total': pv_capacity_total,
              'openshift.master.pv.space.available': pv_capacity_available})
 
         for key, value in pv_types.iteritems():
             print "Total Persistent Volume %s count: %s" % (key, value)
-            self.zagg_sender.add_zabbix_keys(
+            self.metric_sender.add_metric(
                 {'openshift.master.pv.%s.count' %key.lower() : value})
 
         # Add dynamic items
-        self.zagg_sender.add_zabbix_dynamic_item(discovery_key_pv, item_prototype_macro_pv, dynamic_pv_count.keys())
+        self.metric_sender.add_dynamic_metric(discovery_key_pv, item_prototype_macro_pv, dynamic_pv_count.keys())
 
         for size, count in dynamic_pv_count.iteritems():
             print
             print "Total Persistent Volume %s count: %s" % (size, count)
             print "Total Persistent Volume available %s count: %s" % (size, dynamic_pv_available[size])
 
-            self.zagg_sender.add_zabbix_keys({"%s[%s]" %(item_prototype_key_count, size) : count,
-                                              "%s[%s]" %(item_prototype_key_available, size) : dynamic_pv_available[size]})
+            self.metric_sender.add_metric({"%s[%s]" %(item_prototype_key_count, size) : count,
+                                           "%s[%s]" %(item_prototype_key_available, size) : dynamic_pv_available[size]})
 
 
     def nodes_not_schedulable(self):
@@ -359,7 +358,7 @@ class OpenshiftMasterZaggClient(object):
         print "Count of nodes not schedulable: %s" % len(nodes_not_schedulable)
         print "Nodes not schedulable: %s\n" % nodes_not_schedulable
 
-        self.zagg_sender.add_zabbix_keys(
+        self.metric_sender.add_metric(
             {'openshift.master.nodesnotschedulable.count' : len(nodes_not_schedulable)})
 
 
@@ -390,7 +389,7 @@ class OpenshiftMasterZaggClient(object):
 
         print "Count of nodes not ready: %s" % len(nodes_not_ready)
 
-        self.zagg_sender.add_zabbix_keys(
+        self.metric_sender.add_metric(
             {'openshift.master.nodesnotready.count' : len(nodes_not_ready)})
 
 
@@ -412,7 +411,7 @@ class OpenshiftMasterZaggClient(object):
                 nodes_not_labeled.append(n['metadata']['name'])
 
         print "Nodes not labeled: %s\nNodes labeled: %s \n" % (nodes_not_labeled, nodes_labeled)
-        self.zagg_sender.add_zabbix_keys(
+        self.metric_sender.add_metric(
             {'openshift.master.nodesnotlabeled.count' : len(nodes_not_labeled)})
 
 
