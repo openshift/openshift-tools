@@ -52,9 +52,12 @@ class MultiInventoryAccount(object):
     @property
     def inventory(self):
         """property for inventory"""
-        if self._inventory == None:
+        if self._inventory is None:
             self._inventory = MultiInventoryUtils.get_inventory_from_cache(os.path.join(self.cache_path, self.name))
-            self.apply_account_config()
+            if self._inventory is None:
+                self._inventory = {}
+            else:
+                self.apply_account_config()
 
         return self._inventory
 
@@ -88,20 +91,19 @@ class MultiInventoryAccount(object):
 
                     # For any non-zero, raise an error on it
                     if proc.returncode != 0:
-                        err_msg = ['\nProblem fetching account: %s' % acc.name,
-                                   'Error Code: %s' % proc.returncode,
-                                   'StdErr: %s' % err,
-                                   'Stdout: %s' % out,
-                                  ]
-                        raise RuntimeError('\n'.join(err_msg))
+                        err_msg = 'Account: %s Error_Code: %s StdErr: [%s] Stdout: [%s]\n' % \
+                                   (acc.name, proc.returncode, err.replace('\n', '\\n'), out.replace('\n', '\\n'))
 
-                    updated = True
-                    # The reason this exists here is that we
-                    # are using the futures pattern.  The account object
-                    # has run a subprocess and we are collecting the results.
-                    data = json.loads(out)
-                    acc.write_to_cache(data)
-                    acc.inventory = data
+                        #raise RuntimeError('\n'.join(err_msg))
+                        sys.stderr.write(err_msg)
+                    else:
+                        updated = True
+                        # The reason this exists here is that we
+                        # are using the futures pattern.  The account object
+                        # has run a subprocess and we are collecting the results.
+                        data = json.loads(out)
+                        acc.write_to_cache(data)
+                        acc.inventory = data
         except ValueError as exc:
             print exc.message
             sys.exit(1)
@@ -131,11 +133,12 @@ class MultiInventoryAccount(object):
         env = self.config.get('env_vars', {})
         if env and tmp_dir:
             for key, value in env.items():
+                if value is None:
+                    value = ''
                 env[key] = Template(value).substitute(tmpdir=tmp_dir)
 
         if not env:
             env = os.environ
-
 
         provider = self.config['provider']
         # Allow relatively path'd providers in config file
