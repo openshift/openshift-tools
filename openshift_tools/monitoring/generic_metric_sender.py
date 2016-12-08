@@ -44,7 +44,7 @@ class GenericMetricSender(object):
         """ empty implementation overridden by derived classes """
         pass
 
-    def add_metric(self, metric, host=None, synthetic=False):
+    def add_metric(self, metric, host=None, synthetic=False, key_tags=None):
         """ empty implementation overridden by derived classes """
         pass
 
