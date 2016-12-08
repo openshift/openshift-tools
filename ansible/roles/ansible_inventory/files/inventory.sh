@@ -5,7 +5,7 @@ data=$(/usr/share/ansible/inventory/multi_inventory.py --refresh-cache 2>&1 1>/d
 
 err_count=$(echo "$data" | wc -l)
 
-if [ -n data  ]; then
+if [ -n "$data"  ]; then
   # Log stderr from multi_inventory account refresh
   echo "$(date "+%F %T") $data" >> /var/log/multi_inventory.log
 fi
