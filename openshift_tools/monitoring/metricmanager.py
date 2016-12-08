@@ -66,7 +66,7 @@ class UniqueMetric(zbxsend.Metric):
     #         data easily.
     # Status: permanently disabled.
     # pylint: disable=too-many-arguments
-    def __init__(self, host, key, value, clock=None, unique_id=None):
+    def __init__(self, host, key, value, clock=None, unique_id=None, tags=None):
         ''' Construct object
 
             Keyword arguments:
@@ -75,12 +75,14 @@ class UniqueMetric(zbxsend.Metric):
             value     -- the value that zabbix should put in for the key
             clock     -- the time the metric was taken (default: current time)
             unique_id -- the unique id of this metric (default: generate one)
+            tags      -- metadata tag values hash for key (e.g. {"units":"byte"}
         '''
 
         self.host = host
         self.key = key
         self.value = value
         self.clock = clock
+        self.tags = tags or {}
 
         if self.clock is None:
             self.clock = calendar.timegm(time.gmtime())

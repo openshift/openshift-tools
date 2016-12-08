@@ -19,7 +19,7 @@ Examples:
     zs.add_zabbix_keys({ 'test.key' : '1' })
     zs.send_metrics()
 """
-
+import re
 from openshift_tools.monitoring.metricmanager import UniqueMetric
 from openshift_tools.monitoring.hawk_client import HawkClient
 from openshift_tools.monitoring.hawk_common import HawkConnection
@@ -90,8 +90,11 @@ class HawkSender(GenericMetricSender):
 
         return hawk_connection
 
-    def add_metric(self, metrics, host=None, synthetic=False):
+    def add_metric(self, metrics, host=None, synthetic=False, key_tags=None):
         """ create unique metric from key value pair """
+
+        if not key_tags:
+            key_tags = {}
 
         if synthetic and not host:
             host = self.config['synthetic_clusterwide']['host']['name']
@@ -100,8 +103,20 @@ class HawkSender(GenericMetricSender):
 
         hawk_metrics = []
 
+        config_rules = self.config.get('metadata_rules') or []
+
+        metric_tags = {}
+
         for key, value in metrics.iteritems():
-            hawk_metric = UniqueMetric(host, key, value)
+            #check config rules - add tags that match this key
+            for rule in config_rules:
+                compiled_rule = re.compile(rule.get('regex'))
+                if compiled_rule.match(key):
+                    metric_tags.update(rule.get('tags') or {})
+
+            #override configuration with runtime parameters
+            metric_tags.update(key_tags)
+            hawk_metric = UniqueMetric(host, key, value, tags=metric_tags)
             hawk_metrics.append(hawk_metric)
 
         self.unique_metrics += hawk_metrics
@@ -119,3 +134,4 @@ class HawkSender(GenericMetricSender):
 
         self.hawkclient.push_metrics(self.unique_metrics)
         self.unique_metrics = []
+

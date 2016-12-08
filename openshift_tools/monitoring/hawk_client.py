@@ -85,5 +85,10 @@ class HawkClient(object):
 
             self.client.push(metric_type, key, value, clock)
 
+            # Update tags in Hawkular
+            if metric.tags != {}:
+                self.client.update_metric_tags(metric_type, key, **metric.tags)
+
         status, raw_response = None, None
         return (status, raw_response)
+
