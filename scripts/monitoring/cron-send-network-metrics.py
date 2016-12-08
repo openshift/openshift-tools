@@ -19,11 +19,11 @@
 #   limitations under the License.
 #
 #This is not a module, but pylint thinks it is.  This is a command.
-#pylint: disable=invalid-name
+#pylint: disable=invalid-name,import-error
 
 
 import argparse
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.monitoring import pminfo
 
 def parse_args():
@@ -48,7 +48,7 @@ def main():
     """  Main function to run the check """
 
     args = parse_args()
-    zagg_sender = ZaggSender(verbose=args.verbose, debug=args.debug)
+    metric_sender = MetricSender(verbose=args.verbose, debug=args.debug)
 
     discovery_key_network = 'disc.network'
     pcp_network_dev_metrics = ['network.interface.in.bytes', 'network.interface.out.bytes']
@@ -67,22 +67,22 @@ def main():
                                                    pcp_network_dev_metrics[0] + '.')
 
     # Add dynamic items
-    zagg_sender.add_zabbix_dynamic_item(discovery_key_network, item_proto_macro_network, filtered_network_totals.keys())
+    metric_sender.add_dynamic_metric(discovery_key_network, item_proto_macro_network, filtered_network_totals.keys())
 
-    # Report Network IN bytes; them to the ZaggSender
+    # Report Network IN bytes; them to the MetricSender
     for interface, total in filtered_network_totals.iteritems():
-        zagg_sender.add_zabbix_keys({'%s[%s]' % (item_proto_key_in_bytes, interface): total})
+        metric_sender.add_metric({'%s[%s]' % (item_proto_key_in_bytes, interface): total})
 
     # Report Network OUT Bytes;  use network.interface.out.bytes
     filtered_network_totals = clean_up_metric_dict(pcp_metrics_divided[pcp_network_dev_metrics[1]],
                                                    pcp_network_dev_metrics[1] + '.')
 
-    # calculate the % Util and add them to the ZaggSender
+    # calculate the % Util and add them to the MetricSender
     for interface, total in filtered_network_totals.iteritems():
 
-        zagg_sender.add_zabbix_keys({'%s[%s]' % (item_proto_key_out_bytes, interface): total})
+        metric_sender.add_metric({'%s[%s]' % (item_proto_key_out_bytes, interface): total})
 
-    zagg_sender.send_metrics()
+    metric_sender.send_metrics()
 
 if __name__ == '__main__':
     main()

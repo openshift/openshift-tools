@@ -7,13 +7,13 @@
   -m kernel.all.cpu.sys -m kernel.all.cpu.user -m kernel.all.cpu.wait.total -i 2 -v
 '''
 # Disabling invalid-name because pylint doesn't like the naming conention we have.
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name,import-error
 
 import sys
 import argparse
 import collections
 from openshift_tools.monitoring import pminfo
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 
 def parse_args():
     '''Parse the arguments for this script'''
@@ -76,9 +76,9 @@ def main():
 
     # Send the data to zabbix
     if not args.test:
-        zgs = ZaggSender(verbose=args.debug)
-        zgs.add_zabbix_keys(zab_results)
-        zgs.send_metrics()
+        mts = MetricSender(verbose=args.debug)
+        mts.add_metric(zab_results)
+        mts.send_metrics()
 
 
 if __name__ == '__main__':

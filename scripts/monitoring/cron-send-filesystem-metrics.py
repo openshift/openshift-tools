@@ -19,10 +19,10 @@
 #   limitations under the License.
 #
 #This is not a module, but pylint thinks it is.  This is a command.
-#pylint: disable=invalid-name
+#pylint: disable=invalid-name,import-error
 
 import argparse
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.monitoring import pminfo
 
 def parse_args():
@@ -46,7 +46,7 @@ def main():
     """  Main function to run the check """
 
     args = parse_args()
-    zagg_sender = ZaggSender(verbose=args.verbose, debug=args.debug)
+    metric_sender = MetricSender(verbose=args.verbose, debug=args.debug)
 
     filesys_full_metric = ['filesys.full']
     filesys_inode_derived_metrics = {'filesys.inodes.pused' :
@@ -65,9 +65,9 @@ def main():
 
     filtered_filesys_metrics = filter_out_docker_filesystems(filesys_full_metrics, 'filesys.full.')
 
-    zagg_sender.add_zabbix_dynamic_item(discovery_key_fs, item_prototype_macro_fs, filtered_filesys_metrics.keys())
+    metric_sender.add_dynamic_metric(discovery_key_fs, item_prototype_macro_fs, filtered_filesys_metrics.keys())
     for filesys_name, filesys_full in filtered_filesys_metrics.iteritems():
-        zagg_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_full, filesys_name): filesys_full})
+        metric_sender.add_metric({'%s[%s]' % (item_prototype_key_full, filesys_name): filesys_full})
 
 
     # Get filesytem inode metrics
@@ -75,10 +75,10 @@ def main():
 
     filtered_filesys_inode_metrics = filter_out_docker_filesystems(filesys_inode_metrics, 'filesys.inodes.pused.')
     for filesys_name, filesys_inodes in filtered_filesys_inode_metrics.iteritems():
-        zagg_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_inode, filesys_name): filesys_inodes})
+        metric_sender.add_metric({'%s[%s]' % (item_prototype_key_inode, filesys_name): filesys_inodes})
 
 
-    zagg_sender.send_metrics()
+    metric_sender.send_metrics()
 
 if __name__ == '__main__':
     main()

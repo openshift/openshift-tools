@@ -19,11 +19,11 @@
 #   limitations under the License.
 #
 #This is not a module, but pylint thinks it is.  This is a command.
-#pylint: disable=invalid-name
+#pylint: disable=invalid-name,import-error
 
 
 import argparse
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.monitoring import pminfo
 
 def parse_args():
@@ -47,7 +47,7 @@ def main():
     """  Main function to run the check """
 
     args = parse_args()
-    zagg_sender = ZaggSender(verbose=args.verbose, debug=args.debug)
+    metric_sender = MetricSender(verbose=args.verbose, debug=args.debug)
 
     discovery_key_disk = 'disc.disk'
     interval = 3
@@ -67,12 +67,12 @@ def main():
                                                 pcp_disk_dev_metrics[0] + '.')
 
     # Add dynamic items
-    zagg_sender.add_zabbix_dynamic_item(discovery_key_disk, item_prototype_macro_disk, filtered_disk_totals.keys())
+    metric_sender.add_dynamic_metric(discovery_key_disk, item_prototype_macro_disk, filtered_disk_totals.keys())
 
     # calculate the TPS and add them to the ZaggSender
     for disk, totals in filtered_disk_totals.iteritems():
         disk_tps = (totals[1] - totals[0]) / interval
-        zagg_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_tps, disk): disk_tps})
+        metric_sender.add_metric({'%s[%s]' % (item_prototype_key_tps, disk): disk_tps})
 
     # do % Util checks; use disk.dev.avactive
     filtered_disk_totals = clean_up_metric_dict(pcp_metrics_divided[pcp_disk_dev_metrics[1]],
@@ -83,9 +83,9 @@ def main():
         total_active = (float)(totals[1] - totals[0]) / 1000.0
         putil = 100 * total_active / interval
 
-        zagg_sender.add_zabbix_keys({'%s[%s]' % (item_prototype_key_putil, disk): putil})
+        metric_sender.add_metric({'%s[%s]' % (item_prototype_key_putil, disk): putil})
 
-    zagg_sender.send_metrics()
+    metric_sender.send_metrics()
 
 if __name__ == '__main__':
     main()
