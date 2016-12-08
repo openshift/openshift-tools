@@ -4,10 +4,10 @@
 '''
 
 #This is not a module, but pylint thinks it is.  This is a command.
-#pylint: disable=invalid-name
+#pylint: disable=invalid-name,import-error
 
 import subprocess
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 
 def get_vswitch_ports():
     ''' Get list of ports from ovs
@@ -47,12 +47,12 @@ def main():
     print "Found %s OVS pids" % vswitch_pids_count
 
     # we now have all the data we want.  Let's send it to Zagg
-    zs = ZaggSender()
-    zs.add_zabbix_keys({'openshift.node.ovs.ports.count' : vswitch_ports_count})
-    zs.add_zabbix_keys({'openshift.node.ovs.pids.count' : vswitch_pids_count})
+    mts = MetricSender()
+    mts.add_metric({'openshift.node.ovs.ports.count' : vswitch_ports_count})
+    mts.add_metric({'openshift.node.ovs.pids.count' : vswitch_pids_count})
 
     # Finally, sent them to zabbix
-    zs.send_metrics()
+    mts.send_metrics()
 
 if __name__ == '__main__':
     main()
