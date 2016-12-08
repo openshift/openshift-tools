@@ -25,6 +25,7 @@
 import argparse
 import ssl
 import urllib2
+import json
 
 # pylint: disable=import-error
 from openshift_tools.monitoring.ocutil import OCUtil
@@ -94,7 +95,7 @@ class OpenshiftLoggingStatus(object):
         # get cluster nodes
         curl_cmd = "{} 'https://localhost:9200/_nodes'".format(self.es_curl)
         node_cmd = "exec -ti {} -- {}".format(es_master_name, curl_cmd)
-        cluster_nodes = self.oc.run_user_cmd(node_cmd)['nodes']
+        cluster_nodes = json.loads(self.oc.run_user_cmd(node_cmd))['nodes']
         es_status['all_nodes_registered'] = 1
         # The internal ES node name is a random string we do not track anywhere
         # pylint: disable=unused-variable
@@ -116,7 +117,7 @@ class OpenshiftLoggingStatus(object):
         try:
             curl_cmd = "{} 'https://localhost:9200/_cluster/health?pretty=true'".format(self.es_curl)
             cluster_health = "exec -ti {} -- {}".format(es_pod, curl_cmd)
-            health_res = self.oc.run_user_cmd(cluster_health)
+            health_res = json.loads(self.oc.run_user_cmd(cluster_health))
 
             if health_res['status'] == 'green':
                 return 2
@@ -247,9 +248,9 @@ class OpenshiftLoggingStatus(object):
     def run(self):
         ''' Main function that runs the check '''
         self.parse_args()
-        self.get_pods()
         self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
         self.oc = OCUtil(namespace='logging', config_file='/tmp/admin.kubeconfig', verbose=self.args.verbose)
+        self.get_pods()
 
         logging_status = {}
         logging_status['elasticsearch'] = self.check_elasticsearch()
