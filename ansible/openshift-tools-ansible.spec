@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.30
+Version:        0.0.31
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,104 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Dec 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.31-1
+- Skipping error'd accounts.  Instead of raising an exception, print to stderr.
+  (kwoodson@redhat.com)
+- Fixed when attribute does not exist. (kwoodson@redhat.com)
+- Keeping block style on default creates. (kwoodson@redhat.com)
+- removed the oc header (mwoodson@redhat.com)
+- adding sso checks to zabbix (dedgar@redhat.com)
+- Updated location for logging-deployer.yaml (whearn@redhat.com)
+- Add a wait around the elasticsearch redeploy (whearn@redhat.com)
+- Redeploy ES after attaching PV (whearn@redhat.com)
+- Revert "determine path based on kube version" (sedgar@redhat.com)
+- determine path based on kube version (sedgar@redhat.com)
+- Fix metrics route and image settings (sedgar@redhat.com)
+- more git automation work (mwoodson@redhat.com)
+- adding sso checks to zabbix (dedgar@redhat.com)
+- Updated location for logging-deployer.yaml (whearn@redhat.com)
+- Add a wait around the elasticsearch redeploy (whearn@redhat.com)
+- Redeploy ES after attaching PV (whearn@redhat.com)
+- Add authorized_keys file for SSO monitoring container (joesmith@redhat.com)
+- Upping the limits for hawkular (whearn@redhat.com)
+- Run heartbeater in sso monitoring to create zabbix items
+  (joesmith@redhat.com)
+- Ami copy to module (kwoodson@redhat.com)
+- updated repoquery for bug fix; updated epel_repository (mwoodson@redhat.com)
+- Add secrets for zagg and generate zagg config (joesmith@redhat.com)
+- Moving to ruamel yaml for preserving comments (kwoodson@redhat.com)
+- add role to move PVs from one AZ to another (jdiaz@redhat.com)
+- Add monitoring container to SSO app template (joesmith@redhat.com)
+- Move generated "secrets" to emptydir volume in SSO app (joesmith@redhat.com)
+- Fix improperly formated keys in multi_inventory (rharriso@redhat.com)
+- Add OO_PAUSE_ON_{START,BUILD} placeholders for SSO apps (joesmith@redhat.com)
+- updated the aws elb instance tries (mwoodson@redhat.com)
+- Add a pause to allow curator edits to finish before redeploying
+  (rharriso@redhat.com)
+- Add authorized_keys file for SSO monitoring container (joesmith@redhat.com)
+- Upping the limits for hawkular (whearn@redhat.com)
+- Run heartbeater in sso monitoring to create zabbix items
+  (joesmith@redhat.com)
+- Ami copy to module (kwoodson@redhat.com)
+- updated repoquery for bug fix; updated epel_repository (mwoodson@redhat.com)
+- Add secrets for zagg and generate zagg config (joesmith@redhat.com)
+- Moving to ruamel yaml for preserving comments (kwoodson@redhat.com)
+- Revert "determine path based on kube version" (sedgar@redhat.com)
+- add role to move PVs from one AZ to another (jdiaz@redhat.com)
+- determine path based on kube version (sedgar@redhat.com)
+- Fix metrics route and image settings (sedgar@redhat.com)
+- Add monitoring container to SSO app template (joesmith@redhat.com)
+- Move generated "secrets" to emptydir volume in SSO app (joesmith@redhat.com)
+- Fix improperly formated keys in multi_inventory (rharriso@redhat.com)
+- Add OO_PAUSE_ON_{START,BUILD} placeholders for SSO apps (joesmith@redhat.com)
+- updated the git libraries to use ssh (mwoodson@redhat.com)
+- more fixes for the git tools (mwoodson@redhat.com)
+- updated the aws elb instance tries (mwoodson@redhat.com)
+- Add support for monitoring secrets to openshift_sso_app (joesmith@redhat.com)
+- Make a way to get file contents from aws_account_list role
+  (joesmith@redhat.com)
+- Fix openshift_sso_app markdown formatting in README (joesmith@redhat.com)
+- wait rather than exit while the iptables lock is held (jdiaz@redhat.com)
+- Move code for finding running pods from jinja to python filter plugin
+  (joesmith@redhat.com)
+- Add auto-deploy role for SSO app (joesmith@redhat.com)
+- Add a pause to allow curator edits to finish before redeploying
+  (rharriso@redhat.com)
+- Fix default edit actions for router creation (rharriso@redhat.com)
+- set ReclaimPolicy to Delete so controller will delete used volumes
+  (sedgar@redhat.com)
+- Ignore auto-generated values when comparing resources in oc_process
+  (joesmith@redhat.com)
+- Fix oc_process for reconcile runs. Add FIXME about possible logic error
+  (joesmith@redhat.com)
+- Allow openshift_cmd to take input to pipe to oc's stdin (joesmith@redhat.com)
+- Wait for kibana to finish (whearn@redhat.com)
+- make sure latest openshift-ansible-roles is installed (mwoodson@redhat.com)
+- updated logging project description (mwoodson@redhat.com)
+- add support for a 'list' with --all-namespaces (jdiaz@redhat.com)
+- Make sure bad SSL certs won't break the routers (rharriso@redhat.com)
+- Added limits around router and registry (whearn@redhat.com)
+- Fix ansible_tower role item not compatible with new Ansible
+  (joesmith@redhat.com)
+- Adding apache license. (kwoodson@redhat.com)
+- * logger.critical on timeout * section heading comments * magic variables
+  bought to top * write logs to file for further review, only show last 20
+  lines * add basename to differentiate between processes * noPodCount should
+  be active even if there's been a pod found (dranders@redhat.com)
+- Fix required variable quoting for Ansible 2.2 (rharriso@redhat.com)
+- add cluster-wide router stats reporting cron job (jdiaz@redhat.com)
+- Add openshift_aws_iam_sso role to manage IAM configuration of SAML IdP
+  (joesmith@redhat.com)
+- Adding region to host monitoring container (kwoodson@redhat.com)
+- app create v2 command line arguments (dranders@redhat.com)
+- Adding start_date. (kwoodson@redhat.com)
+- logging syntax fix (whearn@redhat.com)
+- description fix for logging project (whearn@redhat.com)
+- Add new line at the end of openshift_metrics/defaults/main.yml
+  (whearn@redhat.com)
+- Minor formatting changes (whearn@redhat.com)
+- Add constraints around hawkular and heapster (whearn@redhat.com)
+
 * Tue Nov 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.30-1
 - Fix for zabbix maintenance. (kwoodson@redhat.com)
 - changed the package cleanup option (mwoodson@redhat.com)
