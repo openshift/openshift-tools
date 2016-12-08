@@ -26,7 +26,7 @@
 #pylint: disable=import-error
 
 import argparse
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 import yaml
 import urllib2
@@ -38,7 +38,7 @@ class OpenshiftWebServiceChecker(object):
     def __init__(self):
         self.args = None
         self.ora = None
-        self.zagg_sender = None
+        self.metric_sender = None
         self.service_ip = None
         self.service_port = '443'
 
@@ -47,7 +47,7 @@ class OpenshiftWebServiceChecker(object):
 
         self.parse_args()
         self.ora = OpenshiftRestApi()
-        self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.metric_sender = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
 
         try:
             self.get_service()
@@ -56,10 +56,10 @@ class OpenshiftWebServiceChecker(object):
         except Exception as ex:
             print "Problem retreiving data: %s " % ex.message
 
-        self.zagg_sender.add_zabbix_keys({
+        self.metric_sender.add_metric({
             "openshift.webservice.{}.status".format(self.args.pod) : status})
 
-        self.zagg_sender.send_metrics()
+        self.metric_sender.send_metrics()
 
     def get_service(self):
         """ Gets the service for a pod """

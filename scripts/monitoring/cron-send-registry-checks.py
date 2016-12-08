@@ -27,7 +27,7 @@
 
 import argparse
 import os
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.monitoring.ocutil import OCUtil
 import socket
 import urllib2
@@ -37,7 +37,7 @@ class OpenshiftDockerRegigtryChecker(object):
 
     def __init__(self):
         self.args = None
-        self.zagg_sender = None
+        self.metric_sender = None
 
         self.docker_hosts = []
         self.docker_port = None
@@ -68,7 +68,7 @@ class OpenshiftDockerRegigtryChecker(object):
         self.parse_args()
         self.get_kubeconfig()
         ocutil = OCUtil(config_file=self.kubeconfig, verbose=self.args.verbose)
-        self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.metric_sender = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
 
         try:
             oc_yaml = ocutil.get_service('docker-registry')
@@ -81,7 +81,7 @@ class OpenshiftDockerRegigtryChecker(object):
         self.registry_service_check()
         self.registry_health_check()
 
-        self.zagg_sender.send_metrics()
+        self.metric_sender.send_metrics()
 
     def parse_args(self):
         """ parse the args from the cli """
@@ -170,7 +170,7 @@ class OpenshiftDockerRegigtryChecker(object):
 
         print "\nDocker Registry service status: {}".format(status)
 
-        self.zagg_sender.add_zabbix_keys({'openshift.node.registry.service.ping' : status})
+        self.metric_sender.add_metric({'openshift.node.registry.service.ping' : status})
 
     def registry_health_check(self):
         """
@@ -193,7 +193,7 @@ class OpenshiftDockerRegigtryChecker(object):
         print "\n%s of %s registry PODs are healthy\n" %(healthy_registries,
                                                          len(self.docker_hosts))
 
-        self.zagg_sender.add_zabbix_keys({'openshift.node.registry-pods.healthy_pct' : healthy_pct})
+        self.metric_sender.add_metric({'openshift.node.registry-pods.healthy_pct' : healthy_pct})
 
 if __name__ == '__main__':
     ODRC = OpenshiftDockerRegigtryChecker()
