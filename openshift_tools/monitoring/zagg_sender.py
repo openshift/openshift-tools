@@ -101,7 +101,7 @@ class ZaggSender(GenericMetricSender):
                                                  )
         self.unique_metrics.append(hb_metric)
 
-    def add_metric(self, metrics, host=None, synthetic=False):
+    def add_metric(self, metrics, host=None, synthetic=False, key_tags=None):
         """ create unique metric from zabbix key value pair """
 
         if synthetic and not host:
@@ -112,7 +112,7 @@ class ZaggSender(GenericMetricSender):
         zabbix_metrics = []
 
         for key, value in metrics.iteritems():
-            zabbix_metric = UniqueMetric(host, key, value)
+            zabbix_metric = UniqueMetric(host, key, value, tags=key_tags)
             zabbix_metrics.append(zabbix_metric)
 
         self.unique_metrics += zabbix_metrics

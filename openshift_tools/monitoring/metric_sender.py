@@ -77,10 +77,10 @@ class MetricSender(GenericMetricSender):
         for sender in self.active_senders:
             sender.add_dynamic_metric(discovery_key, macro_string, macro_array, host, synthetic)
 
-    def add_metric(self, metric, host=None, synthetic=False):
+    def add_metric(self, metric, host=None, synthetic=False, key_tags=None):
         ''' apply add_metric for each sender'''
         for sender in self.active_senders:
-            sender.add_metric(metric, host, synthetic)
+            sender.add_metric(metric, host, synthetic, key_tags)
 
     def add_heartbeat(self, heartbeat, host=None):
         ''' apply add_heartbit for each sender'''

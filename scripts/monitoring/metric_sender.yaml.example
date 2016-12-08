@@ -16,6 +16,13 @@ hawk:
     verbose: False
     debug: False
     ssl_verify: False
+metadata_rules:
+  - regex: .*memory.*
+    tags:
+      units: byte
+  - regex: .*version.*
+    tags:
+      descriptior_name: version
 pcp:
     metrics:
         - kernel.all
