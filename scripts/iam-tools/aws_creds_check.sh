@@ -61,25 +61,27 @@ function _check_creds()
         echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
     fi
 
-    [ -f "$expfile" ] && read -r line < "$expfile"
-    line=$((line+0))
-    if [ -z "$ZSH_NAME" ]; then
-        #    like 'date +%s' without a fork/exec
-        now="$(printf '%(%s)T' -1)"
-    else
-        # zsh's printf doesn't have time formatters so we're forced to fork/exec date
-        now="$(date +%s)"
-    fi
-    if [ $((now + week)) -gt "$line" ]; then
-        if [ "$now" -gt "$line" ]; then
-            echo "AWS credentials have expired. Run the following command to refresh them:"
+    if [ -f "$expfile" ]; then
+        read -r line < "$expfile"
+        line=$((line+0))
+        if [ -z "$ZSH_NAME" ]; then
+            #    like 'date +%s' without a fork/exec
+            now="$(printf '%(%s)T' -1)"
         else
-            echo "AWS credentials will expire in $(((line-now)/day)) day(s)," \
-                "$(((line-now)%day/hour)) hour(s). Run the following command to refresh them:"
+            # zsh's printf doesn't have time formatters so we're forced to fork/exec date
+            now="$(date +%s)"
         fi
-        echo "aws_api_key_manager --all"
+        if [ $((now + week)) -gt "$line" ]; then
+            if [ "$now" -gt "$line" ]; then
+                echo "AWS credentials have expired. Run the following command to refresh them:"
+            else
+                echo "AWS credentials will expire in $(((line-now)/day)) day(s)," \
+                    "$(((line-now)%day/hour)) hour(s). Run the following command to refresh them:"
+            fi
+            echo "aws_api_key_manager --all"
 
-        return 0
+            return 0
+        fi
     fi
     
     while IFS=: read -r name num; do
@@ -135,7 +137,7 @@ if [ $UID -lt 1000 -a $UID -ne 0 ] && id -nG | grep -qw libra_ops; then
         # this works on linux, but isn't portable to other systems.
         # unfortunately no simple means of discovering whether this is a login
         # shell seems to exist from a sourced shell snippet in zsh :-(
-        grep -q ^-zsh\\\> /proc/$$/cmdline && _check_creds
+        grep -q '^-zsh\>' /proc/$$/cmdline && _check_creds
     else
       shopt -q login_shell && _check_creds
       unset -f _check_creds
