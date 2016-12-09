@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.4
+Version:       0.1.5
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -364,6 +364,9 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Thu Dec 08 2016 Joel Smith <joesmith@redhat.com> 0.1.5-1
+- Fiz aws_creds_check for zsh, new accounts (joesmith@redhat.com)
+
 * Thu Dec 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.1.4-1
 - Fix logging checks (whearn@redhat.com)
 - Add tags to metric sender (zgalor@redhat.com)
