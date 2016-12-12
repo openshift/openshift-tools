@@ -21,7 +21,7 @@ cd $(dirname $0)
 echo
 echo "Building oso-centos7-ops-base..."
 sudo time docker build $@ -t oso-centos7-ops-base . && \
-sudo docker tag -f oso-centos7-ops-base openshifttools/oso-centos7-ops-base:latest
+sudo docker tag oso-centos7-ops-base openshifttools/oso-centos7-ops-base:latest
 DOCKER_EXITCODE=$?
 
 
