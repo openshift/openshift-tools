@@ -30,7 +30,7 @@ if [ -n "$BASH_VERSION" -a "$BASH_VERSINFO" -gt 3 -o "$ZSH_NAME" ]; then
 function _check_creds()
 {
     local -A accounts
-    local account_count creds_actual name num line regex now
+    local account_count creds_actual name num line regex now private_dir
     local credfile=~/.aws/credentials
     local expfile=~/.aws/credentials_expiration
     local minute=60
@@ -53,9 +53,11 @@ function _check_creds()
     # if ~/.aws doesn't exist, create it as a symlink to ~/.private/.aws
     [ -d ~/.aws ] || ln -s ~/.private/.aws ~/.aws
     # if ~/.aws is a directory and ~/.aws/credentials doesn't exist, create it as a symlink to ~/.private/.aws/credentials
-    [ -d ~/.aws -a ! -h ~/.aws -a ! -f .aws/credentials ] && ln -s ~/.private/.aws/credentials ~/.aws/credentials
+    [ -d ~/.aws -a ! -h ~/.aws -a ! -f ~/.aws/credentials ] && ln -s ~/.private/.aws/credentials ~/.aws/credentials
     creds_actual=$(readlink -f ~/.aws/credentials)
-    if [ "$creds_actual" != ~/.private/.aws/credentials ]; then
+    private_dir=~/.private/
+    regex="^$private_dir"
+    if ! [[ "$creds_actual" =~ $regex ]]; then
         echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
         echo ~/.aws/credentials must be stored in the encrypted directory ~/.private
         echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
