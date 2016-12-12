@@ -64,6 +64,7 @@ RUN yum clean metadata && \
         gcloud \
         openvswitch \
         python-psutil \
+        pylint \
         docker-python && \
     yum -y update && \
     yum clean all
