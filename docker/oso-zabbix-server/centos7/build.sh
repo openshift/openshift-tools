@@ -13,4 +13,4 @@ sudo echo -e "\nTesting sudo works...\n"
 
 cd $(dirname $0)
 sudo time docker build -t oso-centos7-zabbix-server . && \
-sudo docker tag -f oso-centos7-zabbix-server openshifttools/oso-centos7-zabbix-server:latest
+sudo docker tag oso-centos7-zabbix-server openshifttools/oso-centos7-zabbix-server:latest

@@ -43,7 +43,7 @@ fi
 echo
 echo "Building oso-rhel7-ops-base..."
 sudo time docker build $@ -t oso-rhel7-ops-base . && \
-sudo docker tag -f oso-rhel7-ops-base docker-registry.ops.rhcloud.com/ops/oso-rhel7-ops-base
+sudo docker tag oso-rhel7-ops-base docker-registry.ops.rhcloud.com/ops/oso-rhel7-ops-base
 DOCKER_EXITCODE=$?
 
 if ! is_rhel ; then

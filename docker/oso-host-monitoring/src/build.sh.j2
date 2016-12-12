@@ -31,6 +31,6 @@ container_fingerprint='./container-build-env-fingerprint.output'
   sudo time docker build $@ -t oso-rhel7-host-monitoring .
 {% elif base_os == "centos7" %}
   sudo time docker build $@ -t oso-centos7-host-monitoring . && \
-  sudo docker tag -f oso-centos7-host-monitoring openshifttools/oso-centos7-host-monitoring:latest
+  sudo docker tag oso-centos7-host-monitoring openshifttools/oso-centos7-host-monitoring:latest
 {% endif %}
 #fi
