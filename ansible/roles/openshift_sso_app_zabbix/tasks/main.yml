@@ -1,5 +1,5 @@
 ---
-- name: "openshift master cluster synthetic exists"
+- name: "check whether openshift master cluster synthetic exists"
   zbx_host:
     zbx_server: "{{ ossoz_zbx_server }}"
     zbx_user: "{{ ossoz_zbx_user }}"
@@ -10,14 +10,15 @@
   register: out
   run_once: true
 
-- name: "oso sso app aggregate"
+- name: "Add oso sso app aggregate count item"
+  # only add item when synthetic host exists
   when: "{{ out.results | length == 1 }}"
   zbx_item:
     zbx_server: "{{ ossoz_zbx_server }}"
     zbx_user: "{{ ossoz_zbx_user }}"
     zbx_password: "{{ ossoz_zbx_password }}"
     name: "oso.sso.app.aggregate"
-    key: "grpsum[{{ ossoz_clusterid }},sso.monitoring.container.running,sum,15m]"
+    key: "grpsum[{{ ossoz_clusterid }},sso.monitoring.container.running,max,15m]"
     value_type: int
     data_type: decimal
     description: "The sum of oso-monitor-sso containers checking in."
@@ -27,6 +28,7 @@
     interval: 900
     delta: 0
     units: ""
+    application: Ops SSO
   delegate_to: localhost 
   run_once: true
 
@@ -38,7 +40,7 @@
     name: "Not enough SSO containers running for 30 minutes"
     hostgroup_name: "{{ ossoz_clusterid }}"
     # Need to escape opening brace so we can avoid templating syntax errors
-    expression: "{{ '{'  }}{{ ossoz_clusterid }}-synthetic:grpsum[{{ ossoz_clusterid }},sso.monitoring.container.running,sum,15m].max(1800)}<3"
+    expression: "{{ '{'  }}{{ ossoz_clusterid }}-synthetic:grpsum[{{ ossoz_clusterid }},sso.monitoring.container.running,max,15m].max(1800)}<3"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ops_sso.asciidoc"
     priority: warning
   delegate_to: localhost
