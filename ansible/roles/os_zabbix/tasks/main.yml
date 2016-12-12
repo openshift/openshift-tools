@@ -74,6 +74,10 @@
   tags:
   - sso_app
 
+- include_vars: template_multi_inventory.yml
+  tags:
+  - multi_inventory
+
 - name: Include Template OpenShift Cluster
   include: ../../lib_zabbix/tasks/create_template.yml
   vars:
@@ -275,3 +279,12 @@
   tags:
   - sso_app
 
+- name: Include Template MultiInventory
+  include: ../../lib_zabbix/tasks/create_template.yml
+  vars:
+    template: "{{ g_template_multi_inventory }}"
+    server: "{{ ozb_server }}"
+    user: "{{ ozb_user }}"
+    password: "{{ ozb_password }}"
+  tags:
+  - multi_inventory
