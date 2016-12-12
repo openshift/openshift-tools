@@ -1,0 +1,37 @@
+{
+  "kind": "Pod",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "openshift-tools-pr-validator",
+    "labels": {
+      "name": "openshift-tools-pr-validation"
+    }
+  },
+  "spec": {
+    "containers": [
+      {
+        "name": "openshift-tools-pr-validation",
+        "image": "0.0.0.0:5000/namespace/openshift-tools-pr-validation:latest",
+	"env": [
+          {
+            "name": "TOOLS_PULL_ID",
+            "value": "5"
+          }
+        ],
+        "ports": [],
+        "resources": {},
+        "imagePullPolicy": "IfNotPresent",
+        "capabilities": {},
+        "securityContext": {
+          "capabilities": {},
+          "privileged": false
+        }
+      }
+    ],
+    "volumes": [],
+    "restartPolicy": "Never",
+    "serviceAccount": ""
+  },
+  "status": {}
+}
+

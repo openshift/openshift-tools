@@ -1,0 +1,67 @@
+node {
+   podName = "openshift-tools-pr-validator-${BUILD_NUMBER}"
+   stage 'Create'
+     openshiftCreateResource apiURL: '', authToken: '', jsonyaml: """{
+  "kind": "Pod",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": $podName,
+    "labels": {
+      "name": "openshift-tools-pr-validation"
+    }
+  },
+  "spec": {
+    "containers": [
+      {
+        "name": "openshift-tools-pr-validation",
+        "image": "0.0.0.0:5000/namespace/openshift-tools-pr-validation:latest",
+        "env": [
+          {
+            "name": "TOOLS_PULL_ID",
+            "value": "$TOOLS_PULL_ID"
+          }
+        ],
+        "ports": [],
+        "resources": {},
+        "imagePullPolicy": "IfNotPresent",
+        "capabilities": {},
+        "securityContext": {
+          "capabilities": {},
+          "privileged": false
+        }
+      }
+    ],
+    "volumes": [],
+    "restartPolicy": "Never",
+    "serviceAccount": ""
+  },
+  "status": {}
+  }""", namespace: "${PROJECT_NAME}", verbose: 'false'
+  sleep 10
+
+  stage 'Execute'
+    try {
+        def response = openshiftExec apiURL: '', authToken: '', command: '/usr/bin/python', arguments: [[value: '/validator/openshift-tools/jenkins/bin/pr_validation.py']], container: '', namespace: "${PROJECT_NAME}", pod: "${podName}", verbose: 'false', waitTime: '10', waitUnit: 'min'
+        if ( response.error == "" && response.failure == "") {
+            println('Stdout: '+response.stdout.trim())
+            println('Stderr: '+response.stderr.trim())
+        } else {
+            throw new RuntimeException(response.error + " ||| " + response.failure)
+        }
+    } catch(err) {
+        println("Unable to execute validation on pod ${podName}")
+        println("Cleaning up...")
+        deletePod(podName)
+        throw err
+    }
+
+  stage 'Cleanup'
+   deletePod(podName)
+
+}
+
+def deletePod(name) {
+    println("Deleting pod ${name}")
+    openshiftDeleteResourceByKey apiURL: '', namespace: "${PROJECT_NAME}", authToken: '', keys: "${name}", types: 'pod', verbose: 'false'
+}
+
