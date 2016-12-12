@@ -69,6 +69,7 @@ RUN yum clean metadata && \
         python-pyasn1 python-pyasn1-modules python-rsa \
         openvswitch \
         python-psutil \
+        pylint \
         docker-python && \
     yum -y update && \
     yum clean all
