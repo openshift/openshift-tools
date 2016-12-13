@@ -110,6 +110,16 @@ class MultiInventoryAccount(object):
 
         return updated
 
+    def empty_creds(self):
+        '''test whether credentials are empty'''
+        env = self.config.get('env_vars', {})
+        if 'ec2' in self.config['provider'] and (\
+           not env.has_key('AWS_ACCESS_KEY_ID') or not env['AWS_ACCESS_KEY_ID'] or \
+           not env.has_key('AWS_SECRET_ACCESS_KEY') or not env['AWS_SECRET_ACCESS_KEY']):
+            return True
+
+        return False
+
     def run_provider(self, force=False, validate_cache=False):
         """Setup the provider call with proper variables and call self.get_provider_tags
 
@@ -118,6 +128,14 @@ class MultiInventoryAccount(object):
                          This happens in case of an account update
 
         """
+        # verify creds are in place.  Currently only checks aws accounts.
+        # on new accounts, the time between account setup and install
+        # can vary and we'd like to ignore accounts that are not provisioned.
+        # In the above case, return:
+        #      cached: True and 'data': {}
+        if self.empty_creds():
+            return {'cached': True, 'data': self.inventory}
+
         # force an update??
         if not force:
             # check if we want to validate the cache or if the cache is valid
