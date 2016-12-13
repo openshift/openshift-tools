@@ -28,7 +28,6 @@
     interval: 900
     delta: 0
     units: ""
-    application: Ops SSO
   delegate_to: localhost 
   run_once: true
 
