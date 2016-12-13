@@ -29,7 +29,13 @@ metric_sender_config:
     ssl_verify: "{{ osohm_zagg_verify_ssl }}"
     verbose: False
     debug: False
-  hawk: "{{ osohm_hawk_config }}"
+  hawk:
+    active: {{ osohm_hawk_config.active }}
+    user: "{{ osohm_hawk_config.user }}"
+    pass: "{{ osohm_hawk_config.pass }}"
+    ssl_verify: {{ osohm_hawk_config.ssl_verify }}
+    verbose: {{ osohm_hawk_config.verbose }}
+    debug: {{ osohm_hawk_config.debug }}
   pcp:
     metrics:
     - hinv.ncpu
