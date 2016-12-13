@@ -18,6 +18,86 @@ oso_ops_monitoring_aws_key_id: "{{ osohm_ops_monitoring_aws_access_key_id }}"
 oso_ops_monitoring_aws_secret_access_key: "{{ osohm_ops_monitoring_aws_secret_access_key }}"
 {% endif %}
 
+metric_sender_config:
+  host:
+    name: "{{ osohm_host_name }}"
+  zagg:
+    active: True
+    url: "{{ osohm_zagg_web_url }}"
+    user: "{{ osohm_default_zagg_server_user }}"
+    pass: "{{ osohm_default_zagg_server_password }}"
+    ssl_verify: "{{ osohm_zagg_verify_ssl }}"
+    verbose: False
+    debug: False
+  hawk: "{{ osohm_hawk_config }}"
+  pcp:
+    metrics:
+    - hinv.ncpu
+    - kernel.all.load
+    - kernel.all.pswitch
+    - kernel.all.uptime
+    - kernel.uname.distro
+    - kernel.uname.machine
+    - kernel.uname.nodename
+    - kernel.uname.nodename
+    - kernel.uname.release
+    - kernel.uname.sysname
+    - kernel.uname.version
+    - mem.freemem
+    - mem.physmem
+    - mem.util.available
+    - mem.util.bufmem
+    - mem.util.cached
+    - mem.util.used
+    - proc.nprocs
+    - swap.free
+    - swap.length
+    - swap.used
+
+  heartbeat:
+    templates:
+    - Template Heartbeat        # So we can send hearbeats
+    - Template OS Linux         # So we can send host related metrics
+{% if osohm_host_type == 'node' and osohm_monitor_dnsmasq|bool %}
+    - Template dnsmasq          # So we can monitor dnsmasq
+{% endif %}
+    - Template Docker           # So we can send docker related metrics
+{% if osohm_host_type == 'master' or osohm_host_type == 'node' %}
+    - Template Openshift Node   # So we can send node related metrics
+{% endif %}
+    - Template Operations Tools # So ops-runner works
+    - Template Performance Copilot # So we can report PCP metrics
+{% if osohm_host_type == 'master' %}
+    - Template Openshift Master # So we can send master related metrics
+{%   if osohm_enable_cluster_capacity_triggers | bool %}
+    - Template Openshift Master Capacity Checks # To notify on low capacity
+{%   endif %}
+{%   if osohm_cloud == 'gcp' %}
+    - Template GCP
+{%   elif osohm_cloud == 'aws' %}
+    - Template AWS
+{%   endif %}
+{% if osohm_master_primary | default(False) | bool %}
+    - Template OpenShift Metrics
+{% endif %}
+{% endif %}
+{% if osohm_host_type == 'ansible-tower' %}
+    - Template Config Loop      # So we can send config loop related metrics
+    - Template Zabbix Config    # So we can send Zabbix Config metrics
+{% endif %}
+
+    hostgroups:
+    - "{{ osohm_cluster_id }}"
+    - "{{ osohm_environment }}"
+
+  synthetic_clusterwide:
+    host:
+      name: "{{ osohm_cluster_id }}-synthetic"
+    heartbeat:
+      templates:
+      - Template Heartbeat         # So we can send hearbeats
+      - Template OpenShift Cluster # So we can hold clusterwide items
+
 zagg_client_config:
   host:
     name: "{{ osohm_host_name }}"
