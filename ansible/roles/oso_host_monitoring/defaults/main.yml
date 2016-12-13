@@ -2,3 +2,13 @@
 osohm_monitor_capacity: False
 osohm_service_state:  started
 osohm_service_enabled: yes
+
+osohm_hawk_config:
+  active: False
+  url: https://localhost:8443
+  user: admin
+  pass: password
+  ssl_verify: False
+  verbose: False
+  debug: False
+
