@@ -45,15 +45,10 @@ try:
 except ImportError:
     HAS_BOTO = False
 
-import os
-
 def get_aws_accountid():
     ''' get the aws account id '''
 
-    if os.environ.has_key("AWS_PROFILE"):
-        identity = boto3.Session(profile_name=os.environ["AWS_PROFILE"]).client('sts').get_caller_identity()
-    else:
-        identity = boto3.client('sts').get_caller_identity()
+    identity = boto3.client('sts').get_caller_identity()
 
     iam_user = {}
     iam_user['accountid'] = identity['Account']
