@@ -31,6 +31,7 @@ metric_sender_config:
     debug: False
   hawk:
     active: {{ osohm_hawk_config.active }}
+    url: "{{ osohm_hawk_config.url }}"
     user: "{{ osohm_hawk_config.user }}"
     pass: "{{ osohm_hawk_config.pass }}"
     ssl_verify: {{ osohm_hawk_config.ssl_verify }}
