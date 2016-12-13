@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.31
+Version:        0.0.32
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,25 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Tue Dec 13 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.32-1
+- Skip accounts that do not have creds. (kwoodson@redhat.com)
+- add missing url field (jdiaz@redhat.com)
+- preserve yaml formatting in monitoring-config.yml (jdiaz@redhat.com)
+- Generate metric_sender.yaml from template (zgalor@redhat.com)
+- Revert "made the lib_iam_accountid support aws_profiles"
+  (mwoodson@redhat.com)
+- Fix sso group sum aggregate item, add to Ops SSO App (joesmith@redhat.com)
+- Adding multi-inventory template to ansible-tower hosts. (kwoodson@redhat.com)
+- Adding inventory check to zabbix. (kwoodson@redhat.com)
+- made the lib_iam_accountid support aws_profiles (mwoodson@redhat.com)
+- Moving from iam to sts query for account and name. (kwoodson@redhat.com)
+- Moving from iam to sts query for account and name. (kwoodson@redhat.com)
+- added some variables to host_monitoring to allow for running or not
+  (mwoodson@redhat.com)
+- Fixing a variable bug. (kwoodson@redhat.com)
+- Adding log file and setting permissions. (kwoodson@redhat.com)
+- Adding new user ops_monitoring (mmahut@redhat.com)
+
 * Thu Dec 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.31-1
 - Skipping error'd accounts.  Instead of raising an exception, print to stderr.
   (kwoodson@redhat.com)

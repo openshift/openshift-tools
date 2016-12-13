@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.5
+Version:       0.1.6
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -366,6 +366,9 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Tue Dec 13 2016 Kenny Woodson <kwoodson@redhat.com> 0.1.6-1
+- Allow AWS creds to be stored anywhere in ~/.private (joesmith@redhat.com)
+
 * Thu Dec 08 2016 Joel Smith <joesmith@redhat.com> 0.1.5-1
 - Fiz aws_creds_check for zsh, new accounts (joesmith@redhat.com)
 
