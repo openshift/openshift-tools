@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.6
+Version:       0.1.7
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -364,6 +364,10 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Wed Dec 14 2016 Drew Anderson <dranders@redhat.com> 0.1.7-1
+- change the way we test for pods and pod status increase test duration by 50%%
+  (dranders@redhat.com)
+
 * Tue Dec 13 2016 Kenny Woodson <kwoodson@redhat.com> 0.1.6-1
 - Allow AWS creds to be stored anywhere in ~/.private (joesmith@redhat.com)
 
