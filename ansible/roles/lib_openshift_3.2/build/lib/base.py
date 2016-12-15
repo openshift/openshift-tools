@@ -355,7 +355,7 @@ class Utils(object):
 
                 if not isinstance(user_def[key], list):
                     if debug:
-                        print 'user_def[key] is not a list'
+                        print 'user_def[key] is not a list key=[%s] user_def[key]=%s' % (key, user_def[key])
                     return False
 
                 if len(user_def[key]) != len(value):
@@ -366,9 +366,6 @@ class Utils(object):
                         print "value: %s" % value
                     return False
 
-
-                user_def[key].sort()
-                value.sort()
                 for values in zip(user_def[key], value):
                     if isinstance(values[0], dict) and isinstance(values[1], dict):
                         if debug:

@@ -13,4 +13,4 @@ sudo echo -e "\nTesting sudo works...\n"
 
 cd $(dirname $0)
 sudo time docker build $@ -t oso-centos7-zaio . && \
-sudo docker tag -f oso-centos7-zaio openshifttools/oso-centos7-zaio:latest
+sudo docker tag oso-centos7-zaio openshifttools/oso-centos7-zaio:latest

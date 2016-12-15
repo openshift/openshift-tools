@@ -25,7 +25,8 @@ ADD zabbix.repo /etc/yum.repos.d/
 
 # By default docker recommends to install packages with tsflags=nodocs for space saving
 # but in this case, we need it for this one package, because the DB schema is coming from the docs
-RUN yum install -y --setopt=tsflags='' zabbix-server-mysql
+RUN yum install -y --setopt=tsflags='' zabbix-server-mysql && \
+    yum clean all
 RUN yum install -y zabbix-agent zabbix-sender crontabs \
     mariadb openssh-clients openshift-tools-scripts-monitoring-zabbix-heal && \
     yum -y update && \

@@ -8,5 +8,5 @@ cd $(dirname $0)
 sudo time docker build $@ -t oso-rhel7-zaio .
 {% elif base_os == "centos7" %}
 sudo time docker build $@ -t oso-centos7-zaio . && \
-sudo docker tag -f oso-centos7-zaio openshifttools/oso-centos7-zaio:latest
+sudo docker tag oso-centos7-zaio openshifttools/oso-centos7-zaio:latest
 {% endif %}

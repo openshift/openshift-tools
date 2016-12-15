@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.5
+Version:       0.1.7
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -19,6 +19,8 @@ OpenShift Tools Scripts
 
 # openshift-tools-scripts-monitoring install
 mkdir -p %{buildroot}/usr/bin
+cp -p monitoring/ops-metric-client.py %{buildroot}/usr/bin/ops-metric-client
+cp -p monitoring/ops-metric-pcp-client.py %{buildroot}/usr/bin/ops-metric-pcp-client
 cp -p monitoring/ops-zagg-client.py %{buildroot}/usr/bin/ops-zagg-client
 cp -p monitoring/ops-zagg-pcp-client.py %{buildroot}/usr/bin/ops-zagg-pcp-client
 cp -p monitoring/ops-zagg-metric-processor.py %{buildroot}/usr/bin/ops-zagg-metric-processor
@@ -364,6 +366,13 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Wed Dec 14 2016 Drew Anderson <dranders@redhat.com> 0.1.7-1
+- change the way we test for pods and pod status increase test duration by 50%%
+  (dranders@redhat.com)
+
+* Tue Dec 13 2016 Kenny Woodson <kwoodson@redhat.com> 0.1.6-1
+- Allow AWS creds to be stored anywhere in ~/.private (joesmith@redhat.com)
+
 * Thu Dec 08 2016 Joel Smith <joesmith@redhat.com> 0.1.5-1
 - Fiz aws_creds_check for zsh, new accounts (joesmith@redhat.com)
 

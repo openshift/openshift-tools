@@ -104,6 +104,14 @@ The AWS access key to use for the snapshotter
 
 The AWS secret access key to use for the snapshotter
 
+### osohm_ops_monitoring_aws_access_key_id
+
+The AWS access key to use for monitoring scripts
+
+### osohm_ops_monitoring_aws_secret_access_key
+
+The AWS secret access key to use for monitoring scripts
+
 ### osohm_zagg_client
 
 Name of container with the Zabbix client

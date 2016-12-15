@@ -41,8 +41,8 @@ ocutil = OCUtil()
 
 commandDelay = 5 # seconds
 testLoopCountMax = 180 # * commandDelay = 15min
-testCurlCountMax = 12 # * commandDelay = 1min
-testNoPodCountMax = 12 # * commandDelay = 1min
+testCurlCountMax = 18 # * commandDelay = 1min30s
+testNoPodCountMax = 18 # * commandDelay = 1min30s
 
 def runOCcmd(cmd, base_cmd='oc'):
     """ log commands through ocutil """
@@ -127,13 +127,23 @@ def getPodStatus(pod):
 def getPod(name):
     """ get Pod from all possible pods """
     pods = ocutil.get_pods()
+    result = None
+
     for pod in pods['items']:
         if pod and pod['metadata']['name'] and pod['metadata']['name'].startswith(name):
-            # only report on running build pods, we'll wait if build pod is pending
-            if pod['metadata']['name'].endswith("build") and pod['status']['phase'] != 'Running':
-                continue
-            else:
-                return pod
+            # if we have a pod already, and this one is a build or deploy pod, don't worry about it
+            # we want podname-xyz12 to be priority
+            # if we dont already have a pod, then this one will do
+            if result:
+                if pod['metadata']['name'].endswith("build"):
+                    continue
+
+                if pod['metadata']['name'].endswith("deploy"):
+                    continue
+
+            result = pod
+
+    return result
 
 def setup(config):
     """ global setup for tests """
@@ -226,11 +236,19 @@ def test(config):
 
         if pod['status']['phase']:
             if pod['status']['phase'] == "Failed":
-                logger.error("Error with pod")
+                logger.error("Pod Failed")
                 break
 
-        if pod['status'] and pod['metadata']['name'].endswith("build"):
+            if pod['status']['phase'] == "Error":
+                logger.error("Pod Error")
+                break
+
+        if pod['metadata']['name'].endswith("build"):
             build_ran = 1
+            continue
+
+        if pod['metadata']['name'].endswith("deploy"):
+            continue
 
         if pod['status']['phase'] == 'Running' \
             and pod['status'].has_key('podIP') \

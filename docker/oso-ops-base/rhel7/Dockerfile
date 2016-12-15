@@ -16,7 +16,8 @@ RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 ADD setup-yum.sh /usr/local/bin/setup-yum.sh
 RUN /usr/local/bin/setup-yum.sh
 RUN yum repolist --disablerepo=* && \
-    yum-config-manager --enable rhel-7-server-extras-rpms
+    yum-config-manager --disable \* > /dev/null && \
+    yum-config-manager --enable rhel-7-server-rpms rhel-7-server-extras-rpms
 
 # creature comforts (make it feel like a normal linux environment)
 ENV LANG en_US.UTF-8
