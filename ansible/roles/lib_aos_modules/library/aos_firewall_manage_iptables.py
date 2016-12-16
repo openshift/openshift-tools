@@ -215,7 +215,7 @@ class IpTablesManager(object): # pylint: disable=too-many-instance-attributes
 
     def gen_cmd(self):
         cmd = 'iptables' if self.ip_version == 'ipv4' else 'ip6tables'
-        return ["/usr/sbin/%s" % cmd]
+        return ["/usr/sbin/%s" % cmd, '-w', '600']
 
     def gen_save_cmd(self): # pylint: disable=no-self-use
         return ['/usr/libexec/iptables/iptables.init', 'save']

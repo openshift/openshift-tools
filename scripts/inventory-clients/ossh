@@ -121,13 +121,14 @@ class Ossh(object):
         '''Function to print out the host inventory.
         '''
         for _, server_info in self.host_inventory.items():
-            print '%-42s %-18s %-8s %-25s %-18s %-18s' % (\
-                  server_info.get('oo_name', 'None'),
-                  server_info.get('oo_clusterid', 'None'),
-                  server_info.get('oo_environment', 'None'),
-                  server_info.get('oo_id', 'None'),
-                  server_info.get('oo_public_ip', 'None'),
-                  server_info.get('oo_private_ip', 'None'))
+            if not server_info.get('synthetic', False):
+                print '%-42s %-18s %-8s %-25s %-18s %-18s' % (\
+                    server_info.get('oo_name', 'None'),
+                    server_info.get('oo_clusterid', 'None'),
+                    server_info.get('oo_environment', 'None'),
+                    server_info.get('oo_id', 'None'),
+                    server_info.get('oo_public_ip', 'None'),
+                    server_info.get('oo_private_ip', 'None'))
 
     def ssh(self):
         '''SSH to a specified host

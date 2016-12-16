@@ -1,0 +1,114 @@
+<?php
+/**
+ * SAML 2.0 remote SP metadata for SimpleSAMLphp.
+ *
+ * See: https://simplesamlphp.org/docs/stable/simplesamlphp-reference-sp-remote
+ */
+
+{% for resource in saml2_sso_authdata.resources %}
+{%- if 'urn:amazon:webservices:' in resource.id -%}
+{%- set acct = resource.id | replace('urn:amazon:webservices:', '', 1) -%}
+// Converted from https://signin.aws.amazon.com/static/saml-metadata.xml on 2016/08/23
+// using /admin/metadata-converter.php
+// Metadata for AWS account {{acct}} ({{resource.name}})
+$metadata['urn:amazon:webservices:{{acct}}'] = array (
+  'entityid' => 'urn:amazon:webservices:{{acct}}',
+  'description' => array (),
+  'OrganizationName' => array ( 'en' => 'Amazon Web Services, Inc.'),
+  'name' => array ( 'en' => 'AWS Management Console Single Sign-On to {{acct}}'),
+  'OrganizationDisplayName' => array ('en' => 'AWS'),
+  'url' => array ('en' => 'https://aws.amazon.com'),
+  'OrganizationURL' => array ('en' => 'https://aws.amazon.com'),
+  'contacts' => array (),
+  'metadata-set' => 'saml20-sp-remote',
+  'expire' => 1502150400,
+  'AssertionConsumerService' => array ( 0 => array (
+      'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
+      'Location' => 'https://signin.aws.amazon.com/saml',
+      'index' => 1,
+      'isDefault' => true,
+    ),
+  ),
+  'SingleLogoutService' => array (),
+  'NameIDFormat' => 'urn:oasis:names:tc:SAML:2.0:nameid-format:transient',
+  'attributes' => array (
+    0 => 'https://aws.amazon.com/SAML/Attributes/Role',
+    1 => 'https://aws.amazon.com/SAML/Attributes/RoleSessionName',
+    2 => 'urn:oid:1.3.6.1.4.1.5923.1.1.1.1',
+    3 => 'urn:oid:1.3.6.1.4.1.5923.1.1.1.2',
+    4 => 'urn:oid:1.3.6.1.4.1.5923.1.1.1.3',
+    5 => 'urn:oid:1.3.6.1.4.1.5923.1.1.1.4',
+    6 => 'urn:oid:1.3.6.1.4.1.5923.1.1.1.5',
+    7 => 'urn:oid:1.3.6.1.4.1.5923.1.1.1.6',
+    8 => 'urn:oid:1.3.6.1.4.1.5923.1.1.1.7',
+    9 => 'urn:oid:1.3.6.1.4.1.5923.1.1.1.8',
+    10 => 'urn:oid:1.3.6.1.4.1.5923.1.1.1.9',
+    11 => 'urn:oid:1.3.6.1.4.1.5923.1.1.1.10',
+    12 => 'urn:oid:1.3.6.1.4.1.5923.1.1.1.11',
+    13 => 'urn:oid:1.3.6.1.4.1.5923.1.2.1.2',
+    14 => 'urn:oid:1.3.6.1.4.1.5923.1.2.1.3',
+    15 => 'urn:oid:1.3.6.1.4.1.5923.1.2.1.4',
+    16 => 'urn:oid:1.3.6.1.4.1.5923.1.2.1.5',
+    17 => 'urn:oid:1.3.6.1.4.1.5923.1.2.1.6',
+    18 => 'urn:oid:2.5.4.3',
+  ),
+  'attributes.required' => array (
+    0 => 'https://aws.amazon.com/SAML/Attributes/Role',
+    1 => 'https://aws.amazon.com/SAML/Attributes/RoleSessionName',
+  ),
+  'keys' => array ( 0 => array (
+      'encryption' => false,
+      'signing' => true,
+      'type' => 'X509Certificate',
+      'X509Certificate' => 'MIIDbTCCAlWgAwIBAgIEEPhrEDANBgkqhkiG9w0BAQsFADBnMR8wHQYDVQQDExZ1
+cm46YW1hem9uOndlYnNlcnZpY2VzMSIwIAYDVQQKExlBbWF6b24gV2ViIFNlcnZp
+Y2VzLCBJbmMuMRMwEQYDVQQIEwpXYXNoaW5ndG9uMQswCQYDVQQGEwJVUzAeFw0x
+NjA4MDgwMDAwMDBaFw0xNzA4MDgwMDAwMDBaMGcxHzAdBgNVBAMTFnVybjphbWF6
+b246d2Vic2VydmljZXMxIjAgBgNVBAoTGUFtYXpvbiBXZWIgU2VydmljZXMsIElu
+Yy4xEzARBgNVBAgTCldhc2hpbmd0b24xCzAJBgNVBAYTAlVTMIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo8cZ/yO7wW8KVSGsdXvk7aWTyBVQ0y4lmlPi
+Ma3lv1ZtmgOEyY5Lznv/yOhv3d/D6KmhIPyVcb1tn6Td5MJ3vZC+6BQxgFJO/BjJ
+tPuSVaafYzir3Us1/GDYRUVH1eZEayVkOAPrIOjDrRG2rQphdKVY5yd+jbMPRcN3
+kXmINaeL0zxRPCH8YZQct2bniaMMgGUnKnIEDkxgFZ/mJjjNrwgjcmEO9pRw8tJp
+VM622Cvq9KL+4UDEvnTmsPrHpfkvRMiYiq+qgKrzwE5aBMP9YL08z+KvszirnXZ2
+7rjZmAQcX0kbiiMHpwf5btNwJq8rgbG4fPquDyb2Udj4bBfLBwIDAQABoyEwHzAd
+BgNVHQ4EFgQUguAp0jVQs9Av/S+SJ/f89qPVe0MwDQYJKoZIhvcNAQELBQADggEB
+ABM9fhPJrhqZMq7Sf+WdTyzn1WofLkdMWuSZoU6M8heijdtdvSLhLdgq5cPzzST4
+MMZZ0p9+B69jmIcxXD9+sGjK6+4tWFfYuxQrR6o5uea0TelLgnQh75chPAzaYLGT
+668Uaktl3N7CnQ9fhDwGIXDLwmbRR8XVhVDwwfqdZT5e/5W5gPS1Ne1nPhFjF6P2
+mzUZgoislffXBT4yqSB+lQPUjETincPc18TxXGe304XgANisJwxPSKyea5PywZkA
+qJLmKqAmK89ThawArXHAsAhPqDXDmvdOl6xbebLsUOjRjPEhZq9zvuDciQekGQad
+P7wcH/csymqgAGZvDdTvEZU=',
+    ),
+  ),
+  'saml20.sign.assertion' => true,
+  'authproc' => array(
+        // This filter will make sure the user has rights to this resource
+        // and set the role attribute
+        10 => array(
+            'class' => 'authorizeyaml:Authorize',
+            'yaml_authdata_path' => '{{saml2_sso_configdata.authdata_path}}',
+        ),
+        // Re-map something like role => array('admin') to 
+        // 'https://aws.amazon.com/SAML/Attributes/Role' =>
+        //     array('arn:aws:iam::actnum:role/admin,arn:aws:iam::act:saml-provider/idpname')
+        20 => array(
+            'class' => 'core:AttributeAlter',
+            'subject' => 'role',
+            'pattern' => '/^(.*)$/',
+            'replacement' => 'arn:aws:iam::{{acct}}:role/\\1,arn:aws:iam::{{acct}}:saml-provider/{{saml2_sso_configdata.iam_idp_name}}',
+            'target' => 'https://aws.amazon.com/SAML/Attributes/Role',
+        ),
+        // Rename the 'uid' attribute to 'https://aws.amazon.com/SAML/Attributes/RoleSessionName'
+        30 => array(
+            'class' => 'core:AttributeCopy',
+            'uid' => 'https://aws.amazon.com/SAML/Attributes/RoleSessionName',
+        ),
+  ),
+);
+{% endif %}
+{% endfor %}
+
+{%- for metadata_instance in saml2_sso_configdata.metadata_instances -%}
+{{metadata_instance}}
+{% endfor %}

@@ -1,0 +1,20 @@
+---
+- hosts: all
+  become: True
+  roles:
+    - ansible-logrotate
+    - role: ansible-logrotate
+      logrotate_scripts:
+      - name: nginx-options
+        paths:
+        - /var/log/nginx/options.log
+        options:
+        - daily
+
+    - role: ansible-logrotate
+      logrotate_scripts:
+      - name: nginx-scripts
+        paths:
+        - /var/log/nginx/scripts.log
+        scripts:
+          postrotate: "echo test"

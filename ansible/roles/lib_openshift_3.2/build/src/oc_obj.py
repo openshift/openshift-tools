@@ -1,5 +1,6 @@
 # pylint: skip-file
 
+# pylint: disable=too-many-instance-attributes
 class OCObject(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
@@ -11,9 +12,11 @@ class OCObject(OpenShiftCLI):
                  rname=None,
                  selector=None,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
-                 verbose=False):
+                 verbose=False,
+                 all_namespaces=False):
         ''' Constructor for OpenshiftOC '''
-        super(OCObject, self).__init__(namespace, kubeconfig)
+        super(OCObject, self).__init__(namespace, kubeconfig,
+                                       all_namespaces=all_namespaces)
         self.kind = kind
         self.namespace = namespace
         self.name = rname

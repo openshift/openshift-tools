@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # vim: expandtab:tabstop=4:shiftwidth=4
-'''
+"""
   Interface to OpenShift oc command
-'''
+"""
 #
 #   Copyright 2015 Red Hat Inc.
 #
@@ -18,9 +18,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# Disabling invalid-name because pylint doesn't like the naming conention we have.
-# pylint: disable=invalid-name
-# pylint: disable=too-few-public-methods
 
 import os
 import shlex
@@ -33,120 +30,106 @@ import subprocess
 
 # pylint: disable=bare-except
 def cleanup_file(inc_file):
-    ''' clean up '''
+    """ clean up """
     try:
         os.unlink(inc_file)
     except:
         pass
 
 class OCUtil(object):
-    ''' Wrapper for interfacing with OpenShift 'oc' utility '''
+    """ Wrapper for interfacing with OpenShift 'oc' utility """
 
-    def __init__(self, namespace='default', config_file='/tmp/admin.kubeconfig', verbose=False):
-        '''
+    def __init__(self, namespace='default', config_file='/tmp/admin.kubeconfig', verbose=False, logger=None):
+        """
         Take initial values for running 'oc'
         Ensure to set non-default namespace if that is what is desired
-        '''
+        """
         self.namespace = namespace
         self.config_file = config_file
         self.verbose = verbose
         self.copy_kubeconfig()
+        self.logger = logger
 
     def copy_kubeconfig(self):
-        ''' make a copy of the kubeconfig '''
+        """ make a copy of the kubeconfig """
 
-        file_name = os.path.join('/tmp',
-                                 ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7)))
+        file_name = os.path.join(
+            '/tmp',
+            ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7))
+        )
         shutil.copy(self.config_file, file_name)
         atexit.register(cleanup_file, file_name)
 
         self.config_file = file_name
 
-    def _run_cmd(self, cmd):
-        ''' Actually execute the command '''
+    def _run_cmd(self, cmd, base_cmd='oc', ):
+        """ Actually execute the command """
+        cmd = " ".join([base_cmd, '--config', self.config_file, '-n', self.namespace, cmd])
 
-        cmd += ' --config ' + self.config_file
+        if self.logger:
+            self.logger.debug("ocutil._run_cmd( {} )".format(cmd))
+
         cmd = shlex.split(cmd)
+
         if self.verbose:
             print "Running command: {}".format(str(cmd))
 
-        results = subprocess.check_output(cmd)
-
         try:
-            return yaml.safe_load(results)
-        except:
-            return results
+            return subprocess.check_output(cmd)
+        except subprocess.CalledProcessError as err:
+            if self.logger:
+                self.logger.exception('Error from server: %s' % err.output)
+            raise err
+
+    def _run_cmd_yaml(self, cmd, base_cmd='oc', yaml_cmd='-o yaml'):
+        """ Actually execute the command and expects yaml """
+        return yaml.safe_load(self._run_cmd(" ".join([cmd, yaml_cmd]), base_cmd=base_cmd))
+
+    def run_user_cmd(self, cmd, base_cmd='oc'):
+        """ Runs a custom user command """
+        return self._run_cmd(cmd, base_cmd=base_cmd)
+
+    def run_user_cmd_yaml(self, cmd, base_cmd='oc', yaml_cmd='-o yaml'):
+        """Runs a custom user command and expects yaml"""
+        return self._run_cmd_yaml(cmd, base_cmd=base_cmd, yaml_cmd=yaml_cmd)
 
     def get_secrets(self, name):
-        ''' Get secrets from object 'name' '''
-
-
-        secrets_cmd = "oc get secrets {} -n{} -o yaml".format(name, self.namespace)
-        secrets_yaml = self._run_cmd(secrets_cmd)
-
-        return secrets_yaml
+        """ Get secrets from object 'name' """
+        return self._run_cmd_yaml("get secrets {}".format(name))
 
     def get_endpoint(self, name):
-        ''' Get endpoint details '''
-
-        endpoint_cmd = "oc get endpoints {} -n{} -o yaml".format(name, self.namespace)
-        endpoint_yaml = self._run_cmd(endpoint_cmd)
-
-        return endpoint_yaml
+        """ Get endpoint details """
+        return self._run_cmd_yaml("get endpoints {}".format(name))
 
     def get_service(self, name):
-        ''' Get service details '''
+        """ Get service details """
+        return self._run_cmd_yaml("get service {}".format(name))
 
-        service_cmd = "oc get service {} -n{} -o yaml".format(name, self.namespace)
-        service_yaml = self._run_cmd(service_cmd)
-
-        return service_yaml
+    def get_rc(self, name):
+        """ Get replication controller details """
+        return self._run_cmd_yaml("get rc {}".format(name))
 
     def get_dc(self, name):
-        ''' Get deployment config details '''
-
-        dc_cmd = "oc get dc {} -n{} -o yaml".format(name, self.namespace)
-        dc_yaml = self._run_cmd(dc_cmd)
-
-        return dc_yaml
+        """ Get deployment config details """
+        return self._run_cmd_yaml("get dc {}".format(name))
 
     def get_route(self, name):
-        ''' Get routes details '''
-
-        route_cmd = "oc get route {} -n {} -o yaml".format(name, self.namespace)
-        route_yaml = self._run_cmd(route_cmd)
-
-        return route_yaml
+        """ Get routes details """
+        return self._run_cmd_yaml("get route {}".format(name))
 
     def get_pods(self):
-        ''' Get all the pods in the namespace '''
+        """ Get all the pods in the namespace """
+        return self._run_cmd_yaml("get pods")
 
-        pods_cmd = "oc get pods -n {} -o yaml".format(self.namespace)
-        pods_yaml = self._run_cmd(pods_cmd)
-
-        return pods_yaml
+    def get_projects(self):
+        """ Get all projects in the cluster """
+        return self._run_cmd_yaml("get projects")
 
     def get_nodes(self):
-        ''' Get all the nodes in the cluster '''
-
-        nodes_cmd = "oc get nodes -o yaml"
-        nodes_yaml = self._run_cmd(nodes_cmd)
-
-        return nodes_yaml
+        """ Get all the nodes in the cluster """
+        return self._run_cmd_yaml("get nodes")
 
     def get_log(self, name):
-        ''' Gets the log for the specified container '''
+        """ Gets the log for the specified container """
+        return self._run_cmd("logs {}".format(name))
 
-        log_cmd = "oc logs {} -n {}".format(name, self.namespace)
-        log_results = self._run_cmd(log_cmd)
-
-        return log_results
-
-    def run_user_cmd(self, command):
-        ''' Runs a custom user command '''
-
-        # At least force the user to use oc
-        user_cmd = "oc {}".format(command)
-        user_results = self._run_cmd(user_cmd)
-
-        return user_results

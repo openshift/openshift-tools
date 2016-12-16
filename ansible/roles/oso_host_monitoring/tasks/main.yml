@@ -92,5 +92,5 @@
 - name: "Start the {{ osohm_host_monitoring }} service"
   service:
     name: "{{ osohm_host_monitoring }}"
-    state: started
-    enabled: yes
+    state: "{{ osohm_service_state }}"
+    enabled: "{{ osohm_service_enabled }}"

@@ -1,0 +1,60 @@
+---
+- name: Create a new SAML Identity Provider Entry
+  oo_iam_saml:
+    name: "{{ osasso_idp_name }}"
+    state: present
+    metadata_document: |
+      <?xml version="1.0"?>
+      <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" entityID="https://{{ osasso_idp_hostname }}/saml/saml2/idp/metadata.php">
+             <md:IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+          <md:KeyDescriptor use="signing">
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+              <ds:X509Data>
+                <ds:X509Certificate>{{ osasso_idp_certificate }}</ds:X509Certificate>
+              </ds:X509Data>
+            </ds:KeyInfo>
+          </md:KeyDescriptor>
+          <md:KeyDescriptor use="encryption">
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+              <ds:X509Data>
+                <ds:X509Certificate>{{ osasso_idp_certificate }}</ds:X509Certificate>
+              </ds:X509Data>
+            </ds:KeyInfo>
+          </md:KeyDescriptor>
+          <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://{{ osasso_idp_hostname }}/saml/saml2/idp/SingleLogoutService.php"/>
+          <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</md:NameIDFormat>
+          <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://{{ osasso_idp_hostname }}/saml/saml2/idp/SSOService.php"/>
+        </md:IDPSSODescriptor>
+        <md:ContactPerson contactType="technical">
+          <md:GivenName>{{ osasso_tech_contact_name }}</md:GivenName>
+          <md:SurName>{{ osasso_tech_contact_surname }}</md:SurName>
+          <md:EmailAddress>{{ osasso_tech_contact_email }}</md:EmailAddress>
+        </md:ContactPerson>
+      </md:EntityDescriptor>
+    
+- name: Create IAM roles with trust relationship to SAML provider
+  iam:
+    iam_type: role
+    name: "{{ item.role }}"
+    state: present
+    trust_policy:
+      Version: '2012-10-17'
+      Statement:
+      - Effect: Allow
+        Action: sts:AssumeRoleWithSAML
+        Principal:
+          Federated: "arn:aws:iam::{{ osasso_account_number }}:saml-provider/{{ osasso_idp_name }}"
+  with_items:
+    - "{{ osasso_roles }}"
+
+
+- name: Add policies to roles
+  iam_policy:
+    iam_type: role
+    iam_name: "{{ item.0.role }}"
+    policy_name: "{{ item.1.iam_policy_name }}"
+    policy_json: "{{ item.1.iam_json_policy }}"
+    state: present
+  with_subelements:
+    - "{{ osasso_roles }}"
+    - policies

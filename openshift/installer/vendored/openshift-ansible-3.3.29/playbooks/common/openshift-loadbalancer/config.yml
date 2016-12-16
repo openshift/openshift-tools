@@ -1,5 +1,0 @@
----
-- name: Configure load balancers
-  hosts: oo_lb_to_config
-  roles:
-  - role: openshift_loadbalancer

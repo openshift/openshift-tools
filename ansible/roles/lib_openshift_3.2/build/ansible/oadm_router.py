@@ -43,7 +43,7 @@ def main():
             # extra
             cacert_file=dict(default=None, type='str'),
             # edits
-            edits=dict(default={}, type='dict'),
+            edits=dict(default=[], type='list'),
         ),
         mutually_exclusive=[["router_type", "images"]],
 

@@ -5,10 +5,10 @@
 
 - name: set the kube version
   set_fact:
-    kube_version: "{{ oc_version.kubernetes_short }}"
+    kube_version: "{{ oc_version.result.kubernetes_short }}"
 
 - name: Ensure openshift-ansible-roles is installed
-  action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
+  action: "{{ ansible_pkg_mgr }} name={{ item }} state=latest"
   with_items:
   - openshift-ansible-roles
 

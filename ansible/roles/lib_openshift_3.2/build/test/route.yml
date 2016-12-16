@@ -8,7 +8,7 @@
     oc_route:
       state: list
       name: test
-      namespace: test
+      namespace: default
     register: routeout
   - debug: var=routeout
 
@@ -16,7 +16,7 @@
     oc_route:
       state: absent
       name: test
-      namespace: test
+      namespace: default
     register: routeout
   - debug: var=routeout
 
@@ -25,9 +25,9 @@
       name: test
       namespace: test
       tls_termination: edge
-      cert: testing cert
-      cacert: testing cacert
-      cert_key: testing cert_key
+      cert_content: testing cert
+      cacert_content: testing cacert
+      cert_content: testing cert_key
       service_name: test
       host: test.example
     register: routeout
@@ -38,9 +38,9 @@
       name: test
       namespace: test
       tls_termination: edge
-      cert: testing cert
-      cacert: testing cacert
-      cert_key: testing cert_key
+      cert_content: testing cert
+      cacert_content: testing cacert
+      cert_content: testing cert_key
       service_name: test
       host: test.example
     register: routeout
@@ -51,9 +51,9 @@
       name: test
       namespace: test
       tls_termination: edge
-      cert: testing cert
-      cacert: testing cacert
-      cert_key: testing cert_key updated
+      cert_content: testing cert
+      cacert_content: testing cacert
+      cert_content: testing cert_key updated
       service_name: test
       host: test.example
     register: routeout

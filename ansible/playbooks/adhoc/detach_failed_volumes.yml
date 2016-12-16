@@ -1,0 +1,47 @@
+---
+# This playbook detaches the EBS volumes of all the Failed PVs in a given cluster.
+# This is a workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1377486#c22
+# Usage:
+#   source <aws-creds>
+#   ansible-playbook detach_failed_volumes.yml -e cli_clusterid=<clusterid>
+
+- hosts: localhost
+  gather_facts: no
+  become: no
+  user: root
+
+  tasks:
+
+  - name: Check for required variables
+    fail:
+      msg: "Please define {{ item }}"
+    when: "{{ item }} is undefined"
+    with_items:
+    - cli_clusterid
+    run_once: True
+
+  - name: Choose a single master to run commands on
+    set_fact:
+      cluster_master: "{{ groups['oo_hosttype_master'] | intersect(groups['oo_clusterid_' ~ cli_clusterid]) | first }}"
+    run_once: true
+
+  - name: Get a list of all Failed PVs
+    shell: oc get pv --template '{% raw %}{{ range .items }}{{if eq .status.phase "Failed"}}{{ index .spec.awsElasticBlockStore.volumeID }}{{ printf "\n" }}{{end}}{{end}}{% endraw %}' |cut -d/ -f4
+    run_once: true
+    delegate_to: "{{ cluster_master }}"
+    register: failed_pvs
+
+  - name: Number of Failed PVs
+    debug:
+      msg: "{{ failed_pvs.stdout_lines|length }}"
+
+  # Attempt to detach all volumes. Time out after 2 minutes.
+  # Any failures here indicate that a manual force-detach is needed,
+  # since the module doesn't support force-detach.
+  - name: Detach all Failed volumes
+    ec2_vol:
+      id: "{{ item }}"
+      instance: None
+    with_items: "{{ failed_pvs.stdout_lines }}"
+    async: 120
+    poll: 5

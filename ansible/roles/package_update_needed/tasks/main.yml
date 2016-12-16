@@ -1,0 +1,23 @@
+---
+- name: Set default values for pun_retval_update_needed=False
+  set_fact:
+    pun_retval_update_needed: False
+
+- name: Check if package is installed
+  repoquery:
+    name: "{{ pun_package_name }}"
+    show_duplicates: True
+    query_type: installed
+  register: package_check_out
+
+- name: The installed version of the rpm didn't match what we wanted. Set update_needed=True
+  set_fact:
+    pun_retval_update_needed: True
+  when: pun_wanted_version not in package_check_out.results.versions.available_versions_full
+
+- debug:
+    msg: "{{ item }}"
+  with_items:
+  - "Update needed?: {{ pun_retval_update_needed }}"
+  - "RPM version wanted: {{ pun_wanted_version }}"
+  - "RPM version installed: {{ package_check_out.results.versions.available_versions_full }}"

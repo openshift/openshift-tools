@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.87
+Version:       0.0.98
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -134,6 +134,12 @@ Zagg Python libraries developed for monitoring OpenShift.
 %{python_sitelib}/openshift_tools/monitoring/zagg*.py[co]
 %{python_sitelib}/openshift_tools/monitoring/zabbix_metric_processor.py
 %{python_sitelib}/openshift_tools/monitoring/zabbix_metric_processor.py[co]
+%{python_sitelib}/openshift_tools/monitoring/generic_metric_sender.py
+%{python_sitelib}/openshift_tools/monitoring/generic_metric_sender.py[co]
+%{python_sitelib}/openshift_tools/monitoring/metric_sender.py
+%{python_sitelib}/openshift_tools/monitoring/metric_sender.py[co]
+%{python_sitelib}/openshift_tools/monitoring/hawk*.py
+%{python_sitelib}/openshift_tools/monitoring/hawk*.py[co]
 
 # ----------------------------------------------------------------------------------
 # python-openshift-tools-monitoring-aws subpackage
@@ -291,6 +297,57 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Thu Dec 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.98-1
+- Add tags to metric sender (zgalor@redhat.com)
+
+* Wed Dec 07 2016 Joel Diaz <jdiaz@redhat.com> 0.0.97-1
+- Elegant ImportError handling of hawkular-client (zgalor@redhat.com)
+- Add MetricSender to monitoring lib (zgalor@redhat.com)
+- Add a hawkular configuration, client and sender classes to the monitoring lib
+  (kobi.zamir@gmail.com)
+
+* Mon Nov 14 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.96-1
+- add region for the s3 check (zhizhang@zhizhang-laptop-nay.redhat.com)
+
+* Tue Nov 08 2016 Joel Diaz <jdiaz@redhat.com> 0.0.95-1
+- router monitoring (jdiaz@redhat.com)
+
+* Tue Oct 25 2016 Drew Anderson <dranders@redhat.com> 0.0.94-1
+- 
+
+* Tue Oct 25 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.93-1
+- Updating awsutil to handle the refactor. (kwoodson@redhat.com)
+
+* Mon Oct 24 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.92-1
+- 
+
+* Mon Oct 24 2016 Unknown name 0.0.91-1
+- pylint missing-docstring (dranders@redhat.com)
+- use logger for error display, then raise further (dranders@redhat.com)
+- moving up to where the command is setup (dranders@redhat.com)
+- enable logger (dranders@redhat.com)
+- update for yaml (dranders@redhat.com)
+- _run_user_* commands updated (dranders@redhat.com)
+- _run_cmd_yaml("get pods") (dranders@redhat.com)
+- _run_cmd_yaml("get nodes") (dranders@redhat.com)
+- pylint line-too-long (dranders@redhat.com)
+- use _run_cmd_yaml (dranders@redhat.com)
+- _run_cmd_yaml (dranders@redhat.com)
+- _run_cmd gets array join and baseCmd (dranders@redhat.com)
+- removing unnecessary variables (dranders@redhat.com)
+- fix for get_projects (dranders@redhat.com)
+
+* Mon Oct 24 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.90-1
+- Fixed the library call for the multiinventory (kwoodson@redhat.com)
+
+* Mon Oct 24 2016 Wesley Hearn <whearn@redhat.com> 0.0.89-1
+- Have _run_cmd handle the namespace (whearn@redhat.com)
+- Add logging checks (whearn@redhat.com)
+
+* Sun Oct 23 2016 Unknown name 0.0.88-1
+- OCUtil.get_projects() (dranders@redhat.com)
+- dry up some awsutil methods. (blentz@redhat.com)
+
 * Tue Oct 11 2016 Wesley Hearn <whearn@redhat.com> 0.0.87-1
 - Add openshift metrics checks. Updated ocutil with more features
   (whearn@redhat.com)

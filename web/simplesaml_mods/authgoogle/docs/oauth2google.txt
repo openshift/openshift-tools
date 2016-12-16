@@ -1,0 +1,8 @@
+Using the Google authentication source with SimpleSAMLphp
+==========================================================
+
+Set the callback URL to be:
+
+ * `http://idp.example.com/simplesaml/module.php/authgoogle/linkback.php`
+
+Replace `idp.example.com` with your hostname, and simplesaml with your baseurlpath.

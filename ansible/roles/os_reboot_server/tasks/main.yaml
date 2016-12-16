@@ -12,5 +12,5 @@
       host={{ ansible_ssh_host }}
       port=22
       delay=3
-      timeout=300
+      timeout=600
   sudo: false

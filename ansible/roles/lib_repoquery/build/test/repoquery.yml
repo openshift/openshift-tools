@@ -43,7 +43,7 @@
     repoquery:
       name: atomic-openshift
       show_duplicates: True
-      match_version: 3.3.0.33
+      match_version: 3.3.1
     register: openshift_out
   - debug:
       var: openshift_out

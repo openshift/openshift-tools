@@ -9,6 +9,17 @@
 # 
 
 
+set -o errexit
+
+function cleanup() {
+  echo -n "Removing the fingerprint... "
+  [ -f ${container_fingerprint} ] && rm -f "${container_fingerprint}"
+  echo "Done."
+}
+
+trap 'exit $?' ERR
+trap cleanup  INT TERM EXIT
+
 sudo echo -e "\nTesting sudo works...\n"
 
 # We MUST be in the same directory as this script for the build to work properly
@@ -25,8 +36,5 @@ container_fingerprint='./container-build-env-fingerprint.output'
   echo
   echo "Building oso-centos7-host-monitoring..."
   sudo time docker build $@ -t oso-centos7-host-monitoring . && \
-  sudo docker tag -f oso-centos7-host-monitoring openshifttools/oso-centos7-host-monitoring:latest
+  sudo docker tag oso-centos7-host-monitoring openshifttools/oso-centos7-host-monitoring:latest
 #fi
-
-# cleanup
-rm -f ${container_fingerprint}

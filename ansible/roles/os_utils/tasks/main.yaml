@@ -16,3 +16,4 @@
   - ack
   - telnet
   - jq
+  - ruamel.yaml

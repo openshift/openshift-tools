@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.24
+Version:        0.0.32
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,219 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Tue Dec 13 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.32-1
+- Skip accounts that do not have creds. (kwoodson@redhat.com)
+- add missing url field (jdiaz@redhat.com)
+- preserve yaml formatting in monitoring-config.yml (jdiaz@redhat.com)
+- Generate metric_sender.yaml from template (zgalor@redhat.com)
+- Revert "made the lib_iam_accountid support aws_profiles"
+  (mwoodson@redhat.com)
+- Fix sso group sum aggregate item, add to Ops SSO App (joesmith@redhat.com)
+- Adding multi-inventory template to ansible-tower hosts. (kwoodson@redhat.com)
+- Adding inventory check to zabbix. (kwoodson@redhat.com)
+- made the lib_iam_accountid support aws_profiles (mwoodson@redhat.com)
+- Moving from iam to sts query for account and name. (kwoodson@redhat.com)
+- Moving from iam to sts query for account and name. (kwoodson@redhat.com)
+- added some variables to host_monitoring to allow for running or not
+  (mwoodson@redhat.com)
+- Fixing a variable bug. (kwoodson@redhat.com)
+- Adding log file and setting permissions. (kwoodson@redhat.com)
+- Adding new user ops_monitoring (mmahut@redhat.com)
+
+* Thu Dec 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.31-1
+- Skipping error'd accounts.  Instead of raising an exception, print to stderr.
+  (kwoodson@redhat.com)
+- Fixed when attribute does not exist. (kwoodson@redhat.com)
+- Keeping block style on default creates. (kwoodson@redhat.com)
+- removed the oc header (mwoodson@redhat.com)
+- adding sso checks to zabbix (dedgar@redhat.com)
+- Updated location for logging-deployer.yaml (whearn@redhat.com)
+- Add a wait around the elasticsearch redeploy (whearn@redhat.com)
+- Redeploy ES after attaching PV (whearn@redhat.com)
+- Revert "determine path based on kube version" (sedgar@redhat.com)
+- determine path based on kube version (sedgar@redhat.com)
+- Fix metrics route and image settings (sedgar@redhat.com)
+- more git automation work (mwoodson@redhat.com)
+- adding sso checks to zabbix (dedgar@redhat.com)
+- Updated location for logging-deployer.yaml (whearn@redhat.com)
+- Add a wait around the elasticsearch redeploy (whearn@redhat.com)
+- Redeploy ES after attaching PV (whearn@redhat.com)
+- Add authorized_keys file for SSO monitoring container (joesmith@redhat.com)
+- Upping the limits for hawkular (whearn@redhat.com)
+- Run heartbeater in sso monitoring to create zabbix items
+  (joesmith@redhat.com)
+- Ami copy to module (kwoodson@redhat.com)
+- updated repoquery for bug fix; updated epel_repository (mwoodson@redhat.com)
+- Add secrets for zagg and generate zagg config (joesmith@redhat.com)
+- Moving to ruamel yaml for preserving comments (kwoodson@redhat.com)
+- add role to move PVs from one AZ to another (jdiaz@redhat.com)
+- Add monitoring container to SSO app template (joesmith@redhat.com)
+- Move generated "secrets" to emptydir volume in SSO app (joesmith@redhat.com)
+- Fix improperly formated keys in multi_inventory (rharriso@redhat.com)
+- Add OO_PAUSE_ON_{START,BUILD} placeholders for SSO apps (joesmith@redhat.com)
+- updated the aws elb instance tries (mwoodson@redhat.com)
+- Add a pause to allow curator edits to finish before redeploying
+  (rharriso@redhat.com)
+- Add authorized_keys file for SSO monitoring container (joesmith@redhat.com)
+- Upping the limits for hawkular (whearn@redhat.com)
+- Run heartbeater in sso monitoring to create zabbix items
+  (joesmith@redhat.com)
+- Ami copy to module (kwoodson@redhat.com)
+- updated repoquery for bug fix; updated epel_repository (mwoodson@redhat.com)
+- Add secrets for zagg and generate zagg config (joesmith@redhat.com)
+- Moving to ruamel yaml for preserving comments (kwoodson@redhat.com)
+- Revert "determine path based on kube version" (sedgar@redhat.com)
+- add role to move PVs from one AZ to another (jdiaz@redhat.com)
+- determine path based on kube version (sedgar@redhat.com)
+- Fix metrics route and image settings (sedgar@redhat.com)
+- Add monitoring container to SSO app template (joesmith@redhat.com)
+- Move generated "secrets" to emptydir volume in SSO app (joesmith@redhat.com)
+- Fix improperly formated keys in multi_inventory (rharriso@redhat.com)
+- Add OO_PAUSE_ON_{START,BUILD} placeholders for SSO apps (joesmith@redhat.com)
+- updated the git libraries to use ssh (mwoodson@redhat.com)
+- more fixes for the git tools (mwoodson@redhat.com)
+- updated the aws elb instance tries (mwoodson@redhat.com)
+- Add support for monitoring secrets to openshift_sso_app (joesmith@redhat.com)
+- Make a way to get file contents from aws_account_list role
+  (joesmith@redhat.com)
+- Fix openshift_sso_app markdown formatting in README (joesmith@redhat.com)
+- wait rather than exit while the iptables lock is held (jdiaz@redhat.com)
+- Move code for finding running pods from jinja to python filter plugin
+  (joesmith@redhat.com)
+- Add auto-deploy role for SSO app (joesmith@redhat.com)
+- Add a pause to allow curator edits to finish before redeploying
+  (rharriso@redhat.com)
+- Fix default edit actions for router creation (rharriso@redhat.com)
+- set ReclaimPolicy to Delete so controller will delete used volumes
+  (sedgar@redhat.com)
+- Ignore auto-generated values when comparing resources in oc_process
+  (joesmith@redhat.com)
+- Fix oc_process for reconcile runs. Add FIXME about possible logic error
+  (joesmith@redhat.com)
+- Allow openshift_cmd to take input to pipe to oc's stdin (joesmith@redhat.com)
+- Wait for kibana to finish (whearn@redhat.com)
+- make sure latest openshift-ansible-roles is installed (mwoodson@redhat.com)
+- updated logging project description (mwoodson@redhat.com)
+- add support for a 'list' with --all-namespaces (jdiaz@redhat.com)
+- Make sure bad SSL certs won't break the routers (rharriso@redhat.com)
+- Added limits around router and registry (whearn@redhat.com)
+- Fix ansible_tower role item not compatible with new Ansible
+  (joesmith@redhat.com)
+- Adding apache license. (kwoodson@redhat.com)
+- * logger.critical on timeout * section heading comments * magic variables
+  bought to top * write logs to file for further review, only show last 20
+  lines * add basename to differentiate between processes * noPodCount should
+  be active even if there's been a pod found (dranders@redhat.com)
+- Fix required variable quoting for Ansible 2.2 (rharriso@redhat.com)
+- add cluster-wide router stats reporting cron job (jdiaz@redhat.com)
+- Add openshift_aws_iam_sso role to manage IAM configuration of SAML IdP
+  (joesmith@redhat.com)
+- Adding region to host monitoring container (kwoodson@redhat.com)
+- app create v2 command line arguments (dranders@redhat.com)
+- Adding start_date. (kwoodson@redhat.com)
+- logging syntax fix (whearn@redhat.com)
+- description fix for logging project (whearn@redhat.com)
+- Add new line at the end of openshift_metrics/defaults/main.yml
+  (whearn@redhat.com)
+- Minor formatting changes (whearn@redhat.com)
+- Add constraints around hawkular and heapster (whearn@redhat.com)
+
+* Tue Nov 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.30-1
+- Fix for zabbix maintenance. (kwoodson@redhat.com)
+- changed the package cleanup option (mwoodson@redhat.com)
+- Update logging installer (whearn@redhat.com)
+- fixed some output of package_update_needed (mwoodson@redhat.com)
+- router monitoring (jdiaz@redhat.com)
+- Fixing a bug with the yedit separator and _replace_content.
+  (kwoodson@redhat.com)
+- lets update docker, for now (mwoodson@redhat.com)
+- added the openshift_update_packages role (mwoodson@redhat.com)
+- Modifying yum_repos to use yum_repository call. (kwoodson@redhat.com)
+- add items to hold openshift router health status (jdiaz@redhat.com)
+- change/add error handling on zabbix ansible module (jdiaz@redhat.com)
+- fix up some metrics and logging trigger expressions (jdiaz@redhat.com)
+- modify the /usr/bin/cron-send-docker-metrics path (zhiwliu@redhat.com)
+- Fixing an incorrect msg variable. (kwoodson@redhat.com)
+- Ansible 2.2 broke the parameter message.  Updating to msg.
+  (kwoodson@redhat.com)
+- Adding rc for retry loops. (kwoodson@redhat.com)
+- added package_update_needed and os_update_latest (mwoodson@redhat.com)
+- Idempotently add or remove repo ids. (kwoodson@redhat.com)
+- fixed the user writing adding in gcp (mwoodson@redhat.com)
+- updated the verfiy aws role (mwoodson@redhat.com)
+- sadly cron is running without the right environmental vars
+  (ihorvath@redhat.com)
+- updated repoquery (mwoodson@redhat.com)
+
+* Thu Oct 27 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.29-1
+- aws_account_list: Pass in path to aws_accounts.txt (joesmith@redhat.com)
+- fix spelling error in multi_inventory (blentz@redhat.com)
+- add synthetic property that ossh can use to filter out synth hosts.
+  (blentz@redhat.com)
+- don't use global variable in role (jdiaz@redhat.com)
+- fixed the openshift_numeric (mwoodson@redhat.com)
+- fixed a bug with pv vars (mwoodson@redhat.com)
+- use current version of docker (mwoodson@redhat.com)
+- moved nickhammond logrotate to logrotate (mwoodson@redhat.com)
+- added nickhammond.logrotate (mwoodson@redhat.com)
+- Bypass templates that are not idempotent. (kwoodson@redhat.com)
+- fixing the call to the tagged image: (ihorvath@redhat.com)
+- fixed oc version issue (mwoodson@redhat.com)
+- fixed oc version issue with metrics (mwoodson@redhat.com)
+- added playbook to detach failed PVs (sedgar@redhat.com)
+- Set up resource constraints for metrics based on how many cassandra nodes we
+  have (whearn@redhat.com)
+
+* Tue Oct 25 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.28-1
+- Updating awsutil to handle the refactor. (kwoodson@redhat.com)
+- changing registry url to include environment for host monitoring pulls
+  (ihorvath@redhat.com)
+- change to 7d removal of data if not required, solve daily cert OK alerts
+  (dranders@redhat.com)
+
+* Mon Oct 24 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.27-1
+- Fixed the library call for the multiinventory (kwoodson@redhat.com)
+
+* Mon Oct 24 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.26-1
+- Separating accounts. (kwoodson@redhat.com)
+- updated git commit module (mwoodson@redhat.com)
+
+* Mon Oct 24 2016 Wesley Hearn <whearn@redhat.com> 0.0.25-1
+- reducing priority on config run, there is no reason for this to page
+  (ihorvath@redhat.com)
+- Fix around oo_zabbix role and logging (whearn@redhat.com)
+- Attempt at making oc_process idempotent. (kwoodson@redhat.com)
+- add support for setting up multiple OpenShift routers (jdiaz@redhat.com)
+- Fix config for container usage to be compatible with ansible 2.x
+  (twiest@redhat.com)
+- Added quick and dirty disk check (whearn@redhat.com)
+- remove ignore_errors (sedgar@redhat.com)
+- fixed the registry options in oadm_registry (mwoodson@redhat.com)
+- improve upgrade-check variables (sedgar@redhat.com)
+- Adding statuspage component (kwoodson@redhat.com)
+- set verbosity (dranders@redhat.com)
+- generated namespace exceeds limit (dranders@redhat.com)
+- Fixed description bug and added workaround for project/namespace issue.
+  (kwoodson@redhat.com)
+- Fixed a couple bugs found by the team (sedgar@redhat.com)
+- pass the name when creating router template output (jdiaz@redhat.com)
+- added kube version to the metrics; cleaned up template installer
+  (mwoodson@redhat.com)
+- added FIXME statements for future improvements (sedgar@redhat.com)
+- Add logging vars file (whearn@redhat.com)
+- Add logging checks (whearn@redhat.com)
+- Add trigger to alert on metrics failing (whearn@redhat.com)
+- updated oc version with a few cleanup steps (mwoodson@redhat.com)
+- added playbook for in-place rpm hotfixes (sedgar@redhat.com)
+- added lib_repoquery (mwoodson@redhat.com)
+- Adding statuspage ansible module. (kwoodson@redhat.com)
+- seperate the builds (dranders@redhat.com)
+- Add metrics check cronjob (whearn@redhat.com)
+- updated the git_commit to have better logic (mwoodson@redhat.com)
+- added git_commit module to take files to commit argument
+  (mwoodson@redhat.com)
+- add Terminating project check (zhizhang@redhat.com)
+
 * Thu Oct 13 2016 Wesley Hearn <whearn@redhat.com> 0.0.24-1
 - Add host template to primary masters (whearn@redhat.com)
 - Fix zabbix key names (whearn@redhat.com)

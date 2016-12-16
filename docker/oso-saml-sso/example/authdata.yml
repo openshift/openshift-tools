@@ -1,0 +1,29 @@
+---
+groups:
+  - name: cloud_ops
+    members:
+      - george@example.com
+      - wanda@example.com
+  - name: helpdesk
+    members:
+      - beatrice@example.com
+      - robert@example.com
+
+# override these in resources
+# for example:
+#     resources:
+#       - name: foo
+#         roles: [ { name: admin, groups: [], members: [ bob ] } ]
+# would override the default admin role, but not any other default roles
+default_roles:
+  - name: admin
+    members: []
+    groups: [ cloud_ops ]
+  - name: view_only
+    members: []
+    groups: [ helpdesk ]
+resources:
+  - name: my_aws_account_1
+    id: "urn:amazon:webservices:111111111111"
+  - name: my_aws_account_2
+    id: "urn:amazon:webservices:222222222222"

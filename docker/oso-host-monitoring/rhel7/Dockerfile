@@ -10,7 +10,7 @@ FROM oso-rhel7-ops-base:latest
 
 
 # Pause indefinitely if asked to do so.
-RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
+RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 # PCP
 ##################
@@ -58,13 +58,13 @@ RUN yum clean metadata && \
         openshift-tools-scripts-monitoring-openshift \
         openshift-tools-scripts-monitoring-autoheal \
         pcp-manager pcp-webapi python-pcp \
-        pcp-manager pcp-webapi python-pcp \
         python-uri-templates google-api-python-client \
         python-httplib2 python-oauth2client \
         python-pyasn1 python-pyasn1-modules python-rsa \
         gcloud \
         openvswitch \
         python-psutil \
+        pylint \
         docker-python && \
     yum -y update && \
     yum clean all

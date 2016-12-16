@@ -1,0 +1,2 @@
+osalog_fluentd_nodes:
+- type=compute

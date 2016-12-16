@@ -6,7 +6,7 @@ It contains the base utilities, configuration and conveniences that we expect al
 
 
 == Setup
-See https://github.com/openshift/openshift-ops/blob/pr/docker/README.adoc#setup[general setup].
+See https://github.com/openshift/openshift-tools/blob/prod/docker/README.adoc#setup[general setup].
 
 Nothing additional needs to be setup for this container.
 

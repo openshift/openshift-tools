@@ -1,0 +1,27 @@
+---
+ossr_default_router_edits:
+  - key: spec.strategy.rollingParams
+    value:
+      intervalSeconds: 1
+      maxSurge: 50%
+      maxUnavailable: 50%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    action: put
+  - key: spec.template.spec.containers[0].resources.limits.memory
+    value: 2G
+    action: update
+  - key: spec.template.spec.containers[0].resources.requests.memory
+    value: 1G
+    action: update
+  - key: spec.template.spec.containers[0].env
+    value:
+      name: EXTENDED_VALIDATION
+      value: 'false'
+    action: update
+
+ossr_default_listeners:
+- instance_port: 80
+- instance_port: 443
+- instance_port: 5000
+

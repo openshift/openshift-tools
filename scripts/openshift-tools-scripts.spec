@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.154
+Version:       0.1.7
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -19,6 +19,8 @@ OpenShift Tools Scripts
 
 # openshift-tools-scripts-monitoring install
 mkdir -p %{buildroot}/usr/bin
+cp -p monitoring/ops-metric-client.py %{buildroot}/usr/bin/ops-metric-client
+cp -p monitoring/ops-metric-pcp-client.py %{buildroot}/usr/bin/ops-metric-pcp-client
 cp -p monitoring/ops-zagg-client.py %{buildroot}/usr/bin/ops-zagg-client
 cp -p monitoring/ops-zagg-pcp-client.py %{buildroot}/usr/bin/ops-zagg-pcp-client
 cp -p monitoring/ops-zagg-metric-processor.py %{buildroot}/usr/bin/ops-zagg-metric-processor
@@ -34,6 +36,7 @@ cp -p monitoring/cron-send-pcp-ping.sh %{buildroot}/usr/bin/cron-send-pcp-ping
 cp -p monitoring/cron-send-etcd-status.py %{buildroot}/usr/bin/cron-send-etcd-status
 cp -p monitoring/cron-send-disk-metrics.py %{buildroot}/usr/bin/cron-send-disk-metrics
 cp -p monitoring/cron-send-metrics-checks.py %{buildroot}/usr/bin/cron-send-metrics-checks
+cp -p monitoring/cron-send-logging-checks.py %{buildroot}/usr/bin/cron-send-logging-checks
 cp -p monitoring/cron-send-network-metrics.py %{buildroot}/usr/bin/cron-send-network-metrics
 cp -p monitoring/cron-send-s3-metrics.py %{buildroot}/usr/bin/cron-send-s3-metrics
 cp -p monitoring/cron-send-gcs-metrics.py %{buildroot}/usr/bin/cron-send-gcs-metrics
@@ -66,6 +69,7 @@ cp -p monitoring/cron-haproxy-close-wait.py %{buildroot}/usr/bin/cron-haproxy-cl
 cp -p monitoring/delete-stuck-projects.sh %{buildroot}/usr/bin/delete-stuck-projects
 cp -p monitoring/cron-send-saml-status.py %{buildroot}/usr/bin/cron-send-saml-status
 cp -p monitoring/cron-certificate-expirations.py %{buildroot}/usr/bin/cron-certificate-expirations
+cp -p monitoring/cron-send-os-router-status.py %{buildroot}/usr/bin/cron-send-os-router-status
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -81,6 +85,18 @@ mkdir -p %{buildroot}/etc/openshift_tools
 cp -p inventory-clients/{ohi,opscp,opssh,oscp,ossh} %{buildroot}%{_bindir}
 cp -p inventory-clients/ossh_bash_completion %{buildroot}/etc/bash_completion.d
 cp -p inventory-clients/openshift_tools.conf.example %{buildroot}/etc/openshift_tools/openshift_tools.conf
+
+# openshift-tools-scripts-iam-tools install
+mkdir -p %{buildroot}/usr/local/bin
+install -m 755 iam-tools/aws_api_key_manager.py %{buildroot}/usr/local/bin/aws_api_key_manager
+install -m 755 iam-tools/change_iam_password.py %{buildroot}/usr/local/bin/change_iam_password
+install -m 755 iam-tools/delete_iam_account.py %{buildroot}/usr/local/bin/delete_iam_account
+install -m 755 iam-tools/check_sso_service.py %{buildroot}/usr/local/bin/check_sso_service
+install -m 755 iam-tools/check_sso_http_status.py %{buildroot}/usr/local/bin/check_sso_http_status
+install -m 755 iam-tools/aws_creds_check.sh %{buildroot}/usr/local/bin/aws_creds_check
+mkdir -p %{buildroot}%{python_sitelib}/openshift_tools
+install -m 755 iam-tools/saml_aws_creds.py %{buildroot}%{python_sitelib}/openshift_tools/
+ln -sf %{python_sitelib}/openshift_tools/saml_aws_creds.py %{buildroot}/usr/local/bin/saml_aws_creds
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-inventory-clients subpackage
@@ -274,6 +290,8 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-saml-status
 /usr/bin/cron-certificate-expirations
 /usr/bin/cron-send-metrics-checks
+/usr/bin/cron-send-os-router-status
+/usr/bin/cron-send-logging-checks
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -325,8 +343,201 @@ OpenShift Tools GCP specific scripts
 /usr/bin/ops-gcp-snapshot-pd-volumes
 /usr/bin/ops-gcp-trim-pd-snapshots
 
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-iam-tools subpackage
+# ----------------------------------------------------------------------------------
+%package iam-tools
+Summary:       OpenShift Tools IAM tools
+Requires:      python2
+BuildRequires: python2-devel
+BuildArch:     noarch
+
+%description iam-tools
+OpenShift Tools IAM specific scripts
+
+%files iam-tools
+/usr/local/bin/aws_api_key_manager
+/usr/local/bin/change_iam_password
+/usr/local/bin/delete_iam_account
+/usr/local/bin/saml_aws_creds
+/usr/local/bin/check_sso_service
+/usr/local/bin/check_sso_http_status
+/usr/local/bin/aws_creds_check
+%{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Wed Dec 14 2016 Drew Anderson <dranders@redhat.com> 0.1.7-1
+- change the way we test for pods and pod status increase test duration by 50%%
+  (dranders@redhat.com)
+
+* Tue Dec 13 2016 Kenny Woodson <kwoodson@redhat.com> 0.1.6-1
+- Allow AWS creds to be stored anywhere in ~/.private (joesmith@redhat.com)
+
+* Thu Dec 08 2016 Joel Smith <joesmith@redhat.com> 0.1.5-1
+- Fiz aws_creds_check for zsh, new accounts (joesmith@redhat.com)
+
+* Thu Dec 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.1.4-1
+- Fix logging checks (whearn@redhat.com)
+- Add tags to metric sender (zgalor@redhat.com)
+
+* Wed Dec 07 2016 Joel Diaz <jdiaz@redhat.com> 0.1.3-1
+- remove unpackaged files from rpm spec (jdiaz@redhat.com)
+
+* Wed Dec 07 2016 Joel Diaz <jdiaz@redhat.com> 0.1.2-1
+- Add MetricSender to monitoring lib (zgalor@redhat.com)
+- Add a hawkular configuration, client and sender classes to the monitoring lib
+  (kobi.zamir@gmail.com)
+
+* Mon Dec 05 2016 Joel Smith <joesmith@redhat.com> 0.1.1-1
+- adding value for aggregate check (dedgar@redhat.com)
+- Add cron-send-logging-checks to the rpm (whearn@redhat.com)
+- increase to 15m (dranders@redhat.com)
+- Fix return code getting overwritten (whearn@redhat.com)
+
+* Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.1.0-1
+- Version bump
+
+* Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.0.175-1
+- adding error handling, fixing pylint issues (dedgar@redhat.com)
+- Skip SSL verification step from SSO monitoring container
+  (joesmith@redhat.com)
+
+* Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.0.174-1
+- Add aws_creds_check to openshift-tools-scripts-iam-tools RPM
+  (joesmith@redhat.com)
+- Add at-login AWS credential checker script (joesmith@redhat.com)
+- Minor fixes to openshift-tools-scripts-iam-tools RPM (joesmith@redhat.com)
+- adding scripts to iam-tools package (dedgar@redhat.com)
+- saml_aws_creds.py: permit callers to pass additionall ssh options
+  (joesmith@redhat.com)
+- saml_aws_creds.py: switch from shell string to execv array for popen
+  (joesmith@redhat.com)
+- Switch line endings from DOS to UNIX for saml_aws_creds.py
+  (joesmith@redhat.com)
+- updating after initial PR review (dedgar@redhat.com)
+- adding sso service check for the oso-monitor-sso container
+  (dedgar@redhat.com)
+- Get hawkular creds expects to have the deployers pod name which is set in
+  check_pods (whearn@redhat.com)
+- addressing requested changes (dedgar@redhat.com)
+
+* Mon Nov 14 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.173-1
+- add region for the s3 check (zhizhang@zhizhang-laptop-nay.redhat.com)
+- * logger.critical on timeout * section heading comments * magic variables
+  bought to top * write logs to file for further review, only show last 20
+  lines * add basename to differentiate between processes * noPodCount should
+  be active even if there's been a pod found (dranders@redhat.com)
+- correcting file name so it matches what we create from the config
+  (ihorvath@redhat.com)
+
+* Wed Nov 09 2016 Drew Anderson <dranders@redhat.com> 0.0.172-1
+- allow use of oadm command for new-project setup(), if not exception: test()
+  (dranders@redhat.com)
+
+* Wed Nov 09 2016 Drew Anderson <dranders@redhat.com> 0.0.171-1
+- V2 app create script: (dranders@redhat.com)
+
+* Wed Nov 09 2016 Joel Diaz <jdiaz@redhat.com> 0.0.170-1
+- check for other potential exception on failed router health check
+  (jdiaz@redhat.com)
+
+* Wed Nov 09 2016 Drew Anderson <dranders@redhat.com> 0.0.169-1
+- 
+
+* Tue Nov 08 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.168-1
+- curl function tidy-up (dranders@redhat.com)
+- logger.debug curlCount (dranders@redhat.com)
+- retry curl of not successful (dranders@redhat.com)
+
+* Tue Nov 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.167-1
+- add router monitoring script to scripts-monitoring-openshift RPM
+  (jdiaz@redhat.com)
+
+* Tue Nov 08 2016 Joel Diaz <jdiaz@redhat.com> 0.0.166-1
+- use image uuid instead of image name (dranders@redhat.com)
+- router monitoring (jdiaz@redhat.com)
+- oinv - fix method docstring for transpose (blentz@redhat.com)
+- oinv - update default columns (blentz@redhat.com)
+- add oinv cli tool (blentz@redhat.com)
+
+* Fri Oct 28 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.165-1
+- unused-variable (dranders@redhat.com)
+- force teardown if error with es_index (dranders@redhat.com)
+- logging-not-lazy (dranders@redhat.com)
+- fail early if pod not found (dranders@redhat.com)
+- debug not used (dranders@redhat.com)
+- use logger (dranders@redhat.com)
+- updating password change message to user (dedgar@redhat.com)
+
+* Thu Oct 27 2016 Ivan Horvath <ihorvath@redhat.com> 0.0.164-1
+- add synthetic property that ossh can use to filter out synth hosts.
+  (blentz@redhat.com)
+- changing script to find the image instead of hardcoding it
+  (ihorvath@redhat.com)
+- Fix for the metrics check (whearn@redhat.com)
+
+* Thu Oct 27 2016 Joel Smith <joesmith@redhat.com> 0.0.163-1
+- Make sure IAM scripts are execuatable (joesmith@redhat.com)
+- making scripts executable (dedgar@redhat.com)
+
+* Tue Oct 25 2016 Drew Anderson <dranders@redhat.com> 0.0.162-1
+- Revert "Automatic commit of package [openshift-tools-scripts] release
+  [0.0.162-1]." (dedgar@redhat.com)
+- fixing iam_tools package directory structure (dedgar@redhat.com)
+- addding /usr/local/bin dir to scripts spec (dedgar@redhat.com)
+- Automatic commit of package [openshift-tools-scripts] release [0.0.162-1].
+  (dedgar@redhat.com)
+- updating spec file (dedgar@redhat.com)
+- disabling pylint import error for boto3 (dedgar@redhat.com)
+- making compatible with unconfigured new accounts created by
+  aws_api_key_manager (dedgar@redhat.com)
+- wrapping functions in a class (dedgar@redhat.com)
+- updating spec file (dedgar@redhat.com)
+- fixing pylint errors (dedgar@redhat.com)
+- refactoring and adding saml creds module (dedgar@redhat.com)
+- initial addition of delete iam user tool (dedgar@redhat.com)
+
+* Mon Oct 24 2016 Unknown name 0.0.161-1
+- single-line docs comment (dranders@redhat.com)
+
+* Mon Oct 24 2016 Unknown name 0.0.160-1
+- 
+
+* Mon Oct 24 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.159-1
+- creating subdirectory (dedgar@redhat.com)
+- finished testing on tower (dedgar@redhat.com)
+- style changes (dedgar@redhat.com)
+- updating comments, fixing indentation (dedgar@redhat.com)
+- disabling pylint import error for boto3 (dedgar@redhat.com)
+- updating message to user (dedgar@redhat.com)
+- adding aws_api_key_manager.py (dedgar@redhat.com)
+
+* Mon Oct 24 2016 Wesley Hearn <whearn@redhat.com> 0.0.158-1
+- Some formatting around cron-send-logging-checks (whearn@redhat.com)
+- Added quick and dirty disk check (whearn@redhat.com)
+- Added a catch around the clusterhealth to fail the check if an exception is
+  thrown. (whearn@redhat.com)
+- Only loop over all pods only once and various other changes
+  (whearn@redhat.com)
+- Add logging checks (whearn@redhat.com)
+
+* Sun Oct 23 2016 Unknown name 0.0.157-1
+- this could be required to help ensure things are available for subsequent
+  commands (dranders@redhat.com)
+
+* Thu Oct 20 2016 Unknown name 0.0.156-1
+- use new library function (dranders@redhat.com)
+- pylint (dranders@redhat.com)
+- pylint (dranders@redhat.com)
+- reduce scale of script, use library (dranders@redhat.com)
+
+* Wed Oct 19 2016 zhiwliu <zhiwliu@redhat.com> 0.0.155-1
+- Missed a few scripts in commit 1fcf0 (whearn@redhat.com)
+- add namespace to allow us to seperate builds (dranders@redhat.com)
+- "finished" was confusing (dranders@redhat.com)
+- pylinting (dranders@redhat.com)
+- almost-rebuild cron-send-create-app (dranders@redhat.com)
+
 * Thu Oct 13 2016 Wesley Hearn <whearn@redhat.com> 0.0.154-1
 - Few fixes around the metrics check (whearn@redhat.com)
 

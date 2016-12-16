@@ -8,9 +8,9 @@ def main():
         argument_spec=dict(
             state=dict(default='list', type='str', choices=['list']),
             name=dict(default=None, required=True, type='str'),
-            query_type=dict(default='all', required=False, type='str',
+            query_type=dict(default='repos', required=False, type='str',
                             choices=['installed', 'available', 'recent',
-                                     'updates', 'extras', 'all']
+                                     'updates', 'extras', 'all', 'repos']
                            ),
             verbose=dict(default=False, required=False, type='bool'),
             show_duplicates=dict(default=None, required=False, type='bool'),

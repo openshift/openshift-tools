@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""
-    Quick and dirty create application check for v3
-"""
+""" Create application check for v3 """
 
 # We just want to see any exception that happens
 # don't want the script to die under any cicumstances
@@ -11,28 +9,25 @@
 # main() function has a lot of setup and error handling
 # pylint: disable=too-many-statements
 
+# main() function raises a captured exception if there is one
+# pylint: disable=raising-bad-type
+
 # Adding the ignore because it does not like the naming of the script
 # to be different than the class name
 # pylint: disable=invalid-name
 
-import subprocess
-import json
-import time
-import re
-import urllib2
-import os
-import atexit
-import shutil
-import string
-import random
 import argparse
 import datetime
-import sys
+import random
+import string
+import time
+import urllib2
 
 # Our jenkins server does not include these rpms.
 # In the future we might move this to a container where these
 # libs might exist
 #pylint: disable=import-error
+from openshift_tools.monitoring.ocutil import OCUtil
 from openshift_tools.monitoring.zagg_sender import ZaggSender
 
 import logging
@@ -42,206 +37,22 @@ logging.basicConfig(
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# pylint: disable=bare-except
-def cleanup_file(inc_file):
-    """ clean up """
-    try:
-        os.unlink(inc_file)
-    except:
-        pass
+ocutil = OCUtil()
 
-def copy_kubeconfig(config):
-    """ make a copy of the kubeconfig """
-    file_name = os.path.join('/tmp', ''.join(
-        random.choice(string.ascii_uppercase + string.digits) for _ in range(7)
-    ))
-    shutil.copy(config, file_name)
-    atexit.register(cleanup_file, file_name)
+commandDelay = 5 # seconds
+testLoopCountMax = 180 # * commandDelay = 15min
+testCurlCountMax = 18 # * commandDelay = 1min30s
+testNoPodCountMax = 18 # * commandDelay = 1min30s
 
-    return file_name
+def runOCcmd(cmd, base_cmd='oc'):
+    """ log commands through ocutil """
+    logger.info(base_cmd + " " + cmd)
+    return ocutil.run_user_cmd(cmd, base_cmd=base_cmd, )
 
-class OpenShiftOC(object):
-    """ Class to wrap the oc command line tools """
-    def __init__(self, namespace, kubeconfig, args, verbose=False):
-        """ Constructor for OpenShiftOC """
-        self.namespace = namespace
-        # used to delete the project ES index
-        self.run_date = datetime.datetime.now().strftime("%Y.%m.%d")
-        self.verbose = verbose
-        self.kubeconfig = kubeconfig
-        self.args = args
-
-    def get_pod(self):
-        """return a pod by name"""
-        pods = self.get_pods()
-        podname = pod_name(self.args.name)
-        # this will match on build pods but not deploy pods
-        regex = re.compile('%s-[0-9]-[a-z0-9]{5}$' % podname)
-        for pod in pods['items']:
-            results = regex.search(pod['metadata']['name'])
-            if results:
-                # only report on running build pods, we'll wait if build pod is pending
-                if "build" in pod['metadata']['name'] and pod['status']['phase'] != 'Running':
-                    continue
-                else: return pod
-
-    def get_pods(self):
-        """return all pods """
-        cmd = ['get', 'pods', '--no-headers', '-o', 'json', '-n', self.namespace]
-        results = self.oc_cmd(cmd)
-
-        return json.loads(results)
-
-    def new_app(self, path):
-        """run new-app """
-        cmd = ['new-app', path, '-n', self.namespace]
-        return self.oc_cmd(cmd)
-
-    def delete_project(self):
-        """delete project """
-        cmd = ['delete', 'project', self.namespace]
-        results = self.oc_cmd(cmd)
-        time.sleep(5)
-        return results
-
-    def new_project(self):
-        """create new project """
-        version = self.get_version()
-        cmd = ['new-project', self.namespace]
-        if "v3.2" in version:  ## remove this after BZ1333049 resolved in OSE
-            rval = self.oadm_cmd(cmd)
-        else:
-            rval = self.oc_cmd(cmd)
-        return rval
-
-    def get_logs(self):
-        """get all pod logs"""
-        pods = self.get_pods()
-        result = ""
-        for pod in pods['items']:
-            result = result + self.oc_cmd(['logs', pod['metadata']['name'], '-n', self.namespace])
-
-        if result == "":
-            return 'Could not get logs for pod.  Could not determine pod name.'
-
-        return result
-
-    def get_route(self):
-        """get route to check if app is running"""
-        cmd = ['get', 'route', '--no-headers', '-o', 'json', '-n', self.namespace]
-        results = self.oc_cmd(cmd)
-        return json.loads(results)
-
-    def get_service(self):
-        """get service to check if app is running"""
-        return json.loads(self.oc_cmd(
-            ['get', 'service', '--no-headers', '-n', self.namespace, '-o', 'json']
-        ))
-
-    def get_events(self):
-        """get all events"""
-        return self.oc_cmd(['get', 'events', '-n', self.namespace])
-
-
-    def get_projects(self):
-        """get all projects """
-        cmd = ['get', 'projects', '--no-headers']
-        results = [
-            proj.split()[0] for proj in self.oc_cmd(cmd).split('\n') if proj and len(proj) > 0
-        ]
-
-        return results
-
-    def get_version(self):
-        """get openshift version"""
-        return self.oc_cmd(['version'])
-
-    def oc_cmd(self, cmd):
-        """Base command for oc """
-        cmds = ['/usr/bin/oc']
-        cmds.extend(cmd)
-        logger.debug(' '.join(cmds))
-        proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
-                                env={'KUBECONFIG': self.kubeconfig, \
-                                     'PATH': os.environ["PATH"]})
-        stdout, stderr = proc.communicate()
-        if proc.returncode == 0:
-            if self.verbose:
-                print "Stdout:"
-                print stdout
-                print "Stderr:"
-                print stderr
-            return stdout
-
-        return "Error: %s.  Return: %s" % (proc.returncode, stderr)
-
-    def oadm_cmd(self, cmd):
-        """Base command for oadm """
-        cmds = ['/usr/bin/oadm']
-        cmds.extend(cmd)
-        logger.debug(' '.join(cmds))
-        proc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, \
-                                env={'KUBECONFIG': self.kubeconfig, \
-                                     'PATH': os.environ["PATH"]})
-        stdout, stderr = proc.communicate()
-        if proc.returncode == 0:
-            if self.verbose:
-                print "Stdout:"
-                print stdout
-                print "Stderr:"
-                print stderr
-            return stdout
-
-        return "Error: %s.  Return: %s" % (proc.returncode, stderr)
-
-    def delete_es_index(self):
-        """ delete elasticsearch index """
-        # find project uuid
-        get_project_uid_cmd = ['get', 'project', '-o', 'json', self.namespace]
-        project = json.loads(self.oc_cmd(get_project_uid_cmd))
-        if project:
-            project_uid = project['metadata']['uid']
-        else:
-            logger.error("Failed finding project uid!")
-            return 0
-        # find logging pod
-        get_log_pods_cmd = ['get', 'pods', '-o', 'json', '-n', 'logging']
-        pods = json.loads(self.oc_cmd(get_log_pods_cmd))
-        regex = re.compile('logging-es-*')
-        for pod in pods['items']:
-            pod_found = regex.search(pod['metadata']['name'])
-            if pod_found:
-                project_es_uuid = self.namespace + "." + project_uid + "." + self.run_date
-                curl_cmd = ['curl', '-X', 'DELETE', \
-                    '--key', '/etc/elasticsearch/keys/admin-key', \
-                    '--cert', '/etc/elasticsearch/keys/admin-cert', \
-                    '--cacert', '/etc/elasticsearch/keys/admin-ca', \
-                    'https://localhost:9200/' + project_es_uuid]
-                delete_cmd = ['exec', pod['metadata']['name'], '-n', 'logging', '--'] + curl_cmd
-                delete_results = self.oc_cmd(delete_cmd)
-                if self.verbose:
-                    logger.debug(delete_results)
-                return delete_results
-        logger.error("Failed finding logging pod")
-        return 0
-
-def curl(ip_addr, port):
-    """ Open an http connection to the url and read """
-    logger.debug("curl()")
-
-    code = 0
-    timeout = 30 ## only wait this number of seconds for a response
-    try:
-        code = urllib2.urlopen( \
-            'http://%s:%s' % (ip_addr, port), timeout=timeout).getcode()
-    except urllib2.HTTPError, e:
-        code = e.fp.getcode()
-    except urllib2.URLError, e:
-        logger.error(
-            "timed out in %s seconds opening http://%s:%s",
-            timeout, ip_addr, port
-        )
-    return code
+def runOCcmd_yaml(cmd, base_cmd='oc'):
+    """ log commands through ocutil """
+    logger.info(base_cmd + " " + cmd)
+    return ocutil.run_user_cmd_yaml(cmd, base_cmd=base_cmd, )
 
 def parse_args():
     """ parse the args from the cli """
@@ -249,26 +60,12 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='OpenShift app create end-to-end test')
     parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
-    parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
-    parser.add_argument('--name', default="openshift/hello-openshift:v1.0.6", help='app template')
-    parser.add_argument('--namespace', default="default", help='additional text for namespace')
+    parser.add_argument('--source', default="openshift/hello-openshift:v1.0.6",
+                        help='source application to use')
+    parser.add_argument('--basename', default="test", help='base name, added to via openshift')
+    parser.add_argument('--namespace', default="ops-health-monitoring",
+                        help='namespace (be careful of using existing namespaces)')
     return parser.parse_args()
-
-def pod_name(name):
-    """ strip pre/suffices from app name to get pod name """
-    logger.debug("pod_name()")
-
-    # for app deploy "https://github.com/openshift/hello-openshift:latest",
-    # pod name is hello-openshift
-    if 'http' in name:
-        name = name.rsplit('/')[-1]
-    if 'git' in name:
-        name = name.replace('.git', '')
-    if '/' in name:
-        name = name.split('/')[1]
-    if ':' in name:
-        name = name.split(':')[0]
-    return name
 
 def send_zagg_data(build_ran, create_app, http_code, run_time):
     """ send data to Zagg"""
@@ -287,15 +84,38 @@ def send_zagg_data(build_ran, create_app, http_code, run_time):
         zgs.add_zabbix_keys({'openshift.master.app.create.code': http_code})
         zgs.add_zabbix_keys({'openshift.master.app.create.time': run_time})
 
+    zgs.send_metrics()
+    logger.info("Data sent to Zagg in %s seconds", str(time.time() - zgs_time))
+
+def writeTmpFile(data, filename=None, outdir="/tmp"):
+    """ write string to file """
+    filename = ''.join([
+        outdir, '/',
+        filename,
+    ])
+
+    with open(filename, 'w') as f:
+        f.write(data)
+
+    logger.info("wrote file: %s", filename)
+
+def curl(ip_addr, port, timeout=30):
+    """ Open an http connection to the url and read """
+    url = 'http://%s:%s' % (ip_addr, port)
+    logger.debug("curl(%s timeout=%ss)", url, timeout)
+
     try:
-        zgs.send_metrics()
-        logger.info("Data sent to Zagg in %s seconds", str(time.time() - zgs_time))
-    except:
-        logger.error("Error sending data to Zagg: %s \n %s ", sys.exc_info()[0], sys.exc_info()[1])
+        return urllib2.urlopen(url, timeout=timeout).getcode()
+    except urllib2.HTTPError, e:
+        return e.fp.getcode()
+    except Exception as e:
+        logger.exception("Unknown error")
+
+    return 0
 
 def getPodStatus(pod):
     """ get pod status for display """
-    logger.debug("getPodStatus()")
+    #logger.debug("getPodStatus()")
     if not pod:
         return "no pod"
 
@@ -304,32 +124,109 @@ def getPodStatus(pod):
 
     return "%s %s" % (pod['metadata']['name'], pod['status']['phase'])
 
-def setup(config, oocmd=None,):
+def getPod(name):
+    """ get Pod from all possible pods """
+    pods = ocutil.get_pods()
+    result = None
+
+    for pod in pods['items']:
+        if pod and pod['metadata']['name'] and pod['metadata']['name'].startswith(name):
+            # if we have a pod already, and this one is a build or deploy pod, don't worry about it
+            # we want podname-xyz12 to be priority
+            # if we dont already have a pod, then this one will do
+            if result:
+                if pod['metadata']['name'].endswith("build"):
+                    continue
+
+                if pod['metadata']['name'].endswith("deploy"):
+                    continue
+
+            result = pod
+
+    return result
+
+def setup(config):
     """ global setup for tests """
     logger.info('setup()')
-    oocmd.delete_project()
-    oocmd.new_project()
+    logger.debug(config)
 
-    return config
+    project = None
 
-def test(config, oocmd=None,):
+    try:
+        project = runOCcmd_yaml("get project {}".format(config.namespace))
+        logger.debug(project)
+    except Exception:
+        pass # don't want exception if project not found
+
+    if not project:
+        try:
+            runOCcmd("new-project {}".format(config.namespace), base_cmd='oadm')
+            time.sleep(commandDelay)
+        except Exception:
+            logger.exception('error creating new project')
+
+    runOCcmd("new-app {} --name={} -n {}".format(
+        config.source,
+        config.podname,
+        config.namespace,
+    ))
+
+def testCurl(config):
+    """ run curl and return http_code, have retries """
+    logger.info('testCurl()')
+    logger.debug(config)
+
+    http_code = 0
+
+    # attempt retries
+    for curlCount in range(testCurlCountMax):
+        # introduce small delay to give time for route to establish
+        time.sleep(commandDelay)
+
+        service = ocutil.get_service(config.podname)
+
+        if service:
+            logger.debug("service")
+            logger.debug(service)
+
+            http_code = curl(
+                service['spec']['clusterIP'],
+                service['spec']['ports'][0]['port']
+            )
+
+            logger.debug("http code %s", http_code)
+
+        if http_code == 200:
+            logger.debug("curl completed in %d tries", curlCount)
+            break
+
+    return http_code
+
+
+def test(config):
     """ run tests """
     logger.info('test()')
-
-    oocmd.new_app(config['applicationName'])
+    logger.debug(config)
 
     build_ran = 0
     pod = None
+    noPodCount = 0
     http_code = 0
 
-    # Now we wait until the pod comes up
-    for _ in range(120):
-        time.sleep(5)
-        pod = oocmd.get_pod()
+    for _ in range(testLoopCountMax):
+        time.sleep(commandDelay)
+        pod = getPod(config.podname)
 
         if not pod:
+            noPodCount = noPodCount + 1
+            if noPodCount > testNoPodCountMax:
+                logger.critical("cannot find pod, fail early")
+                break
+
             logger.debug("cannot find pod")
             continue # cannot test pod further
+
+        noPodCount = 0
 
         if not pod['status']:
             logger.error("no pod status")
@@ -337,25 +234,27 @@ def test(config, oocmd=None,):
 
         logger.info(getPodStatus(pod))
 
-        if pod['status'] and "build" in pod['metadata']['name']:
+        if pod['status']['phase']:
+            if pod['status']['phase'] == "Failed":
+                logger.error("Pod Failed")
+                break
+
+            if pod['status']['phase'] == "Error":
+                logger.error("Pod Error")
+                break
+
+        if pod['metadata']['name'].endswith("build"):
             build_ran = 1
+            continue
+
+        if pod['metadata']['name'].endswith("deploy"):
+            continue
 
         if pod['status']['phase'] == 'Running' \
             and pod['status'].has_key('podIP') \
-            and not "build" in pod['metadata']['name']:
+            and not pod['metadata']['name'].endswith("build"):
 
-            # introduce small delay to give time for route to establish
-            time.sleep(2)
-
-            # test pods http capability
-            route = oocmd.get_route()
-            if route['items']:
-                # FIXME: no port in the route object, is 80 a safe assumption?
-                http_code = curl(route['items'][0]['spec']['host'], 80)
-            else:
-                service = oocmd.get_service()
-                http_code = curl(service['items'][0]['spec']['clusterIP'], \
-                    service['items'][0]['spec']['ports'][0]['port'])
+            http_code = testCurl(config)
 
             return {
                 'build_ran': build_ran,
@@ -365,6 +264,11 @@ def test(config, oocmd=None,):
                 'pod': pod,
             }
 
+    if build_ran:
+        logger.critical("build timed out, please check build log for last messages")
+    else:
+        logger.critical("app create timed out, please check event log for information")
+
     return {
         'build_ran': build_ran,
         'create_app': 1, # app create failed
@@ -373,22 +277,25 @@ def test(config, oocmd=None,):
         'pod': pod,
     }
 
-
-def teardown(config, oocmd=None,):
+def teardown(config):
     """ clean up after testing """
-
     logger.info('teardown()')
-    oocmd.delete_es_index()
-    oocmd.delete_project()
+    logger.debug(config)
 
-    return config
+    time.sleep(commandDelay)
+
+    runOCcmd("delete all -l app={} -n {}".format(
+        config.podname,
+        config.namespace,
+    ))
 
 def main():
     """ setup / test / teardown with exceptions to ensure teardown """
+    exception = None
 
-    print '################################################################################'
-    print '  Starting App Create - %s' % datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-    print '################################################################################'
+    logger.info('################################################################################')
+    logger.info('  Starting App Create - %s', datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
+    logger.info('################################################################################')
     logger.debug("main()")
 
     args = parse_args()
@@ -396,84 +303,95 @@ def main():
     if args.verbose:
         logger.setLevel(logging.DEBUG)
 
-    kubeconfig = copy_kubeconfig('/tmp/admin.kubeconfig')
-    namespace = '-'.join([
-        'ops-health',
-        args.namespace,
-        pod_name(args.name),
-        os.environ['ZAGG_CLIENT_HOSTNAME'],
-    ])
+    ocutil.namespace = args.namespace
 
-    oocmd = OpenShiftOC(namespace, kubeconfig, args, verbose=False)
+    ############# generate unique podname #############
+    args.uid = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(2))
+    args.timestamp = datetime.datetime.utcnow().strftime("%m%d%H%Mz")
+    args.podname = '-'.join([args.basename, args.timestamp, args.uid]).lower()
 
-    config = {
-        'args': args,
-        'namespace': namespace,
-        'applicationName': args.name,
-    }
+    if len(args.podname) > 24:
+        raise ValueError("len(args.podname) cannot exceed 24, currently {}: {}".format(
+            len(args.podname), args.podname
+        ))
 
-    # delete project, make new project
-    setup(config, oocmd=oocmd,)
-
-    # start time tracking
-    start_time = time.time()
-
-    # run tests, collect results
+    ############# setup() #############
     try:
-        test_response = test(config, oocmd=oocmd,)
+        setup(args)
     except Exception as e:
-        logger.critical('problem running test')
-        logger.critical(e)
-        test_response = {
-            'build_ran': 0,
-            'create_app': 1, # app create failed
-            'http_code': 0,
-            'failed': True,
-            'pod': None,
-        }
-    logger.debug("test_response")
-    logger.debug(test_response)
+        logger.exception("error during setup()")
+        exception = e
 
-    # finish time tracking
-    run_time = str(time.time() - start_time)
+    ############# test() #############
+    if not exception:
+        # start time tracking
+        start_time = time.time()
 
-    logger.info('Test finished. Time to complete test only: %s', run_time)
-
-    # send data to zabbix
-    try:
-        send_zagg_data(
-            test_response['build_ran'],
-            test_response['create_app'],
-            test_response['http_code'],
-            run_time
-        )
-    except Exception as e:
-        logger.critical('problem sending zabbix data')
-        logger.critical(e)
-
-    if test_response['failed']:
         try:
-            logger.critical('Deploy State: Fail')
-            logger.info('Fetching Events:')
-            oocmd.verbose = True
-            logger.info(oocmd.get_events())
-            logger.info('Fetching Logs:')
-            logger.info(oocmd.get_logs())
-            logger.info('Fetching Pod:')
-            logger.info(test_response['pod'])
+            test_response = test(args)
+            logger.debug(test_response)
         except Exception as e:
-            logger.critical('problem fetching additional error data')
-            logger.critical(e)
-    else:
-        logger.info('Deploy State: Success')
-        logger.info('Service HTTP response code: %s', test_response['http_code'])
+            logger.exception("error during test()")
+            exception = e
+            test_response = {
+                'build_ran': 0,
+                'create_app': 1, # app create failed
+                'http_code': 0,
+                'failed': True,
+                'pod': None,
+            }
 
-    # cleanup project
-    try:
-        teardown(config, oocmd=oocmd,)
-    except Exception as e:
-        logger.critical('problem cleaning up project')
-        logger.critical(e)
+        # finish time tracking
+        run_time = str(time.time() - start_time)
+        logger.info('Test finished. Time to complete test only: %s', run_time)
+
+        ############# send data to zabbix #############
+        try:
+            send_zagg_data(
+                test_response['build_ran'],
+                test_response['create_app'],
+                test_response['http_code'],
+                run_time
+            )
+        except Exception as e:
+            logger.exception("error sending zabbix data")
+            exception = e
+
+        ############# collect more information if failed #############
+        if test_response['failed']:
+            try:
+                ocutil.verbose = True
+                logger.setLevel(logging.DEBUG)
+                logger.critical('Deploy State: Fail')
+
+                if test_response['pod']:
+                    logger.info('Fetching Pod:')
+                    logger.info(test_response['pod'])
+                    logger.info('Fetching Logs: showing last 20, see file for full data')
+                    logs = ocutil.get_log(test_response['pod']['metadata']['name'])
+                    writeTmpFile(logs, filename=args.podname+".logs")
+                    logger.info("\n".join(
+                        logs.split("\n")[-20:]
+                    ))
+                logger.info('Fetching Events: see file for full data')
+                events = "\n".join(
+                    [event for event in runOCcmd('get events').split("\n") if args.podname in event]
+                )
+                writeTmpFile(events, filename=args.podname+".events")
+                logger.info(events)
+            except Exception as e:
+                logger.exception("problem fetching additional error data")
+                exception = e
+        else:
+            logger.info('Deploy State: Success')
+            logger.info('Service HTTP response code: %s', test_response['http_code'])
+
+    ############# teardown #############
+    teardown(args)
+
+    ############# raise any exceptions discovered #############
+    if exception:
+        raise exception
 
 if __name__ == "__main__":
     main()

@@ -46,7 +46,7 @@ class ZaggMetricProcessor(object):
         if not metrics:
             return True # we successfully sent 0 metrics to zagg
 
-        status, _ = self.zagg_client.add_metric(metrics)
+        status, _ = self.zagg_client.push_metrics(metrics)
 
         if status == 200:
             # We've successfuly sent the metrics, so remove them from disk

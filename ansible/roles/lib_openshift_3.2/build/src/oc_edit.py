@@ -46,6 +46,6 @@ class Edit(OpenShiftCLI):
 
             return self._replace(file_name, force=force)
 
-        return self._replace_content(self.kind, self.name, content, force=force)
+        return self._replace_content(self.kind, self.name, content, force=force, sep=self.separator)
 
 

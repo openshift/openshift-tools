@@ -1,0 +1,40 @@
+ul.resource_list {
+    font-size: medium;
+    list-style-type: disc;
+    -webkit-columns: 3;
+    -moz-columns: 3;
+    columns: 3;
+    list-style-position: inside;
+}
+
+#header h1 {
+    font-size: xx-large;
+    padding-top:   30px;
+    padding-right: 100px;
+}
+
+.float_right {
+    float: right;
+}
+.clear_right {
+    clear: right;
+}
+.float_left {
+    float: left;
+}
+.clear_left {
+    clear: left;
+}
+
+img.theme_heading {
+    left; margin: 20px;
+}
+h1.theme_heading {
+    text-align: center;
+}
+a.theme_heading {
+    text-decoration: none; color: white;
+}
+.display_none {
+        display: none;
+}

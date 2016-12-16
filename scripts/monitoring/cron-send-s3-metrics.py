@@ -70,13 +70,29 @@ def get_aws_creds(yaml_results):
 
     return [aws_access_key, aws_secret_key]
 
-def main():
-    ''' Gather and send details on all visible S3 buckets '''
-
+def send_zagg_data(bucket_list, bucket_stats, args):
+    '''send data to zabbix '''
     discovery_key = "disc.aws"
     discovery_macro = "#S3_BUCKET"
     prototype_s3_size = "disc.aws.size"
     prototype_s3_count = "disc.aws.objects"
+
+    zgs = ZaggSender(verbose=args.debug)
+    zgs.add_zabbix_dynamic_item(discovery_key, discovery_macro, bucket_list)
+    for bucket in bucket_stats.keys():
+        zab_key = "{}[{}]".format(prototype_s3_size, bucket)
+        zgs.add_zabbix_keys({zab_key: int(round(bucket_stats[bucket]["size"]))})
+        zab_key = "{}[{}]".format(prototype_s3_count, bucket)
+        zgs.add_zabbix_keys({zab_key: bucket_stats[bucket]["objects"]})
+    zgs.send_metrics()
+
+def main():
+    ''' Gather and send details on all visible S3 buckets '''
+
+    #get the region
+    with open('/container_setup/monitoring-config.yml', 'r') as f:
+        doc = yaml.load(f)
+    bucket_region = doc['oso_region']
 
     args = parse_args()
 
@@ -89,12 +105,13 @@ def main():
     aws_access, aws_secret = get_aws_creds(oc_yaml)
     awsutil = AWSUtil(aws_access, aws_secret, args.debug)
 
-    bucket_list = awsutil.get_bucket_list(args.debug)
+    bucket_list = awsutil.get_bucket_list(verbose=args.debug, BucketRegion=bucket_region)
 
     bucket_stats = {}
 
     for bucket in bucket_list:
-        s3_size, s3_objects = awsutil.get_bucket_info(bucket, args.debug)
+        #print bucket
+        s3_size, s3_objects = awsutil.get_bucket_info(bucket, verbose=args.debug, BucketRegion=bucket_region)
         bucket_stats[bucket] = {"size": s3_size, "objects": s3_objects}
 
     if args.debug:
@@ -103,15 +120,8 @@ def main():
     if args.test:
         print "Test-only. Received results: " + str(bucket_stats)
     else:
-        zgs = ZaggSender(verbose=args.debug)
-        zgs.add_zabbix_dynamic_item(discovery_key, discovery_macro, bucket_list)
-        for bucket in bucket_stats.keys():
-            zab_key = "{}[{}]".format(prototype_s3_size, bucket)
-            zgs.add_zabbix_keys({zab_key: int(round(bucket_stats[bucket]["size"]))})
-
-            zab_key = "{}[{}]".format(prototype_s3_count, bucket)
-            zgs.add_zabbix_keys({zab_key: bucket_stats[bucket]["objects"]})
-        zgs.send_metrics()
+        send_zagg_data(bucket_list, bucket_stats, args)
 
 if __name__ == '__main__':
     main()
+
