@@ -22,15 +22,19 @@ The script will then submit a comment to the pull request indiciating whether al
 
 3. Log into the jenkins instance using your openshift credentials and navigate to 'Manage Jenkins' > 'Configure Global Security'. Under 'Access Control' > 'Authorization', select the radio button 'Logged-in users can do anything'. Ensure the 'Allow anonymous read access' box remains checked. Save the changes.
 
-4. In Jenkins, create a new jenkins pipeline job. Configure the following:
+4. Due to a [bug in jenkins](https://issues.jenkins-ci.org/browse/JENKINS-28466), it is necessary to navigate to 'Manage Jenkins' > 'Configure System' and hit 'Save'. If this is not done, certain environment variables, such as `BUILD_URL` will not be available to jenkins pipeline builds.
+
+5. In Jenkins, create a new jenkins pipeline job. Configure the following:
   1. Check the 'This project is parameterized' box and add a 'String Parameter' with the Name 'payload' (case-sensitive). Leave all other boxes empty.
   2. Under 'Build Triggers', check the 'Trigger builds remotely' checkbox and specify any string to use as the authorization token. This same token will be used later to configure the github webhook.
   3. Under 'Pipeline', select 'Pipeline script from SCM' as the pipeline definition. Choose 'Git' as the SCM and specify `https://github.com/openshift/openshift-tools` as the repository url. Leave the 'Branches to build' blank. For the 'Script path', set to 'jenkins/Jenkinsfile'
   4. Save the job
     
-5. In github, navigate to the settings for openshift-tools with administrator permissions. Under webhooks, create a new webhook and configure the following:
+6. In github, navigate to the settings for openshift-tools with administrator permissions. Under webhooks, create a new webhook and configure the following:
   1. The Payload URL will be the url of the jenkins build trigger configured earlier. Here is an example where 'someuniquestring' is specified as the build trigger token: `https://jenkins-exampleproject.example.com/job/job_name/buildWithParameters?token=someuniquestring`
   2. Set the 'Content type' to `application/x-www-form-urlencoded`. This enabled the webhook payload to be sent as a parameter to the jenkins job.
   3. Under "Which events would you like to trigger", select only 'Pull request'.
   4. Check the 'Active' box to ensure the github webhook is active
   5. Hit 'Update webhook' to save the changes.
+
+7. Ensure that the github user used to update pull requests has push permissions to the repository. As an adiministrator of the repository, navigate to 'Settings' > 'Collaborators' to invite the user to have push permissions.

@@ -24,7 +24,7 @@ node {
         if (trigger == "test") {
             stage "Test Changes"
                 echo "Starting Tests"
-                openshiftBuild buildConfig: 'openshift-tools-test', env: [[ name: 'GITHUB_WEBHOOK_PAYLOAD', value: payload ]], showBuildLogs: true
+                openshiftBuild buildConfig: 'openshift-tools-test', env: [[ name: 'GITHUB_WEBHOOK_PAYLOAD', value: payload ], [ name: 'BUILD_URL', value: env.BUILD_URL ]], showBuildLogs: true
         } else if (trigger == "build") {
             stage "Build RPMS"
                 echo "Starting Build"
