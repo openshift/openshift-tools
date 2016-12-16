@@ -153,6 +153,11 @@ FILES = {'oc_obj.py': ['lib/base.py',
                        'src/oc_pvc.py',
                        'ansible/oc_pvc.py',
                       ],
+         'oc_image.py': ['lib/base.py',
+                         '../../lib_yaml_editor/build/src/yedit.py',
+                         'src/oc_image.py',
+                         'ansible/oc_image.py',
+                        ],
         }
 
 
