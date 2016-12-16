@@ -1,0 +1,18 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: "oo_clusterid_opstest:&oo_master_primary"
+  gather_facts: no
+  user: root
+  tasks:
+  - name: get image
+    oc_image:
+      state: list
+      name: rhel7
+      namespace: default
+
+  - name: create image
+    oc_image:
+      registry_url: registry.ops.openshift.com/ops
+      image_name: oso-rhel7-zagg-web
+      image_tag: int
+    run_once: true
