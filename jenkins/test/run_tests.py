@@ -131,6 +131,19 @@ def submit_pr_comment(text, pull_id):
     # Raise an error if the request fails for some reason
     response.raise_for_status()
 
+def submit_pr_status_update(state, text, remote_sha):
+    """ Submit a commit status update with a link to the build results """
+    target_url = os.getenv("BUILD_URL")
+    github_username, oauth_token = get_github_credentials()
+    payload = {'state': state,
+               'description': text,
+               'target_url': target_url,
+               'context': "jenkins-ci"}
+    status_url = "%s/repos/%s/%s/statuses/%s" % (GITHUB_API_URL, REPO_USER, REPO, remote_sha)
+    response = requests.post(status_url, json=payload, auth=(github_username, oauth_token))
+    # Raise an error if the request fails for some reason
+    response.raise_for_Status()
+
 def get_github_credentials():
     """ Get credentials from mounted secret volume """
     secret_dir = os.getenv("OPENSHIFT_BOT_SECRET_DIR")
@@ -149,8 +162,8 @@ def get_github_credentials():
 
 def main():
     """ Get the payload, merge changes, assign env, and run validators """
+    # Get the github webhook payload json from the defined env variable
     payload_json = os.getenv("GITHUB_WEBHOOK_PAYLOAD", "")
-
     if payload_json == "":
         print 'No JSON data provided in $GITHUB_WEBHOOK_PAYLOAD'
         sys.exit(1)
@@ -160,19 +173,28 @@ def main():
         print "Unable to load JSON data from $GITHUB_WEBHOOK_PAYLOAD"
         sys.exit(1)
     pull_request = payload["pull_request"]
+    remote_sha = pull_request["head"]["sha"]
+    pull_id = pull_request["number"]
+
+    # Update the PR to inform users that testing is in progress
+    submit_pr_status_update("pending", "Automated tests in progress", remote_sha)
 
     # Merge changes from pull request
     merge_changes(pull_request)
+
     # Assign env variables for validators
     assign_env(pull_request)
 
     # Run validators
     success = run_validators()
-    pull_id = pull_request["number"]
+
+    # Determine and post result of tests
     if not success:
         submit_pr_comment("Tests failed!", pull_id)
+        submit_pr_status_update("failure", "Automated tests failed", remote_sha)
         sys.exit(1)
     submit_pr_comment("Tests passed!", pull_id)
+    submit_pr_status_update("success", "Automated tests passed", remote_sha)
 
 if __name__ == '__main__':
     main()

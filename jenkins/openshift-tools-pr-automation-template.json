@@ -62,6 +62,10 @@
                 {
                   "name": "OPENSHIFT_BOT_SECRET_DIR",
                   "value": "openshift-ops-bot"
+                },
+                {
+                  "name": "BUILD_URL",
+                  "value": ""
                 }
               ]
 	    }
