@@ -68,7 +68,7 @@ def main():
                        'ap-southeast-1',
                        'ap-southeast-2',
                        'eu-central-1',
-                       'eu-central-1',
+                       'ca-central-1',
                       ]
 
     conn = boto.ec2.connect_to_region(source_region)
