@@ -49,7 +49,7 @@ class AMICopy(object):
                        'ap-southeast-1',
                        'ap-southeast-2',
                        'eu-central-1',
-                       'eu-central-1',
+                       'ca-central-1',
                       ]
 
     def __init__(self, aid=None, name=None, region='us-east-1'):
