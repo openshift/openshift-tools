@@ -1,0 +1,11 @@
+---
+g_user_opsmedic:
+  uid: "{{ g_user_opsmedic_uid }}"
+  gid: "{{ g_user_opsmedic_gid }}"
+  groups: "{{ g_user_opsmedic_groups }}"
+  username: opsmedic
+  authkey_opts: command="/usr/bin/remote-healer READ_SSH"
+  pub_key: ssh-rsa AAAAblahblahblah== opsmedic
+  priv_key: |-
+    -----BEGIN RSA PRIVATE KEY-----
+    -----END RSA PRIVATE KEY-----
