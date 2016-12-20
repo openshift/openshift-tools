@@ -424,6 +424,10 @@ host_monitoring_cron:
   minute: "1"
   job: ops-runner -f -s 30 -n ccexp.openshift.master.certificates /usr/bin/cron-certificate-expirations --cert-list=/etc/origin/master,/etc/origin/node
 
+- name: "Report running builds" 
+  minute: "*/5"
+  job: /usr/bin/cron-send-build-counts
+
 {% if osohm_metrics_enabled | default(False) | bool %}
 - name: "Report metrics health"
   hour: "*"
