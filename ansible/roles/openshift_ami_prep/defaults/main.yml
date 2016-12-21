@@ -1,0 +1,12 @@
+oap_package_list:
+- atomic-openshift-master
+- atomic-openshift-sdn-ovs
+- atomic-openshift-tests
+- atomic-openshift-node
+- atomic-openshift-pod
+- atomic-openshift-utils
+- atomic-openshift-clients
+- atomic-openshift-clients-redistributable
+- atomic-openshift-dockerregistry
+- tuned-profiles-atomic
+- tuned-profiles-atomic-openshift-node
