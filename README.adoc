@@ -6,6 +6,7 @@
 
 toc::[]
 
+image:https://ci.openshift.redhat.com/jenkins/buildStatus/icon?job=openshift-tools[Build, title="Build Status", link="https://ci.openshift.redhat.com/jenkins/job/openshift-tools"]
 
 == Description
 
