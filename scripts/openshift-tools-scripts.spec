@@ -191,7 +191,6 @@ OpenShift Tools Docker Monitoring Scripts
 /usr/bin/cron-send-docker-containers-usage
 /usr/bin/cron-send-docker-dns-resolution
 /usr/bin/cron-send-docker-existing-dns-resolution
-/usr/bin/cron-send-docker-oc-versions
 
 
 # ----------------------------------------------------------------------------------
@@ -298,6 +297,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-metrics-checks
 /usr/bin/cron-send-os-router-status
 /usr/bin/cron-send-logging-checks
+/usr/bin/cron-send-docker-oc-versions
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
