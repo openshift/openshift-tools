@@ -30,7 +30,7 @@ import argparse
 
 # pylint: disable=import-error
 from openshift_tools.monitoring.ocutil import OCUtil
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 # pylint: enable=import-error
 
 # These are here for a metrics pre 3.4 workaround
@@ -47,7 +47,7 @@ class OpenshiftMetricsStatus(object):
     def __init__(self):
         ''' Initialize OpenShiftMetricsStatus class '''
         self.kubeconfig = '/tmp/admin.kubeconfig'
-        self.zagg_sender = None
+        self.metric_sender = None
         self.oc = None
         self.args = None
         self.deployer_pod_name = None
@@ -192,9 +192,9 @@ class OpenshiftMetricsStatus(object):
         item_prototype_key_starttime = 'openshift.metrics.hawkular.starttime'
         item_prototype_key_restarts = 'openshift.metrics.hawkular.restarts'
 
-        self.zagg_sender.add_zabbix_dynamic_item(discovery_key_metrics,
-                                                 item_prototype_macro_metrics,
-                                                 pods_status.keys())
+        self.metric_sender.add_dynamic_metric(discovery_key_metrics,
+                                              item_prototype_macro_metrics,
+                                              pods_status.keys())
 
         for pod, data in pods_status.iteritems():
             if self.args.verbose:
@@ -202,18 +202,18 @@ class OpenshiftMetricsStatus(object):
                     print
                     print "%s: Key[%s] Value[%s]" % (pod, key, val)
 
-            self.zagg_sender.add_zabbix_keys({
+            self.metric_sender.add_metric({
                 "%s[%s]" %(item_prototype_key_status, pod) : data['status'],
                 "%s[%s]" %(item_prototype_key_starttime, pod) : data['starttime'],
                 "%s[%s]" %(item_prototype_key_restarts, pod) : data['restarts']})
 
-        self.zagg_sender.add_zabbix_keys({'openshift.metrics.nodes_reporting': node_health})
-        self.zagg_sender.send_metrics()
+        self.metric_sender.add_metric({'openshift.metrics.nodes_reporting': node_health})
+        self.metric_sender.send_metrics()
 
     def run(self):
         ''' Main function that runs the check '''
         self.parse_args()
-        self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.metric_sender = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
 
         self.oc = OCUtil(namespace='openshift-infra', config_file=self.kubeconfig, verbose=self.args.verbose)
 

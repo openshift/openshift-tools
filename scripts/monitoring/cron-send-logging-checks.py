@@ -29,7 +29,7 @@ import json
 
 # pylint: disable=import-error
 from openshift_tools.monitoring.ocutil import OCUtil
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 # pylint: enable=import-error
 
 class OpenshiftLoggingStatus(object):
@@ -38,7 +38,7 @@ class OpenshiftLoggingStatus(object):
     '''
     def __init__(self):
         ''' Initialize OpenShiftLoggingStatus class '''
-        self.zagg_sender = None
+        self.metric_sender = None
         self.oc = None
         self.args = None
         self.es_pods = []
@@ -219,36 +219,36 @@ class OpenshiftLoggingStatus(object):
 
     def report_to_zabbix(self, logging_status):
         ''' Report all of our findings to zabbix '''
-        self.zagg_sender.add_zabbix_dynamic_item('openshift.logging.elasticsarch.pods',
-                                                 '#OSO_ELASTIC',
-                                                 logging_status['elasticsearch']['pods'].keys())
+        self.metric_sender.add_dynamic_metric('openshift.logging.elasticsarch.pods',
+                                              '#OSO_ELASTIC',
+                                              logging_status['elasticsearch']['pods'].keys())
         for item, data in logging_status.iteritems():
             if item == "fluentd":
-                self.zagg_sender.add_zabbix_keys({
+                self.metric_sender.add_metric({
                     'openshift.logging.fluentd.running': data['running'],
                     'openshift.logging.fluentd.number_pods': data['number_pods'],
                     'openshift.logging.fluentd.node_mismatch': data['node_mismatch'],
                     'openshift.logging.fluentd.number_expected_pods': data['number_expected_pods']
                 })
             elif item == "kibana":
-                self.zagg_sender.add_zabbix_keys({'openshift.logging.kibana.site_up': data['site_up']})
+                self.metric_sender.add_metric({'openshift.logging.kibana.site_up': data['site_up']})
             elif item == "elasticsearch":
-                self.zagg_sender.add_zabbix_keys({
+                self.metric_sender.add_metric({
                     'openshift.logging.elasticsearch.single_master': data['single_master'],
                     'openshift.logging.elasticsearch.all_nodes_registered': data['all_nodes_registered']
                 })
                 for pod, value in data['pods'].iteritems():
-                    self.zagg_sender.add_zabbix_keys({
+                    self.metric_sender.add_metric({
                         "openshift.logging.elasticsarch.pod_health[%s]" %(pod): value['elasticsearch_health'],
                         "openshift.logging.elasticsarch.disk_used[%s]" %(pod): value['disk']['used'],
                         "openshift.logging.elasticsarch.disk_free[%s]" %(pod): value['disk']['free']
                     })
-        self.zagg_sender.send_metrics()
+        self.metric_sender.send_metrics()
 
     def run(self):
         ''' Main function that runs the check '''
         self.parse_args()
-        self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.metric_sender = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
         self.oc = OCUtil(namespace='logging', config_file='/tmp/admin.kubeconfig', verbose=self.args.verbose)
         self.get_pods()
 

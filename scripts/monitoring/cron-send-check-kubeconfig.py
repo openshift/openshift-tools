@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-  Send kubeconfig status checks to Zagg
+  Send kubeconfig status checks to MetricSender
 '''
 # vim: expandtab:tabstop=4:shiftwidth=4
 #
@@ -26,7 +26,7 @@
 #pylint: disable=import-error
 
 import argparse
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 import yaml
 
 class OpenshiftKubeconfigChecker(object):
@@ -34,20 +34,20 @@ class OpenshiftKubeconfigChecker(object):
 
     def __init__(self):
         self.args = None
-        self.zagg_sender = None
+        self.metric_sender = None
 
     def run(self):
         """  Main function to run the check """
 
         self.parse_args()
-        self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.metric_sender = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
 
         status = self.parse_config()
 
-        self.zagg_sender.add_zabbix_keys({
+        self.metric_sender.add_metric({
             "openshift.kubeconfig.status" : status})
 
-        self.zagg_sender.send_metrics()
+        self.metric_sender.send_metrics()
 
     def parse_config(self):
         """ Load the kubeconfig """
