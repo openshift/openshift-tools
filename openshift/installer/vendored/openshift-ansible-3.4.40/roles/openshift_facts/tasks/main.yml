@@ -1,0 +1,44 @@
+---
+- name: Detecting Operating System
+  stat:
+    path: /run/ostree-booted
+  register: ostree_booted
+
+# Locally setup containerized facts for now
+- set_fact:
+    l_is_atomic: "{{ ostree_booted.stat.exists }}"
+- set_fact:
+    l_is_containerized: "{{ (l_is_atomic | bool) or (containerized | default(false) | bool) }}"
+
+- name: Ensure PyYaml is installed
+  action: "{{ ansible_pkg_mgr }} name=PyYAML state=present"
+  when: not l_is_atomic | bool
+
+- name: Ensure yum-utils is installed
+  action: "{{ ansible_pkg_mgr }} name=yum-utils state=present"
+  when: not l_is_atomic | bool
+
+- name: Gather Cluster facts and set is_containerized if needed
+  openshift_facts:
+    role: common
+    local_facts:
+      debug_level: "{{ openshift_debug_level | default(2) }}"
+      # TODO: Deprecate deployment_type in favor of openshift_deployment_type
+      deployment_type: "{{ openshift_deployment_type | default(deployment_type) }}"
+      deployment_subtype: "{{ openshift_deployment_subtype | default(None) }}"
+      cluster_id: "{{ openshift_cluster_id | default('default') }}"
+      hostname: "{{ openshift_hostname | default(None) }}"
+      ip: "{{ openshift_ip | default(None) }}"
+      is_containerized: "{{ l_is_containerized | default(None) }}"
+      public_hostname: "{{ openshift_public_hostname | default(None) }}"
+      public_ip: "{{ openshift_public_ip | default(None) }}"
+      portal_net: "{{ openshift_portal_net | default(openshift_master_portal_net) | default(None) }}"
+      http_proxy: "{{ openshift_http_proxy | default(None) }}"
+      https_proxy: "{{ openshift_https_proxy | default(None) }}"
+      no_proxy: "{{ openshift_no_proxy | default(None) }}"
+      generate_no_proxy_hosts: "{{ openshift_generate_no_proxy_hosts | default(True) }}"
+      no_proxy_internal_hostnames: "{{ openshift_no_proxy_internal_hostnames | default(None) }}"
+
+- name: Set repoquery command
+  set_fact:
+    repoquery_cmd: "{{ 'dnf repoquery --latest-limit 1 -d 0' if ansible_pkg_mgr == 'dnf' else 'repoquery --plugins' }}"
