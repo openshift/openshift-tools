@@ -3,9 +3,10 @@ FROM registry.ops.openshift.com/ops/oso-rhel7-host-monitoring:prod
 # Add the openshift bot credentials to the build
 ADD openshift-ops-bot/ /openshift-ops-bot/
 
-# Set this so that the image, when started, will automatically sit and sleep
-# for debugging purposes
-ENV OO_PAUSE_ON_START=true
+# Set this so that the built image, when started, will sit and wait.
+# This allows the resulting image to be easily reviewed. Normally, the image is thrown
+# away, as only the build process is important.
+# ENV OO_PAUSE_ON_START=true
 
 RUN mkdir /validator && \
     git clone https://github.com/tiwillia/openshift-tools /validator/openshift-tools && \
