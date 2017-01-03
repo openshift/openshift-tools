@@ -54,6 +54,7 @@ cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
 cp -p monitoring/cron-send-project-stats.py %{buildroot}/usr/bin/cron-send-project-stats
 cp -p monitoring/cron-openshift-pruner.py %{buildroot}/usr/bin/cron-openshift-pruner
+cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
 cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
 cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
 cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
