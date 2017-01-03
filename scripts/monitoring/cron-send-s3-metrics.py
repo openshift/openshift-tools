@@ -26,7 +26,7 @@ import argparse
 import base64
 from openshift_tools.monitoring.awsutil import AWSUtil
 from openshift_tools.monitoring.ocutil import OCUtil
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 import sys
 import yaml
 
@@ -70,21 +70,22 @@ def get_aws_creds(yaml_results):
 
     return [aws_access_key, aws_secret_key]
 
-def send_zagg_data(bucket_list, bucket_stats, args):
+def send_metric_data(bucket_list, bucket_stats, args):
     '''send data to zabbix '''
     discovery_key = "disc.aws"
     discovery_macro = "#S3_BUCKET"
     prototype_s3_size = "disc.aws.size"
     prototype_s3_count = "disc.aws.objects"
 
-    zgs = ZaggSender(verbose=args.debug)
-    zgs.add_zabbix_dynamic_item(discovery_key, discovery_macro, bucket_list)
+    mts = MetricSender(verbose=args.debug)
+    mts.add_dynamic_metric(discovery_key, discovery_macro, bucket_list)
     for bucket in bucket_stats.keys():
         zab_key = "{}[{}]".format(prototype_s3_size, bucket)
-        zgs.add_zabbix_keys({zab_key: int(round(bucket_stats[bucket]["size"]))})
+        mts.add_metric({zab_key: int(round(bucket_stats[bucket]["size"]))})
+
         zab_key = "{}[{}]".format(prototype_s3_count, bucket)
-        zgs.add_zabbix_keys({zab_key: bucket_stats[bucket]["objects"]})
-    zgs.send_metrics()
+        mts.add_metric({zab_key: bucket_stats[bucket]["objects"]})
+    mts.send_metrics()
 
 def main():
     ''' Gather and send details on all visible S3 buckets '''
@@ -120,7 +121,7 @@ def main():
     if args.test:
         print "Test-only. Received results: " + str(bucket_stats)
     else:
-        send_zagg_data(bucket_list, bucket_stats, args)
+        send_metric_data(bucket_list, bucket_stats, args)
 
 if __name__ == '__main__':
     main()
