@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.7
+Version:       0.1.8
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -54,6 +54,7 @@ cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
 cp -p monitoring/cron-send-project-stats.py %{buildroot}/usr/bin/cron-send-project-stats
 cp -p monitoring/cron-openshift-pruner.py %{buildroot}/usr/bin/cron-openshift-pruner
+cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
 cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
 cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
 cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
@@ -366,6 +367,14 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Tue Jan 03 2017 Marek Mahut <mmahut@redhat.com> 0.1.8-1
+- Adding cron-send-elb-status.py to monitoring (mmahut@redhat.com)
+- added ca-central-1 (mwoodson@redhat.com)
+- Add tags to ops-metric-client cli (zgalor@redhat.com)
+- Add ops-metric-client cli (zgalor@redhat.com)
+- changing the user to ops_monitoring (mmahut@redhat.com)
+- Adding cron-send-elb-status.py (mmahut@redhat.com)
+
 * Wed Dec 14 2016 Drew Anderson <dranders@redhat.com> 0.1.7-1
 - change the way we test for pods and pod status increase test duration by 50%%
   (dranders@redhat.com)
