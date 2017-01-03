@@ -71,6 +71,7 @@ cp -p monitoring/delete-stuck-projects.sh %{buildroot}/usr/bin/delete-stuck-proj
 cp -p monitoring/cron-send-saml-status.py %{buildroot}/usr/bin/cron-send-saml-status
 cp -p monitoring/cron-certificate-expirations.py %{buildroot}/usr/bin/cron-certificate-expirations
 cp -p monitoring/cron-send-os-router-status.py %{buildroot}/usr/bin/cron-send-os-router-status
+cp -p monitoring/cron-send-build-count.sh %{buildroot}/usr/bin/cron-send-build-count
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -296,6 +297,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-os-router-status
 /usr/bin/cron-send-logging-checks
 /usr/bin/cron-send-elb-status
+/usr/bin/cron-send-build-count
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -378,6 +380,9 @@ OpenShift Tools IAM specific scripts
 - changing the user to ops_monitoring (mmahut@redhat.com)
 - Adding cron-send-elb-status.py (mmahut@redhat.com)
 
+* Tue Dec 20 2016 Sten Turpin <sturpin@redhat.com> 0.1.8-1
+- add first iteration build monitors
+
 * Wed Dec 14 2016 Drew Anderson <dranders@redhat.com> 0.1.7-1
 - change the way we test for pods and pod status increase test duration by 50%%
   (dranders@redhat.com)
@@ -408,6 +413,11 @@ OpenShift Tools IAM specific scripts
 
 * Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.1.0-1
 - Version bump
+
+* Mon Dec 05 2016 Wesley Hearn <whearn@redhat.com> 0.0.176-1
+- Add cron-send-logging-checks to the rpm (whearn@redhat.com)
+- increase to 15m (dranders@redhat.com)
+- Fix return code getting overwritten (whearn@redhat.com)
 
 * Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.0.175-1
 - adding error handling, fixing pylint issues (dedgar@redhat.com)
