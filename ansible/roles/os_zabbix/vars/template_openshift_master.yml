@@ -638,6 +638,42 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: builds_running.cancelled
+    description: "count of cancelled builds on master"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: builds_running.complete
+    description: "count of complete builds on master"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: builds_running.new
+    description: "count of new builds on master"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: builds_running.error
+    description: "count of errored builds on master"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: builds_running.failed
+    description: "count of failed builds on master"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: builds_running.total
+    description: "count of total builds on master"
+    value_type: int
+    applications:
+    - Openshift Master
+
   zdiscoveryrules:
   - name: disc.pv
     key: disc.pv
@@ -740,6 +776,11 @@ g_template_openshift_master:
     expression: "{Template Openshift Master:openshift.master.pv.available.count.max(#2)}<5"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pv_remaining.asciidoc"
     priority: warn
+
+  - name: "Too many new builds {HOST.NAME}"
+    expression: "{Template Openshift Master:builds_running.new.avg(#3)}>10"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/build_count_alerts.asciidoc"
+    priority: high
 
   # Put triggers that depend on other triggers here (deps must be created first)
   - name: "Application creation has failed on {HOST.NAME}"
