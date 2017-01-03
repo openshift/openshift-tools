@@ -1,0 +1,17 @@
+---
+- name: Install cockpit-ws
+  action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
+  with_items:
+    - cockpit-ws
+    - cockpit-shell
+    - cockpit-bridge
+    - cockpit-docker
+    - "{{ cockpit_plugins }}"
+  when: not openshift.common.is_containerized | bool
+
+- name: Enable cockpit-ws
+  service:
+    name: cockpit.socket
+    enabled: true
+    state: started
+  when: not openshift.common.is_containerized | bool
