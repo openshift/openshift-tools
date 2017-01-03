@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.7
+Version:       0.1.8
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -170,6 +170,8 @@ OpenShift Tools PCP Monitoring Scripts
 /usr/bin/cron-send-disk-metrics
 /usr/bin/cron-send-network-metrics
 /usr/bin/ops-zagg-pcp-client
+/usr/bin/ops-metric-client
+/usr/bin/ops-metric-pcp-client
 
 
 # ----------------------------------------------------------------------------------
@@ -294,6 +296,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-metrics-checks
 /usr/bin/cron-send-os-router-status
 /usr/bin/cron-send-logging-checks
+/usr/bin/cron-send-elb-status
 /usr/bin/cron-send-build-count
 
 # ----------------------------------------------------------------------------------
@@ -369,6 +372,14 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Tue Jan 03 2017 Marek Mahut <mmahut@redhat.com> 0.1.8-1
+- Adding cron-send-elb-status.py to monitoring (mmahut@redhat.com)
+- added ca-central-1 (mwoodson@redhat.com)
+- Add tags to ops-metric-client cli (zgalor@redhat.com)
+- Add ops-metric-client cli (zgalor@redhat.com)
+- changing the user to ops_monitoring (mmahut@redhat.com)
+- Adding cron-send-elb-status.py (mmahut@redhat.com)
+
 * Tue Dec 20 2016 Sten Turpin <sturpin@redhat.com> 0.1.8-1
 - add first iteration build monitors
 
