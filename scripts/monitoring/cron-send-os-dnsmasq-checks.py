@@ -34,7 +34,7 @@
 import argparse
 from dns import resolver
 from dns import exception as dns_exception
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 import socket
 
 class DnsmasqZaggClient(object):
@@ -42,7 +42,7 @@ class DnsmasqZaggClient(object):
 
     def __init__(self):
         self.args = None
-        self.zagg_sender = None
+        self.metric_sender = None
         self.dns_host_ip = socket.gethostbyname(socket.gethostname())
         self.dns_port = 53
 
@@ -50,12 +50,12 @@ class DnsmasqZaggClient(object):
         """  Main function to run the check """
 
         self.parse_args()
-        self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.metric_sender = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
 
         if self.check_dns_port_alive():
             self.do_dns_check()
 
-        self.zagg_sender.send_metrics()
+        self.metric_sender.send_metrics()
 
     def parse_args(self):
         """ parse the args from the cli """
@@ -79,7 +79,7 @@ class DnsmasqZaggClient(object):
 
             print "\ndnsmasq host: %s, port: %s is OPEN" % (self.dns_host_ip, self.dns_port)
             print "================================================\n"
-            self.zagg_sender.add_zabbix_keys({'dnsmasq.port.open' : 1})
+            self.metric_sender.add_metric({'dnsmasq.port.open' : 1})
 
             return True
 
@@ -87,7 +87,7 @@ class DnsmasqZaggClient(object):
             print "\ndnsmasq host: %s, port: %s is CLOSED" % (self.dns_host_ip, self.dns_port)
             print "Python Error: %s" % e
             print "================================================\n"
-            self.zagg_sender.add_zabbix_keys({'dnsmasq.port.open' : 0})
+            self.metric_sender.add_metric({'dnsmasq.port.open' : 0})
 
             return False
     def do_dns_check(self):
@@ -117,7 +117,7 @@ class DnsmasqZaggClient(object):
 
         print "================================================\n"
 
-        self.zagg_sender.add_zabbix_keys({'dnsmasq.query' : dns_check})
+        self.metric_sender.add_metric({'dnsmasq.query' : dns_check})
 
 if __name__ == '__main__':
     ONDZC = DnsmasqZaggClient()

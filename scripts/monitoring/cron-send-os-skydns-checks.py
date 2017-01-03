@@ -51,7 +51,7 @@ import argparse
 from dns import resolver
 from dns import exception as dns_exception
 from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 import socket
 import sys
 
@@ -60,7 +60,7 @@ class OpenshiftSkyDNSZaggClient(object):
 
     def __init__(self):
         self.args = None
-        self.zagg_sender = None
+        self.metric_sender = None
         self.ora = OpenshiftRestApi()
         self.dns_host = ''
         self.dns_port = 53
@@ -70,7 +70,7 @@ class OpenshiftSkyDNSZaggClient(object):
         """  Main function to run the check """
 
         self.parse_args()
-        self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.metric_sender = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
 
         self.get_openshift_services()
         dns_host = [i for i in self.openshift_services if i['name'] == 'kubernetes' and i['namespace'] == 'default']
@@ -85,7 +85,7 @@ class OpenshiftSkyDNSZaggClient(object):
         if self.check_dns_port_alive():
             self.do_dns_check()
 
-        self.zagg_sender.send_metrics()
+        self.metric_sender.send_metrics()
 
     def parse_args(self):
         """ parse the args from the cli """
@@ -109,7 +109,7 @@ class OpenshiftSkyDNSZaggClient(object):
 
             print "\nOpenshift SkyDNS host: %s, port: %s is OPEN" % (self.dns_host, self.dns_port)
             print "================================================\n"
-            self.zagg_sender.add_zabbix_keys({'openshift.master.skydns.port.open' : 1})
+            self.metric_sender.add_metric({'openshift.master.skydns.port.open' : 1})
 
             return True
 
@@ -117,7 +117,7 @@ class OpenshiftSkyDNSZaggClient(object):
             print "\nOpenshift SkyDNS host: %s, port: %s is CLOSED" % (self.dns_host, self.dns_port)
             print "Python Error: %s" % e
             print "================================================\n"
-            self.zagg_sender.add_zabbix_keys({'openshift.master.skydns.port.open' : 0})
+            self.metric_sender.add_metric({'openshift.master.skydns.port.open' : 0})
 
             return False
 
@@ -176,7 +176,7 @@ class OpenshiftSkyDNSZaggClient(object):
 
         print "================================================\n"
 
-        self.zagg_sender.add_zabbix_keys({'openshift.master.skydns.query' : dns_check})
+        self.metric_sender.add_metric({'openshift.master.skydns.query' : dns_check})
 
 if __name__ == '__main__':
     OMSZC = OpenshiftSkyDNSZaggClient()
