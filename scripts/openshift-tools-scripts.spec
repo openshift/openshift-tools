@@ -295,11 +295,8 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-metrics-checks
 /usr/bin/cron-send-os-router-status
 /usr/bin/cron-send-logging-checks
-<<<<<<< HEAD
 /usr/bin/cron-send-elb-status
 /usr/bin/cron-send-build-count
-=======
->>>>>>> parent of 256ef97... add build count script, cronjob, zitem, ztrigger
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
