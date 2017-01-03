@@ -45,7 +45,7 @@ class OpenshiftLoggingStatus(object):
         self.fluentd_pods = []
 
         es_cert = '/etc/elasticsearch/secret/admin-'
-        self.es_curl = "curl --cert {}cert --key {}key --cacert {}ca -XGET ".format(es_cert, es_cert, es_cert)
+        self.es_curl = "curl -s --cert {}cert --key {}key --cacert {}ca -XGET ".format(es_cert, es_cert, es_cert)
 
     def parse_args(self):
         ''' Parse arguments passed to the script '''
