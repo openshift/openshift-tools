@@ -7,12 +7,12 @@
 
 # Adding the ignore because it does not like the naming of the script
 # to be different than the class name
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name,import-error
 
 
 from docker import AutoVersionClient
 from docker.errors import DockerException
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.timeout import TimeoutException
 from openshift_tools.monitoring.dockerutil import DockerUtil
 import json
@@ -20,7 +20,7 @@ import time
 
 if __name__ == "__main__":
     keys = None
-    zs = ZaggSender()
+    mts = MetricSender()
     try:
         cli = AutoVersionClient(base_url='unix://var/run/docker.sock')
         du = DockerUtil(cli, max_wait=360)
@@ -40,9 +40,9 @@ if __name__ == "__main__":
             'docker.info_elapsed_ms': 360000 # 360000 = 6 minutes
         }
 
-    zs.add_zabbix_keys(keys)
+    mts.add_metric(keys)
 
     print "Sending these metrics:"
     print json.dumps(keys, indent=4)
-    zs.send_metrics()
+    mts.send_metrics()
     print "\nDone.\n"
