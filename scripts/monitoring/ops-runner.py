@@ -24,7 +24,7 @@ import socket
 # Reason: disable pylint import-error because our libs aren't loaded on jenkins.
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.timeout import timeout, TimeoutException
 
 
@@ -172,21 +172,21 @@ class OpsRunner(object):
 
     def report_to_zabbix(self, disc_key, disc_macro, item_proto_key, value):
         """ Sends the commands exit code to zabbix. """
-        zs = ZaggSender()
+        mts = MetricSender()
 
 
         # Add the dynamic item
         self.verbose_print("Adding the dynamic item to Zabbix - %s, %s, [%s]" % \
                            (disc_key, disc_macro, self.args.name))
-        zs.add_zabbix_dynamic_item(disc_key, disc_macro, [self.args.name])
+        mts.add_dynamic_metric(disc_key, disc_macro, [self.args.name])
 
         # Send the value for the dynamic item
         self.verbose_print("Sending metric to Zabbix - %s[%s]: %s" % \
                            (item_proto_key, self.args.name, value))
-        zs.add_zabbix_keys({'%s[%s]' % (item_proto_key, self.args.name): value})
+        mts.add_metric({'%s[%s]' % (item_proto_key, self.args.name): value})
 
         # Actually send them
-        zs.send_metrics()
+        mts.send_metrics()
 
     def parse_args(self):
         """ parse the args from the cli """
