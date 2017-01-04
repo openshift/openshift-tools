@@ -1,6 +1,6 @@
 #!/bin/env python2
 '''
-  Command to send process connection count to Zagg
+  Command to send process connection count to MetricSender
 '''
 # vim: expandtab:tabstop=4:shiftwidth=4
 
@@ -12,7 +12,7 @@ import psutil
 # Reason: disable pylint import-error because our libs aren't loaded on jenkins.
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 
 def parse_args():
     """ parse the args from the cli """
@@ -63,9 +63,9 @@ def main():
                                                                                    argz.conn_status
                                                                                   )
 
-    zgs = ZaggSender(debug=argz.debug)
-    zgs.add_zabbix_keys({'{0}'.format(argz.zabbix_key) : conn_count})
-    zgs.send_metrics()
+    ms = MetricSender(debug=argz.debug)
+    ms.add_metric({'{0}'.format(argz.zabbix_key) : conn_count})
+    ms.send_metrics()
 
 if __name__ == '__main__':
     main()
