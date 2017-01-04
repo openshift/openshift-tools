@@ -169,6 +169,8 @@ OpenShift Tools PCP Monitoring Scripts
 /usr/bin/cron-send-disk-metrics
 /usr/bin/cron-send-network-metrics
 /usr/bin/ops-zagg-pcp-client
+/usr/bin/ops-metric-client
+/usr/bin/ops-metric-pcp-client
 
 
 # ----------------------------------------------------------------------------------
@@ -293,6 +295,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-metrics-checks
 /usr/bin/cron-send-os-router-status
 /usr/bin/cron-send-logging-checks
+/usr/bin/cron-send-elb-status
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
