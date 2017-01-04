@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.8
+Version:       0.1.9
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -373,6 +373,25 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Wed Jan 04 2017 Joel Diaz <jdiaz@redhat.com> 0.1.9-1
+- one one try to add -s to make curl less verbose (dyocum@redhat.com)
+- Change send-pcp-ping script to use ops-metric-client (zgalor@redhat.com)
+- Change check sending scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change cloud scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change ops-runner and some cron scripts to Use MetricSender instead of
+  ZaggSender (zgalor@redhat.com)
+- Change stats scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change metrics scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change os scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change docker scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change scripts to use MetricSender instead of ZaggSender (zgalor@redhat.com)
+
 * Tue Jan 03 2017 Marek Mahut <mmahut@redhat.com> 0.1.8-1
 - Adding cron-send-elb-status.py to monitoring (mmahut@redhat.com)
 - added ca-central-1 (mwoodson@redhat.com)
