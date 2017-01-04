@@ -24,7 +24,7 @@
 #pylint: disable=import-error
 
 import argparse
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 import json
 from Queue import Queue
 import re
@@ -67,11 +67,10 @@ class OpenshiftEventConsumer(object):
                 print "Got events: " + str(event_counts)
 
             if not self.args.dry_run:
-                zagg_sender = ZaggSender(verbose=self.args.verbose,
-                                         debug=self.args.debug)
+                metric_sender = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
                 for event, count in event_counts.iteritems():
-                    zagg_sender.add_zabbix_keys({event: count})
-                zagg_sender.send_metrics()
+                    metric_sender.add_metric({event: count})
+                metric_sender.send_metrics()
 
             time.sleep(self.args.reporting_period)
 

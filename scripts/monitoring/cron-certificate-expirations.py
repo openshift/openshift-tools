@@ -15,7 +15,8 @@ from stat import S_ISDIR, S_ISREG
 # Reason: disable pylint import-error because our libs aren't loaded on jenkins.
 # Status: temporary until we start testing in a container where our stuff is ins talled.
 # pylint: disable=import-error
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
+
 
 
 CERT_DISC_KEY = 'disc.certificate.expiration'
@@ -30,7 +31,7 @@ class CertificateReporting(object):
         self.args = None
         self.current_date = datetime.datetime.today()
         self.parse_args()
-        self.zsend = ZaggSender(debug=self.args.debug)
+        self.msend = MetricSender(debug=self.args.debug)
 
     def dprint(self, msg):
         ''' debug printer '''
@@ -75,20 +76,19 @@ class CertificateReporting(object):
             elif S_ISREG(mode):
                 days = self.days_to_expiration(cert)
                 self.dprint("{} in {} days".format(cert, days))
-                self.add_to_zabbix(cert, days)
+                self.add_metrics(cert, days)
             else:
                 self.dprint("not a file. not a directory. skipping.")
 
-        # now push out all queued up item(s) to zabbix
-        self.zsend.send_metrics()
+        # now push out all queued up item(s) to metric servers
+        self.msend.send_metrics()
 
-    def add_to_zabbix(self, certificate, days_to_expiration):
+    def add_metrics(self, certificate, days_to_expiration):
         ''' queue up item for submission to zabbix '''
 
-        self.zsend.add_zabbix_dynamic_item(CERT_DISC_KEY, CERT_DISC_MACRO,
-                                           [certificate])
+        self.msend.add_dynamic_metric(CERT_DISC_KEY, CERT_DISC_MACRO, [certificate])
         zbx_key = "{}[{}]".format(CERT_DISC_KEY, certificate)
-        self.zsend.add_zabbix_keys({zbx_key: days_to_expiration})
+        self.msend.add_metric({zbx_key: days_to_expiration})
 
     def all_certs_in_dir(self, directory):
         ''' recursively go through all *.crt files in 'directory' '''
@@ -99,7 +99,7 @@ class CertificateReporting(object):
                     full_path = os.path.join(root, filename)
                     days = self.days_to_expiration(full_path)
                     self.dprint("{} in {} days".format(full_path, days))
-                    self.add_to_zabbix(full_path, days)
+                    self.add_metrics(full_path, days)
 
 if __name__ == '__main__':
     CertificateReporting().process_certificates()
