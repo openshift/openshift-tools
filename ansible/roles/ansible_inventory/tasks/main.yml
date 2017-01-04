@@ -5,7 +5,7 @@
     state: present
   with_items:
   - openshift-tools-scripts-inventory-clients
-  - openshift-tools-scripts-monitoring-zagg-client
+  - openshift-tools-scripts-monitoring
 
 - file:
     state: directory
