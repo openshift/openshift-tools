@@ -20,7 +20,7 @@ import datetime
 # libs might exist
 # pylint: disable=import-error
 from openshift_tools.monitoring.ocutil import OCUtil
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 
 import logging
 logging.basicConfig(
@@ -41,8 +41,8 @@ def send_zagg_data(keep_time):
     logger.debug('send_zagg_data()')
 
     zgs_time = time.time()
-    zgs = ZaggSender()
-    zgs.add_zabbix_keys({'openshift.master.project.terminating.time': keep_time})
+    zgs = MetricSender()
+    zgs.add_metric({'openshift.master.project.terminating.time': keep_time})
 
     try:
         zgs.send_metrics()

@@ -26,7 +26,7 @@ import argparse
 import base64
 from openshift_tools.monitoring.gcputil import GcloudUtil
 from openshift_tools.monitoring.ocutil import OCUtil
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 import sys
 import yaml
 
@@ -104,15 +104,15 @@ def main():
     if args.test:
         print "Test-only. Received results: " + str(bucket_stats)
     else:
-        zgs = ZaggSender(verbose=args.debug)
-        zgs.add_zabbix_dynamic_item(discovery_key, discovery_macro, bucket_list)
+        mts = MetricSender(verbose=args.debug)
+        mts.add_dynamic_metric(discovery_key, discovery_macro, bucket_list)
         for bucket in bucket_stats.keys():
             zab_key = "{}[{}]".format(prototype_bucket_size, bucket)
-            zgs.add_zabbix_keys({zab_key: int(round(bucket_stats[bucket]["size"]))})
+            mts.add_metric({zab_key: int(round(bucket_stats[bucket]["size"]))})
 
             zab_key = "{}[{}]".format(prototype_bucket_count, bucket)
-            zgs.add_zabbix_keys({zab_key: bucket_stats[bucket]["objects"]})
-        zgs.send_metrics()
+            mts.add_metric({zab_key: bucket_stats[bucket]["objects"]})
+        mts.send_metrics()
 
 if __name__ == '__main__':
     main()
