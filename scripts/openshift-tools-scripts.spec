@@ -54,7 +54,6 @@ cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
 cp -p monitoring/cron-send-project-stats.py %{buildroot}/usr/bin/cron-send-project-stats
 cp -p monitoring/cron-openshift-pruner.py %{buildroot}/usr/bin/cron-openshift-pruner
-cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
 cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
 cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
 cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
@@ -74,6 +73,7 @@ cp -p monitoring/cron-send-os-router-status.py %{buildroot}/usr/bin/cron-send-os
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
+cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
 cp -p monitoring/zagg_server.yaml.example %{buildroot}/etc/openshift_tools/zagg_server.yaml
 cp -p remote-heal/remote_healer.conf.example %{buildroot}/etc/openshift_tools/remote_healer.conf
 
@@ -155,7 +155,7 @@ OpenShift Tools Monitoring Autoheal Scripts
 # ----------------------------------------------------------------------------------
 %package monitoring-pcp
 Summary:       OpenShift Tools PCP Monitoring Scripts
-Requires:      python2,openshift-tools-scripts-monitoring-zagg-client,python-openshift-tools-monitoring-zagg,python-openshift-tools-monitoring-pcp,python-docker-py
+Requires:      python2,openshift-tools-scripts-monitoring,python-openshift-tools-monitoring-zagg,python-openshift-tools-monitoring-pcp,python-docker-py
 BuildRequires: python2-devel
 BuildArch:     noarch
 
@@ -169,6 +169,7 @@ OpenShift Tools PCP Monitoring Scripts
 /usr/bin/cron-send-disk-metrics
 /usr/bin/cron-send-network-metrics
 /usr/bin/ops-zagg-pcp-client
+/usr/bin/ops-metric-pcp-client
 
 
 # ----------------------------------------------------------------------------------
@@ -192,22 +193,24 @@ OpenShift Tools Docker Monitoring Scripts
 
 
 # ----------------------------------------------------------------------------------
-# openshift-tools-scripts-monitoring-zagg-client subpackage
+# openshift-tools-scripts-monitoring subpackage
 # ----------------------------------------------------------------------------------
-%package monitoring-zagg-client
-Summary:       OpenShift Tools Zagg Client Monitoring Scripts
+%package monitoring
+Summary:       OpenShift Tools Monitoring Client Scripts
 Requires:      python2,python-openshift-tools-monitoring-zagg
 BuildRequires: python2-devel
 BuildArch:     noarch
 
-%description monitoring-zagg-client
-OpenShift Tools Zagg Client Monitoring Scripts
+%description monitoring
+OpenShift Tools Monitoring Client Scripts
 
-%files monitoring-zagg-client
+%files monitoring
 /usr/bin/cron-send-process-count
 /usr/bin/ops-runner
 /usr/bin/ops-zagg-client
+/usr/bin/ops-metric-client
 %config(noreplace)/etc/openshift_tools/zagg_client.yaml
+%config(noreplace)/etc/openshift_tools/metric_sender.yaml
 
 
 # ----------------------------------------------------------------------------------
