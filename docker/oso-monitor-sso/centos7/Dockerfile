@@ -21,7 +21,7 @@ RUN yum -y install python-pip \
         python-openshift-tools-web \
         python-beautifulsoup4 \
         openshift-tools-scripts \
-        openshift-tools-scripts-monitoring-zagg-client \
+        openshift-tools-scripts-monitoring \
         openshift-tools-scripts-iam-tools && \
     yum clean all
 
