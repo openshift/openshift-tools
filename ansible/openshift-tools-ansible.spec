@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.32
+Version:        0.0.33
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,19 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Wed Jan 04 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.33-1
+- rename openshift-tools-scripts-monitoring-zagg-client (jdiaz@redhat.com)
+- Openshift Installer no longer supports 'online' deployment type
+  (mwoodson@redhat.com)
+- Adding cron-send-elb-status.py to monitoring (mmahut@redhat.com)
+- AMI prep role. (kwoodson@redhat.com)
+- added ca-central-1 (mwoodson@redhat.com)
+- Don't use oc import-image. It breaks some tags. (sedgar@redhat.com)
+- Remove sorting as it breaks order of arrays. (kwoodson@redhat.com)
+- Undo addition of broken parameter to SSO monitoring (joesmith@redhat.com)
+- Fixing the wrapper that reports inventory to zabbix. (kwoodson@redhat.com)
+- oc_image module implements image-import (ihorvath@redhat.com)
+
 * Tue Dec 13 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.32-1
 - Skip accounts that do not have creds. (kwoodson@redhat.com)
 - add missing url field (jdiaz@redhat.com)
