@@ -5,7 +5,7 @@
     name: "{{ item }}"
     state: latest
   with_items:
-    - openshift-tools-scripts-monitoring-zagg-client
+    - openshift-tools-scripts-monitoring
     - python-openshift-tools-monitoring-zagg
     - python-openshift-tools-monitoring-zabbix
 
