@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.98
+Version:       0.0.99
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -297,6 +297,10 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Wed Jan 04 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.99-1
+- Fix hawk_client to properly send unicode string metrics (zgalor@redhat.com)
+- moved to openshift_tools (dyocum@redhat.com)
+
 * Thu Dec 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.98-1
 - Add tags to metric sender (zgalor@redhat.com)
 
