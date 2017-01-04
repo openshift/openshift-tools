@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.9
+Version:       0.1.10
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -374,6 +374,9 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Wed Jan 04 2017 Joel Diaz <jdiaz@redhat.com> 0.1.10-1
+- rename openshift-tools-scripts-monitoring-zagg-client (jdiaz@redhat.com)
+
 * Wed Jan 04 2017 Joel Diaz <jdiaz@redhat.com> 0.1.9-1
 - one one try to add -s to make curl less verbose (dyocum@redhat.com)
 - Change send-pcp-ping script to use ops-metric-client (zgalor@redhat.com)
