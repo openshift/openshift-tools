@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.11
+Version:       0.1.12
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -370,6 +370,9 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Fri Jan 06 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.12-1
+- catch missing executable file exception (jdiaz@redhat.com)
+
 * Thu Jan 05 2017 Drew Anderson <dranders@redhat.com> 0.1.11-1
 - send metrics always (drewandersonnz@users.noreply.github.com)
 
