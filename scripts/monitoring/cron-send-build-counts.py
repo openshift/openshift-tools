@@ -95,7 +95,6 @@ def count_builds():
 
 def main():
     """ setup / test / teardown with exceptions to ensure teardown """
-    exception = None
 
     logger.debug("main()")
 
@@ -106,12 +105,7 @@ def main():
 
     builds = count_builds()
 
-    ############# send data to zabbix #############
     send_metrics(builds)
-
-    ############# raise any exceptions discovered #############
-    if exception:
-        raise exception
 
 if __name__ == "__main__":
     main()
