@@ -129,6 +129,8 @@
     template_name: logging-deployer-template
     create: True
     reconcile: False
+    params:
+      IMAGE_PREFIX: registry.ops.openshift.com/openshift3/
   register: processout
   run_once: true
 - debug: var=processout
