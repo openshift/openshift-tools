@@ -6,9 +6,6 @@
 # script must try to clean itself up
 # pylint: disable=broad-except
 
-# main() function has a lot of setup and error handling
-# pylint: disable=too-many-statements
-
 # main() function raises a captured exception if there is one
 # pylint: disable=raising-bad-type
 
@@ -76,16 +73,20 @@ def count_builds():
 
     get_builds = "get builds --all-namespaces -o jsonpath='{range .items[*]}{.status.phase}{\"\\n\"}{end}'"
     try:
-        builds_list = runOCcmd(get_builds)
+        builds_list = runOCcmd(get_builds).split()
         logger.debug(builds_list)
     except Exception:
         pass # don't want exception if builds not found
 
-    for build_state in builds_list.split():
+    for build_state in builds_list:
         build_state = build_state.lower()
         logger.debug(build_state)
         if build_state in valid_build_states:
             build_counts[build_state] += 1
+        else:
+            build_counts["unknown"] += 1
+
+    build_counts["total"] = len(builds_list)
 
     logger.info(build_counts)
     logger.info("Count generated in %s seconds", str(time.time() - count_build_time))
