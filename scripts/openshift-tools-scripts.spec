@@ -71,7 +71,7 @@ cp -p monitoring/delete-stuck-projects.sh %{buildroot}/usr/bin/delete-stuck-proj
 cp -p monitoring/cron-send-saml-status.py %{buildroot}/usr/bin/cron-send-saml-status
 cp -p monitoring/cron-certificate-expirations.py %{buildroot}/usr/bin/cron-certificate-expirations
 cp -p monitoring/cron-send-os-router-status.py %{buildroot}/usr/bin/cron-send-os-router-status
-cp -p monitoring/cron-send-build-count.sh %{buildroot}/usr/bin/cron-send-build-count
+cp -p monitoring/cron-send-build-counts.py %{buildroot}/usr/bin/cron-send-build-counts
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -294,7 +294,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-metrics-checks
 /usr/bin/cron-send-os-router-status
 /usr/bin/cron-send-logging-checks
-/usr/bin/cron-send-build-count
+/usr/bin/cron-send-build-counts
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
