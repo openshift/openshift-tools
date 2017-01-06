@@ -1,14 +1,6 @@
 #!/usr/bin/env python
 """ Build status check for v3 """
 
-# We just want to see any exception that happens
-# don't want the script to die under any cicumstances
-# script must try to clean itself up
-# pylint: disable=broad-except
-
-# main() function raises a captured exception if there is one
-# pylint: disable=raising-bad-type
-
 # Adding the ignore because it does not like the naming of the script
 # to be different than the class name
 # pylint: disable=invalid-name
@@ -72,11 +64,8 @@ def count_builds():
         build_counts[build_state] = 0
 
     get_builds = "get builds --all-namespaces -o jsonpath='{range .items[*]}{.status.phase}{\"\\n\"}{end}'"
-    try:
-        builds_list = runOCcmd(get_builds).split()
-        logger.debug(builds_list)
-    except Exception:
-        pass # don't want exception if builds not found
+    builds_list = runOCcmd(get_builds).split()
+    logger.debug(builds_list)
 
     for build_state in builds_list:
         build_state = build_state.lower()
@@ -94,7 +83,7 @@ def count_builds():
     return build_counts
 
 def main():
-    """ setup / test / teardown with exceptions to ensure teardown """
+    """ get count of build types, send results """
 
     logger.debug("main()")
 
