@@ -230,8 +230,14 @@ class OpsRunner(object):
 
     def run_cmd_with_output(self, cmd, log=True):
         """ Runs a command and optionally logs it's output """
-        process = Popen(cmd, stdout=PIPE, stderr=STDOUT,
-                        universal_newlines=True)
+        try:
+            process = Popen(cmd, stdout=PIPE, stderr=STDOUT,
+                            universal_newlines=True)
+        except OSError as e:
+            self.verbose_print("Error while trying to run: {}".format(cmd))
+            self.verbose_print(e)
+            # return non-zero exit
+            return 1
 
         while True:
             out = process.stdout.read(1)
