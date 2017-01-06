@@ -69,14 +69,19 @@ def count_builds():
         build_counts["%s" % build_state] = 0
 
     get_builds = "get builds --all-namespaces -o jsonpath='{range .items[*]}{.status.phase}{\"\\n\"}{end}'"
+
     builds_list = runOCcmd(get_builds).split()
     logger.debug(builds_list)
 
-    for build_item in builds_yaml["items"]:
-        build_state = build_item["status"]["phase"].lower()
+    for build_state in builds_list:
+        build_state = build_state.lower()
         logger.debug(build_state)
         if build_state in valid_build_states:
-            build_counts["%s" % build_state] += 1
+            build_counts[build_state] += 1
+        else:
+            build_counts["unknown"] += 1
+
+    build_counts["total"] = len(builds_list)
 
     logger.info(build_counts)
     logger.info("Count generated in %s seconds", str(time.time() - count_build_time))
