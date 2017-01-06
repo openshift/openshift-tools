@@ -84,7 +84,7 @@ def send_metrics(build_ran, create_app, http_code, run_time):
         ms.add_metric({'openshift.master.app.create.code': http_code})
         ms.add_metric({'openshift.master.app.create.time': run_time})
 
-        ms.send_metrics()
+    ms.send_metrics()
     logger.info("Data sent to Zagg in %s seconds", str(time.time() - ms_time))
 
 def writeTmpFile(data, filename=None, outdir="/tmp"):
