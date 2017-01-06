@@ -100,17 +100,7 @@ def main():
         logger.exception("error during test()")
         exception = e
 
-    ############# send data to zabbix #############
-    try:
-        send_metrics(builds)
-
-    except Exception as e:
-        logger.exception("error sending zabbix data")
-        exception = e
-
-    ############# raise any exceptions discovered #############
-    if exception:
-        raise exception
+    send_metrics(builds)
 
 if __name__ == "__main__":
     main()
