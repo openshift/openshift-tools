@@ -42,11 +42,6 @@ def runOCcmd(cmd, base_cmd='oc'):
     logger.info(base_cmd + " " + cmd)
     return ocutil.run_user_cmd(cmd, base_cmd=base_cmd, )
 
-def runOCcmd_yaml(cmd, base_cmd='oc'):
-    """ log commands through ocutil """
-    logger.info(base_cmd + " " + cmd)
-    return ocutil.run_user_cmd_yaml(cmd, base_cmd=base_cmd, )
-
 def parse_args():
     """ parse the args from the cli """
     logger.debug("parse_args()")
@@ -77,19 +72,20 @@ def count_builds():
     count_build_time = time.time()
 
     for build_state in valid_build_states:
-        build_counts["%s" % build_state] = 0
+        build_counts[build_state] = 0
 
+    get_builds = "get builds --all-namespaces -o jsonpath='{range .items[*]}{.status.phase}{\"\\n\"}{end}'"
     try:
-        builds_yaml = runOCcmd_yaml("get builds --all-namespaces")
-        logger.debug(builds_yaml)
+        builds_list = runOCcmd(get_builds)
+        logger.debug(builds_list)
     except Exception:
         pass # don't want exception if builds not found
 
-    for build_item in builds_yaml["items"]:
-        build_state = build_item["status"]["phase"].lower()
+    for build_state in builds_list.split():
+        build_state = build_state.lower()
         logger.debug(build_state)
         if build_state in valid_build_states:
-            build_counts["%s" % build_state] += 1
+            build_counts[build_state] += 1
 
     logger.info(build_counts)
     logger.info("Count generated in %s seconds", str(time.time() - count_build_time))
@@ -107,20 +103,10 @@ def main():
     if args.verbose:
         logger.setLevel(logging.DEBUG)
 
-    try:
-        builds = count_builds()
-
-    except Exception as e:
-        logger.exception("error during test()")
-        exception = e
+    builds = count_builds()
 
     ############# send data to zabbix #############
-    try:
-        send_metrics(builds)
-
-    except Exception as e:
-        logger.exception("error sending zabbix data")
-        exception = e
+    send_metrics(builds)
 
     ############# raise any exceptions discovered #############
     if exception:
