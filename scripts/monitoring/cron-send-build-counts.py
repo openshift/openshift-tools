@@ -31,11 +31,6 @@ def runOCcmd(cmd, base_cmd='oc'):
     logger.info(base_cmd + " " + cmd)
     return ocutil.run_user_cmd(cmd, base_cmd=base_cmd, )
 
-def runOCcmd_yaml(cmd, base_cmd='oc'):
-    """ log commands through ocutil """
-    logger.info(base_cmd + " " + cmd)
-    return ocutil.run_user_cmd_yaml(cmd, base_cmd=base_cmd, )
-
 def parse_args():
     """ parse the args from the cli """
     logger.debug("parse_args()")
@@ -66,7 +61,7 @@ def count_builds():
     count_build_time = time.time()
 
     for build_state in valid_build_states:
-        build_counts["%s" % build_state] = 0
+        build_counts[build_state] = 0
 
     get_builds = "get builds --all-namespaces -o jsonpath='{range .items[*]}{.status.phase}{\"\\n\"}{end}'"
 
@@ -98,12 +93,7 @@ def main():
     if args.verbose:
         logger.setLevel(logging.DEBUG)
 
-    try:
-        builds = count_builds()
-
-    except Exception as e:
-        logger.exception("error during test()")
-        exception = e
+    builds = count_builds()
 
     send_metrics(builds)
 
