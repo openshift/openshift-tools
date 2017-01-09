@@ -296,6 +296,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-metrics-checks
 /usr/bin/cron-send-os-router-status
 /usr/bin/cron-send-logging-checks
+/usr/bin/cron-send-elb-status
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
