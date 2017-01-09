@@ -193,7 +193,7 @@ host_monitoring_cron:
 # This is needed every minute for the performance team
 - name: run pcp checks every minute
   minute: "*"
-  job: ops-runner -f -s 15 -n ozpc.send.pcp /usr/bin/ops-zagg-pcp-client
+  job: ops-runner -f -s 15 -n ozpc.send.pcp /usr/bin/ops-metric-pcp-client
 
 # This is needed every minute for the performance team
 - name: run pcp sampler every minute
