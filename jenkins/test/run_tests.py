@@ -142,7 +142,7 @@ def submit_pr_status_update(state, text, remote_sha):
     status_url = "%s/repos/%s/%s/statuses/%s" % (GITHUB_API_URL, REPO_USER, REPO, remote_sha)
     response = requests.post(status_url, json=payload, auth=(github_username, oauth_token))
     # Raise an error if the request fails for some reason
-    response.raise_for_Status()
+    response.raise_for_status()
 
 def get_github_credentials():
     """ Get credentials from mounted secret volume """
