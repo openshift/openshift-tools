@@ -14,7 +14,7 @@
 
 from docker import AutoVersionClient
 from docker.errors import APIError
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 
 ZBX_KEY = "docker.container.existing.dns.resolution.failed"
 CMD_NOT_FOUND = -1
@@ -51,10 +51,10 @@ if __name__ == "__main__":
         # Extra whitespace between output for each container
         print
 
-    zs = ZaggSender()
-    zs.add_zabbix_keys({ZBX_KEY: bad_dns_count})
+    ms = MetricSender()
+    ms.add_metric({ZBX_KEY: bad_dns_count})
 
     print "Sending these metrics:"
     print ZBX_KEY + ": " + str(bad_dns_count)
-    zs.send_metrics()
+    ms.send_metrics()
     print "\nDone.\n"

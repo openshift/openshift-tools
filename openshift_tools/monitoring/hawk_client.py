@@ -76,7 +76,7 @@ class HawkClient(object):
             _id = metric.host
             key = '{0}/{1}/{2}'.format(_type, _id, metric.key)
 
-            if type(value) == str:
+            if isinstance(value, basestring):
                 # Use MetricType.String for string metrics data
                 metric_type = MetricType.String
             else:

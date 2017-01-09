@@ -14,7 +14,7 @@ import time
 # Reason: disable pylint import-error because our libs aren't loaded on jenkins.
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 
 ZABBIX_KEY = "openshift.haproxy.close-wait"
 
@@ -103,9 +103,9 @@ class HAProxy(object):
 
         print "Stopped {} haproxy processes".format(kill_count)
 
-        zgs = ZaggSender()
-        zgs.add_zabbix_keys({ZABBIX_KEY : kill_count})
-        zgs.send_metrics()
+        ms = MetricSender()
+        ms.add_metric({ZABBIX_KEY : kill_count})
+        ms.send_metrics()
 
 if __name__ == '__main__':
     hap = HAProxy()

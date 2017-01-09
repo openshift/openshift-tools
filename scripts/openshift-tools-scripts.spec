@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.8
+Version:       0.1.15
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -54,7 +54,6 @@ cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
 cp -p monitoring/cron-send-project-stats.py %{buildroot}/usr/bin/cron-send-project-stats
 cp -p monitoring/cron-openshift-pruner.py %{buildroot}/usr/bin/cron-openshift-pruner
-cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
 cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
 cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
 cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
@@ -72,9 +71,11 @@ cp -p monitoring/cron-send-saml-status.py %{buildroot}/usr/bin/cron-send-saml-st
 cp -p monitoring/cron-certificate-expirations.py %{buildroot}/usr/bin/cron-certificate-expirations
 cp -p monitoring/cron-send-os-router-status.py %{buildroot}/usr/bin/cron-send-os-router-status
 cp -p monitoring/cron-send-build-counts.py %{buildroot}/usr/bin/cron-send-build-counts
+cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
+cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
 cp -p monitoring/zagg_server.yaml.example %{buildroot}/etc/openshift_tools/zagg_server.yaml
 cp -p remote-heal/remote_healer.conf.example %{buildroot}/etc/openshift_tools/remote_healer.conf
 
@@ -156,7 +157,7 @@ OpenShift Tools Monitoring Autoheal Scripts
 # ----------------------------------------------------------------------------------
 %package monitoring-pcp
 Summary:       OpenShift Tools PCP Monitoring Scripts
-Requires:      python2,openshift-tools-scripts-monitoring-zagg-client,python-openshift-tools-monitoring-zagg,python-openshift-tools-monitoring-pcp,python-docker-py
+Requires:      python2,openshift-tools-scripts-monitoring,python-openshift-tools-monitoring-zagg,python-openshift-tools-monitoring-pcp,python-docker-py
 BuildRequires: python2-devel
 BuildArch:     noarch
 
@@ -170,6 +171,7 @@ OpenShift Tools PCP Monitoring Scripts
 /usr/bin/cron-send-disk-metrics
 /usr/bin/cron-send-network-metrics
 /usr/bin/ops-zagg-pcp-client
+/usr/bin/ops-metric-pcp-client
 
 
 # ----------------------------------------------------------------------------------
@@ -193,22 +195,24 @@ OpenShift Tools Docker Monitoring Scripts
 
 
 # ----------------------------------------------------------------------------------
-# openshift-tools-scripts-monitoring-zagg-client subpackage
+# openshift-tools-scripts-monitoring subpackage
 # ----------------------------------------------------------------------------------
-%package monitoring-zagg-client
-Summary:       OpenShift Tools Zagg Client Monitoring Scripts
+%package monitoring
+Summary:       OpenShift Tools Monitoring Client Scripts
 Requires:      python2,python-openshift-tools-monitoring-zagg
 BuildRequires: python2-devel
 BuildArch:     noarch
 
-%description monitoring-zagg-client
-OpenShift Tools Zagg Client Monitoring Scripts
+%description monitoring
+OpenShift Tools Monitoring Client Scripts
 
-%files monitoring-zagg-client
+%files monitoring
 /usr/bin/cron-send-process-count
 /usr/bin/ops-runner
 /usr/bin/ops-zagg-client
+/usr/bin/ops-metric-client
 %config(noreplace)/etc/openshift_tools/zagg_client.yaml
+%config(noreplace)/etc/openshift_tools/metric_sender.yaml
 
 
 # ----------------------------------------------------------------------------------
@@ -295,6 +299,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-os-router-status
 /usr/bin/cron-send-logging-checks
 /usr/bin/cron-send-build-counts
+/usr/bin/cron-send-elb-status
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -369,6 +374,43 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Mon Jan 09 2017 Marek Mahut <mmahut@redhat.com> 0.1.15-1
+- Forgot to copy the script during the build (mmahut@redhat.com)
+
+* Mon Jan 09 2017 Marek Mahut <mmahut@redhat.com> 0.1.14-1
+- 
+
+* Mon Jan 09 2017 Marek Mahut <mmahut@redhat.com> 0.1.13-1
+- Adding cron-send-elb-status script (mmahut@redhat.com)
+
+* Fri Jan 06 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.12-1
+- catch missing executable file exception (jdiaz@redhat.com)
+
+* Thu Jan 05 2017 Drew Anderson <dranders@redhat.com> 0.1.11-1
+- send metrics always (drewandersonnz@users.noreply.github.com)
+
+* Wed Jan 04 2017 Joel Diaz <jdiaz@redhat.com> 0.1.10-1
+- rename openshift-tools-scripts-monitoring-zagg-client (jdiaz@redhat.com)
+
+* Wed Jan 04 2017 Joel Diaz <jdiaz@redhat.com> 0.1.9-1
+- one one try to add -s to make curl less verbose (dyocum@redhat.com)
+- Change send-pcp-ping script to use ops-metric-client (zgalor@redhat.com)
+- Change check sending scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change cloud scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change ops-runner and some cron scripts to Use MetricSender instead of
+  ZaggSender (zgalor@redhat.com)
+- Change stats scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change metrics scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change os scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change docker scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change scripts to use MetricSender instead of ZaggSender (zgalor@redhat.com)
+
 * Tue Jan 03 2017 Marek Mahut <mmahut@redhat.com> 0.1.8-1
 - Adding cron-send-elb-status.py to monitoring (mmahut@redhat.com)
 - added ca-central-1 (mwoodson@redhat.com)

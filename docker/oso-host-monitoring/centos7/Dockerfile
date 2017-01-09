@@ -58,7 +58,6 @@ RUN yum clean metadata && \
         openshift-tools-scripts-cloud-gcp \
         openshift-tools-scripts-monitoring-pcp \
         openshift-tools-scripts-monitoring-docker \
-        openshift-tools-scripts-monitoring-zagg-client \
         openshift-tools-scripts-monitoring-aws \
         openshift-tools-scripts-monitoring-gcp \
         openshift-tools-scripts-monitoring-openshift \
