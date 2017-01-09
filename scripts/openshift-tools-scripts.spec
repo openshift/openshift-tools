@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.15
+Version:       0.1.16
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -374,6 +374,14 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Mon Jan 09 2017 Sten Turpin <sten@redhat.com> 0.1.16-1
+- use jsonpath to avoid parsing yaml, misc cleanup (sten@redhat.com)
+- add count of unknown and total states (sten@redhat.com)
+- more cleanup (sten@redhat.com)
+- merge changes to monitor-build process from stg branch (sten@redhat.com)
+- line up count vs counts, replace sh with py (sten@redhat.com)
+- add build count script, cronjob, zitem, ztrigger (sten@redhat.com)
+
 * Mon Jan 09 2017 Marek Mahut <mmahut@redhat.com> 0.1.15-1
 - Forgot to copy the script during the build (mmahut@redhat.com)
 
