@@ -67,6 +67,10 @@ def count_builds():
     builds_list = runOCcmd(get_builds).split()
     logger.debug(builds_list)
 
+    builds_list = runOCcmd(get_builds).split()
+    logger.debug(builds_list)
+
+>>>>>>> monitor-build-count
     for build_state in builds_list:
         build_state = build_state.lower()
         logger.debug(build_state)
