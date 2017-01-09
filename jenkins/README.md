@@ -16,25 +16,27 @@ The script will then submit a comment to the pull request indiciating whether al
 - Access to configure github webhooks for the github repository
 
 ### Configuration
-1. In an openshift environment, deploy a persistent jenkins instance using the [jenkins-persistent template]( https://raw.githubusercontent.com/openshift/origin/master/examples/jenkins/jenkins-persistent-template.json)
+1. In an openshift environment, deploy a persistent jenkins instance using the [jenkins-persistent template]( https://raw.githubusercontent.com/openshift/origin/master/examples/jenkins/jenkins-persistent-template.json). Pass the parameter `ENABLE_OAUTH=false` to disable OAUTH and set the default username and password to admin:password
 
 2. Deploy the builds and secrets in the openshift environment using the `openshift-tools-pr-automation-template.json` in this directory. A username and oauth token for a github user will be required.
 
-3. Log into the jenkins instance using your openshift credentials and navigate to 'Manage Jenkins' > 'Configure Global Security'. Under 'Access Control' > 'Authorization', select the radio button 'Logged-in users can do anything'. Ensure the 'Allow anonymous read access' box remains checked. Save the changes.
+3. Log into the jenkins instance using the default credentials. Navigate to 'Manage Jenkins' > 'Manage Users' and click the 'config' icon for the admin user. Change the admin users password to something much more secure.
 
-4. Due to a [bug in jenkins](https://issues.jenkins-ci.org/browse/JENKINS-28466), it is necessary to navigate to 'Manage Jenkins' > 'Configure System' and hit 'Save'. If this is not done, certain environment variables, such as `BUILD_URL` will not be available to jenkins pipeline builds.
+4. In jenkins, navigate to 'Manage Jenkins' > 'Configure Global Security'. Under 'Access Control' > 'Authorization', the radio button 'Matrix-based security' should be checked by default. In the matrix, select 'Read' access for the Anonymous group under 'Job'. Additionally, select 'Build' for the Anonymous group under 'Job'. This will allow github to post to jenkins via webhooks.
 
-5. In Jenkins, create a new jenkins pipeline job. Configure the following:
+5. Due to a [bug in jenkins](https://issues.jenkins-ci.org/browse/JENKINS-28466), it is necessary to navigate to 'Manage Jenkins' > 'Configure System' and hit 'Save'. If this is not done, certain environment variables, such as `BUILD_URL` will not be available to jenkins pipeline builds.
+
+6. In Jenkins, create a new jenkins pipeline job. Configure the following:
   1. Check the 'This project is parameterized' box and add a 'String Parameter' with the Name 'payload' (case-sensitive). Leave all other boxes empty.
   2. Under 'Build Triggers', check the 'Trigger builds remotely' checkbox and specify any string to use as the authorization token. This same token will be used later to configure the github webhook.
   3. Under 'Pipeline', select 'Pipeline script from SCM' as the pipeline definition. Choose 'Git' as the SCM and specify `https://github.com/openshift/openshift-tools` as the repository url. Leave the 'Branches to build' blank. For the 'Script path', set to 'jenkins/Jenkinsfile'
   4. Save the job
     
-6. In github, navigate to the settings for openshift-tools with administrator permissions. Under webhooks, create a new webhook and configure the following:
+7. In github, navigate to the settings for openshift-tools with administrator permissions. Under webhooks, create a new webhook and configure the following:
   1. The Payload URL will be the url of the jenkins build trigger configured earlier. Here is an example where 'someuniquestring' is specified as the build trigger token: `https://jenkins-exampleproject.example.com/job/job_name/buildWithParameters?token=someuniquestring`
   2. Set the 'Content type' to `application/x-www-form-urlencoded`. This enabled the webhook payload to be sent as a parameter to the jenkins job.
   3. Under "Which events would you like to trigger", select only 'Pull request'.
   4. Check the 'Active' box to ensure the github webhook is active
   5. Hit 'Update webhook' to save the changes.
 
-7. Ensure that the github user used to update pull requests has push permissions to the repository. As an adiministrator of the repository, navigate to 'Settings' > 'Collaborators' to invite the user to have push permissions.
+8. Ensure that the github user used to update pull requests has push permissions to the repository. As an adiministrator of the repository, navigate to 'Settings' > 'Collaborators' to invite the user to have 'Write' permissions.

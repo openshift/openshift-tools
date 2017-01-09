@@ -18,7 +18,6 @@ node {
         // These variables must be nullified as they are not serializable
         // See http://stackoverflow.com/questions/37864542/jenkins-pipeline-notserializableexception-groovy-json-internal-lazymap
         slurper = null
-        webhook = null
 
     if (trigger != "") {
         if (trigger == "test") {
@@ -28,10 +27,10 @@ node {
         } else if (trigger == "build") {
             stage "Build RPMS"
                 echo "Starting Build"
-                # TODO this is not yet implemented
+                // TODO this is not yet implemented
 						stage "Deploy Updates"
 								echo "Deploying updated RPMs"
-                # TODO this is not yet implemented
+                // TODO this is not yet implemented
         } else {
             echo "Trigger ${trigger} not recognized"
             currentBuild.result = 'FAILURE'
