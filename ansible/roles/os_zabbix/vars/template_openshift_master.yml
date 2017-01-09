@@ -638,32 +638,38 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
-  - key: builds_running.cancelled
+  - key: openshift.build_state.cancelled
     description: "count of cancelled builds on master"
     value_type: int
     applications:
     - Openshift Master
 
-  - key: builds_running.complete
+  - key: openshift.build_state.complete
     description: "count of complete builds on master"
     value_type: int
     applications:
     - Openshift Master
 
-  - key: builds_running.new
+  - key: openshift.build_state.new
     description: "count of new builds on master"
     value_type: int
     applications:
     - Openshift Master
 
-  - key: builds_running.error
+  - key: openshift.build_state.error
     description: "count of errored builds on master"
     value_type: int
     applications:
     - Openshift Master
 
-  - key: builds_running.failed
+  - key: openshift.build_state.failed
     description: "count of failed builds on master"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: openshift.build_state.unknown
+    description: "count of builds in unknown on master"
     value_type: int
     applications:
     - Openshift Master
@@ -778,7 +784,7 @@ g_template_openshift_master:
     priority: warn
 
   - name: "Too many new builds {HOST.NAME}"
-    expression: "{Template Openshift Master:builds_running.new.avg(#3)}>10"
+    expression: "{Template Openshift Master:openshift.build_state.new.count.avg(#3)}>10"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/build_count_alerts.asciidoc"
     priority: high
 
