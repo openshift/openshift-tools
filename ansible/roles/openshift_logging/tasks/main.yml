@@ -130,7 +130,7 @@
     create: True
     reconcile: False
     params:
-      IMAGE_PREFIX: registry.ops.openshift.com/openshift3/
+      IMAGE_PREFIX: "{{ osalog_image_prefix }}"
   register: processout
   run_once: true
 - debug: var=processout
