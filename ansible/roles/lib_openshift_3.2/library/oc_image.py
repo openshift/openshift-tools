@@ -380,7 +380,7 @@ class Utils(object):
 
                 if not isinstance(user_def[key], list):
                     if debug:
-                        print 'user_def[key] is not a list'
+                        print 'user_def[key] is not a list key=[%s] user_def[key]=%s' % (key, user_def[key])
                     return False
 
                 if len(user_def[key]) != len(value):
@@ -391,9 +391,6 @@ class Utils(object):
                         print "value: %s" % value
                     return False
 
-
-                user_def[key].sort()
-                value.sort()
                 for values in zip(user_def[key], value):
                     if isinstance(values[0], dict) and isinstance(values[1], dict):
                         if debug:
@@ -653,6 +650,9 @@ class Yedit(object):
         tmp_filename = self.filename + '.yedit'
         try:
             with open(tmp_filename, 'w') as yfd:
+                # pylint: disable=no-member
+                if hasattr(self.yaml_dict, 'fa'):
+                    self.yaml_dict.fa.set_block_style()
                 yfd.write(yaml.dump(self.yaml_dict, Dumper=yaml.RoundTripDumper))
         except Exception as err:
             raise YeditException(err.message)
@@ -698,6 +698,9 @@ class Yedit(object):
         try:
             if content_type == 'yaml' and contents:
                 self.yaml_dict = yaml.load(contents, yaml.RoundTripLoader)
+                # pylint: disable=no-member
+                if hasattr(self.yaml_dict, 'fa'):
+                    self.yaml_dict.fa.set_block_style()
             elif content_type == 'json' and contents:
                 self.yaml_dict = json.loads(contents)
         except yaml.YAMLError as err:
@@ -862,8 +865,11 @@ class Yedit(object):
         if entry == value:
             return (False, self.yaml_dict)
 
-        # deepcopy didn't preserve copy comments
-        tmp_copy = yaml.load(yaml.dump(self.yaml_dict, Dumper=yaml.RoundTripDumper), yaml.RoundTripLoader)
+        # deepcopy didn't work
+        tmp_copy = yaml.load(yaml.round_trip_dump(self.yaml_dict, default_flow_style=False), yaml.RoundTripLoader)
+        # pylint: disable=no-member
+        if hasattr(self.yaml_dict, 'fa'):
+            tmp_copy.fa.set_block_style()
         result = Yedit.add_entry(tmp_copy, path, value, self.separator)
         if not result:
             return (False, self.yaml_dict)
@@ -875,8 +881,11 @@ class Yedit(object):
     def create(self, path, value):
         ''' create a yaml file '''
         if not self.file_exists():
-            # deepcopy didn't preserve copy comments
-            tmp_copy = yaml.load(yaml.dump(self.yaml_dict, Dumper=yaml.RoundTripDumper), yaml.RoundTripLoader)
+            # deepcopy didn't work
+            tmp_copy = yaml.load(yaml.round_trip_dump(self.yaml_dict, default_flow_style=False), yaml.RoundTripLoader)
+            # pylint: disable=no-member
+            if hasattr(self.yaml_dict, 'fa'):
+                tmp_copy.fa.set_block_style()
             result = Yedit.add_entry(tmp_copy, path, value, self.separator)
             if result:
                 self.yaml_dict = tmp_copy
