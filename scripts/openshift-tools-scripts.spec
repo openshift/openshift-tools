@@ -70,6 +70,7 @@ cp -p monitoring/delete-stuck-projects.sh %{buildroot}/usr/bin/delete-stuck-proj
 cp -p monitoring/cron-send-saml-status.py %{buildroot}/usr/bin/cron-send-saml-status
 cp -p monitoring/cron-certificate-expirations.py %{buildroot}/usr/bin/cron-certificate-expirations
 cp -p monitoring/cron-send-os-router-status.py %{buildroot}/usr/bin/cron-send-os-router-status
+cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
 cp -p monitoring/cron-send-build-counts.py %{buildroot}/usr/bin/cron-send-build-counts
 
 mkdir -p %{buildroot}/etc/openshift_tools
