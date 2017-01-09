@@ -64,6 +64,7 @@ def count_builds():
         build_counts[build_state] = 0
 
     get_builds = "get builds --all-namespaces -o jsonpath='{range .items[*]}{.status.phase}{\"\\n\"}{end}'"
+
     builds_list = runOCcmd(get_builds).split()
     logger.debug(builds_list)
 
