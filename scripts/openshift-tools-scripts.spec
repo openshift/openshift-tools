@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.16
+Version:       0.1.17
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -376,6 +376,10 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Tue Jan 10 2017 Joel Diaz <jdiaz@redhat.com> 0.1.17-1
+- convert router-stats to use MetricSender (jdiaz@redhat.com)
+- remove unused kubeconfig check (jdiaz@redhat.com)
+
 * Mon Jan 09 2017 Sten Turpin <sten@redhat.com> 0.1.16-1
 - use jsonpath to avoid parsing yaml, misc cleanup (sten@redhat.com)
 - add count of unknown and total states (sten@redhat.com)
