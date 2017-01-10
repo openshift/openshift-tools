@@ -25,7 +25,7 @@
 
 import argparse
 import os
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.monitoring.ocutil import OCUtil
 import urllib2
 
@@ -34,7 +34,7 @@ class OpenshiftRouterChecks(object):
 
     def __init__(self):
         self.args = None
-        self.zgs = None # zagg sender
+        self.metrics = None # metric sender
         self.kubeconfig = None
         self.parse_args()
         self.get_kubeconfig()
@@ -77,13 +77,13 @@ class OpenshiftRouterChecks(object):
 
         # make dynamic items, and queue up the associated data
         router_names = health_report.keys()
-        self.zgs.add_zabbix_dynamic_item(discovery_key, discovery_macro,
-                                         router_names, synthetic=True)
+        self.metrics.add_dynamic_metric(discovery_key, discovery_macro,
+                                        router_names, synthetic=True)
 
         for router_name, health_status in health_report.iteritems():
             zbx_key = "{}[{}]".format(router_health_item, router_name)
-            self.zgs.add_zabbix_keys({zbx_key: int(health_status)},
-                                     synthetic=True)
+            self.metrics.add_metric({zbx_key: int(health_status)},
+                                    synthetic=True)
 
     def running_pod_count_check(self):
         """ return hash of deployment configs containing whether the number
@@ -129,27 +129,27 @@ class OpenshiftRouterChecks(object):
 
         # make dynamic items, and queue up the associated data
         dc_names = replica_results.keys()
-        self.zgs.add_zabbix_dynamic_item(discovery_key, discovery_macro,
-                                         dc_names, synthetic=True)
+        self.metrics.add_dynamic_metric(discovery_key, discovery_macro,
+                                        dc_names, synthetic=True)
 
         for dc_name, replica_status in replica_results.iteritems():
             zbx_key = "{}[{}]".format(dc_status_item, dc_name)
-            self.zgs.add_zabbix_keys({zbx_key: int(replica_status)},
-                                     synthetic=True)
+            self.metrics.add_metric({zbx_key: int(replica_status)},
+                                    synthetic=True)
 
     def run(self):
         """Main function to run the check"""
 
         self.ocutil = OCUtil(config_file=self.kubeconfig, verbose=self.args.verbose)
-        self.zgs = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.metrics = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
 
         self.check_all_router_health()
         self.check_router_replica_count()
 
         if self.args.dry_run:
-            self.zgs.print_unique_metrics_key_value()
+            self.metrics.print_unique_metrics_key_value()
         else:
-            self.zgs.send_metrics()
+            self.metrics.send_metrics()
 
     def parse_args(self):
         """ parse the args from the cli """
