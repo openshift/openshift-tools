@@ -25,6 +25,16 @@
       }
     },
     {
+      "kind": "Secret",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${WHITELIST_SECRET_NAME}"
+      },
+      "stringData": {
+        "whitelist": "${WHITELIST}"
+      }
+    },
+    {
       "kind": "BuildConfig",
       "apiVersion": "v1",
       "metadata": {
@@ -47,7 +57,13 @@
                   "name": "${OPENSHIFT_BOT_SECRET_NAME}" 
                 },
                 "destinationDir": "openshift-ops-bot"
-              }
+              },
+							{
+								"secret": {
+									"name": "${WHITELIST_SECRET_NAME}"
+								},
+								"destinationDir": "whitelist"
+							}
             ]
         },
         "strategy": {
@@ -60,12 +76,16 @@
                   "value": "{}"
                 },
                 {
+                  "name": "BUILD_URL",
+                  "value": ""
+                },
+                {
                   "name": "OPENSHIFT_BOT_SECRET_DIR",
                   "value": "openshift-ops-bot"
                 },
                 {
-                  "name": "BUILD_URL",
-                  "value": ""
+                  "name": "WHITELIST_SECRET_DIR",
+                  "value": "whitelist"
                 }
               ]
 	    }
@@ -106,6 +126,17 @@
       "displayName": "Bot Credentials Secret Name",
       "required": false,
       "value": "openshift-ops-bot-secret"
+    },
+    {
+      "name": "WHITELIST_SECRET_NAME",
+      "displayName": "Admin Whitelist Secret Name",
+      "required": false,
+      "value": "admin-whitelist-secret"
+    },
+    {
+      "name": "WHITELIST",
+      "displayName": "Comma-seperated list of admin users. Ex: kearny,jimbo,nelson",
+      "required": true
     }
   ]
 }

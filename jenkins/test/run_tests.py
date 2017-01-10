@@ -160,6 +160,18 @@ def get_github_credentials():
     token_file.close()
     return username, token
 
+def get_user_whitelist():
+    """ Get the user whitelist for testing from mounted secret volume """
+    secret_dir = os.getenv("WHITELIST_SECRET_DIR")
+    if secret_dir == "":
+        print "ERROR: $WHITELIST_SECRET_DIR undefined. This variable should exist and" + \
+            " should point to the mounted volume containing the admin whitelist"
+        sys.exit(2)
+    whitelist_file = open(os.path.join("/", secret_dir, "whitelist"), "r")
+    whitelist = whitelist_file.read()
+    whitelist_file.close()
+    return whitelist
+
 def main():
     """ Get the payload, merge changes, assign env, and run validators """
     # Get the github webhook payload json from the defined env variable
@@ -173,6 +185,16 @@ def main():
         print "Unable to load JSON data from $GITHUB_WEBHOOK_PAYLOAD"
         sys.exit(1)
     pull_request = payload["pull_request"]
+
+    # Check to ensure the user submitting the changes is on the whitelist
+    user = pull_request["user"]["login"]
+    whitelist = get_user_whitelist()
+    if whitelist == "" or user not in whitelist.split(","):
+        print "WARN: User " + user + " not in admin whitelist."
+        # exit success here so that the jenkins job is marked as a success,
+        # since no actual error occured
+        sys.exit(0)
+
     remote_sha = pull_request["head"]["sha"]
     pull_id = pull_request["number"]
 
