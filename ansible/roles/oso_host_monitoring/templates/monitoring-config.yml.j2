@@ -335,7 +335,7 @@ host_monitoring_cron:
 
 - name: OpenShift Cluster router stats
   minute: "*/10"
-  job: ops-runner -f -s 60 -t 120 -n csors.cluster.router.stats /usr/bin/cron-send-os-router-stats
+  job: ops-runner -f -s 60 -t 120 -n csors.cluster.router.status /usr/bin/cron-send-os-router-status
 
 - name: Delete stuck projects for bz 1367432
   minute: "*/10"
