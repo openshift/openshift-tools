@@ -40,7 +40,7 @@ class ZaggSender(GenericMetricSender):
         super(ZaggSender, self).__init__()
 
         if not config_file:
-            config_file = '/etc/openshift_tools/zagg_client.yaml'
+            config_file = '/etc/openshift_tools/metric_sender.yaml'
 
         self.config_file = config_file
         self.unique_metrics = []
