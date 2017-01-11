@@ -15,6 +15,10 @@ The human readable name for the host
 
 The cluster id of the host from inventory.
 
+### osohm_zagg_is_active
+
+is Zabbix active for this image.
+
 ### osohm_default_zagg_server_user
 
 Login user for the Zabbix server.
@@ -138,6 +142,7 @@ None.
     osohm_environment: prod
     osohm_host_type: "{{ hostvars[inventory_hostname]['ex_hosttype'] }}"
     osohm_cluster_id: example
+    osohm_zagg_is_active: True
     osohm_default_zagg_server_user: "zagg-client"
     osohm_default_zagg_password: "secret"
     osohm_docker_registry_url: "docker-registry.example.com/mon/"

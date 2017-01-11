@@ -3,6 +3,7 @@
     msg: "This playbook requires {{item}} to be set."
   when: "{{ item }} is not defined or {{ item }} == ''"
   with_items:
+  - osohm_zagg_is_active
   - osohm_zagg_web_url
   - osohm_host_monitoring
   - osohm_docker_registry_url
