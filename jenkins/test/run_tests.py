@@ -16,16 +16,18 @@
 #    PRV_PULL_URL      URL of the pull request
 #
 #  Base info
-#    PRV_BASE_SHA      Current SHA of the target being merged into
+#    PRV_BASE_SHA      SHA of the target being merged into
 #    PRV_BASE_REF      ref (usually branch name) of the base
 #    PRV_BASE_LABEL    Base label
 #    PRV_BASE_NAME     Full name of the base 'namespace/reponame'
 #
 #  Remote (or "head") info
-#    PRV_REMOTE_SHA    Current SHA of the branch being merged
+#    PRV_REMOTE_SHA    SHA of the branch being merged
 #    PRV_REMOTE_REF    ref (usually branch name) of the remote
 #    PRV_REMOTE_LABEL  Remote label
 #    PRV_REMOTE_NAME   Full name of the remote 'namespace/reponame'
+#    PRV_CURRENT_SHA   The SHA of the merge commit
+#
 
 import os
 import json
@@ -35,7 +37,6 @@ import requests
 
 EXCLUDES = [
     "common.py",
-    "yaml_validation.py",
     ".pylintrc"
 ]
 VALIDATOR_PATH = "jenkins/test/validators/"
@@ -82,15 +83,14 @@ def assign_env(pull_request):
 
 def merge_changes(pull_request):
     """ Merge changes into current repository """
-    remote_url = pull_request["head"]["repo"]["git_url"]
-    remote_ref = pull_request["head"]["ref"]
-    base_ref = pull_request["base"]["ref"]
+    pull_id = pull_request["number"]
     test_branch_name = "tpr-" + remote_ref + "-" + pull_request["number"]
 
-    run_cli_cmd(['/usr/bin/git', 'checkout', base_ref])
-    run_cli_cmd(['/usr/bin/git', 'checkout', '-b', test_branch_name])
-    run_cli_cmd(['/usr/bin/git', 'remote', 'add', 'remoterepo', remote_url])
-    run_cli_cmd(['/usr/bin/git', 'fetch', 'remoterepo', remote_ref])
+    run_cli_cmd(['/usr/bin/git', 'fetch', "--tags", "origin", "+refs/head/*:refs/remotes/origin/*", "+refs/pull/*:refs/remotes/origin/pr/*"])
+    _, current_rev = run_cli_cmd(['/usr/bin/git', 'rev-parse', 'refs/remotes/origin/pr/'+pull_id+'/merge^{commit}'])
+    run_cli_cmd(['/usr/bin/git', 'config', 'core.sparsecheckout'])
+    run_cli_cmd(['/usr/bin/git', 'fetch', '-f', current_rev])
+    os.environ["PRV_CURRENT_SHA"] = current_rev
 
 def run_validators():
     """ Run all test validators """

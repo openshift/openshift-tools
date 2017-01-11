@@ -43,15 +43,15 @@ def ensure_stg_contains(commit_id):
 
 def usage():
     ''' Print usage '''
-    print """usage: parent.py [[base_ref] [remote_sha]]
+    print """usage: parent.py [[base_ref] [current_sha]]
 
-    base_ref:    Git REF of the base branch being merged into
-    remote_sha:  The SHA of the remote branch being merged
+    base_ref:     Git REF of the base branch being merged into
+    current_sha:  The SHA of the remote branch after merge (git rev-parse HEAD)
 
 Arguments can be provided through the following environment variables:
 
-    base_ref:    PRV_BASE_REF
-    remote_sha:  PRV_REMOTE_SHA"""
+    base_ref:     PRV_BASE_REF
+    current_sha:  PRV_CURRENT_SHA"""
 
 def main():
     ''' Get git change information and check stg for commit '''
