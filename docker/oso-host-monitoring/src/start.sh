@@ -18,7 +18,7 @@ source /root/.bashrc
 time ansible-playbook /root/config.yml
 
 # Send a heartbeat when the container starts up
-/usr/bin/ops-zagg-client --send-heartbeat
+/usr/bin/ops-metric-client --send-heartbeat
 
 # fire off the check pmcd status script
 check-pmcd-status.sh &

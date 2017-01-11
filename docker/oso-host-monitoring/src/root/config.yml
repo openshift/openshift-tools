@@ -19,7 +19,7 @@
   - fail: msg="This playbook requires {{ item }} to be set and not empty."
     when: "{{ item }} is not defined or not {{ item }}"
     with_items:
-    - zagg_client_config
+    - metric_sender_config
     - oso_host_type
     - oso_cluster_id
 
@@ -36,12 +36,6 @@
       dest: /etc/openshift_tools/etcd_metrics.yml
       mode: 0644
     when: etcd_metrics_config is defined
-
-  - name: Generate the zagg_client.yaml config file
-    copy:
-      content: "{{ zagg_client_config | to_nice_yaml }}"
-      dest: /etc/openshift_tools/zagg_client.yaml
-      mode: "644"
 
   - name: Generate the metric_sender.yaml config file
     copy:

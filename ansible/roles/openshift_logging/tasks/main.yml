@@ -129,6 +129,8 @@
     template_name: logging-deployer-template
     create: True
     reconcile: False
+    params:
+      IMAGE_PREFIX: "{{ osalog_image_prefix }}"
   register: processout
   run_once: true
 - debug: var=processout
@@ -321,22 +323,28 @@
 - name: Redeploy kibana
   command: oc deploy dc/logging-kibana --latest -n logging
 
-#  We may need a reencrypt route in the future
-#  This was tested, but didn't quite work.
-#
-#- name: create route for the kibana
-#  oc_route:
-#    name: kibana
-#    namespace: logging
-#    tls_termination: reencrypt
-#    cert_path: "/etc/origin/master/named_certificates/{{ cert_basename }}"
-#    key_path: "/etc/origin/master/named_certificates/{{ key_basename }}"
-#    cacert_path: "/etc/origin/master/named_certificates/{{ cacert_basename }}"
-#    dest_cacert_path: "/etc/origin/master/named_certificates/{{ cacert_basename }}"
-#    service_name: logging-kibana
-#    host: "logs.{{ osalog_clusterid }}.openshift.com"
-#  register: routeout
-#  run_once: True
-#
-#- debug: var=routeout
-#  run_once: True
+- name: get ca from kibana secret
+  oc_secret:
+    state: list
+    namespace: logging
+    name: logging-kibana
+    decode: True
+  register: kibana_ca_cert
+  run_once: true
+
+- name: Configure certificates for reencrypt route
+  oc_route:
+    name: logging-kibana
+    namespace: logging
+    cert_path: "/etc/origin/master/named_certificates/{{ cert_basename }}"
+    key_path: "/etc/origin/master/named_certificates/{{ key_basename }}"
+    cacert_path: "/etc/origin/master/named_certificates/{{ cacert_basename }}"
+    dest_cacert_content:  "{{ kibana_ca_cert.results.decoded['ca'] }}"
+    service_name: logging-kibana
+    host: "logs.{{ osalog_clusterid }}.openshift.com"
+    tls_termination: reencrypt
+  register: routeout
+  run_once: true
+
+- debug: var=routeout
+  run_once: True

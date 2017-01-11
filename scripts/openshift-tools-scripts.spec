@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.12
+Version:       0.1.17
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -71,6 +71,9 @@ cp -p monitoring/delete-stuck-projects.sh %{buildroot}/usr/bin/delete-stuck-proj
 cp -p monitoring/cron-send-saml-status.py %{buildroot}/usr/bin/cron-send-saml-status
 cp -p monitoring/cron-certificate-expirations.py %{buildroot}/usr/bin/cron-certificate-expirations
 cp -p monitoring/cron-send-os-router-status.py %{buildroot}/usr/bin/cron-send-os-router-status
+cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
+cp -p monitoring/cron-send-build-counts.py %{buildroot}/usr/bin/cron-send-build-counts
+cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -298,6 +301,10 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-os-router-status
 /usr/bin/cron-send-logging-checks
 /usr/bin/cron-send-docker-oc-versions
+/usr/bin/cron-send-elb-status
+/usr/bin/cron-send-build-counts
+/usr/bin/cron-send-elb-status
+
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -372,6 +379,27 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Tue Jan 10 2017 Joel Diaz <jdiaz@redhat.com> 0.1.17-1
+- convert router-stats to use MetricSender (jdiaz@redhat.com)
+- remove unused kubeconfig check (jdiaz@redhat.com)
+
+* Mon Jan 09 2017 Sten Turpin <sten@redhat.com> 0.1.16-1
+- use jsonpath to avoid parsing yaml, misc cleanup (sten@redhat.com)
+- add count of unknown and total states (sten@redhat.com)
+- more cleanup (sten@redhat.com)
+- merge changes to monitor-build process from stg branch (sten@redhat.com)
+- line up count vs counts, replace sh with py (sten@redhat.com)
+- add build count script, cronjob, zitem, ztrigger (sten@redhat.com)
+
+* Mon Jan 09 2017 Marek Mahut <mmahut@redhat.com> 0.1.15-1
+- Forgot to copy the script during the build (mmahut@redhat.com)
+
+* Mon Jan 09 2017 Marek Mahut <mmahut@redhat.com> 0.1.14-1
+- 
+
+* Mon Jan 09 2017 Marek Mahut <mmahut@redhat.com> 0.1.13-1
+- Adding cron-send-elb-status script (mmahut@redhat.com)
+
 * Fri Jan 06 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.12-1
 - catch missing executable file exception (jdiaz@redhat.com)
 
@@ -438,6 +466,11 @@ OpenShift Tools IAM specific scripts
 
 * Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.1.0-1
 - Version bump
+
+* Mon Dec 05 2016 Wesley Hearn <whearn@redhat.com> 0.0.176-1
+- Add cron-send-logging-checks to the rpm (whearn@redhat.com)
+- increase to 15m (dranders@redhat.com)
+- Fix return code getting overwritten (whearn@redhat.com)
 
 * Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.0.175-1
 - adding error handling, fixing pylint issues (dedgar@redhat.com)
