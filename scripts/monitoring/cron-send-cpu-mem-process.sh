@@ -11,8 +11,8 @@ MemUsagenode=`ps -p $processidofnode -o %mem |grep -v MEM`
 
 echo "the mem usage of openshift.node process is $MemUsagenode%"
 
-ops-zagg-client -k "openshift.nodeprocess.cpu" -o "$CpuUsagenode"
-ops-zagg-client -k "openshift.nodeprocess.mem" -o "$MemUsagenode"
+ops-metric-client -k "openshift.nodeprocess.cpu" -o "$CpuUsagenode"
+ops-metric-client -k "openshift.nodeprocess.mem" -o "$MemUsagenode"
 
 #the cpu use of master api process usage
 
@@ -29,8 +29,8 @@ then
 
     echo "the mem usage of openshift.master.api is $MemUsagemasterapi%"
 
-    ops-zagg-client -k "openshift.master.api.cpu" -o "$CpuUsagenode"
-    ops-zagg-client -k "openshift.master.api.mem" -o "$MemUsagenode"
+    ops-metric-client -k "openshift.master.api.cpu" -o "$CpuUsagenode"
+    ops-metric-client -k "openshift.master.api.mem" -o "$MemUsagenode"
 else
     echo 
 fi
@@ -50,8 +50,8 @@ then
 
     echo "the mem usage of openshift.etcd is $MemUsageetcd%"
 
-    ops-zagg-client -k "openshift.etcd.cpu" -o "$CpuUsageetcd"
-    ops-zagg-client -k "openshift.etcd.mem" -o "$MemUsageetcd"
+    ops-metric-client -k "openshift.etcd.cpu" -o "$CpuUsageetcd"
+    ops-metric-client -k "openshift.etcd.mem" -o "$MemUsageetcd"
 else
     echo 
 fi
@@ -69,7 +69,7 @@ MemUsagedocker=`ps -p $processidofdocker -o %mem |grep -v MEM`
 
 echo "the mem usage of docker daemon is $MemUsagedocker%"
 
-ops-zagg-client -k "openshift.docker.daemon.cpu" -o "$CpuUsageetcd"
-ops-zagg-client -k "openshift.docker.daemon.mem" -o "$MemUsageetcd"
+ops-metric-client -k "openshift.docker.daemon.cpu" -o "$CpuUsageetcd"
+ops-metric-client -k "openshift.docker.daemon.mem" -o "$MemUsageetcd"
 
 
