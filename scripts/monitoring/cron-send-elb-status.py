@@ -29,7 +29,7 @@
 # pylint: disable=bad-builtin
 
 from ConfigParser import SafeConfigParser
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 import argparse
 import urllib2
 import yaml
@@ -87,7 +87,7 @@ def main():
     instance_region = get_instance_region()
     elb = boto.ec2.elb.connect_to_region(instance_region, aws_access_key_id=aws_access,
                                          aws_secret_access_key=aws_secret)
-    instance_name = get_instance_name('/etc/openshift_tools/zagg_client.yaml')
+    instance_name = get_instance_name('/etc/openshift_tools/metrics_sender.yaml')
 
     ''' Define what instance type this node is, only master/infra are in ELBs '''
 
@@ -117,9 +117,9 @@ def main():
                     print "Instance %s is missing from ELB %s!" % (instance_id, i.name)
 
     ''' Now that we know if this instance is missing, feed zabbix '''
-    zs = ZaggSender(verbose=args.verbose, debug=args.debug)
-    zs.add_zabbix_keys({'openshift.aws.elb.status' : instance_missing})
-    zs.send_metrics()
+    mts = MetricSender(verbose=args.verbose, debug=args.debug)
+    mts.add_metric({'openshift.aws.elb.status' : instance_missing})
+    mts.send_metrics()
 
 if __name__ == '__main__':
     main()
