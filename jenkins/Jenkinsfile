@@ -1,0 +1,42 @@
+// Process the github webhook and trigger tests or builds depending on the payload data
+
+node {
+    stage "Check PR Action"
+        def slurper = new groovy.json.JsonSlurper()
+        def webhook = slurper.parseText(payload)
+        def trigger = ""
+        // The following are the actions we should test:
+        // "opened", "reopened", "synchronize"
+        // We should build if the action is "closed" and the "merged" flag is true
+        // The "edited" action is when a comment is edited, we don't care about that.
+        echo webhook.action
+        if (webhook.action == "opened" || webhook.action == "reopened" || webhook.action == "synchronize") {
+            trigger = "test"
+        } else if (webhook.action == "closed" && webhook.pull_request.merged) {
+            trigger = "build"
+        }
+        // These variables must be nullified as they are not serializable
+        // See http://stackoverflow.com/questions/37864542/jenkins-pipeline-notserializableexception-groovy-json-internal-lazymap
+        slurper = null
+
+    if (trigger != "") {
+        if (trigger == "test") {
+            stage "Test Changes"
+                echo "Starting Tests"
+                openshiftBuild buildConfig: 'openshift-tools-test', env: [[ name: 'GITHUB_WEBHOOK_PAYLOAD', value: payload ], [ name: 'BUILD_URL', value: env.BUILD_URL ]], showBuildLogs: true
+        } else if (trigger == "build") {
+            stage "Build RPMS"
+                echo "Starting Build"
+                // TODO this is not yet implemented
+						stage "Deploy Updates"
+								echo "Deploying updated RPMs"
+                // TODO this is not yet implemented
+        } else {
+            echo "Trigger ${trigger} not recognized"
+            currentBuild.result = 'FAILURE'
+        }
+    } else {
+        echo "Pull request action, ${webhook.action}, does not justify running any jobs."
+        currentBuild.result = 'SUCCESS'
+    }
+}
