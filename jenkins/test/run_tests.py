@@ -112,7 +112,7 @@ def run_validators():
         elif ext == ".sh":
             executer = "/bin/sh"
 	# If the ext is not recongized, try to just run the file
-        print "Running " + executer + " " + validator_abs
+        print "Executing validator: " + executer + " " + validator_abs
         success, output = run_cli_cmd([executer, validator_abs], exit_on_fail=False)
         print output
         if not success:
@@ -182,8 +182,9 @@ def main():
         sys.exit(1)
     try:
         payload = json.loads(payload_json, parse_int=str, parse_float=str)
-    except ValueError:
-        print "Unable to load JSON data from $GITHUB_WEBHOOK_PAYLOAD"
+    except ValueError as e:
+        print "Unable to load JSON data from $GITHUB_WEBHOOK_PAYLOAD:"
+        print e
         sys.exit(1)
     pull_request = payload["pull_request"]
 
