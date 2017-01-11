@@ -13,5 +13,5 @@ else
   err_count=0
 fi
 
-# Send to zabbix
-ops-zagg-client -s $host -k multi_inventory.account.refresh -o $err_count
+# Send metrics
+ops-metric-client -s $host -k multi_inventory.account.refresh -o $err_count
