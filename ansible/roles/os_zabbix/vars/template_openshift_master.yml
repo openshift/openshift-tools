@@ -106,6 +106,24 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.pv.percent.usage
+    description: "check the openshift pv usage"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.pv.capacity.max
+    description: "check the openshift pv max capacity"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.pv.capacity.used
+    description: "check the openshfit pv used"
+    value_type: int
+    applications:
+    - Openshift Master
+
   - key: openshift.master.app.create.time
     description: "check the time it takes app create with a build process"
     value_type: float
