@@ -73,7 +73,7 @@ def get_dynamic_pod_name():
     """get the max_capacity of the cluster"""
     pods = ocutil.get_pods()
     dynamic_pod_name = ""
-    pattern = re.compile(r'online-volume-provisioner-') 
+    pattern = re.compile(r'online-volume-provisioner-')
     for pod in pods['items']:
         pod_name = pod['metadata']['name']
         match = pattern.search(pod_name)
