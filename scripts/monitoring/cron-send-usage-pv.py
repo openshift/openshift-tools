@@ -37,10 +37,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
 ocutil = OCUtil()
-
-
 
 def runOCcmd(cmd, base_cmd='oc'):
     """ log commands through ocutil """
