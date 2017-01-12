@@ -84,10 +84,11 @@ def assign_env(pull_request):
 def merge_changes(pull_request):
     """ Merge changes into current repository """
     pull_id = pull_request["number"]
-    test_branch_name = "tpr-" + remote_ref + "-" + pull_request["number"]
 
-    run_cli_cmd(['/usr/bin/git', 'fetch', "--tags", "origin", "+refs/head/*:refs/remotes/origin/*", "+refs/pull/*:refs/remotes/origin/pr/*"])
-    _, current_rev = run_cli_cmd(['/usr/bin/git', 'rev-parse', 'refs/remotes/origin/pr/'+pull_id+'/merge^{commit}'])
+    run_cli_cmd(['/usr/bin/git', 'fetch', "--tags", "origin", "+refs/head/*:refs/remotes/origin/*",
+                 "+refs/pull/*:refs/remotes/origin/pr/*"])
+    _, current_rev = run_cli_cmd(['/usr/bin/git', 'rev-parse',
+                                  'refs/remotes/origin/pr/'+pull_id+'/merge^{commit}'])
     run_cli_cmd(['/usr/bin/git', 'config', 'core.sparsecheckout'])
     run_cli_cmd(['/usr/bin/git', 'fetch', '-f', current_rev])
     os.environ["PRV_CURRENT_SHA"] = current_rev
@@ -182,9 +183,9 @@ def main():
         sys.exit(1)
     try:
         payload = json.loads(payload_json, parse_int=str, parse_float=str)
-    except ValueError as e:
+    except ValueError as error:
         print "Unable to load JSON data from $GITHUB_WEBHOOK_PAYLOAD:"
-        print e
+        print error
         sys.exit(1)
     pull_request = payload["pull_request"]
 
