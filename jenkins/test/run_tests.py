@@ -87,10 +87,11 @@ def merge_changes(pull_request):
 
     run_cli_cmd(['/usr/bin/git', 'fetch', "--tags", "origin", "+refs/head/*:refs/remotes/origin/*",
                  "+refs/pull/*:refs/remotes/origin/pr/*"])
-    _, current_rev = run_cli_cmd(['/usr/bin/git', 'rev-parse',
-                                  'refs/remotes/origin/pr/'+pull_id+'/merge^{commit}'])
-    run_cli_cmd(['/usr/bin/git', 'config', 'core.sparsecheckout'])
-    run_cli_cmd(['/usr/bin/git', 'fetch', '-f', current_rev])
+    _, output = run_cli_cmd(['/usr/bin/git', 'rev-parse',
+                             'refs/remotes/origin/pr/'+pull_id+'/merge^{commit}'])
+    current_rev = output.rstrip()
+    run_cli_cmd(['/usr/bin/git', 'config', 'core.sparsecheckout'], exit_on_fail=False)
+    run_cli_cmd(['/usr/bin/git', 'checkout', '-f', current_rev])
     os.environ["PRV_CURRENT_SHA"] = current_rev
 
 def run_validators():
