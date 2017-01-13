@@ -131,7 +131,7 @@ def submit_pr_comment(text, pull_id, repo):
     """ Submit a comment on a pull request or issue in github """
     github_username, oauth_token = get_github_credentials()
     payload = {'body': text}
-    comment_url = "%s/repos/%s/issues/%s/comments" % (GITHUB_API_URL, repo, pull_id)
+    comment_url = "{0}/repos/{1}/issues/{2}/comments".format(GITHUB_API_URL, repo, pull_id)
     response = requests.post(comment_url, json=payload, auth=(github_username, oauth_token))
     # Raise an error if the request fails for some reason
     response.raise_for_status()
@@ -144,7 +144,7 @@ def submit_pr_status_update(state, text, remote_sha, repo):
                'description': text,
                'target_url': target_url,
                'context': "jenkins-ci"}
-    status_url = "%s/repos/%s/statuses/%s" % (GITHUB_API_URL, repo, remote_sha)
+    status_url = "{0}/repos/{1}/statuses/{2}".format(GITHUB_API_URL, repo, remote_sha)
     response = requests.post(status_url, json=payload, auth=(github_username, oauth_token))
     # Raise an error if the request fails for some reason
     response.raise_for_status()
