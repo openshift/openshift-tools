@@ -41,8 +41,6 @@ EXCLUDES = [
 ]
 VALIDATOR_PATH = "jenkins/test/validators/"
 GITHUB_API_URL = "https://api.github.com"
-REPO = "openshift-tools"
-REPO_USER = "openshift"
 
 def run_cli_cmd(cmd, exit_on_fail=True):
     '''Run a command and return its output'''
@@ -113,7 +111,7 @@ def run_validators():
             executer = "/usr/bin/python"
         elif ext == ".sh":
             executer = "/bin/sh"
-	# If the ext is not recongized, try to just run the file
+        # If the ext is not recongized, try to just run the file
         print "Executing validator: " + executer + " " + validator_abs
         success, output = run_cli_cmd([executer, validator_abs], exit_on_fail=False)
         print output
@@ -125,16 +123,16 @@ def run_validators():
         return False
     return True
 
-def submit_pr_comment(text, pull_id):
+def submit_pr_comment(text, pull_id, repo):
     """ Submit a comment on a pull request or issue in github """
     github_username, oauth_token = get_github_credentials()
     payload = {'body': text}
-    comment_url = "%s/repos/%s/%s/issues/%s/comments" % (GITHUB_API_URL, REPO_USER, REPO, pull_id)
+    comment_url = "%s/repos/%s/issues/%s/comments" % (GITHUB_API_URL, repo, pull_id)
     response = requests.post(comment_url, json=payload, auth=(github_username, oauth_token))
     # Raise an error if the request fails for some reason
     response.raise_for_status()
 
-def submit_pr_status_update(state, text, remote_sha):
+def submit_pr_status_update(state, text, remote_sha, repo):
     """ Submit a commit status update with a link to the build results """
     target_url = os.getenv("BUILD_URL")
     github_username, oauth_token = get_github_credentials()
@@ -142,7 +140,7 @@ def submit_pr_status_update(state, text, remote_sha):
                'description': text,
                'target_url': target_url,
                'context': "jenkins-ci"}
-    status_url = "%s/repos/%s/%s/statuses/%s" % (GITHUB_API_URL, REPO_USER, REPO, remote_sha)
+    status_url = "%s/repos/%s/statuses/%s" % (GITHUB_API_URL, repo, remote_sha)
     response = requests.post(status_url, json=payload, auth=(github_username, oauth_token))
     # Raise an error if the request fails for some reason
     response.raise_for_status()
@@ -201,9 +199,10 @@ def main():
 
     remote_sha = pull_request["head"]["sha"]
     pull_id = pull_request["number"]
+    repo = pull_request["base"]["repo"]["full_name"]
 
     # Update the PR to inform users that testing is in progress
-    submit_pr_status_update("pending", "Automated tests in progress", remote_sha)
+    submit_pr_status_update("pending", "Automated tests in progress", remote_sha, repo)
 
     # Merge changes from pull request
     merge_changes(pull_request)
@@ -216,11 +215,11 @@ def main():
 
     # Determine and post result of tests
     if not success:
-        submit_pr_comment("Tests failed!", pull_id)
-        submit_pr_status_update("failure", "Automated tests failed", remote_sha)
+        submit_pr_comment("Tests failed!", pull_id, repo)
+        submit_pr_status_update("failure", "Automated tests failed", remote_sha, repo)
         sys.exit(1)
-    submit_pr_comment("Tests passed!", pull_id)
-    submit_pr_status_update("success", "Automated tests passed", remote_sha)
+    submit_pr_comment("Tests passed!", pull_id, repo)
+    submit_pr_status_update("success", "Automated tests passed", remote_sha, repo)
 
 if __name__ == '__main__':
     main()
