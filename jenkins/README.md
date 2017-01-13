@@ -3,7 +3,9 @@
 The files within this directory are used to set up automation around testing, building, and deploying changes to components in the openshift-tools repository.
 
 ### How it works
-When a pull request is submitted to the openshift-tools repository on github, a webhook starts a job on a persistent jenkins instance running in an openshift environment. The job is a simple jenkins pipeline using the `Jenkinsfile` in this directory. The pipeline determines the action to take based on the action in the webhook. When a test is necessary, the jenkins pipeline starts a build on the openshift environment titled `openshift-tools-test` and outputs the build logs to the pipeline's logs.
+When a pull request is submitted to the openshift-tools repository on github, a webhook starts a job on a persistent jenkins instance running in an openshift environment. The job is a simple jenkins pipeline using the `Jenkinsfile` in this directory. The pipeline determines the action to take based on the action and some other details in the webhook. When a test is necessary, the jenkins pipeline starts a build on the openshift environment titled `openshift-tools-test` and outputs the build logs to the pipeline's logs.
+
+Tests will be run whenever a pull request is opened, reopened, or "synchronized" (a commit is added, subtracted, or amended). Tests can also be manually performed by commenting on the pull request with the term '[test]' with a whitelisted user.
 
 The `openshift-tools-test` build is defined in the `openshift-tools-pr-automation-template.json` template. The build mounts a secret containing the github bot user credentials, then starts a docker build using the Dockerfile `test/Dockerfile`. This build runs from the oso-host-monitoring container and clones the openshift-tools repository. Once the environment is set up, the build runs the `test/run_tests.py` script. This script merges in the changes defined in the github webhook payload and defines several environment variables for consumption by a suite of validators. Each `.py` or .sh` file in `test/validators` is run with these environment varibles.
 
@@ -18,7 +20,7 @@ The script will then submit a comment to the pull request indiciating whether al
 ### Configuration
 1. In an openshift environment, deploy a persistent jenkins instance using the [jenkins-persistent template]( https://raw.githubusercontent.com/openshift/origin/master/examples/jenkins/jenkins-persistent-template.json). Pass the parameter `ENABLE_OAUTH=false` to disable OAUTH and set the default username and password to admin:password
 
-2. Deploy the builds and secrets in the openshift environment using the `openshift-tools-pr-automation-template.json` in this directory. A username and oauth token for a github user will be required.
+2. Deploy the builds and secrets in the openshift environment using the `openshift-tools-pr-automation-template.json` in this directory. A username and oauth token for a github user will be required. A comma-seperated list of github users will also be necessary for the whitelist.
 
 3. Log into the jenkins instance using the default credentials. Navigate to 'Manage Jenkins' > 'Manage Users' and click the 'config' icon for the admin user. Change the admin users password to something much more secure.
 
