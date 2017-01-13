@@ -121,14 +121,15 @@ def main():
     if dynamic_pod_name == "":
         pass
     else:
-        MAXIMUM_CLUSTER_CAPACITY = get_max_capacity(dynamic_pod_name)
-        logger.debug(MAXIMUM_CLUSTER_CAPACITY)
+        cluster_capacity_max = get_max_capacity(dynamic_pod_name)
+        logger.debug("cluster_capacity_max: %s", cluster_capacity_max)
         pv_used = get_pv_usage()
-        logger.debug(pv_used)
+        logger.debug("cluster_pv_used: %s", pv_used)
+        cluster_capacity_max_gb = int(cluster_capacity_max.replace("Gi", ""))
         #use int to send the usge of %
-        usage_pv = (pv_used*100)/int(MAXIMUM_CLUSTER_CAPACITY.replace("Gi", ""))
-        logger.debug(usage_pv)
-        send_metrics(usage_pv, MAXIMUM_CLUSTER_CAPACITY, pv_used)
+        usage_pv = (pv_used*100)/cluster_capacity_max_gb
+        logger.debug("percent of usage of pv: %s", usage_pv)
+        send_metrics(usage_pv, cluster_capacity_max_gb, pv_used)
 
 if __name__ == "__main__":
     main()
