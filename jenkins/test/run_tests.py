@@ -39,10 +39,12 @@ EXCLUDES = [
     "common.py",
     ".pylintrc"
 ]
+# The relative path to the testing validator scripts
 VALIDATOR_PATH = "jenkins/test/validators/"
+# The github API base url
 GITHUB_API_URL = "https://api.github.com"
-REPO = "openshift-tools"
-REPO_USER = "openshift"
+# The string to accept in PR comments to initiate testing by a whitelisted user
+TEST_STRING = "[test]"
 
 def run_cli_cmd(cmd, exit_on_fail=True):
     '''Run a command and return its output'''
@@ -113,7 +115,7 @@ def run_validators():
             executer = "/usr/bin/python"
         elif ext == ".sh":
             executer = "/bin/sh"
-	# If the ext is not recongized, try to just run the file
+        # If the ext is not recongized, try to just run the file
         print "Executing validator: " + executer + " " + validator_abs
         success, output = run_cli_cmd([executer, validator_abs], exit_on_fail=False)
         print output
@@ -125,16 +127,16 @@ def run_validators():
         return False
     return True
 
-def submit_pr_comment(text, pull_id):
+def submit_pr_comment(text, pull_id, repo):
     """ Submit a comment on a pull request or issue in github """
     github_username, oauth_token = get_github_credentials()
     payload = {'body': text}
-    comment_url = "%s/repos/%s/%s/issues/%s/comments" % (GITHUB_API_URL, REPO_USER, REPO, pull_id)
+    comment_url = "{0}/repos/{1}/issues/{2}/comments".format(GITHUB_API_URL, repo, pull_id)
     response = requests.post(comment_url, json=payload, auth=(github_username, oauth_token))
     # Raise an error if the request fails for some reason
     response.raise_for_status()
 
-def submit_pr_status_update(state, text, remote_sha):
+def submit_pr_status_update(state, text, remote_sha, repo):
     """ Submit a commit status update with a link to the build results """
     target_url = os.getenv("BUILD_URL")
     github_username, oauth_token = get_github_credentials()
@@ -142,7 +144,7 @@ def submit_pr_status_update(state, text, remote_sha):
                'description': text,
                'target_url': target_url,
                'context': "jenkins-ci"}
-    status_url = "%s/repos/%s/%s/statuses/%s" % (GITHUB_API_URL, REPO_USER, REPO, remote_sha)
+    status_url = "{0}/repos/{1}/statuses/{2}".format(GITHUB_API_URL, repo, remote_sha)
     response = requests.post(status_url, json=payload, auth=(github_username, oauth_token))
     # Raise an error if the request fails for some reason
     response.raise_for_status()
@@ -163,17 +165,67 @@ def get_github_credentials():
     token_file.close()
     return username, token
 
-def get_user_whitelist():
-    """ Get the user whitelist for testing from mounted secret volume """
+def check_user_whitelist(payload):
+    """ Get and check the user whitelist for testing from mounted secret volume """
+    # Get user from payload
+    user = ""
+    comment_made = False
+    if "pull_request" in payload:
+        user = payload["pull_request"]["user"]["login"]
+    elif "comment" in payload:
+        user = payload["comment"]["user"]["login"]
+        comment_made = True
+    else:
+        print "Webhook payload does not include pull request user or issue comment user data"
+        sys.exit(1)
+
+    if comment_made:
+        body = payload["comment"]["body"]
+        if not "[test]" in body.split(" "):
+            print "Pull request coment does not include test string \"" + TEST_STRING +"\""
+            # Exit success here so that the jenkins job is marked as  a success,
+            # since no actual error occurred, the expected has happened
+            sys.exit(0)
+
+    # Get secret informatino from env variable
     secret_dir = os.getenv("WHITELIST_SECRET_DIR")
     if secret_dir == "":
         print "ERROR: $WHITELIST_SECRET_DIR undefined. This variable should exist and" + \
             " should point to the mounted volume containing the admin whitelist"
         sys.exit(2)
+    # Extract whitelist from secret volume
     whitelist_file = open(os.path.join("/", secret_dir, "whitelist"), "r")
     whitelist = whitelist_file.read()
     whitelist_file.close()
-    return whitelist
+    if whitelist == "" or user not in whitelist.split(","):
+        print "WARN: User " + user + " not in admin whitelist."
+        # exit success here so that the jenkins job is marked as a success,
+        # since no actual error occured, the expected has happened
+        sys.exit(0)
+
+def get_pull_request_info(payload):
+    """ Get the relevant pull request details for this webhook payload """
+    if "pull_request" in payload:
+        return payload["pull_request"]
+
+    if not "issue" in payload:
+        print "Webhook payload does not include pull request or issue data"
+        sys.exit(1)
+    if not "pull_request" in payload["issue"]:
+        print "Webhook payload is for an issue comment, not pull request."
+        sys.exit(1)
+
+    pull_request_url = payload["issue"]["pull_request"]["url"]
+    response = requests.get(pull_request_url)
+    response.raise_for_status()
+    pull_request_json = response.text
+    try:
+        pull_request = json.loads(pull_request_json, parse_int=str, parse_float=str)
+    except ValueError as error:
+        print "Unable to load JSON data from " + pull_request_url
+        print error
+        sys.exit(1)
+    return pull_request
 
 def main():
     """ Get the payload, merge changes, assign env, and run validators """
@@ -188,22 +240,19 @@ def main():
         print "Unable to load JSON data from $GITHUB_WEBHOOK_PAYLOAD:"
         print error
         sys.exit(1)
-    pull_request = payload["pull_request"]
 
     # Check to ensure the user submitting the changes is on the whitelist
-    user = pull_request["user"]["login"]
-    whitelist = get_user_whitelist()
-    if whitelist == "" or user not in whitelist.split(","):
-        print "WARN: User " + user + " not in admin whitelist."
-        # exit success here so that the jenkins job is marked as a success,
-        # since no actual error occured
-        sys.exit(0)
+    check_user_whitelist(payload)
+
+    # Extract or get the pull request information from the payload
+    pull_request = get_pull_request_info(payload)
 
     remote_sha = pull_request["head"]["sha"]
     pull_id = pull_request["number"]
+    repo = pull_request["base"]["repo"]["full_name"]
 
     # Update the PR to inform users that testing is in progress
-    submit_pr_status_update("pending", "Automated tests in progress", remote_sha)
+    submit_pr_status_update("pending", "Automated tests in progress", remote_sha, repo)
 
     # Merge changes from pull request
     merge_changes(pull_request)
@@ -216,11 +265,11 @@ def main():
 
     # Determine and post result of tests
     if not success:
-        submit_pr_comment("Tests failed!", pull_id)
-        submit_pr_status_update("failure", "Automated tests failed", remote_sha)
+        submit_pr_comment("Tests failed!", pull_id, repo)
+        submit_pr_status_update("failure", "Automated tests failed", remote_sha, repo)
         sys.exit(1)
-    submit_pr_comment("Tests passed!", pull_id)
-    submit_pr_status_update("success", "Automated tests passed", remote_sha)
+    submit_pr_comment("Tests passed!", pull_id, repo)
+    submit_pr_status_update("success", "Automated tests passed", remote_sha, repo)
 
 if __name__ == '__main__':
     main()
