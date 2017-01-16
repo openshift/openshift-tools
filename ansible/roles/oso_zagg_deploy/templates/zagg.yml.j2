@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: zagg-per-cluster
+objects:
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      app: oso-rhel7-zagg-web
+    name: oso-rhel7-zagg-web
+  spec:
+    replicas: 2
+    selector:
+      app: oso-rhel7-zagg-web
+      deploymentconfig: oso-rhel7-zagg-web
+    strategy:
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: oso-rhel7-zagg-web
+          deploymentconfig: oso-rhel7-zagg-web
+      spec:
+        containers:
+        - image: registry.ops.openshift.com/ops/oso-rhel7-zagg-web:{{ oo_environment }}
+          imagePullPolicy: Always
+          name: oso-rhel7-zagg-web
+          ports:
+          - containerPort: 8000
+            protocol: TCP
+          - containerPort: 8443
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /secrets
+            name: monitoring-secrets
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: monitoring-secrets
+          secret:
+            secretName: monitoring-secrets
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+          requests:
+            cpu: 1000m
+            memory: 512Mi
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-rhel7-zagg-web
+        from:
+          kind: ImageStreamTag
+          name: oso-rhel7-zagg-web:{{ oo_environment }}
+          namespace: zagg
+      type: ImageChange
+

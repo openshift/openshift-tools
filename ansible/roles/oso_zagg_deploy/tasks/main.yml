@@ -1,0 +1,63 @@
+---
+- block:
+  - name: importing the zagg web image
+    oc_image:
+      registry_url: registry.ops.openshift.com/ops
+      image_name: oso-rhel7-zagg-web
+      image_tag: "{{ oo_environment }}"
+
+  - name: create secrets
+    oc_secret:
+      namespace: default
+      name: monitoring-secrets
+      delete_after: true
+      contents:
+        - path: zagg-server-vars.yml
+          data: |
+            ---
+            g_default_zagg_server_config: "{{ g_default_zagg_cluster_config }}"
+            g_default_zagg_server_user: "{{ g_default_zagg_server_user }}"
+            g_default_zagg_server_password: "{{ g_default_zagg_server_password }}"
+            g_default_zagg_server_api_password: "{{ g_default_zagg_server_api_password }}"
+
+  - name: create the zagg service
+    oc_service:
+      namespace: default
+      name: zagg-service
+      ports:
+      - name: 80-tcp
+        port: 80
+        protocol: TCP
+        targetPort: 8000
+      - name: 443-tcp
+        port: 443
+        protocal: TCP
+        targetPort: 8000
+      selector:
+        deploymentconfig: oso-rhel7-zagg-web
+      service_type: ClusterIP
+
+  - name: checking for existing pods
+    oc_obj:
+      state: list
+      namespace: default
+      kind: pods
+    register: podlist
+
+  - set_fact:
+      zagg_pods_running: "{{ podlist.results | get_running_pods(['oso-rhel7-zagg-web']) }}"
+
+  - name: create app from template
+    oc_process:
+      namespace: default
+      template_name: oso-zagg
+      content: "{{ lookup('template', 'templates/zagg.yml.j2') }}"
+      create: True
+      reconcile: True
+    when: '{{ zagg_pods_running | length }} < 2'
+
+  - name: deploy in 3.3
+    command: "oc deploy --latest -n default oso-rhel7-zagg-web"
+    when: '{{ zagg_pods_running | length }} < 2'
+
+  run_once: true
