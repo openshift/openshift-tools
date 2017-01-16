@@ -12,10 +12,10 @@ LINT_EXCLUDE_PATTERN_LIST = [
     r'ansible/inventory/gce/hosts/gce.py'
     r'docs/*']
 
-def linter(base_sha, current_sha):
+def linter(base_sha, remote_sha):
     '''Use pylint to lint all python files changed in the pull request'''
     _, diff_output = common.run_cli_cmd(["/usr/bin/git", "diff", "--name-only", base_sha,
-                                         current_sha, "--diff-filter=ACM"])
+                                         remote_sha, "--diff-filter=ACM"])
     diff_file_list = diff_output.split('\n')
     file_list = []
 
@@ -43,42 +43,42 @@ def linter(base_sha, current_sha):
         return True, ""
 
     print "Running pylint against " + " ".join(file_list)
-    success, stdout = common.run_cli_cmd(["/usr/bin/pylint", "--rcfile=" + PYLINT_RCFILE] + file_list,
-                                         exit_on_fail=False)
+    pylint_cmd = ["/usr/bin/pylint", "--rcfile=" + PYLINT_RCFILE] + file_list
+    success, stdout = common.run_cli_cmd(pylint_cmd, exit_on_fail=False)
     if not success:
         return False, "Pylint failed:\n" + stdout
     return True, ""
 
 def usage():
     ''' Print usage '''
-    print """usage: python lint.py [[base_sha] [current_sha]]
+    print """usage: python lint.py [[base_sha] [remote_sha]]
     
-    base_sha:    The SHA of the current base branch being merged into
-    current_sha: The SHA of the branch after merge (git rev-parse HEAD)
+    base_sha:    The SHA of the base branch being merged into
+    remote_sha:  The SHA of the remote branch being merged
     
 Arguments can be provided through the following environment variables:
 
     base_sha:    PRV_BASE_SHA
-    current_sha: PRV_CURRENT_SHA"""
+    remote_sha:  PRV_REMOTE_SHA"""
 
 def main():
     ''' Get base and remote SHA from arguments and run linter '''
     if len(sys.argv) == 3:
         base_sha = sys.argv[1]
-        current_sha = sys.argv[2]
+        remote_sha = sys.argv[2]
     elif len(sys.argv) > 1:
         print len(sys.argv)-1, "arguments provided, expected 2."
         usage()
         sys.exit(2)
     else:
         base_sha = os.getenv("PRV_BASE_SHA", "")
-        current_sha = os.getenv("PRV_CURRENT_SHA", "")
+        remote_sha = os.getenv("PRV_REMOTE_SHA", "")
 
-    if base_sha == "" or current_sha == "":
+    if base_sha == "" or remote_sha == "":
         print "base and remote sha must be defined"
         usage()
         sys.exit(3)
-    success, error_message = linter(base_sha, current_sha)
+    success, error_message = linter(base_sha, remote_sha)
     if not success:
         print "Pylint failed:"
         print error_message
