@@ -3,12 +3,14 @@
   Send openshift and docker versions with miq_metric tag to metric_sender
 
   Example:
-  ./cron-send-docker-oc-versions.py -u oc_username -p oc_password
+  ./cron-send-docker-oc-versions.py
 '''
 # Disabling invalid-name because pylint doesn't like the naming conention we have.
 # pylint: disable=invalid-name,import-error
 
-from docker import AutoVersionClient
+import json
+import os
+import sys
 import subprocess
 import argparse
 from openshift_tools.monitoring.metric_sender import MetricSender
@@ -24,6 +26,24 @@ def parse_args():
     return args
 
 
+def add_specific_rpm_version(package_name, rpm_db_path, keys, mts):
+    '''get rpm package version and add to metric sender and keys dictionary
+    '''
+    try:
+        return_value = subprocess.check_output("rpm --dbpath {rpm_db_path} -q {package}".format(rpm_db_path=rpm_db_path,
+                                                                                                package=package_name),
+                                               stderr=subprocess.STDOUT, shell=True)
+
+        if return_value.startswith(package_name):
+            package_version = return_value[len(package_name)+1:len(return_value)-1]
+            key = "{}.version".format(package_name)
+            mts.add_metric({key: package_version}, key_tags={'miq_metric': 'true'})
+            keys[key] = package_version
+            return True, None
+
+    except subprocess.CalledProcessError as err:
+        return False, err
+
 def main():
     '''get docker and openshift versions and send to metric sender
     '''
@@ -31,19 +51,48 @@ def main():
     args = parse_args()
     mts = MetricSender(verbose=args.verbose, debug=args.debug)
 
+    # Check if host rpm db is mounted. Otherwise check againts container db
+    rpm_db_path = "/host/var/lib/rpm"
+    if not os.path.exists(rpm_db_path):
+        rpm_db_path = "/var/lib/rpm"
+
+    keys = {}
+
+    # Accumulate failures
+    failures = 0
+
     # Get docker version
-    cli = AutoVersionClient(base_url='unix://var/run/docker.sock', timeout=120)
-    docker_version = cli.version()["Version"]
-    mts.add_metric({"docker.version": docker_version}, key_tags={'miq_metric': 'true'})
+    success, err = add_specific_rpm_version("docker", rpm_db_path, keys, mts)
+    if not success:
+        failures += 1
+        print "Failed to get docker rpm version. " + err.output
 
-    # Get openshift version
-    try:
-        return_value = subprocess.check_output("oc version", stderr=subprocess.STDOUT, shell=True)
-        oc_version = return_value.split('\n')[0].split(' ')[1]
-        mts.add_metric({"oc.version": oc_version}, key_tags={'miq_metric': 'true'})
 
-    except subprocess.CalledProcessError as error:
-        print ("Failed to get openshift version: ", error.output)
+    openshift_package_name = "origin"
+
+    # Get openshift node version (attempt upstream)
+    success, err = add_specific_rpm_version("{}-node".format(openshift_package_name), rpm_db_path, keys, mts)
+    if not success:
+        # Get openshift version (attempt downstream)
+        openshift_package_name = "atomic-openshift"
+        success, err2 = add_specific_rpm_version("{}-node".format(openshift_package_name), rpm_db_path, keys, mts)
+        if not success:
+            failures += 1
+            print "Failed to get openshift rpm version:\n" + err.output + + err2.output
+
+    # Get openshift master version (upstream or downstream) - only if node rpm found
+    if success:
+        success, err = add_specific_rpm_version("{}-master".format(openshift_package_name), rpm_db_path, keys, mts)
+        if not success:
+            # Print notification but don't count this as failure
+            print "Note: " + err.output
+
+    print "Sending these metrics:"
+    print json.dumps(keys, indent=4)
+    mts.send_metrics()
+    print "\nDone.\n"
+
+    sys.exit(failures)
 
 if __name__ == '__main__':
     main()
