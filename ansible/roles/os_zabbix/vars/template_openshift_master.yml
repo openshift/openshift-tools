@@ -106,6 +106,26 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - name: openshift.router.pod.location
+    applications:
+    - Openshift Master
+    key: openshift.router.pod.location
+
+  - name: openshift.registry.pod.location
+    applications:
+    - Openshift Master
+    key: openshift.registry.pod.location
+
+  - name: openshift.router.pod.status
+    applications:
+    - Openshift Master
+    key: openshift.router.pod.status
+
+  - name: openshift.registry.pod.status
+    applications:
+    - Openshift Master
+    key: openshift.registry.pod.status
+
   - key: openshift.master.pv.percent.usage
     description: "check the openshift pv usage"
     value_type: int
