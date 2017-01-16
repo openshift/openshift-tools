@@ -43,6 +43,8 @@ GITHUB_API_URL = "https://api.github.com"
 REPO = "openshift-tools"
 REPO_USER = "openshift"
 
+THIS IS A BREAKING CHANGE
+
 def run_cli_cmd(cmd, exit_on_fail=True):
     '''Run a command and return its output'''
     proc = subprocess.Popen(cmd, bufsize=-1, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
