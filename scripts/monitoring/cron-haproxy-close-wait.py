@@ -16,6 +16,9 @@ import time
 # pylint: disable=import-error
 from openshift_tools.monitoring.metric_sender import MetricSender
 
+
+# This script is a mitigation for this bug:
+# https://bugzilla.redhat.com/show_bug.cgi?id=1364870
 ZABBIX_KEY = "openshift.haproxy.close-wait"
 
 class HAProxy(object):
