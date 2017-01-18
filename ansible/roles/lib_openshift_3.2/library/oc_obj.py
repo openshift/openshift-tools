@@ -931,12 +931,19 @@ class OCObject(OpenShiftCLI):
         return self._delete(self.kind, self.name)
 
     def create(self, files=None, content=None):
-        '''Create a deploymentconfig '''
+        '''
+           Create a config
+
+           NOTE: This creates the first file OR The first conent.
+           TODO: Handle all files and content passed in
+        '''
         if files:
             return self._create(files[0])
 
-        return self._create(Utils.create_files_from_contents(content))
+        content['data'] = yaml.dump(content['data'])
+        content_file = Utils.create_files_from_contents(content)[0]
 
+        return self._create(content_file['path'])
 
     # pylint: disable=too-many-function-args
     def update(self, files=None, content=None, force=False):
@@ -991,40 +998,7 @@ def main():
             all_namespaces=dict(defaul=False, type='bool'),
             name=dict(default=None, type='str'),
             files=dict(default=None, type='list'),
-            kind=dict(required=True,
-                      type='str',
-                      choices=['dc', 'deploymentconfigs',
-                               'buildconfigs', 'bc',
-                               'secrets',
-                               'svc', 'services',
-                               'scc', 'securitycontextconstraints',
-                               'ns', 'namespace', 'project', 'projects',
-                               'is', 'imagestreams',
-                               'istag', 'imagestreamtags',
-                               'imagestreamimages', 'isimage',
-                               'bc', 'buildconfigs',
-                               'routes',
-                               'builds',
-                               'node', 'no',
-                               'pods', 'po',
-                               'replicationcontrollers', 'rc',
-                               'daemonsets', 'ds',
-                               'events', 'ev',
-                               'persistentvolumes', 'pv',
-                               'persistentvolumeclaims', 'pvc',
-                               'policies',
-                               'rolebindings',
-                               'limitranges', 'limits',
-                               'resourcequotas', 'quota',
-                               'users',
-                               'groups',
-                               'componentstatuses', 'cs',
-                               'endpoints', 'ep'
-                               'role',
-                               'policybinding',
-                               'clusterbinding',
-                               'template',
-                              ]),
+            kind=dict(required=True, type='str'),
             delete_after=dict(default=False, type='bool'),
             content=dict(default=None, type='dict'),
             force=dict(default=False, type='bool'),
