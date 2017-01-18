@@ -28,6 +28,9 @@
 #    PRV_REMOTE_NAME   Full name of the remote 'namespace/reponame'
 #    PRV_CURRENT_SHA   The SHA of the merge commit
 #
+#  Other info
+#    PRV_CHANGED_FILES List of files changed in a pull request
+#
 
 import os
 import json
@@ -35,14 +38,14 @@ import subprocess
 import sys
 import requests
 
+import github_helpers
+
 EXCLUDES = [
     "common.py",
     ".pylintrc"
 ]
 # The relative path to the testing validator scripts
 VALIDATOR_PATH = "jenkins/test/validators/"
-# The github API base url
-GITHUB_API_URL = "https://api.github.com"
 # The string to accept in PR comments to initiate testing by a whitelisted user
 TEST_STRING = "[test]"
 
@@ -82,6 +85,12 @@ def assign_env(pull_request):
     os.environ["PRV_REMOTE_REF"] = head["ref"]
     os.environ["PRV_REMOTE_LABEL"] = head["label"]
     os.environ["PRV_REMOTE_NAME"] = head["repo"]["full_name"]
+
+    # Other helpful environment variables
+    baserepo = base["repo"]["full_name"]
+    prnum = pull_request["number"]
+    changed_files = github_helpers.get_changed_files(baserepo, prnum)
+    os.environ["PRV_CHANGED_FILES"] = ",".join(changed_files)
 
 def merge_changes(pull_request):
     """ Merge changes into current repository """
@@ -135,45 +144,10 @@ def run_validators():
         return False
     return True
 
-def submit_pr_comment(text, pull_id, repo):
-    """ Submit a comment on a pull request or issue in github """
-    github_username, oauth_token = get_github_credentials()
-    payload = {'body': text}
-    comment_url = "{0}/repos/{1}/issues/{2}/comments".format(GITHUB_API_URL, repo, pull_id)
-    response = requests.post(comment_url, json=payload, auth=(github_username, oauth_token))
-    # Raise an error if the request fails for some reason
-    response.raise_for_status()
-
-def submit_pr_status_update(state, text, remote_sha, repo):
-    """ Submit a commit status update with a link to the build results """
-    target_url = os.getenv("BUILD_URL")
-    github_username, oauth_token = get_github_credentials()
-    payload = {'state': state,
-               'description': text,
-               'target_url': target_url,
-               'context': "jenkins-ci"}
-    status_url = "{0}/repos/{1}/statuses/{2}".format(GITHUB_API_URL, repo, remote_sha)
-    response = requests.post(status_url, json=payload, auth=(github_username, oauth_token))
-    # Raise an error if the request fails for some reason
-    response.raise_for_status()
-
-def get_github_credentials():
-    """ Get credentials from mounted secret volume """
-    secret_dir = os.getenv("OPENSHIFT_BOT_SECRET_DIR")
-    if secret_dir == "":
-        print "ERROR: $OPENSHIFT_BOT_SECRET_DIR undefined. This variable should exist and" + \
-            " should point to the mounted volume containing the openshift-ops-bot username" + \
-            " and password"
-        sys.exit(2)
-    username_file = open(os.path.join("/", secret_dir, "username"), 'r')
-    token_file = open(os.path.join("/", secret_dir, "token"), 'r')
-    username = username_file.read()
-    username_file.close()
-    token = token_file.read()
-    token_file.close()
-    return username, token
-
-def check_user_whitelist(payload):
+# Check both the user and org whitelist for the user in this payload
+# Additionally, if the payload is an issue_comment, check to ensure that the
+# TEST_STRING is included in the comment.
+def pre_test_check(payload):
     """ Get and check the user whitelist for testing from mounted secret volume """
     # Get user from payload
     user = ""
@@ -195,22 +169,38 @@ def check_user_whitelist(payload):
             # since no actual error occurred, the expected has happened
             sys.exit(0)
 
-    # Get secret informatino from env variable
+    # Get secret information from env variable
     secret_dir = os.getenv("WHITELIST_SECRET_DIR")
     if secret_dir == "":
         print "ERROR: $WHITELIST_SECRET_DIR undefined. This variable should exist and" + \
             " should point to the mounted volume containing the admin whitelist"
         sys.exit(2)
     # Extract whitelist from secret volume
-    whitelist_file = open(os.path.join("/", secret_dir, "whitelist"), "r")
-    whitelist = whitelist_file.read()
-    whitelist_file.close()
-    if whitelist == "" or user not in whitelist.split(","):
-        print "WARN: User " + user + " not in admin whitelist."
-        # exit success here so that the jenkins job is marked as a success,
-        # since no actual error occured, the expected has happened
-        sys.exit(0)
+    user_whitelist_file = open(os.path.join("/", secret_dir, "users"), "r")
+    user_whitelist = user_whitelist_file.read()
+    user_whitelist_file.close()
+    if user_whitelist == "" or user not in user_whitelist.split(","):
+        if not check_org_whitelist(user, secret_dir):
+            print "WARN: User " + user + " not in admin or org whitelist."
+            # exit success here so that the jenkins job is marked as a success,
+            # since no actual error occured, the expected has happened
+            sys.exit(0)
 
+# Get the members of each organization in the organization whitelist for the user. If
+# the user is a member of any of these organizations, return True
+def check_org_whitelist(user, secret_dir):
+    """ Determine whether user is a member of any org in the org whitelist """
+    org_whitelist_file = open(os.path.join("/", secret_dir, "orgs"), "r")
+    org_whitelist = org_whitelist_file.read()
+    org_whitelist_file.close()
+    for org in org_whitelist.split(","):
+        if github_helpers.org_includes(user, org):
+            return True
+    return False
+
+# The payload may be for an issue_comment or for a pull_request. This method determines
+# which of those this payload represents. If the payload is an issue_comment, the
+# relevant pull_request information is gathered from Github
 def get_pull_request_info(payload):
     """ Get the relevant pull request details for this webhook payload """
     if "pull_request" in payload:
@@ -249,8 +239,8 @@ def main():
         print error
         sys.exit(1)
 
-    # Check to ensure the user submitting the changes is on the whitelist
-    check_user_whitelist(payload)
+    # Run several checks to ensure tests should be run for this payload
+    pre_test_check(payload)
 
     # Extract or get the pull request information from the payload
     pull_request = get_pull_request_info(payload)
@@ -260,7 +250,8 @@ def main():
     repo = pull_request["base"]["repo"]["full_name"]
 
     # Update the PR to inform users that testing is in progress
-    submit_pr_status_update("pending", "Automated tests in progress", remote_sha, repo)
+    github_helpers.submit_pr_status_update("pending", "Automated tests in progress",
+                                           remote_sha, repo)
 
     # Merge changes from pull request
     merge_changes(pull_request)
@@ -273,11 +264,13 @@ def main():
 
     # Determine and post result of tests
     if not success:
-        submit_pr_comment("Tests failed!", pull_id, repo)
-        submit_pr_status_update("failure", "Automated tests failed", remote_sha, repo)
+        github_helpers.submit_pr_comment("Tests failed!", pull_id, repo)
+        github_helpers.submit_pr_status_update("failure", "Automated tests failed",
+                                               remote_sha, repo)
         sys.exit(1)
-    submit_pr_comment("Tests passed!", pull_id, repo)
-    submit_pr_status_update("success", "Automated tests passed", remote_sha, repo)
+    github_helpers.submit_pr_comment("Tests passed!", pull_id, repo)
+    github_helpers.submit_pr_status_update("success", "Automated tests passed",
+                                           remote_sha, repo)
 
 if __name__ == '__main__':
     main()
