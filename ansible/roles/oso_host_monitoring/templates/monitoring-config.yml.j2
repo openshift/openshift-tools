@@ -357,7 +357,11 @@ host_monitoring_cron:
 
 - name: "Report number of stuck new builds" 
   minute: "*/10"
-  job: "ops-runner -f -s 30 -n cssnb.openshift.stuck_new_builds cron-send-stuck-new-builds"
+  job: "ops-runner -f -s 30 -n cssb.openshift.stuck_builds.new cron-send-stuck-builds -s New"
+
+- name: "Report number of stuck pending builds" 
+  minute: "*/10"
+  job: "ops-runner -f -s 30 -n cssb.openshift.stuck_builds.pending cron-send-stuck-builds -s Pending"
 
 {% if osohm_metrics_enabled | default(False) | bool %}
 - name: "Report metrics health"

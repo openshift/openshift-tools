@@ -38,10 +38,11 @@ def parse_args():
     argparser = argparse.ArgumentParser(description='OpenShift stuck new build count')
     argparser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
     argparser.add_argument('-a', '--age', action='store', default=180, type=int,
-                           help='How long a build can stay in New state before being considered stuck.')
+                           help='How long (in seconds) a build can stay in the state before being considered stuck. Default: 180')
+    argparser.add_argument('-s', '--state', action='store', default='New', help='The build state being checked. Default: New')
     return argparser.parse_args()
 
-def send_metrics(stuck_builds):
+def send_metrics(stuck_builds, build_state):
     """ send data to MetricSender"""
     logger.debug("send_metrics()")
 
@@ -49,13 +50,13 @@ def send_metrics(stuck_builds):
     ms = MetricSender()
     logger.info("Send data to MetricSender")
 
-    logger.debug({'openshift.stuck_new_builds' : stuck_builds})
-    ms.add_metric({'openshift.stuck_new_builds' : stuck_builds})
+    logger.debug({'openshift.stuck_builds.%s' % build_state.lower() : stuck_builds})
+    ms.add_metric({'openshift.stuck_builds.%s' % build_state.lower() : stuck_builds})
 
     ms.send_metrics()
     logger.info("Data sent to Zagg in %s seconds", str(time.time() - ms_time))
 
-def get_stuck_build_count(age):
+def get_stuck_build_count(age, build_state):
     """
         Return a count of the number of builds that have remained
         in New state longer than 'age' seconds.
@@ -68,10 +69,10 @@ def get_stuck_build_count(age):
 
     # go template method - shiny!
     get_new_build_timestamps = ("get builds --all-namespaces -o go-template='{{range .items}}"
-                                "{{if eq .status.phase \"New\"}}{{.status.startTimestamp}}"
+                                "{{if eq .status.phase \"%s\"}}{{.status.startTimestamp}}"
                                 "{{print \"\\n\"}}{{end}}{{end}}'")
 
-    all_ts = runOCcmd(get_new_build_timestamps).split()
+    all_ts = runOCcmd(get_new_build_timestamps % build_state).split()
     #logger.debug(all_ts)
     #epoch = datetime.datetime.utcfromtimestamp(0)
     stuck_build_count = 0
@@ -101,9 +102,9 @@ def main():
     if args.verbose:
         logger.setLevel(logging.DEBUG)
 
-    stuck_builds = get_stuck_build_count(args.age)
+    stuck_builds = get_stuck_build_count(args.age, args.state)
 
-    send_metrics(stuck_builds)
+    send_metrics(stuck_builds, args.state)
 
 if __name__ == "__main__":
     main()
