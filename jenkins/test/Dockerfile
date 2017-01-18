@@ -14,6 +14,7 @@ ADD whitelist/ /whitelist/
 RUN mkdir /validator && \
     git clone https://github.com/openshift/openshift-tools /validator/openshift-tools && \
     cd /validator/openshift-tools && \
+    git checkout stg && \
     git config user.name validator && \
     git config user.email validator@localhost && \
     /usr/bin/python /validator/openshift-tools/jenkins/test/run_tests.py
