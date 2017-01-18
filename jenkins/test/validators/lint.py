@@ -12,15 +12,12 @@ LINT_EXCLUDE_PATTERN_LIST = [
     r'ansible/inventory/gce/hosts/gce.py'
     r'docs/*']
 
-def linter(base_sha, remote_sha):
+def linter(diff_file_list):
     '''Use pylint to lint all python files changed in the pull request'''
-    _, diff_output = common.run_cli_cmd(["/usr/bin/git", "diff", "--name-only", base_sha,
-                                         remote_sha, "--diff-filter=ACM"])
-    diff_file_list = diff_output.split('\n')
     file_list = []
 
     # For each file in the diff, confirm it should be linted
-    for dfile in diff_file_list:
+    for dfile in diff_file_list.split(","):
         # Skip linting for specific files
         skip = False
         for exclude_pattern in LINT_EXCLUDE_PATTERN_LIST:
@@ -39,7 +36,7 @@ def linter(base_sha, remote_sha):
         file_list.append(dfile)
 
     if len(file_list) == 0:
-        print "No python files have changed, skipping running python linter"
+        print "No python files have changed or all files are excluded, skipping running python linter"
         return True, ""
 
     print "Running pylint against " + " ".join(file_list)
@@ -51,34 +48,30 @@ def linter(base_sha, remote_sha):
 
 def usage():
     ''' Print usage '''
-    print """usage: python lint.py [[base_sha] [remote_sha]]
+    print """usage: python lint.py [file_list...]
     
-    base_sha:    The SHA of the base branch being merged into
-    remote_sha:  The SHA of the remote branch being merged
+    file_list:  Comma-seperated list of files to run pylint against
     
 Arguments can be provided through the following environment variables:
 
-    base_sha:    PRV_BASE_SHA
-    remote_sha:  PRV_REMOTE_SHA"""
+    file_list:  PRV_CHANGED_FILES"""
 
 def main():
     ''' Get base and remote SHA from arguments and run linter '''
-    if len(sys.argv) == 3:
-        base_sha = sys.argv[1]
-        remote_sha = sys.argv[2]
-    elif len(sys.argv) > 1:
-        print len(sys.argv)-1, "arguments provided, expected 2."
+    if len(sys.argv) == 2:
+        file_list = sys.argv[1]
+    elif len(sys.argv) > 2:
+        print len(sys.argv)-1, "arguments provided, expected 1."
         usage()
         sys.exit(2)
     else:
-        base_sha = os.getenv("PRV_BASE_SHA", "")
-        remote_sha = os.getenv("PRV_REMOTE_SHA", "")
+        file_list = os.getenv("PRV_CHANGED_FILES", "")
 
-    if base_sha == "" or remote_sha == "":
-        print "base and remote sha must be defined"
+    if file_list == "":
+        print "file list must be provided"
         usage()
         sys.exit(3)
-    success, error_message = linter(base_sha, remote_sha)
+    success, error_message = linter(file_list)
     if not success:
         print "Pylint failed:"
         print error_message
