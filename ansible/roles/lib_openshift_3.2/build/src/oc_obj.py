@@ -38,12 +38,19 @@ class OCObject(OpenShiftCLI):
         return self._delete(self.kind, self.name)
 
     def create(self, files=None, content=None):
-        '''Create a deploymentconfig '''
+        '''
+           Create a config
+
+           NOTE: This creates the first file OR the first conent.
+           TODO: Handle all files and content passed in
+        '''
         if files:
             return self._create(files[0])
 
-        return self._create(Utils.create_files_from_contents(content))
+        content['data'] = yaml.dump(content['data'])
+        content_file = Utils.create_files_from_contents(content)[0]
 
+        return self._create(content_file['path'])
 
     # pylint: disable=too-many-function-args
     def update(self, files=None, content=None, force=False):
