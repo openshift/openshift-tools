@@ -38,15 +38,15 @@ def get_changes(oldrev, newrev, tempdir):
 
 def usage():
     ''' Print usage '''
-    print """usage: yaml_validation.py [[base_sha] [current_sha]]
+    print """usage: yaml_validation.py [[base_sha] [remote_sha]]
 
-    base_sha:     The SHA of the base branch being merged into
-    current_sha:  The SHA of the remote branch after merge (git rev-parse HEAD)
+    base_sha:    The SHA of the base branch being merged into
+    remote_sha:  The SHA of the remote branch after merge (git rev-parse HEAD)
 
 Arguments can be provided through the following environment variables:
 
-    base_sha:     PRV_BASE_SHA
-    current_sha:  PRV_CURRENT_SHA"""
+    base_sha:    PRV_BASE_SHA
+    remote_sha:  PRV_REMOTE_SHA"""
 
 def main():
     '''
@@ -54,15 +54,15 @@ def main():
     '''
     if len(sys.argv) == 3:
         base_sha = sys.argv[1]
-        current_sha = sys.argv[2]
+        remote_sha = sys.argv[2]
     elif len(sys.argv) > 1:
         print len(sys.argv)-1, "arguments provided, expected 2."
         usage()
         sys.exit(2)
     else:
         base_sha = os.getenv("PRV_BASE_SHA", "")
-        current_sha = os.getenv("PRV_CURRENT_SHA", "")
-    if base_sha == "" or current_sha == "":
+        remote_sha = os.getenv("PRV_REMOTE_SHA", "")
+    if base_sha == "" or remote_sha == "":
         print "Base SHA and remote SHA must be defined"
         usage()
         sys.exit(3)
@@ -71,7 +71,7 @@ def main():
     try:
         tmpdir = tempfile.mkdtemp(prefix='jenkins-git-')
         old = base_sha
-        new = current_sha
+        new = remote_sha
 
         for file_mod in get_changes(old, new, tmpdir):
 

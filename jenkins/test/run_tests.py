@@ -98,6 +98,14 @@ def merge_changes(pull_request):
 
 def run_validators():
     """ Run all test validators """
+    # First, add the validator direcotry to the python path to allow
+    # modules to be loaded by pylint
+    pypath = os.getenv("PYTHONPATH", "")
+    if pypath != "":
+        os.environ["PYTHONPATH"] = VALIDATOR_PATH + os.pathsep + pypath
+    else:
+        os.environ["PYTHONPATH"] = VALIDATOR_PATH
+
     failure_occured = False
     validators = [validator for validator in os.listdir(VALIDATOR_PATH) if
                   os.path.isfile(os.path.join(VALIDATOR_PATH, validator))]
