@@ -820,7 +820,7 @@ g_template_openshift_master:
 
   - name: "Builds stuck in New state for longer than 3 minutes on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.stuck_builds.new.last()}>0"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/build_count_alerts.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/stuck_build_alerts.asciidoc"
     priority: high
 
   # Put triggers that depend on other triggers here (deps must be created first)
