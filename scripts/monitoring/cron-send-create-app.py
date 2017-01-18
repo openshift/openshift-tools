@@ -40,19 +40,26 @@ logger.setLevel(logging.INFO)
 ocutil = OCUtil()
 
 commandDelay = 5 # seconds
-testLoopCountMax = 180 # * commandDelay = 15min
+# use parsed arg instead
+#testLoopCountMax = 180 # * commandDelay = 15min
 testCurlCountMax = 18 # * commandDelay = 1min30s
 testNoPodCountMax = 18 # * commandDelay = 1min30s
 
 def runOCcmd(cmd, base_cmd='oc'):
     """ log commands through ocutil """
     logger.info(base_cmd + " " + cmd)
-    return ocutil.run_user_cmd(cmd, base_cmd=base_cmd, )
+    oc_time = time.time()
+    oc_result = ocutil.run_user_cmd(cmd, base_cmd=base_cmd, )
+    logger.info("oc command took %s seconds", str(time.time() - oc_time))
+    return oc_result
 
 def runOCcmd_yaml(cmd, base_cmd='oc'):
     """ log commands through ocutil """
     logger.info(base_cmd + " " + cmd)
-    return ocutil.run_user_cmd_yaml(cmd, base_cmd=base_cmd, )
+    ocy_time = time.time()
+    ocy_result = ocutil.run_user_cmd_yaml(cmd, base_cmd=base_cmd, )
+    logger.info("oc command took %s seconds", str(time.time() - ocy_time))
+    return ocy_result
 
 def parse_args():
     """ parse the args from the cli """
@@ -65,6 +72,8 @@ def parse_args():
     parser.add_argument('--basename', default="test", help='base name, added to via openshift')
     parser.add_argument('--namespace', default="ops-health-monitoring",
                         help='namespace (be careful of using existing namespaces)')
+    parser.add_argument('--loopcount', default="36", 
+                        help="how many 5 second loops before giving up on app creation")
     return parser.parse_args()
 
 def send_metrics(build_ran, create_app, http_code, run_time):
@@ -213,7 +222,7 @@ def test(config):
     noPodCount = 0
     http_code = 0
 
-    for _ in range(testLoopCountMax):
+    for _ in range(self.args.loopcount):
         time.sleep(commandDelay)
         pod = getPod(config.podname)
 
