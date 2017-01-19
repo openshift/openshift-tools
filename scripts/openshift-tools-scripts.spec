@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.18
+Version:       0.1.19
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -380,6 +380,10 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Thu Jan 19 2017 Sten Turpin <sten@redhat.com> 0.1.19-1
+- debug run time of oc commands, line up in-script timeouts so ops-runner
+  timeout is less likely to fire (sten@redhat.com)
+
 * Thu Jan 19 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.18-1
 - Updating SOP URL and adding script to spec file (bmorriso@redhat.com)
 - Fixing linting issues (bmorriso@redhat.com)
