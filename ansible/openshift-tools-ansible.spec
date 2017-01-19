@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.33
+Version:        0.0.34
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,37 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Jan 19 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.34-1
+- Updating SOP URL and adding script to spec file (bmorriso@redhat.com)
+- Updated script and cronjob to work with any build state.
+  (bmorriso@redhat.com)
+- Adding stuck build check, cronjob, zitem, ztrigger (bmorriso@redhat.com)
+- updated oc_obj (mwoodson@redhat.com)
+- add checks for pv usage (zhizhang@zhizhang-laptop-nay.redhat.com)
+- role for deploying zagg in cluster (ihorvath@redhat.com)
+- Change Ansible inventory and docker start to use ops-metric-client instead of
+  zagg (zgalor@redhat.com)
+- use correct name to script (and update ops-runner signature)
+  (jdiaz@redhat.com)
+- use logging ca in route to avoid 503 errors (sedgar@redhat.com)
+- remove route until we can determine what is causing 503 error
+  (sedgar@redhat.com)
+- Update hawkular limits (whearn@redhat.com)
+- use ops-metric-pcp-client instead of ops-zagg-pcp-client (jdiaz@redhat.com)
+- use ops-metric-client instead of ops-zagg-client (jdiaz@redhat.com)
+- add default image prefix (sedgar@redhat.com)
+- add variable for image prefix (sedgar@redhat.com)
+- Use universal read mode when opening cert files. (sedgar@redhat.com)
+- add reencrypt route to logging (sedgar@redhat.com)
+- use ops registry for logging images (sedgar@redhat.com)
+- changed key names, added key for unknown state (sten@redhat.com)
+- remove old zabbix config section (now metric_sender_config)
+  (jdiaz@redhat.com)
+- add nodata trigger for config loop (dranders@redhat.com)
+- run cron-send-build-counts under ops-monitor (sten@redhat.com)
+- remove unused kubeconfig check (jdiaz@redhat.com)
+- add build count script, cronjob, zitem, ztrigger (sten@redhat.com)
+
 * Wed Jan 04 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.33-1
 - rename openshift-tools-scripts-monitoring-zagg-client (jdiaz@redhat.com)
 - Openshift Installer no longer supports 'online' deployment type

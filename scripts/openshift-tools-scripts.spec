@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.17
+Version:       0.1.18
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -382,6 +382,24 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Thu Jan 19 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.18-1
+- Updating SOP URL and adding script to spec file (bmorriso@redhat.com)
+- Fixing linting issues (bmorriso@redhat.com)
+- Updated script and cronjob to work with any build state.
+  (bmorriso@redhat.com)
+- Adding stuck build check, cronjob, zitem, ztrigger (bmorriso@redhat.com)
+- Added bug link for haproxy-close-wait mitigation script. (twiest@redhat.com)
+- fix a var from string to int (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix a pylint (zhizhang@zhizhang-laptop-nay.redhat.com)
+- remove useless ling (zhizhang@zhizhang-laptop-nay.redhat.com)
+- add checks for pv usage (zhizhang@zhizhang-laptop-nay.redhat.com)
+- Add a script that sends docker and openshift versions to metric_sender
+  (zgalor@redhat.com)
+- Replace calls to ZaggSender with MetricSender in monitoring scripts
+  (zgalor@redhat.com)
+- add the script to report usage of pv (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+
 * Tue Jan 10 2017 Joel Diaz <jdiaz@redhat.com> 0.1.17-1
 - convert router-stats to use MetricSender (jdiaz@redhat.com)
 - remove unused kubeconfig check (jdiaz@redhat.com)
