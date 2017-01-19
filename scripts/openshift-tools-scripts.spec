@@ -74,6 +74,7 @@ cp -p monitoring/cron-certificate-expirations.py %{buildroot}/usr/bin/cron-certi
 cp -p monitoring/cron-send-os-router-status.py %{buildroot}/usr/bin/cron-send-os-router-status
 cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
 cp -p monitoring/cron-send-build-counts.py %{buildroot}/usr/bin/cron-send-build-counts
+cp -p monitoring/cron-send-stuck-builds.py %{buildroot}/usr/bin/cron-send-stuck-builds
 cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
 
 mkdir -p %{buildroot}/etc/openshift_tools
@@ -304,6 +305,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-logging-checks
 /usr/bin/cron-send-elb-status
 /usr/bin/cron-send-build-counts
+/usr/bin/cron-send-stuck-builds
 /usr/bin/cron-send-elb-status
 /usr/bin/cron-send-docker-oc-versions
 
