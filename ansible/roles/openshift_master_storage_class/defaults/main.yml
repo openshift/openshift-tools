@@ -1,0 +1,23 @@
+---
+osmsc_storageclass_cloud: aws
+osmsc_storageclass_defaults:
+  aws:
+    name: ebs
+    provisioner: kubernetes.io/aws-ebs
+    type: gp2
+  gcp:
+    name: gcppd
+    provisioner: kubernetes.io/gce-pd
+    type: pd-standard
+
+osmsc_storageclass_name: "{{ osmsc_storageclass_defaults[osmsc_storageclass_cloud]['name'] }}"
+osmsc_storageclass_provisioner: "{{ osmsc_storageclass_defaults[osmsc_storageclass_cloud]['provisioner'] }}"
+osmsc_storageclass_type: "{{ osmsc_storageclass_defaults[osmsc_storageclass_cloud]['type'] }}"
+
+osmsc_enable_quotas: True
+osmsc_cluster_pv_quota: 100Gi
+osmsc_exclude_quota_label: storage_pv_quota
+osmsc_projects_to_exclude:
+- default
+- openshift-infra
+- logging
