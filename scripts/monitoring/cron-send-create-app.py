@@ -222,7 +222,7 @@ def test(config):
     noPodCount = 0
     http_code = 0
 
-    for _ in range(self.args.loopcount):
+    for _ in range(int(config.loopcount)):
         time.sleep(commandDelay)
         pod = getPod(config.podname)
 
