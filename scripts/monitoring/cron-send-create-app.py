@@ -72,7 +72,7 @@ def parse_args():
     parser.add_argument('--basename', default="test", help='base name, added to via openshift')
     parser.add_argument('--namespace', default="ops-health-monitoring",
                         help='namespace (be careful of using existing namespaces)')
-    parser.add_argument('--loopcount', default="36", 
+    parser.add_argument('--loopcount', default="36",
                         help="how many 5 second loops before giving up on app creation")
     return parser.parse_args()
 
@@ -222,7 +222,7 @@ def test(config):
     noPodCount = 0
     http_code = 0
 
-    for _ in range(self.args.loopcount):
+    for _ in range(int(config.loopcount)):
         time.sleep(commandDelay)
         pod = getPod(config.podname)
 
