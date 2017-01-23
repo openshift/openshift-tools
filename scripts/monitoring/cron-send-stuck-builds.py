@@ -70,7 +70,7 @@ def get_stuck_build_count(age, build_state):
 
     # go template method - shiny!
     get_new_build_timestamps = ("get builds --all-namespaces -o go-template='{{range .items}}"
-                                "{{if eq .status.phase \"%s\"}}{{.status.startTimestamp}}"
+                                "{{if eq .status.phase \"%s\"}}{{.metadata.creationTimestamp}}"
                                 "{{print \"\\n\"}}{{end}}{{end}}'")
 
     all_ts = runOCcmd(get_new_build_timestamps % build_state).split()
