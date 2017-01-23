@@ -1,0 +1,79 @@
+---
+- name: admissionConfig.pluginConfig.DefaultStorageClass.configuration
+  yedit:
+    src: /etc/origin/master/master-config.yaml
+    key: admissionConfig.pluginConfig.DefaultStorageClass.configuration
+    value:
+      apiVersion: v1
+      kind: DefaultStorageClass
+  notify:
+  - restart openshift master services
+
+- name: volumeConfig.dynamicProvisioningEnabled
+  yedit:
+    src: /etc/origin/master/master-config.yaml
+    key: volumeConfig.dynamicProvisioningEnabled
+    value: True
+  notify:
+  - restart openshift master services
+
+- name: Ensure storageclass object
+  oc_obj:
+    kind: storageclass
+    name: ebs
+    content:
+      path: /tmp/osmsc_storageclass
+      data:
+        kind: StorageClass
+        apiVersion: storage.k8s.io/v1beta1
+        metadata:
+          name: "{{ osmsc_storageclass_name }}"
+          annotations:
+            storageclass.beta.kubernetes.io/is-default-class: "true"
+        provisioner: "{{ osmsc_storageclass_provisioner }}"
+        parameters:
+          type: "{{ osmsc_storageclass_type }}"
+  run_once: true
+  notify:
+  - restart openshift master services
+
+# Quota support
+# Can disable quota support by passing in "osmsc_enable_quota: False"
+#
+- name: label designated projects to exclude from pv quotas
+  oc_label:
+    state: add
+    kind: namespace
+    name: "{{ item }}"
+    labels:
+    - key: "{{ osmsc_exclude_quota_label }}"
+      value: "False"
+  with_items: "{{ osmsc_projects_to_exclude }}"
+  run_once: True
+  when: osmsc_enable_quotas
+
+- name: Ensure Quotas are set for storage
+  oc_obj:
+    kind: ClusterResourceQuota
+    name: persistent-volume
+    content:
+      path: /tmp/osmsc_persistent_volume_quota
+      data:
+        kind: ClusterResourceQuota
+        apiVersion: v1
+        metadata:
+          name: persistent-volume
+        spec:
+          selector:
+            annotations: null
+            labels:
+              matchExpressions:
+              - key: "{{ osmsc_exclude_quota_label }}"
+                operator: DoesNotExist
+          quota:
+            hard:
+              requests.storage: "{{ osmsc_cluster_pv_quota }}"
+  run_once: true
+  when: osmsc_enable_quotas
+  notify:
+  - restart openshift master services
