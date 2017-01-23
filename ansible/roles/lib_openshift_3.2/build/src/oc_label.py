@@ -74,7 +74,7 @@ class OCLabel(OpenShiftCLI):
         current_label_keys = []
         current_labels = self.get_current_labels()
         for current_host_labels in current_labels:
-            current_label_keys.appens(current_host_labels.keys())
+            current_label_keys.append(current_host_labels.keys())
 
         return list(set(current_label_keys))
 
