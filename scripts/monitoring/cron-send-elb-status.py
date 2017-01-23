@@ -87,7 +87,7 @@ def main():
     instance_region = get_instance_region()
     elb = boto.ec2.elb.connect_to_region(instance_region, aws_access_key_id=aws_access,
                                          aws_secret_access_key=aws_secret)
-    instance_name = get_instance_name('/etc/openshift_tools/metrics_sender.yaml')
+    instance_name = get_instance_name('/etc/openshift_tools/metric_sender.yaml')
 
     ''' Define what instance type this node is, only master/infra are in ELBs '''
 
