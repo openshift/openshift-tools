@@ -587,7 +587,7 @@ def main():
 
     content = zapi.get_content(zbx_class_name,
                                'get',
-                               {'search': {'name': module.params['name']},
+                               {'filter': {'name': module.params['name']},
                                 'selectFilter': 'extend',
                                 'selectOperations': 'extend',
                                })
