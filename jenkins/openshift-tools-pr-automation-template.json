@@ -31,7 +31,8 @@
         "name": "${WHITELIST_SECRET_NAME}"
       },
       "stringData": {
-        "whitelist": "${WHITELIST}"
+        "users": "${USER_WHITELIST}",
+        "orgs": "${ORG_WHITELIST}"
       }
     },
     {
@@ -58,19 +59,19 @@
                 },
                 "destinationDir": "openshift-ops-bot"
               },
-							{
-								"secret": {
-									"name": "${WHITELIST_SECRET_NAME}"
-								},
-								"destinationDir": "whitelist"
-							}
+              {
+                "secret": {
+                  "name": "${WHITELIST_SECRET_NAME}"
+                },
+                "destinationDir": "whitelist"
+              }
             ]
         },
         "strategy": {
           "type": "Docker",
-	    "dockerStrategy": {
-              "noCache": true,
-	      "env": [
+            "dockerStrategy": {
+            "noCache": true,
+            "env": [
                 {
                   "name": "GITHUB_WEBHOOK_PAYLOAD",
                   "value": "{}"
@@ -88,7 +89,7 @@
                   "value": "whitelist"
                 }
               ]
-	    }
+           }
         },
         "output": {
         },
@@ -134,9 +135,16 @@
       "value": "admin-whitelist-secret"
     },
     {
-      "name": "WHITELIST",
-      "displayName": "Comma-seperated list of admin users. Ex: kearny,jimbo,nelson",
-      "required": true
+      "name": "USER_WHITELIST",
+      "displayName": "Comma-seperated list of github users. Ex: kearny,jimbo,nelson",
+      "required": false,
+      "value": ""
+    },
+    {
+      "name": "ORG_WHITELIST",
+      "displayName": "Comma-seperated list of github organizations. Ex: openshift,google",
+      "required": false,
+      "value": ""
     }
   ]
 }

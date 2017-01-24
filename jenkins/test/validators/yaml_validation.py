@@ -6,97 +6,69 @@
 '''
 python yaml validator for a git commit
 '''
-import shutil
 import sys
 import os
-import tempfile
-import subprocess
 import yaml
 
-def get_changes(oldrev, newrev, tempdir):
-    '''Get a list of git changes from oldrev to newrev'''
-    proc = subprocess.Popen(['/usr/bin/git', 'diff', '--name-only', oldrev,
-                             newrev, '--diff-filter=ACM'], stdout=subprocess.PIPE)
-    stdout, _ = proc.communicate()
-    files = stdout.split('\n')
+def validate_yaml(file_list):
+    """ Validate yaml syntax for each yaml file in file_list """
+    results = []
+    for file_mod in file_list.split(","):
+        # if the file extensions is not yml or yaml, move along.
+        if not file_mod.endswith('.yml') and not file_mod.endswith('.yaml'):
+            continue
 
-    # No file changes
-    if not stdout or stdout == '' or not files:
-        return []
+        # We use symlinks in our repositories, ignore them.
+        if os.path.islink(file_mod):
+            continue
 
-    cmd = '/usr/bin/git archive %s %s | /bin/tar x -C %s' % (newrev, " ".join(files), tempdir)
-    proc = subprocess.Popen(cmd, shell=True)
-    _, _ = proc.communicate()
+        print "YAML validation running aginst: %s" % file_mod
 
-    rfiles = []
-    for dirpath, _, fnames in os.walk(tempdir):
-        for fname in fnames:
-            rfiles.append(os.path.join(dirpath, fname))
+        try:
+            yaml.load(open(file_mod))
+            results.append(True)
 
-    return rfiles
+        except yaml.scanner.ScannerError as yerr:
+            print "YAML validation failed on " + file_mod + ": " + str(yerr)
+            results.append(False)
+
+    return results
 
 
 def usage():
     ''' Print usage '''
-    print """usage: yaml_validation.py [[base_sha] [remote_sha]]
+    print """usage: yaml_validation.py [file_list...]
 
-    base_sha:    The SHA of the base branch being merged into
-    remote_sha:  The SHA of the remote branch after merge (git rev-parse HEAD)
+    file_list:  The list of files to run yaml validation against
 
 Arguments can be provided through the following environment variables:
 
-    base_sha:    PRV_BASE_SHA
-    remote_sha:  PRV_REMOTE_SHA"""
+    file_list:  PRV_CHANGED_FILES"""
 
 def main():
     '''
     Perform yaml validation
     '''
-    if len(sys.argv) == 3:
-        base_sha = sys.argv[1]
-        remote_sha = sys.argv[2]
-    elif len(sys.argv) > 1:
+    if len(sys.argv) == 2:
+        file_list = sys.argv[1]
+    elif len(sys.argv) > 2:
         print len(sys.argv)-1, "arguments provided, expected 2."
         usage()
         sys.exit(2)
     else:
-        base_sha = os.getenv("PRV_BASE_SHA", "")
-        remote_sha = os.getenv("PRV_REMOTE_SHA", "")
-    if base_sha == "" or remote_sha == "":
-        print "Base SHA and remote SHA must be defined"
+        file_list = os.getenv("PRV_CHANGED_FILES", "")
+
+    if file_list == "":
+        print "file list must be provided"
         usage()
         sys.exit(3)
 
-    results = []
-    try:
-        tmpdir = tempfile.mkdtemp(prefix='jenkins-git-')
-        old = base_sha
-        new = remote_sha
-
-        for file_mod in get_changes(old, new, tmpdir):
-
-            print "+++++++ Received: %s" % file_mod
-
-            # if the file extensions is not yml or yaml, move along.
-            if not file_mod.endswith('.yml') and not file_mod.endswith('.yaml'):
-                continue
-
-            # We use symlinks in our repositories, ignore them.
-            if os.path.islink(file_mod):
-                continue
-
-            try:
-                yaml.load(open(file_mod))
-                results.append(True)
-
-            except yaml.scanner.ScannerError as yerr:
-                print yerr
-                results.append(False)
-    finally:
-        shutil.rmtree(tmpdir)
-
+    results = validate_yaml(file_list)
     if not all(results):
+        print "YAML validation failed!"
         sys.exit(1)
+    else:
+        print "YAML validation succeeded!"
 
 if __name__ == "__main__":
     main()
