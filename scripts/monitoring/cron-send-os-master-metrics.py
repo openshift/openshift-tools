@@ -250,7 +250,9 @@ class OpenshiftMasterZaggClient(object):
             if 'containerStatuses' in i['status']:
                 if 'running' in i['status']['containerStatuses'][0]['state']:
                     if 'nodeSelector' in i['spec']:
-                        if i['spec']['nodeSelector']['type'] == 'compute':
+                        # logging pods don't have selector on 'type'
+                        if 'type' in i['spec']['nodeSelector'] \
+                           and i['spec']['nodeSelector']['type'] == 'compute':
                             running_user_pod_count += 1
 
 
@@ -271,6 +273,15 @@ class OpenshiftMasterZaggClient(object):
 
         print "Total user count: %s" % len(response['items'])
         self.metric_sender.add_metric({'openshift.master.user.count' : len(response['items'])})
+
+    @staticmethod
+    def convert_to_GiB(value):
+        """ take units as 'Gi', 'Ti', etc and return as int GiB """
+
+        if 'Gi' in value:
+            return int(value.replace('Gi', ''))
+        elif 'Ti' in value:
+            return 1000 * int(value.replace('Ti', ''))
 
     def pv_info(self):
         """ Gather info about the persistent volumes in Openshift """
@@ -305,12 +316,12 @@ class OpenshiftMasterZaggClient(object):
             capacity = item['spec']['capacity']['storage']
             if item['status']['phase'] == 'Available':
                 # get total available capacity
-                pv_capacity_available = pv_capacity_available + int(capacity.replace('Gi', ''))
+                pv_capacity_available = pv_capacity_available + self.convert_to_GiB(capacity)
 
                 # gather dynamic pv available counts
                 dynamic_pv_available[item['spec']['capacity']['storage']] += 1
 
-            pv_capacity_total = pv_capacity_total + int(capacity.replace('Gi', ''))
+            pv_capacity_total = pv_capacity_total + self.convert_to_GiB(capacity)
 
         print "Total Persistent Volume Total count: %s" % len(response['items'])
         print 'Total Persistent Volume Capacity: %s' % pv_capacity_total
