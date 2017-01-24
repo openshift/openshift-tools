@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.21
+Version:       0.1.22
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -380,6 +380,9 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Tue Jan 24 2017 Joel Diaz <jdiaz@redhat.com> 0.1.22-1
+- take into account when value returned is not 'Gi' (jdiaz@redhat.com)
+
 * Mon Jan 23 2017 Marek Mahut <mmahut@redhat.com> 0.1.21-1
 - cron-send-elb-status: fixing the metric sender file name (mmahut@redhat.com)
 - cron-send-stuck-builds: use the creationTimestamp for new builds
