@@ -69,6 +69,7 @@ RUN yum clean metadata && \
         openvswitch \
         python-psutil \
         pylint \
+        python-pygithub \
         docker-python && \
     yum -y update && \
     yum clean all
