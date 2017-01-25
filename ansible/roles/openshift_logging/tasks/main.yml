@@ -32,6 +32,15 @@
   run_once: true
 - debug: var=projectout
 
+- name: label logging project to exclude from pv quotas
+  oc_label:
+    state: add
+    kind: namespace
+    name: logging
+    labels: "{{ osalog_logging_project_labels }}"
+  run_once: True
+  when: not osalog_logging_labels
+
 - name: Allow logging to deploy to all node types
   oc_edit:
     kind: ns
