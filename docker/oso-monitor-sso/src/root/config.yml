@@ -25,6 +25,7 @@
       mode: 0600
     with_items:
       - zagg_client.yaml
+      - metric_sender.yaml
 
   - name: install a copy of the SSH known hosts file
     copy:
