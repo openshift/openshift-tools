@@ -104,6 +104,16 @@
     seconds: 120
   run_once: true
 
+- name: Add the "view" role to system:serviceaccount:openshift-infra:hawkular
+  oadm_policy_user:
+    namespace: openshift-infra
+    user: system:serviceaccount:openshift-infra:hawkular
+    resource_kind: role
+    resource_name: view
+  register: policyout
+  run_once: true
+- debug: var=policyout
+
 - name: scale down cassandra to 0
   oc_scale:
     name: "hawkular-cassandra-{{ item }}"
