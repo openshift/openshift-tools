@@ -56,7 +56,7 @@ class AuthData
         $roles = array_key_exists('roles', $resource) ? $resource['roles'] : $this->data['default_roles'];
         foreach ($roles as $role)
         {
-            if (array_key_exists('members', $role) && array_search($user, $role['members']))
+            if (array_key_exists('members', $role) && FALSE !== array_search($user, $role['members']))
             {
                 return $role['name'];
             }
