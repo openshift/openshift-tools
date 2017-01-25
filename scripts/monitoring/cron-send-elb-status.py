@@ -105,7 +105,12 @@ def main():
 
     ''' Fetch the load balancers and make sure this instance is within them '''
 
-    elbs = elb.get_all_load_balancers()
+    try:
+        elbs = elb.get_all_load_balancers()
+    except:
+        print "Rate limit reached, skipping."
+        exit()
+
     instance_id = get_instance_id()
     instance_missing = 0
 
