@@ -1,3 +1,4 @@
 osalog_fluentd_nodes:
 - type=compute
 osalog_image_prefix: registry.access.redhat.com/openshift3/
+osalog_logging_labels: False
