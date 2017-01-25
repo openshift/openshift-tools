@@ -354,17 +354,17 @@ def main():
         run_time = str(time.time() - start_time)
         logger.info('Test finished. Time to complete test only: %s', run_time)
 
-    ############# send data to zabbix #############
-    try:
-        send_metrics(
-            test_response['build_ran'],
-            test_response['create_app'],
-            test_response['http_code'],
-            run_time
-        )
-    except Exception as e:
-        logger.exception("error sending zabbix data")
-        exception = e
+        ############# send data to zabbix #############
+        try:
+            send_metrics(
+                test_response['build_ran'],
+                test_response['create_app'],
+                test_response['http_code'],
+                run_time
+            )
+        except Exception as e:
+            logger.exception("error sending zabbix data")
+            exception = e
 
         ############# collect more information if failed #############
         if test_response['failed']:
