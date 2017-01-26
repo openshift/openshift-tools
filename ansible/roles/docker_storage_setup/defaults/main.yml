@@ -1,2 +1,3 @@
 ---
 dss_docker_device: /dev/xvdb
+dss_docker_storage_dm_basesize: 3G
