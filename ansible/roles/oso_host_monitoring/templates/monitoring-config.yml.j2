@@ -323,7 +323,7 @@ host_monitoring_cron:
 {% if osohm_master_primary | default(False) | bool %}
 - name: send openshift-master /healthz status every 5 minutes
   minute: "*/5"
-  job: ops-runner -f -s 15 -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --healthz --ap    i-ping --metrics --node-checks -v &>> /var/log/csosmm-notready.log
+  job: ops-runner -f -s 15 -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --healthz --api-ping --metrics --node-checks -v &>> /var/log/csosmm-notready.log
 
 - name: Do a full heartbeat for synthetic host
   minute: "10"
