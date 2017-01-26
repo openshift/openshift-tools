@@ -64,16 +64,17 @@ RUN yum clean metadata && \
         python-uri-templates google-api-python-client \
         python-httplib2 python-oauth2client \
         python-pyasn1 python-pyasn1-modules python-rsa \
-{# This is installed for gsutil and calculating the size of the gcs #}
-{# centos users should install this from https://cloud.google.com/sdk/downloads and follow the instructions #}
-{% if base_os == 'rhel7' %}
-        gcloud \
-{% endif %}
         openvswitch \
         python-psutil \
         pylint \
         python-pygithub \
         docker-python && \
+{# This is installed for gsutil and calculating the size of the gcs #}
+{# centos users should install this from https://cloud.google.com/sdk/downloads and follow the instructions #}
+{# disabling releases-optional repo as the filelist_db metadata file is over 1GB #}
+{% if base_os == 'rhel7' %}
+    yum install -y gcloud --disablerepo="oso-rhui-rhel-server-releases-optional" && \
+{% endif %}
     yum -y update && \
     yum clean all
 

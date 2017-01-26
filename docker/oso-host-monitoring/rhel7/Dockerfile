@@ -60,12 +60,12 @@ RUN yum clean metadata && \
         python-uri-templates google-api-python-client \
         python-httplib2 python-oauth2client \
         python-pyasn1 python-pyasn1-modules python-rsa \
-        gcloud \
         openvswitch \
         python-psutil \
         pylint \
         python-pygithub \
         docker-python && \
+    yum install -y gcloud --disablerepo="oso-rhui-rhel-server-releases-optional" && \
     yum -y update && \
     yum clean all
 
