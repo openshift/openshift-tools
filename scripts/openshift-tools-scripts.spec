@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.22
+Version:       0.1.23
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -382,6 +382,12 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Thu Jan 26 2017 Marek Mahut <mmahut@redhat.com> 0.1.23-1
+- Disable bare-except as we know this function fails with EC2
+  (mmahut@redhat.com)
+- If get fails, we exceeded API rate of amazon (mmahut@redhat.com)
+- was changed inappropriately (dranders@redhat.com)
+
 * Tue Jan 24 2017 Joel Diaz <jdiaz@redhat.com> 0.1.22-1
 - take into account when value returned is not 'Gi' (jdiaz@redhat.com)
 
