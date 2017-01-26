@@ -803,16 +803,6 @@ g_template_openshift_master:
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pv_failed.asciidoc"
     priority: info
 
-  - name: "Less than 10 Available Persistent Volumes on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.pv.available.count.max(#2)}<10"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pv_remaining.asciidoc"
-    priority: info
-
-  - name: "Less than 5 Available Persistent Volumes on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.pv.available.count.max(#2)}<5"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pv_remaining.asciidoc"
-    priority: warn
-
   - name: "Too many new builds {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.build_state.new.count.avg(#3)}>10"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/build_count_alerts.asciidoc"
