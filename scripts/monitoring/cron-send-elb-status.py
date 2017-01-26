@@ -27,6 +27,7 @@
 # pylint: disable=pointless-string-statement
 # pylint: disable=deprecated-lambda
 # pylint: disable=bad-builtin
+# pylint: disable=bare-except
 
 from ConfigParser import SafeConfigParser
 from openshift_tools.monitoring.metric_sender import MetricSender
