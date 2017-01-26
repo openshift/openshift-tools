@@ -27,6 +27,7 @@
 # pylint: disable=pointless-string-statement
 # pylint: disable=deprecated-lambda
 # pylint: disable=bad-builtin
+# pylint: disable=bare-except
 
 from ConfigParser import SafeConfigParser
 from openshift_tools.monitoring.metric_sender import MetricSender
@@ -105,7 +106,12 @@ def main():
 
     ''' Fetch the load balancers and make sure this instance is within them '''
 
-    elbs = elb.get_all_load_balancers()
+    try:
+        elbs = elb.get_all_load_balancers()
+    except:
+        print "Rate limit reached, skipping."
+        exit()
+
     instance_id = get_instance_id()
     instance_missing = 0
 
