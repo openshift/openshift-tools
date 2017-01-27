@@ -53,7 +53,6 @@ RUN yum clean metadata && \
         python-openshift-tools-monitoring-openshift \
         python-openshift-tools-ansible \
         python-openshift-tools-web \
-        openshift-tools-scripts \
         openshift-tools-scripts-cloud-aws \
         openshift-tools-scripts-cloud-gcp \
         openshift-tools-scripts-monitoring-pcp \
@@ -71,7 +70,6 @@ RUN yum clean metadata && \
         pylint \
         python-pygithub \
         docker-python && \
-    yum -y update && \
     yum clean all
 
 ADD urllib3-connectionpool-patch /root/

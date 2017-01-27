@@ -47,7 +47,6 @@ RUN yum clean metadata && \
         python-openshift-tools-monitoring-openshift \
         python-openshift-tools-ansible \
         python-openshift-tools-web \
-        openshift-tools-scripts \
         openshift-tools-scripts-cloud-aws \
         openshift-tools-scripts-cloud-gcp \
         openshift-tools-scripts-monitoring-pcp \
@@ -66,7 +65,6 @@ RUN yum clean metadata && \
         python-pygithub \
         docker-python && \
     yum install -y gcloud --disablerepo="oso-rhui-rhel-server-releases-optional" && \
-    yum -y update && \
     yum clean all
 
 ADD urllib3-connectionpool-patch /root/
