@@ -246,7 +246,28 @@ g_template_app_zabbix_server:
      zabbix_type: internal
      delta: 1 # speed per second
 
+   zhttptests:
+   - name: check_v2_zabbix_web
+     interval: 60
+     steps:
+     - name: "Check v2 Zabbix web"
+       url: "{{ g_v2_monitor_url }}"
+       status_codes: '200'
+       required: Zabbix
+       'no': 1
+     #- name: "Hit some other service"
+     #  url: "http://google.com"
+     #  status_codes: '200'
+     #  required: google
+     #  'no': 2
+
    ztriggers:
+   - description: "Zabbix v2 Web UI is not responding"
+     expression: "{Template App Zabbix Server:web.test.fail[check_v2_zabbix_web].last(#1)}<>0 and {Template App Zabbix Server:web.test.fail[check_v2_zabbix_web].last(#2)}<>0"
+     name: "Zabbix v2 Web UI is not responding"
+     priority: high
+     url: https://github.com/openshift/ops-sop/blob/master/Services/Zabbix/Custom_Checks.asciidoc
+
    - description: "There has been unexpected output while running the housekeeping script\
        \ on the Zabbix. There are only three kinds of lines we expect to see in the output,\
        \ and we've gotten something enw.\r\n\r\nCheck the script's output in /var/lib/zabbix/state\
