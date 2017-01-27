@@ -47,6 +47,17 @@
   with_items: "{{ template.zitems | default([]) }}"
   register: created_items
 
+- name: Create Web Checks
+  zbx_httptest:
+    zbx_server: "{{ server }}"
+    zbx_user: "{{ user }}"
+    zbx_password: "{{ password }}"
+    name: "{{ item.name }}"
+    interval: "{{ item.interval }}"
+    template_name: "{{ template.name }}"
+    steps: "{{ item.steps }}"
+  with_items: "{{ template.zhttptests | default([]) }}"
+
 - name: Create Triggers
   zbx_trigger:
     zbx_server: "{{ server }}"
@@ -141,3 +152,4 @@
     width: "{{ item.width }}"
     graph_items: "{{ item.graph_items }}"
   with_items: "{{ template.zgraphprototypes | default([]) }}"
+
