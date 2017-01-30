@@ -1,0 +1,9 @@
+---
+ossr_cloud_router_edits:
+  # needed to correspond with AWS ELB configuration that causes ELB to
+  # communicated with the proxy protocol
+  - key: spec.template.spec.containers[0].env
+    value:
+      name: ROUTER_USE_PROXY_PROTOCOL
+      value: 'true'
+    action: update
