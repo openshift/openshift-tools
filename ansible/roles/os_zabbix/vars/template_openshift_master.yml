@@ -804,7 +804,7 @@ g_template_openshift_master:
     priority: info
 
   - name: "Too many new builds {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.build_state.new.count.avg(#3)}>10"
+    expression: "{Template Openshift Master:openshift.build_state.new.avg(#3)}>10"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/build_count_alerts.asciidoc"
     priority: high
 
