@@ -29,7 +29,8 @@
 #    PRV_CURRENT_SHA   The SHA of the merge commit
 #
 #  Other info
-#    PRV_CHANGED_FILES List of files changed in a pull request
+#    PRV_CHANGED_FILES List of files changed in the pull request
+#    PRV_COMMITS       List of commits in the pull request
 #
 
 import os
@@ -89,8 +90,14 @@ def assign_env(pull_request):
     # Other helpful environment variables
     baserepo = base["repo"]["full_name"]
     prnum = pull_request["number"]
+
+    # List of changed files
     changed_files = github_helpers.get_changed_files(baserepo, prnum)
     os.environ["PRV_CHANGED_FILES"] = ",".join(changed_files)
+
+    # List of commits
+    commits = github_helpers.get_commits(baserepo, prnum)
+    os.environ["PRV_COMMITS"] = ",".join(commits)
 
 def merge_changes(pull_request):
     """ Merge changes into current repository """
