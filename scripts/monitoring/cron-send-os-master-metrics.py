@@ -278,8 +278,8 @@ class OpenshiftMasterZaggClient(object):
     def convert_to_GiB(value):
         """ take units as 'Gi', 'Ti', etc and return as int GiB """
 
-        if 'Gi' in value:
-            return int(value.replace('Gi', ''))
+        if 'G' in value:
+            return int(value.strip('GIgi'))
         elif 'Ti' in value:
             return 1000 * int(value.replace('Ti', ''))
 
