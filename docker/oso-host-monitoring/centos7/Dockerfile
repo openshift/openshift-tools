@@ -75,6 +75,9 @@ RUN yum clean metadata && \
 ADD urllib3-connectionpool-patch /root/
 RUN yum install -y patch && yum clean all && cd /usr/lib/python2.7/site-packages/ && patch -p1 < /root/urllib3-connectionpool-patch
 
+RUN yum install -y python-pip
+RUN pip install hawkular-client
+
 # Ansible startup configuration playbook
 ADD root /root
 
