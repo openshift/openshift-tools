@@ -1,0 +1,25 @@
+---
+- name: "auditConfig.enabled"
+  yedit:
+    src: /etc/origin/master/master-config.yaml
+    key: auditConfig.enabled
+    value: "{{ omac_auditConfig_enabled }}"
+  notify: restart openshift master services
+
+- name: "deploy master audit config options"
+  yedit:
+    src: /etc/origin/master/master-config.yaml
+    key: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: "{{ 'present' if item.value != '' else 'absent' }}"
+  notify: restart openshift master services
+  with_items:
+  - key: auditConfig.auditFilePath
+    value: "{{ omac_auditConfig_auditFilePath | default('') }}"
+  - key: auditConfig.maximumFileRetentionDays
+    value: "{{ omac_auditConfig_maximumFileRetentionDays | default('') }}"
+  - key: auditConfig.maximumRetainedFiles
+    value: "{{ omac_auditConfig_maximumRetainedFiles | default('') }}"
+  - key: auditConfig.maximumFileSizeMegabytes
+    value: "{{ omac_auditConfig_maximumFileSizeMegabytes | default('') }}"
+
