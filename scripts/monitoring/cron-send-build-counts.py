@@ -62,6 +62,7 @@ def count_builds():
 
     for build_state in valid_build_states:
         build_counts[build_state] = 0
+    build_counts["unknown"] = 0
 
     get_builds = "get builds --all-namespaces -o jsonpath='{range .items[*]}{.status.phase}{\"\\n\"}{end}'"
 
