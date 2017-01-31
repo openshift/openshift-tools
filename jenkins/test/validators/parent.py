@@ -4,38 +4,21 @@ import sys
 import common
 
 PROD_BRANCH_NAME = "prod"
+STG_BRANCH_NAME = "stg"
 
-def ensure_stg_contains(commit_id):
+# Takes an array of commit SHA strings
+def ensure_stg_contains(commit_shas):
     '''Ensure that the stg branch contains a specific commit'''
-    print "Ensuring stage branch also contains " + commit_id
-    # reset any changes other validators might have made
-    common.run_cli_cmd(['/usr/bin/git', 'reset', '--hard'])
-    # git co stg
-    common.run_cli_cmd(['/usr/bin/git', 'checkout', 'stg'])
-    # git pull latest
-    common.run_cli_cmd(['/usr/bin/git', 'pull'])
-    # setup on the <prod> branch in git
-    common.run_cli_cmd(['/usr/bin/git', 'checkout', 'prod'])
-    common.run_cli_cmd(['/usr/bin/git', 'pull'])
-    # merge the passed in commit into my current <branch>
-    common.run_cli_cmd(['/usr/bin/git', 'merge', commit_id])
+    print "Ensuring stage branch also contains " + ",".join(commit_shas)
 
     commits_not_in_stg = []
-
-    # get the differences from stg and <branch>
-    _, rev_list = common.run_cli_cmd(['/usr/bin/git', 'rev-list', '--left-right', 'stg...prod'])
-    for commit in rev_list.split('\n'):
-        # continue if it is already in stg
-        if not commit or commit.startswith('<'):
-            continue
-        # remove the first char '>'
-        commit = commit[1:]
+    for commit in commit_shas:
         parent_cmd = ['/usr/bin/git', 'branch', '-q', '-r', '--contains', commit]
         success, branches = common.run_cli_cmd(parent_cmd, exit_on_fail=False)
-        if success and len(branches) == 0:
-            continue
-        if 'origin/stg/' not in branches:
-            commits_not_in_stg.append(commit)
+        if not success or len(branches) != 0:
+            if 'origin/stg' not in branches:
+                # If not, this commit is not in stg and should not be merged to prod
+                commits_not_in_stg.append(commit)
 
     if len(commits_not_in_stg) > 0:
         return False, "These commits are not in stage:\n\t" + " ".join(commits_not_in_stg)
@@ -43,34 +26,37 @@ def ensure_stg_contains(commit_id):
 
 def usage():
     ''' Print usage '''
-    print """usage: parent.py [[base_ref] [remote_sha]]
+    print """usage: parent.py base_branch commit_list
 
-    base_ref:    Git REF of the base branch being merged into
-    remote_sha:  The SHA of the remote branch after merge (git rev-parse HEAD)
+    base_branch:  Branch commits are being merged into.
+    commit_list:  Comma-seperated list of commits to check for in {}
 
 Arguments can be provided through the following environment variables:
 
-    base_ref:    PRV_BASE_REF
-    remote_sha:  PRV_REMOTE_SHA"""
+    base_branch:  PRV_BASE_REF
+    commit_list:  PRV_COMMITS""".format(PROD_BRANCH_NAME)
 
 def main():
     ''' Get git change information and check stg for commit '''
     if len(sys.argv) == 3:
-        base_ref = sys.argv[1]
-        commit_id = sys.argv[2]
-    elif len(sys.argv) > 1:
+        base_branch = sys.argv[1]
+        commit_list = sys.argv[2]
+    elif len(sys.argv) > 3:
         print len(sys.argv)-1, "arguments provided, expected 2."
         usage()
         sys.exit(2)
     else:
-        base_ref = os.getenv("PRV_BASE_REF", "")
-        commit_id = os.getenv("PRV_REMOTE_SHA", "")
-    if base_ref == "" or commit_id == "":
-        print "Base REF and remote SHA must be defined"
+        base_branch = os.getenv("PRV_BASE_REF", "")
+        commit_list = os.getenv("PRV_COMMITS", "")
+    if base_branch == "" or commit_list == "":
+        print "Base branch and commit list must be provided"
         usage()
         sys.exit(3)
-    if base_ref == PROD_BRANCH_NAME:
-        success, error_message = ensure_stg_contains(commit_id)
+    if base_branch == PROD_BRANCH_NAME:
+        commit_shas = []
+        for sha in commit_list.split(","):
+            commit_shas.append(sha)
+        success, error_message = ensure_stg_contains(commit_shas)
         if not success:
             print error_message
             sys.exit(1)

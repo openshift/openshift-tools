@@ -72,3 +72,14 @@ def get_changed_files(repo, pr_num):
         filename = prfile.filename
         filename_list.append(filename)
     return filename_list
+
+# Takes a repo in the form 'org/repo-name' and a pr number string or int
+def get_commits(repo, pr_num):
+    """ Get list of commits for a pull request """
+    ghc = conn()
+    pull = ghc.get_repo(repo).get_pull(int(pr_num))
+    commit_list = []
+    for commit in pull.get_commits():
+        commit_sha = commit.sha
+        commit_list.append(commit_sha)
+    return commit_list
