@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.34
+Version:        0.0.35
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,24 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Tue Jan 31 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.35-1
+- extra word in build_state.new key (sten@redhat.com)
+- Fix docker oc version script (zgalor@redhat.com)
+- monitor v2 zabbix ui from v3 zabbix server (sten@redhat.com)
+- fix --api-ping param typo (jdiaz@redhat.com)
+- made it possible to pass in default dm basesize for docker storage setup
+  (mwoodson@redhat.com)
+- Removing the available PV trigger (mmahut@redhat.com)
+- move the node check to the primary master (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+- disable cron job that checks dns on existing containers (jdiaz@redhat.com)
+- get logging and metrics working on 3.4 (mwoodson@redhat.com)
+- Adding openshift sysctl role (kwoodson@redhat.com)
+- added the storage class role, updated oc_label (mwoodson@redhat.com)
+- Fixing zbx_action to filter instead of wildcard search (kwoodson@redhat.com)
+- debug run time of oc commands, line up in-script timeouts so ops-runner
+  timeout is less likely to fire (sten@redhat.com)
+
 * Thu Jan 19 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.34-1
 - Updating SOP URL and adding script to spec file (bmorriso@redhat.com)
 - Updated script and cronjob to work with any build state.
