@@ -75,6 +75,12 @@ RUN yum clean metadata && \
 ADD urllib3-connectionpool-patch /root/
 RUN yum install -y patch && yum clean all && cd /usr/lib/python2.7/site-packages/ && patch -p1 < /root/urllib3-connectionpool-patch
 
+# Add copr repo for python-hawkular-client rpm
+RUN cd /etc/yum.repos.d && curl -O https://copr.fedorainfracloud.org/coprs/g/Hawkular/python-hawkular-client/repo/epel-7/group_Hawkular-python-hawkular-client-epel-7.repo
+
+# Install python-hawkular-client
+RUN yum install -y python-hawkular-client && yum clean all
+
 # Ansible startup configuration playbook
 ADD root /root
 
