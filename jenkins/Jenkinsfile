@@ -1,0 +1,69 @@
+// Process the github webhook and trigger tests or builds depending on the payload data
+
+node {
+    stage "Check PR Action"
+        // Parse json payload
+        def test_key = "[test]"
+        def slurper = new groovy.json.JsonSlurper()
+        def webhook = slurper.parseText(payload)
+        def trigger = ""
+
+        // The following are the actions we should test:
+        // "opened", "reopened", "synchronize"
+        // We should build if the action is "closed" and the "merged" flag is true
+        // The "edited" action is when a comment is edited, we don't care about that.
+
+        // Additionally, to support re-testing via a comment made on the PR, we should test
+        // on the following issue-only actions:
+        // created, edited
+        // These will requier some additional verification, as tests should only commence if
+        // the comment was made on an open pull request and includes a certain phrase.
+
+        def action = webhook.action
+        echo "Webhook payload action: ${action}"
+        if (action == "opened" || action == "reopened" || action == "synchronize") {
+            echo "Pull request has been opened or modified, testing..."
+            trigger = "test"
+        } else if (action == "closed" && webhook.pull_request.merged) {
+            echo "Pull request has been merged, running builds..."
+            trigger = "build"
+        } else if (action == "created" || action == "edited") {
+            if (webhook.issue && webhook.issue.containsKey("pull_request")) {
+                body = webhook.comment.body
+                if (body.toLowerCase().contains(test_key)) {
+                    echo "Pull request comment contains '${test_key}', running tests..."
+                    trigger = "test"
+                } else {
+                    echo "Pull request comment does not contain '${test_key}'. Ignoring..."
+                }
+            } else {
+                echo "Comment made on issue, not pull request. Ignoring..."
+            }
+        }
+        echo "Trigger: ${trigger}"
+        // These variables must be nullified as they are not serializable
+        // See http://stackoverflow.com/questions/37864542/jenkins-pipeline-notserializableexception-groovy-json-internal-lazymap
+        slurper = null
+        webhook = null
+
+    if (trigger != "") {
+        if (trigger == "test") {
+            stage "Test Changes"
+                echo "Starting Tests"
+                openshiftBuild buildConfig: 'openshift-tools-test', env: [[ name: 'GITHUB_WEBHOOK_PAYLOAD', value: payload ], [ name: 'BUILD_URL', value: env.BUILD_URL ]], showBuildLogs: true
+        } else if (trigger == "build") {
+            stage "Build RPMS"
+                echo "Starting Build"
+                // TODO this is not yet implemented
+            stage "Deploy Updates"
+                echo "Deploying updated RPMs"
+                // TODO this is not yet implemented
+        } else {
+            echo "Trigger ${trigger} not recognized"
+            currentBuild.result = 'FAILURE'
+        }
+    } else {
+        echo "Webhook action, ${action}, does not justify running any jobs."
+        currentBuild.result = 'SUCCESS'
+    }
+}
