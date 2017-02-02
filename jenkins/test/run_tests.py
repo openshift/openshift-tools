@@ -33,10 +33,20 @@
 #    PRV_COMMITS       List of commits in the pull request
 #
 
+# TODO:
+# - Handle failures better. Just exiting is not a good option, as it will likely leave the PR
+#    commit status in pending forever.
+# - There are two packages that are not available in the centos version of the oso-host-monitoring image:
+#     oso-simplesamlphp https://brewweb.engineering.redhat.com/brew/buildinfo?buildID=518089
+#     python-ruamel-yaml https://brewweb.engineering.redhat.com/brew/packageinfo?packageID=61628
+#   This will cause centos builds to fail. The python-ruamel-yaml rpm is needed for running the unit
+#    tests. The oso-simplesamlphp rpm is needed to build and install the test rpms
+
 import os
 import json
 import subprocess
 import sys
+import fnmatch
 import requests
 
 import github_helpers
@@ -45,18 +55,31 @@ EXCLUDES = [
     "common.py",
     ".pylintrc"
 ]
-# The relative path to the testing validator scripts
-VALIDATOR_PATH = "jenkins/test/validators/"
+
+WORK_DIR = "/validator/"
+# The absolute path to the testing validator scripts
+VALIDATOR_PATH = WORK_DIR + "openshift-tools/jenkins/test/validators/"
+# The absolute path to the ops-rpm repo
+OPS_RPM_PATH = WORK_DIR + "ops-rpm/"
+# The absolute path to openshift-tools repo
+OPENSHIFT_TOOLS_PATH = WORK_DIR + "openshift-tools"
 # The string to accept in PR comments to initiate testing by a whitelisted user
 TEST_STRING = "[test]"
 
-def run_cli_cmd(cmd, exit_on_fail=True):
+def run_cli_cmd(cmd, exit_on_fail=True, log_cmd=True):
     '''Run a command and return its output'''
+    # Don't log the command if log_cmd=False to avoid exposing secrets in commands
+    if log_cmd:
+        print "> " + " ".join(cmd)
     proc = subprocess.Popen(cmd, bufsize=-1, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
                             shell=False)
     stdout, stderr = proc.communicate()
     if proc.returncode != 0:
-        print "Unable to run " + " ".join(cmd) + " due to error: " + stderr
+        # Don't log the command if log_cmd=False to avoid exposing secrets in commands
+        if log_cmd:
+            print "Unable to run " + " ".join(cmd) + " due to error: " + stderr
+        else:
+            print "Error running system command: " + stderr
         if exit_on_fail:
             sys.exit(proc.returncode)
         else:
@@ -232,6 +255,123 @@ def get_pull_request_info(payload):
         sys.exit(1)
     return pull_request
 
+def build_test_tools_rpms():
+    """ Build and install the openshift-tools rpms """
+    # We only need to build the openshift-tools rpms:
+    #   openshift-tools/scripts/openshift-tools-scripts.spec
+    #   openshift-tools/ansible/openshift-tools-ansible.spec
+    #   openshift-tools/openshift_tools/python-openshift-tools.spec
+    #   openshift-tools/web/openshift-tools-web.spec
+
+    # To build them: cd /validator/ops-rpm; /bin/sh /validator/ops-rpm/ops-rpm test-build-git openshift-tools
+    # This will unfortunately create a /tmp/titobuild.[A-Za-z0-9]{10} directory for each rpm
+    print "Building openshift-tools test rpms..."
+    cwd = os.getcwd()
+
+    # Clone the ops-rpm repo
+    # The ops-rpm repo is private and requires authentication
+    username, token = github_helpers.get_github_credentials()
+    opsrpm_url = "https://" + username + ":" + token + "@github.com/openshift/ops-rpm"
+    clone_opsrpm_cmd = ["/usr/bin/git", "clone", opsrpm_url, OPS_RPM_PATH]
+    success, output = run_cli_cmd(clone_opsrpm_cmd, False, False)
+    if not success:
+        print "Unable to clone the ops-rpm repo, builds cannot continue: " + output
+        sys.exit(1)
+
+    # Change to the ops-rpm directory
+    cd_cmd = ["cd", OPS_RPM_PATH]
+    success, output = run_cli_cmd(cd_cmd, False)
+    if not success:
+        print "Unable to change to the ops-rpm directory: " + output
+        sys.exit(1)
+
+    # Do the build
+    build_cmd = ["/bin/sh", os.path.join(OPS_RPM_PATH, "ops-rpm"), "test-build-git", "openshift-tools"]
+    success, output = run_cli_cmd(build_cmd, False)
+    if not success:
+        print "Unable to build test rpms: " + output
+        sys.exit(1)
+    else:
+        print "Successfully built openshift-tools test rpms!"
+
+    # Change back to previous directory
+    cd_cmd = ["cd", cwd]
+    # We don't really care if this fails, most things we do are from an absolute path
+    run_cli_cmd(cd_cmd, False)
+
+    # The directories ops-rpm creates look like this:
+    #   /tmp/titobuild.CzQ1l4W8LM:
+    #     noarch
+    #     openshift-tools-ansible-0.0.35-1.git.2.74afd1e.el7.centos.src.rpm
+    #     openshift-tools-ansible-git-2.aa60bc1.tar.gz
+    #   /tmp/titobuild.CzQ1l4W8LM/noarch:
+    #     openshift-tools-ansible-filter-plugins-0.0.35-1.git.2.74afd1e.el7.centos.noarch.rpm
+    #     openshift-tools-ansible-inventory-0.0.35-1.git.2.74afd1e.el7.centos.noarch.rpm
+    #     openshift-tools-ansible-inventory-aws-0.0.35-1.git.2.74afd1e.el7.centos.noarch.rpm
+    #     openshift-tools-ansible-inventory-gce-0.0.35-1.git.2.74afd1e.el7.centos.noarch.rpm
+    #     openshift-tools-ansible-zabbix-0.0.35-1.git.2.74afd1e.el7.centos.noarch.rpm
+    # We want to install all of the *.noarch.rpm files in the tree.
+    rpms = []
+    for root, _, files in os.walk('/tmp/'):
+        # This really assumes that no other *.noarch.rpm files are in /tmp/, we might want to narrow it down
+        for filename in files:
+            if fnmatch.fnmatch(filename, "*.noarch.rpm"):
+                file_abs = os.path.abspath(os.path.join(root, filename))
+                rpms.append(file_abs)
+
+    # If we didn't find any rpms, then there must have been some problems building.
+    if len(rpms) == 0:
+        print "No rpms found in /tmp/ after test build of openshift-tools"
+        sys.exit(1)
+
+    # Install the rpms, in one big yum install command
+    yum_install_cmd = ["yum", "localinstall", " ".join(rpms)]
+    success, output = run_cli_cmd(yum_install_cmd, False)
+    return success, output
+
+def run_unit_tests():
+    """ Run unit tests against installed tools rpms """
+    # Here are the instructions provided to me by kwoodson:
+    # go to openshift-tools.
+    # source test/env-setup
+    # cd test/units/
+    # python -m unittest yedit_test
+
+    print "Setting up unit tests"
+    # Change to the openshift-tools rpm repo. We should already be there, but just in case
+    # This must be done, as the test/env-setup bash script expects to be run from here
+    cwd = os.getcwd()
+    cd_cmd = ["cd", OPENSHIFT_TOOLS_PATH]
+    success, output = run_cli_cmd(cd_cmd, False)
+    if not success:
+        print "Unable to change to the openshift-tools directory: " + output
+        sys.exit(1)
+
+    # The env-setup script defines env variables that need to be present for unit tests
+    # We'll emulate sourcing in this file by grabbing the env list after sourcing it and
+    #  setting all of those envs explicity in our python enivronment
+    _, envs = run_cli_cmd(["/bin/bash", "-c", "source ./test/env-setup && env"], False)
+    for env in envs:
+        key, _, value = env.partition("=")
+        os.environ[key] = value
+
+    # Change to the test/units directory to run the tests properly
+    cd_cmd = ["cd", os.path.join(OPENSHIFT_TOOLS_PATH, "test", "units")]
+    success, output = run_cli_cmd(cd_cmd, False)
+    if not success:
+        print "Unable to change to the openshift-tools/test/units directory: " + output
+        sys.exit(1)
+
+    print "Running unit tests"
+    success, output = run_cli_cmd(["/usr/bin/python", "-m", "unittest", "yedit_test"], False)
+
+    # Change back to previous directory
+    cd_cmd = ["cd", cwd]
+    # We don't really care if this fails, most things we do are from an absolute path
+    run_cli_cmd(cd_cmd, False)
+
+    return success, output
+
 def main():
     """ Get the payload, merge changes, assign env, and run validators """
     # Get the github webhook payload json from the defined env variable
@@ -267,16 +407,38 @@ def main():
     assign_env(pull_request)
 
     # Run validators
-    success = run_validators()
+    validators_success = run_validators()
 
     # Determine and post result of tests
-    if not success:
-        github_helpers.submit_pr_comment("Tests failed!", pull_id, repo)
-        github_helpers.submit_pr_status_update("failure", "Automated tests failed",
+    if not validators_success:
+        github_helpers.submit_pr_comment("Validation tests failed!", pull_id, repo)
+        github_helpers.submit_pr_status_update("failure", "Validation tests failed",
                                                remote_sha, repo)
         sys.exit(1)
-    github_helpers.submit_pr_comment("Tests passed!", pull_id, repo)
-    github_helpers.submit_pr_status_update("success", "Automated tests passed",
+
+    # Build test rpms
+    build_success, output = build_test_tools_rpms()
+    if not build_success:
+        print "Rpm test builds failed, output:"
+        print output
+        github_helpers.submit_pr_comment("Validation tests passed, rpm test builds failed!", pull_id, repo)
+        github_helpers.submit_pr_status_update("failure", "Validation tests passed, rpm test builds failed",
+                                               remote_sha, repo)
+        sys.exit(1)
+
+    # Run unit tests
+    unittest_success, output = run_unit_tests()
+    if not unittest_success:
+        print "Unit tests failed, output:"
+        print output
+        github_helpers.submit_pr_comment("Validation tests passed, unit tests failed!", pull_id, repo)
+        github_helpers.submit_pr_status_update("failure", "Validation tests passed, unit tests failed",
+                                               remote_sha, repo)
+        sys.exit(1)
+
+    # If we are here, then everything succeeded!
+    github_helpers.submit_pr_comment("All tests passed!", pull_id, repo)
+    github_helpers.submit_pr_status_update("success", "All tests passed",
                                            remote_sha, repo)
 
 if __name__ == '__main__':
