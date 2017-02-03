@@ -101,7 +101,7 @@
 
 - name: wait for deployment to finish
   pause:
-    seconds: 120
+    seconds: 240
   run_once: true
 
 - name: Add the "view" role to system:serviceaccount:openshift-infra:hawkular
