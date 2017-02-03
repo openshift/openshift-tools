@@ -53,7 +53,7 @@
     zbx_user: "{{ user }}"
     zbx_password: "{{ password }}"
     name: "{{ item.name }}"
-    applications: "{{ item.applications }}"
+    application: "{{ item.application }}"
     interval: "{{ item.interval }}"
     template_name: "{{ template.name }}"
     steps: "{{ item.steps }}"

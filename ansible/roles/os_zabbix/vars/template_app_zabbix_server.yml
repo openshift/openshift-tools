@@ -249,7 +249,7 @@ g_template_app_zabbix_server:
    zhttptests:
    - name: check_v2_zabbix_web
      interval: 60
-     applications: Zabbix server
+     application: Zabbix server
      steps:
      - name: "Check v2 Zabbix web"
        url: "{{ g_v2_monitor_url }}"
