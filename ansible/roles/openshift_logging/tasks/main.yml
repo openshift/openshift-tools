@@ -230,7 +230,7 @@
 
 - name: Wait for elasticsearch first deploy to finish
   pause:
-    seconds: 60
+    seconds: 120
   run_once: true
 
 - name: Redeploy elasticsearch
@@ -239,7 +239,7 @@
 
 - name: Wait for elasticsearch deploy to finish
   pause:
-    seconds: 60
+    seconds: 120
   run_once: true
 
 - name: Remove old logging-fluentd configmap
@@ -305,7 +305,7 @@
 
 - name: Wait for curator to finish
   pause:
-    seconds: 60
+    seconds: 120
   run_once: true
 
 - name: Redeploy curator
@@ -326,7 +326,7 @@
 
 - name: Wait for kibana to finish
   pause:
-    seconds: 60
+    seconds: 120
   run_once: true
 
 - name: Redeploy kibana
