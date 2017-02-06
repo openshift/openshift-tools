@@ -61,13 +61,4 @@ objects:
     test: false
     triggers:
     - type: ConfigChange
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - oso-rhel7-zagg-web
-        from:
-          kind: ImageStreamTag
-          name: oso-rhel7-zagg-web:{{ oo_environment }}
-          namespace: zagg
-      type: ImageChange
 
