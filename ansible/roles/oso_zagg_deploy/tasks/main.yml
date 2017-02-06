@@ -24,6 +24,7 @@
     oc_service:
       namespace: default
       name: zagg-service
+      debug: true
       ports:
       - name: 80-tcp
         port: 80
@@ -31,7 +32,7 @@
         targetPort: 8000
       - name: 443-tcp
         port: 443
-        protocal: TCP
+        protocol: TCP
         targetPort: 8000
       selector:
         deploymentconfig: oso-rhel7-zagg-web
@@ -56,8 +57,16 @@
       reconcile: True
     when: '{{ zagg_pods_running | length }} < 2'
 
+  - name: get oc version
+    oc_version:
+    register: l_oc_version
+
   - name: deploy in 3.3
     command: "oc deploy --latest -n default oso-rhel7-zagg-web"
-    when: '{{ zagg_pods_running | length }} < 2'
+    when:
+      - '{{ zagg_pods_running | length }} < 2'
+      - l_oc_version.result.oc_short == "3.3"
 
   run_once: true
+  tags:
+    - zagg
