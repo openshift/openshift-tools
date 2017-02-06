@@ -105,6 +105,29 @@
     - [ 'filter_plugins', 'lookup_plugins' ]
     - [ 'openshift-cluster', 'openshift-master', 'openshift-node']
 
+  # Each OpenShift release ships with 1-2 supported upgrade paths in a
+  # version specific directory like "v3_4". Search for anything that looks like
+  # one, and create the required symlinks within it.
+  - name: Lookup versioned upgrade directories
+    find:
+      paths: "{{ vendored_dir }}/playbooks/byo/openshift-cluster/upgrades/"
+      patterns: "v3_*"
+      file_type: directory
+    register: upgrade_versions
+
+  - fail:
+      msg: "No upgrade directories found."
+    when: upgrade_versions.files | length == 0
+
+  - name: Symlink the filter and lookup plugins (no longer shipped with rpm) for byo/openshift-cluster/upgrades
+    file:
+      state: link
+      src: "../../../../../{{ item[0] }}"
+      dest: "{{ vendored_dir }}/playbooks/byo/openshift-cluster/upgrades/{{ item[1].path | basename }}/{{ item[0] }}"
+    with_nested:
+    - [ 'filter_plugins', 'lookup_plugins' ]
+    - "{{ upgrade_versions.files }}"
+
   - name: Symlink the openshift version to the installer
     file:
       state: link
