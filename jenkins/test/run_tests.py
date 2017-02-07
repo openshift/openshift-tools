@@ -36,11 +36,6 @@
 # TODO:
 # - Handle failures better. Just exiting is not a good option, as it will likely leave the PR
 #    commit status in pending forever.
-# - There are two packages that are not available in the centos version of the oso-host-monitoring image:
-#     oso-simplesamlphp https://brewweb.engineering.redhat.com/brew/buildinfo?buildID=518089
-#     python-ruamel-yaml https://brewweb.engineering.redhat.com/brew/packageinfo?packageID=61628
-#   This will cause centos builds to fail. The python-ruamel-yaml rpm is needed for running the unit
-#    tests. The oso-simplesamlphp rpm is needed to build and install the test rpms
 
 import os
 import json
@@ -56,13 +51,17 @@ EXCLUDES = [
     ".pylintrc"
 ]
 
+# The path set up in the Dockerfile
 WORK_DIR = "/validator/"
+# The absolute path to openshift-tools repo
+OPENSHIFT_TOOLS_PATH = WORK_DIR + "openshift-tools/"
 # The absolute path to the testing validator scripts
-VALIDATOR_PATH = WORK_DIR + "openshift-tools/jenkins/test/validators/"
+VALIDATOR_PATH = OPENSHIFT_TOOLS_PATH + "jenkins/test/validators/"
+# Script location of unit tests
+UNIT_TEST_SCRIPT = OPENSHIFT_TOOLS_PATH + "jenkins/test/run_unit_tests.sh"
 # The absolute path to the ops-rpm repo
 OPS_RPM_PATH = WORK_DIR + "ops-rpm/"
-# The absolute path to openshift-tools repo
-OPENSHIFT_TOOLS_PATH = WORK_DIR + "openshift-tools"
+
 # The string to accept in PR comments to initiate testing by a whitelisted user
 TEST_STRING = "[test]"
 
@@ -139,11 +138,13 @@ def run_validators():
     """ Run all test validators """
     # First, add the validator direcotry to the python path to allow
     # modules to be loaded by pylint
+    # We also add the jenkins/test directory so that github_helpers can be properly loaded.
     pypath = os.getenv("PYTHONPATH", "")
+    tools_test_path = OPENSHIFT_TOOLS_PATH + "jenkins/test/"
     if pypath != "":
-        os.environ["PYTHONPATH"] = VALIDATOR_PATH + os.pathsep + pypath
+        os.environ["PYTHONPATH"] = VALIDATOR_PATH + os.pathsep + tools_test_path + os.pathsep + pypath
     else:
-        os.environ["PYTHONPATH"] = VALIDATOR_PATH
+        os.environ["PYTHONPATH"] = VALIDATOR_PATH + os.pathsep + tools_test_path
 
     failure_occured = False
     validators = [validator for validator in os.listdir(VALIDATOR_PATH) if
@@ -331,45 +332,10 @@ def build_test_tools_rpms():
 
 def run_unit_tests():
     """ Run unit tests against installed tools rpms """
-    # Here are the instructions provided to me by kwoodson:
-    # go to openshift-tools.
-    # source test/env-setup
-    # cd test/units/
-    # python -m unittest yedit_test
-
-    print "Setting up unit tests"
-    # Change to the openshift-tools rpm repo. We should already be there, but just in case
-    # This must be done, as the test/env-setup bash script expects to be run from here
-    cwd = os.getcwd()
-    cd_cmd = ["cd", OPENSHIFT_TOOLS_PATH]
-    success, output = run_cli_cmd(cd_cmd, False)
-    if not success:
-        print "Unable to change to the openshift-tools directory: " + output
-        sys.exit(1)
-
-    # The env-setup script defines env variables that need to be present for unit tests
-    # We'll emulate sourcing in this file by grabbing the env list after sourcing it and
-    #  setting all of those envs explicity in our python enivronment
-    _, envs = run_cli_cmd(["/bin/bash", "-c", "source ./test/env-setup && env"], False)
-    for env in envs:
-        key, _, value = env.partition("=")
-        os.environ[key] = value
-
-    # Change to the test/units directory to run the tests properly
-    cd_cmd = ["cd", os.path.join(OPENSHIFT_TOOLS_PATH, "test", "units")]
-    success, output = run_cli_cmd(cd_cmd, False)
-    if not success:
-        print "Unable to change to the openshift-tools/test/units directory: " + output
-        sys.exit(1)
-
-    print "Running unit tests"
-    success, output = run_cli_cmd(["/usr/bin/python", "-m", "unittest", "yedit_test"], False)
-
-    # Change back to previous directory
-    cd_cmd = ["cd", cwd]
-    # We don't really care if this fails, most things we do are from an absolute path
-    run_cli_cmd(cd_cmd, False)
-
+    # At the time of this writing, no unit tests exist.
+    # A unit tests script will be run so that unit tests can easily be modified
+    print "Running unit tests..."
+    success, output = run_cli_cmd(["/bin/sh", UNIT_TEST_SCRIPT], False)
     return success, output
 
 def main():
@@ -416,6 +382,7 @@ def main():
                                                remote_sha, repo)
         sys.exit(1)
 
+    print "Validation tests passed!"
     # Build test rpms
     build_success, output = build_test_tools_rpms()
     if not build_success:
@@ -426,16 +393,18 @@ def main():
                                                remote_sha, repo)
         sys.exit(1)
 
+    print "Test rpms built!"
     # Run unit tests
     unittest_success, output = run_unit_tests()
     if not unittest_success:
         print "Unit tests failed, output:"
         print output
-        github_helpers.submit_pr_comment("Validation tests passed, unit tests failed!", pull_id, repo)
-        github_helpers.submit_pr_status_update("failure", "Validation tests passed, unit tests failed",
+        github_helpers.submit_pr_comment("Validation tests passed, test rpms built, unit tests failed!", pull_id, repo)
+        github_helpers.submit_pr_status_update("failure", "Validation tests passed, test rpms built, unit tests failed",
                                                remote_sha, repo)
         sys.exit(1)
 
+    print "Unit tests passed!"
     # If we are here, then everything succeeded!
     github_helpers.submit_pr_comment("All tests passed!", pull_id, repo)
     github_helpers.submit_pr_status_update("success", "All tests passed",
