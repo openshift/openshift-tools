@@ -42,3 +42,5 @@ The script will then submit a comment to the pull request indiciating whether al
   5. Hit 'Update webhook' to save the changes.
 
 8. Ensure that the github user used to update pull requests has push permissions to the repository. As an adiministrator of the repository, navigate to 'Settings' > 'Collaborators' to invite the user to have 'Write' permissions.
+
+This is a silly test change!

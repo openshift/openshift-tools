@@ -50,6 +50,8 @@ VALIDATOR_PATH = "jenkins/test/validators/"
 # The string to accept in PR comments to initiate testing by a whitelisted user
 TEST_STRING = "[test]"
 
+THIS IS A BREAKING CHANGE
+
 def run_cli_cmd(cmd, exit_on_fail=True):
     '''Run a command and return its output'''
     proc = subprocess.Popen(cmd, bufsize=-1, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
