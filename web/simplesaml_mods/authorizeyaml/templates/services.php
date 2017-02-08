@@ -20,8 +20,14 @@ if (isset($this->data['resources']) && is_array($this->data['resources']) && cou
 {
 ?>
 <ul class="resource_list">
-<?php foreach ($this->data['resources'] as $resource) { ?>
-    <li><a href='/<?php echo $this->data['baseurlpath']; ?>saml2/idp/SSOService.php?spentityid=<?php echo urlencode($resource['resource_id']);?>'><?php echo htmlspecialchars($resource['name'])?></a>
+<?php foreach ($this->data['resources'] as $resource) {
+    $url = '/'.$this->data['baseurlpath'].'saml2/idp/SSOService.php?spentityid='.urlencode($resource['resource_id']);
+    // add a redirect URL if one was provided
+    if (array_key_exists('relaystate_url', $resource) && $resource['relaystate_url']) {
+        $url .= "&RelayState=".urlencode($resource['relaystate_url']);
+    }
+    ?>
+    <li><a href='<?php echo $url; ?>'><?php echo htmlspecialchars($resource['name'])?></a>
 <?php } ?>
 </ul>
 
