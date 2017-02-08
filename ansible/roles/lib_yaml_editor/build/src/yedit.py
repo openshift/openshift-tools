@@ -171,7 +171,7 @@ class Yedit(object):
         tmp_filename = self.filename + '.yedit'
         try:
             with open(tmp_filename, 'w') as yfd:
-                # pylint: disable=no-member
+                # pylint: disable=no-member,maybe-no-member
                 if hasattr(self.yaml_dict, 'fa'):
                     self.yaml_dict.fa.set_block_style()
                 yfd.write(yaml.dump(self.yaml_dict, Dumper=yaml.RoundTripDumper))
@@ -219,7 +219,7 @@ class Yedit(object):
         try:
             if content_type == 'yaml' and contents:
                 self.yaml_dict = yaml.load(contents, yaml.RoundTripLoader)
-                # pylint: disable=no-member
+                # pylint: disable=no-member,maybe-no-member
                 if hasattr(self.yaml_dict, 'fa'):
                     self.yaml_dict.fa.set_block_style()
             elif content_type == 'json' and contents:
