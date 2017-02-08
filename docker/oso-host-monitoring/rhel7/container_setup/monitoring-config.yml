@@ -183,7 +183,7 @@ host_monitoring_cron:
 
 - name: run docker info timer
   minute: "*/10"
-  job: ops-runner -f -s 15 -n csdt.docker.timer /usr/bin/cron-send-docker-rimer
+  job: ops-runner -f -s 15 -n csdt.docker.timer /usr/bin/cron-send-docker-timer
 
 - name: run docker dns test on existing containers
   minute: "*/5"
