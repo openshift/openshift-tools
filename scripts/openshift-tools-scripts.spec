@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.24
+Version:       0.1.25
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -382,6 +382,9 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Wed Feb 08 2017 zhiwliu <zhiwliu@redhat.com> 0.1.25-1
+- added the check for the internal pod (zhiwliu@redhat.com)
+
 * Tue Jan 31 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.24-1
 - Adding 'unknown' build state to the count script (bmorriso@redhat.com)
 - Fix docker oc version script (zgalor@redhat.com)
