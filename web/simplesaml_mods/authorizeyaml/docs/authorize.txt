@@ -39,5 +39,12 @@ Example authdata.yml
     resources:
       - name: aws_account_1
         id: "urn:amazon:webservices:123456789012"
+        # override the default roles for this resource only
+        roles:
+          - name: admin
+            members: [ opsguy ]
+            groups: []
       - name: aws_account_2
         id: "urn:amazon:webservices:987654321098"
+        # Provide a redirect URL that the user will be sent to after authenticating
+        relaystate_url: "https://console.aws.amazon.com/console/home?region=ap-southeast-1"

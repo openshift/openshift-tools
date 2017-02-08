@@ -37,7 +37,11 @@ foreach ($resource_ids as $rid)
     $resource = $authdata->getResource($rid);
     if (count($authdata->getRoles($resource, $user, $groups)) != 0)
     {
-        array_push($resources, array('resource_id' => $rid, 'name' => $resource['name']));
+        $rval = array('resource_id' => $rid, 'name' => $resource['name']);
+        if (array_key_exists('relaystate_url', $resource)) {
+            $rval['relaystate_url'] = $resource['relaystate_url'];
+        }
+        array_push($resources, $rval);
     }
 }
 $t->data['resources'] = $resources;
