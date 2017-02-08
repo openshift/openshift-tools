@@ -72,7 +72,7 @@ RUN yum clean metadata && \
         python-devel \
         libyaml-devel \
         oso-simplesamlphp \
-        python-ruamel-yaml \
+        python2-ruamel-yaml \
         python-pygithub \
         docker-python && \
     yum clean all
