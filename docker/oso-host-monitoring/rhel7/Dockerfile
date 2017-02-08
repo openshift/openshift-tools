@@ -66,7 +66,7 @@ RUN yum clean metadata && \
         python-devel \
         libyaml-devel \
         oso-simplesamlphp \
-        python-ruamel-yaml \
+        python2-ruamel-yaml \
         python-pygithub \
         docker-python && \
     yum install -y gcloud --disablerepo="oso-rhui-rhel-server-releases-optional" && \
