@@ -18,16 +18,14 @@
 
 import argparse
 import datetime
-import random
-import string
 import time
-import urllib2
 import re
 
 # Our jenkins server does not include these rpms.
 # In the future we might move this to a container where these
 # libs might exist
 #pylint: disable=import-error
+#pylint: disable=maybe-no-member
 from openshift_tools.monitoring.ocutil import OCUtil
 from openshift_tools.monitoring.metric_sender import MetricSender
 
@@ -101,12 +99,11 @@ def get_pv_usage():
         namespace = pv['spec']['claimRef']['namespace']
         capacity = pv['spec']['capacity']['storage']
         if namespace != "openshift-infra" and namespace != "logging":
-            capacity_int = int(capacity.replace('Gi', ''))
+            capacity_int = int(capacity.strip('GIgi'))
             total = total + capacity_int
     return total
 def main():
     """ report pv usage  """
-    exception = None
 
     logger.info('################################################################################')
     logger.info('  Starting Report pv usage - %s', datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
@@ -125,7 +122,7 @@ def main():
         logger.debug("cluster_capacity_max: %s", cluster_capacity_max)
         pv_used = get_pv_usage()
         logger.debug("cluster_pv_used: %s", pv_used)
-        cluster_capacity_max_gb = int(cluster_capacity_max.replace("Gi", ""))
+        cluster_capacity_max_gb = int(cluster_capacity_max.strip('GIgi'))
         #use int to send the usge of %
         usage_pv = (pv_used*100)/cluster_capacity_max_gb
         logger.debug("percent of usage of pv: %s", usage_pv)
