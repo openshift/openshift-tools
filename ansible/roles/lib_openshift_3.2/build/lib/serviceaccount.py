@@ -34,6 +34,7 @@ class ServiceAccountConfig(object):
             for sec in self.image_pull_secrets:
                 self.data['imagePullSecrets'].append({"name": sec})
 
+# pylint: disable=too-many-public-methods
 class ServiceAccount(Yedit):
     ''' Class to wrap the oc command line tools '''
     image_pull_secrets_path = "imagePullSecrets"
