@@ -67,9 +67,12 @@ def run_cli_cmd(cmd, exit_on_fail=True):
 def assign_env(pull_request):
     '''Assign environment variables base don github webhook payload json data'''
     # Github environment variables
-    os.environ["PRV_TITLE"] = pull_request["title"]
+    # encode to utf8 to support unicode characters in python 2.x
+    os.environ["PRV_TITLE"] = pull_request["title"].encode('utf8')
     # Handle pull request body in case it is empty
-    os.environ["PRV_BODY"] = (pull_request["body"] if pull_request["body"] is not None else "")
+    # Also encode to utf8 to support unicde characters in python 2.x
+    body = (pull_request["body"].encode('utf8') if pull_request["body"] is not None else "")
+    os.environ["PRV_BODY"] = body
     os.environ["PRV_PULL_ID"] = pull_request["number"]
     os.environ["PRV_URL"] = pull_request["url"]
 
