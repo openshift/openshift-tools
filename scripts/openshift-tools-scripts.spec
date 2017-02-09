@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.27
+Version:       0.1.28
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -382,6 +382,9 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Thu Feb 09 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.28-1
+- 
+
 * Wed Feb 08 2017 zhiwliu <zhiwliu@redhat.com> 0.1.27-1
 - 
 
