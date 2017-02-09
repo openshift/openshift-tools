@@ -333,6 +333,7 @@ class Router(OpenShiftCLI):
                 'restartPolicy', 'timeoutSeconds',
                 'livenessProbe', 'readinessProbe',
                 'terminationMessagePath', 'hostPort',
+                'defaultMode',
                ]
 
         return not Utils.check_def_equal(oc_objects_prep['DeploymentConfig']['obj'].yaml_dict,
