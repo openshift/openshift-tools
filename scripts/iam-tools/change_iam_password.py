@@ -107,7 +107,12 @@ class ChangePassword(object):
     def change_password(self, aws_account, user_name, new_password):
         """ Change the password for the specified account. """
 
-        session = boto3.Session(profile_name=aws_account)
+        try:
+            session = boto3.Session(profile_name=aws_account)
+        except botocore.exceptions.ProfileNotFound:
+            print('Error: ProfileNotFound. AWS credentials must be generated first using')
+            print('       the command: aws_api_key_manager -p', aws_account)
+            return False
         client = session.client('iam')
 
         try:
@@ -122,6 +127,14 @@ class ChangePassword(object):
                     UserName=user_name,
                     Password=new_password
                     )
+            elif client_exception.response['Error']['Code'] == 'InvalidClientTokenId':
+                print('Error: InvalidClientTokenId. Your API key may have expired or may have been replaced.')
+                print('       Generate new credentials using this command: aws_api_key_manager -p', aws_account)
+                return False
+            elif client_exception.response['Error']['Code'] == 'SignatureDoesNotMatch':
+                print('Error: SignatureDoesNotMatch. Credentials for this account may have been corrupted. You may')
+                print('       need to generate new credentials using this command: aws_api_key_manager -p', aws_account)
+                return False
             else:
                 raise # re-raise for any other flavor of botocore.exceptions.ClientError
 
