@@ -122,6 +122,8 @@ class ChangePassword(object):
                     UserName=user_name,
                     Password=new_password
                     )
+            else:
+                raise # re-raise for any other flavor of botocore.exceptions.ClientError
 
         print('Password successfully changed for:', aws_account)
         return self.response
