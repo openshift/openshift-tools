@@ -6,6 +6,7 @@ class ProjectConfig(OpenShiftCLIConfig):
     def __init__(self, rname, namespace, kubeconfig, project_options):
         super(ProjectConfig, self).__init__(rname, rname, kubeconfig, project_options)
 
+# pylint: disable=too-many-public-methods
 class Project(Yedit):
     ''' Class to wrap the oc command line tools '''
     annotations_path = "metadata.annotations"

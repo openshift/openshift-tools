@@ -650,7 +650,7 @@ class Yedit(object):
         tmp_filename = self.filename + '.yedit'
         try:
             with open(tmp_filename, 'w') as yfd:
-                # pylint: disable=no-member
+                # pylint: disable=no-member,maybe-no-member
                 if hasattr(self.yaml_dict, 'fa'):
                     self.yaml_dict.fa.set_block_style()
                 yfd.write(yaml.dump(self.yaml_dict, Dumper=yaml.RoundTripDumper))
@@ -698,7 +698,7 @@ class Yedit(object):
         try:
             if content_type == 'yaml' and contents:
                 self.yaml_dict = yaml.load(contents, yaml.RoundTripLoader)
-                # pylint: disable=no-member
+                # pylint: disable=no-member,maybe-no-member
                 if hasattr(self.yaml_dict, 'fa'):
                     self.yaml_dict.fa.set_block_style()
             elif content_type == 'json' and contents:
@@ -1484,6 +1484,7 @@ class ServiceAccountConfig(object):
             for sec in self.image_pull_secrets:
                 self.data['imagePullSecrets'].append({"name": sec})
 
+# pylint: disable=too-many-public-methods
 class ServiceAccount(Yedit):
     ''' Class to wrap the oc command line tools '''
     image_pull_secrets_path = "imagePullSecrets"
@@ -2186,6 +2187,7 @@ class Router(OpenShiftCLI):
                 'restartPolicy', 'timeoutSeconds',
                 'livenessProbe', 'readinessProbe',
                 'terminationMessagePath', 'hostPort',
+                'defaultMode',
                ]
 
         return not Utils.check_def_equal(oc_objects_prep['DeploymentConfig']['obj'].yaml_dict,
