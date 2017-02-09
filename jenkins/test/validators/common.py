@@ -5,7 +5,7 @@ import sys
 # Run cli command. By default, exit when an error occurs
 def run_cli_cmd(cmd, exit_on_fail=True):
     '''Run a command and return its output'''
-    print "Running system command: " + " ".join(cmd)
+    print "> " + " ".join(cmd)
     proc = subprocess.Popen(cmd, bufsize=-1, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=False)
     stdout, stderr = proc.communicate()
     if proc.returncode != 0:
