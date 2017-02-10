@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.28
+Version:       0.1.29
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -380,6 +380,14 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Thu Feb 09 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.29-1
+- change_iam_password: Capture a few of the common expected exceptions
+  (joesmith@redhat.com)
+- Don't swallow other flavors of botocore.exceptions.ClientError on failed pw
+  change (joesmith@redhat.com)
+- change from Gi to G , change the code (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+
 * Thu Feb 09 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.28-1
 - 
 
