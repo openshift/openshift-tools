@@ -26,6 +26,7 @@ class Registry(OpenShiftCLI):
            - svc/docker-registry
         '''
         super(Registry, self).__init__('default', registry_config.kubeconfig, verbose)
+        self.version = OCVersion(registry_config.kubeconfig, False)
         self.svc_ip = None
         self.portal_ip = None
         self.config = registry_config
@@ -128,6 +129,12 @@ class Registry(OpenShiftCLI):
 
     def prep_registry(self):
         ''' prepare a registry for instantiation '''
+        # In <= 3.4 credentials are used
+        # In >= 3.5 credentials are removed
+        versions = self.version.get()
+        if '3.5' in versions['oc']:
+            self.config.config_options['credentials']['include'] = False
+
         options = self.config.to_option_list()
 
         cmd = ['registry', '-n', self.config.namespace]
@@ -275,6 +282,8 @@ class Registry(OpenShiftCLI):
                         'imagePullPolicy',
                         'protocol', # ports.portocol: TCP
                         'type', # strategy: {'type': 'rolling'}
+                        'defaultMode', # added on secrets
+                        'activeDeadlineSeconds', # added in 1.5 for timeouts
                        ]
 
         if not Utils.check_def_equal(self.registry_prep['deployment'].yaml_dict,
