@@ -5,14 +5,14 @@
   with_dict: "{{ osvp_provisioner_params }}"
   when: osvp_provisioner_params is undefined
 
-- name: install the openshift-scripts-online
+- name: install the openshift-scripts-dedicated
   yum:
-    name: openshift-scripts-online
+    name: openshift-scripts-dedicated
     state: installed
 
-- name: ensure the template file from openshift-scripts-online has metadate.name. This should not be needed in the future
+- name: ensure the template file from openshift-scripts-dedicated has metadate.name. This should not be needed in the future
   yedit:
-    src: /etc/openshift-online/templates/volume-provisioner.yaml
+    src: /etc/openshift-dedicated/templates/volume-provisioner.yaml
     key: metadata
     value:
       name: online-volume-provisioner
@@ -68,7 +68,7 @@
     name: online-volume-provisioner
     kind: template
     files:
-    - "/etc/openshift-online/templates/volume-provisioner.yaml"
+    - "/etc/openshift-dedicated/templates/volume-provisioner.yaml"
   register: templateout
   run_once: true
 #- debug: var=templateout
