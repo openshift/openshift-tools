@@ -43,6 +43,7 @@ class AMICopy(object):
     """simple wrapper class for rhsm repos"""
 
     regions_to_copy = ['us-east-1',
+                       'us-east-2',
                        'us-west-1',
                        'us-west-2',
                        'eu-west-1',
