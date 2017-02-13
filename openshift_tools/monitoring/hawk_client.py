@@ -28,7 +28,7 @@ Example usage:
 # The hawkular client
 # hawkular client is not installed on the buildbot, disabling this
 #pylint: disable=import-error
-from hawkular.metrics import HawkularMetricsClient, MetricType
+from hawkular.metrics import HawkularMetricsClient, MetricType, Availability
 
 #This class implements rest calls. We only have one rest call implemented
 # add_metric.  More could be added here
@@ -76,7 +76,11 @@ class HawkClient(object):
             _id = metric.host
             key = '{0}/{1}/{2}'.format(_type, _id, metric.key)
 
-            if isinstance(value, basestring):
+            if metric.key == "heartbeat.ping":
+                # Use MetricType.Availablity for heartbeat
+                metric_type = MetricType.Availablity
+                value = Availability.Up
+            elif isinstance(value, basestring):
                 # Use MetricType.String for string metrics data
                 metric_type = MetricType.String
             else:
