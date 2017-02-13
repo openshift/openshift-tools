@@ -315,7 +315,7 @@ class ManageKeys(object):
 
     @staticmethod
     def create_key(aws_account, user_name, client):
-        """ Change an API key for the specified account.
+        """ Create a new API key for the specified account.
 
         Returns:
             A response object from boto3, which contains information about the new IAM key.
