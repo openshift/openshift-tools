@@ -16,4 +16,4 @@
   - ack
   - telnet
   - jq
-  - ruamel.yaml
+  - python2-ruamel-yaml
