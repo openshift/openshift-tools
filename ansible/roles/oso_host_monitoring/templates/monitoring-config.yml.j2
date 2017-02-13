@@ -192,7 +192,7 @@ host_monitoring_cron:
 {# end if dnsmasq #}
 {% endif %}
 
-{% if osohm_host_type == 'master' or osohm_host_type == 'infra' and osohm_cloud == 'aws' %}
+{% if ( osohm_host_type == 'master' or osohm_host_type == 'infra' ) and osohm_cloud == 'aws' %}
 - name: send ELB status
   minute: "*/15"
   job: ops-runner -f -s 60 -n cses.openshift.aws.elbd.status /usr/bin/cron-send-elb-status
