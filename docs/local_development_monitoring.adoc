@@ -21,7 +21,7 @@ In this document, we're going to focus on the monitoring components, but similar
 .The following packages are required:
 . Docker
 . python-ndg_httpsclient-0.3.2-1
-. ansible (As of 17 June 2016, Ansible 1.9 must be used, *not* 2.*)
+. ansible (As of 13 Nov 2016, Ansible 2.2)
 
 .Fedora:
 ----
