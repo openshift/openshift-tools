@@ -53,6 +53,7 @@ import yaml
 import boto3
 import botocore
 
+# pylint: disable=no-name-in-module
 from openshift_tools import saml_aws_creds
 
 
