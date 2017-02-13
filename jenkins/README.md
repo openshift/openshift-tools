@@ -2,8 +2,13 @@
 
 The files within this directory are used to set up automation around testing, building, and deploying changes to components in the openshift-tools repository.
 
+### Using the CI as a developer
+Upon submitting a pull request, tests will automatically be started for the changes in the pull request as long as the user who opened the pull request is on the user or organization whitelist. There may be some delay between the tests starting and the pull request being updated as the docker build initialization can take some time. Once testing is completely, the pull request will be updated with the result. The last commit will be marked with success or failure and a link to the test output.
+
+To manually run tests for a pull request, a whitelisted user can comment the term `[test]` to initiate testing. Testing will also be initiated any time the pull request commits are updated.
+
 ### How it works
-When a pull request is submitted to the openshift-tools repository on github, a webhook starts a job on a persistent jenkins instance running in an openshift environment. The job is a simple jenkins pipeline using the `Jenkinsfile` in this directory. The pipeline determines the action to take based on the action and some other details in the webhook. When a test is necessary, the jenkins pipeline starts a build on the openshift environment titled `openshift-tools-test` and outputs the build logs to the pipeline's logs.
+When a pull request is submitted to the openshift-tools repository on github, a webhook starts a job on a persistent jenkins instance running in an openshift environment. The job is a simple jenkins pipeline using the `Jenkinsfile` in this directory. The pipeline determines the action to take based on the `action` field and some other details in the webhook. When a test is necessary, the jenkins pipeline starts a build on the openshift environment titled `openshift-tools-test` and outputs the build logs to the pipeline's logs.
 
 Tests will be run whenever a pull request is opened, reopened, or "synchronized" (a commit is added, subtracted, or amended). Tests can also be manually performed by commenting on the pull request with the term '[test]' with a whitelisted user.
 
@@ -20,7 +25,7 @@ The script will then submit a comment to the pull request indiciating whether al
 ### Configuration
 1. In an openshift environment, deploy a persistent jenkins instance using the [jenkins-persistent template]( https://raw.githubusercontent.com/openshift/origin/master/examples/jenkins/jenkins-persistent-template.json). Pass the parameter `ENABLE_OAUTH=false` to disable OAUTH and set the default username and password to admin:password
 
-2. Deploy the builds and secrets in the openshift environment using the `openshift-tools-pr-automation-template.json` in this directory. A username and oauth token for a github user will be required. A comma-seperated list of github users will also be necessary for the whitelist.
+2. Deploy the builds and secrets in the openshift environment using the `openshift-tools-pr-automation-template.json` in this directory. A username and oauth token for a github user will be required. The user and org whitelists will need to be specified with at least one user or org that will be allowed to run tests.
 
 3. Log into the jenkins instance using the default credentials. Navigate to 'Manage Jenkins' > 'Manage Users' and click the 'config' icon for the admin user. Change the admin users password to something much more secure.
 
@@ -31,7 +36,7 @@ The script will then submit a comment to the pull request indiciating whether al
 6. In Jenkins, create a new jenkins pipeline job. Configure the following:
   1. Check the 'This project is parameterized' box and add a 'String Parameter' with the Name 'payload' (case-sensitive). Leave all other boxes empty.
   2. Under 'Build Triggers', check the 'Trigger builds remotely' checkbox and specify any string to use as the authorization token. This same token will be used later to configure the github webhook.
-  3. Under 'Pipeline', select 'Pipeline script from SCM' as the pipeline definition. Choose 'Git' as the SCM and specify `https://github.com/openshift/openshift-tools` as the repository url. Leave the 'Branches to build' blank. For the 'Script path', set to 'jenkins/Jenkinsfile'
+  3. Under 'Pipeline', you can either have jenkins pull the pipeline instructions Jenkinsfile from github, or you can copy and paste the Jenkinsfile contents from `jenkins/test/Jenkinsfile` into the text box. Grabbing the Jenkinsfile from Github will add 10-20 seconds to the build time. Select 'Pipeline script from SCM' as the pipeline definition. Choose 'Git' as the SCM and specify `https://github.com/openshift/openshift-tools` as the repository url. Leave the 'Branches to build' blank. For the 'Script path', set to 'jenkins/Jenkinsfile'
   4. Save the job
     
 7. In github, navigate to the settings for openshift-tools with administrator permissions. Under webhooks, create a new webhook and configure the following:
@@ -42,3 +47,8 @@ The script will then submit a comment to the pull request indiciating whether al
   5. Hit 'Update webhook' to save the changes.
 
 8. Ensure that the github user used to update pull requests has push permissions to the repository. As an adiministrator of the repository, navigate to 'Settings' > 'Collaborators' to invite the user to have 'Write' permissions.
+
+## Possible Gotchas
+- The `test/run_tests.py` file is the only file that is not dynamically updated with changes. This means that if you modify `test/run_tests.py` in a pull request, those changes will not take affect during testing until the changes have been merged. This occurs because `test/run_tests.py` is the entrypoint to testing that pulls in the changes. Something must run to pull in the changes made in a pull request that will be unaffected by the pull request. The testing currently runs from the 'stg' branch to help with this. Once the commit is merged to stg, the pull request submitting the changes to the prod branch will run with the updated `test/run_tests.py` to allow for proper verification.
+- Tests in the `test/Validators/` directory are run dynamically. If a pull request includes a new *.py or *.sh executable script in this directory, it will be run during testing. Because of the possible security implications, there are whitelists that must be used to specify only trusted individuals allowed to run tests.
+- To build and install rpms, the testing must run as root. This requires the testing to be run as a docker build. The docker build adds some extra complexity and a good deal of additional time to the testing process. Pull requests will not be updated with an indication that testing is in progress until the `test/run_tests.py` executable has been called during the docker build. This delay can cause some confusion.
