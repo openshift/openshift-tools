@@ -32,6 +32,9 @@
 
  To manage keys for another user, use the '-u' option:
  aws_api_key_manager -u <some-other-user> -p ded-stage-aws
+
+ To remove a stale entry found in your credentials file, use the '-c' option:
+ aws_api_key_manager -p <outdated-profile> -c
 """
 
 from __future__ import print_function
@@ -50,6 +53,7 @@ import yaml
 import boto3
 import botocore
 
+# pylint: disable=no-name-in-module
 from openshift_tools import saml_aws_creds
 
 
@@ -77,6 +81,9 @@ class ManageKeys(object):
         parser.add_argument('-p', '--profile',
                             help='Create new API keys for the specified profile.',
                             action='append')
+        parser.add_argument('-c', '--clean',
+                            help='Specify an unwanted profile entry to remove.',
+                            action='store_true')
         parser.add_argument('-u', '--user',
                             help='Specify a username for the account.')
         args = parser.parse_args()
@@ -87,7 +94,9 @@ class ManageKeys(object):
                   'Usage:\n'
                   'example: {0} -p <account-name>\n'
                   'example: {0} -u <some-other-user> -p <account-name>\n'
-                  'example: {0} --all'.format(parser.prog))
+                  'example: {0} --all\n'
+                  'To clean an outdated profile entry from the credentials file, use "-c"\n'
+                  'example: {0} -p <outdated-account-name> -c'.format(parser.prog))
             sys.exit(10)
 
         if not args.user:
@@ -156,7 +165,11 @@ class ManageKeys(object):
 
     @staticmethod
     def create_user(aws_account, user_name, client):
-        """ Create an IAM user account. """
+        """ Create an IAM user account and add them to the admin group.
+
+        Returns:
+            True, after successful account creation.
+        """
 
         client.create_user(
             UserName=user_name
@@ -265,9 +278,44 @@ class ManageKeys(object):
         else:
             raise ValueError(sso_config_path + 'does not exist.')
 
+
+    @staticmethod
+    def clean_entry(args):
+        """ Cleans an unwanted entry from the credentials file.
+
+        Returns:
+            True, after cleaning the unwanted entry.
+
+        Raises:
+            A ValueError if the path to the credentials file does not exist.
+        """
+
+        path = os.path.join(os.path.expanduser('~'), '.aws/credentials')
+
+        if os.path.isfile(path):
+            config = ConfigParser.RawConfigParser()
+            config.read(path)
+
+            for aws_account in args.profile:
+                try:
+                    config.remove_section(aws_account)
+
+                    with open(path, 'w') as configfile:
+                        config.write(configfile)
+
+                    print('Successfully removed entry for %s' % aws_account)
+
+                except ConfigParser.NoSectionError:
+                    print('Section for account %s could not be found, skipping' % aws_account)
+
+
+        else:
+            raise ValueError(path + ' does not exist.')
+
+
     @staticmethod
     def create_key(aws_account, user_name, client):
-        """ Change an API key for the specified account.
+        """ Create a new API key for the specified account.
 
         Returns:
             A response object from boto3, which contains information about the new IAM key.
@@ -323,7 +371,7 @@ class ManageKeys(object):
     def write_credentials(aws_account, key_object):
         """ Write the profile for the user account to the AWS credentials file.
 
-        Raise:
+        Raises:
             A ValueError if the path to the credentials file does not exist.
         """
 
@@ -416,7 +464,10 @@ class ManageKeys(object):
         args = self.check_arguments()
         ops_accounts = self.check_accounts()
 
-        if args.profile and args.user:
+        if args.clean and args.profile:
+            self.clean_entry(args)
+
+        elif args.profile and args.user:
             self.run_one(args, ops_accounts)
 
         elif args.all and args.user:

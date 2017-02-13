@@ -107,6 +107,8 @@ function _check_creds()
                     fi
                 elif [ "$line" != "default" ]; then
                     echo "AWS Credentials exist in $credfile for unrecognized (possibly stale?) account '$line'"
+                    echo "You can remove them with the following command:"
+                    echo "aws_api_key_manager -c -p '$line'"
                 fi
             fi
         done < "$credfile"
