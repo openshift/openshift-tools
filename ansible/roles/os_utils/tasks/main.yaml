@@ -1,6 +1,10 @@
 ---
-# Utility packages that make things helpful
+- name: remove ruamel.yaml
+  yum:
+    name: ruamel.yaml
+    state: absent
 
+# Utility packages that make things helpful
 - name: Install useful rpm packages
   action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
   with_items:
