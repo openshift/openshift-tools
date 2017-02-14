@@ -1,0 +1,9 @@
+---
+g_ses_mail_from: ops@example.com
+g_ses_smtp_domain: zabbix.ops.example.com
+g_ses_smtp_server: email-smtp.us-east-1.amazonaws.com
+g_ses_user: AKIASECRET
+# AWS SMTP user (zabbix_smtp) secret key: secret
+g_ses_password: secret
+g_zbx_scriptrunner_user: opsmedic
+g_zbx_scriptrunner_bastion_host: bastion-host.example.com

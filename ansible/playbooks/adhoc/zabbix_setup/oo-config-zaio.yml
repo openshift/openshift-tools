@@ -5,9 +5,9 @@
   connection: local
   become: no
   vars:
-    g_server: http://localhost/zabbix/api_jsonrpc.php
-    g_user: Admin
-    g_password: zabbix
+    g_server: "http://localhost/zabbix/api_jsonrpc.php"
+    g_user: "{{ zabbix_user | default('Admin') }}"
+    g_password: "{{ zabbix_pass | default('zabbix') }}"
     g_zbx_scriptrunner_user: scriptrunner
     g_zbx_scriptrunner_bastion_host: specialhost.example.com
   roles:
