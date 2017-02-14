@@ -1,7 +1,7 @@
 ''' Ensure any changes to prod branch also exist in stg '''
 import os
 import sys
-import common
+import ci_util as util
 
 PROD_BRANCH_NAME = "prod"
 STG_BRANCH_NAME = "stg"
@@ -14,7 +14,7 @@ def ensure_stg_contains(commit_shas):
     commits_not_in_stg = []
     for commit in commit_shas:
         parent_cmd = ['/usr/bin/git', 'branch', '-q', '-r', '--contains', commit]
-        success, branches = common.run_cli_cmd(parent_cmd, exit_on_fail=False)
+        success, branches = util.run_cli_cmd(parent_cmd, exit_on_fail=False)
         if not success or len(branches) != 0:
             if 'origin/stg' not in branches:
                 # If not, this commit is not in stg and should not be merged to prod

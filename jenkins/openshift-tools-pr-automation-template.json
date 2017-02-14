@@ -55,6 +55,68 @@
             "secrets": [
               {
                 "secret": {
+                  "name": "${OPENSHIFT_BOT_SECRET_NAME}"
+                },
+                "destinationDir": "openshift-ops-bot"
+              },
+              {
+                "secret": {
+                  "name": "${WHITELIST_SECRET_NAME}"
+                },
+                "destinationDir": "whitelist"
+              }
+            ]
+        },
+        "strategy": {
+          "type": "Docker",
+            "dockerStrategy": {
+            "noCache": true,
+            "env": [
+                {
+                  "name": "GITHUB_WEBHOOK_PAYLOAD",
+                  "value": "{}"
+                },
+                {
+                  "name": "BUILD_URL",
+                  "value": ""
+                },
+                {
+                  "name": "OPENSHIFT_BOT_SECRET_DIR",
+                  "value": "openshift-ops-bot"
+                },
+                {
+                  "name": "WHITELIST_SECRET_DIR",
+                  "value": "whitelist"
+                }
+              ]
+           }
+        },
+        "output": {
+        },
+        "triggers": [
+        ]
+      }
+    },
+    {
+      "kind": "BuildConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "openshift-tools-build",
+        "annotations": {
+          "description": "Builds the custom builder image for building changes from a merged pull request"
+        }
+      },
+      "spec": {
+        "source": {
+            "type": "Git",
+            "git":{
+                "uri": "${SOURCE_REPOSITORY_URL}",
+                "ref": "${SOURCE_REPOSITORY_REF}"
+                },
+            "contextDir": "jenkins/build",
+            "secrets": [
+              {
+                "secret": {
                   "name": "${OPENSHIFT_BOT_SECRET_NAME}" 
                 },
                 "destinationDir": "openshift-ops-bot"

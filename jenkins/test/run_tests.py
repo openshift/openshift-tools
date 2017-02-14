@@ -43,9 +43,10 @@ import sys
 import fnmatch
 
 import github_helpers
+import ci_util as util
 
+# list of files in the validators/ directory to ignore when executing validation scripts
 EXCLUDES = [
-    "common.py",
     ".pylintrc"
 ]
 
@@ -62,27 +63,6 @@ OPS_RPM_PATH = WORK_DIR + "ops-rpm/"
 
 # The string to accept in PR comments to initiate testing by a whitelisted user
 TEST_STRING = "[test]"
-
-def run_cli_cmd(cmd, exit_on_fail=True, log_cmd=True):
-    '''Run a command and return its output'''
-    # Don't log the command if log_cmd=False to avoid exposing secrets in commands
-    if log_cmd:
-        print "> " + " ".join(cmd)
-    proc = subprocess.Popen(cmd, bufsize=-1, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
-                            shell=False)
-    stdout, stderr = proc.communicate()
-    if proc.returncode != 0:
-        # Don't log the command if log_cmd=False to avoid exposing secrets in commands
-        if log_cmd:
-            print "Unable to run " + " ".join(cmd) + " due to error: " + stderr
-        else:
-            print "Error running system command: " + stderr
-        if exit_on_fail:
-            sys.exit(proc.returncode)
-        else:
-            return False, stdout
-    else:
-        return True, stdout
 
 def assign_env(pull_request):
     '''Assign environment variables based on pull_request json data and other env variables'''
@@ -123,26 +103,24 @@ def merge_changes(pull_request):
     """ Merge changes into current repository """
     pull_id = pull_request["number"]
 
-    run_cli_cmd(['/usr/bin/git', 'fetch', "--tags", "origin", "+refs/head/*:refs/remotes/origin/*",
+    util.run_cli_cmd(['/usr/bin/git', 'fetch', "--tags", "origin", "+refs/head/*:refs/remotes/origin/*",
                  "+refs/pull/*:refs/remotes/origin/pr/*"])
-    _, output = run_cli_cmd(['/usr/bin/git', 'rev-parse',
+    _, output = util.run_cli_cmd(['/usr/bin/git', 'rev-parse',
                              'refs/remotes/origin/pr/'+pull_id+'/merge^{commit}'])
     current_rev = output.rstrip()
-    run_cli_cmd(['/usr/bin/git', 'config', 'core.sparsecheckout'], exit_on_fail=False)
-    run_cli_cmd(['/usr/bin/git', 'checkout', '-f', current_rev])
+    util.run_cli_cmd(['/usr/bin/git', 'config', 'core.sparsecheckout'], exit_on_fail=False)
+    util.run_cli_cmd(['/usr/bin/git', 'checkout', '-f', current_rev])
     os.environ["PRV_CURRENT_SHA"] = current_rev
 
 def run_validators():
     """ Run all test validators """
     # First, add the validator direcotry to the python path to allow
     # modules to be loaded by pylint
-    # We also add the jenkins/test directory so that github_helpers can be properly loaded.
     pypath = os.getenv("PYTHONPATH", "")
-    tools_test_path = OPENSHIFT_TOOLS_PATH + "jenkins/test/"
     if pypath != "":
-        os.environ["PYTHONPATH"] = VALIDATOR_PATH + os.pathsep + tools_test_path + os.pathsep + pypath
+        os.environ["PYTHONPATH"] = VALIDATOR_PATH + os.pathsep + pypath
     else:
-        os.environ["PYTHONPATH"] = VALIDATOR_PATH + os.pathsep + tools_test_path
+        os.environ["PYTHONPATH"] = VALIDATOR_PATH
 
     failure_occured = False
     validators = [validator for validator in os.listdir(VALIDATOR_PATH) if
@@ -163,7 +141,7 @@ def run_validators():
             executer = "/bin/sh"
         # If the ext is not recongized, try to just run the file
         print "Executing validator: " + executer + " " + validator_abs
-        success, output = run_cli_cmd([executer, validator_abs], exit_on_fail=False)
+        success, output = util.run_cli_cmd([executer, validator_abs], exit_on_fail=False)
         print output
         if not success:
             print validator + " failed!"
@@ -232,21 +210,21 @@ def build_test_tools_rpms():
     username, token = github_helpers.get_github_credentials()
     opsrpm_url = "https://" + username + ":" + token + "@github.com/openshift/ops-rpm"
     clone_opsrpm_cmd = ["/usr/bin/git", "clone", opsrpm_url, OPS_RPM_PATH]
-    success, output = run_cli_cmd(clone_opsrpm_cmd, False, False)
+    success, output = util.run_cli_cmd(clone_opsrpm_cmd, False, False)
     if not success:
         print "Unable to clone the ops-rpm repo, builds cannot continue: " + output
         sys.exit(1)
 
     # Change to the ops-rpm directory
     cd_cmd = ["cd", OPS_RPM_PATH]
-    success, output = run_cli_cmd(cd_cmd, False)
+    success, output = util.run_cli_cmd(cd_cmd, False)
     if not success:
         print "Unable to change to the ops-rpm directory: " + output
         sys.exit(1)
 
     # Do the build
     build_cmd = ["/bin/sh", os.path.join(OPS_RPM_PATH, "ops-rpm"), "test-build-git", "openshift-tools"]
-    success, output = run_cli_cmd(build_cmd, False)
+    success, output = util.run_cli_cmd(build_cmd, False)
     if not success:
         print "Unable to build test rpms: " + output
         sys.exit(1)
@@ -256,7 +234,7 @@ def build_test_tools_rpms():
     # Change back to previous directory
     cd_cmd = ["cd", cwd]
     # We don't really care if this fails, most things we do are from an absolute path
-    run_cli_cmd(cd_cmd, False)
+    util.run_cli_cmd(cd_cmd, False)
 
     # The directories ops-rpm creates look like this:
     #   /tmp/titobuild.CzQ1l4W8LM:
@@ -285,7 +263,7 @@ def build_test_tools_rpms():
 
     # Install the rpms, in one big yum install command
     yum_install_cmd = ["yum", "localinstall", " ".join(rpms)]
-    success, output = run_cli_cmd(yum_install_cmd, False)
+    success, output = util.run_cli_cmd(yum_install_cmd, False)
     return success, output
 
 def run_unit_tests():
@@ -293,7 +271,7 @@ def run_unit_tests():
     # At the time of this writing, no unit tests exist.
     # A unit tests script will be run so that unit tests can easily be modified
     print "Running unit tests..."
-    success, output = run_cli_cmd(["/bin/sh", UNIT_TEST_SCRIPT], False)
+    success, output = util.run_cli_cmd(["/bin/sh", UNIT_TEST_SCRIPT], False)
     return success, output
 
 def main():

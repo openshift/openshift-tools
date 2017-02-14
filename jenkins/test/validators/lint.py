@@ -3,7 +3,7 @@
 import os
 import re
 import sys
-import common
+import ci_util as util
 
 PYLINT_RCFILE = "jenkins/test/validators/.pylintrc"
 LINT_EXCLUDE_PATTERN_LIST = [
@@ -41,7 +41,7 @@ def linter(diff_file_list):
 
     print "Running pylint against " + " ".join(file_list)
     pylint_cmd = ["/usr/bin/pylint", "--rcfile=" + PYLINT_RCFILE] + file_list
-    success, stdout = common.run_cli_cmd(pylint_cmd, exit_on_fail=False)
+    success, stdout = util.run_cli_cmd(pylint_cmd, exit_on_fail=False)
     if not success:
         return False, "Pylint failed:\n" + stdout
     return True, ""

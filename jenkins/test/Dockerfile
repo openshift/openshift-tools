@@ -17,4 +17,5 @@ RUN mkdir /validator && \
     git checkout stg && \
     git config user.name validator && \
     git config user.email validator@localhost && \
+    export PYTHONPATH=/validator/openshift-tools/jenkins/lib:$PYTHONPATH && \
     /usr/bin/python /validator/openshift-tools/jenkins/test/run_tests.py
