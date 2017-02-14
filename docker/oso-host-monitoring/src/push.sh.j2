@@ -8,6 +8,7 @@ if ! grep -qi 'Red Hat Enterprise Linux' /etc/redhat-release ; then
 fi
 {% endif %}
 
+cd $(dirname $0)
 # Make sure base is pushed with the latest changes since we depend on it.
 if ../../oso-ops-base/{{ base_os }}/push.sh ; then
   # Push ourselves

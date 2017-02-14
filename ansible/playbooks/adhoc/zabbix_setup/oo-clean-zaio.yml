@@ -2,6 +2,6 @@
 ---
 - include: clean_zabbix.yml
   vars:
-    g_server: http://localhost/zabbix/api_jsonrpc.php
-    g_user: Admin
-    g_password: zabbix
+    g_server: "http://localhost/zabbix/api_jsonrpc.php"
+    g_user: "{{ zabbux_user | default('Admin') }}"
+    g_password: "{{ zabbix_pass | default('zabbix') }}"
