@@ -10,6 +10,7 @@
 
 
 
+cd $(dirname $0)
 # Make sure base is pushed with the latest changes since we depend on it.
 if ../../oso-ops-base/centos7/push.sh ; then
   # Push ourselves
