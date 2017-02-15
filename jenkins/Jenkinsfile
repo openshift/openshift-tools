@@ -5,8 +5,10 @@ node {
         // Parse json payload
         def test_key = "[test]"
         def slurper = new groovy.json.JsonSlurper()
+        def jout = new groovy.json.JsonOutput()
         def webhook = slurper.parseText(payload)
-        def trigger = ""
+        def trigger
+        def pull_request
 
         // The following are the actions we should test:
         // "opened", "reopened", "synchronize"
@@ -19,19 +21,25 @@ node {
         // These will requier some additional verification, as tests should only commence if
         // the comment was made on an open pull request and includes a certain phrase.
 
+        // The following block determines the action (trigger) to take depending on the action field in the webhook
         def action = webhook.action
         echo "Webhook payload action: ${action}"
         if (action == "opened" || action == "reopened" || action == "synchronize") {
             echo "Pull request has been opened or modified, testing..."
+            pull_request = webhook.pull_request
             trigger = "test"
         } else if (action == "closed" && webhook.pull_request.merged) {
             echo "Pull request has been merged, running builds..."
+            pull_request = webhook.pull_request
             trigger = "build"
         } else if (action == "created" || action == "edited") {
             if (webhook.issue && webhook.issue.containsKey("pull_request")) {
                 body = webhook.comment.body
                 if (body.toLowerCase().contains(test_key)) {
                     echo "Pull request comment contains '${test_key}', running tests..."
+                    // The webhook only contains the comment and issue details. We need to get the pull request
+                    pr_json = get_pr(webhook.issue.pull_request.url)
+                    pull_request = slurper.parseText(pr_json)
                     trigger = "test"
                 } else {
                     echo "Pull request comment does not contain '${test_key}'. Ignoring..."
@@ -41,16 +49,31 @@ node {
             }
         }
         echo "Trigger: ${trigger}"
+
+        // Unset the pull request title and body in the pull request json
+        // This is done to avoid possible issues in parsing the json when unexpected characters are used in the title and body
+        pull_request.title = ""
+        pull_request.body = ""
+
+        // Get sha and repo to submit pr update
+        sha = pull_request.head.sha
+        repo = pull_request.base.repo.full_name
+
+        // Get the json string representation of the updated pull request data to pass to openshift
+        pull_request_string = jout.toJson(pull_request)
+
         // These variables must be nullified as they are not serializable
         // See http://stackoverflow.com/questions/37864542/jenkins-pipeline-notserializableexception-groovy-json-internal-lazymap
         slurper = null
+        jout = null
         webhook = null
+        pull_request = null
 
+    // From the determined trigger, initiate tests or builds
     if (trigger != "") {
         if (trigger == "test") {
             stage "Test Changes"
-                echo "Starting Tests"
-                openshiftBuild buildConfig: 'openshift-tools-test', env: [[ name: 'GITHUB_WEBHOOK_PAYLOAD', value: payload ], [ name: 'BUILD_URL', value: env.BUILD_URL ]], showBuildLogs: true
+                run_tests(pull_request_string, sha, repo)
         } else if (trigger == "build") {
             stage "Build RPMS"
                 echo "Starting Build"
@@ -66,4 +89,60 @@ node {
         echo "Webhook action, ${action}, does not justify running any jobs."
         currentBuild.result = 'SUCCESS'
     }
+}
+
+// Run pull request testing
+def run_tests(pull_request_string, sha, repo) {
+    echo "Starting Tests"
+    update_pr_status("pending", "Automated tests in progress", sha, repo)
+    // TODO we could probably handle failures here a bit better
+    // We should do a try/catch so that when the build fails, we update the PR with a failure statues.
+    // If we do that, we need to make sure that the script only ever exits with a non-zero exit code when
+    // a failure occurred and the PR was NOT updated with a failure status.
+    try {
+        openshiftBuild buildConfig: 'openshift-tools-test', env: [[ name: 'PULL_REQUEST', value: pull_request_string ], [ name: 'BUILD_URL', value: env.BUILD_URL ]], showBuildLogs: true
+    } catch(Exception e) {
+        println "Build failed in a way that likely didn't update PR status!"
+        update_pr_status("failure", "Automated tests failed to run", sha, repo)
+        currentBuild.result = 'FAILURE'
+    }
+}
+
+// Update the status of a pull request
+def update_pr_status(state, text, sha, repo) {
+    String token = new File('/openshift-ops-bot/token').text
+    
+    def target_url = env.BUILD_URL
+    def urlString = "https://api.github.com/repos/" + repo + "/statuses/" + sha
+    def url = new URL(urlString)
+    def conn = url.openConnection()
+    
+    conn.setRequestMethod("POST")
+    conn.setRequestProperty("Content-Type", "application/json")
+    conn.setRequestProperty("Authorization", "token " + token)
+    def data = '{"state": "' + state + '", "description": "' + text + '", "target_url": "' +
+            target_url + '", "context": "jenkins-ci"}'
+   
+    println "Updating ${sha} in github with state ${state} and description ${text}..." 
+    conn.doOutput = true
+    def writer = new OutputStreamWriter(conn.outputStream)
+    writer.write(data)
+    writer.flush()
+    writer.close()
+    conn.connect()
+    println "Posted PR status update with response: ${conn.responseCode} ${conn.responseMessage}"
+}
+
+// Get a pull request
+def get_pr(urlString) {
+    String token = new File('/openshift-ops-bot/token').text
+    def url = new URL(urlString)
+    def conn = url.openConnection()
+
+    conn.setRequestMethod("GET")
+    conn.setRequestProperty("Authorization", "token " + token)
+    conn.connect()
+
+    assert conn.responseCode == 200
+    return conn.content.text
 }
