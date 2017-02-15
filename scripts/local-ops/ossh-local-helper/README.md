@@ -13,11 +13,11 @@ A helper to make parts of ossh work locally
 # ~/.bashrc OSSH helper, /path/to/project means where you put git/openshift-tools/scripts/local-ops/ossh-local-helper
 export OSSH_HELPER_BASEDIR=/path/to/project
 
-# setup your remote host(tower) user, usually it's your kerberos username
+# setup your remote host(jumphost) user, usually it's your kerberos username
 export myUser=$kerberos_name
 
-# setup remote host, since it's for v3, so it's tower
-export bastion=tower.ops.rhcloud.com
+# setup the jumphost
+export bastion="bastion.ops.example.com"
 
 # -v is optional
 # --target-host is intentionally blank as it will take the very next argument as target-host
