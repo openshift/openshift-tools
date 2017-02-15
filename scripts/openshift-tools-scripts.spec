@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.30
+Version:       0.1.31
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -382,6 +382,9 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Wed Feb 15 2017 Doug Edgar <dedgar@redhat.com> 0.1.31-1
+- update iam-tools (dedgar@redhat.com)
+
 * Tue Feb 14 2017 zhiwliu <zhiwliu@redhat.com> 0.1.30-1
 - added cron-send-internal-pods-check.py (zhiwliu@redhat.com)
 - testing bot status check (dedgar@redhat.com)
