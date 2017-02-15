@@ -29,7 +29,6 @@
     node_selector: type=infra
     display_name: openshift-infra
   register: projectout
-  run_once: true
 - debug: var=projectout
 
 - name: create secret
@@ -40,7 +39,6 @@
     - name: nothing
       path: /dev/null
   register: secretout
-  run_once: true
 - debug: var=secretout
 
 - name: create serviceaccount
@@ -50,7 +48,6 @@
     secrets:
     - metrics-deployer
   register: saout
-  run_once: true
 - debug: var=saout
 
 - name: create role binding to metrics-deployer service account
@@ -60,7 +57,6 @@
     resource_kind: role
     resource_name: edit
   register: policyout
-  run_once: true
 - debug: var=policyout
 
 - name: add cluster role binding to heapster service account
@@ -70,7 +66,6 @@
     resource_kind: cluster-role
     resource_name: cluster-reader
   register: policyout
-  run_once: true
 - debug: var=policyout
 
 - name: create metrics deployer template
@@ -82,9 +77,8 @@
     files:
     - "/usr/share/ansible/openshift-ansible/roles/openshift_hosted_templates/files/v{{ kube_version }}/enterprise/metrics-deployer.yaml"
   register: templateout
-  run_once: true
 
-- name: create template
+- name: create application using metrics deployer template
   oc_process:
     namespace: openshift-infra
     template_name: metrics-deployer-template
@@ -96,13 +90,11 @@
       IMAGE_PREFIX: registry.ops.openshift.com/openshift3/
     reconcile: False
   register: processout
-  run_once: true
 - debug: var=processout
 
 - name: wait for deployment to finish
   pause:
     seconds: 240
-  run_once: true
 
 - name: Add the "view" role to system:serviceaccount:openshift-infra:hawkular
   oadm_policy_user:
@@ -111,7 +103,6 @@
     resource_kind: role
     resource_name: view
   register: policyout
-  run_once: true
 - debug: var=policyout
 
 - name: scale down cassandra to 0
@@ -125,7 +116,6 @@
 - name: Wait for cassandra to scale down
   pause:
     seconds: 30
-  run_once: true
 
 - name: Add the resource constraints to the cassandra RC
   oc_edit:
@@ -155,7 +145,6 @@
 - name: Wait for hawkular to scale down
   pause:
     seconds: 30
-  run_once: true
 
 - name: Add the resource constraints to the hawkular RC
   oc_edit:
@@ -207,7 +196,6 @@
     namespace: openshift-infra
     kind: pods
   register: podout
-  run_once: true
 
 - name: get ca from hawkular
   oc_secret:
@@ -216,12 +204,10 @@
     name:  hawkular-metrics-certificate
     decode: True
   register: hawkout
-  run_once: true
 
 - fail:
     msg: hawkular-metrics-certificate not found
   when: hawkout.results.exists|bool == False
-  run_once: true
 
 - name: reencrypt route
   oc_route:
@@ -235,13 +221,3 @@
     host: "metrics.{{ osamet_clusterid }}.openshift.com"
     tls_termination: reencrypt
   register: routeout
-  run_once: true
-
-- name: add metrics url to master-config.yml
-  yedit:
-    src: /etc/origin/master/master-config.yaml
-    key: assetConfig.metricsPublicURL
-    value: "https://metrics.{{ osamet_clusterid }}.openshift.com/hawkular/metrics"
-  register: yeditout
-  notify:
-  - restart openshift master services
