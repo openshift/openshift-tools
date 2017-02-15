@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.29
+Version:       0.1.30
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -382,6 +382,13 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Tue Feb 14 2017 zhiwliu <zhiwliu@redhat.com> 0.1.30-1
+- added cron-send-internal-pods-check.py (zhiwliu@redhat.com)
+- testing bot status check (dedgar@redhat.com)
+- adding pylint disable (dedgar@redhat.com)
+- ossh local helper (dranders@redhat.com)
+- adding stale credential entry removal option (dedgar@redhat.com)
+
 * Thu Feb 09 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.29-1
 - change_iam_password: Capture a few of the common expected exceptions
   (joesmith@redhat.com)
