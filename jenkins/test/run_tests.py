@@ -1,8 +1,6 @@
 """ Run all tests for openshift-tools repository """
-# This script expects a few environment variables to be defined:
+# This script expects a single environment variable to be defined:
 #    PULL_REQUEST - JSON represntation of the pull request to be tested
-#    PR_TITLE - Title of the pull request, extracted from pull request json for predictable json parsing
-#    PR_BODY - BODY of the pull request, extracted from pull request json for predictable json parsing
 #
 # The data expected in PULL_REQUEST is defined in the github api here:
 #    https://developer.github.com/v3/pulls/#get-a-single-pull-request
@@ -13,8 +11,6 @@
 # consumption by the validation scripts. Then, each *.py file in ./validators/ (minus specified exclusions)
 # will be run. The list of variables defined is below:
 #  Github stuff
-#    PRV_TITLE         Title of the pull request
-#    PRV_BODY          Description of the pull request
 #    PRV_PULL_ID       ID of the pull request
 #    PRV_PULL_URL      URL of the pull request
 #
@@ -91,12 +87,9 @@ def run_cli_cmd(cmd, exit_on_fail=True, log_cmd=True):
 def assign_env(pull_request):
     '''Assign environment variables based on pull_request json data and other env variables'''
     # Github environment variables
-    # Note that the PR title and body are special, as unexpected characters can cause issues
-    # when parsing json. The jenkins pipeline should remove these from the pull request json
-    # and set them in their own environment variables PR_TITLE and PR_BODY.
-    # Additionally, encode to utf8 to support unicode characters in python 2.x
-    os.environ["PRV_TITLE"] = os.getenv("PR_TITLE", "")#.encode('utf8')
-    os.environ["PRV_BODY"] = os.getenv("PR_BODY", "")#.encode('utf8')
+    # Note that the PR title and body are not set or included in the pull_request json
+    # This is to avoid issues with unexpected characters being passed through the jenkins plugin,
+    # to openshift, and through json parsing. There are too many unknowns for it to be predictable.
     os.environ["PRV_PULL_ID"] = pull_request["number"]
     os.environ["PRV_URL"] = pull_request["url"]
 

@@ -50,10 +50,8 @@ node {
         }
         echo "Trigger: ${trigger}"
 
-        // Unset the pull request title and body in the pull request json and extract them into their own variables
+        // Unset the pull request title and body in the pull request json
         // This is done to avoid possible issues in parsing the json when unexpected characters are used in the title and body
-        title = pull_request.title
-        body = pull_request.body
         pull_request.title = ""
         pull_request.body = ""
 
