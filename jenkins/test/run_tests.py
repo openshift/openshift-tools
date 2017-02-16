@@ -330,8 +330,6 @@ def main():
     # Determine and post result of tests
     if not validators_success:
         github_helpers.submit_pr_comment("Validation tests failed!", pull_id, repo)
-        github_helpers.submit_pr_status_update("failure", "Validation tests failed",
-                                               remote_sha, repo)
         sys.exit(1)
 
     print "Validation tests passed!"
@@ -341,8 +339,6 @@ def main():
         print "Rpm test builds failed, output:"
         print output
         github_helpers.submit_pr_comment("Validation tests passed, rpm test builds failed!", pull_id, repo)
-        github_helpers.submit_pr_status_update("failure", "Validation tests passed, rpm test builds failed",
-                                               remote_sha, repo)
         sys.exit(1)
 
     print "Test rpms built!"
@@ -352,8 +348,6 @@ def main():
         print "Unit tests failed, output:"
         print output
         github_helpers.submit_pr_comment("Validation tests passed, test rpms built, unit tests failed!", pull_id, repo)
-        github_helpers.submit_pr_status_update("failure", "Validation tests passed, test rpms built, unit tests failed",
-                                               remote_sha, repo)
         sys.exit(1)
 
     print "Unit tests passed!"
