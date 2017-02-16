@@ -72,6 +72,17 @@ class GitCLI(object):
 
         return results
 
+    def _fetch(self, remote):
+        ''' git fetch '''
+
+        cmd = ["fetch"]
+
+        cmd += [remote]
+
+        results = self.git_cmd(cmd, output=True, output_type='raw')
+
+        return results
+
     def _status(self, porcelain=False, show_untracked=True):
         ''' Do a git status '''
 
@@ -214,15 +225,14 @@ class GitCLI(object):
 
             if err:
                 rval.update({"err": err,
-                             "stderr": stderr,
-                             "stdout": stdout,
                              "cmd": cmds
                             })
 
         else:
-            rval.update({"stderr": stderr,
-                         "stdout": stdout,
-                         "results": {},
-                        })
+            rval.update({"results": {}})
+
+        # Always include stdout/stderr:
+        rval.update({"stderr": stderr,
+                     "stdout": stdout})
 
         return rval
