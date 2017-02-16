@@ -374,123 +374,74 @@ class GitCLI(object):
 
         return rval
 
-class GitPush(GitCLI):
-    ''' Class to wrap the git merge line tools
-    '''
+class GitFetch(GitCLI):
+    ''' Class to wrap the git merge line tools '''
     # pylint: disable=too-many-arguments
     def __init__(self,
                  path,
                  remote,
-                 src_branch,
-                 dest_branch,
                  ssh_key=None):
-        ''' Constructor for GitPush '''
-        super(GitPush, self).__init__(path, ssh_key=ssh_key)
-        self.path = path
+        ''' Constructor for GitFetch '''
+        super(GitFetch, self).__init__(path, remote, ssh_key=ssh_key)
         self.remote = remote
-        self.src_branch = src_branch
-        self.dest_branch = dest_branch
         self.debug = []
 
-        os.chdir(path)
+        if not os.path.isdir(self.path):
+            print "Git checkout directory does not exist. Exiting..."
+            sys.exit(1)
 
-    def checkout_branch(self):
-        ''' check out the desired branch '''
+    def fetch(self):
+        ''' fetch from the selected remote '''
 
-        current_branch_results = self._get_current_branch()
+        os.chdir(self.path)
 
-        if current_branch_results['results'] == self.src_branch:
-            return True
+        fetch_results = self._fetch(self.remote)
+        no_fetch_needed = False
 
-        current_branch_results = self._checkout(self.src_branch)
-
-        self.debug.append(current_branch_results)
-        if current_branch_results['returncode'] == 0:
-            return True
-
-        return False
-
-    def remote_update(self):
-        ''' update the git remotes '''
-
-        remote_update_results = self._remote_update()
-
-        self.debug.append(remote_update_results)
-        if remote_update_results['returncode'] == 0:
-            return True
-
-        return False
-
-    def need_push(self):
-        ''' checks to see if push is needed '''
-
-        git_status_results = self._status(show_untracked=False)
-
-        self.debug.append(git_status_results)
-        status_msg = "Your branch is ahead of '%s" %self.remote
-
-        if status_msg in git_status_results['results']:
-            return True
-
-        return False
-
-    def push(self):
-        '''perform a git push '''
-
-        if not self.src_branch or not self.dest_branch or not self.remote:
+        # TODO: Check for no results
+        if fetch_results['returncode'] != 0:
             return {'returncode': 1,
-                    'results':
-                    'Invalid variables being passed in. Please investigate remote, src_branc, and/or dest_branch',
+                    'results': fetch_results,
+                    'error_msg': 'Unable to fetch for remote: ' + self.remote,
+                    'no_fetch_needed': False
                    }
 
-        if self.checkout_branch():
-            if self.remote_update():
-                if self.need_push():
-                    push_results = self._push(self.remote, self.src_branch, self.dest_branch)
-                    push_results['debug'] = self.debug
-
-                    return push_results
-                else:
-                    return {'returncode': 0,
-                            'results': {},
-                            'no_push_needed': True
-                           }
-
-        return {'returncode': 1,
-                'results': {},
-                'debug': self.debug
+        # git fetch returns output to stderr.
+        # Success but no stderr contents implies nothing was fetched.
+        no_fetch_needed = len(fetch_results['stderr']) == 0
+        return {'returncode': 0,
+                'results': fetch_results,
+                'no_fetch_needed': no_fetch_needed
                }
+
 
 def main():
     '''
-    ansible git module for pushing
+    ansible git module for cloning
     '''
     module = AnsibleModule(
         argument_spec=dict(
+            # TODO: state necessary for this?
             state=dict(default='present', type='str', choices=['present']),
             path=dict(default=None, required=True, type='str'),
-            remote=dict(default=None, required=True, type='str'),
-            src_branch=dict(default=None, required=True, type='str'),
-            dest_branch=dict(default=None, required=True, type='str'),
+            remote=dict(default='origin', required=False, type='str'),
             ssh_key=dict(default=None, required=False, type='str'),
         ),
         supports_check_mode=False,
     )
-    git = GitPush(module.params['path'],
-                  module.params['remote'],
-                  module.params['src_branch'],
-                  module.params['dest_branch'],
-                  module.params['ssh_key'])
+    git = GitFetch(module.params['path'],
+                   module.params['remote'],
+                   module.params['ssh_key'])
 
     state = module.params['state']
 
     if state == 'present':
-        results = git.push()
+        results = git.fetch()
 
         if results['returncode'] != 0:
             module.fail_json(msg=results)
 
-        if results.has_key('no_push_needed'):
+        if results['no_fetch_needed'] == True:
             module.exit_json(changed=False, results=results, state="present")
 
         module.exit_json(changed=True, results=results, state="present")
