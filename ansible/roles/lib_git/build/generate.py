@@ -53,6 +53,11 @@ FILES = {'git_commit.py': ['lib/ssh_agent.py',
                           'src/git_clone.py',
                           'ansible/git_clone.py',
                          ],
+         'git_fetch.py': ['lib/ssh_agent.py',
+                          'lib/base.py',
+                          'src/git_fetch.py',
+                          'ansible/git_fetch.py',
+                         ],
         }
 
 def main():
