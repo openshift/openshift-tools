@@ -50,6 +50,8 @@ node {
         }
         echo "Trigger: ${trigger}"
 
+    // From the determined trigger, initiate tests or builds
+    if (trigger != null) {
         // Unset the pull request title and body in the pull request json
         // This is done to avoid possible issues in parsing the json when unexpected characters are used in the title and body
         pull_request.title = ""
@@ -69,8 +71,6 @@ node {
         webhook = null
         pull_request = null
 
-    // From the determined trigger, initiate tests or builds
-    if (trigger != "") {
         if (trigger == "test") {
             stage "Test Changes"
                 run_tests(pull_request_string, sha, repo)
@@ -95,15 +95,14 @@ node {
 def run_tests(pull_request_string, sha, repo) {
     echo "Starting Tests"
     update_pr_status("pending", "Automated tests in progress", sha, repo)
-    // TODO we could probably handle failures here a bit better
-    // We should do a try/catch so that when the build fails, we update the PR with a failure statues.
-    // If we do that, we need to make sure that the script only ever exits with a non-zero exit code when
-    // a failure occurred and the PR was NOT updated with a failure status.
     try {
         openshiftBuild buildConfig: 'openshift-tools-test', env: [[ name: 'PULL_REQUEST', value: pull_request_string ], [ name: 'BUILD_URL', value: env.BUILD_URL ]], showBuildLogs: true
+        // It is the build's responsibility to update the PR status when the tests pass
+        // This is to ensure that the PR is updated with "success" as soon as possible
+        currentBuild.result = 'SUCCESS'
     } catch(Exception e) {
-        println "Build failed in a way that likely didn't update PR status!"
-        update_pr_status("failure", "Automated tests failed to run", sha, repo)
+        println "Build failed!"
+        update_pr_status("failure", "Automated tests failed", sha, repo)
         currentBuild.result = 'FAILURE'
     }
 }
