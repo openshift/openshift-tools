@@ -57,9 +57,10 @@ node {
         pull_request.title = ""
         pull_request.body = ""
 
-        // Get sha and repo to submit pr update
+        // Get sha, repo, and pull id to submit pr updates and comments
         sha = pull_request.head.sha
         repo = pull_request.base.repo.full_name
+        pull_id = pull_request.number
 
         // Get the json string representation of the updated pull request data to pass to openshift
         pull_request_string = jout.toJson(pull_request)
@@ -77,10 +78,7 @@ node {
         } else if (trigger == "build") {
             stage "Build RPMS"
                 echo "Starting Build"
-                // TODO this is not yet implemented
-            stage "Deploy Updates"
-                echo "Deploying updated RPMs"
-                // TODO this is not yet implemented
+                run_builds(pull_request_string, pull_id, repo)
         } else {
             echo "Trigger ${trigger} not recognized"
             currentBuild.result = 'FAILURE'
@@ -103,6 +101,24 @@ def run_tests(pull_request_string, sha, repo) {
     } catch(Exception e) {
         println "Build failed!"
         update_pr_status("failure", "Automated tests failed", sha, repo)
+        currentBuild.result = 'FAILURE'
+    }
+}
+
+def run_builds(pull_requesst_string, pull_id, repo) {
+    echo "Starting Builds"
+    comment = "RPM Builds in progress... see " + env.BUILD_URL
+    submit_pr_comment(comment, pull_id, repo)
+    try {
+        openshiftBuild buildConfig: 'openshift-tools-build', env: [[ name: 'PULL_REQUEST', value: pull_request_string ], [ name: 'BUILD_URL', value: env.BUILD_URL ]], showBuildLogs: true
+        // TODO once s3 pushing is implemented, this comment needs to be changed
+        comment = "Successfully build rpms. Note that rpms were not pushed to the repo"
+        submit_pr_comment(comment, pull_id, repo)
+        currentBuild.result = 'SUCCESS'
+    } catch(Exception e) {
+        println "Build failed!"
+        comment = "Failed to build rpms."
+        submit_pr_comment(comment, pull_id, repo)
         currentBuild.result = 'FAILURE'
     }
 }
@@ -130,6 +146,30 @@ def update_pr_status(state, text, sha, repo) {
     writer.close()
     conn.connect()
     println "Posted PR status update with response: ${conn.responseCode} ${conn.responseMessage}"
+}
+
+// Make a comment on a pull request
+def submit_pr_comment(text, pull_id, repo) {
+    String token = new File('/openshift-ops-bot/token').text
+    
+    def target_url = env.BUILD_URL
+    def urlString = "https://api.github.com/repos/" + repo + "/issues/" + pull_id + "/comments"
+    def url = new URL(urlString)
+    def conn = url.openConnection()
+    
+    conn.setRequestMethod("POST")
+    conn.setRequestProperty("Content-Type", "application/json")
+    conn.setRequestProperty("Authorization", "token " + token)
+    def data = '{"body": "' + text + '"}'
+   
+    println "Submitting comment to " + repo  + "..." 
+    conn.doOutput = true
+    def writer = new OutputStreamWriter(conn.outputStream)
+    writer.write(data)
+    writer.flush()
+    writer.close()
+    conn.connect()
+    println "Posted PR comment with response: ${conn.responseCode} ${conn.responseMessage}"
 }
 
 // Get a pull request

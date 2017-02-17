@@ -28,11 +28,32 @@
       "kind": "Secret",
       "apiVersion": "v1",
       "metadata": {
+        "name": "rpm-signing"
+      },
+      "stringData": {
+        "key": "${RPM_SIGNING_KEY}"
+      }
+    },
+    {
+      "kind": "Secret",
+      "apiVersion": "v1",
+      "metadata": {
         "name": "${WHITELIST_SECRET_NAME}"
       },
       "stringData": {
         "users": "${USER_WHITELIST}",
         "orgs": "${ORG_WHITELIST}"
+      }
+    },
+    {
+      "kind": "Secret",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "s3-access"
+      },
+      "stringData": {
+        "username": "${S3_USERNAME}",
+        "accesskey": "${S3_ACCESS_KEY}"
       }
     },
     {
@@ -73,7 +94,7 @@
             "noCache": true,
             "env": [
                 {
-                  "name": "GITHUB_WEBHOOK_PAYLOAD",
+                  "name": "PULL_REQUEST",
                   "value": "{}"
                 },
                 {
@@ -123,9 +144,15 @@
               },
               {
                 "secret": {
-                  "name": "${WHITELIST_SECRET_NAME}"
+                  "name": "rpm-signing"
                 },
-                "destinationDir": "whitelist"
+                "destinationDir": "rpm-signing"
+              },
+              {
+                "secret": {
+                  "name": "s3-access"
+                },
+                "destinationDir": "s3-access"
               }
             ]
         },
@@ -135,7 +162,7 @@
             "noCache": true,
             "env": [
                 {
-                  "name": "GITHUB_WEBHOOK_PAYLOAD",
+                  "name": "PULL_REQUEST",
                   "value": "{}"
                 },
                 {
@@ -147,8 +174,12 @@
                   "value": "openshift-ops-bot"
                 },
                 {
-                  "name": "WHITELIST_SECRET_DIR",
-                  "value": "whitelist"
+                  "name": "RPM_SIGNING_SECRET_DIR",
+                  "value": "rpm-signing"
+                },
+                {
+                  "name": "S3_ACCESS_SECRET_DIR",
+                  "value": "s3-access"
                 }
               ]
            }
@@ -207,6 +238,21 @@
       "displayName": "Comma-seperated list of github organizations. Ex: openshift,google",
       "required": false,
       "value": ""
+    },
+    {
+      "name": "RPM_SIGNING_KEY",
+      "displayName": "Key used to sign offical rpm buils",
+      "required": true
+    },
+    {
+      "name": "S3_USERNAME",
+      "displayName": "Username used to access the s3-hosted yum repos",
+      "required": true
+    },
+    {
+      "name": "S3_ACCESS_KEY",
+      "displayName": "Key used to access the s3-hosted yum repos",
+      "required": true
     }
   ]
 }
