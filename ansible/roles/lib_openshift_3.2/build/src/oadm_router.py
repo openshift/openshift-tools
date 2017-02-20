@@ -1,7 +1,5 @@
 # pylint: skip-file
 
-import time
-
 class RouterException(Exception):
     ''' Router exception'''
     pass
@@ -249,20 +247,19 @@ class Router(OpenShiftCLI):
 
     def update(self):
         '''run update for the router.  This performs a delete and then create '''
-        parts = self.delete()
-        for part in parts:
-            if part['returncode'] != 0:
-                if part.has_key('stderr') and 'not found' in part['stderr']:
-                    # the object is not there, continue
-                    continue
+        # generate the objects and prepare for instantiation
+        self.prepare_router()
 
-                # something went wrong
-                return parts
+        results = []
+        for _, oc_data in self.router_prep.items():
+            results.append(self._replace(oc_data['path']))
 
-        # Ugly built in sleep here.
-        time.sleep(15)
+        rval = 0
+        for result in results:
+            if result['returncode'] != 0 and not 'already exist' in result['stderr']:
+                rval = result['returncode']
 
-        return self.create()
+        return {'returncode': rval, 'results': results}
 
     # pylint: disable=too-many-return-statements,too-many-branches
     def needs_update(self, verbose=False):
