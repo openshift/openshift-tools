@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.103
+Version:       0.0.104
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -297,6 +297,9 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Mon Feb 20 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.104-1
+- Fix typo that cause script failure (zgalor@redhat.com)
+
 * Wed Feb 15 2017 zhiwliu <zhiwliu@redhat.com> 0.0.103-1
 - Translate metrics with key "heartbeat.ping" to Hawkular Availability Metrics
   (zgalor@redhat.com)
