@@ -46,11 +46,11 @@ class OpenshiftMetricsStatus(object):
     '''
     def __init__(self):
         ''' Initialize OpenShiftMetricsStatus class '''
-        self.kubeconfig = '/tmp/admin.kubeconfig'
         self.metric_sender = None
         self.oc = None
         self.args = None
         self.deployer_pod_name = None
+        self.hawkular_pod_name = None
         self.hawkular_username = None
         self.hawkular_password = None
 
@@ -76,6 +76,9 @@ class OpenshiftMetricsStatus(object):
                     self.deployer_pod_name = pod_name
                     continue
 
+                if pod_name.startswith('hawkular-metrics-'):
+                    self.hawkular_pod_name = pod_name
+
                 pod_pretty_name = pod['metadata']['labels']['name']
                 pod_report[pod_pretty_name] = {}
 
@@ -95,8 +98,10 @@ class OpenshiftMetricsStatus(object):
 
                 # Since we convert to seconds it is an INT but pylint still complains. Only disable here
                 # pylint: disable=E1101
+                # pylint: disable=maybe-no-member
                 pod_report[pod_pretty_name]['starttime'] = int(pod_start_time.strftime("%s"))
                 # pylint: enable=E1101
+                # pylint: enable=maybe-no-member
 
         return pod_report
 
@@ -109,17 +114,14 @@ class OpenshiftMetricsStatus(object):
         try:
             # If so get http password from secret
             secret = self.oc.get_secrets("hawkular-htpasswd")
-            self.hawkular_username = base64.b64decode(secret['data']['hawkular-username'])
-            self.hawkular_password = base64.b64decode(secret['data']['hawkular-password'])
+            # We have seen cases where username and passwork have gotten an added newline to the end
+            self.hawkular_username = base64.b64decode(secret['data']['hawkular-username']).rstrip('\n')
+            self.hawkular_password = base64.b64decode(secret['data']['hawkular-password']).rstrip('\n')
         except:
-            # If not create secret wiith http password
-            # This is VERY expensive.
-            # So we want to make sure we only run it ONCE per cluster
-            deployer_log = self.oc.get_log(self.deployer_pod_name)
-            for line in deployer_log.split('\n'):
-                if "hawkular_metrics_password" in line:
-                    self.hawkular_username = 'hawkular'
-                    self.hawkular_password = line.split('=')[-1]
+            passwd_file = "/client-secrets/hawkular-metrics.password"
+            self.hawkular_username = 'hawkular'
+            self.hawkular_password = self.oc.run_user_cmd("{} cat {}".format(self.hawkular_pod_name, passwd_file))
+            self.hawkular_password = self.hawkular_password.rstrip('\n')
 
             new_secret = {}
             new_secret['username'] = self.hawkular_username
@@ -215,7 +217,7 @@ class OpenshiftMetricsStatus(object):
         self.parse_args()
         self.metric_sender = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
 
-        self.oc = OCUtil(namespace='openshift-infra', config_file=self.kubeconfig, verbose=self.args.verbose)
+        self.oc = OCUtil(namespace='openshift-infra', config_file='/tmp/admin.kubeconfig', verbose=self.args.verbose)
 
         pod_report = self.check_pods()
         self.get_hawkular_creds()
