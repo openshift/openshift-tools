@@ -74,6 +74,8 @@ RUN yum clean metadata && \
         oso-simplesamlphp \
         python2-ruamel-yaml \
         python-pygithub \
+        rpm-sign \
+        createrepo \
         docker-python && \
     yum clean all
 
