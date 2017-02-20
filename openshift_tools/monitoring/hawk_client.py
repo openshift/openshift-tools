@@ -55,7 +55,6 @@ class HawkClient(object):
                                             tenant_id=self.hawk_conn.tenant_id,
                                            )
 
-    # pylint: disable=unidiomatic-typecheck
     def push_metrics(self, unique_metric_list):
         """
         Add a list of UniqueMetrics (unique_metric_list) via hawkular client
@@ -77,8 +76,8 @@ class HawkClient(object):
             key = '{0}/{1}/{2}'.format(_type, _id, metric.key)
 
             if metric.key == "heartbeat.ping":
-                # Use MetricType.Availablity for heartbeat
-                metric_type = MetricType.Availablity
+                # Use MetricType.Availability for heartbeat
+                metric_type = MetricType.Availability
                 value = Availability.Up
             elif isinstance(value, basestring):
                 # Use MetricType.String for string metrics data
