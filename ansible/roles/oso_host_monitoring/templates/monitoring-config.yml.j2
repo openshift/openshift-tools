@@ -384,6 +384,14 @@ host_monitoring_cron:
   minute: "*/10"
   job: "ops-runner -f -s 30 -n cssb.openshift.stuck_builds.pending cron-send-stuck-builds -s Pending"
 
+{% if osohm_master_primary | default(False) | bool %}
+{% if osohm_cloud == 'aws' %}
+- name: cron-send-aws-instance-health.py
+  minute: "*/10"
+  job: ops-runner -f -s 10 -n csaih.aws.instance.health /usr/bin/cron-send-aws-instance-health --aws-creds-profile ops-monitoring-master
+{% endif %}
+{% endif %}
+
 {% if osohm_metrics_enabled | default(False) | bool %}
 - name: "Report metrics health"
   hour: "*"

@@ -307,7 +307,7 @@ g_template_openshift_master:
     - Openshift Master
 
   - key: openshift.master.smal.status
-    description: Show saml pod status 
+    description: Show saml pod status
     value_type: int
     applications:
     - Openshift Master
@@ -546,7 +546,7 @@ g_template_openshift_master:
     value_type: int
     applications:
     - Openshift Cluster
-  
+
   - key: openshift.master.nodesnotlabeled.count
     description: This check shows how many nodes in a cluster are not labeled.
     value_type: int
@@ -746,6 +746,24 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: aws.ec2.instance.instance_status
+    description: "count of AWS EC2 Instances in problem state"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: aws.ec2.instance.system_status
+    description: "count of AWS EC2 Systems in problem state"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: aws.ec2.instance.events
+    description: "count of AWS EC2 Host Events pending"
+    value_type: int
+    applications:
+    - Openshift Master
+
   zdiscoveryrules:
   - name: disc.pv
     key: disc.pv
@@ -848,6 +866,21 @@ g_template_openshift_master:
     expression: "{Template Openshift Master:openshift.stuck_builds.new.last()}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/stuck_build_alerts.asciidoc"
     priority: high
+
+  - name: 'AWS EC2 InstanceStatus problem count not zero on {HOST.NAME}'
+    expression: '{Template Openshift Master:aws.ec2.instance.instance_status.last()}>0'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_cloud_aws.asciidoc'
+    priority: warn
+
+  - name: 'AWS EC2 SystemStatus problem count not zero on {HOST.NAME}'
+    expression: '{Template Openshift Master:aws.ec2.instance.system_status.last()}>0'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_cloud_aws.asciidoc'
+    priority: warn
+
+  - name: 'AWS EC2 Host Events count not zero on {HOST.NAME}'
+    expression: '{Template Openshift Master:aws.ec2.instance.events.last()}>0'
+    url: 'https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_cloud_aws.asciidoc'
+    priority: warn
 
   # Put triggers that depend on other triggers here (deps must be created first)
   - name: "Application creation has failed on {HOST.NAME}"
