@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.35
+Version:        0.0.36
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,32 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Mon Feb 20 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.36-1
+- Add a git fetch module. (dgoodwin@redhat.com)
+- Updated metrics playbook (sedgar@redhat.com)
+- local development with 'oc cluster up' (jdiaz@redhat.com)
+- remove ruamel.yaml in favor of python2-ruamel-yaml (mwoodson@redhat.com)
+- changed to the new python2-ruamel-yaml file (mwoodson@redhat.com)
+- added us-east-2 as a region to copy ami's to (mwoodson@redhat.com)
+- add the brackets for monitoring-config.yml.j2 (zhiwliu@redhat.com)
+- changed cron-send-elb-status just for aws cluster (zhiwliu@redhat.com)
+- added a check for the serial cert file in the registry setup
+  (mwoodson@redhat.com)
+- changed volume provisioner to use openshift-scripts-dedicated
+  (mwoodson@redhat.com)
+- Enhancements to registery and route for 3.5 (kwoodson@redhat.com)
+- defaultMode field on secret causing oadm_router to detect changes when there
+  were none (jdiaz@redhat.com)
+- add cronjob for the pvusage (zhizhang@zhizhang-laptop-nay.redhat.com)
+- Added miq-setup.yml (twiest@redhat.com)
+- typo fix in protocAls, and 3.4 fixes for smooth operation
+  (ihorvath@redhat.com)
+- upped the timeouts for logging/metrics (mwoodson@redhat.com)
+- add applications as string to zhttptests (sten@redhat.com)
+- add applications as string to zhttptests (sten@redhat.com)
+- test adding application to web check (sten@redhat.com)
+- Add OpenShift master audit config role. (dgoodwin@redhat.com)
+
 * Tue Jan 31 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.35-1
 - extra word in build_state.new key (sten@redhat.com)
 - Fix docker oc version script (zgalor@redhat.com)
