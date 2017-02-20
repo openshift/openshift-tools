@@ -92,6 +92,15 @@ class OpenshiftLoggingStatus(object):
             elif es_master_name != master_name:
                 es_status['single_master'] = 0
 
+        # fix for 3.4 logging where es_master_name is getting set to an ip.
+        # so we set a try check around incase it fails just so it keeps working for 3.3
+        for pod in self.es_pods:
+            try:
+                if pod['status']['podIP'] == es_master_name:
+                    es_master_name = pod['metadata']['name']
+            except:
+                continue
+
         # get cluster nodes
         curl_cmd = "{} 'https://localhost:9200/_nodes'".format(self.es_curl)
         node_cmd = "exec -ti {} -- {}".format(es_master_name, curl_cmd)
@@ -177,12 +186,19 @@ class OpenshiftLoggingStatus(object):
             node_matched = False
 
             if pod['status']['containerStatuses'][0]['ready'] == False:
+                if self.args.verbose:
+                    print "Pod: " + pod['metadata']['name'] + " is not in ready state"
                 fluentd_status['running'] = 0
 
             # If there is already a problem don't worry about looping over the remaining pods/nodes
             if fluentd_status['node_mismatch'] == 0:
                 for node in fluentd_nodes:
-                    if node['metadata']['labels']['kubernetes.io/hostname'] == pod['spec']['host']:
+                    internal_ip = ""
+                    for address in node['status']['addresses']:
+                        if address['type'] == "InternalIP":
+                            internal_ip = address['address']
+
+                    if internal_ip == pod['spec']['host']:
                         node_matched = True
                         break
 
