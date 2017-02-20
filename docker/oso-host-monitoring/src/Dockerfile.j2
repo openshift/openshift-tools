@@ -74,6 +74,7 @@ RUN yum clean metadata && \
         python-pygithub \
         rpm-sign \
         createrepo \
+        python2-boto3 \
         docker-python && \
 {# This is installed for gsutil and calculating the size of the gcs #}
 {# centos users should install this from https://cloud.google.com/sdk/downloads and follow the instructions #}
