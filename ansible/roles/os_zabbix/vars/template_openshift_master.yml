@@ -2,6 +2,18 @@
 g_template_openshift_master:
   name: Template Openshift Master
   zitems:
+  - key: origin-master.version
+    description: Show origin-master rpm version
+    value_type: string
+    applications:
+    - Openshift Cluster
+
+  - key: atomic-openshift-master.version
+    description: Show atomic-openshift-master rpm version
+    value_type: string
+    applications:
+    - Openshift Cluster
+
   - key: openshift.master.cluster.compute_nodes.scheduled.cpu
     description: "Scheduled CPU (millicores) for compute nodes"
     value_type: int
