@@ -13,7 +13,7 @@ oso_snapshot_aws_secret_access_key: "{{ osohm_snapshot_aws_secret_access_key }}"
 gcp_volume_user_creds: '{{ osohm_snapshot_gcp_creds | to_json }}'
 {% endif %}
 
-{% if osohm_cloud == 'aws' %}
+{% if ( osohm_host_type == 'master' or osohm_host_type == 'infra' ) and osohm_cloud == 'aws' %}
 oso_ops_monitoring_aws_key_id: "{{ osohm_ops_monitoring_aws_access_key_id }}"
 oso_ops_monitoring_aws_secret_access_key: "{{ osohm_ops_monitoring_aws_secret_access_key }}"
 {% endif %}
