@@ -198,9 +198,19 @@ class OpenshiftLoggingStatus(object):
                         if address['type'] == "InternalIP":
                             internal_ip = address['address']
 
-                    if internal_ip == pod['spec']['host']:
-                        node_matched = True
-                        break
+                    try:
+                        if node['metadata']['labels']['kubernetes.io/hostname'] == pod['spec']['host']:
+                            node_matched = True
+                            break
+                        else:
+                            raise ValueError('')
+                    except:
+                        if internal_ip == pod['spec']['nodeName']:
+                            node_matched = True
+                            break
+                        elif node['metadata']['name'] == pod['spec']['nodeName']:
+                            node_matched = True
+                            break
 
             if node_matched == False:
                 fluentd_status['node_mismatch'] = 1
