@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.32
+Version:       0.1.33
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -382,6 +382,10 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Tue Feb 21 2017 Wesley Hearn <whearn@redhat.com> 0.1.33-1
+- Fix pylint issues (whearn@redhat.com)
+- Fix fluentd check to work with both 3.4 and 3.3 (whearn@redhat.com)
+
 * Mon Feb 20 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.32-1
 - Update Metrics and Logging to work with 3.4 (whearn@redhat.com)
 
