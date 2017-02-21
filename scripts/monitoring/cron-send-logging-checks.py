@@ -186,34 +186,29 @@ class OpenshiftLoggingStatus(object):
             node_matched = False
 
             if pod['status']['containerStatuses'][0]['ready'] == False:
-                if self.args.verbose:
-                    print "Pod: " + pod['metadata']['name'] + " is not in ready state"
                 fluentd_status['running'] = 0
 
             # If there is already a problem don't worry about looping over the remaining pods/nodes
-            if fluentd_status['node_mismatch'] == 0:
-                for node in fluentd_nodes:
-                    internal_ip = ""
-                    for address in node['status']['addresses']:
-                        if address['type'] == "InternalIP":
-                            internal_ip = address['address']
+            for node in fluentd_nodes:
+                internal_ip = ""
+                for address in node['status']['addresses']:
+                    if address['type'] == "InternalIP":
+                        internal_ip = address['address']
 
-                    try:
-                        if node['metadata']['labels']['kubernetes.io/hostname'] == pod['spec']['host']:
-                            node_matched = True
-                            break
-                        else:
-                            raise ValueError('')
-                    except:
-                        if internal_ip == pod['spec']['nodeName']:
-                            node_matched = True
-                            break
-                        elif node['metadata']['name'] == pod['spec']['nodeName']:
-                            node_matched = True
-                            break
+                try:
+                    if node['metadata']['labels']['kubernetes.io/hostname'] == pod['spec']['host']:
+                        node_matched = True
+                        break
+
+                    raise ValueError('')
+                except:
+                    if internal_ip == pod['spec']['nodeName'] or node['metadata']['name'] == pod['spec']['nodeName']:
+                        node_matched = True
+                        break
 
             if node_matched == False:
                 fluentd_status['node_mismatch'] = 1
+                break
 
 
         return fluentd_status
