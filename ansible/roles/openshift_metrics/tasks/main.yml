@@ -92,9 +92,23 @@
   register: processout
 - debug: var=processout
 
-- name: wait for deployment to finish
-  pause:
-    seconds: 240
+# wait up to 10 minutes for deployer pod to complete
+- name: wait until metrics deployer pod has completed
+  oc_obj:
+    state: list
+    namespace: openshift-infra
+    kind: pods
+    selector: metrics-infra=deployer
+  register: podout
+  until: podout.results.results[0]['items'][0].status.phase in ['Succeeded', 'Failed']
+  retries: 120
+  delay: 5
+  run_once: true
+
+- fail:
+    msg: metrics deployer failed to complete setup
+  when: podout.results.results[0]['items'][0].status.phase != 'Succeeded'
+  run_once: true
 
 - name: Add the "view" role to system:serviceaccount:openshift-infra:hawkular
   oadm_policy_user:

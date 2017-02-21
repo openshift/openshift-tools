@@ -152,18 +152,9 @@
     kind: pods
     selector: logging-infra=deployer
   register: podout
-  until: podout.results.results[0]['items'][0].status.phase == 'Succeeded'
+  until: podout.results.results[0]['items'][0].status.phase in ['Succeeded', 'Failed']
   retries: 36
   delay: 5
-  run_once: true
-
-- name: get deployer pod status
-  oc_obj:
-    state: list
-    namespace: logging
-    kind: pods
-    selector: logging-infra=deployer
-  register: podout
   run_once: true
 
 - fail:
@@ -201,7 +192,7 @@
   run_once: true
 - debug: var=pvcout
 
-- name: wait until logging deployer pod has completed
+- name: wait until logging pvcs are bound completed
   oc_obj:
     state: list
     namespace: logging
