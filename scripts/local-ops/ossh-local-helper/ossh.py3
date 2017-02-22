@@ -63,11 +63,6 @@ def parse_args():
 
 args = parse_args()
 
-if args.verbose:
-    logger.setLevel(logging.DEBUG)
-
-logger.debug("args:" + repr(args))
-
 if not args.bastion_user:
     args.bastion_user = ''
 else:
@@ -79,15 +74,32 @@ else:
     args.target_user = args.target_user + '@'
 
 sshcmd = [
-    'ssh -t',
-    '-o ProxyCommand="ssh -W %h:%p ' + args.bastion_user + args.bastion_host + '"',
+    'ssh ',
+    '-o ProxyCommand="ssh -q -W %h:%p ' + args.bastion_user + args.bastion_host + '"',
     '-o StrictHostKeyChecking=no',
     args.target_user + args.target_host,
 ]
 
-if len(args.arguments) > 0:
-    if "mon" in args.arguments[0]:
-        sshcmd.append('/usr/bin/bash -c "echo \"%s\"; docker exec -it oso-rhel7-host-monitoring bash"' % args.target_host)
+def show_verbose():
+    if '-v'in args.arguments:
+        logger.setLevel(logging.DEBUG)
+        logger.debug("args:" + repr(args))
+        logger.debug(" ".join(shlex.split(" ".join(sshcmd))))
 
-logger.debug(" ".join(shlex.split(" ".join(sshcmd))))
-subprocess.call(shlex.split(" ".join(sshcmd)))
+def run_cmd(cmd):
+    subprocess.call(cmd)
+
+def main():
+    show_verbose()
+    if len(args.arguments) > 0:
+        if "mon" in args.arguments[0]:
+            sshcmd.append('/usr/bin/bash -c "echo \"%s\"; docker exec -it oso-rhel7-host-monitoring bash"' % args.target_host)
+            subprocess.call(shlex.split(" ".join(sshcmd)))
+        else:
+            sshcmd.append(args.arguments[0])
+            subprocess.call(shlex.split(" ".join(sshcmd)))
+    if len(args.arguments) == 0:
+        subprocess.call(shlex.split(" ".join(sshcmd)))
+
+if __name__ == "__main__":
+    main()
