@@ -112,7 +112,7 @@ class OpenshiftLoggingStatus(object):
         # pylint: enable=unused-variable
             has_matched = False
             for pod in self.es_pods:
-                if data['host'] == pod['metadata']['name']:
+                if data['host'] == pod['metadata']['name'] or data['host'] == pod['status']['podIP']:
                     has_matched = True
                     break
 
