@@ -1,1 +1,1 @@
-../../../../../ansible_plugins/filter_plugins/oo_filters.py
+../../../filter_plugins/oo_filters.py
