@@ -411,9 +411,8 @@ class ManageKeys(object):
         """ Loop through a list of every ops-managed AWS account and create API keys for each. """
 
         for aws_account in ops_accounts:
-            matching = [s for s in ops_accounts if aws_account in s]
-            account_name = matching[0].split(':')[0]
-            account_number = matching[0].split(':')[1]
+            account_name = aws_account.split(':')[0]
+            account_number = aws_account.split(':')[1]
             client = self.get_token(account_number)
 
             if client:
@@ -436,9 +435,15 @@ class ManageKeys(object):
         """ Create API keys for only the specified ops-managed AWS accounts. """
 
         for aws_account in args.profile:
-            matching = [s for s in ops_accounts if aws_account in s]
-            account_name = matching[0].split(':')[0]
-            account_number = matching[0].split(':')[1]
+            for line in ops_accounts:
+                new_reg = r'(?P<account_name>\b' + aws_account + r'\b)'\
+                + ':' + r'(?P<account_number>\d+)'
+                match = re.search(new_reg, line)
+
+                if match:
+                    account_name = match.group('account_name')
+                    account_number = match.group('account_number')
+
             client = self.get_token(account_number)
 
             if client:
