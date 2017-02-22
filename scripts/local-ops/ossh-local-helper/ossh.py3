@@ -93,6 +93,7 @@ def main():
     show_verbose()
     if len(args.arguments) > 0:
         if "mon" in args.arguments[0]:
+            sshcmd.insert(1, '-t')
             sshcmd.append('/usr/bin/bash -c "echo \"%s\"; docker exec -it oso-rhel7-host-monitoring bash"' % args.target_host)
             subprocess.call(shlex.split(" ".join(sshcmd)))
         else:
