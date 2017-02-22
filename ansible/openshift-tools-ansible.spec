@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.36
+Version:        0.0.37
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,14 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Wed Feb 22 2017 Dan Yocum <dyocum@redhat.com> 0.0.37-1
+- Properly wait for metrics deploy to complete. (dgoodwin@redhat.com)
+- add key for internal pods check (zhiwliu@redhat.com)
+- fixed type chioces -> choices (dyocum@redhat.com)
+- use replace to do in-place updates when there are router changes
+  (jdiaz@redhat.com)
+- router DC changes for setting x_forwarded_for header (jdiaz@redhat.com)
+
 * Mon Feb 20 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.36-1
 - Add a git fetch module. (dgoodwin@redhat.com)
 - Updated metrics playbook (sedgar@redhat.com)
