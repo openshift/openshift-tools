@@ -437,7 +437,7 @@ def main():
             name=dict(default=None, type='str'),
             description=dict(default=None, type='str'),
             group_name=dict(default=None, type='str'),
-            status=dict(default='operational', chioces=["operational", "degraded_performance",
+            status=dict(default='operational', choices=["operational", "degraded_performance",
                                                         "partial_outage", "major_outage"],
                         type='str'),
             verbose=dict(default=False, type='bool'),
