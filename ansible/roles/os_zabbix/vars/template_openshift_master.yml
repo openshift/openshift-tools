@@ -2,13 +2,13 @@
 g_template_openshift_master:
   name: Template Openshift Master
   zitems:
-  - key: origin-master.version
+  - key: openshift.master.origin-master.version
     description: Show origin-master rpm version
     value_type: string
     applications:
     - Openshift Cluster
 
-  - key: atomic-openshift-master.version
+  - key: openshift.master.atomic-openshift-master.version
     description: Show atomic-openshift-master rpm version
     value_type: string
     applications:

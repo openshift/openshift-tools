@@ -26,7 +26,7 @@ def parse_args():
     return args
 
 
-def add_specific_rpm_version(package_name, rpm_db_path, keys, mts):
+def add_specific_rpm_version(package_name, rpm_db_path, keys, mts, key_prefix=""):
     '''get rpm package version and add to metric sender and keys dictionary
     '''
     try:
@@ -36,8 +36,10 @@ def add_specific_rpm_version(package_name, rpm_db_path, keys, mts):
 
         if return_value.startswith(package_name):
             package_version = return_value[len(package_name)+1:len(return_value)-1]
-            key = "{}.version".format(package_name)
-            mts.add_metric({key: package_version}, key_tags={'miq_metric': 'true'})
+            key = "{prefix}{name}.version".format(prefix=key_prefix, name=package_name)
+            tags = {"descriptor_name": "{name}.version".format(name=package_name),
+                    "miq_metric": "true"}
+            mts.add_metric({key: package_version}, key_tags=tags)
             keys[key] = package_version
             return True, None
 
@@ -71,18 +73,21 @@ def main():
     openshift_package_name = "origin"
 
     # Get openshift node version (attempt upstream)
-    success, err = add_specific_rpm_version("{}-node".format(openshift_package_name), rpm_db_path, keys, mts)
+    success, err = add_specific_rpm_version("{}-node".format(openshift_package_name), rpm_db_path, keys, mts,
+                                            "openshift.node.")
     if not success:
         # Get openshift version (attempt downstream)
         openshift_package_name = "atomic-openshift"
-        success, err2 = add_specific_rpm_version("{}-node".format(openshift_package_name), rpm_db_path, keys, mts)
+        success, err2 = add_specific_rpm_version("{}-node".format(openshift_package_name), rpm_db_path, keys, mts,
+                                                 "openshift.node.")
         if not success:
             failures += 1
             print "Failed to get openshift rpm version:\n" + err.output + + err2.output
 
     # Get openshift master version (upstream or downstream) - only if node rpm found
     if success:
-        success, err = add_specific_rpm_version("{}-master".format(openshift_package_name), rpm_db_path, keys, mts)
+        success, err = add_specific_rpm_version("{}-master".format(openshift_package_name), rpm_db_path, keys, mts,
+                                                "openshift.master.")
         if not success:
             # Print notification but don't count this as failure
             print "Note: " + err.output
