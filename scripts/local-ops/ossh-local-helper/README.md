@@ -2,9 +2,13 @@
 A helper to make parts of ossh work locally
 
 # Usage
-* `ossh hos<tab><tab>`: autocomplete possible hosts
+* `ossh hos<tab><tab>`: autocomplete possible hosts, caching for performance
 * `ossh hostname`: ssh to that host via bastion
+* `ossh hostname <command>`: ssh to that host via bastion and run commands, returning results
+  * `ossh hostname "hostname && date && ls -la /tmp/*"`
 * `ossh hostname mon`: ssh to that host via bastion and connect to monitoring container
+* `ossh hostname mon <command>`: ssh to that host via bastion and connect to monitoring container and run commands, returning results
+  * `ossh hostname mon "hostname && date && ls -la /tmp/*"`
 
 # Installation
 * git clone to your local disk
