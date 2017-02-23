@@ -33,6 +33,7 @@ ops-metric-client -s --discovery-key filesys --macro-string #FILESYS --macro-nam
 
 """
 
+import json
 import argparse
 from openshift_tools.monitoring.metric_sender import MetricSender, MetricSenderHeartbeat
 import yaml
@@ -64,6 +65,21 @@ class OpsMetricClient(object):
 
         self.metric_sender.send_metrics()
 
+    @staticmethod
+    def adjust_type(val, metric_type):
+        """
+        :param val: string representing metric value
+        :param metric_type: string or numeric
+        :return:  if metric_type isn't string - value converted to float or int according to json parsing
+        """
+        if metric_type == 'string':
+            return val
+
+        try:
+            return json.loads(val)
+        except ValueError:
+            return val
+
     def parse_args(self):
         """ parse the args from the cli """
         parser = argparse.ArgumentParser(description='metric sender')
@@ -79,6 +95,9 @@ class OpsMetricClient(object):
         parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
         parser.add_argument('-c', '--config-file', help='ops-metric-client config file',
                             default='/etc/openshift_tools/metric_sender.yaml')
+        parser.add_argument('-m', '--metric', choices=['numeric', 'string'],
+                            default='numeric',
+                            help='use specific metrics type [numeric, string]')
 
         key_value_group = parser.add_argument_group('Sending a Key-Value Pair')
         key_value_group.add_argument('-k', '--key', help='metric key')
@@ -133,7 +152,8 @@ class OpsMetricClient(object):
         # Get tags from command line args
         tags = dict([i.split("=")[0], i.split("=")[1]] for i in self.args.tags) if self.args.tags else {}
 
-        self.metric_sender.add_metric({self.args.key : self.args.value}, key_tags=tags)
+        self.metric_sender.add_metric({self.args.key : self.adjust_type(self.args.value, self.args.metric)},
+                                      key_tags=tags)
 
     def add_dynamic_metric(self):
         """ send zabbix low level discovery item to zagg """
