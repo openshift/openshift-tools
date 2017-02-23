@@ -43,6 +43,7 @@ class OpsRunner(object):
 
     def __init__(self):
         """ constructor """
+        self.args = None
         self.parse_args()
         self.tmp_file_handle = None
         self.lock_file_handle = None
@@ -86,7 +87,12 @@ class OpsRunner(object):
     def check_sleep(self):
         """ pause for a random number (bounded) of seconds if needed"""
         if self.args.random_sleep:
-            seconds = random.randrange(int(self.args.random_sleep))
+            rand = random.Random()
+            # seed the rng using the hostname and check name. That means that for each hostname/check,
+            # it will sleep the same amount every time for a given self.args.random_sleep
+            rand.seed(hash(socket.gethostname()+self.args.name))
+
+            seconds = rand.randrange(int(self.args.random_sleep))
             self.verbose_print("Sleeping %s seconds..." % seconds)
             time.sleep(seconds)
 
