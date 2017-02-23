@@ -62,6 +62,8 @@ def parse_args():
     return parser.parse_args()
 
 args = parse_args()
+if args.verbose:
+    logger.setLevel(logging.DEBUG)
 
 if not args.bastion_user:
     args.bastion_user = ''
@@ -73,35 +75,70 @@ if not args.target_user:
 else:
     args.target_user = args.target_user + '@'
 
-sshcmd = [
-    'ssh ',
-    '-o ProxyCommand="ssh -q -W %h:%p ' + args.bastion_user + args.bastion_host + '"',
-    '-o StrictHostKeyChecking=no',
-    args.target_user + args.target_host,
-]
+def addQuotes(string):
+    return '"' + string + '"'
 
-def show_verbose():
-    #if args.verbose:
-    if '-v'in args.arguments or args.verbose:
-        logger.setLevel(logging.DEBUG)
-        logger.debug("args:" + repr(args))
-        logger.debug(" ".join(shlex.split(" ".join(sshcmd))))
+def addSlashes(string):
+    string = string.replace('*', '\\*')
+    string = string.replace('$', '\\$')
+    string = string.replace('"', '\\"')
+    string = string.replace('\'', '\\\'')
+    return string
 
-def run_cmd(cmd):
-    subprocess.call(cmd)
+def buildCmd(bastion, target, docker):
 
-def main():
-    show_verbose()
-    if len(args.arguments) > 0:
-        if "mon" in args.arguments[0]:
-            sshcmd.insert(1, '-t')
-            sshcmd.append('/usr/bin/bash -c "echo \"%s\"; docker exec -it oso-rhel7-host-monitoring bash"' % args.target_host)
-            subprocess.call(shlex.split(" ".join(sshcmd)))
-        else:
-            sshcmd.append(args.arguments[0])
-            subprocess.call(shlex.split(" ".join(sshcmd)))
-    if len(args.arguments) == 0:
-        subprocess.call(shlex.split(" ".join(sshcmd)))
+    ProxyCommand = 'ssh -q -W %h:%p ' + bastion["user"] + bastion["host"]
+
+    if len(docker["cmd"]) > 0:
+        docker["cmd"] = " ".join(docker["cmd"])
+        docker["cmd"] = [addSlashes(docker["cmd"])]
+
+    return [
+        'ssh',
+        '-o ProxyCommand="' + ProxyCommand + '"',
+        '-o StrictHostKeyChecking=no',
+    ] + target['ssh_opts'] + [
+        target["user"] + target["host"],
+    ] + target["cmd"] + docker["cmd"]
 
 if __name__ == "__main__":
-    main()
+    bastion = {
+        'host': args.bastion_host,
+        'user': args.bastion_user,
+    }
+    target = {
+        'host': args.target_host,
+        'user': args.target_user,
+        'ssh_opts': [
+            #'-t',
+        ],
+        'cmd': [],
+    }
+    docker = {
+        'cmd': [],
+    }
+
+    if len(args.arguments) > 0:
+        if "mon" in args.arguments[0]:
+            # add tty terminal
+            target["ssh_opts"].append('-t')
+
+            # force target bash
+            target["cmd"] = ['/bin/bash -c']
+
+            docker["cmd"] = [
+                'echo %s' % args.target_host,
+                '&&',
+                'docker exec -it oso-rhel7-host-monitoring' ,
+            ]
+
+            dockerCmd = '/usr/bin/env /bin/bash'
+            if args.arguments[1:]:
+                dockerCmd = '/usr/bin/env /bin/bash -c ' + addQuotes(" ".join(args.arguments[1:]))
+            docker["cmd"].append(dockerCmd)
+
+        else:
+            target["cmd"] = ['/bin/bash -c'] + args.arguments
+
+    logger.debug(" ".join(buildCmd(bastion, target, docker)))
+    subprocess.call(shlex.split(" ".join(buildCmd(bastion, target, docker))))
