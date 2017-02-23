@@ -81,7 +81,8 @@ sshcmd = [
 ]
 
 def show_verbose():
-    if '-v'in args.arguments:
+    #if args.verbose:
+    if '-v'in args.arguments or args.verbose:
         logger.setLevel(logging.DEBUG)
         logger.debug("args:" + repr(args))
         logger.debug(" ".join(shlex.split(" ".join(sshcmd))))
