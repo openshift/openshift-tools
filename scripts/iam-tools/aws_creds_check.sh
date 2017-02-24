@@ -85,7 +85,7 @@ function _check_creds()
             return 0
         fi
     fi
-    
+
     while IFS=: read -r name num; do
         accounts["$name"]="$num"
     done < /etc/openshift_tools/aws_accounts.txt
@@ -101,7 +101,7 @@ function _check_creds()
                 if [ -n "${accounts["$line"]+is_set}" ]; then
                     if [ -n "$ZSH_NAME" ]; then
                         # zsh syntax for unset requires quotes on associative array keys, which would break bash
-                        unset 'accounts["$line"]'
+                        unset "accounts[\"$line\"]"
                     else
                         unset accounts["$line"]
                     fi
