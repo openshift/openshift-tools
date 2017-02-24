@@ -25,6 +25,7 @@ sudo firewall-cmd --add-service=dns --quiet
 
 sudo ${OC} cluster up
 ${OC} login localhost:8443 -u developer -p developer --insecure-skip-tls-verify
+${OC} new-project monitoring
 
 ${OC} secrets new monitoring-secrets ./monitoring-secrets/*
 
