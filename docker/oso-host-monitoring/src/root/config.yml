@@ -37,6 +37,28 @@
       mode: 0644
     when: etcd_metrics_config is defined
 
+  - block:
+    - name: find kubeconfig exact file name
+      find:
+        paths: "/etc/origin/node"
+        patterns: "system*kubeconfig"
+        use_regex: False
+      register: files
+
+    # FIXME: change to use openshift ansible module when it is packaged and installed in host-mon container
+    - name: get service IP for the service
+      command: >
+        /usr/bin/oc --config={{ files.files.0['path'] }}
+        get svc zagg-service
+        --template='{% raw %}{{.spec.clusterIP}}{% endraw %}'
+      register: svcipout
+
+    - name: change zaggtarget to IP if uses local cluster zagg
+      set_fact:
+        metric_sender_config="{{metric_sender_config|combine({'zagg':{'url':'http://'+svcipout.stdout}},recursive=True)}}"
+
+    when: "'zagg.ops-aws.openshift.com' not in metric_sender_config['zagg']['url']"
+
   - name: Generate the metric_sender.yaml config file
     copy:
       content: "{{ metric_sender_config | to_nice_yaml }}"
