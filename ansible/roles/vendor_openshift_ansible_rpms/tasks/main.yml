@@ -83,6 +83,18 @@
   - [ 'filter_plugins', 'lookup_plugins' ]
   - [ 'openshift-cluster', 'openshift-master', 'openshift-node']
 
+- name: Symlink the filter and lookup plugins roles/openshift_master_facts
+  file:
+    state: link
+    src: "../../../{{ item.dirname }}/{{ item.linkname }}"
+    dest: "{{ vosar_output_directory }}/roles/openshift_master_facts/{{ item.dirname }}/{{ item.linkname }}"
+    force: yes
+  with_items:
+  - dirname: filter_plugins
+    linkname: oo_filters.py
+  - dirname: lookup_plugins
+    linkname: oo_option.py
+
 # Each OpenShift release ships with 1-2 supported upgrade paths in a
 # version specific directory like "v3_4". Search for anything that looks like
 # one, and create the required symlinks within it.
