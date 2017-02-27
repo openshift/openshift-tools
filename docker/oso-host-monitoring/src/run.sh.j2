@@ -32,7 +32,6 @@ sudo docker run --rm=true -it --name oso-{{ base_os }}-host-monitoring \
            -v /etc/yum:/host/etc/yum:ro                     \
            -v /etc/yum.conf:/host/etc/yum.conf:ro           \
            -v /etc/yum.repos.d:/host/etc/yum.repos.d:ro     \
-           -v /var/lib/rpm:/host/var/lib/rpm:ro             \
            -v /var/lib/yum:/host/var/lib/yum:ro             \
            -v /var/cache/yum:/host/var/cache/yum:rw         \
            -v ${CONFIG_SOURCE}:/container_setup:ro \
