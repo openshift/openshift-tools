@@ -27,6 +27,7 @@ cp -p monitoring/ops-zagg-metric-processor.py %{buildroot}/usr/bin/ops-zagg-metr
 cp -p monitoring/ops-zagg-heartbeat-processor.py %{buildroot}/usr/bin/ops-zagg-heartbeat-processor
 cp -p monitoring/ops-zagg-heartbeater.py %{buildroot}/usr/bin/ops-zagg-heartbeater
 cp -p monitoring/cron-send-process-count.sh %{buildroot}/usr/bin/cron-send-process-count
+cp -p monitoring/cron-send-security-updates-count.py %{buildroot}/usr/bin/cron-send-security-updates-count
 cp -p monitoring/cron-send-filesystem-metrics.py %{buildroot}/usr/bin/cron-send-filesystem-metrics
 cp -p monitoring/cron-send-pcp-sampled-metrics.py %{buildroot}/usr/bin/cron-send-pcp-sampled-metrics
 cp -p monitoring/ops-runner.py %{buildroot}/usr/bin/ops-runner
@@ -212,6 +213,7 @@ OpenShift Tools Monitoring Client Scripts
 
 %files monitoring
 /usr/bin/cron-send-process-count
+/usr/bin/cron-send-security-updates-count
 /usr/bin/ops-runner
 /usr/bin/ops-zagg-client
 /usr/bin/ops-metric-client

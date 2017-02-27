@@ -188,6 +188,19 @@ g_template_os_linux:
     multiplier: 1024
     units: B
 
+  # security items
+  - key: yum.security.updates
+    applications:
+    - Security
+    value_type: int
+    description: "The number of security updates that are pending on the host (excluding any that have been whitelisted)"
+
+  - key: yum.security.updates.skipped
+    applications:
+    - Security
+    value_type: int
+    description: "The number of security updates that are pending on the host but are ignored by yum.security.updates as they are whitelisted"
+
   zdiscoveryrules:
   - name: disc.filesys
     key: disc.filesys
@@ -318,3 +331,9 @@ g_template_os_linux:
     description: "CPU is less than 10% idle"
     dependencies:
     - "CPU idle less than 5% on {HOST.NAME}"
+
+  - name: "Security updates available for {HOST.NAME}"
+    expression: "{Template OS Linux:yum.security.updates.last(0)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_yum_update.asciidoc"
+    priority: info
+    description: "One or more security updates need to be applied to the host"
