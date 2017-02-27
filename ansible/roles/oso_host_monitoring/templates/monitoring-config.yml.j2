@@ -166,6 +166,12 @@ host_monitoring_cron:
   minute: "*"
   job: ops-runner -f -s 15 -n csdcu.docker.containers.usage /usr/bin/cron-send-docker-containers-usage
 
+- name: check for pending security updates once per day
+  minute: "0"
+  hour:   "10"
+  # 43200 is 12 hours. Spread the checks out across a half day
+  job: ops-runner -f -s 43200 -n cssuc.security.updates.count /usr/bin/cron-send-security-updates-count
+
 
 {% if osohm_host_type != 'ansible-tower' %}
 # This is an active issue, we need it to run on a frequent basis.
