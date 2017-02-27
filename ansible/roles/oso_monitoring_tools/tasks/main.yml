@@ -9,10 +9,12 @@
     - python-openshift-tools-monitoring-zagg
     - python-openshift-tools-monitoring-zabbix
 
-- debug: var=g_zagg_client_config
 
-- name: Generate the /etc/openshift_tools/zagg_client.yaml config file
+- name: Read in monitoring-config.yaml
+  include_vars: "/etc/openshift_tools/monitoring-config.yml"
+
+- name: Generate metric_sender.yaml config file
   copy:
-    content: "{{ osomt_zagg_client_config | to_nice_yaml }}"
-    dest: /etc/openshift_tools/zagg_client.yaml
+    content: "{{ metric_sender_config | to_nice_yaml }}"
+    dest: /etc/openshift_tools/metric_sender.yaml
     mode: "644"
