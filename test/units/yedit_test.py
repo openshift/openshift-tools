@@ -12,6 +12,7 @@ import os
 # Disable import-error b/c our libraries aren't loaded in jenkins
 # pylint: disable=import-error
 from yedit import Yedit
+from yedit import YeditException
 
 # pylint: disable=too-many-public-methods
 # Silly pylint, moar tests!
@@ -186,6 +187,7 @@ class YeditTest(unittest.TestCase):
         yed.append('x:y:z', [5, 6])
         yed.append('x:y:z', [5, 6])
         self.assertTrue(yed.get('x:y:z') == [1, 2, 3, [5, 6], [5, 6]])
+        # pylint: disable=maybe-no-member
         self.assertTrue(2 == yed.get('x:y:z').count([5, 6]))
         self.assertFalse(yed.exists('x:y:z', 4))
 
@@ -254,6 +256,24 @@ class YeditTest(unittest.TestCase):
         yed = Yedit(content={'a': {'b': {'c': 1, 'd': 2}}}, separator='#')
         yed.pop('a#b', 'c')
         self.assertTrue({'a': {'b': {'d': 2}}} == yed.yaml_dict)
+
+    def test_accessing_path_with_unexpected_objects(self):
+        '''test providing source path objects that differ from current object state'''
+        yed = Yedit(content={'a': {'b': {'c': ['d', 'e']}}})
+        with self.assertRaises(YeditException):
+            yed.put('a.b.c.d', 'x')
+
+    def test_creating_new_objects_with_embedded_list(self):
+        '''test creating new objects with an embedded list in the creation path'''
+        yed = Yedit(content={'a': {'b': 12}})
+        with self.assertRaises(YeditException):
+            yed.put('new.stuff[0].here', 'value')
+
+    def test_creating_new_objects_with_trailing_list(self):
+        '''test creating new object(s) where the final piece is a list'''
+        yed = Yedit(content={'a': {'b': 12}})
+        with self.assertRaises(YeditException):
+            yed.put('new.stuff.here[0]', 'item')
 
     def tearDown(self):
         '''TearDown method'''
