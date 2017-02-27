@@ -54,6 +54,15 @@ ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                
            -v /usr/bin/oc:/usr/bin/oc                                                               \
            -v /usr/bin/oadm:/usr/bin/oadm                                                           \
            -v /var/lib/rpm:/host/var/lib/rpm:ro                                                     \
+           -v /etc/rhsm/ca:/host/etc/rhsm/ca:ro                                                     \
+           -v /etc/openshift_tools:/host/etc/openshift_tools:ro                                     \
+           -v /etc/pki/entitlement:/host/etc/pki/entitlement:ro                                     \
+           -v /etc/pki/rpm-gpg:/host/etc/pki/rpm-gpg:ro                                             \
+           -v /etc/yum:/host/etc/yum:ro                                                             \
+           -v /etc/yum.conf:/host/etc/yum.conf:ro                                                   \
+           -v /etc/yum.repos.d:/host/etc/yum.repos.d:ro                                             \
+           -v /var/lib/yum:/host/var/lib/yum:ro                                                     \
+           -v /var/cache/yum:/host/var/cache/yum:rw                                                 \
            -v /etc/openshift_tools:/container_setup:ro                                              \
            {{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}:{{ osohm_environment }}
 
