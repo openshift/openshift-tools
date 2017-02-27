@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.34
+Version:       0.1.35
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -384,6 +384,18 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Mon Feb 27 2017 Joel Smith <joesmith@redhat.com> 0.1.35-1
+- Fix at-login check for AWS creds for zsh users (joesmith@redhat.com)
+- Add cron-send-security-updates-count (joesmith@redhat.com)
+- Make ops-runner random sleeps deterministic by host & check name
+  (joesmith@redhat.com)
+- command examples for ossh-local-helper (dranders@redhat.com)
+- ossh can now pass commands along too (dranders@redhat.com)
+- fixed the verbose output issue for ossh.py3 (zhiwliu@redhat.com)
+- added the -t for ossh.py3 when need login monitoring container
+  (zhiwliu@redhat.com)
+- updated ossh.py3 (zhiwliu@redhat.com)
+
 * Wed Feb 22 2017 Dan Yocum <dyocum@redhat.com> 0.1.34-1
 - ES for 3.4 uses pod ip for the host, so we need to check the pod name and pod
   ip (whearn@redhat.com)
