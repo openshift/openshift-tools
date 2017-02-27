@@ -7,6 +7,7 @@
     - /etc/pki/entitlement
     - /etc/pki/rpm-gpg
     - /etc/rpm
+    - /var/lib/rpm
     - /var/lib/yum
     - /var/cache/yum
 
