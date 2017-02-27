@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.35
+Version:       0.1.36
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -386,6 +386,9 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Mon Feb 27 2017 Wesley Hearn <whearn@redhat.com> 0.1.36-1
+- Forgot rsh in the run_usr_cmd to get the password (whearn@redhat.com)
+
 * Mon Feb 27 2017 Joel Smith <joesmith@redhat.com> 0.1.35-1
 - Fix at-login check for AWS creds for zsh users (joesmith@redhat.com)
 - Add cron-send-security-updates-count (joesmith@redhat.com)
