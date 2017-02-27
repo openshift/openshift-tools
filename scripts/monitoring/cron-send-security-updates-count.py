@@ -126,8 +126,16 @@ def setup():
     config = ConfigObj(ROOT + '/etc/yum.conf')
     config['main']['cachedir'] = ROOT + '/var/cache/yum/$basearch/$releasever'
     config['main']['reposdir'] = ROOT + '/etc/yum.repos.d'
+    config['main']['pluginconfpath'] = ROOT + '/etc/yum/pluginconf.d'
     config['main']['installroot'] = ROOT
     config['main']['logfile'] = '/var/log/hostpkg.yum.log'
+    config.write()
+
+    # edit etc/yum/pluginconf.d/subscription-manager.conf
+    config = ConfigObj(ROOT + '/etc/yum/pluginconf.d/subscription-manager.conf')
+    # disabled, becuase the host has already created the correct list of repos and if enabled,
+    # it'll rewrite our (already correct) etc/yum.repos.d/redhat.repo file with a broken version
+    config['main']['enabled'] = '0'
     config.write()
 
     # edit the repos using fileinput since ConfigParser doesn't support the multi-line format used by yum's baseurl tag
