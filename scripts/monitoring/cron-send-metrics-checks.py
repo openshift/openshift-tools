@@ -120,7 +120,7 @@ class OpenshiftMetricsStatus(object):
         except:
             passwd_file = "/client-secrets/hawkular-metrics.password"
             self.hawkular_username = 'hawkular'
-            self.hawkular_password = self.oc.run_user_cmd("{} cat {}".format(self.hawkular_pod_name, passwd_file))
+            self.hawkular_password = self.oc.run_user_cmd("rsh {} cat {}".format(self.hawkular_pod_name, passwd_file))
             self.hawkular_password = self.hawkular_password.rstrip('\n')
 
             new_secret = {}
