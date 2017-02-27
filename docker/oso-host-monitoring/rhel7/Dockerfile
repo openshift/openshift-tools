@@ -60,6 +60,7 @@ RUN yum clean metadata && \
         python-httplib2 python-oauth2client \
         python-pyasn1 python-pyasn1-modules python-rsa \
         openvswitch \
+        python-configobj \
         python-psutil \
         pylint \
         tito \
@@ -77,6 +78,26 @@ RUN yum clean metadata && \
 
 ADD urllib3-connectionpool-patch /root/
 RUN yum install -y patch && yum clean all && cd /usr/lib/python2.7/site-packages/ && patch -p1 < /root/urllib3-connectionpool-patch
+
+# make mount points for security update count check, and make a circular symlink because yum is dumb about its root
+RUN mkdir -p /host/etc/openshift_tools \
+             /host/etc/rpm \
+             /host/etc/pki/entitlement \
+             /host/etc/pki/rpm-gpg \
+             /host/etc/rhsm/ca \
+             /host/etc/yum \
+             /host/etc/yum.repos.d \
+             /host/var/lib/rpm \
+             /host/var/lib/yum \
+             /host/var/cache/yum \
+             /var/local/hostpkg/etc/rhsm/ca \
+             /var/local/hostpkg/etc/rpm \
+             /var/local/hostpkg/etc/pki/entitlement \
+             /var/local/hostpkg/etc/pki/rpm-gpg \
+             /var/local/hostpkg/var/local \
+             /var/local/hostpkg/var/cache/yum \
+             /var/local/hostpkg/var/lib/yum && \
+    ln -s /var/local/hostpkg /var/local/hostpkg/var/local/hostpkg
 
 # Install python-hawkular-client
 RUN yum install -y python-hawkular-client && yum clean all

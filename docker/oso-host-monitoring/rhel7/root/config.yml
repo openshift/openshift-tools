@@ -1,6 +1,14 @@
 ---
 - hosts: localhost
   gather_facts: no
+  vars:
+    hostpkg_bindmnt_dirs:
+    - /etc/rhsm/ca
+    - /etc/pki/entitlement
+    - /etc/pki/rpm-gpg
+    - /etc/rpm
+    - /var/lib/yum
+    - /var/cache/yum
 
   pre_tasks:
   - stat:
@@ -121,3 +129,18 @@
       dest: /root/.gce/creds.json
     when: gcp_volume_user_creds is defined
 
+  - name: "Create bind mountpoints for hostpkg checks"
+    file:
+      path: "/var/local/hostpkg{{ item }}"
+      state: directory
+      recurse: yes
+    with_items: "{{hostpkg_bindmnt_dirs}}"
+
+  - name: "Bind mount /host/ dirs to /var/local/hostpkg/ for hostpkg checks"
+    mount:
+      opts: bind
+      fstype: none
+      state: mounted
+      name: "/var/local/hostpkg{{ item }}"
+      src: "/host{{ item }}"
+    with_items: "{{hostpkg_bindmnt_dirs}}"
