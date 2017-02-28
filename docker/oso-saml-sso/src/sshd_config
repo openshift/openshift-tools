@@ -137,6 +137,3 @@ PermitUserEnvironment no
 
 # no default banner path
 Banner none
-
-# override default of no subsystems
-Subsystem sftp  /usr/libexec/openssh/sftp-server
