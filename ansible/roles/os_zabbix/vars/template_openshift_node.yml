@@ -2,6 +2,18 @@
 g_template_openshift_node:
   name: Template Openshift Node
   zitems:
+  - key: openshift.node.origin-node.version
+    description: Show origin-node rpm version
+    value_type: string
+    applications:
+    - Openshift Node
+
+  - key: openshift.node.atomic-openshift-node.version
+    description: Show atomic-openshift-Node rpm version
+    value_type: string
+    applications:
+    - Openshift Node
+
   - key: openshift.node.process.count
     description: Shows number of OpenShift Node processes running
     value_type: int
