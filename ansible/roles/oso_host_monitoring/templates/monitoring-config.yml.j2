@@ -149,6 +149,11 @@ host_monitoring_cron:
   minute: "*/5"
   job: ops-runner -f -s 15 -n csnm.network.int /usr/bin/cron-send-network-metrics
 
+- name: report rpm versions daily
+  hour: "1"
+  minute: "0"
+  job: ops-runner -f -s 120 -n csdov.rpm.versions /usr/bin/cron-send-docker-oc-versions
+
 # We might want to break docker checks out at some point.
 - name: run docker storage space checks every 15 minutes
   minute: "*/15"
