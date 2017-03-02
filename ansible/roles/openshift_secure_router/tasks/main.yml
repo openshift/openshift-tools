@@ -8,12 +8,24 @@
   - "{{ ossr_default_router_keys }}"
   - "{{ ossr_default_router_cacert }}"
 
+- name: get OpenShift version
+  oc_version:
+  register: oc_version
+
 - name: Include cloud-specific router edits
   include_vars: "{{ ossr_cloud }}.yml"
 
+# pre-3.4 clusters should ignore PROXY env var settings from vars/aws.yml
+- name: Set router edit(s) list
+  set_fact:
+    ossr_router_edits: "{{ ossr_default_router_edits }}"
+  when: oc_version['result']['openshift_short'] | version_compare('3.4', '<')
+
+# anything beyond a 3.3 cluster should set the router up for PROXY protocol (from vars/aws.yml)
 - name: Merge default and cloud-specific router edits
   set_fact:
     ossr_router_edits: "{{ ossr_default_router_edits | union(ossr_cloud_router_edits) }}"
+  when: oc_version['result']['openshift_short'] | version_compare('3.4', '>=')
 
 - name: create routers
   oadm_router:
