@@ -357,6 +357,11 @@ host_monitoring_cron:
   minute: "*/10"
   job: /usr/bin/delete-stuck-projects &>> /var/log/delete-stuck-projects
 
+- name: Do a quick check for the internal pods status and location every 1 hour
+  minute: "15"
+  hour: "*/1"
+  job: ops-runner -f -s 15 -n csipc.openshift.internal.status /usr/bin/cron-send-internal-pods-check
+
 - name: "Prune builds/deployments/images"
   hour: "{{ osohm_pruning.cron.hour }}"
   minute: "{{ osohm_pruning.cron.minute }}"
