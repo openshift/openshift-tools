@@ -1,97 +1,8 @@
 ---
-- hosts: oo_name_miq-4bbf
+- hosts: localhost
   gather_facts: no
-  user: root
-  vars:
-    # This may need to change as they give us updates
-    #miq_pull_url: docker.io/manageiq/manageiq:darga-3
-    g_miq_pull_url: "docker.io/manageiq/manageiq:{{ cli_miq_release_tag }}"
-    g_miq_db_path: "/var/lib/docker/volumes/oso-manageiq-{{ cli_miq_release_tag }}/data"
-    g_miq_log_path: "/var/lib/docker/volumes/oso-manageiq-{{ cli_miq_release_tag }}/log"
   vars_files:
   - vars.yml
-  handlers:
-  - name: restart oso-manageiq
-    service:
-      name: oso-manageiq
-      state: restarted
-  pre_tasks:
-  - name: Install require packages
-    yum:
-      name: "{{ item }}"
-      state: present
-    with_items:
-    - python-docker-py
-    - git
-    - python-pip
-
-  - name: Ensure that the DB path has been created. We want each releases DB to be in it's own dir.
-    file:
-      state: directory
-      path: "{{ item }}"
-    with_items:
-    - "{{ g_miq_db_path }}"
-    - "{{ g_miq_log_path }}"
-
-  - name: Pull the manageiq container image
-    docker_image:
-      name: "{{ g_miq_pull_url }}"
-    notify:
-    - restart oso-manageiq
-
-  - name: Setup systemd file
-    copy:
-      dest: /etc/systemd/system/oso-manageiq.service
-      content: |-
-        [Unit]
-        Description=ManageIQ Container
-        Requires=docker.service
-        After=docker.service
-
-        [Service]
-        Type=simple
-        TimeoutStartSec=5m
-
-        ExecStart=/usr/bin/docker run --name oso-manageiq \
-                  -v {{ g_miq_db_path }}:/var/opt/rh/rh-postgresql94/lib/pgsql/data:rw,Z \
-                  -v {{ g_miq_log_path }}:/var/www/miq/vmdb/log:rw,Z \
-                  --privileged \
-                  -p 80:80 \
-                  -p 443:443 \
-                  docker.io/manageiq/manageiq:{{ cli_miq_release_tag }}
-
-        ExecReload=-/usr/bin/docker stop "oso-manageiq"
-        ExecReload=-/usr/bin/docker rm "oso-manageiq"
-        ExecStop=-/usr/bin/docker stop "oso-manageiq"
-        ExecStop=-/usr/bin/docker rm "oso-manageiq"
-        Restart=always
-        RestartSec=30
-
-        [Install]
-        WantedBy=default.target
-    register: systemd_file
-
-  - name: Setup systemd service
-    systemd:
-      name: oso-manageiq
-      daemon_reload: "{{ systemd_file | changed }}"
-      enabled: true
-      state: "{{ systemd_file | changed | ternary('restarted', 'started') }}"
-
-  - name: need to wait for the oso-manageiq container to start up
-    uri:
-      url: "{{ g_miq_url }}"
-      status_code: 200, 302
-    register: result
-    until: result.status == 200 or result.status == 302
-    retries: 30
-    delay: 10
-
-  - name: "install the manageiq python client. TODO: have this packaged, pip isn't allowed in production."
-    pip:
-      name: "git+https://github.com/ManageIQ/manageiq-api-client-python.git#egg=manageiq-api-client-python"
-      state: latest
-
   roles:
   - role: "{{ cli_miq_ans_module_path }}"
 
@@ -110,24 +21,24 @@
       hawkular_hostname: "{{ g_hawular_hostname }}"
       hawkular_port: "{{ g_hawkular_port }}"
 
-  - manageiq_provider:
-      name: "{{ g_miq_aws_provider_name }}"
-      provider_type: amazon
-      provider_region: us-east-1
-      access_key_id: "{{ g_miq_access_key_id }}"
-      secret_access_key: "{{ g_miq_secret_access_key }}"
-      state: present
-      miq_url: "{{ g_miq_url }}"
-      miq_username: "{{ g_miq_username }}"
-      miq_password: "{{ g_miq_password }}"
+  #- manageiq_provider:
+  #    name: "{{ g_miq_aws_provider_name }}"
+  #    provider_type: amazon
+  #    provider_region: us-east-1
+  #    access_key_id: "{{ g_miq_access_key_id }}"
+  #    secret_access_key: "{{ g_miq_secret_access_key }}"
+  #    state: present
+  #    miq_url: "{{ g_miq_url }}"
+  #    miq_username: "{{ g_miq_username }}"
+  #    miq_password: "{{ g_miq_password }}"
 
-  - manageiq_custom_attributes:
-      entity_type: provider
-      entity_name: '{{ g_miq_os_provider_name }}'
-      state: present
-      miq_url: "{{ g_miq_url }}"
-      miq_username: "{{ g_miq_username }}"
-      miq_password: "{{ g_miq_password }}"
-      custom_attributes:
-      - name: "oo_account"
-        value: "{{ g_aws_account }}"
+  #- manageiq_custom_attributes:
+  #    entity_type: provider
+  #    entity_name: '{{ g_miq_os_provider_name }}'
+  #    state: present
+  #    miq_url: "{{ g_miq_url }}"
+  #    miq_username: "{{ g_miq_username }}"
+  #    miq_password: "{{ g_miq_password }}"
+  #    custom_attributes:
+  #    - name: "oo_account"
+  #      value: "{{ g_aws_account }}"
