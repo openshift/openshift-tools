@@ -16,7 +16,8 @@ RUN yum repolist --disablerepo=* && \
     yum-config-manager --disable \* > /dev/null && \
     yum-config-manager --enable rhel-7-server-rpms rhel-7-server-extras-rpms
 {% elif base_os == "centos7" %}
-
+# Temporary fix while ansible-2.2.0.0 isn't available in EPEL
+RUN yum -y install centos-release-openshift-origin && yum clean all
 ADD copr-openshift-tools.repo /etc/yum.repos.d/
 {% endif %}
 
