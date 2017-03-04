@@ -57,6 +57,15 @@
     state: absent
   with_items: "{{ template_list.results }}"
 
+- name: Check if container-build-env-fingerprint.sh exists
+  stat:
+    path: "./{{ base_os }}/container-build-env-fingerprint.sh"
+  register: container_build_env_fingerprint
+
+- name: Create the container-build-env-fingerprint
+  shell: "./{{ base_os }}/container-build-env-fingerprint.sh > ./{{ base_os }}/container-build-env-fingerprint"
+  when: container_build_env_fingerprint.stat.exists == True
+
 - name: Insert auto-generated readme
   copy:
     content: |
