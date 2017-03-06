@@ -36,7 +36,6 @@ ADD check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
 RUN echo -e "\n\nalias oca='KUBECONFIG=/tmp/admin.kubeconfig oc '" >> /root/.bashrc
 RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oadm '" >> /root/.bashrc
 
-
 RUN yum clean metadata && \
     yum install -y python-pip pcp pcp-conf pcp-testsuite \
         python-requests pyOpenSSL \

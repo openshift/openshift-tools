@@ -12,6 +12,8 @@ FROM centos:centos7
 # Pause indefinitely if asked to do so.
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
+# centos openshift repo
+RUN yum install -y centos-release-openshift-origin && yum clean all
 
 ADD copr-openshift-tools.repo /etc/yum.repos.d/
 

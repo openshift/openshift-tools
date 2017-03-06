@@ -32,15 +32,6 @@ ADD check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
 RUN echo -e "\n\nalias oca='KUBECONFIG=/tmp/admin.kubeconfig oc '" >> /root/.bashrc
 RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oadm '" >> /root/.bashrc
 
-{% if base_os == "centos7" %}
-# Need to manually install the RPMs, since yum will get confused
-# when resolving dependencies for /usr/bin/oc and /usr/bin/oadm
-# in python-openshift-tools-monitoring-openshift.rpm using the
-# maxamillion/origin-next copr repository below
-RUN cd /etc/yum.repos.d && curl -O https://copr.fedorainfracloud.org/coprs/maxamillion/origin-next/repo/epel-7/maxamillion-origin-next-epel-7.repo
-RUN yum install -y origin origin-clients
-{% endif %}
-
 RUN yum clean metadata && \
     yum install -y python-pip pcp pcp-conf pcp-testsuite \
         python-requests pyOpenSSL \
