@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.37
+Version:       0.1.38
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -386,6 +386,10 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Mon Mar 06 2017 Matt Woodson <mwoodson@redhat.com> 0.1.38-1
+- config loop tag monitoring work (mwoodson@redhat.com)
+- Rename version metrics with zabbix compatible prefix (zgalor@redhat.com)
+
 * Mon Feb 27 2017 Joel Smith <joesmith@redhat.com> 0.1.37-1
 - Disable rhsm while running hostpkg checks (joesmith@redhat.com)
 
