@@ -7,7 +7,7 @@ g_template_config_loop:
     - Config Loop
     value_type: int
 
-  - key: config_loop.config_loop.enabled
+  - key: config_loop.enabled
     applications:
     - Config Loop
     value_type: int
