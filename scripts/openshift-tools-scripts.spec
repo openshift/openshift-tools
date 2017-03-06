@@ -345,6 +345,7 @@ OpenShift Tools AWS specific scripts
 /usr/bin/ops-ec2-snapshot-ebs-volumes
 /usr/bin/ops-ec2-trim-ebs-snapshots
 /usr/bin/ops-ec2-add-snapshot-tag-to-ebs-volumes
+/usr/bin/ops-ec2-check-tags
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-cloud-gcp subpackage
@@ -362,6 +363,7 @@ OpenShift Tools GCP specific scripts
 /usr/bin/ops-gcp-add-snapshot-label-to-pd-volumes
 /usr/bin/ops-gcp-snapshot-pd-volumes
 /usr/bin/ops-gcp-trim-pd-snapshots
+/usr/bin/ops-gcp-check-tags
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-iam-tools subpackage
