@@ -16,6 +16,8 @@ RUN yum repolist --disablerepo=* && \
     yum-config-manager --disable \* > /dev/null && \
     yum-config-manager --enable rhel-7-server-rpms rhel-7-server-extras-rpms
 {% elif base_os == "centos7" %}
+# centos openshift repo
+RUN yum install -y centos-release-openshift-origin && yum clean all
 
 ADD copr-openshift-tools.repo /etc/yum.repos.d/
 {% endif %}
