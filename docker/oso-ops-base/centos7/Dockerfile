@@ -12,7 +12,8 @@ FROM centos:centos7
 # Pause indefinitely if asked to do so.
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
-
+# Temporary fix while ansible-2.2.0.0 isn't available in EPEL
+RUN yum -y install centos-release-openshift-origin && yum clean all
 ADD copr-openshift-tools.repo /etc/yum.repos.d/
 
 # creature comforts (make it feel like a normal linux environment)
