@@ -7,6 +7,11 @@ g_template_config_loop:
     - Config Loop
     value_type: int
 
+  - key: config_loop.config_loop.enabled
+    applications:
+    - Config Loop
+    value_type: int
+
   ztriggers:
   - name: "config_loop.run.exit_code not zero on {HOST.NAME}"
     expression: "{Template Config Loop:config_loop.run.exit_code.min(#2)}>0"
