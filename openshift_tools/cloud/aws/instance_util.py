@@ -14,10 +14,10 @@ class InstanceUtil(Base):
         """ Initialize the class """
         super(InstanceUtil, self).__init__(region, verbose)
 
-    def get_all_instances_as_dict(self):
+    def get_all_instances_as_dict(self, filters=None):
         """ Returns a disctionary of all instances where the key is the instance id """
         retval = {}
-        for inst in self.ec2.get_only_instances():
+        for inst in self.ec2.get_only_instances(filters=filters):
             retval[inst.id] = inst
 
         return retval
