@@ -63,11 +63,9 @@ cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-
 cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
 cp -p cloud/aws/ops-ec2-trim-ebs-snapshots.py %{buildroot}/usr/bin/ops-ec2-trim-ebs-snapshots
 cp -p cloud/aws/ops-ec2-add-snapshot-tag-to-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-add-snapshot-tag-to-ebs-volumes
-cp -p cloud/aws/ops-ec2-check-tags.py %{buildroot}/usr/bin/ops-ec2-check-tags
 cp -p cloud/gcp/ops-gcp-add-snapshot-label-to-pd-volumes.py %{buildroot}/usr/bin/ops-gcp-add-snapshot-label-to-pd-volumes
 cp -p cloud/gcp/ops-gcp-snapshot-pd-volumes.py %{buildroot}/usr/bin/ops-gcp-snapshot-pd-volumes
 cp -p cloud/gcp/ops-gcp-trim-pd-snapshots.py %{buildroot}/usr/bin/ops-gcp-trim-pd-snapshots
-cp -p cloud/gcp/ops-gcp-check-tags.py %{buildroot}/usr/bin/ops-gcp-check-tags
 cp -p monitoring/cron-send-cluster-capacity.py %{buildroot}/usr/bin/cron-send-cluster-capacity
 cp -p monitoring/cron-send-connection-count.py %{buildroot}/usr/bin/cron-send-connection-count
 cp -p monitoring/cron-send-cpu-mem-stats.py %{buildroot}/usr/bin/cron-send-cpu-mem-stats
@@ -79,6 +77,8 @@ cp -p monitoring/cron-send-os-router-status.py %{buildroot}/usr/bin/cron-send-os
 cp -p monitoring/cron-send-build-counts.py %{buildroot}/usr/bin/cron-send-build-counts
 cp -p monitoring/cron-send-stuck-builds.py %{buildroot}/usr/bin/cron-send-stuck-builds
 cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
+cp -p monitoring/ops-ec2-check-tags.py %{buildroot}/usr/bin/ops-ec2-check-tags
+cp -p monitoring/ops-gcp-check-tags.py %{buildroot}/usr/bin/ops-gcp-check-tags
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -257,6 +257,7 @@ OpenShift Tools AWS Monitoring Scripts
 
 %files monitoring-aws
 /usr/bin/cron-send-s3-metrics
+/usr/bin/ops-ec2-check-tags
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-gcp subpackage
@@ -272,7 +273,7 @@ OpenShift Tools GCP Monitoring Scripts
 
 %files monitoring-gcp
 /usr/bin/cron-send-gcs-metrics
-
+/usr/bin/ops-gcp-check-tags
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-openshift subpackage
