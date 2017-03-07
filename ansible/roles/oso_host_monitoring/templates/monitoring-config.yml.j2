@@ -487,7 +487,7 @@ host_monitoring_cron:
 - name: send GCP Tag checks (config loop) every 2 hours
   hour: "*/6"
   minute: "8"
-  job: "ops-runner -f -s 30 -n ogct.gcp.tags /usr/bin/ops-gcp-check-tags --gcp-creds-file /root/.gce/creds.json --region "{{ osohm_region }}" --clusterid {{ osohm_cluster_id }}"
+  job: "ops-runner -f -s 30 -n ogct.gcp.tags /usr/bin/ops-gcp-check-tags --gcp-creds-file /root/.gce/creds.json --region {{ osohm_region }} --clusterid {{ osohm_cluster_id }}"
 
 {# end if cloud gcp #}
 {% endif %}
