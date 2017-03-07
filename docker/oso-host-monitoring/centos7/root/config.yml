@@ -66,7 +66,9 @@
       set_fact:
         metric_sender_config="{{metric_sender_config|combine({'zagg':{'url':'http://'+svcipout.stdout}},recursive=True)}}"
 
-    when: "'zagg.ops-aws.openshift.com' not in metric_sender_config['zagg']['url']"
+    when:
+    - ("zagg-service.default.svc.cluster.local" in metric_sender_config['zagg']['url'])
+    - metric_sender_config['zagg']['active'] == True
 
   - name: Generate the metric_sender.yaml config file
     copy:
