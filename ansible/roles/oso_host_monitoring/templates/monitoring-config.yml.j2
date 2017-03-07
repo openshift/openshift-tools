@@ -63,8 +63,9 @@ metric_sender_config:
 
   heartbeat:
     templates:
-    - Template Heartbeat        # So we can send hearbeats
-    - Template OS Linux         # So we can send host related metrics
+    - Template Heartbeat           # So we can send hearbeats
+    - Template OS Linux            # So we can send host related metrics
+    - Template Config Loop Client  # So we can send config loop client related metrics
 {% if osohm_host_type == 'node' and osohm_monitor_dnsmasq|bool %}
     - Template dnsmasq          # So we can monitor dnsmasq
 {% endif %}
