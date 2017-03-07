@@ -441,7 +441,7 @@ host_monitoring_cron:
   job: ops-runner -f -s 120 -n oetes.trim.snapshots ops-ec2-trim-ebs-snapshots --aws-creds-profile snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
 
 - name: send AWS Tag checks (config loop) every 2 hours
-  hour: "*/2"
+  hour: "*/6"
   minute: "8"
   job: "ops-runner -f -s 30 -n oect.ec2.tags /usr/bin/ops-ec2-check-tags --aws-creds-profile ops_monitoring --clusterid {{ osohm_cluster_id }}"
 
@@ -485,7 +485,7 @@ host_monitoring_cron:
   job: ops-runner -f -s 120 -n ogtps.trim.snapshots ops-gcp-trim-pd-snapshots --gcp-creds-file /root/.gce/creds.json --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
 
 - name: send GCP Tag checks (config loop) every 2 hours
-  hour: "*/2"
+  hour: "*/6"
   minute: "8"
   job: "ops-runner -f -s 30 -n ogct.gcp.tags /usr/bin/ops-gcp-check-tags --gcp-creds-file /root/.gce/creds.json --region "{{ osohm_region }}" --clusterid {{ osohm_cluster_id }}"
 
