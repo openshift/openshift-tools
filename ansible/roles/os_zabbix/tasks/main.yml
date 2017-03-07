@@ -78,6 +78,10 @@
   tags:
   - multi_inventory
 
+- include_vars: template_config_loop_client.yml
+  tags:
+  - config_loop_client
+
 - name: Include Template OpenShift Cluster
   include: ../../lib_zabbix/tasks/create_template.yml
   vars:
@@ -233,6 +237,16 @@
   include: ../../lib_zabbix/tasks/create_template.yml
   vars:
     template: "{{ g_template_config_loop }}"
+    server: "{{ ozb_server }}"
+    user: "{{ ozb_user }}"
+    password: "{{ ozb_password }}"
+  tags:
+  - config_loop
+
+- name: Include Template Config Loop Client
+  include: ../../lib_zabbix/tasks/create_template.yml
+  vars:
+    template: "{{ g_template_config_loop_client }}"
     server: "{{ ozb_server }}"
     user: "{{ ozb_user }}"
     password: "{{ ozb_password }}"
