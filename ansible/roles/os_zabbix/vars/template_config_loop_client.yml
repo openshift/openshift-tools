@@ -9,7 +9,7 @@ g_template_config_loop_client:
 
   ztriggers:
   - name: "config_loop not enabled {HOST.NAME}"
-    expression: "{Template Config Loop Client:config_loop.enabled.min(#2)}=1"
+    expression: "{Template Config Loop Client:config_loop.enabled.min(#4)}=1"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_config_loop.asciidoc"
     priority: avg
 
