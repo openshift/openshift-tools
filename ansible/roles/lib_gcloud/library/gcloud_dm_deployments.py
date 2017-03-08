@@ -40,9 +40,10 @@ class GcloudCLIError(Exception):
 # pylint: disable=too-few-public-methods
 class GcloudCLI(object):
     ''' Class to wrap the command line tools '''
-    def __init__(self, credentials=None, verbose=False):
-        ''' Constructor for OpenshiftCLI '''
+    def __init__(self, credentials=None, project=None, verbose=False):
+        ''' Constructor for GcloudCLI '''
         self.scope = None
+        self.project = project
 
         if not credentials:
             self.credentials = GoogleCredentials.get_application_default()
@@ -184,15 +185,21 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
-    def _list_metadata(self):
-        '''create metadata'''
-        cmd = ['compute', 'project-info', 'describe']
+    def _list_metadata(self, resource_type, name=None, zone=None):
+        ''' list metadata'''
+        cmd = ['compute', resource_type, 'describe']
+
+        if name:
+            cmd.extend([name, '--zone', zone])
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
-    def _delete_metadata(self, keys, remove_all=False):
+    def _delete_metadata(self, resource_type, keys, remove_all=False, name=None, zone=None):
         '''create metadata'''
-        cmd = ['compute', 'project-info', 'remove-metadata']
+        cmd = ['compute', resource_type, 'remove-metadata']
+
+        if name:
+            cmd.extend([name, '--zone', zone])
 
         if remove_all:
             cmd.append('--all')
@@ -205,9 +212,12 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
-    def _create_metadata(self, metadata=None, metadata_from_file=None):
+    def _create_metadata(self, resource_type, metadata=None, metadata_from_file=None, name=None, zone=None):
         '''create metadata'''
-        cmd = ['compute', 'project-info', 'add-metadata']
+        cmd = ['compute', resource_type, 'add-metadata']
+
+        if name:
+            cmd.extend([name, '--zone', zone])
 
         data = None
 
@@ -375,6 +385,9 @@ class GcloudCLI(object):
     def gcloud_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for gcloud '''
         cmds = ['/usr/bin/gcloud']
+
+        if self.project:
+            cmds.extend(['--project', self.project])
 
         cmds.extend(cmd)
 

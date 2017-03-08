@@ -1,0 +1,53 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: localhost
+  gather_facts: no
+
+  tasks:
+  - name: list gcloud_compute_label
+    gcloud_compute_label:
+      name: mwoodson-master-av4pu
+      state: list
+      project: optestgcp
+
+  - name: create gcloud_compute_label
+    gcloud_compute_label:
+      name: mwoodson-master-av4pu
+      state: present
+      zone: us-east1-c
+      project: optestgcp
+      labels:
+        foo: bar
+        fooz: baz
+
+  - name: create gcloud_compute_label (idempotentcy test)
+    gcloud_compute_label:
+      name: mwoodson-master-av4pu
+      state: absent
+      project: optestgcp
+      labels:
+        fooz: baz
+
+  - name: create gcloud_compute_label (idempotentcy test)
+    gcloud_compute_label:
+      name: mwoodson-master-av4pu
+      state: absent
+      project: optestgcp
+      labels:
+        fooz: baz
+
+  - name: create gcloud_compute_label (idempotentcy test)
+    gcloud_compute_label:
+      name: mwoodson-master-av4pu
+      state: present
+      project: optestgcp
+      labels:
+        foo: bar
+
+  - name: create gcloud_compute_label (idempotentcy test)
+    gcloud_compute_label:
+      name: mwoodson-master-av4pu
+      state: present
+      project: optestgcp
+      labels:
+        fooz: baz
