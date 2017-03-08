@@ -30,7 +30,7 @@ import copy
 from apiclient.discovery import build
 # pylint: disable=import-error
 from oauth2client.client import GoogleCredentials
-
+from ansible.module_utils.basic import AnsibleModule
 
 
 class GcloudCLIError(Exception):
@@ -194,6 +194,7 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
+    # pylint: disable=too-many-arguments
     def _delete_metadata(self, resource_type, keys, remove_all=False, name=None, zone=None):
         '''create metadata'''
         cmd = ['compute', resource_type, 'remove-metadata']
@@ -212,6 +213,7 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
+    # pylint: disable=too-many-arguments
     def _create_metadata(self, resource_type, metadata=None, metadata_from_file=None, name=None, zone=None):
         '''create metadata'''
         cmd = ['compute', resource_type, 'add-metadata']
@@ -525,7 +527,7 @@ class GcloudComputeLabel(GcloudCLI):
     def get_labels(self):
         ''' get a list of labels '''
 
-        results =  self._list_metadata('instances', self.name, self.zone)
+        results = self._list_metadata('instances', self.name, self.zone)
         if results['returncode'] == 0:
             self.existing_metadata = yaml.load(results['results'])
             self.gcp_labels_to_dict(self.existing_metadata['metadata']['items'])
@@ -551,7 +553,7 @@ class GcloudComputeLabel(GcloudCLI):
                 label_keys_to_be_deleted.append(i)
 
         if label_keys_to_be_deleted:
-            results =self._delete_metadata('instances', label_keys_to_be_deleted, False, self.name, self.zone)
+            results = self._delete_metadata('instances', label_keys_to_be_deleted, False, self.name, self.zone)
             self.get_labels()
             results['instance_labels'] = self.existing_labels
 
@@ -578,6 +580,67 @@ class GcloudComputeLabel(GcloudCLI):
             return results
         else:
             return {'no_creates_needed' : True, 'instance_labels' : self.existing_labels}
+
+    # pylint: disable=too-many-return-statements
+    @staticmethod
+    def run_ansible(params, check_mode):
+        ''' run the ansible code '''
+
+        compute_labels = GcloudComputeLabel(params['project'],
+                                            params['zone'],
+                                            params['labels'],
+                                            params['name'],
+                                           )
+
+        state = params['state']
+        api_rval = compute_labels.get_labels()
+
+        #####
+        # Get
+        #####
+        if state == 'list':
+            if api_rval['returncode'] != 0:
+                return {'failed': True, 'msg' : api_rval, 'state' : "list"}
+
+            return {'changed' : False, 'results' : api_rval, 'state' : 'list'}
+
+        ########
+        # Delete
+        ########
+        if state == 'absent':
+
+            api_rval = compute_labels.delete_labels()
+
+            if check_mode:
+                return {'changed': False, 'msg': 'Would have performed a delete.'}
+
+            if 'returncode' in api_rval and api_rval['returncode'] != 0:
+                return {'failed': True, 'msg': api_rval, 'state': "absent"}
+
+            if "no_deletes_needed" in api_rval:
+                return {'changed': False, 'state': "absent", 'msg': api_rval}
+
+            return {'changed': True, 'results': api_rval, 'state': "absent"}
+
+        ########
+        # Create
+        ########
+        if state == 'present':
+
+            api_rval = compute_labels.create_labels()
+
+            if check_mode:
+                return {'changed': False, 'msg': 'Would have performed a create.'}
+
+            if 'returncode' in api_rval and api_rval['returncode'] != 0:
+                return {'failed': True, 'msg': api_rval, 'state': "present"}
+
+            if "no_creates_needed" in api_rval:
+                return {'changed': False, 'state': "present", 'msg': api_rval}
+
+            return {'changed': True, 'results': api_rval, 'state': "present"}
+
+        return {'failed': True, 'changed': False, 'results': 'Unknown state passed. %s' % state, 'state' : "unknown"}
 # vim: expandtab:tabstop=4:shiftwidth=4
 
 #pylint: disable=too-many-branches
@@ -596,74 +659,12 @@ def main():
         supports_check_mode=True,
     )
 
-    compute_labels = GcloudComputeLabel(module.params['project'],
-                                        module.params['zone'],
-                                        module.params['labels'],
-                                        module.params['name'],
-                                       )
+    results = GcloudComputeLabel.run_ansible(module.params, module.check_mode)
 
-    state = module.params['state']
+    if 'failed' in results:
+        module.fail_json(**results)
 
-    api_rval = compute_labels.get_labels()
+    module.exit_json(**results)
 
-    #####
-    # Get
-    #####
-    if state == 'list':
-        if api_rval['returncode'] != 0:
-            module.fail_json(msg=api_rval, state="list")
-
-        module.exit_json(changed=False, results=api_rval, state="list")
-
-    ########
-    # Delete
-    ########
-    if state == 'absent':
-
-       api_rval = compute_labels.delete_labels()
-
-       if module.check_mode:
-           module.exit_json(changed=False, msg='Would have performed a delete.')
-
-       if 'returncode' in api_rval and api_rval['returncode'] != 0:
-            module.fail_json(msg=api_rval, state="absent")
-
-       if "no_deletes_needed" in api_rval:
-           module.exit_json(changed=False, state="absent", msg=api_rval)
-
-       module.exit_json(changed=True, results=api_rval, state="absent")
-
-    ########
-    # Create
-    ########
-    if state == 'present':
-
-       api_rval = compute_labels.create_labels()
-
-       if module.check_mode:
-           module.exit_json(changed=False, msg='Would have performed a create.')
-
-       if 'returncode' in api_rval and api_rval['returncode'] != 0:
-            module.fail_json(msg=api_rval, state="present")
-
-       if "no_creates_needed" in api_rval:
-           module.exit_json(changed=False, state="present", msg=api_rval)
-
-
-       module.exit_json(changed=True, results=api_rval, state="present")
-
-    module.exit_json(failed=True,
-                     changed=False,
-                     results='Unknown state passed. %s' % state,
-                     state="unknown")
-
-#if __name__ == '__main__':
-#    gcloud = GcloudComputeImage('rhel-7-base-2016-06-10')
-#    print gcloud.list_images()
-
-
-# pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
-# import module snippets.  This are required
-from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    main()

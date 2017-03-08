@@ -30,7 +30,7 @@ import copy
 from apiclient.discovery import build
 # pylint: disable=import-error
 from oauth2client.client import GoogleCredentials
-
+from ansible.module_utils.basic import AnsibleModule
 
 
 class GcloudCLIError(Exception):
@@ -194,6 +194,7 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
+    # pylint: disable=too-many-arguments
     def _delete_metadata(self, resource_type, keys, remove_all=False, name=None, zone=None):
         '''create metadata'''
         cmd = ['compute', resource_type, 'remove-metadata']
@@ -212,6 +213,7 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
+    # pylint: disable=too-many-arguments
     def _create_metadata(self, resource_type, metadata=None, metadata_from_file=None, name=None, zone=None):
         '''create metadata'''
         cmd = ['compute', resource_type, 'add-metadata']

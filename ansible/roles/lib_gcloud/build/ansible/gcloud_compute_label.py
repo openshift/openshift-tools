@@ -17,74 +17,12 @@ def main():
         supports_check_mode=True,
     )
 
-    compute_labels = GcloudComputeLabel(module.params['project'],
-                                        module.params['zone'],
-                                        module.params['labels'],
-                                        module.params['name'],
-                                       )
+    results = GcloudComputeLabel.run_ansible(module.params, module.check_mode)
 
-    state = module.params['state']
+    if 'failed' in results:
+        module.fail_json(**results)
 
-    api_rval = compute_labels.get_labels()
+    module.exit_json(**results)
 
-    #####
-    # Get
-    #####
-    if state == 'list':
-        if api_rval['returncode'] != 0:
-            module.fail_json(msg=api_rval, state="list")
-
-        module.exit_json(changed=False, results=api_rval, state="list")
-
-    ########
-    # Delete
-    ########
-    if state == 'absent':
-
-       api_rval = compute_labels.delete_labels()
-
-       if module.check_mode:
-           module.exit_json(changed=False, msg='Would have performed a delete.')
-
-       if 'returncode' in api_rval and api_rval['returncode'] != 0:
-            module.fail_json(msg=api_rval, state="absent")
-
-       if "no_deletes_needed" in api_rval:
-           module.exit_json(changed=False, state="absent", msg=api_rval)
-
-       module.exit_json(changed=True, results=api_rval, state="absent")
-
-    ########
-    # Create
-    ########
-    if state == 'present':
-
-       api_rval = compute_labels.create_labels()
-
-       if module.check_mode:
-           module.exit_json(changed=False, msg='Would have performed a create.')
-
-       if 'returncode' in api_rval and api_rval['returncode'] != 0:
-            module.fail_json(msg=api_rval, state="present")
-
-       if "no_creates_needed" in api_rval:
-           module.exit_json(changed=False, state="present", msg=api_rval)
-
-
-       module.exit_json(changed=True, results=api_rval, state="present")
-
-    module.exit_json(failed=True,
-                     changed=False,
-                     results='Unknown state passed. %s' % state,
-                     state="unknown")
-
-#if __name__ == '__main__':
-#    gcloud = GcloudComputeImage('rhel-7-base-2016-06-10')
-#    print gcloud.list_images()
-
-
-# pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
-# import module snippets.  This are required
-from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    main()

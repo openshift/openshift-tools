@@ -6,13 +6,14 @@
   tasks:
   - name: list gcloud_compute_label
     gcloud_compute_label:
-      name: mwoodson-master-av4pu
+      name: mwoodson-master-2pcml
       state: list
+      zone: us-east1-c
       project: optestgcp
 
   - name: create gcloud_compute_label
     gcloud_compute_label:
-      name: mwoodson-master-av4pu
+      name: mwoodson-master-2pcml
       state: present
       zone: us-east1-c
       project: optestgcp
@@ -22,32 +23,36 @@
 
   - name: create gcloud_compute_label (idempotentcy test)
     gcloud_compute_label:
-      name: mwoodson-master-av4pu
+      name: mwoodson-master-2pcml
       state: absent
+      project: optestgcp
+      zone: us-east1-c
+      labels:
+        fooz: baz
+
+  - name: create gcloud_compute_label (idempotentcy test)
+    gcloud_compute_label:
+      name: mwoodson-master-2pcml
+      state: absent
+      zone: us-east1-c
       project: optestgcp
       labels:
         fooz: baz
 
   - name: create gcloud_compute_label (idempotentcy test)
     gcloud_compute_label:
-      name: mwoodson-master-av4pu
-      state: absent
-      project: optestgcp
-      labels:
-        fooz: baz
-
-  - name: create gcloud_compute_label (idempotentcy test)
-    gcloud_compute_label:
-      name: mwoodson-master-av4pu
+      name: mwoodson-master-2pcml
       state: present
       project: optestgcp
+      zone: us-east1-c
       labels:
         foo: bar
 
   - name: create gcloud_compute_label (idempotentcy test)
     gcloud_compute_label:
-      name: mwoodson-master-av4pu
+      name: mwoodson-master-2pcml
       state: present
       project: optestgcp
+      zone: us-east1-c
       labels:
         fooz: baz
