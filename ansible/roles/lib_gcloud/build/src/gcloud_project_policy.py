@@ -13,8 +13,7 @@ class GcloudProjectPolicy(GcloudCLI):
                  member_type='serviceAccount',
                  verbose=False):
         ''' Constructor for gcloud resource '''
-        super(GcloudProjectPolicy, self).__init__()
-        self._project = project
+        super(GcloudProjectPolicy, self).__init__(project=project)
         self._role = role
         self._member = '%s:%s' % (member_type, member)
         self._exist_policy = None
@@ -30,11 +29,6 @@ class GcloudProjectPolicy(GcloudCLI):
             self._exist_policy = results['results']
 
         return self._exist_policy
-
-    @property
-    def project(self):
-        '''property for project'''
-        return self._project
 
     @property
     def member(self):
