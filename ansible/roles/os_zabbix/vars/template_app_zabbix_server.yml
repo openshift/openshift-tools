@@ -246,6 +246,13 @@ g_template_app_zabbix_server:
      zabbix_type: internal
      delta: 1 # speed per second
 
+   - key: zabbix.software.version.disparity
+     applications:
+     - Zabbix server
+     description: "How many versions behind is the current running version of Zabbix"
+     value_type: int
+     zabbix_type: trapper
+
    zhttptests:
    - name: check_v2_zabbix_web
      interval: 60
@@ -432,3 +439,9 @@ g_template_app_zabbix_server:
      name: Less than 25% free in the trends cache
      priority: avg
      url: https://github.com/openshift/ops-sop/blob/master/Alerts/check_cache.asciidoc
+
+   - name: New version of Zabbix is available
+     description: There is a new version of Zabbix available. This Zabbix server should be updated.
+     expression: "{Template App Zabbix Server:zabbix.software.version.disparity.last(0)}>0"
+     priority: info
+     url: https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_zabbix_version.asciidoc
