@@ -33,10 +33,10 @@ class GcloudCLIError(Exception):
 # pylint: disable=too-few-public-methods
 class GcloudCLI(object):
     ''' Class to wrap the command line tools '''
-    def __init__(self, credentials=None, project=None, verbose=False):
+    def __init__(self, credentials=None, project_name=None, verbose=False):
         ''' Constructor for GcloudCLI '''
         self.scope = None
-        self.project = project
+        self.project_name = project_name
 
         if not credentials:
             self.credentials = GoogleCredentials.get_application_default()
@@ -381,8 +381,8 @@ class GcloudCLI(object):
         '''Base command for gcloud '''
         cmds = ['/usr/bin/gcloud']
 
-        if self.project:
-            cmds.extend(['--project', self.project])
+        if self.project_name:
+            cmds.extend(['--project', self.project_name])
 
         cmds.extend(cmd)
 
