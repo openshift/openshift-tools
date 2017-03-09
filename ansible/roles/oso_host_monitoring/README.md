@@ -71,6 +71,10 @@ Is this a primary master in a HA configuration
 
 Should dnsmasq be monitored on the node. `True` or `False`
 
+### osohm_monitor_zabbix_infra
+
+Is Zabbix running on the cluster and should it be monitored? `True` or `False`
+
 ### osohm_pruning:
 
 A dictionary of the configuration for the pruning cron job. It has the following keys
@@ -118,7 +122,7 @@ Name of container with the Zabbix client
 
 ### osohm_zagg_verify_ssl
 
-Sould the zagg client verify SSL connections. `True` or `False`
+Should the zagg client verify SSL connections. `True` or `False`
 
 ### osohm_zagg_web_url
 
