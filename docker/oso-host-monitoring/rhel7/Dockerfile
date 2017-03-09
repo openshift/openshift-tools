@@ -71,6 +71,7 @@ RUN yum clean metadata && \
         rpm-sign \
         createrepo \
         python2-boto3 \
+        python-lxml \
         docker-python && \
     yum install -y gcloud --disablerepo="oso-rhui-rhel-server-releases-optional" && \
     yum clean all
