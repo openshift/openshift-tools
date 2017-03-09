@@ -398,6 +398,13 @@ host_monitoring_cron:
   job: "ops-runner -f -s 30 -n cosp.openshift.logging.check cron-send-logging-checks"
 {% endif %}
 
+{% if osohm_monitor_zabbix_infra | default(False) | bool %}
+- name: "Check Zabbix repo to see if newer versions are available"
+  minute: "1"
+  hour: "8"
+  job: ops-runner -f -n cszto.zabbix.too.old cron-send-zabbix-too-old
+{% endif %}
+
 {% if osohm_cloud == 'aws' %}
 - name: send S3 bucket metrics every day
   hour: "3"
