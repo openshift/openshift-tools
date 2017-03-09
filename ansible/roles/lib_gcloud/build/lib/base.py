@@ -33,10 +33,10 @@ class GcloudCLIError(Exception):
 # pylint: disable=too-few-public-methods
 class GcloudCLI(object):
     ''' Class to wrap the command line tools '''
-    def __init__(self, credentials=None, project_name=None, verbose=False):
+    def __init__(self, credentials=None, project=None, verbose=False):
         ''' Constructor for GcloudCLI '''
         self.scope = None
-        self.project_name = project_name
+        self._project = project
 
         if not credentials:
             self.credentials = GoogleCredentials.get_application_default()
@@ -50,6 +50,11 @@ class GcloudCLI(object):
         self.scope = build('compute', 'beta', credentials=self.credentials)
 
         self.verbose = verbose
+
+    @property
+    def project(self):
+        '''property for project'''
+        return self._project
 
     def _create_image(self, image_name, image_info):
         '''create an image name'''
@@ -183,7 +188,10 @@ class GcloudCLI(object):
         cmd = ['compute', resource_type, 'describe']
 
         if name:
-            cmd.extend([name, '--zone', zone])
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
@@ -193,7 +201,10 @@ class GcloudCLI(object):
         cmd = ['compute', resource_type, 'remove-metadata']
 
         if name:
-            cmd.extend([name, '--zone', zone])
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
 
         if remove_all:
             cmd.append('--all')
@@ -212,7 +223,10 @@ class GcloudCLI(object):
         cmd = ['compute', resource_type, 'add-metadata']
 
         if name:
-            cmd.extend([name, '--zone', zone])
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
 
         data = None
 
@@ -381,8 +395,8 @@ class GcloudCLI(object):
         '''Base command for gcloud '''
         cmds = ['/usr/bin/gcloud']
 
-        if self.project_name:
-            cmds.extend(['--project', self.project_name])
+        if self.project:
+            cmds.extend(['--project', self.project])
 
         cmds.extend(cmd)
 

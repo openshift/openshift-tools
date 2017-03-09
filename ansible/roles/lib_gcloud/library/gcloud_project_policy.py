@@ -40,10 +40,10 @@ class GcloudCLIError(Exception):
 # pylint: disable=too-few-public-methods
 class GcloudCLI(object):
     ''' Class to wrap the command line tools '''
-    def __init__(self, credentials=None, project_name=None, verbose=False):
+    def __init__(self, credentials=None, project=None, verbose=False):
         ''' Constructor for GcloudCLI '''
         self.scope = None
-        self.project_name = project_name
+        self._project = project
 
         if not credentials:
             self.credentials = GoogleCredentials.get_application_default()
@@ -57,6 +57,11 @@ class GcloudCLI(object):
         self.scope = build('compute', 'beta', credentials=self.credentials)
 
         self.verbose = verbose
+
+    @property
+    def project(self):
+        '''property for project'''
+        return self._project
 
     def _create_image(self, image_name, image_info):
         '''create an image name'''
@@ -388,8 +393,8 @@ class GcloudCLI(object):
         '''Base command for gcloud '''
         cmds = ['/usr/bin/gcloud']
 
-        if self.project_name:
-            cmds.extend(['--project', self.project_name])
+        if self.project:
+            cmds.extend(['--project', self.project])
 
         cmds.extend(cmd)
 
@@ -506,8 +511,7 @@ class GcloudProjectPolicy(GcloudCLI):
                  member_type='serviceAccount',
                  verbose=False):
         ''' Constructor for gcloud resource '''
-        super(GcloudProjectPolicy, self).__init__()
-        self._project = project
+        super(GcloudProjectPolicy, self).__init__(project=project)
         self._role = role
         self._member = '%s:%s' % (member_type, member)
         self._exist_policy = None
@@ -523,11 +527,6 @@ class GcloudProjectPolicy(GcloudCLI):
             self._exist_policy = results['results']
 
         return self._exist_policy
-
-    @property
-    def project(self):
-        '''property for project'''
-        return self._project
 
     @property
     def member(self):
