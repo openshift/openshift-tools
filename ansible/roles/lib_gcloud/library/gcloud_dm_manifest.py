@@ -30,7 +30,7 @@ import copy
 from apiclient.discovery import build
 # pylint: disable=import-error
 from oauth2client.client import GoogleCredentials
-
+from ansible.module_utils.basic import AnsibleModule
 
 
 class GcloudCLIError(Exception):
@@ -40,9 +40,10 @@ class GcloudCLIError(Exception):
 # pylint: disable=too-few-public-methods
 class GcloudCLI(object):
     ''' Class to wrap the command line tools '''
-    def __init__(self, credentials=None, verbose=False):
-        ''' Constructor for OpenshiftCLI '''
+    def __init__(self, credentials=None, project=None, verbose=False):
+        ''' Constructor for GcloudCLI '''
         self.scope = None
+        self._project = project
 
         if not credentials:
             self.credentials = GoogleCredentials.get_application_default()
@@ -56,6 +57,11 @@ class GcloudCLI(object):
         self.scope = build('compute', 'beta', credentials=self.credentials)
 
         self.verbose = verbose
+
+    @property
+    def project(self):
+        '''property for project'''
+        return self._project
 
     def _create_image(self, image_name, image_info):
         '''create an image name'''
@@ -184,15 +190,28 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
-    def _list_metadata(self):
-        '''create metadata'''
-        cmd = ['compute', 'project-info', 'describe']
+    def _list_metadata(self, resource_type, name=None, zone=None):
+        ''' list metadata'''
+        cmd = ['compute', resource_type, 'describe']
+
+        if name:
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
-    def _delete_metadata(self, keys, remove_all=False):
+    # pylint: disable=too-many-arguments
+    def _delete_metadata(self, resource_type, keys, remove_all=False, name=None, zone=None):
         '''create metadata'''
-        cmd = ['compute', 'project-info', 'remove-metadata']
+        cmd = ['compute', resource_type, 'remove-metadata']
+
+        if name:
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
 
         if remove_all:
             cmd.append('--all')
@@ -205,9 +224,16 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
-    def _create_metadata(self, metadata=None, metadata_from_file=None):
+    # pylint: disable=too-many-arguments
+    def _create_metadata(self, resource_type, metadata=None, metadata_from_file=None, name=None, zone=None):
         '''create metadata'''
-        cmd = ['compute', 'project-info', 'add-metadata']
+        cmd = ['compute', resource_type, 'add-metadata']
+
+        if name:
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
 
         data = None
 
@@ -375,6 +401,9 @@ class GcloudCLI(object):
     def gcloud_cmd(self, cmd, output=False, output_type='json'):
         '''Base command for gcloud '''
         cmds = ['/usr/bin/gcloud']
+
+        if self.project:
+            cmds.extend(['--project', self.project])
 
         cmds.extend(cmd)
 
