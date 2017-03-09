@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.40
+Version:       0.1.41
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -391,6 +391,10 @@ OpenShift Tools IAM specific scripts
 %{python_sitelib}/openshift_tools/saml_aws_creds*
 
 %changelog
+* Thu Mar 09 2017 Joel Smith <joesmith@redhat.com> 0.1.41-1
+- Add check to see if Zabbix is running the most recent LTS version
+  (joesmith@redhat.com)
+
 * Mon Mar 06 2017 Matt Woodson <mwoodson@redhat.com> 0.1.40-1
 - moved config scripts around, re-ordered rpm spec file (mwoodson@redhat.com)
 - fixed spec file for config tag checks (mwoodson@redhat.com)
