@@ -42,7 +42,7 @@ class GcloudComputeProjectInfo(GcloudCLI):
 
     def list_metadata(self):
         '''return metatadata'''
-        results = self._list_metadata()
+        results = self._list_metadata('project-info')
         if results['returncode'] == 0:
             results['results'] = yaml.load(results['results'])
 
@@ -108,7 +108,7 @@ class GcloudComputeProjectInfo(GcloudCLI):
             # create a file and pass it to create
             ssh_strings = ["%s:%s" % (user, pub_key) for user, pub_key in self.metadata['sshKeys'].items()]
             ssh_keys = {'sshKeys': Utils.create_file('ssh_keys', '\n'.join(ssh_strings), 'raw')}
-            results = self._create_metadata(self.metadata, ssh_keys)
+            results = self._create_metadata('project-info', self.metadata, ssh_keys)
 
             # remove them and continue
             del self.metadata['sshKeys']
@@ -117,7 +117,7 @@ class GcloudComputeProjectInfo(GcloudCLI):
                 return results
 
 
-        new_results = self._create_metadata(self.metadata, self.metadata_from_file)
+        new_results = self._create_metadata('project-info', self.metadata, self.metadata_from_file)
         if results:
             return [results, new_results]
 

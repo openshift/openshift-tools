@@ -13,8 +13,7 @@ class GcloudComputeDisk(GcloudCLI):
                  credentials=None,
                  verbose=False):
         ''' Constructor for gcloud resource '''
-        super(GcloudComputeDisk, self).__init__(credentials)
-        self.project = project
+        super(GcloudComputeDisk, self).__init__(credentials, project)
         self.zone = zone
         self.disk_info = disk_info
         self.verbose = verbose
