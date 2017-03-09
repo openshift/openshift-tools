@@ -195,7 +195,10 @@ class GcloudCLI(object):
         cmd = ['compute', resource_type, 'describe']
 
         if name:
-            cmd.extend([name, '--zone', zone])
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
@@ -205,7 +208,10 @@ class GcloudCLI(object):
         cmd = ['compute', resource_type, 'remove-metadata']
 
         if name:
-            cmd.extend([name, '--zone', zone])
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
 
         if remove_all:
             cmd.append('--all')
@@ -224,7 +230,10 @@ class GcloudCLI(object):
         cmd = ['compute', resource_type, 'add-metadata']
 
         if name:
-            cmd.extend([name, '--zone', zone])
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
 
         data = None
 
@@ -571,11 +580,11 @@ class GcloudComputeLabel(GcloudCLI):
 
         labels_to_create = {}
         for i in self.labels.keys():
-            if i not in self.existing_labels:
-                labels_to_create[i] = self.labels[i]
-            else:
+            if i in self.existing_labels:
                 if self.labels[i] != self.existing_labels[i]:
                     labels_to_create[i] = self.labels[i]
+            else:
+                labels_to_create[i] = self.labels[i]
 
         if labels_to_create:
             results = self._create_metadata('instances', labels_to_create, name=self.name, zone=self.zone)
@@ -605,9 +614,9 @@ class GcloudComputeLabel(GcloudCLI):
         #####
         if state == 'list':
             if api_rval['returncode'] != 0:
-                return {'failed': True, 'msg' : api_rval, 'state' : "list"}
+                return {'failed': True, 'msg' : api_rval, 'state' : state}
 
-            return {'changed' : False, 'results' : api_rval, 'state' : 'list'}
+            return {'changed' : False, 'results' : api_rval, 'state' : state}
 
         ########
         # Delete
@@ -620,12 +629,12 @@ class GcloudComputeLabel(GcloudCLI):
                 return {'changed': False, 'msg': 'Would have performed a delete.'}
 
             if 'returncode' in api_rval and api_rval['returncode'] != 0:
-                return {'failed': True, 'msg': api_rval, 'state': "absent"}
+                return {'failed': True, 'msg': api_rval, 'state': state}
 
             if "no_deletes_needed" in api_rval:
-                return {'changed': False, 'state': "absent", 'msg': api_rval}
+                return {'changed': False, 'state': "absent", 'resultes': api_rval}
 
-            return {'changed': True, 'results': api_rval, 'state': "absent"}
+            return {'changed': True, 'results': api_rval, 'state': state}
 
         ########
         # Create
@@ -638,14 +647,14 @@ class GcloudComputeLabel(GcloudCLI):
                 return {'changed': False, 'msg': 'Would have performed a create.'}
 
             if 'returncode' in api_rval and api_rval['returncode'] != 0:
-                return {'failed': True, 'msg': api_rval, 'state': "present"}
+                return {'failed': True, 'msg': api_rval, 'state': state}
 
             if "no_creates_needed" in api_rval:
-                return {'changed': False, 'state': "present", 'msg': api_rval}
+                return {'changed': False, 'state': "present", 'results': api_rval}
 
-            return {'changed': True, 'results': api_rval, 'state': "present"}
+            return {'changed': True, 'results': api_rval, 'state': state}
 
-        return {'failed': True, 'changed': False, 'results': 'Unknown state passed. %s' % state, 'state' : "unknown"}
+        return {'failed': True, 'changed': False, 'msg': 'Unknown state passed. %s' % state, 'state' : "unknown"}
 # vim: expandtab:tabstop=4:shiftwidth=4
 
 #pylint: disable=too-many-branches

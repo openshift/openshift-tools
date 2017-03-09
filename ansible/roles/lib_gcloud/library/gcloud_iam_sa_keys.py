@@ -195,7 +195,10 @@ class GcloudCLI(object):
         cmd = ['compute', resource_type, 'describe']
 
         if name:
-            cmd.extend([name, '--zone', zone])
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
@@ -205,7 +208,10 @@ class GcloudCLI(object):
         cmd = ['compute', resource_type, 'remove-metadata']
 
         if name:
-            cmd.extend([name, '--zone', zone])
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
 
         if remove_all:
             cmd.append('--all')
@@ -224,7 +230,10 @@ class GcloudCLI(object):
         cmd = ['compute', resource_type, 'add-metadata']
 
         if name:
-            cmd.extend([name, '--zone', zone])
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
 
         data = None
 
