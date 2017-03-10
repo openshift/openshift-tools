@@ -78,6 +78,15 @@
     - "/usr/share/ansible/openshift-ansible/roles/openshift_hosted_templates/files/v{{ kube_version }}/enterprise/metrics-deployer.yaml"
   register: templateout
 
+- name: Add the "view" role to system:serviceaccount:openshift-infra:hawkular
+  oadm_policy_user:
+    namespace: openshift-infra
+    user: system:serviceaccount:openshift-infra:hawkular
+    resource_kind: role
+    resource_name: view
+  register: policyout
+- debug: var=policyout
+
 - name: create application using metrics deployer template
   oc_process:
     namespace: openshift-infra
@@ -109,15 +118,6 @@
     msg: metrics deployer failed to complete setup
   when: podout.results.results[0]['items'][0].status.phase != 'Succeeded'
   run_once: true
-
-- name: Add the "view" role to system:serviceaccount:openshift-infra:hawkular
-  oadm_policy_user:
-    namespace: openshift-infra
-    user: system:serviceaccount:openshift-infra:hawkular
-    resource_kind: role
-    resource_name: view
-  register: policyout
-- debug: var=policyout
 
 - name: scale down cassandra to 0
   oc_scale:
