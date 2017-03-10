@@ -1,0 +1,54 @@
+---
+ostd_rpm: False
+ostd_master_config_edits: False
+ostd_node_selector: type=infra
+ostd_project_display_name: "{{ ostd_project_name }}"AAAA:q
+
+- name: SYNC_PERIOD
+  description: controller sync period
+  value: "1m"
+
+- name: MAX_RETRY_INTERVAL
+  description: maximum interval between retries
+  value: "24h"
+
+- name: RETRY_INTERVAL_UNIT
+  description: Unit for retry interval, grows exponentially per failure
+  value: "1m"
+
+- name: MAXIMUM_CAPACITY
+  description: maximum capacity for any provisioned volume
+  value: "1Gi"
+
+- name: MAXIMUM_CLUSTER_CAPACITY
+  description: Maximum provisioning capacity for the cluster
+  value: "-1Gi"
+
+- name: MAXIMUM_PROJECT_CAPACITY
+  description: The maximum provisioning capacity per project
+  value: "-1Gi"
+
+- name: TEST_MODE_ENABLED
+  description: Enable a mock plugin that allows integration and local testing
+  value: "false"
+
+- name: TEST_FAILURE_RATE
+  description: The percent of times a provisioning call should fail.
+  value: "20"
+
+- name: TEST_PROVISIONING_TIME
+  description: The elapsed time for a provisioning call to mimic network latency.
+  value: "2s"
+
+- name: LOG_LEVEL
+  description: Logging level.
+  value: "0"
+  value: "20"
+
+- name: TEST_PROVISIONING_TIME
+  description: The elapsed time for a provisioning call to mimic network latency.
+  value: "2s"
+
+- name: LOG_LEVEL
+  description: Logging level.
+  value: "0"
