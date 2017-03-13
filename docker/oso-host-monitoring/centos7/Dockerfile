@@ -82,16 +82,7 @@ RUN yum install -y patch && yum clean all && cd /usr/lib/python2.7/site-packages
 RUN cd /etc/yum.repos.d && curl -O https://copr.fedorainfracloud.org/coprs/g/Hawkular/python-hawkular-client/repo/epel-7/group_Hawkular-python-hawkular-client-epel-7.repo
 
 # make mount points for security update count check, and make a circular symlink because yum is dumb about its root
-RUN mkdir -p /host/etc/openshift_tools \
-             /host/etc/rpm \
-             /host/etc/pki/entitlement \
-             /host/etc/pki/rpm-gpg \
-             /host/etc/rhsm/ca \
-             /host/etc/yum \
-             /host/etc/yum.repos.d \
-             /host/var/lib/rpm \
-             /host/var/lib/yum \
-             /host/var/cache/yum \
+RUN mkdir -p /host \
              /var/local/hostpkg/etc/rhsm/ca \
              /var/local/hostpkg/etc/rpm \
              /var/local/hostpkg/etc/pki/entitlement \
