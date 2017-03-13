@@ -80,16 +80,7 @@ ADD urllib3-connectionpool-patch /root/
 RUN yum install -y patch && yum clean all && cd /usr/lib/python2.7/site-packages/ && patch -p1 < /root/urllib3-connectionpool-patch
 
 # make mount points for security update count check, and make a circular symlink because yum is dumb about its root
-RUN mkdir -p /host/etc/openshift_tools \
-             /host/etc/rpm \
-             /host/etc/pki/entitlement \
-             /host/etc/pki/rpm-gpg \
-             /host/etc/rhsm/ca \
-             /host/etc/yum \
-             /host/etc/yum.repos.d \
-             /host/var/lib/rpm \
-             /host/var/lib/yum \
-             /host/var/cache/yum \
+RUN mkdir -p /host \
              /var/local/hostpkg/etc/rhsm/ca \
              /var/local/hostpkg/etc/rpm \
              /var/local/hostpkg/etc/pki/entitlement \
