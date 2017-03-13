@@ -22,7 +22,7 @@
   yedit:
     src: "{{ ostd_template_file }}"
     key: "{{ item.key }}"
-    value: "{{item.value }}"
+    value: "{{ item.value }}"
   when: ostd_template_edits
   with_items: "{{ ostd_template_edits }}"
 
