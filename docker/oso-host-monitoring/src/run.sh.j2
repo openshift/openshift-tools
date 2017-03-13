@@ -23,16 +23,7 @@ sudo docker run --rm=true -it --name oso-{{ base_os }}-host-monitoring \
            -v /var/lib/docker:/var/lib/docker:ro            \
            -v /var/lib/docker/volumes/shared:/shared:rw     \
            -v /var/run/docker.sock:/var/run/docker.sock     \
-           -v /var/lib/rpm:/host/var/lib/rpm:ro             \
-           -v /etc/rhsm/ca:/host/etc/rhsm/ca:ro             \
-           -v /etc/openshift_tools:/host/etc/openshift_tools:ro \
-           -v /etc/pki/entitlement:/host/etc/pki/entitlement:ro \
-           -v /etc/pki/rpm-gpg:/host/etc/pki/rpm-gpg:ro     \
-           -v /etc/rpm:/host/etc/rpm:ro                     \
-           -v /etc/yum:/host/etc/yum:ro                     \
-           -v /etc/yum.conf:/host/etc/yum.conf:ro           \
-           -v /etc/yum.repos.d:/host/etc/yum.repos.d:ro     \
-           -v /var/lib/yum:/host/var/lib/yum:ro             \
+           -v /:/host:ro                                    \
            -v /var/cache/yum:/host/var/cache/yum:rw         \
            -v ${CONFIG_SOURCE}:/container_setup:ro \
            --memory 512m \
