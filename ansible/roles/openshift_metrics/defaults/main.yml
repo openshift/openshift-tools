@@ -6,3 +6,4 @@ osamet_hawkular_limits_memory: 3G
 osamet_hawkular_requests_memory: 2G
 osamet_heapster_limits_memory: 3.75G
 osamet_heapster_requests_memory: 0.9375G
+osamet_image_version: "v3.4"
