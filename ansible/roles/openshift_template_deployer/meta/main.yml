@@ -10,5 +10,5 @@ galaxy_info:
     versions:
     - 7
 dependencies:
-  - role: aos_{{ g_play_openshift_version  }}_roles/lib_yaml_editor
-  - role: aos_{{ g_play_openshift_version  }}_roles/lib_openshift
+  - role: "aos_{{ g_play_openshift_version  }}_roles/lib_yaml_editor"
+  - role: "aos_{{ g_play_openshift_version  }}_roles/lib_openshift"
