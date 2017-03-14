@@ -1,68 +1,55 @@
-openshift_volume_provisioner
+openshift_template_deployer
 =========
 
-Ansible role for setting up and configuring the cloud provisioning pod
-
-Due to the nature of Openshift Templates, this role is a one time role and is NOT idempotent.
-
-To clean up from this role, run these commands on a master in the cluster:
-
-```
-oc delete template online-volume-provisioner -n openshift-infra
-oc delete sa volume-provisioner -n openshift-infra
-oc delete ClusterRoleBinding volume-provisioner -n openshift-infra
-oc delete ClusterRole volume-provisioner -n openshift-infra
-oc delete dc online-volume-provisioner -n openshift-infra
-oc delete secret aws-credentials cloud-provider-config -n openshift-infra
-```
+Generic Template Deployer - Ansible generic role for setting up and deploying templates
 
 Requirements
 ------------
-
-Ansible Modules:
-
-- tools_roles/lib_yaml_editor
-- tools_roles/lib_openshift_3.2
 
 
 Role Variables
 --------------
 
-    osvp_provisioner_params:  This is a dict of key values pairs to pass into the provisioner pod.
-    osvp_master_nodes: list of master nodes.  This is needed to restart the services, if needed, serially
-
-
-As of 8-11-16, version openshift-scripts-online-3.2.3.2-1.el7, the valid key value pairs that osvp_provisioner_param
-  expects (key name = default value)
-
+  ostd_rpm: optional: rpms to install prior to template creation
+  ostd_template_name: name of template
+  ostd_template_file: name of template file
+  ostd_project: project name
+  ostd_template_edits: key/value pairs of edits needed for template
+  ostd_template_params: key/value pairs of paramaters to supply to the template file. Params are formated in the style of:
 ```
-  NAME=online-volume-provisioner
-  IMAGE_PULL_POLICY=IfNotPresent
-  IMAGE_NAME
-  CLOUD_PROVIDER=aws
-  CLOUD_PROVIDER_CONFIG
-  AWS_ACCESS_KEY_ID
-  AWS_SECRET_ACCESS_KEY
-  CLUSTER_NAME=kubernetes
-  SYNC_PERIOD=1m
-  MAX_RETRY_INTERVAL=24h
-  RETRY_INTERVAL_UNIT=1m
-  MAXIMUM_CAPACITY=1Gi
-  MAXIMUM_CLUSTER_CAPACITY=-1Gi
-  MAXIMUM_PROJECT_CAPACITY=-1Gi
-  TEST_MODE_ENABLED=false
-  TEST_FAILURE_RATE=20
-  TEST_PROVISIONING_TIME=2s
-  LOG_LEVEL=0
+   PARAM_1 : VALUE_1
 ```
 
 
 Dependencies
 ------------
 
+Ansible Modules:
+
+- "aos_{{ g_play_openshift_version }}_roles/lib_yaml_editor"
+- "aos_{{ g_play_openshift_version }}_roles/lib_openshift"
+
 
 Example Playbook
 ----------------
+
+- name: Test add
+  hosts: "oo_clusterid_cicd:&oo_version_3:&oo_master_primary"
+  gather_facts: no
+  remote_user: root
+  tasks:
+  - include_role:
+      name: tools_roles/openshift_template_deployer
+    vars:
+      ostd_rpm: other_needed_rpm
+      ostd_template_name: template_name
+      ostd_template_file: path_to_template_file.yml
+      ostd_project: project_name
+      ostd_template_edits:
+      - key: key_value_1
+        value: value_1
+      ostd_template_params:
+        PARAM_1 : VALUE_1
 
 License
 -------

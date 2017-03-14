@@ -1,9 +1,9 @@
 ---
 # Ensure needed variables are set
 # This is a a place to verify needed values
-- name: Ensure that osvp is set
+- name: Ensure that ostd vars are set
   fail:
-    msg:  "Please ensure that 'osvp_<variables>' are set!"
+    msg:  "Please ensure that 'ostd_<variables>' are set!"
   when: item is undefined
   with_items:
   - "{{ ostd_template_name }}"
@@ -59,16 +59,16 @@
     seconds: 10
   when: master_config_changes.changed
 
-# Enusre project is created
-- name: create project
-  oadm_project:
-    name: "{{ ostd_project }}"
-    node_selector: "{{ ostd_node_selector|default(omit)}}"
-    display_name: "{{ ostd_project_display_name|default(omit)}}"
-    description: "{{ ostd_project_description|default(omit)}}"
-  register: projectout
-  run_once: true
-#- debug: var=projectout
+  ## Enusre project is created
+  #- name: create project
+  #  oadm_project:
+  #    name: "{{ ostd_project }}"
+  #    node_selector: "{{ ostd_node_selector | default(omit)}}"
+  #    display_name: "{{ ostd_project_display_name | default(omit) }}"
+  #    description: "{{ ostd_project_description | default(omit) }}"
+  #  register: projectout
+  #  run_once: true
+  # - debug: var=projectout
 
 # This installs the template to memory
 - name: Create the openshift template
@@ -81,7 +81,7 @@
     - "{{ ostd_template_file }}"
   register: templateout
   run_once: true
-#- debug: var=templateout
+ - debug: var=templateout
 
 # TODO: What if we want to create the template in namespace A but create it's objects in namespace B?
 # This processes the template with variables
@@ -90,9 +90,9 @@
     namespace: "{{ ostd_project }}"
     template_name: "{{ ostd_template_name }}"
     create: True
-    params: "{{ ostd_template_params|default(omit)}}"
+    params: "{{ ostd_template_params | default(omit) }}"
     reconcile: True
   register: processout
   run_once: true
-  #- debug: var=processout
+  - debug: var=processout
 

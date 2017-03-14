@@ -5,6 +5,6 @@
     state: restarted
   delegate_to: "{{ item[0] }}"
   with_nested:
-  - "{{ osvp_master_nodes }}"
+  - "{{ ansible_play_hosts }}"
   - [ 'atomic-openshift-master-api', 'atomic-openshift-master-controllers' ]
   run_once: true
