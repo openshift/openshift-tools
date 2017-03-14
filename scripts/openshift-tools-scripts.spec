@@ -53,6 +53,7 @@ cp -p monitoring/ops-zbx-event-processor.py %{buildroot}/usr/bin/ops-zbx-event-p
 cp -p monitoring/cron-send-os-skydns-checks.py %{buildroot}/usr/bin/cron-send-os-skydns-checks
 cp -p monitoring/cron-send-os-dnsmasq-checks.py %{buildroot}/usr/bin/cron-send-os-dnsmasq-checks
 cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
+cp -p monitoring/cron-send-aws-instance-health.py %{buildroot}/usr/bin/cron-send-aws-instance-health
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
 cp -p monitoring/cron-send-internal-pods-check.py %{buildroot}/usr/bin/cron-send-internal-pods-check
 cp -p monitoring/cron-send-usage-pv.py %{buildroot}/usr/bin/cron-send-usage-pv
