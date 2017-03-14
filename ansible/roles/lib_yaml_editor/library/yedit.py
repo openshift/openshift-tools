@@ -612,8 +612,11 @@ def parse_value(inc_value, vtype=''):
     elif isinstance(inc_value, bool) and 'str' in vtype:
         inc_value = str(inc_value)
 
+    # There is a special case where '' will turn into None after yaml loading it so skip
+    if isinstance(inc_value, str) and inc_value == '':
+        pass
     # If vtype is not str then go ahead and attempt to yaml load it.
-    if isinstance(inc_value, str) and 'str' not in vtype:
+    elif isinstance(inc_value, str) and 'str' not in vtype:
         try:
             inc_value = yaml.load(inc_value)
         except Exception as _:
@@ -697,7 +700,7 @@ def main():
             yamlfile.yaml_dict = content
 
         # we were passed a value; parse it
-        if module.params['value']:
+        if module.params['value'] is not None:
             value = parse_value(module.params['value'], module.params['value_type'])
             key = module.params['key']
             if module.params['update']:
