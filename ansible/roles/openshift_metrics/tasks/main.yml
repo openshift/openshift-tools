@@ -97,6 +97,7 @@
       CASSANDRA_PV_SIZE: "{{ osamet_pv_size }}"
       CASSANDRA_NODES: "{{ osamet_cassandra_node }}"
       IMAGE_PREFIX: registry.ops.openshift.com/openshift3/
+      IMAGE_VERSION: "{{ osamet_image_version }}"
     reconcile: False
   register: processout
 - debug: var=processout
