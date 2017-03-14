@@ -81,7 +81,7 @@
     - "{{ ostd_template_file }}"
   register: templateout
   run_once: true
- - debug: var=templateout
+  #- debug: var=templateout
 
 # TODO: What if we want to create the template in namespace A but create it's objects in namespace B?
 # This processes the template with variables
@@ -94,5 +94,5 @@
     reconcile: True
   register: processout
   run_once: true
-  - debug: var=processout
+  #- debug: var=processout
 
