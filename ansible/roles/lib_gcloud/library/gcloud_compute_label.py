@@ -1,0 +1,684 @@
+#!/usr/bin/env python
+#     ___ ___ _  _ ___ ___    _ _____ ___ ___
+#    / __| __| \| | __| _ \  /_\_   _| __|   \
+#   | (_ | _|| .` | _||   / / _ \| | | _|| |) |
+#    \___|___|_|\_|___|_|_\/_/_\_\_|_|___|___/_ _____
+#   |   \ / _ \  | \| |/ _ \_   _| | __|   \_ _|_   _|
+#   | |) | (_) | | .` | (_) || |   | _|| |) | |  | |
+#   |___/ \___/  |_|\_|\___/ |_|   |___|___/___| |_|
+
+'''
+   GcloudCLI class that wraps the oc commands in a subprocess
+'''
+
+import atexit
+import json
+import os
+import random
+# Not all genearated modules use this.
+# pylint: disable=unused-import
+import re
+import shutil
+import string
+import subprocess
+import tempfile
+import yaml
+# Not all genearated modules use this.
+# pylint: disable=unused-import
+import copy
+# pylint: disable=import-error
+from apiclient.discovery import build
+# pylint: disable=import-error
+from oauth2client.client import GoogleCredentials
+from ansible.module_utils.basic import AnsibleModule
+
+
+class GcloudCLIError(Exception):
+    '''Exception class for openshiftcli'''
+    pass
+
+# pylint: disable=too-few-public-methods
+class GcloudCLI(object):
+    ''' Class to wrap the command line tools '''
+    def __init__(self, credentials=None, project=None, verbose=False):
+        ''' Constructor for GcloudCLI '''
+        self.scope = None
+        self._project = project
+
+        if not credentials:
+            self.credentials = GoogleCredentials.get_application_default()
+        else:
+            tmp = tempfile.NamedTemporaryFile()
+            tmp.write(json.dumps(credentials))
+            tmp.seek(0)
+            self.credentials = GoogleCredentials.from_stream(tmp.name)
+            tmp.close()
+
+        self.scope = build('compute', 'beta', credentials=self.credentials)
+
+        self.verbose = verbose
+
+    @property
+    def project(self):
+        '''property for project'''
+        return self._project
+
+    def _create_image(self, image_name, image_info):
+        '''create an image name'''
+        cmd = ['compute', 'images', 'create', image_name]
+        for key, val in image_info.items():
+            if val:
+                cmd.extend(['--%s' % key, val])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _delete_image(self, image_name):
+        '''delete image by name '''
+        cmd = ['compute', 'images', 'delete', image_name]
+        if image_name:
+            cmd.extend(['describe', image_name])
+        else:
+            cmd.append('list')
+
+        cmd.append('-q')
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_images(self, image_name=None):
+        '''list images.
+           if name is supplied perform a describe and return
+        '''
+        cmd = ['compute', 'images']
+        if image_name:
+            cmd.extend(['describe', image_name])
+        else:
+            cmd.append('list')
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_deployments(self, simple=True):
+        '''list deployments by name '''
+        cmd = ['deployment-manager', 'deployments', 'list']
+        if simple:
+            cmd.append('--simple-list')
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _delete_deployment(self, dname):
+        '''list deployments by name '''
+        cmd = ['deployment-manager', 'deployments', 'delete', dname, '-q']
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _create_deployment(self, dname, config=None, opts=None):
+        ''' create a deployment'''
+        cmd = ['deployment-manager', 'deployments', 'create', dname]
+        if config:
+            if isinstance(config, dict):
+                config = Utils.create_file(dname, config)
+
+            if isinstance(config, str) and os.path.exists(config):
+                cmd.extend(['--config=%s' % config])
+
+        if opts:
+            for key, val in opts.items():
+                cmd.append('--%s=%s' % (key, val))
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _update_deployment(self, dname, config=None, opts=None):
+        ''' create a deployment'''
+        cmd = ['deployment-manager', 'deployments', 'update', dname]
+        if config:
+            if isinstance(config, dict):
+                config = Utils.create_file(dname, config)
+
+            if isinstance(config, str) and os.path.exists(config):
+                cmd.extend(['--config=%s' % config])
+
+        if opts:
+            for key, val in opts.items():
+                cmd.append('--%s=%s' % (key, val))
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_manifests(self, deployment, mname=None):
+        ''' list manifests
+            if a name is specified then perform a describe
+        '''
+        cmd = ['deployment-manager', 'manifests', '--deployment', deployment]
+        if mname:
+            cmd.extend(['describe', mname])
+        else:
+            cmd.append('list')
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _delete_address(self, aname):
+        ''' list addresses
+            if a name is specified then perform a describe
+        '''
+        cmd = ['compute', 'addresses', 'delete', aname, '-q']
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_addresses(self, aname=None):
+        ''' list addresses
+            if a name is specified then perform a describe
+        '''
+        cmd = ['compute', 'addresses']
+        if aname:
+            cmd.extend(['describe', aname])
+        else:
+            cmd.append('list')
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _create_address(self, address_name, address_info, address=None, isglobal=False):
+        ''' create a deployment'''
+        cmd = ['compute', 'addresses', 'create', address_name]
+
+        if address:
+            cmd.append(address)
+
+        if isglobal:
+            cmd.append('--global')
+
+        for key, val in address_info.items():
+            if val:
+                cmd.extend(['--%s' % key, val])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_metadata(self, resource_type, name=None, zone=None):
+        ''' list metadata'''
+        cmd = ['compute', resource_type, 'describe']
+
+        if name:
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    # pylint: disable=too-many-arguments
+    def _delete_metadata(self, resource_type, keys, remove_all=False, name=None, zone=None):
+        '''create metadata'''
+        cmd = ['compute', resource_type, 'remove-metadata']
+
+        if name:
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
+
+        if remove_all:
+            cmd.append('--all')
+
+        else:
+            cmd.append('--keys')
+            cmd.append(','.join(keys))
+
+        cmd.append('-q')
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    # pylint: disable=too-many-arguments
+    def _create_metadata(self, resource_type, metadata=None, metadata_from_file=None, name=None, zone=None):
+        '''create metadata'''
+        cmd = ['compute', resource_type, 'add-metadata']
+
+        if name:
+            cmd.extend([name])
+
+        if zone:
+            cmd.extend(['--zone', zone])
+
+        data = None
+
+        if metadata_from_file:
+            cmd.append('--metadata-from-file')
+            data = metadata_from_file
+        else:
+            cmd.append('--metadata')
+            data = metadata
+
+        cmd.append(','.join(['%s=%s' % (key, val) for key, val in data.items()]))
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_service_accounts(self, sa_name=None):
+        '''return service accounts '''
+        cmd = ['iam', 'service-accounts']
+        if sa_name:
+            cmd.extend(['describe', sa_name])
+        else:
+            cmd.append('list')
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _delete_service_account(self, sa_name):
+        '''delete service account '''
+        cmd = ['iam', 'service-accounts', 'delete', sa_name, '-q']
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _create_service_account(self, sa_name, display_name=None):
+        '''create service account '''
+        cmd = ['iam', 'service-accounts', 'create', sa_name]
+        if display_name:
+            cmd.extend(['--display-name', display_name])
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _update_service_account(self, sa_name, display_name=None):
+        '''update service account '''
+        cmd = ['iam', 'service-accounts', 'update', sa_name]
+        if display_name:
+            cmd.extend(['--display-name', display_name])
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _delete_service_account_key(self, sa_name, key_id):
+        '''delete service account key'''
+        cmd = ['iam', 'service-accounts', 'keys', 'delete', key_id, '--iam-account', sa_name, '-q']
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_service_account_keys(self, sa_name):
+        '''return service account keys '''
+        cmd = ['iam', 'service-accounts', 'keys', 'list', '--iam-account', sa_name]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _create_service_account_key(self, sa_name, outputfile, key_format='p12'):
+        '''create service account key '''
+        # Ensure we remove the key file
+        atexit.register(Utils.cleanup, [outputfile])
+
+        cmd = ['iam', 'service-accounts', 'keys', 'create', outputfile,
+               '--iam-account', sa_name, '--key-file-type', key_format]
+
+        return self.gcloud_cmd(cmd, output=True, output_type='raw')
+
+    def _list_project_policy(self, project):
+        '''create service account key '''
+        cmd = ['projects', 'get-iam-policy', project]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _add_project_policy(self, project, member, role):
+        '''create service account key '''
+        cmd = ['projects', 'add-iam-policy-binding', project, '--member', member, '--role', role]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _remove_project_policy(self, project, member, role):
+        '''create service account key '''
+        cmd = ['projects', 'remove-iam-policy-binding', project, '--member', member, '--role', role]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _set_project_policy(self, project, policy_path):
+        '''create service account key '''
+        cmd = ['projects', 'set-iam-policy', project, policy_path]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _list_zones(self):
+        ''' list zones '''
+        cmd = ['compute', 'zones', 'list']
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _config_set(self, config_param, config_value, config_section):
+        ''' set config params with gcloud config set '''
+        param = config_section + '/' + config_param
+        cmd = ['config', 'set', param, config_value]
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def _list_config(self):
+        '''return config '''
+        cmd = ['config', 'list']
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    def list_disks(self, zone=None, disk_name=None):
+        '''return a list of disk objects in this project and zone'''
+        cmd = ['beta', 'compute', 'disks']
+        if disk_name and zone:
+            cmd.extend(['describe', disk_name, '--zone', zone])
+        else:
+            cmd.append('list')
+
+        cmd.extend(['--format', 'json'])
+
+        return self.gcloud_cmd(cmd, output=True, output_type='json')
+
+    # disabling too-many-arguments as these are all required for the disk labels
+    # pylint: disable=too-many-arguments
+    def _set_disk_labels(self, project, zone, dname, labels, finger_print):
+        '''create service account key '''
+        if labels == None:
+            labels = {}
+
+        self.scope = build('compute', 'beta', credentials=self.credentials)
+        body = {'labels': labels, 'labelFingerprint': finger_print}
+        result = self.scope.disks().setLabels(project=project,
+                                              zone=zone,
+                                              resource=dname,
+                                              body=body,
+                                             ).execute()
+
+        return result
+
+    def gcloud_cmd(self, cmd, output=False, output_type='json'):
+        '''Base command for gcloud '''
+        cmds = ['/usr/bin/gcloud']
+
+        if self.project:
+            cmds.extend(['--project', self.project])
+
+        cmds.extend(cmd)
+
+        rval = {}
+        results = ''
+        err = None
+
+        if self.verbose:
+            print ' '.join(cmds)
+
+        proc = subprocess.Popen(cmds,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                env={})
+
+        stdout, stderr = proc.communicate()
+        rval = {"returncode": proc.returncode,
+                "results": results,
+                "cmd": ' '.join(cmds),
+               }
+
+        if proc.returncode == 0:
+            if output:
+                if output_type == 'json':
+                    try:
+                        rval['results'] = json.loads(stdout)
+                    except ValueError as err:
+                        if "No JSON object could be decoded" in err.message:
+                            err = err.message
+                elif output_type == 'raw':
+                    rval['results'] = stdout
+
+            if self.verbose:
+                print stdout
+                print stderr
+
+            if err:
+                rval.update({"err": err,
+                             "stderr": stderr,
+                             "stdout": stdout,
+                             "cmd": cmds
+                            })
+
+        else:
+            rval.update({"stderr": stderr,
+                         "stdout": stdout,
+                         "results": {},
+                        })
+
+        return rval
+
+################################################################################
+# utilities and helpers for generation
+################################################################################
+class Utils(object):
+    ''' utilities for openshiftcli modules '''
+
+    COMPUTE_URL_BASE = 'https://www.googleapis.com/compute/v1/'
+
+    @staticmethod
+    def create_file(rname, data, ftype='yaml'):
+        ''' create a file in tmp with name and contents'''
+        path = os.path.join('/tmp', rname)
+        with open(path, 'w') as fds:
+            if ftype == 'yaml':
+                fds.write(yaml.safe_dump(data, default_flow_style=False))
+
+            elif ftype == 'json':
+                fds.write(json.dumps(data))
+            else:
+                fds.write(data)
+
+        # Register cleanup when module is done
+        atexit.register(Utils.cleanup, [path])
+        return path
+
+    @staticmethod
+    def global_compute_url(project, collection, rname):
+        '''build the global compute url for a resource'''
+        return ''.join([Utils.COMPUTE_URL_BASE, 'projects/', project, '/global/', collection, '/', rname])
+
+    @staticmethod
+    def zonal_compute_url(project, zone, collection, rname):
+        '''build the zone compute url for a resource'''
+        return ''.join([Utils.COMPUTE_URL_BASE, 'projects/', project, '/zones/', zone, '/', collection, '/', rname])
+
+    @staticmethod
+    def generate_random_name(size):
+        '''generate a random string of lowercase and digits the length of size'''
+        return ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(size))
+
+
+    @staticmethod
+    def cleanup(files):
+        '''Clean up on exit '''
+        for sfile in files:
+            if os.path.exists(sfile):
+                if os.path.isdir(sfile):
+                    shutil.rmtree(sfile)
+                elif os.path.isfile(sfile):
+                    os.remove(sfile)
+
+
+# pylint: disable=too-many-instance-attributes
+class GcloudComputeLabel(GcloudCLI):
+    ''' Class to wrap the gcloud compute images command'''
+
+    # pylint allows 5
+    # pylint: disable=too-many-arguments
+    def __init__(self,
+                 project,
+                 zone,
+                 labels,
+                 name=None,
+                 verbose=False):
+        ''' Constructor for gcloud resource '''
+        super(GcloudComputeLabel, self).__init__(None, project)
+        self.zone = zone
+        self.labels = labels
+        self.verbose = verbose
+        self.name = name
+        self.existing_labels = {}
+        self.existing_metadata = None
+
+    # gcp returns a list of labels as a list of [{ 'key': 'key_value', 'value': 'value_value'
+    # this is hard to work with.  this will create one big dict of them
+    def gcp_labels_to_dict(self, label_list):
+        ''' let's make a dict out of the labels that GCP returns '''
+
+        # Moving the {"key" : "key_value", "value" : "value_value" }
+        # to { "key_value" : "value_value"
+        for i in label_list:
+            self.existing_labels[i['key']] = i['value']
+
+    def get_labels(self):
+        ''' get a list of labels '''
+
+        results = self._list_metadata('instances', self.name, self.zone)
+        if results['returncode'] == 0:
+            self.existing_metadata = yaml.load(results['results'])
+            self.gcp_labels_to_dict(self.existing_metadata['metadata']['items'])
+
+            results['instance_metadata'] = self.existing_metadata
+            results['instance_labels'] = self.existing_labels
+            results.pop('results', None)
+
+            # Set zone if not already set
+            if not self.zone:
+                self.zone = self.existing_metadata['zone'].split('/')[-1]
+                print self.zone
+
+        return results
+
+    def delete_labels(self):
+        ''' remove labels from a disk '''
+
+        label_keys_to_be_deleted = []
+
+        for i in self.labels.keys():
+            if i in self.existing_labels:
+                label_keys_to_be_deleted.append(i)
+
+        if label_keys_to_be_deleted:
+            results = self._delete_metadata('instances', label_keys_to_be_deleted, False, self.name, self.zone)
+            self.get_labels()
+            results['instance_labels'] = self.existing_labels
+
+            return results
+        else:
+            return {'no_deletes_needed' : True, 'instance_labels' : self.existing_labels}
+
+    def create_labels(self, labels=None):
+        '''set the labels for a disk'''
+
+        labels_to_create = {}
+        for i in self.labels.keys():
+            if i in self.existing_labels:
+                if self.labels[i] != self.existing_labels[i]:
+                    labels_to_create[i] = self.labels[i]
+            else:
+                labels_to_create[i] = self.labels[i]
+
+        if labels_to_create:
+            results = self._create_metadata('instances', labels_to_create, name=self.name, zone=self.zone)
+            self.get_labels()
+            results['instance_labels'] = self.existing_labels
+
+            return results
+        else:
+            return {'no_creates_needed' : True, 'instance_labels' : self.existing_labels}
+
+    # pylint: disable=too-many-return-statements
+    @staticmethod
+    def run_ansible(params, check_mode):
+        ''' run the ansible code '''
+
+        compute_labels = GcloudComputeLabel(params['project'],
+                                            params['zone'],
+                                            params['labels'],
+                                            params['name'],
+                                           )
+
+        state = params['state']
+        api_rval = compute_labels.get_labels()
+
+        #####
+        # Get
+        #####
+        if state == 'list':
+            if api_rval['returncode'] != 0:
+                return {'failed': True, 'msg' : api_rval, 'state' : state}
+
+            return {'changed' : False, 'results' : api_rval, 'state' : state}
+
+        ########
+        # Delete
+        ########
+        if state == 'absent':
+
+            api_rval = compute_labels.delete_labels()
+
+            if check_mode:
+                return {'changed': False, 'msg': 'Would have performed a delete.'}
+
+            if 'returncode' in api_rval and api_rval['returncode'] != 0:
+                return {'failed': True, 'msg': api_rval, 'state': state}
+
+            if "no_deletes_needed" in api_rval:
+                return {'changed': False, 'state': "absent", 'resultes': api_rval}
+
+            return {'changed': True, 'results': api_rval, 'state': state}
+
+        ########
+        # Create
+        ########
+        if state == 'present':
+
+            api_rval = compute_labels.create_labels()
+
+            if check_mode:
+                return {'changed': False, 'msg': 'Would have performed a create.'}
+
+            if 'returncode' in api_rval and api_rval['returncode'] != 0:
+                return {'failed': True, 'msg': api_rval, 'state': state}
+
+            if "no_creates_needed" in api_rval:
+                return {'changed': False, 'state': "present", 'results': api_rval}
+
+            return {'changed': True, 'results': api_rval, 'state': state}
+
+        return {'failed': True, 'changed': False, 'msg': 'Unknown state passed. %s' % state, 'state' : "unknown"}
+# vim: expandtab:tabstop=4:shiftwidth=4
+
+#pylint: disable=too-many-branches
+def main():
+    ''' ansible module for gcloud compute disk labels'''
+    module = AnsibleModule(
+        argument_spec=dict(
+            state=dict(default='present', type='str',
+                       choices=['present', 'absent', 'list']),
+            name=dict(default=None, type='str', required=True),
+            labels=dict(default=None, type='dict'),
+            project=dict(default=None, type='str', required=True),
+            zone=dict(default=None, type='str', required=True),
+        ),
+        #required_together=[['name', 'zone']],
+        supports_check_mode=True,
+    )
+
+    results = GcloudComputeLabel.run_ansible(module.params, module.check_mode)
+
+    if 'failed' in results:
+        module.fail_json(**results)
+
+    module.exit_json(**results)
+
+if __name__ == '__main__':
+    main()
