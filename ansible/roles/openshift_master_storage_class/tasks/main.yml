@@ -20,7 +20,7 @@
 - name: Ensure storageclass object
   oc_obj:
     kind: storageclass
-    name: ebs
+    name: "{{ osmsc_storageclass_name }}"
     content:
       path: /tmp/osmsc_storageclass
       data:
