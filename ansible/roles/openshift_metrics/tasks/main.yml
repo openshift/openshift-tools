@@ -102,7 +102,7 @@
   register: processout
 - debug: var=processout
 
-# wait up to 10 minutes for deployer pod to complete
+# wait up to 15 minutes for deployer pod to complete
 - name: wait until metrics deployer pod has completed
   oc_obj:
     state: list
@@ -111,7 +111,7 @@
     selector: metrics-infra=deployer
   register: podout
   until: podout.results.results[0]['items'][0].status.phase in ['Succeeded', 'Failed']
-  retries: 120
+  retries: 180
   delay: 5
   run_once: true
 
