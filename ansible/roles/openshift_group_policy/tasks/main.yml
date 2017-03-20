@@ -1,0 +1,9 @@
+---
+- name: manage_group_policy
+  oc_adm_policy_group:  # call openshift-ansible lib_openshift module
+    namespace: "{{ osgp_namespace }}"
+    group: "{{ osgp_group }}"
+    resource_kind: "{{ osgp_resource_kind }}"
+    resource_name: "{{ osgp_resource_name }}"
+    state: "{{ osgp_state }}"
+  run_once: true
