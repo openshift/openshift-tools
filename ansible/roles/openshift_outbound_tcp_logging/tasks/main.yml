@@ -1,0 +1,121 @@
+---
+- set_fact:
+    outbound_logging_chain:
+    - chain: oo-outbound-logging
+      line:  ":oo-outbound-logging - [0:0]"
+      after: "filter$"
+      regex: "Create oo-outbound-logging chain"
+      test: True
+      pos: 1
+
+    outbound_logging_rules:
+    - chain: oo-outbound-logging
+      line:  "-A oo-outbound-logging -m comment --comment \"Log outbound TCP connections with this chain\" -m limit --limit 50/second --limit-burst 50 -j LOG --log-prefix \"tcp_out_logging: \""
+      after: "^-A FORWARD"
+      regex: "Log outbound TCP connections with this chain"
+      test: True
+      pos: 1
+
+    - chain: oo-outbound-logging
+      line:  "-A oo-outbound-logging -m comment --comment \"We use this pattern since there is no LOG_AND_RETURN target\" -m limit --limit 50/second --limit-burst 50 -j RETURN"
+      after: "Log outbound TCP connections with this chain"
+      regex: "We use this pattern since there is no LOG_AND_RETURN target"
+      test: True
+      pos: 2
+
+    - chain: oo-outbound-logging
+      line: "-A oo-outbound-logging -m comment --comment \"Drop 1 or more logs for 60 seconds after this message\" -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix \"tcp_out_logging: logdrop \"" 
+      after: "We use this pattern since there is no LOG_AND_RETURN target"
+      regex: "Drop 1 or more logs for 60 seconds after this message"
+      test: True
+      pos: 3
+
+    - chain: oo-outbound-logging
+      line:  "-A oo-outbound-logging -m comment --comment \"Will show up only if we're doing more than 1000 connections/second\" -m limit --limit 1000/second -j RETURN"
+      after: "Drop 1 or more logs for 60 seconds after this message"
+      regex: "This message will show up only if we're doing more than 1000 connections/second"
+      test: True
+      pos: 4
+
+    - chain: oo-outbound-logging
+      line:  "-A oo-outbound-logging -m comment --comment \"Watch for log flooding\" -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix \"tcp_out_logflood: \""
+      after: "This message will show up only if we're doing more than 1000 connections/second"
+      regex: "tcp_log_outflood"
+      test: True
+      pos: 5
+
+    forward_logging_rules:
+    - chain: FORWARD
+      line:  "-A FORWARD -o eth0 -p tcp ! -d 172.16.0.0/12 -m state --state NEW -m comment --comment \"Matches first packet in new outbound TCP connections\" -j oo-outbound-logging"
+      after: "^-A INPUT"
+      regex: Matches first packet in new outbound TCP connections
+      test: True
+      pos: 1
+
+    forward_logging_memory:
+    - chain: FORWARD
+      line:  "-I FORWARD -o eth0 -p tcp ! -d 172.16.0.0/12 -m state --state NEW -m comment --comment \"Matches first packet in new outbound TCP connections\" -j oo-outbound-logging"
+      after: "^-A INPUT"
+      regex: Matches first packet in new outbound TCP connections
+      test: True
+      pos: 1
+
+- name: list iptables rules FORWARD chain
+  command: '/usr/sbin/iptables -w -nL FORWARD'
+  changed_when: False
+  register: forwardchain
+
+- name: list iptables rules logging chain
+  command: '/usr/sbin/iptables -w -nL oo-outbound-logging'
+  changed_when: False
+  register: loggingchain
+  ignore_errors: True
+
+- name: add in-memory iptables chain
+  command: "/usr/sbin/iptables -N oo-outbound-logging"
+  when: item.test|bool and not "oo-outbound-logging" in loggingchain.stdout
+  with_items: "{{ outbound_logging_chain }}"
+
+- name: modify in-memory iptables rules
+  command: "/usr/sbin/iptables {{ item.line }}"
+  when: item.test|bool and not item.regex in forwardchain.stdout
+  with_items: 
+  - "{{ outbound_logging_rules }}"
+  - "{{ forward_logging_memory }}"
+
+- name: modify /etc/sysconfig/iptables
+  lineinfile:
+    dest: /etc/sysconfig/iptables
+    insertafter: "{{ item.after }}"
+    line: "{{ item.line }}"
+    regexp: "{{ item.regex }}"
+  when: "{{ item.test|bool | default(False, True) }}"
+  with_items: 
+  - "{{ outbound_logging_chain }}"
+  - "{{ outbound_logging_rules }}"
+  - "{{ forward_logging_rules }}"
+
+- name: copy tcp_out_logging config file
+  copy:
+    src: tcp_out_logging.conf
+    dest: /etc/rsyslog.d/tcp_out_logging.conf
+    mode: "0644"
+    owner: root
+    group: root
+  notify: restart rsyslog
+
+- name: setup outbound TCP log rotate
+  copy:
+    content: |
+      /var/log/tcp_out.log.gz {
+          nocopytruncate
+          missingok
+          nocompress
+          nomail
+          weekly
+          rotate 5
+      }
+    dest: /etc/logrotate.d/log_outbound_tcp
+    mode: "0640"
+    owner: root
+    group: root
