@@ -9,54 +9,61 @@
       pos: 1
 
     outbound_logging_rules:
+      # Log outbound TCP connections with this chain.
     - chain: oo-outbound-logging
-      line:  "-A oo-outbound-logging -m comment --comment \"Log outbound TCP connections with this chain\" -m limit --limit 50/second --limit-burst 50 -j LOG --log-prefix \"tcp_out_logging: \""
+      line:  "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_1_ -m limit --limit 50/second --limit-burst 50 -j LOG --log-prefix \"tcp_out_logging: \""
       after: "^-A FORWARD"
-      regex: "Log outbound TCP connections with this chain"
+      regex: "id_outbound_tcp_log_1_"
       test: True
       pos: 1
 
+      # We use this pattern since there is no LOG_AND_RETURN target.
     - chain: oo-outbound-logging
-      line:  "-A oo-outbound-logging -m comment --comment \"We use this pattern since there is no LOG_AND_RETURN target\" -m limit --limit 50/second --limit-burst 50 -j RETURN"
-      after: "Log outbound TCP connections with this chain"
-      regex: "We use this pattern since there is no LOG_AND_RETURN target"
+      line:  "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_2_ -m limit --limit 50/second --limit-burst 50 -j RETURN"
+      after: "id_outbound_tcp_log_1_"
+      regex: "id_outbound_tcp_log_2_"
       test: True
       pos: 2
 
+      # Drop 1 or more logs for 60 seconds after this message.
     - chain: oo-outbound-logging
-      line: "-A oo-outbound-logging -m comment --comment \"Drop 1 or more logs for 60 seconds after this message\" -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix \"tcp_out_logging: logdrop \"" 
-      after: "We use this pattern since there is no LOG_AND_RETURN target"
-      regex: "Drop 1 or more logs for 60 seconds after this message"
+      line: "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_3_ -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix \"tcp_out_logging: logdrop \"" 
+      after: "id_outbound_tcp_log_2_"
+      regex: "id_outbound_tcp_log_3_"
       test: True
       pos: 3
 
+      # Will show up only if we're doing more than 1000 connections/second.
     - chain: oo-outbound-logging
-      line:  "-A oo-outbound-logging -m comment --comment \"Will show up only if we're doing more than 1000 connections/second\" -m limit --limit 1000/second -j RETURN"
-      after: "Drop 1 or more logs for 60 seconds after this message"
-      regex: "This message will show up only if we're doing more than 1000 connections/second"
+      line:  "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_4_ -m limit --limit 1000/second -j RETURN"
+      after: "id_outbound_tcp_log_3_"
+      regex: "id_outbound_tcp_log_4_"
       test: True
       pos: 4
 
+      # Watch for log flooding
     - chain: oo-outbound-logging
-      line:  "-A oo-outbound-logging -m comment --comment \"Watch for log flooding\" -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix \"tcp_out_logflood: \""
-      after: "This message will show up only if we're doing more than 1000 connections/second"
-      regex: "tcp_log_outflood"
+      line:  "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_5_ -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix \"tcp_out_logflood: \""
+      after: "id_outbound_tcp_log_4_"
+      regex: "id_outbound_tcp_log_5_"
       test: True
       pos: 5
 
     forward_logging_rules:
+      # Matches first packet in new outbound TCP connections, -A for use in /etc/sysconfig/iptables.
     - chain: FORWARD
-      line:  "-A FORWARD -o eth0 -p tcp ! -d 172.16.0.0/12 -m state --state NEW -m comment --comment \"Matches first packet in new outbound TCP connections\" -j oo-outbound-logging"
+      line:  "-A FORWARD -o eth0 -p tcp ! -d 172.16.0.0/12 -m state --state NEW -m comment --comment id_outbound_tcp_log_7_ -j oo-outbound-logging"
       after: "^-A INPUT"
-      regex: Matches first packet in new outbound TCP connections
+      regex: "id_outbound_tcp_log_7_"
       test: True
       pos: 1
-
+        
     forward_logging_memory:
+      # Matches first packet in new outbound TCP connections, -I to send to the top of the FORWARD chain in memory.
     - chain: FORWARD
-      line:  "-I FORWARD -o eth0 -p tcp ! -d 172.16.0.0/12 -m state --state NEW -m comment --comment \"Matches first packet in new outbound TCP connections\" -j oo-outbound-logging"
+      line:  "-I FORWARD -o eth0 -p tcp ! -d 172.16.0.0/12 -m state --state NEW -m comment --comment id_outbound_tcp_log_7_ -j oo-outbound-logging"
       after: "^-A INPUT"
-      regex: Matches first packet in new outbound TCP connections
+      regex: "id_outbound_tcp_log_7_" 
       test: True
       pos: 1
 
