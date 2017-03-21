@@ -1,6 +1,8 @@
 ---
 - set_fact:
     outbound_logging_chain:
+    # This chain doesn't block anything, but does log one message per new outbound TCP connection
+    # (unless there are so many new connections as to exceed the limits defined here)
     - chain: oo-outbound-logging
       line:  ":oo-outbound-logging - [0:0]"
       after: "filter$"
@@ -9,7 +11,7 @@
       pos: 1
 
     outbound_logging_rules:
-      # Log outbound TCP connections with this chain.
+    # Log outbound TCP connections with this chain.
     - chain: oo-outbound-logging
       line:  "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_1_ -m limit --limit 50/second --limit-burst 50 -j LOG --log-prefix \"tcp_out_logging: \""
       after: "^-A FORWARD"
@@ -17,7 +19,7 @@
       test: True
       pos: 1
 
-      # We use this pattern since there is no LOG_AND_RETURN target.
+    # The above and below rules should have the same limits. We use this pattern since there is no LOG_AND_RETURN target.
     - chain: oo-outbound-logging
       line:  "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_2_ -m limit --limit 50/second --limit-burst 50 -j RETURN"
       after: "id_outbound_tcp_log_1_"
@@ -25,7 +27,8 @@
       test: True
       pos: 2
 
-      # Drop 1 or more logs for 60 seconds after this message.
+    # This message will show up in the main tcp_out_logging log file to indicate
+    # that for 60 seconds after this message, we're dropping one or more log messages.
     - chain: oo-outbound-logging
       line: "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_3_ -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix \"tcp_out_logging: logdrop \"" 
       after: "id_outbound_tcp_log_2_"
@@ -33,7 +36,7 @@
       test: True
       pos: 3
 
-      # Will show up only if we're doing more than 1000 connections/second.
+    # This message will show up only if we're doing more than 1000 connections/second.
     - chain: oo-outbound-logging
       line:  "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_4_ -m limit --limit 1000/second -j RETURN"
       after: "id_outbound_tcp_log_3_"
@@ -41,7 +44,10 @@
       test: True
       pos: 4
 
-      # Watch for log flooding
+    # This message has a different prefix so that it will go to syslog. We should probably alert when we see it.
+    # The contents of this message aren't necessarily representitive of what is causing the log flood.
+    # The tcp_out_logging messages should be examined to see the actual cause.
+    # If we're exceeding all the above limits, we won't be logging the rest.
     - chain: oo-outbound-logging
       line:  "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_5_ -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix \"tcp_out_logflood: \""
       after: "id_outbound_tcp_log_4_"
@@ -50,16 +56,16 @@
       pos: 5
 
     forward_logging_rules:
-      # Matches first packet in new outbound TCP connections, -A for use in /etc/sysconfig/iptables.
+    # Matches first packet in new outbound TCP connections, -A for use in /etc/sysconfig/iptables.
     - chain: FORWARD
       line:  "-A FORWARD -o eth0 -p tcp ! -d 172.16.0.0/12 -m state --state NEW -m comment --comment id_outbound_tcp_log_7_ -j oo-outbound-logging"
       after: "^-A INPUT"
       regex: "id_outbound_tcp_log_7_"
       test: True
       pos: 1
-        
+
     forward_logging_memory:
-      # Matches first packet in new outbound TCP connections, -I to send to the top of the FORWARD chain in memory.
+    # Matches first packet in new outbound TCP connections, -I to send to the top of the FORWARD chain in memory.
     - chain: FORWARD
       line:  "-I FORWARD -o eth0 -p tcp ! -d 172.16.0.0/12 -m state --state NEW -m comment --comment id_outbound_tcp_log_7_ -j oo-outbound-logging"
       after: "^-A INPUT"
