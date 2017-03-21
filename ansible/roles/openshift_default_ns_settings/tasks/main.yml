@@ -4,6 +4,7 @@
   oc_edit:
     kind: namespace
     name: "{{ item }}"
+    separator: ":"
     content:
       'metadata:annotations:openshift.io/node-selector': 'type=infra'
   with_items:
