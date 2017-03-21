@@ -1,0 +1,112 @@
+---
+- name: Get the routing subdomain from the master
+  yedit:
+    state: list
+    src: /etc/origin/master/master-config.yaml
+    key: routingConfig.subdomain
+  register: subdomain
+  run_once: true
+
+# task to insall rpm
+- name: install the latest version of openshift-scripts-devpreview
+  yum:
+    name: openshift-scripts-devpreview
+    state: present
+
+## task to check if configmap is present
+#- name: create the configmap (oc_obj)
+#  oc_obj:
+#    state: list
+#    name: customrouter
+#    namespace: default
+#    kind: configmap
+#  register: customrouter_is_present
+#- debug: var=customrouter_is_present
+#
+
+## TODO:
+## From here to the bottom we're using the "command" module extensively to get this into the build
+## with the intentention to paying down the technical debt first thing
+## The "correct" way of calling the task will be first followed by the quick and dirty command way second
+
+#- name: Delete customrouter if present
+#  oc_obj:
+#    state: absent
+#    name: customrouter
+#    namespace: default
+#    kind: configmap
+#  when: customrouter_is_present
+
+# Delete the configmap regardless
+- name: Delete the configmap (command)
+  command: >
+    oc delete configmap customrouter -n default --ignore-not-found
+  run_once: true
+
+## And add it back as a new object
+
+#- name: create the configmap (oc_obj)
+#  oc_obj:
+#    state: present
+#    name: customrouter
+#    namespace: default
+#    kind: configmap
+#    files:
+#    - /etc/openshift-online/templates/haproxy-config.template
+
+- name: create the configmap (command)
+  command: >
+    oc create configmap customrouter -n default --from-file=/etc/openshift-online/templates/haproxy-config.template
+  run_once: true
+
+#- name: Attach Storage Volumes to Instances
+#  oc_volume:
+#    namespace: default
+#    kind: dc
+#    name: router
+#    mount_type: hostpath
+#    mount_path: /var/lib/haproxy/conf/custom
+#    vol_name: config-volume
+#  with_items: " {{ dcout.results.results[0]['items'] }}"
+#  register: volumeout
+#  run_once: true
+#- debug: var=volumeout
+
+- name: Attach Storage Volumes to Instances
+  command: >
+    oc volume dc/router --add --overwrite --name=config-volume --mount-path=/var/lib/haproxy/conf/custom --source='{"configMap":{"name":"customrouter"}}'
+
+# TODO: We are hitting a wall with the oc_env, so to get around it for now to be able to continue testing,
+# we're going to convert the following two "oc_env" taskes into "command" tasks.
+# The following is the error for future reference:
+#
+##  TASK [tools_roles/openshift_online_ha_proxy : create env vars for ther outer] **
+##  fatal: [cicd-master-e62c6]: FAILED! => {"changed": false, "failed": true, "msg": {"cmd": "/usr/bin/oc replace -f /tmp/router-dO2w3T -n default", "results": {}, "returncode": 1, "stderr": "Error from server (BadRequest): error when replacing \"/tmp/router-dO2w3T\": DeploymentConfig in version \"v1\" cannot be handled as a DeploymentConfig: [pos 1711]: json: expect char '\"' but got char 'f'\n", "stdout": ""}}
+
+- name: Add env vars to new customrouter
+  command: >
+    oc env dc/router ROUTER_OVERRIDE_HOSTNAME=false ROUTER_CLOUD_DOMAIN={{ subdomain.result }} TEMPLATE_FILE=/var/lib/haproxy/conf/custom/haproxy-config.template
+
+#- name: create env vars for the router
+#  oc_env:
+#    kind: dc
+#    name: router
+#    env_vars:
+#      ROUTER_OVERRIDE_HOSTNAME: false
+#      ROUTER_CLOUD_DOMAIN: "{{ subdomain.result }}"
+#      TEMPLATE_FILE: /var/lib/haproxy/conf/custom/haproxy-config.template
+#  run_once: true
+
+- name: Add env vars to new customrouter
+  command: >
+    oc env dc/router EXTENDED_VALIDATION=true
+  run_once: true
+
+## Split out EXTENDED_VALIDATION env var task
+#- name: Split out EXTENDED_VALIDATION env var task
+#  oc_env:
+#    kind: dc
+#    name: router
+#    env_vars:
+#      EXTENDED_VALIDATION: true
+#  run_once: true
