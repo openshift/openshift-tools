@@ -13,3 +13,6 @@ sudo docker stop oso-centos7-host-monitoring
 sudo docker rm oso-centos7-host-monitoring
 echo "Stop OpenShift"
 sudo ${OC} cluster down
+
+echo "Unloading temporary firewall changes"
+sudo firewall-cmd --reload
