@@ -36,7 +36,6 @@
       test: True
       pos: 3
 
-    # This message will show up only if we're doing more than 1000 connections/second.
     - chain: oo-outbound-logging
       line:  "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_4_ -m limit --limit 1000/second -j RETURN"
       after: "id_outbound_tcp_log_3_"
@@ -44,6 +43,7 @@
       test: True
       pos: 4
 
+    # This message will show up only if we're doing more than 1000 connections/second.
     # This message has a different prefix so that it will go to syslog. We should probably alert when we see it.
     # The contents of this message aren't necessarily representitive of what is causing the log flood.
     # The tcp_out_logging messages should be examined to see the actual cause.
