@@ -1,0 +1,49 @@
+---
+
+- name: Get the routing subdomain from the master
+  yedit:
+    state: list
+    src: /etc/origin/master/master-config.yaml
+    key: routingConfig.subdomain
+  register: subdomain
+  run_once: true
+
+# task to insall rpm
+- name: install the latest version of openshift-scripts-devpreview
+  yum:
+    name: openshift-scripts-devpreview
+    state: present
+
+# The following tasks use the command module due to what appear to be bugs in the serialization/deserizliation
+# of the complex content in the customrouter configmap.
+# An attempt was made to use oc_obj to create the configmap with the necessary content, but we ran into errors
+# when oc attempted to read the temporary file created by oc_obj.
+# We have documented the work necessary to address these problems long term. In the interim, the command
+# module will be used.
+
+- name: Delete the configmap if it exists
+  command: >
+    oc delete configmap customrouter -n default --ignore-not-found
+  run_once: true
+
+- name: create the customrouter configmap
+  command: >
+    oc create configmap customrouter -n default --from-file=/etc/openshift-online/templates/haproxy-config.template
+  run_once: true
+
+# The oc_volume command does not currently support a configmap source. Falling back to command module.
+- name: Add a volume to the router
+  command: >
+    oc set volume dc/router --add --overwrite --name=config-volume --mount-path=/var/lib/haproxy/conf/custom --configmap-name=customrouter
+  run_once: true
+
+- name: Add our env vars to new customrouter
+  oc_env:
+    kind: dc
+    name: router
+    env_vars:
+      ROUTER_OVERRIDE_HOSTNAME: "false"
+      ROUTER_CLOUD_DOMAIN: "{{ subdomain.result }}"
+      TEMPLATE_FILE: /var/lib/haproxy/conf/custom/haproxy-config.template
+      EXTENDED_VALIDATION: "true"
+  run_once: true
