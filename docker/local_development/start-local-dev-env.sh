@@ -20,8 +20,11 @@ if [ "${OC_RUNNING}" -eq "200" ]; then
 	exit
 fi
 
-echo "Opening ports on default zone for DNS (non-permanent)"
-sudo firewall-cmd --add-service=dns --quiet
+echo "Opening ports on default zone for DNS and container traffic (non-permanent)"
+sudo firewall-cmd --add-source 172.17.0.0/16
+sudo firewall-cmd --add-port 8443/tcp
+sudo firewall-cmd --add-port 53/udp
+sudo firewall-cmd --add-port 8053/udp
 
 sudo ${OC} cluster up
 ${OC} login localhost:8443 -u developer -p developer --insecure-skip-tls-verify
