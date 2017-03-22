@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.42
+Version:       0.1.43
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -408,6 +408,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Wed Mar 22 2017 Matt Woodson <mwoodson@redhat.com> 0.1.43-1
+- added the /usr/bin/cron-send-aws-instance-health to the aws script section of
+  the spec file (mwoodson@redhat.com)
+
 * Wed Mar 22 2017 Matt Woodson <mwoodson@redhat.com> 0.1.42-1
 - added cicd to the openshift-tools-scripts spec file (mwoodson@redhat.com)
 - cron-send-aws-instance-health.py uses the aws api check for known host issues
