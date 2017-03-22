@@ -260,6 +260,7 @@ OpenShift Tools AWS Monitoring Scripts
 %files monitoring-aws
 /usr/bin/cron-send-s3-metrics
 /usr/bin/ops-ec2-check-tags
+/usr/bin/cron-send-aws-instance-health
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-gcp subpackage
