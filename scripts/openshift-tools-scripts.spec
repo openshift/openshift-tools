@@ -17,7 +17,6 @@ OpenShift Tools Scripts
 
 %install
 
-# openshift-tools-scripts-monitoring install
 mkdir -p %{buildroot}/usr/bin
 cp -p monitoring/ops-metric-client.py %{buildroot}/usr/bin/ops-metric-client
 cp -p monitoring/ops-metric-pcp-client.py %{buildroot}/usr/bin/ops-metric-pcp-client
@@ -82,6 +81,7 @@ cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-stat
 cp -p monitoring/ops-ec2-check-tags.py %{buildroot}/usr/bin/ops-ec2-check-tags
 cp -p monitoring/ops-gcp-check-tags.py %{buildroot}/usr/bin/ops-gcp-check-tags
 cp -p monitoring/cron-send-zabbix-too-old.py %{buildroot}/usr/bin/cron-send-zabbix-too-old
+cp -p cicd/verify-cicd-operation.py %{buildroot}/usr/bin/verify-cicd-operation.py
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
@@ -390,6 +390,21 @@ OpenShift Tools IAM specific scripts
 /usr/local/bin/check_sso_http_status
 /usr/local/bin/aws_creds_check
 %{python_sitelib}/openshift_tools/saml_aws_creds*
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-cicd subpackage
+# ----------------------------------------------------------------------------------
+%package cicd
+Summary:       OpenShift Tools CICD Scripts
+Requires:      python2
+#BuildRequires: python2-devel
+BuildArch:     noarch
+
+%description cicd
+OpenShift Tools cicd scripts
+
+%files cicd
+/usr/bin/verify-cicd-operation.py
 
 %changelog
 * Thu Mar 09 2017 Joel Smith <joesmith@redhat.com> 0.1.41-1
