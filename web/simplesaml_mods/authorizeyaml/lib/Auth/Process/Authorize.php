@@ -48,10 +48,10 @@ class sspmod_authorizeyaml_Auth_Process_Authorize extends SimpleSAML_Auth_Proces
         $groups = $authdata->getGroups($user);
 
         $resource = $authdata->getResource($entityid);
-        $role = $authdata->getRoles($resource, $user, $groups);
-        if (!is_null($role) && !empty($role))
+        $roles = $authdata->getRoles($resource, $user, $groups);
+        if (!is_null($roles) && !empty($roles))
         {
-            $request['Attributes']['role'] = array($role);
+            $request['Attributes']['role'] = $roles;
         }
         else
         {
