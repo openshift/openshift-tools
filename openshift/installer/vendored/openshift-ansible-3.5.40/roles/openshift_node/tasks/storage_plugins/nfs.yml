@@ -1,0 +1,26 @@
+---
+- name: Install NFS storage plugin dependencies
+  package: name=nfs-utils state=present
+  when: not openshift.common.is_atomic | bool
+
+- name: Check for existence of seboolean
+  command: getsebool {{ item }}
+  register: getsebool_status
+  when: ansible_selinux and ansible_selinux.status == "enabled"
+  failed_when: false
+  changed_when: false
+  with_items:
+    - virt_use_nfs
+    - virt_sandbox_use_nfs
+
+- name: Set seboolean to allow nfs storage plugin access from containers
+  seboolean:
+    name: "{{ item.item }}"
+    state: yes
+    persistent: yes
+  # We need to detect whether or not the boolean is an alias, since `seboolean`
+  # will error if it is an alias.  We do this by inspecting stdout for the boolean name,
+  # since getsebool prints the resolved name.  (At some point Ansible's seboolean module
+  # should learn to deal with aliases)
+  when: ansible_selinux and ansible_selinux.status == "enabled" and item.rc == 0 and item.stdout.find(item.item) != -1
+  with_items: "{{ getsebool_status.results }}"
