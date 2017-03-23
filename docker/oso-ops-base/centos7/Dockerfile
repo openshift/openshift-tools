@@ -10,10 +10,13 @@
 FROM centos:centos7
 
 # Pause indefinitely if asked to do so.
+ARG OO_PAUSE_ON_BUILD
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
+ADD usr_local_bin/* /usr/local/bin/
+
 # centos openshift repo
-RUN yum install -y centos-release-openshift-origin && yum clean all
+RUN yum-install-check.sh -y centos-release-openshift-origin && yum clean all
 
 ADD copr-openshift-tools.repo /etc/yum.repos.d/
 
@@ -34,9 +37,10 @@ ENV PYTHONSTARTUP=/root/.pythonrc
 # setup epel repo
 RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 
+
 RUN yum clean metadata && \
     yum -y update && \
-    yum -y install iputils cronie ansible-2.2.0.0 vim procps less ack tar psmisc python-scandir lsof && \
+    yum-install-check.sh -y wget iputils cronie ansible vim procps less ack tar psmisc python-scandir lsof && \
     yum clean all
 
 # Setup locales.  It comes broken (probably a size issue) by default in the docker image.

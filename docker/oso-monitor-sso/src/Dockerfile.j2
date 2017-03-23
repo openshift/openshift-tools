@@ -7,13 +7,14 @@ FROM openshifttools/oso-centos7-ops-base:latest
 {% endif %}
 
 # Pause indefinitely if asked to do so.
+ARG OO_PAUSE_ON_BUILD
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
 
 # Add necessary permissions to add arbitrary user
 RUN chmod -R g+rwX /etc/passwd /etc/group
 
 # Install memcached
-RUN yum -y install python-pip \
+RUN yum-install-check.sh -y python-pip \
         python-requests\
         pyOpenSSL \
         openssl \
@@ -24,7 +25,6 @@ RUN yum -y install python-pip \
         python-openshift-tools-ansible \
         python-openshift-tools-web \
         python-beautifulsoup4 \
-        openshift-tools-scripts \
         openshift-tools-scripts-monitoring \
         openshift-tools-scripts-iam-tools && \
     yum clean all
