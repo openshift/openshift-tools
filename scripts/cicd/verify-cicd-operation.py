@@ -19,6 +19,16 @@ import socket
 import logging
 import logging.handlers
 
+OPTION = r'--openshift-ansible=\d+\.\d+'
+ALLOWED_COMMANDS = (
+    ['install'],
+    ['install', OPTION],
+    ['update'],
+    ['update', OPTION],
+    ['delete'],
+    ['delete', OPTION],
+)
+
 def runner(program, *args):
     ''' string '''
 
@@ -30,21 +40,29 @@ def runner(program, *args):
     sys.exit(11)
     # runner never returns
 
-logger = logging.getLogger('verify_command_logger')
-logger.setLevel(logging.INFO)
-logger.addHandler(logging.handlers.SysLogHandler('/dev/log'))
+def verify(allowed_args, args):
+    """ Check if `args` is valid, according to `allowed_args`. """
+    for allowed in allowed_args:
+        if len(allowed) != len(args):
+            continue
+        if all(re.match(pat + '$', arg) for (pat, arg) in zip(allowed, args)):
+            return True
+    return False
 
-keyname = sys.argv[1] if len(sys.argv) >= 2 else "<none specified>"
-cmd = os.environ.get("SSH_ORIGINAL_COMMAND", "")
+if __name__ == '__main__':
+    """ Module entrypoint when executed directly. """
+    logger = logging.getLogger('verify_command_logger')
+    logger.setLevel(logging.INFO)
+    logger.addHandler(logging.handlers.SysLogHandler('/dev/log'))
 
-match = re.match(r"(?P<operation>install|delete|upgrade)", cmd)
+    keyname = sys.argv[1] if len(sys.argv) >= 2 else "<none specified>"
+    cmd = os.environ.get("SSH_ORIGINAL_COMMAND", "").split()
+    if verify(ALLOWED_COMMANDS, cmd):
+        logger.info("%s Restricted key '%s' running command: %s" % (os.path.basename(__file__), keyname, cmd))
+        runner("/home/opsmedic/aos-cd/git/aos-cd-jobs/bin/cicd-control.sh", keyname, *cmd)
 
-if match:
-    logger.info("%s Restricted key '%s' running command: %s" % (os.path.basename(__file__), keyname, cmd))
-    runner("/home/opsmedic/aos-cd/git/aos-cd-jobs/bin/cicd-control.sh", keyname, match.group("operation"))
-
-logger.info("%s Restricted key '%s' disallowed command: %s" % (os.path.basename(__file__), keyname, cmd))
-print("doesn't match an allowed pattern")
-print("REJECTED ON HOST: " + socket.gethostname())
-print("REJECTED COMMAND: " + cmd)
-sys.exit(10)
+    logger.info("%s Restricted key '%s' disallowed command: %s" % (os.path.basename(__file__), keyname, cmd))
+    print("doesn't match an allowed pattern")
+    print("REJECTED ON HOST: " + socket.gethostname())
+    print("REJECTED COMMAND: %s" % (cmd,))
+    sys.exit(10)
