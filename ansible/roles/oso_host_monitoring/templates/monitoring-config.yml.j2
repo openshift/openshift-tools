@@ -135,7 +135,7 @@ host_monitoring_cron:
 # between checks means it'll take longer for us to know a box is down. See
 # heartbeat trigger for details.
 - name: Do a quick heartbeat
-  minute: "*/5"
+  minute: "*"
   job: ops-runner -f -s 60 -n ozc.send.heartbeat.quick /usr/bin/ops-metric-client -k heartbeat.ping -o 1
 
 - name: run filesystem space checks every 10 minutes
