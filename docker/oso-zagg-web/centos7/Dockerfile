@@ -15,10 +15,11 @@
 FROM openshifttools/oso-centos7-ops-base:latest
 
 # Pause indefinitely if asked to do so.
+ARG OO_PAUSE_ON_BUILD
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 RUN yum clean metadata && \
-    yum install -y iproute iputils pylint \
+    yum-install-check.sh -y iproute iputils \
         python-passlib \
         python-openshift-tools-monitoring-zagg \
         openshift-tools-web-zagg \

@@ -15,6 +15,7 @@
 FROM oso-rhel7-ops-base:latest
 
 # Pause indefinitely if asked to do so.
+ARG OO_PAUSE_ON_BUILD
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 EXPOSE 8000
@@ -22,7 +23,7 @@ EXPOSE 8000
 ADD zabbix.repo /etc/yum.repos.d/
 
 # Install zabbix from zabbix repo
-RUN yum install -y zabbix-web-mysql mariadb && \
+RUN yum-install-check.sh -y zabbix-web-mysql mariadb && \
     yum -y update && \
     yum clean all
 
@@ -36,6 +37,9 @@ ADD httpd.conf /etc/httpd/conf/
 
 # Set the timezone in the php.ini file
 RUN sed -r -i -e 's/^;(date.timezone).*/\1 = America\/New_York/g' /etc/php.ini
+
+# Disable exposure of php version information
+RUN sed -i 's/expose_php = .*/expose_php = Off/g' /etc/php.ini
 
 # RHEL7.2 Fix for mod_auth_digest writing to /run/httpd/authdigest_shm.pid
 RUN sed -i -e 's/^\(LoadModule auth_digest_module modules\/mod_auth_digest.so\)$/#\1/g' /etc/httpd/conf.modules.d/00-base.conf
