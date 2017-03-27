@@ -30,6 +30,10 @@ data:
       @include configs.d/openshift/filter-k8s-flatten-hash.conf
       @include configs.d/openshift/filter-k8s-record-transform.conf
       @include configs.d/openshift/filter-syslog-record-transform.conf
+      ##
+      # for 3.5 this will be @include configs.d/openshift/filter-viaq-data-model.conf
+      @include configs.d/openshift/filter-common-data-model.conf
+      ##
       @include configs.d/openshift/filter-post-*.conf
     ##
 
