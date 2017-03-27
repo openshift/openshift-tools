@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 #     ___ ___ _  _ ___ ___    _ _____ ___ ___         
 #    / __| __| \| | __| _ \  /_\_   _| __|   \        
 #   | (_ | _|| .` | _||   / / _ \| | | _|| |) |       
@@ -8,8 +8,19 @@
 #   |___/ \___/  |_|\_|\___/ |_|   |___|___/___| |_|  
 # 
 
+
+# Make sure the script exits on first error
+set -e
+
 RED="$(echo -e '\033[1;31m')"
 NORM="$(echo -e '\033[0m')"
+
+function handle_err() {
+  echo -e "\n${RED}ERROR: build script failed.${NORM}\n"
+}
+
+trap handle_err ERR
+
 
 sudo echo -e "\nTesting sudo works...\n"
 
@@ -42,9 +53,8 @@ fi
 # Build ourselves
 echo
 echo "Building oso-rhel7-ops-base..."
-sudo time docker build $@ -t oso-rhel7-ops-base . && \
+sudo time docker build $@ -t oso-rhel7-ops-base .
 sudo docker tag oso-rhel7-ops-base docker-registry.ops.rhcloud.com/ops/oso-rhel7-ops-base
-DOCKER_EXITCODE=$?
 
 if ! is_rhel ; then
   echo
@@ -57,10 +67,4 @@ if ! is_rhel ; then
   rm -rf etc-pki-entitlement
   echo "Done."
   echo
-fi
-
-# This shouldn't be needed since we're using -e, but apparently -e isn't working as expected.
-if [ $DOCKER_EXITCODE -ne 0 ] ; then
-  echo -e "\n${RED}ERROR: docker command failed.${NORM}\n"
-  exit $DOCKER_EXITCODE
 fi

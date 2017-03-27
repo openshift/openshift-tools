@@ -10,12 +10,13 @@ FROM openshifttools/oso-centos7-ops-base:latest
 
 
 # Pause indefinitely if asked to do so.
+ARG OO_PAUSE_ON_BUILD
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 # PCP
 ##################
 # install pcp-collector and it's dependencies, clean the cache.
-RUN yum install -y pcp pcp-conf pcp-collector xz && yum clean all
+RUN yum-install-check.sh -y pcp pcp-conf pcp-collector xz && yum clean all
 # Run in the container as root - avoids PCP_USER mismatches
 RUN sed -i -e 's/PCP_USER=.*$/PCP_USER=root/' -e 's/PCP_GROUP=.*$/PCP_GROUP=root/' /etc/pcp.conf
 
@@ -33,11 +34,30 @@ ENV PATH /usr/share/pcp/lib:/usr/libexec/pcp/bin:$PATH
 ADD check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
 ##################
 
+
+
+
+# PYLINT WORKAROUND
+# This is needed until epel is shipping pylint again. These are the packages we
+#   were running on before they were removed from epel.
+#
+# IMPORTANT: Remove this section once pylint is shipping in epel again.
+#
+# More info: https://bugzilla.redhat.com/show_bug.cgi?id=1431835
+##################
+RUN rpm -ivh \
+    https://kojipkgs.fedoraproject.org//packages/pylint/1.3.1/1.el7/noarch/pylint-1.3.1-1.el7.noarch.rpm \
+    https://kojipkgs.fedoraproject.org//packages/python-astroid/1.2.1/2.el7/noarch/python-astroid-1.2.1-2.el7.noarch.rpm \
+    https://kojipkgs.fedoraproject.org//packages/python-logilab-common/0.62.1/1.el7/noarch/python-logilab-common-0.62.1-1.el7.noarch.rpm
+##################
+
+
+
 RUN echo -e "\n\nalias oca='KUBECONFIG=/tmp/admin.kubeconfig oc '" >> /root/.bashrc
 RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oadm '" >> /root/.bashrc
 
 RUN yum clean metadata && \
-    yum install -y python-pip pcp pcp-conf pcp-testsuite \
+    yum-install-check.sh -y python-pip pcp pcp-conf pcp-testsuite \
         python-requests pyOpenSSL \
         python-openshift-tools \
         python-openshift-tools-monitoring-pcp \
@@ -55,8 +75,7 @@ RUN yum clean metadata && \
         openshift-tools-scripts-monitoring-openshift \
         openshift-tools-scripts-monitoring-autoheal \
         pcp-manager pcp-webapi python-pcp \
-        python-uri-templates google-api-python-client \
-        python-httplib2 python-oauth2client \
+        python-httplib2 \
         python-pyasn1 python-pyasn1-modules python-rsa \
         openvswitch \
         python-configobj \
@@ -76,7 +95,7 @@ RUN yum clean metadata && \
     yum clean all
 
 ADD urllib3-connectionpool-patch /root/
-RUN yum install -y patch && yum clean all && cd /usr/lib/python2.7/site-packages/ && patch -p1 < /root/urllib3-connectionpool-patch
+RUN yum-install-check.sh -y patch && yum clean all && cd /usr/lib/python2.7/site-packages/ && patch -p1 < /root/urllib3-connectionpool-patch
 
 # Add copr repo for python-hawkular-client rpm
 RUN cd /etc/yum.repos.d && curl -O https://copr.fedorainfracloud.org/coprs/g/Hawkular/python-hawkular-client/repo/epel-7/group_Hawkular-python-hawkular-client-epel-7.repo
@@ -93,7 +112,7 @@ RUN mkdir -p /host \
     ln -s /var/local/hostpkg /var/local/hostpkg/var/local/hostpkg
 
 # Install python-hawkular-client
-RUN yum install -y python-hawkular-client && yum clean all
+RUN yum-install-check.sh -y python-hawkular-client && yum clean all
 
 # Ansible startup configuration playbook
 ADD root /root

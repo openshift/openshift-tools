@@ -11,6 +11,7 @@ FROM openshifttools/oso-centos7-ops-base:latest
 {% endif %}
 
 # Pause indefinitely if asked to do so.
+ARG OO_PAUSE_ON_BUILD
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 EXPOSE 8000
@@ -18,7 +19,7 @@ EXPOSE 8000
 ADD zabbix.repo /etc/yum.repos.d/
 
 # Install zabbix from zabbix repo
-RUN yum install -y zabbix-web-mysql mariadb && \
+RUN yum-install-check.sh -y zabbix-web-mysql mariadb && \
     yum -y update && \
     yum clean all
 
