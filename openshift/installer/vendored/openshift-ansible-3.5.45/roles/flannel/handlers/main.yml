@@ -1,0 +1,8 @@
+---
+- name: restart flanneld
+  become: yes
+  systemd: name=flanneld state=restarted
+
+- name: restart docker
+  become: yes
+  systemd: name=docker state=restarted
