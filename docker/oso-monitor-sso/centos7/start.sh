@@ -23,8 +23,8 @@ ts='{ print strftime("%Y-%m-%d %H:%M:%S"), $0; fflush(); }'
 
 # Send a full heartbeat every 4 hours
 /usr/local/bin/ops-run-in-loop $((60*60*4)) ops-runner -f -s 300 -n sso.monitoring.send.heartbeat.full /usr/bin/ops-zagg-client --send-heartbeat 2>&1 | awk "$ts" &
-# Send a quick heartbeat every 5 minutes
-/usr/local/bin/ops-run-in-loop $((60*5)) ops-runner -f -s 60 -n sso.monitoring.send.heartbeat.quick /usr/bin/ops-zagg-client  -k heartbeat.ping -o 1 2>&1 | awk "$ts" &
+# Send a quick heartbeat every minute
+/usr/local/bin/ops-run-in-loop $((60*1)) ops-runner -f -s 60 -n sso.monitoring.send.heartbeat.quick /usr/bin/ops-zagg-client  -k heartbeat.ping -o 1 2>&1 | awk "$ts" &
 
 echo
 echo 'Running container and HTTP status check every 5 minutes'
