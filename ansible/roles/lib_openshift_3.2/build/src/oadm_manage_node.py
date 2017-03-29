@@ -87,6 +87,8 @@ class ManageNode(OpenShiftCLI):
             # this is gross but I filed a bug...
             # build our own json from the output.
             all_pods = json.loads(results['results'])['items']
+            if all_pods is None:
+                all_pods = []
 
         return all_pods
 

@@ -592,7 +592,8 @@ class Yedit(object):
                     continue
 
                 elif data and not isinstance(data, dict):
-                    return None
+                    raise YeditException("Unexpected item type found while going through key " +
+                                         "path: {} (at key: {})".format(key, dict_key))
 
                 data[dict_key] = {}
                 data = data[dict_key]
@@ -600,7 +601,7 @@ class Yedit(object):
             elif arr_ind and isinstance(data, list) and int(arr_ind) <= len(data) - 1:
                 data = data[int(arr_ind)]
             else:
-                return None
+                raise YeditException("Unexpected item type found while going through key path: {}".format(key))
 
         if key == '':
             data = item
@@ -613,6 +614,12 @@ class Yedit(object):
         # expected dict entry
         elif key_indexes[-1][1] and isinstance(data, dict):
             data[key_indexes[-1][1]] = item
+
+        # didn't add/update to an existing list, nor add/update key to a dict
+        # so we must have been provided some syntax like a.b.c[<int>] = "data" for a
+        # non-existent array
+        else:
+            raise YeditException("Error adding data to object at path: {}".format(key))
 
         return data
 
