@@ -102,6 +102,40 @@ def get_pv_usage():
             capacity_int = int(capacity.strip('GIgi'))
             total = total + capacity_int
     return total
+def get_pv_usage_clusterresourcequota():
+    """get all the pv used if the cluster is using the clusterresourcequota"""
+    pv_info = runOCcmd_yaml(" get clusterresourcequota/persistent-volume ")
+    return pv_info
+
+
+def convert_to_bytes(data):
+    """convert to bytes"""
+    (number, unit) = re.search("([0-9]+)([A-Za-z]+)", data.strip()).groups()
+
+    if unit.lower() == 'bi':
+        return int(number)
+    elif unit.lower() == 'ki':
+        return int(number) * 1024
+    elif unit.lower() == 'mi':
+        return int(number) * 1024 * 1024
+    elif unit.lower() == 'gi':
+        return int(number) * 1024 * 1024 * 1024
+
+    raise Exception("invalid input data: " + data)
+
+def convert_to_kb(data):
+    """convert to kib"""
+    return float(convert_to_bytes(data)) / 1024
+
+def convert_to_mb(data):
+    """convert to mb"""
+    return float(convert_to_kb(data)) / 1024
+
+def convert_to_gb(data):
+    """convert to gb"""
+    return float(convert_to_mb(data)) / 1024
+
+
 def main():
     """ report pv usage  """
 
@@ -116,13 +150,23 @@ def main():
     ocutil.namespace = "openshift-infra"
     dynamic_pod_name = get_dynamic_pod_name()
     if dynamic_pod_name == "":
-        pass
+        pv_info = get_pv_usage_clusterresourcequota()
+        #this may be becuase in new version ,will use the clusterresourcequota
+        cluster_capacity_max = pv_info['status']['total']['hard']['requests.storage']
+        logger.debug("cluster_capacity_max: %s", cluster_capacity_max)
+        pv_used = pv_info['status']['total']['used']['requests.storage']
+        usage_pv = (convert_to_bytes(pv_used)*100)/convert_to_bytes(cluster_capacity_max)
+        logger.debug("percent of usage of pv: %s", usage_pv)
+        logger.debug("datasend to zabbix:")
+        logger.debug("datasend to zabbix: max_gb %s", convert_to_gb(cluster_capacity_max))
+        logger.debug("datasend to zabbix:pv used: %s", convert_to_gb(pv_used))
+        send_metrics(usage_pv, convert_to_gb(cluster_capacity_max), convert_to_gb(pv_used))
     else:
         cluster_capacity_max = get_max_capacity(dynamic_pod_name)
         logger.debug("cluster_capacity_max: %s", cluster_capacity_max)
         pv_used = get_pv_usage()
         logger.debug("cluster_pv_used: %s", pv_used)
-        cluster_capacity_max_gb = int(cluster_capacity_max.strip('GIgi'))
+        cluster_capacity_max_gb = convert_to_gb(cluster_capacity_max)
         #use int to send the usge of %
         usage_pv = (pv_used*100)/cluster_capacity_max_gb
         logger.debug("percent of usage of pv: %s", usage_pv)
