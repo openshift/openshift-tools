@@ -17,6 +17,18 @@ g_template_docker:
     - Docker Daemon
     value_type: int
 
+  - key: docker.memoryusage.rss
+    applications:
+    - Docker Daemon
+    value_type: int
+    units: B
+
+  - key: docker.memoryusage.vms
+    applications:
+    - Docker Daemon
+    value_type: int
+    units: B
+
   - key: docker.container.dns.resolution
     applications:
     - Docker Container
