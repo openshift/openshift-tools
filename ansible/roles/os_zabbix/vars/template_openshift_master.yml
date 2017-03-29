@@ -144,19 +144,19 @@ g_template_openshift_master:
 
   - key: openshift.master.pv.percent.usage
     description: "check the openshift pv usage"
-    value_type: int
+    value_type: float
     applications:
     - Openshift Master
 
   - key: openshift.master.pv.capacity.max
     description: "check the openshift pv max capacity"
-    value_type: int
+    value_type: float
     applications:
     - Openshift Master
 
   - key: openshift.master.pv.capacity.used
     description: "check the openshfit pv used"
-    value_type: int
+    value_type: float
     applications:
     - Openshift Master
 
