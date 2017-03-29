@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.46
+Version:       0.1.47
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -406,6 +406,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Wed Mar 29 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.47-1
+- 
+
 * Wed Mar 29 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.46-1
 - add new mothed to get pv usage in new version of openshift (zhizhang
   @zhizhang-laptop-nay.redhat.com)
