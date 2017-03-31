@@ -162,6 +162,16 @@ osm_use_cockpit=false
 {# DO NOT USE FIREWALLD UNTIL READY #}
 os_firewall_use_firewalld=False
 
+{# OpenShift Cluster Network #}
+{% if obg_cluster_network_cidr %}
+osm_cluster_network_cidr={{ obg_cluster_network_cidr }}
+{% endif %}
+
+{# OpenShift Service Network #}
+{% if obg_master_portal_net %}
+openshift_master_portal_net={{ obg_master_portal_net }}
+{% endif %}
+
 # Openshift Router
 {% if obg_install_router %}
 openshift_hosted_manage_router=true
