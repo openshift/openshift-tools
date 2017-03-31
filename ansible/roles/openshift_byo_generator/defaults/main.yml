@@ -4,7 +4,6 @@ obg_registry_host: registry.example.com
 obg_registry_template: openshift3/ose-${component}:${version}
 obg_install_metrics: false
 obg_install_logging: false
-obg_install_provisioner: false
 obg_inventory_sdn: redhat/openshift-ovs-subnet
 obg_master_cluster_hostname: internal.api.example.com
 obg_master_public_hostname: api.example.com
