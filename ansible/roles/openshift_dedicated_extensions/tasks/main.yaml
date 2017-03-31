@@ -1,0 +1,6 @@
+---
+#role to enable the pip for 3.3
+- name: make sure the pipe line is in the file
+  lineinfile:
+    dest: /etc/openshift-dedicated/ui-extensions/assets/extensions/dedicated-extensions.js
+    line: 'window.OPENSHIFT_CONSTANTS.ENABLE_TECH_PREVIEW_FEATURE.pipelines = true;'
