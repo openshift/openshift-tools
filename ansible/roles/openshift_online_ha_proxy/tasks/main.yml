@@ -14,13 +14,6 @@
     name: openshift-scripts-devpreview
     state: present
 
-- name: Delete existing config map if necessary
-  oc_configmap:
-    state: absent
-    name: customrouter
-    namespace: default
-  run_once: true
-
 - name: Create customrouter configmap
   oc_configmap:
     state: present
