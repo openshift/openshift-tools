@@ -14,21 +14,21 @@
     name: openshift-scripts-devpreview
     state: present
 
-# The following tasks use the command module due to what appear to be bugs in the serialization/deserizliation
-# of the complex content in the customrouter configmap.
-# An attempt was made to use oc_obj to create the configmap with the necessary content, but we ran into errors
-# when oc attempted to read the temporary file created by oc_obj.
-# We have documented the work necessary to address these problems long term. In the interim, the command
-# module will be used.
-
-- name: Delete the configmap if it exists
-  command: >
-    oc delete configmap customrouter -n default --ignore-not-found
+- name: Delete existing config map if necessary
+  oc_configmap:
+    state: absent
+    name: customrouter
+    namespace: default
   run_once: true
 
-- name: create the customrouter configmap
-  command: >
-    oc create configmap customrouter -n default --from-file=/etc/openshift-online/templates/haproxy-config.template
+- name: Create customrouter configmap
+  oc_configmap:
+    state: present
+    name: customrouter
+    namespace: default
+    from_file:
+      template: /etc/openshift-online/templates/haproxy-config.template
+  register: configmap_out
   run_once: true
 
 - name: Add a volume to the router
