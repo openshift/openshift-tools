@@ -24,15 +24,10 @@
   register: configmap_out
   run_once: true
 
+# The oc_volume command does not currently support a configmap source. Falling back to command module.
 - name: Add a volume to the router
-  oc_volume:
-    namespace: default
-    kind: dc
-    name: router
-    vol_name: config-volume
-    mount_type: configmap
-    mount_path: /var/lib/haproxy/conf/custom
-    configmap_name: customrouter
+  command: >
+    oc set volume dc/router --add --overwrite --name=config-volume --mount-path=/var/lib/haproxy/conf/custom --configmap-name=customrouter
   run_once: true
 
 - name: Add our env vars to new customrouter
