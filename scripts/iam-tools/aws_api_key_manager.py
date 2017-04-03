@@ -434,6 +434,7 @@ class ManageKeys(object):
     def run_one(self, args, ops_accounts):
         """ Create API keys for only the specified ops-managed AWS accounts. """
 
+        match_list = []
         for aws_account in args.profile:
             for line in ops_accounts:
                 new_reg = r'(?P<account_name>\b' + aws_account + r'\b)'\
@@ -441,24 +442,28 @@ class ManageKeys(object):
                 match = re.search(new_reg, line)
 
                 if match:
+                    match_list.append(match)
                     account_name = match.group('account_name')
                     account_number = match.group('account_number')
 
-            client = self.get_token(account_number)
+                    client = self.get_token(account_number)
 
-            if client:
-                self.check_user(aws_account, args.user, client)
-                existing_keys = self.get_keys(args.user, client)
+                    if client:
+                        self.check_user(aws_account, args.user, client)
+                        existing_keys = self.get_keys(args.user, client)
 
-                if existing_keys:
-                    for key in existing_keys:
-                        self.delete_key(aws_account, args.user, key, client)
-                        key_object = self.create_key(aws_account, args.user, client)
-                        self.write_credentials(account_name, key_object)
+                        if existing_keys:
+                            for key in existing_keys:
+                                self.delete_key(aws_account, args.user, key, client)
+                                key_object = self.create_key(aws_account, args.user, client)
+                                self.write_credentials(account_name, key_object)
 
-                else:
-                    key_object = self.create_key(aws_account, args.user, client)
-                    self.write_credentials(account_name, key_object)
+                        else:
+                            key_object = self.create_key(aws_account, args.user, client)
+                            self.write_credentials(account_name, key_object)
+
+            if not match_list:
+                print('Account %s does not match any current ops accounts.' % aws_account)
 
         self.manage_timestamp()
 
