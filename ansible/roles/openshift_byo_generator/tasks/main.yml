@@ -20,6 +20,7 @@
   - obg_compute_nodes
   - obg_router_domain
   - obg_install_version
+  - obg_registry_host
 
 - fail:
     msg: "Please define {{ item }}"

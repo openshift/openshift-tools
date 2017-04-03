@@ -1,6 +1,5 @@
 ---
 obg_output_path: /tmp
-obg_registry_host: registry.example.com
 obg_registry_template: openshift3/ose-${component}:${version}
 obg_install_metrics: false
 obg_install_logging: false
