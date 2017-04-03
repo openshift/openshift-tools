@@ -30,6 +30,9 @@
     description: Aggregated Logging
   register: projectout
   run_once: true
+  retries: 12
+  delay: 5
+
 - debug: var=projectout
 
 - name: label logging project to exclude from pv quotas
