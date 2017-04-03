@@ -122,7 +122,7 @@ function _check_creds()
         if [ -n "$ZSH_NAME" ]; then
             # in zsh associative array keys syntax is (@k) instead of !
             for name in "${(@k)accounts[@]}"; do
-                echo -n " -p '$name'"
+                echo -n " -p $name"
             done
         else
             for name in "${!accounts[@]}"; do
