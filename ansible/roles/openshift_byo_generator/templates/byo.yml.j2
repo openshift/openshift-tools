@@ -14,10 +14,6 @@ openshift_master_api_port=443
 openshift_master_console_port=443
 openshift_docker_hosted_registry_insecure=false
 osm_default_node_selector='type=compute'
-openshift_router_selector='type=infra'
-openshift_registry_selector='type=infra'
-openshift_hosted_manage_router=false
-openshift_hosted_manage_registry=false
 {# End Static options #}
 
 {# set install version if set #}
@@ -27,29 +23,16 @@ openshift_pkg_version=-{{ obg_install_version }}
 {# end install version #}
 
 cluster_id={{ obg_clusterid }}
-oreg_url={{ obg_registry_template }}
 openshift_master_cluster_hostname={{ obg_master_cluster_hostname }}
 openshift_master_cluster_public_hostname={{ obg_master_public_hostname }}
 openshift_master_public_api_url={{ obg_master_public_api_url }}
 openshift_master_public_console_url={{ obg_master_public_console_url }}
+oreg_url={{ obg_registry_host }}/{{ obg_registry_template }}
 
 os_sdn_network_plugin_name={{ obg_inventory_sdn }}
 
-{# start metrics info #}
-{%- if obg_install_metrics -%}
-openshift_master_metrics_public_url={{ obg_metrics_url }}
-{%- endif -%}
-{# end metrics #}
-
-{# start logging info #}
-{%- if obg_install_logging -%}
-openshift_master_logging_public_url={{ obg_logging_url }}
-{%- endif -%}
-{# end logging #}
-
 {# start provisioner info #}
-openshift_master_dynamic_provisioning_enabled={{ obg_install_provisioner }}
-# TODO: Set limits here?
+openshift_master_dynamic_provisioning_enabled=true
 {# end provisioner #}
 
 osm_default_subdomain={{ obg_router_subdomain }}
@@ -173,6 +156,121 @@ openshift_master_scheduler_priorities={{ obg_openshift_scheduler_priorities }}
 openshift_master_scheduler_predicates={{ obg_openshift_scheduler_predicates }}
 {% endif %}
 
+{# Don't install Cockpit #}
+osm_use_cockpit=false
+
+{# DO NOT USE FIREWALLD UNTIL READY #}
+os_firewall_use_firewalld=False
+
+{# OpenShift Cluster Network #}
+{% if obg_cluster_network_cidr %}
+osm_cluster_network_cidr={{ obg_cluster_network_cidr }}
+{% endif %}
+
+{# OpenShift Service Network #}
+{% if obg_master_portal_net %}
+openshift_master_portal_net={{ obg_master_portal_net }}
+{% endif %}
+
+# Openshift Router
+{% if obg_install_router %}
+openshift_hosted_manage_router=true
+openshift_hosted_router_selector='type=infra'
+openshift_hosted_router_replicas=2
+openshift_hosted_registry_routetermination=reencrypt
+openshift_hosted_router_registryurl={{ obg_registry_host }}/{{ obg_registry_template }}
+openshift_hosted_routers={{ obg_hosted_routers }}
+{% else %}
+openshift_hosted_manage_router=false
+{# END Openshift Router #}
+{% endif %}
+
+# Openshift Registry
+{% if obg_install_registry %}
+openshift_hosted_manage_registry=true
+openshift_hosted_registry_storage_kind=object
+openshift_hosted_registry_storage_provider=s3
+openshift_hosted_registry_storage_s3_accesskey={{ obg_registry_storage_s3_accesskey }}
+openshift_hosted_registry_storage_s3_secretkey={{ obg_registry_storage_s3_secretkey }}
+openshift_hosted_registry_storage_s3_region={{ obg_registry_storage_s3_region }}
+openshift_hosted_registry_storage_s3_bucket={{ obg_registry_storage_s3_bucket }}
+openshift_docker_hosted_registry_insecure=False
+openshift_hosted_registry_selector='type=infra'
+openshift_hosted_registry_routehost={{ obg_registry_routehost }}
+openshift_hosted_registry_routecertificates={{ obg_registry_routehost_routecertificates }}
+{% else %}
+openshift_hosted_manage_registry=false
+{# END Openshift Registry #}
+{% endif %}
+
+
+# Openshift Logging
+{% if obg_install_logging %}
+openshift_hosted_logging_deploy=true
+openshift_hosted_logging_elasticsearch_cluster_size=1
+openshift_hosted_logging_deployer_version=v{{ obg_install_version_short }}
+openshift_logging_image_prefix={{ obg_registry_host }}/openshift3/
+openshift_logging_use_ops=false
+openshift_logging_master_public_url={{ obg_master_public_api_url }}
+openshift_logging_namespace=logging
+openshift_logging_curator_default_days=14
+openshift_logging_curator_script_log_level=INFO
+openshift_logging_curator_log_level=WARN
+openshift_logging_curator_memory_limit=2G
+openshift_logging_curator_nodeselector={'type': 'infra'}
+openshift_logging_kibana_hostname={{ obg_logging_host }}
+openshift_logging_kibana_memory_limit=768M
+openshift_logging_kibana_proxy_memory_limit=128M
+openshift_logging_kibana_replica_count=2
+openshift_logging_kibana_nodeselector={'type': 'infra'}
+openshift_logging_fluentd_memory_limit=1G
+openshift_logging_fluentd_nodeselector={'logging-infra-fluentd': 'true'}
+openshift_logging_fluentd_hosts=[]
+openshift_logging_es_cluster_size=2
+openshift_logging_es_memory_limit=7680M
+openshift_logging_es_pvc_dynamic=true
+openshift_logging_es_pvc_size=200Gi
+openshift_logging_es_nodeselector={'type': 'infra'}
+openshift_logging_kibana_cert={{ obg_logging_kibana_cert }}
+openshift_logging_kibana_key={{ obg_logging_kibana_key }}
+openshift_logging_kibana_ca={{ obg_logging_kibana_ca }}
+{% else %}
+openshift_hosted_logging_deploy=false
+{# END Openshift Logging #}
+{% endif %}
+
+# Openshift Metrics
+{% if obg_install_metrics %}
+openshift_hosted_metrics_deploy=true
+openshift_metrics_image_prefix={{ obg_registry_host }}/openshift3/
+openshift_metrics_image_version=v{{ obg_install_version_short }}
+openshift_hosted_metrics_storage_kind=dynamic
+openshift_metrics_cassandra_storage_type=dynamic
+openshift_metrics_cassandra_pvc_size=100Gi
+openshift_hosted_metrics_public_url=https://{{ odg_metrics_host }}/hawkular/metrics
+openshift_metrics_cassandra_limits_memory=2G
+openshift_metrics_cassandra_replicas=2
+openshift_metrics_cassandra_requests_memory=1G
+openshift_metrics_duration=7
+openshift_metrics_hawkular_limits_memory=3G
+openshift_metrics_hawkular_replicas=1
+openshift_metrics_hawkular_requests_cpu=100m
+openshift_metrics_hawkular_requests_memory=2G
+openshift_metrics_heapster_limits_memory=3.75G
+openshift_metrics_heapster_requests_memory=0.9375G
+openshift_metrics_heapster_standalone=false
+openshift_metrics_resolution=30s
+openshift_metrics_startup_timeout=500
+openshift_metrics_hawkular_hostname={{ odg_metrics_host }}
+openshift_metrics_hawkular_cert={{ obg_metrics_hawkular_cert }}
+openshift_metrics_hawkular_key={{ obg_metrics_hawkular_key }}
+openshift_metrics_hawkular_ca={{ obg_metrics_hawkular_ca }}
+openshift_metrics_project=openshift-infra
+{% else %}
+{# END Openshift Metrics #}
+openshift_hosted_metrics_deploy=false
+{% endif %}
+
 [masters]
 {% for master in obg_masters %}
 {{ hostvars[master].oo_public_ip }}
@@ -193,16 +291,16 @@ openshift_master_scheduler_predicates={{ obg_openshift_scheduler_predicates }}
 {% endfor %}
 {% for infra in obg_infra_nodes %}
 {%     if obg_location == 'gcp' %}
-{{ hostvars[infra].oo_public_ip }}        openshift_hostname={{ infra }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'ops_node': 'old'}"
+{{ hostvars[infra].oo_public_ip }}        openshift_hostname={{ infra }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'ops_node': 'old', 'logging-infra-fluentd': 'true'}"
 {%     else %}
-{{ hostvars[infra].oo_public_ip }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'hostname': '{{ infra }}', 'ops_node': 'old'}"
+{{ hostvars[infra].oo_public_ip }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'hostname': '{{ infra }}', 'ops_node': 'old', 'logging-infra-fluentd': 'true'}"
 {%     endif %}
 {% endfor %}
 {% for compute in obg_compute_nodes %}
 {%     if obg_location == 'gcp' %}
-{{ hostvars[compute].oo_public_ip }}       openshift_hostname={{ compute }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'ops_node': 'old'}"
+{{ hostvars[compute].oo_public_ip }}       openshift_hostname={{ compute }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'ops_node': 'old', 'logging-infra-fluentd': 'true'}"
 {%     else %}
-{{ hostvars[compute].oo_public_ip }}       openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'hostname': '{{ compute }}', 'ops_node': 'old'}"
+{{ hostvars[compute].oo_public_ip }}       openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'hostname': '{{ compute }}', 'ops_node': 'old', 'logging-infra-fluentd': 'true'}"
 {%     endif %}
 {% endfor %}
 
@@ -210,16 +308,16 @@ openshift_master_scheduler_predicates={{ obg_openshift_scheduler_predicates }}
 [new_nodes]
 {%     for infra in obg_new_infra_nodes %}
 {%         if obg_location == 'gcp' %}
-{{ hostvars[infra].oo_public_ip }}        openshift_hostname={{ infra }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'ops_node': 'new'}" openshift_schedulable=false
+{{ hostvars[infra].oo_public_ip }}        openshift_hostname={{ infra }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'ops_node': 'new', 'logging-infra-fluentd': 'true'}" openshift_schedulable=false
 {%         else %}
-{{ hostvars[infra].oo_public_ip }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'hostname': '{{ infra }}', 'ops_node': 'new'}" openshift_schedulable=false
+{{ hostvars[infra].oo_public_ip }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'hostname': '{{ infra }}', 'ops_node': 'new', 'logging-infra-fluentd': 'true'}" openshift_schedulable=false
 {%         endif %}
 {%     endfor %}
 {%     for compute in obg_new_compute_nodes %}
 {%         if obg_location == 'gcp' %}
-{{ hostvars[compute].oo_public_ip }}       openshift_hostname={{ compute }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'ops_node': 'new'}" openshift_schedulable=false
+{{ hostvars[compute].oo_public_ip }}       openshift_hostname={{ compute }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'ops_node': 'new', 'logging-infra-fluentd': 'true'}" openshift_schedulable=false
 {%         else %}
-{{ hostvars[compute].oo_public_ip }}       openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'hostname': '{{ compute }}', 'ops_node': 'new'}" openshift_schedulable=false
+{{ hostvars[compute].oo_public_ip }}       openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'hostname': '{{ compute }}', 'ops_node': 'new', 'logging-infra-fluentd': 'true'}" openshift_schedulable=false
 {%         endif %}
 {%     endfor %}
 {% endif %}
