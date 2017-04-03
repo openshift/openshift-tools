@@ -209,28 +209,13 @@ openshift_hosted_manage_registry=false
 openshift_hosted_logging_deploy=true
 openshift_hosted_logging_elasticsearch_cluster_size=1
 openshift_hosted_logging_deployer_version=v{{ obg_install_version_short }}
-openshift_logging_image_prefix={{ obg_registry_host }}/openshift3/
-openshift_logging_use_ops=false
-openshift_logging_master_public_url={{ obg_master_public_api_url }}
-openshift_logging_namespace=logging
-openshift_logging_curator_default_days=14
-openshift_logging_curator_script_log_level=INFO
-openshift_logging_curator_log_level=WARN
-openshift_logging_curator_memory_limit=2G
-openshift_logging_curator_nodeselector={'type': 'infra'}
-openshift_logging_kibana_hostname={{ obg_logging_host }}
-openshift_logging_kibana_memory_limit=768M
-openshift_logging_kibana_proxy_memory_limit=128M
-openshift_logging_kibana_replica_count=2
-openshift_logging_kibana_nodeselector={'type': 'infra'}
-openshift_logging_fluentd_memory_limit=1G
-openshift_logging_fluentd_nodeselector={'logging-infra-fluentd': 'true'}
-openshift_logging_fluentd_hosts=[]
-openshift_logging_es_cluster_size=2
-openshift_logging_es_memory_limit=7680M
-openshift_logging_es_pvc_dynamic=true
-openshift_logging_es_pvc_size=200Gi
-openshift_logging_es_nodeselector={'type': 'infra'}
+
+{# logging options are passed in via the obg_logging_variables variable #}
+{% for option, value in obg_logging_variables.iteritems() %}
+{{option}}={{value}}
+{% endfor %}
+
+{# cert files come in separately #}
 openshift_logging_kibana_cert={{ obg_logging_kibana_cert }}
 openshift_logging_kibana_key={{ obg_logging_kibana_key }}
 openshift_logging_kibana_ca={{ obg_logging_kibana_ca }}
@@ -242,33 +227,20 @@ openshift_hosted_logging_deploy=false
 # Openshift Metrics
 {% if obg_install_metrics %}
 openshift_hosted_metrics_deploy=true
-openshift_metrics_image_prefix={{ obg_registry_host }}/openshift3/
-openshift_metrics_image_version=v{{ obg_install_version_short }}
 openshift_hosted_metrics_storage_kind=dynamic
-openshift_metrics_cassandra_storage_type=dynamic
-openshift_metrics_cassandra_pvc_size=100Gi
-openshift_hosted_metrics_public_url=https://{{ odg_metrics_host }}/hawkular/metrics
-openshift_metrics_cassandra_limits_memory=2G
-openshift_metrics_cassandra_replicas=2
-openshift_metrics_cassandra_requests_memory=1G
-openshift_metrics_duration=7
-openshift_metrics_hawkular_limits_memory=3G
-openshift_metrics_hawkular_replicas=1
-openshift_metrics_hawkular_requests_cpu=100m
-openshift_metrics_hawkular_requests_memory=2G
-openshift_metrics_heapster_limits_memory=3.75G
-openshift_metrics_heapster_requests_memory=0.9375G
-openshift_metrics_heapster_standalone=false
-openshift_metrics_resolution=30s
-openshift_metrics_startup_timeout=500
-openshift_metrics_hawkular_hostname={{ odg_metrics_host }}
+
+{# metrics options are passed in via the obg_metrics_variables variable #}
+{% for option, value in obg_metrics_variables.iteritems() %}
+{{option}}={{value}}
+{% endfor %}
+
+openshift_metrics_image_version=v{{ obg_install_version_short }}
+openshift_metrics_hawkular_ca={{ obg_metrics_hawkular_ca }}
 openshift_metrics_hawkular_cert={{ obg_metrics_hawkular_cert }}
 openshift_metrics_hawkular_key={{ obg_metrics_hawkular_key }}
-openshift_metrics_hawkular_ca={{ obg_metrics_hawkular_ca }}
-openshift_metrics_project=openshift-infra
 {% else %}
-{# END Openshift Metrics #}
 openshift_hosted_metrics_deploy=false
+{# END Openshift Metrics #}
 {% endif %}
 
 [masters]
