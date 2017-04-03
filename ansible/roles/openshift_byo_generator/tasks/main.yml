@@ -46,7 +46,6 @@
 - fail:
     msg: "Please define {{ item }}"
   with_items:
-  - odg_metrics_host
   - obg_metrics_hawkular_cert
   - obg_metrics_hawkular_key
   - obg_metrics_hawkular_ca
@@ -58,7 +57,6 @@
   - obg_logging_kibana_cert
   - obg_logging_kibana_key
   - obg_logging_kibana_ca
-  - obg_logging_host
   when: "{{ item }} is undefined and obg_install_logging == true"
 
 - set_fact:
