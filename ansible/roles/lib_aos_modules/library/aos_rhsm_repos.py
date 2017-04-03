@@ -56,6 +56,9 @@ EXAMPLES = '''
 import re
 
 RHSM_BIN = '/usr/sbin/subscription-manager'
+# Old versions of subscription-manager would hang idefinitely (BZ 1406491) in
+# certain conditions. This timeout wrapper ensures it will always terminate.
+RHSM_ENTRYPOINT = [ "timeout", "120", "--kill-after=60", RHSM_BIN]
 
 class RHSMError(Exception):
     """rhsm error"""
@@ -70,7 +73,7 @@ class RHSMRepos(object):
 
     def set_repositories(self):
         """set the enabled and disabled repositories"""
-        cmd = [RHSM_BIN, 'repos']
+        cmd = RHSM_ENTRYPOINT + ['repos']
         if self.disabled:
             cmd.extend(['--disable=%s' % dis for dis in self.disabled])
         # enabled must come last as disable will undo the enabled.
@@ -115,7 +118,7 @@ class RHSMRepos(object):
     def query_repos(self, qtype='list'):
         """query for repos"""
 
-        cmd = [RHSM_BIN, 'repos']
+        cmd = RHSM_ENTRYPOINT + ['repos']
 
         if qtype == 'enabled':
             cmd.append('--list-enabled')
@@ -151,7 +154,7 @@ class RHSMRepos(object):
 
     def check_identity(self):
         """verify that this system is entitled"""
-        rcode, _, _ = self.module.run_command([RHSM_BIN, 'identity'])
+        rcode, _, _ = self.module.run_command(RHSM_ENTRYPOINT + ['identity'])
         if rcode != 0:
             self.module.fail_json(msg="command `subscription-manager identity` failed.  exit code non zero.", rc=1)
 
