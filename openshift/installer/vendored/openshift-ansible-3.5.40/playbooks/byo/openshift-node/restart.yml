@@ -1,8 +1,0 @@
----
-- include: ../../common/openshift-cluster/std_include.yml
-  tags:
-  - always
-
-- include: ../../common/openshift-node/restart.yml
-  vars:
-    openshift_deployment_type: "{{ deployment_type }}"
