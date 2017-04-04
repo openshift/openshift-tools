@@ -1,6 +1,0 @@
----
-- name: Configure nfs
-  hosts: oo_nfs_to_config
-  roles:
-  - role: openshift_facts
-  - role: openshift_storage_nfs
