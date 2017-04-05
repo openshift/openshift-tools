@@ -1,0 +1,15 @@
+---
+endpoints:
+# this one will be skipped because the script only processes endpoints that request metrics
+- name: 'analytics'
+  url: 'http://analytics.local.cluster/metrics'
+  metrics:
+
+
+- name: 'podchecker'
+  url: 'http://podchecker.openshift-awesome.svc.cluster.local:1234/metrics'
+  metrics:
+    - 'podchecker_awesome_stats'
+    - 'podchecker_memory_usage'
+
+
