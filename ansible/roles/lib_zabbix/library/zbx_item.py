@@ -108,7 +108,8 @@ def get_template_ids(zapi, template_name):
 
     return template_ids, app_ids
 
-def get_host_ids(zapi, hostname):
+
+def get_host_ids(module, zapi, hostname):
     '''
     get related host_id
     '''
@@ -118,8 +119,19 @@ def get_host_ids(zapi, hostname):
                                'get',
                                {'search': {'host': hostname}})
 
-    if content.has_key('result'):
-        host_ids.append(content['result'][0]['hostid'])
+    # Module exit attempting to catch details about the following error during
+    # TASK [tools_roles/os_zabbix_cluster_stats : item: openshift.master.cluster.all.cpu.idle_sum]:
+    #   in get_host_ids\n    host_ids.append(content['result'][0]['hostid'])
+    #   IndexError: list index out of range
+    try:
+        if content.has_key('result'):
+            host_ids.append(content['result'][0]['hostid'])
+    except IndexError as ierror:
+        module.exit_json(failed=True,
+                         changed=False,
+                         results='Error (%s): get host ids for %s did not contain expected content format: %s' % \
+                                 (str(ierror), hostname, str(content)),
+                         state="Unknown")
 
     return host_ids
 
@@ -253,7 +265,7 @@ def main():
                                    })
 
     if module.params['hostname']:
-        host_ids = get_host_ids(zapi, module.params['hostname'])
+        host_ids = get_host_ids(module, zapi, module.params['hostname'])
 
         if not host_ids:
             module.exit_json(failed=True,
