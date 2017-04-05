@@ -51,6 +51,7 @@ def main():
             zbx_password=dict(default=os.environ.get('ZABBIX_PASSWORD', None), type='str'),
             zbx_debug=dict(default=False, type='bool'),
             name=dict(default=None, type='str'),
+            show_hosts=dict(default=False, type='bool'),
             state=dict(default='present', type='str'),
         ),
         #supports_check_mode=True
@@ -67,10 +68,15 @@ def main():
     hname = module.params['name']
     state = module.params['state']
 
-    content = zapi.get_content(zbx_class_name,
-                               'get',
-                               {'search': {'name': hname},
-                               })
+    query = {
+        'search': {'name': hname},
+    }
+
+    if module.params['show_hosts']:
+        query['selectHosts'] = ['name', 'hostid', 'maintenance_status']
+
+    content = zapi.get_content(zbx_class_name, 'get', query)
+
     if state == 'list':
         module.exit_json(changed=False, results=content['result'], state="list")
 
