@@ -117,3 +117,104 @@
   with_nested:
   - [ 'filter_plugins', 'lookup_plugins' ]
   - "{{ upgrade_versions.files }}"
+
+# Create the lib_vendored_deps role which includes necessary deps for easy use
+- name: Make the lib_vendored_deps role
+  file:
+    state: directory
+    path: "{{ item }}"
+    recurse: true
+  with_items:
+  - "{{ vosar_output_directory }}/roles/lib_vendored_deps/library"
+  - "{{ vosar_output_directory }}/roles/lib_vendored_deps/filter_plugins"
+  - "{{ vosar_output_directory }}/roles/lib_vendored_deps/lookup_plugins"
+
+#######################################################################
+# This section creates a lib_vendored_deps role that includes all of
+# the deps from openshift-ansible that can be included in playbook to
+# source dependencies
+
+###############################
+# This is the roles/lib_* dirs
+###############################
+- find:
+    path: "{{ vosar_output_directory }}/roles"
+    patterns: lib_*
+    file_type: directory
+  register: lib_dirs
+
+- find:
+    path: "{{ item }}/library"
+    patterns: "*.py"
+    file_type: file
+  with_items:
+  - "{{ lib_dirs.files | map(attribute='path') | list }}"
+  register: lib_files
+
+- debug:
+    msg: "{{ lib_files.results | map(attribute='files') | list | ops_flatten | map(attribute='path') | list }}"
+
+- name: set the paths into a var
+  set_fact:
+    lib_roles_files_path: "{{ lib_files.results | map(attribute='files') | list | ops_flatten | map(attribute='path') | list }}"
+
+- name: Symlink the files into the appropriate spots
+  file:
+    state: link
+    src: "{{ item | replace(vosar_output_directory + '/roles', '../..') }}"
+    path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/library/' + (item | basename) }}"
+  with_items: "{{ lib_roles_files_path }}"
+###############################
+# END roles/lib_* dirs
+###############################
+
+###############################
+# library dir
+###############################
+- find:
+    path: "{{ vosar_output_directory }}/library"
+    patterns: "*.py"
+    file_type: file
+  register: lib_files
+
+- name: Symlink the files into the appropriate spots
+  file:
+    state: link
+    src: "{{ item | replace(vosar_output_directory, '../../..') }}"
+    path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/library/' + (item | basename) }}"
+  with_items: "{{ lib_files.files | map(attribute='path') | list }}"
+###############################
+# End library dir
+###############################
+
+###############################
+# fitler_plugin dir
+###############################
+- find:
+    path: "{{ vosar_output_directory }}/filter_plugins"
+    patterns: "*.py"
+    file_type: file
+  register: lib_files
+
+- name: Symlink the files into the appropriate spots
+  file:
+    state: link
+    src: "{{ item | replace(vosar_output_directory, '../../..') }}"
+    path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/filter_plugins/' + (item | basename) }}"
+  with_items: "{{ lib_files.files | map(attribute='path') | list }}"
+
+###############################
+# lookup_plugin dir
+###############################
+- find:
+    path: "{{ vosar_output_directory }}/lookup_plugins"
+    patterns: "*.py"
+    file_type: file
+  register: lib_files
+
+- name: Symlink the files into the appropriate spots
+  file:
+    state: link
+    src: "{{ item | replace(vosar_output_directory, '../../..') }}"
+    path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/lookup_plugins/' + (item | basename) }}"
+  with_items: "{{ lib_files.files | map(attribute='path') | list }}"
