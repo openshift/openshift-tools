@@ -129,6 +129,11 @@
   - "{{ vosar_output_directory }}/roles/lib_vendored_deps/filter_plugins"
   - "{{ vosar_output_directory }}/roles/lib_vendored_deps/lookup_plugins"
 
+- name: Ensure contiv role gets committed to git
+  file:
+    state: touch
+    path: "{{ vosar_output_directory }}/roles/contiv/empty_file"
+
 #######################################################################
 # This section creates a lib_vendored_deps role that includes all of
 # the deps from openshift-ansible that can be included in playbook to
