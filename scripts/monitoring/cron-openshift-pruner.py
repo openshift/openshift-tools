@@ -160,6 +160,8 @@ class OpenShiftPrune(object):
                '--config', self.args.kube_config,
                '--token', token,
                '--confirm']
+        if self.args.debug:
+            cmd += ['--loglevel', '4']
 
         output = subprocess.check_output(cmd)
         if self.args.debug:
@@ -174,6 +176,9 @@ class OpenShiftPrune(object):
                '--keep-failed', self.args.build_keep_failed,
                '--config', self.args.kube_config,
                '--confirm']
+        if self.args.debug:
+            cmd += ['--loglevel', '4']
+
         output = subprocess.check_output(cmd)
         if self.args.debug:
             print "Prune build output:\n" + output
@@ -187,6 +192,8 @@ class OpenShiftPrune(object):
                '--keep-failed', self.args.deploy_keep_failed,
                '--config', self.args.kube_config,
                '--confirm']
+        if self.args.debug:
+            cmd += ['--loglevel', '4']
 
         output = subprocess.check_output(cmd)
         if self.args.debug:
