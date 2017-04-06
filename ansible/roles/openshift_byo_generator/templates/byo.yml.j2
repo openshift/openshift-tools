@@ -177,7 +177,6 @@ openshift_master_portal_net={{ obg_master_portal_net }}
 openshift_hosted_manage_router=true
 openshift_hosted_router_selector='type=infra'
 openshift_hosted_router_replicas=2
-openshift_hosted_registry_routetermination=reencrypt
 openshift_hosted_router_registryurl={{ obg_registry_host }}/{{ obg_registry_template }}
 openshift_hosted_routers={{ obg_hosted_routers }}
 {% else %}
@@ -196,6 +195,8 @@ openshift_hosted_registry_storage_s3_region={{ obg_registry_storage_s3_region }}
 openshift_hosted_registry_storage_s3_bucket={{ obg_registry_storage_s3_bucket }}
 openshift_docker_hosted_registry_insecure=False
 openshift_hosted_registry_selector='type=infra'
+openshift_hosted_registry_routetermination=reencrypt
+openshift_hosted_registry_registryurl={{ obg_registry_host }}/{{ obg_registry_template }}
 openshift_hosted_registry_routehost={{ obg_registry_routehost }}
 openshift_hosted_registry_routecertificates={{ obg_registry_routehost_routecertificates }}
 {% else %}
@@ -207,8 +208,9 @@ openshift_hosted_manage_registry=false
 # Openshift Logging
 {% if obg_install_logging %}
 openshift_hosted_logging_deploy=true
-openshift_hosted_logging_elasticsearch_cluster_size=1
+openshift_hosted_logging_elasticsearch_cluster_size=2
 openshift_hosted_logging_deployer_version=v{{ obg_install_version_short }}
+openshift_logging_image_version=v{{ obg_install_version_short }}
 
 {# logging options are passed in via the obg_logging_variables variable #}
 {% for option, value in obg_logging_variables.iteritems() %}
