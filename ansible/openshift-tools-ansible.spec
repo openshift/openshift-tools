@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.37
+Version:        0.0.38
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,104 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Apr 06 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.38-1
+- Raising heartbeat frequency for synthetic hosts to every minute
+  (bmorriso@redhat.com)
+- Returning hosts from a hostgroup. (kwoodson@redhat.com)
+- Adding debug for zbx get_host_ids error (jupierce@redhat.com)
+- added support for lib_vendored_deps (mwoodson@redhat.com)
+- updated the byo generate to have options passed in for logging and metrics
+  (mwoodson@redhat.com)
+- made the obg_registry need to pass in (mwoodson@redhat.com)
+- Reverting changes to ha_proxy setup (jupierce@redhat.com)
+- updated the logging to retry more for creating the project
+  (mwoodson@redhat.com)
+- added sdn and service network options to gen byo (mwoodson@redhat.com)
+- more changes for gen_byo (mwoodson@redhat.com)
+- Tested idempotency and removed now un-necessary delete section
+  (chmurphy@redhat.com)
+- Use new oc_configmap to pay back tech debt (chmurphy@redhat.com)
+- Use oc_volume to add the router configmap volume. (bbarcaro@redhat.com)
+- updated the generate byo to support router, reg, logging, metrics
+  (mwoodson@redhat.com)
+- Fixed 3.4 output for list-pods. (kwoodson@redhat.com)
+- add new mothed to get pv usage in new version of openshift (zhizhang
+  @zhizhang-laptop-nay.redhat.com)
+- add checks for docker usage of rss and vms (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+- adding conditionals (dedgar@redhat.com)
+- Fix fluentd on 3.4 installs (whearn@redhat.com)
+- adjusting trigger names (mmahut@redhat.com)
+- Send the quick heartbeat data every minute (mmahut@redhat.com)
+- Changing the paging for heartbeat to 5/15 minutes (avg/high)
+  (mmahut@redhat.com)
+- making more comment revisions (dedgar@redhat.com)
+- making more comment revisions (dedgar@redhat.com)
+- Configure the OpenShift Online haproxy (chmurphy@redhat.com)
+- fixed an issue  with the openshift default ns settings role
+  (mwoodson@redhat.com)
+- making comment revisions (dedgar@redhat.com)
+- logging container outbound TCP connections (dedgar@redhat.com)
+- Increase metrics deployer wait to 15 minutes. (dgoodwin@redhat.com)
+- Changing critical memory level alert to average (mwhittingham@redhat.com)
+- fixed naming issue for storageclass (mwoodson@redhat.com)
+- Adding 'openshift_template_deployer' role (jupierce@redhat.com)
+- Start specifying v3.4 for the metrics image version. (dgoodwin@redhat.com)
+- Fix for empty string getting converted to None and treated as None.
+  (kwoodson@redhat.com)
+- Adding interface to call lib_openshift group/user policy module
+  (jupierce@redhat.com)
+- Mount the entire host FS on the host monitoring container's /host
+  (joesmith@redhat.com)
+- updated the subdomain variable in the byo generator (mwoodson@redhat.com)
+- Pass in logging image version (whearn@redhat.com)
+- Add view role to hawkular SA before launching metrics deployer.
+  (dgoodwin@redhat.com)
+- Lower the critical memory alert to avg (mmahut@redhat.com)
+- Add check to see if Zabbix is running the most recent LTS version
+  (joesmith@redhat.com)
+- cleaned up logic in gcloud label, fixed a zone issue (mwoodson@redhat.com)
+- cleaned up project in various gcloud modules (mwoodson@redhat.com)
+- cleaned up gcloud_compute_label (mwoodson@redhat.com)
+- re-did the lib_gcloud compute_labels to have pythonic input
+  (mwoodson@redhat.com)
+- added lib_gcloud gcloud_compute_label (mwoodson@redhat.com)
+- updated the config loop enabled checks with sop (mwoodson@redhat.com)
+- updated the timings (mwoodson@redhat.com)
+- fixed the config loop client triggers (mwoodson@redhat.com)
+- enabled the checks for the host monitoring to check the config loop tags
+  (mwoodson@redhat.com)
+- added the config loop client (mwoodson@redhat.com)
+- added the zabbix config loop client template (mwoodson@redhat.com)
+- fixed dumb typo in zabbix config loop (mwoodson@redhat.com)
+- added triggers for config loop monitoring (mwoodson@redhat.com)
+- config loop tag monitoring work (mwoodson@redhat.com)
+- don't apply PROXY env var changes to 3.3 clusters (jdiaz@redhat.com)
+- Adding python-manageiq-client to tower (bmorriso@redhat.com)
+-  Updating playbook for setting up hawkular provider in miq
+  (bmorriso@redhat.com)
+- update monitoring-config.yml.j2 without hour specification
+  (zhiwliu@redhat.com)
+- add cronjob for internal-pods-check (zhiwliu@redhat.com)
+- updated oo_ami copy to have new sa-east-1 region (mwoodson@redhat.com)
+- Rename version metrics with zabbix compatible prefix (zgalor@redhat.com)
+- Add zabbix keys for rpm versions (zgalor@redhat.com)
+- Add job that reports docker oc rpm versions daily (zgalor@redhat.com)
+- change the Failed pv from info to high (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+- new MetricSender/ZaggSender uses metric_sender.yaml for config info
+  (jdiaz@redhat.com)
+- Enable cron-send-security-updates-count cron job (joesmith@redhat.com)
+- host-monitoring: Have docker mount needed paths for hostpkg checks
+  (joesmith@redhat.com)
+- fixing up openshift_master_facts symlink in the vendor issues
+  (mwoodson@redhat.com)
+- added the vendor_openshift_ansible_rpms tools role; update the vendor rpm to
+  use it (mwoodson@redhat.com)
+- Add cron-send-security-updates-count (joesmith@redhat.com)
+- add openshift.master.pv.bound.count to cluster count graph (jdiaz@redhat.com)
+- raise exceptions when walking through object path (jdiaz@redhat.com)
+
 * Wed Feb 22 2017 Dan Yocum <dyocum@redhat.com> 0.0.37-1
 - Properly wait for metrics deploy to complete. (dgoodwin@redhat.com)
 - add key for internal pods check (zhiwliu@redhat.com)
