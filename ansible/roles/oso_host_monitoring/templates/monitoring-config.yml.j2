@@ -360,10 +360,12 @@ host_monitoring_cron:
   minute: "15"
   job: ops-runner -f -s 15 -n csipc.openshift.internal.status /usr/bin/cron-send-internal-pods-check
 
+{% if osohm_pruning.pruning_enabled | default(True) | bool %}
 - name: "Prune builds/deployments/images"
   hour: "{{ osohm_pruning.cron.hour }}"
   minute: "{{ osohm_pruning.cron.minute }}"
   job: "ops-runner -f -s 30 -n cosp.openshift.master.prune /usr/bin/cron-openshift-pruner --image-keep-younger-than {{ osohm_pruning.image_hours_to_keep }} --image-keep-tag-revisions {{ osohm_pruning.image_revisions_to_keep }} >> /var/log/pruner.log 2>&1"
+{% endif %}
 
 - name: "Report on certificate expiration dates"
   hour: "1"
