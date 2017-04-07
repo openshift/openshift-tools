@@ -1,0 +1,12 @@
+---
+- name: Pre-pull OpenVSwitch system container image
+  command: >
+    atomic pull --storage=ostree {{ openshift.common.system_images_registry }}/{{ openshift.node.ovs_system_image }}:{{ openshift_image_tag }}
+  register: pull_result
+  changed_when: "'Pulling layer' in pull_result.stdout"
+
+- name: Install or Update OpenVSwitch system container
+  oc_atomic_container:
+    name: openvswitch
+    image: "{{ openshift.common.system_images_registry }}/{{ openshift.node.ovs_system_image }}:{{ openshift_image_tag }}"
+    state: latest
