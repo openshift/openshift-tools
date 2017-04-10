@@ -49,9 +49,21 @@ class OpenshiftCertificateRequester(object):
         self.parse_args()
         self.check_host()
         self.parse_config()
+        self.check_node_name()
         self.gen_key()
         self.gen_csr()
         self.digicert_submit_csr()
+
+    def check_node_name(self):
+        """ Refuse certs where nodename > 16b """
+        node_name = self.config["node"].split('.')[1]
+        if len(node_name) <= 16:
+            if self.args.verbose or self.args.debug:
+                print "Node name %s is valid" % node_name
+        else:
+            print "First element of node name (%s) must be <= 16 characters" % node_name
+            sys.exit(1)
+
 
     def check_host(self):
         """ Limit running to bastion hosts """
