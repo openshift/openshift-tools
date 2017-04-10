@@ -23,7 +23,6 @@
       data: "{{ osso_site_key_content }}"
     - path: site.ca.cert.pem
       data: "{{ osso_site_ca_cert_content }}"
-  register: secretout
 
 - name: "Create Monitoring SSO secrets for {{ osso_namespace }}"
   vars:
@@ -50,7 +49,6 @@
         [{{ osso_app_domain }}]:2222 {{ config_data.ssh_keys['ssh_host_ecdsa_key.pub'] }}
         [localhost]:2222 {{ config_data.ssh_keys['ssh_host_ecdsa_key.pub'] }}
         [127.0.0.12]:2222 {{ config_data.ssh_keys['ssh_host_ecdsa_key.pub'] }}
-  register: msecretout
 
 - name: "Check to see if SSO pods exist in {{ osso_namespace }}"
   oc_obj:
@@ -93,7 +91,7 @@
 - name: "Redeploy SSO app in {{ osso_namespace }} when secrets change or not running"
   command: "oc deploy --latest -n {{ osso_namespace }} oso-saml-sso"
   # if we just created the project, we should not try a re-deploy. Otherwise, we'll try if the pods don't seem to be running or if secrets change
-  when: "{{ not createout.changed and (secretout.changed or msecretout.changed or osso_pods_running | select('match', '^oso-saml-sso$') | list | length < 3) }}"
+  when: "{{ not createout.changed and (osso_pods_running | select('match', '^oso-saml-sso$') | list | length < 3) }}"
 
 - name: "Redeploy memcache pod 1 in {{ osso_namespace }} when not running"
   command: "oc deploy --latest -n {{ osso_namespace }} oso-memcached-sso1"
