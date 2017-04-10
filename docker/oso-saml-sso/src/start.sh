@@ -14,12 +14,49 @@ fi
 echo user:x:$(id -u):0:USER:/root:/bin/bash >> /etc/passwd
 echo group:x:$(id -G | awk '{print $2}'):user >> /etc/group
 
-echo "Running config playbook"
-ansible-playbook /root/config.yml
+# This backgrounded block will run in a loop forever.
+# Its job is to monitor for secrets changes and
+# re-run the config playbook when secrets change.
+{
+  set +e
+  while true; do
+    config_version_dir=$(readlink -f /secrets/..data)
+    echo "Running config playbook"
+    for attempt_number in {1..3}; do
+      if ansible-playbook /root/config.yml; then
+        break
+      else
+        echo "Pod configuration attempt #$attempt_number failed"
+        if [ "$attempt_number" -eq 3 ]; then
+          echo "Giving up, killing pod"
+          kill -9 1
+          exit
+        else
+          echo "Sleeping for $((10**attempt_number)) seconds before retry"
+          sleep $((10**attempt_number))
+        fi
+      fi
+    done
+    if [ -f /var/run/sshd.pid ]; then
+      echo "Reloading sshd config"
+      pkill --signal HUP --pidfile /var/run/sshd.pid sshd
+    fi
+    touch /configdata/initial_config
+    # wait until the secrets change
+    inotifywait -e DELETE_SELF "$config_version_dir"
+    sleep 5
+  done
+} &
+
+
+echo "Waiting for initial configuration to finish"
+while ! [ -f /configdata/initial_config ]; do
+  sleep 1
+done
 
 # this backgrounded block will run in 10 seconds
 # after sshd and httpd have had a chance to start
-# it's only point is to show in the logs that the
+# its only point is to show in the logs that the
 # processes are or aren't listening
 {
   sleep 10
