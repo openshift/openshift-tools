@@ -24,6 +24,7 @@ ADD prep_simplesaml.sh start.sh /usr/local/bin/
 # Install SimpleSAML and modules from RPMs, then run our setup/hardening script for SimpleSAML
 RUN yum-install-check.sh -y \
         httpd \
+        inotify-tools \
         mod_ssl \
         openshift-tools-web-simplesamlphp-modules \
         openssh-server \
