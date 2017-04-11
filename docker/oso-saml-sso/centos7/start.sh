@@ -41,6 +41,10 @@ echo group:x:$(id -G | awk '{print $2}'):user >> /etc/group
       echo "Reloading sshd config"
       pkill --signal HUP --pidfile /var/run/sshd.pid sshd
     fi
+    if [ -f /var/run/httpd/httpd.pid ]; then
+      echo "Reloading httpd config"
+      pkill --signal USR1 --pidfile /var/run/httpd/httpd.pid httpd
+    fi
     touch /configdata/initial_config
     # wait until the secrets change
     inotifywait -e DELETE_SELF "$config_version_dir"
