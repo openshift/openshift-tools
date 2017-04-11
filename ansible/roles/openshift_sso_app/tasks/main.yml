@@ -88,9 +88,9 @@
     service_name: sso
     host: "{{ osso_app_domain }}"
 
-- name: "Redeploy SSO app in {{ osso_namespace }} when secrets change or not running"
+- name: "Redeploy SSO app in {{ osso_namespace }} when not running"
   command: "oc deploy --latest -n {{ osso_namespace }} oso-saml-sso"
-  # if we just created the project, we should not try a re-deploy. Otherwise, we'll try if the pods don't seem to be running or if secrets change
+  # if we just created the project, we should not try a re-deploy. Otherwise, we'll try if the pods don't seem to be running
   when: "{{ not createout.changed and (osso_pods_running | select('match', '^oso-saml-sso$') | list | length < 3) }}"
 
 - name: "Redeploy memcache pod 1 in {{ osso_namespace }} when not running"
