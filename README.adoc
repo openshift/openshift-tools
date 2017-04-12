@@ -1,5 +1,6 @@
 // vim: ft=asciidoc
 
+
 = openshift-tools repository
 :toc: macro
 :toc-title:
