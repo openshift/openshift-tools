@@ -31,9 +31,14 @@ options:
       - |-
         A list of iptables rules which the chain should match. The list
         should be derived from the 'iptables -S <chain>' command so that
-        the rules will match later rule dumps on re-runs.
+        the rules will match later rule dumps on re-runs. Otherwise, the
+        module will give the following error:
+          Chain update failed. Do input rules match 'iptables -S your_chain' output?
+        The easiest way to make sure that rules match is to create a chain
+        once manually, then to dump with 'iptables -S <chain>'. Note: the rules
+        should not contain a '-N <chain>' rule.
+
     required: true
-    default: null
 author:
     - "Joel Smith (joelsmith@redhat.com)"
 '''
@@ -233,7 +238,7 @@ def main():
             elif iptchain.get() == rules:
                 changed = True
             else:
-                module.fail_json(msg="Chain update failed")
+                module.fail_json(msg="Chain update failed. Do input rules match 'iptables -S %s' output?" % name)
 
     except IpTablesChainError as ex:
         module.fail_json(msg=ex.msg)
