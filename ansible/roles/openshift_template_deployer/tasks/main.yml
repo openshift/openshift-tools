@@ -54,9 +54,9 @@
   when: master_config_changes.changed
 
 # pause if restarted
-- name: pause 10 seconds when services are restarted
+- name: pause 60 seconds when services are restarted
   pause:
-    seconds: 10
+    seconds: 60
   when: master_config_changes.changed
 
   ## Enusre project is created
