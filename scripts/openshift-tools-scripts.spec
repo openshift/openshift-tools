@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.50
+Version:       0.1.51
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -408,6 +408,11 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Thu Apr 13 2017 Justin Pierce <jupierce@redhat.com> 0.1.51-1
+- Adding status operation to cicd-verify (jupierce@redhat.com)
+- limit certificate node names to 16 characters (sten@redhat.com)
+- using debug flag runs oadm with loglevel 4 (sten@redhat.com)
+
 * Thu Apr 06 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.50-1
 - adding generic prometheus endpoint reading script (ihorvath@redhat.com)
 - adding user message for invalid account names, fix zsh message quoting
