@@ -21,3 +21,4 @@
   - telnet
   - jq
   - python2-ruamel-yaml
+  - httpd-tools
