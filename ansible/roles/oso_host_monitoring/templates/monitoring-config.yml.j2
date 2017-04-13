@@ -331,6 +331,14 @@ host_monitoring_cron:
 {% endif %}
 
 {% if osohm_master_primary | default(False) | bool %}
+{% if osohm_enable_dirty_router_restarts | default(False) | bool %}
+# router pods are getting into a bad state which requires periodic rolling of the pods
+- name: dirty router 503 workaround
+  minute: "*/20"
+  hour: "*"
+  job: KUBECONFIG=/tmp/admin.kubeconfig ops-runner -f -s 15 -t 300 -n dirty.router.503.workaround /usr/bin/oc rollout latest dc/router -n default
+{% endif %}
+
 - name: send openshift-master /healthz status every 5 minutes
   minute: "*/5"
   job: ops-runner -f -s 15 -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --healthz --api-ping --metrics --node-checks -v &>> /var/log/csosmm-notready.log
