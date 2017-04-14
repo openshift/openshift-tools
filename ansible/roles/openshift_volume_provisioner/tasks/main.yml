@@ -46,9 +46,9 @@
   run_once: true
   when: master_config_changes.changed
 
-- name: pause 10 seconds when services are restarted
+- name: pause 60 seconds when services are restarted
   pause:
-    seconds: 10
+    seconds: 60
   when: master_config_changes.changed
 
 - name: create project
