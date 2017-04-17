@@ -87,13 +87,13 @@ ${OC} create -f template_with_certs.yaml
 ${OC} process ${OS_TEMPLATE_NAME} | ${OC} create -f -
 
 echo "Deploying mysql pod"
-${OC} deploy --latest mysql --follow
+#${OC} deploy --latest mysql --follow
 
 echo "Deploying zabbix-server pod"
-${OC} deploy --latest oso-cent7-zabbix-server --follow
+#${OC} deploy --latest oso-cent7-zabbix-server --follow
 
 echo "Deploying zabbix-web pod"
-${OC} deploy --latest oso-cent7-zabbix-web --follow
+#${OC} deploy --latest oso-cent7-zabbix-web --follow
 
 GREP_RESULT=$(grep "oso-cent7-zabbix-web" /etc/hosts || :)
 if [ "${GREP_RESULT}" == "" ]; then
@@ -106,7 +106,7 @@ while [ "$(curl -k -s -o /dev/null -w %{http_code} https://oso-cent7-zabbix-web/
 	sleep 5
 done
 # sleep another 10 so zabbix-web is really up
-sleep 10
+sleep 300
 
 echo "Config zabbix"
 PYTHONPATH=${OPENSHIFT_TOOLS_REPO}:${PYTHONPATH} ansible-playbook ../../ansible/playbooks/adhoc/zabbix_setup/oo-clean-zaio.yml -e g_server="https://oso-cent7-zabbix-web/zabbix/api_jsonrpc.php"
