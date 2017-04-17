@@ -15,7 +15,8 @@
 - name: install the "{{ ostd_rpm }}"
   yum:
     name: "{{ ostd_rpm }}"
-    state: installed
+    state: latest
+    update_cache: yes
   when: ostd_rpm
 
 - name: Make template changes if needed
