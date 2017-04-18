@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.51
+Version:       0.1.52
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -408,6 +408,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Tue Apr 18 2017 Joel Diaz <jdiaz@redhat.com> 0.1.52-1
+- catch and ignore epipe errors (jdiaz@redhat.com)
+
 * Thu Apr 13 2017 Justin Pierce <jupierce@redhat.com> 0.1.51-1
 - Adding status operation to cicd-verify (jupierce@redhat.com)
 - limit certificate node names to 16 characters (sten@redhat.com)
