@@ -16,14 +16,14 @@
   yum:
     name: "{{ ostd_rpm }}"
     state: installed
-  when: ostd_rpm
+  when: ostd_rpm != False
 
 - name: Make template changes if needed
   yedit:
     src: "{{ ostd_template_file }}"
     key: "{{ item.key }}"
     value: "{{ item.value }}"
-  when: ostd_template_edits
+  when: ostd_template_edits != False
   with_items: "{{ ostd_template_edits }}"
 
   # TODO: Think about moving this role back into main playbook and remove it from here
@@ -36,7 +36,7 @@
     state: present
     backup: False
   with_items: "{{ ostd_master_config_edits }}"
-  when: ostd_master_config_edits
+  when: ostd_master_config_edits != False
 
   register: master_config_changes
 

@@ -10,6 +10,8 @@
     name: fio
     state: present
 
+# This command was copied from the AWS documentation:
+# http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-initialize.html
 - name: "run fio read operation on volume {{ apwe_volume }} on aws instance. NOTE: This could take awhile!"
   command: "fio --filename={{ apwe_volume }} --rw=randread --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize"
   async: 14400
