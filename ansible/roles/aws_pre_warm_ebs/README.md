@@ -1,7 +1,11 @@
 aws_pre_warm_ebs
 =========
 
-A role that deploys configuratons for Openshift StorageClass
+A role that "pre-warms" an EBS volume.
+
+More info can be found here:
+
+http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-initialize.html
 
 Requirements
 ------------
