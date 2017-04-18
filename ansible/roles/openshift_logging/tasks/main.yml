@@ -166,6 +166,16 @@
   when: podout.results.results[0]['items'][0].status.phase != 'Succeeded'
   run_once: true
 
+- name: add cluster role binding to aggregated-logging-elasticsearch service account
+  oadm_policy_user:
+    namespace: logging
+    user: system:serviceaccount:logging:aggregated-logging-elasticsearch
+    resource_kind: cluster-role
+    resource_name: rolebinding-reader
+  register: policyout
+  run_once: true
+- debug: var=policyout
+
 - name: get deployer pod status
   oc_obj:
     state: list
