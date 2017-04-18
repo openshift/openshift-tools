@@ -24,7 +24,7 @@ echo -n "Starting redis in the background..."
 # Temporary until we get cron working
 # Send the heartbeat every 5 minutes
 echo -n "Starting heartbeat loop... "
-/usr/local/bin/ops-run-in-loop 300 /usr/bin/ops-zagg-heartbeater &>> /var/log/ops-zagg-heartbeater.log &
+/usr/local/bin/ops-run-in-loop 60 /usr/bin/ops-zagg-heartbeater &>> /var/log/ops-zagg-heartbeater.log &
 echo "Done."
 
 echo -n "Sleeping 3 seconds to make sure the initial heartbeat has been added... "
