@@ -3,6 +3,7 @@
 ''' ssh wrapper with multi-inventory capabilities '''
 
 import argparse
+import errno
 import traceback
 import sys
 import os
@@ -48,7 +49,16 @@ class Ossh(object):
 
         # perform the SSH
         if self.args.list:
-            self.list_hosts()
+            try:
+                self.list_hosts()
+            # You can get IOErrors when piping output to another tool
+            # (ie 'head') b/c the pipe being written to is closed by
+            # the reader. This is okay. Catch and ignore EPIPE errors.
+            except IOError as e:
+                if e.errno == errno.EPIPE:
+                    pass
+                else:
+                    raise e
         else:
             self.ssh()
 
