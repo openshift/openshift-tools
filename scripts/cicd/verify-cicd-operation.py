@@ -41,7 +41,7 @@ match = re.match(r"(?P<operation>install|delete|upgrade|status)", cmd)
 
 if match:
     logger.info("%s Restricted key '%s' running command: %s" % (os.path.basename(__file__), keyname, cmd))
-    runner("/home/opsmedic/aos-cd/git/aos-cd-jobs/bin/cicd-control.sh", keyname, match.group("operation"))
+    runner("/home/opsmedic/aos-cd/git/aos-cd-jobs/tower-scripts/bin/cicd-control.sh", keyname, match.group("operation"))
 
 logger.info("%s Restricted key '%s' disallowed command: %s" % (os.path.basename(__file__), keyname, cmd))
 print("doesn't match an allowed pattern")
