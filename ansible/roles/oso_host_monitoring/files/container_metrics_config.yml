@@ -28,9 +28,6 @@ container_metrics_config:
   - name_match_regex: '^k8s_(elasticsearch)\.[\w\d]+_(logging-es-[a-zA-Z\d-]+)_(logging)_.*$'
     name_format_regex: 'k8s::\3::\2::\1'
 
-
-
-
   # The PV Provisioner
   - name_match_regex: '^k8s_(volume-provisioner)\.[\w\d]+_(online-volume-provisioner-\d+-[a-zA-Z\d-]+)_(openshift-infra)_.*$'
     name_format_regex: 'k8s::\3::\2::\1'
@@ -47,12 +44,30 @@ container_metrics_config:
   - name_match_regex: '^k8s_(hawkular-cassandra-\d+)\.[\w\d]+_(hawkular-cassandra-\d+-[a-zA-Z\d-]+)_(openshift-infra)_.*$'
     name_format_regex: 'k8s::\3::\2::\1'
 
-
-
   # OpenShift Router
   - name_match_regex: '^k8s_(router)\.[\w\d]+_(router-\d+-[a-zA-Z\d-]+)_(default)_.*$'
     name_format_regex: 'k8s::\3::\2::\1'
 
   # OpenShift Registry
   - name_match_regex: '^k8s_(registry)\.[\w\d]+_(docker-registry-\d+-[a-zA-Z\d-]+)_(default)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # Zabbix Web
+  - name_match_regex: '^k8s_(oso-rhel7-zabbix-web)\.[\w\d]+_(oso-rhel7-zabbix-web-\d+-[a-zA-Z\d-]+)_(new-monitoring)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # Zabbix Server
+  - name_match_regex: '^k8s_(oso-rhel7-zabbix-server)\.[\w\d]+_(oso-rhel7-zabbix-server-\d+-[a-zA-Z\d-]+)_(new-monitoring)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # Zagg
+  - name_match_regex: '^k8s_(oso-rhel7-zagg-web)\.[\w\d]+_(oso-rhel7-zagg-web-\d+-[a-zA-Z\d-]+)_(new-monitoring)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # OPS Registry
+  - name_match_regex: '^k8s_(ose-docker-registry)\.[\w\d]+_(ose-docker-registry-\d+-[a-zA-Z\d-]+)_(ops-registry)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # OPS Registry HTTPD frontend
+  - name_match_regex: '^k8s_(httpd-24-rhel7)\.[\w\d]+_(httpd-24-rhel7-\d+-[a-zA-Z\d-]+)_(ops-registry)_.*$'
     name_format_regex: 'k8s::\3::\2::\1'
