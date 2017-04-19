@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.52
+Version:       0.1.53
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -408,6 +408,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Wed Apr 19 2017 Justin Pierce <jupierce@redhat.com> 0.1.53-1
+- Changing path for tower-scripts (jupierce@redhat.com)
+
 * Tue Apr 18 2017 Joel Diaz <jdiaz@redhat.com> 0.1.52-1
 - catch and ignore epipe errors (jdiaz@redhat.com)
 
