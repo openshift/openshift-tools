@@ -114,6 +114,18 @@ g_template_docker:
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_storage.asciidoc"
     priority: high
 
+
+  - name: "Critically Memeryusage of  docker  on {HOST.NAME}"
+    expression: "{Template Docker:docker.memoryusage.rss.last()}>6291456"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_storage.asciidoc"
+    priority: average
+
+
+  - name: "Critically Memeryusage of  docker  on {HOST.NAME}"
+    expression: "{Template Docker:docker.memoryusage.rss.last()}>10485760"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_storage.asciidoc"
+    priority: high
+
   - name: "Critically low docker storage metadata space on {HOST.NAME}"
     expression: "{Template Docker:docker.storage.metadata.space.percent_available.max(#2)}<5 or {Template Docker:docker.storage.metadata.space.available.max(#2)}<0.005" # < 5% or < 5MB
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_storage.asciidoc"
