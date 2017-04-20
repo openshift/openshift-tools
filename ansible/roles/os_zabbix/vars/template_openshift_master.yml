@@ -118,6 +118,18 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.dnsmasq.curl.status
+    description: "check status of dnsmasq use curl"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.dnsmasq.service.status
+    description: "check the status of dnsmasq by service status"
+    value_type: int
+    applications:
+    - Openshift Master
+
   - key: openshift.router.pod.location
     description: "check the openshift router pod location"
     value_type: int
