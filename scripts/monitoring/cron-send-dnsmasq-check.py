@@ -93,7 +93,7 @@ def get_status_of_service():
     return status_code
 
 def main():
-    """check status of dnsmq"""
+    """check status of dnsmq and report"""
     args = parse_args()
     if args.verbose:
         logger.setLevel(logging.DEBUG)
