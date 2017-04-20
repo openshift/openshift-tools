@@ -43,7 +43,9 @@ ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                
            -v /etc/localtime:/etc/localtime                                                         \
            -v /sys:/sys:ro                                                                          \
            -v /var/lib/docker/volumes-ops/oso-rhel7-host-monitoring/empty_selinux:/sys/fs/selinux   \
+{% if osohm_docker_var_lib_docker_mount_enable | default(True) | bool %}
            -v /var/lib/docker:/var/lib/docker:ro                                                    \
+{% endif %}
            -v /var/run/docker.sock:/var/run/docker.sock                                             \
            -v /var/run/openvswitch:/var/run/openvswitch                                             \
 {% if osohm_host_type == 'master' %}
@@ -53,7 +55,11 @@ ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                
 {% endif %}
            -v /usr/bin/oc:/usr/bin/oc                                                               \
            -v /usr/bin/oadm:/usr/bin/oadm                                                           \
+{% if osohm_docker_root_rslave_mount_enable | default(False) | bool %}
+           -v /:/host:ro,rslave                                                                     \
+{% else %}
            -v /:/host:ro                                                                            \
+{% endif %}
            -v /var/cache/yum:/host/var/cache/yum:rw                                                 \
            -v /etc/openshift_tools:/container_setup:ro                                              \
            {{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}:{{ osohm_environment }}
