@@ -115,13 +115,13 @@ g_template_docker:
     priority: high
 
 
-  - name: "Critically Memeryusage of  docker  on {HOST.NAME}"
+  - name: "Critically Memory usage of  docker  on {HOST.NAME}"
     expression: "{Template Docker:docker.memoryusage.rss.last()}>6442450944"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_memoryusage.asciidoc"
     priority: average
 
 
-  - name: "Critically Memeryusage of  docker  on {HOST.NAME}"
+  - name: "Critically Memory usage of  docker  on {HOST.NAME}"
     expression: "{Template Docker:docker.memoryusage.rss.last()}>10737418240"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_docker_memoryusage.asciidoc"
     priority: high
