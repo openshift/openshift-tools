@@ -123,7 +123,5 @@ if __name__ == "__main__":
 
     CONFIG = yaml.load(file('/etc/openshift_tools/zagg_server.yaml'))
 
-    targets = CONFIG['targets']
-
-    for target in targets:
-        process_targets(target)
+    for tgt in CONFIG['targets']:
+        process_targets(tgt)
