@@ -1,5 +1,0 @@
----
-- name: OpenShift Metrics
-  hosts: oo_first_master
-  roles:
-  - openshift_metrics
