@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.53
+Version:       0.1.54
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -410,6 +410,15 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Fri Apr 21 2017 Thomas Wiest <twiest@redhat.com> 0.1.54-1
+- Fix the bot errors. (twiest@redhat.com)
+- Changed ops-zagg-metric-processor.py to not do multi-processing. We
+  determined that each subprocess is sending the same data multiple times. This
+  is hammering on the DB unnecessarily. (twiest@redhat.com)
+- jenkens-ci says something wrong ,but I don't think so (zhizhang@zhizhang-
+  laptop-nay.redhat.com)
+- add check for dnsmasq (zhizhang@zhizhang-laptop-nay.redhat.com)
+
 * Wed Apr 19 2017 Justin Pierce <jupierce@redhat.com> 0.1.53-1
 - Changing path for tower-scripts (jupierce@redhat.com)
 
