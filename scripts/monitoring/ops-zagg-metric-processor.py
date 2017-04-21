@@ -26,7 +26,6 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 import socket
-import multiprocessing
 import signal
 import sys
 import os
@@ -123,8 +122,8 @@ if __name__ == "__main__":
     logger.info('Starting ops-zagg-metric-processor...')
 
     CONFIG = yaml.load(file('/etc/openshift_tools/zagg_server.yaml'))
-    pool = multiprocessing.Pool()
 
-    TARGETS = CONFIG['targets']
+    targets = CONFIG['targets']
 
-    pool.map(process_targets, TARGETS)
+    for target in targets:
+        process_targets(target)
