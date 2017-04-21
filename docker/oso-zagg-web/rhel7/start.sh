@@ -34,7 +34,7 @@ echo "Done."
 
 # Process and send metrics every minute
 echo -n "Starting metric processing loop... "
-/usr/local/bin/ops-run-in-loop 30 /usr/bin/flock -n /var/tmp/ops-zagg-metric-processor.lock -c '/usr/bin/timeout -s9 600s /usr/bin/ops-zagg-metric-processor' &
+/usr/local/bin/ops-run-in-loop 1 /usr/bin/flock -n /var/tmp/ops-zagg-metric-processor.lock -c '/usr/bin/timeout -s9 600s /usr/bin/ops-zagg-metric-processor' &
 echo "Done."
 
 # Process heartbeats every minute
