@@ -165,7 +165,14 @@ class RemoteHealer(object):
             # Run reporting to quiet down trigger
             cmd = self.ossh_cmd(self._args.host,
                                 'docker exec oso-rhe7-host-monitoring /usr/bin/cron-send-ovs-stats')
+        elif re.search(r'^\[HEAL\] Critically High Memory usage of  docker  on', self._args.trigger):
+            logging.info("Restarting docker on " + self._args.host)
 
+            #run playbook to evacuate the host and restart the docker
+            #haven't found where should the script be ,maybe /root ?
+            cmd = '/home/zhizhang/git/openshift-ansible-ops/playbooks/adhoc/v3_auto_heal/auto_heal_for_docker_high_memory_usage.yml -e "cli_nodename='+self._args.host+'"'
+            #run
+            self.run_cmd(cmd)
         else:
             logging.info("No healing action defined for trigger: " + self._args.trigger)
 
