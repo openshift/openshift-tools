@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" Create project check for v3 """
+""" project creation and deletion check for v3 """
 
 import argparse
 import datetime
@@ -32,7 +32,7 @@ def parse_args():
     """ parse the args from the cli """
     logger.debug("parse_args()")
 
-    parser = argparse.ArgumentParser(description='OpenShift app create end-to-end test')
+    parser = argparse.ArgumentParser(description='OpenShift project creation and deletion test')
     parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
     parser.add_argument('--namespace', default="ops-project-operation-check",
                         help='namespace (be careful of using existing namespaces)')
@@ -88,12 +88,10 @@ def delete_project(config):
         time.sleep(commandDelay)
     except Exception:
         logger.exception('error delete project')
+
 def main():
     """ check the project operation status """
-
-    logger.info('Starting project Create - %s', datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
     logger.debug("main()")
-
     args = parse_args()
 
     if args.verbose:
@@ -120,7 +118,7 @@ def main():
                 # 1 means project deletion failed
                 logger.info('project deletion failed')
 
-    print create_project_code, delete_project_code
+    logger.info(create_project_code, delete_project_code)
     if create_project_code == 0 and delete_project_code == 0:
         logger.info('creation and deletion succeed, no data was sent to zagg')
     else:
