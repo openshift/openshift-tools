@@ -77,5 +77,6 @@
       - l_oc_version.result.oc_short == "3.3"
 
   run_once: true
+  when: inventory_hostname == ansible_play_hosts[0]
   tags:
     - zagg
