@@ -49,14 +49,6 @@ objects:
         terminationGracePeriodSeconds: 30
     triggers:
     - type: ConfigChange
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - mysql
-        from:
-          kind: ImageStreamTag
-          name: mysql:latest
-      type: ImageChange
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
@@ -115,14 +107,6 @@ objects:
             secretName: monitoring-secrets
     triggers:
     - type: ConfigChange
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - ${ZABBIX_SERVER}
-        from:
-          kind: ImageStreamTag
-          name: oso-cent7-zabbix-server:latest
-      type: ImageChange
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
@@ -182,14 +166,6 @@ objects:
         terminationGracePeriodSeconds: 30
     triggers:
     - type: ConfigChange
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - oso-cent7-zabbix-web
-        from:
-          kind: ImageStreamTag
-          name: oso-cent7-zabbix-web:latest
-      type: ImageChange
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
@@ -239,14 +215,6 @@ objects:
             secretName: monitoring-secrets
     triggers:
     - type: ConfigChange
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - oso-cent7-zagg-web
-        from:
-          kind: ImageStreamTag
-          name: oso-cent7-zagg-web:latest
-      type: ImageChange
 - apiVersion: v1
   kind: Route
   metadata:
