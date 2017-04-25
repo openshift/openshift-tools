@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+# TODO:
+# - add check for local web server on port 80/443
+# - add check for host based pcp, that will mess with host-monitoring container failing with weird errors
 cd $(dirname "$0")
 
 OS_TEMPLATE="./zabbix_monitoring_cent7_local_dev.yaml"
@@ -86,13 +89,15 @@ done < $OS_TEMPLATE > template_with_certs.yaml
 ${OC} create -f template_with_certs.yaml
 ${OC} process ${OS_TEMPLATE_NAME} | ${OC} create -f -
 
-echo "Deploying mysql pod"
+# These are not needed anymore, because DCs autodeploy, but I shall leave it in here in case we need to trigger
+# it manually, in next iterations I would like to add these as an option
+#echo "Deploying mysql pod"
 #${OC} deploy --latest mysql --follow
 
-echo "Deploying zabbix-server pod"
+#echo "Deploying zabbix-server pod"
 #${OC} deploy --latest oso-cent7-zabbix-server --follow
 
-echo "Deploying zabbix-web pod"
+#echo "Deploying zabbix-web pod"
 #${OC} deploy --latest oso-cent7-zabbix-web --follow
 
 GREP_RESULT=$(grep "oso-cent7-zabbix-web" /etc/hosts || :)
@@ -105,7 +110,7 @@ while [ "$(curl -k -s -o /dev/null -w %{http_code} https://oso-cent7-zabbix-web/
 	echo "Waiting for zabbix to be ready"
 	sleep 5
 done
-# sleep another 10 so zabbix-web is really up
+# sleep another 300 so zabbix-web is really up
 sleep 300
 
 echo "Config zabbix"

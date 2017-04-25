@@ -259,7 +259,7 @@ g_template_app_zabbix_server:
      application: Zabbix server
      steps:
      - name: "Check v2 Zabbix web"
-       url: "http://google.com"
+       url: "{{ g_v2_monitor_url }}"
        status_codes: '200'
        required: Zabbix
        'no': 1
