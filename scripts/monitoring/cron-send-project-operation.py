@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 """ project creation and deletion check for v3 """
 
-import argparse
-import time
-
-import logging
 # We just want to see any exception that happens
 # don't want the script to die under any cicumstances
 # script must try to clean itself up
@@ -12,6 +8,10 @@ import logging
 
 # pylint: disable=invalid-name
 # pylint: disable=import-error
+import argparse
+import time
+
+import logging
 from openshift_tools.monitoring.ocutil import OCUtil
 from openshift_tools.monitoring.metric_sender import MetricSender
 
