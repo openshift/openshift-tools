@@ -228,6 +228,7 @@ objects:
         PLACE_ZABBIX_WEB_SSL_CERT_HERE
       key: |-
         PLACE_ZABBIX_WEB_SSL_KEY_HERE
+      insecureEdgeTerminationPolicy: Redirect
     to:
       kind: Service
       name: oso-cent7-zabbix-web
