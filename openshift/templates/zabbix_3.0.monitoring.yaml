@@ -208,7 +208,13 @@ objects:
           - containerPort: 10051
             name: tcp-10051
             protocol: TCP
-          resources: {}
+          resources:
+           limits:
+             memory: 2Gi
+             cpu: 2000m
+           requests:
+             memory: 2Gi
+             cpu: 2000m
           securityContext:
             capabilities: {}
             privileged: false
@@ -280,7 +286,13 @@ objects:
           - containerPort: 443
             name: tcp-443
             protocol: TCP
-          resources: {}
+          resources:
+           limits:
+             memory: 2Gi
+             cpu: 2000m
+           requests:
+             memory: 2Gi
+             cpu: 2000m
           securityContext:
             capabilities: {}
             privileged: false
@@ -327,7 +339,13 @@ objects:
         - image: monitoring/oso-rhel7-zagg-web:latest
           imagePullPolicy: Always
           name: oso-rhel7-zagg-web
-          resources: {}
+          resources:
+           limits:
+             memory: 1Gi
+             cpu: 1000m
+           requests:
+             memory: 1Gi
+             cpu: 1000m
           securityContext:
             capabilities: {}
             privileged: false
