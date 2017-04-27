@@ -1,0 +1,22 @@
+---
+- name: Record excluder state and disable
+  hosts: oo_masters_to_config:oo_nodes_to_config
+  gather_facts: no
+  tasks:
+  - include: pre/validate_excluder.yml
+    vars:
+      excluder: "{{ openshift.common.service_type }}-docker-excluder"
+    when: enable_docker_excluder | default(enable_excluders) | default(True) | bool
+  - include: pre/validate_excluder.yml
+    vars:
+      excluder: "{{ openshift.common.service_type }}-excluder"
+    when: enable_openshift_excluder | default(enable_excluders) | default(True) | bool
+
+
+  # disable excluders based on their status
+  - include_role:
+      name: openshift_excluder
+      tasks_from: disable
+    vars:
+      openshift_excluder_package_state: latest
+      docker_excluder_package_state: latest
