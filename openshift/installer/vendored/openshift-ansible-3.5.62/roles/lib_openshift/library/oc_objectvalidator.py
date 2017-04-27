@@ -1347,18 +1347,10 @@ class OCObjectValidator(OpenShiftCLI):
         failed = False
 
         def _is_invalid_namespace(namespace):
-            # check if it uses a reserved name
-            name = namespace['metadata']['name']
-            if not any((name == 'kube',
-                        name == 'openshift',
-                        name.startswith('kube-'),
-                        name.startswith('openshift-'),)):
-                return False
-
-            # determine if the namespace was created by a user
-            if 'annotations' not in namespace['metadata']:
-                return False
-            return 'openshift.io/requester' in namespace['metadata']['annotations']
+            # Justin Pierce: patching to avoid this check. dev-preview-prod contains newly "invalid" namespaces created
+            # by users. Since dev-preview-prod is going to be decommissioned soon and there is no harm in leaving
+            # these around until that decommission.
+            return False
 
         checks = (
             (
