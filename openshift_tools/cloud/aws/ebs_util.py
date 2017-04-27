@@ -37,6 +37,8 @@ OpenShiftVolumeIdTypes = namedtuple('OpenShiftVolumeIdTypes',
 PURPOSE_TAG_KEY = 'purpose'
 NAME_TAG_KEY = 'Name'
 
+STABLE_ATTACH_STATUSES = ['attached', 'detached', None]
+
 class EbsUtil(Base):
     """ Useful utility methods for EBS """
 
@@ -45,6 +47,15 @@ class EbsUtil(Base):
         super(EbsUtil, self).__init__(region, verbose)
 
         self.instance_util = InstanceUtil(region, verbose)
+
+    @staticmethod
+    def generate_volume_uri(vol):
+        """
+            Returns an AWS URI that can uniquely identify the volume.
+
+            Example: aws://us-east-1c/vol-0a0112a0e303fe909
+        """
+        return str("aws://%s/%s" % (vol.zone, vol.id))
 
     def get_instance_volume_ids(self, skip_volume_ids=None):
         """ Returns the volume IDs attached to different instance types. """
@@ -104,6 +115,21 @@ class EbsUtil(Base):
                     autoprovisioned_pv_volume_ids.add(vol.id)
 
         return autoprovisioned_pv_volume_ids
+
+
+    def get_trans_attach_status_vols(self, skip_volume_ids=None):
+        """ Returns the volumes that are in a transition state (attaching, detaching, busy, etc) """
+
+        if not skip_volume_ids:
+            skip_volume_ids = []
+
+        all_vols = self.ec2.get_all_volumes()
+        trans_vols = [vol for vol in all_vols \
+                      if vol.id not in skip_volume_ids and \
+                         vol.attach_data.status not in STABLE_ATTACH_STATUSES]
+
+        return trans_vols
+
 
     def get_manual_prov_pv_volume_ids(self, skip_volume_ids=None):
         """ Returns a list of volume IDs for PVs that were created manually """
