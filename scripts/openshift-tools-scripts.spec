@@ -85,7 +85,6 @@ cp -p monitoring/cron-send-prometheus-data.py %{buildroot}/usr/bin/cron-send-pro
 cp -p monitoring/cron-send-dnsmasq-check.py %{buildroot}/usr/bin/cron-send-dnsmasq-check
 
 mkdir -p %{buildroot}/etc/openshift_tools
-cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
 cp -p monitoring/zagg_server.yaml.example %{buildroot}/etc/openshift_tools/zagg_server.yaml
 cp -p remote-heal/remote_healer.conf.example %{buildroot}/etc/openshift_tools/remote_healer.conf
@@ -223,7 +222,6 @@ OpenShift Tools Monitoring Client Scripts
 /usr/bin/ops-runner
 /usr/bin/ops-zagg-client
 /usr/bin/ops-metric-client
-%config(noreplace)/etc/openshift_tools/zagg_client.yaml
 %config(noreplace)/etc/openshift_tools/metric_sender.yaml
 
 
