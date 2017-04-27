@@ -1,7 +1,7 @@
 ---
 galaxy_info:
-  author: Max Whittingham
-  description: This role deploys the OpenShift Dedicated Admin Role
+  author: Devan Goodwin
+  description: Installs the correct version of openshift-dedicated-scripts for the major OpenShift version.
   company: Red Hat
   license: Apache
   min_ansible_version: 1.9
@@ -12,4 +12,4 @@ galaxy_info:
   categories:
   - cloud
 dependencies:
-- role: tools_roles/openshift_dedicated_scripts
+- role: tools_roles/lib_repoquery

@@ -5,11 +5,6 @@
   with_dict: "{{ osvp_provisioner_params }}"
   when: osvp_provisioner_params is undefined
 
-- name: install the openshift-scripts-dedicated
-  yum:
-    name: openshift-scripts-dedicated
-    state: installed
-
 - name: ensure the template file from openshift-scripts-dedicated has metadate.name. This should not be needed in the future
   yedit:
     src: /etc/openshift-dedicated/templates/volume-provisioner.yaml
