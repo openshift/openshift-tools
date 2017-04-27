@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+RED="$(echo -e '\033[1;31m')"
+GREEN="$(echo -e '\033[1;32m')"
+NORM="$(echo -e '\033[0m')"
+
+
 # TODO:
 # - add check for local web server on port 80/443
 # - add check for host based pcp, that will mess with host-monitoring container failing with weird errors
@@ -141,9 +146,15 @@ sudo docker run --name oso-centos7-host-monitoring -d \
 	-v /var/lib/docker:/var/lib/docker:ro \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-v ${CONTAINER_SETUP_DIR}:/container_setup:ro \
+	-v /var/lib/docker/volumes/shared:/shared \
 	--memory 512m \
         docker.io/openshifttools/oso-centos7-host-monitoring:latest
 
-echo "Log into the OpenShift console at https://localhost:8443/console/ (username: developer / password: developer)"
-echo "Log into zabbix at https://oso-cent7-zabbix-web/zabbix/ (username: Admin / password: zabbix)"
-echo "Connect to host-monitoring with: sudo docker exec -ti oso-centos7-host-monitoring bash"
+echo
+echo
+echo "Log into the OpenShift console at ${GREEN}https://localhost:8443/console/${NORM} (username: developer / password: developer)"
+echo
+echo "Log into zabbix at ${GREEN}https://oso-cent7-zabbix-web/zabbix/${NORM} (username: Admin / password: zabbix)"
+echo
+echo "Connect to host-monitoring with: ${GREEN}sudo docker exec -ti oso-centos7-host-monitoring bash${NORM}"
+echo
