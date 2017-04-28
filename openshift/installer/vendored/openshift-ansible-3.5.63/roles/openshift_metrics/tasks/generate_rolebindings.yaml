@@ -1,0 +1,15 @@
+---
+- name: generate view role binding for the hawkular service account
+  template:
+    src: rolebinding.j2
+    dest: "{{ mktemp.stdout }}/templates/hawkular-rolebinding.yaml"
+  vars:
+    obj_name: hawkular-view
+    labels:
+      metrics-infra: hawkular
+    roleRef:
+      name: view
+    subjects:
+    - kind: ServiceAccount
+      name: hawkular
+  changed_when: no
