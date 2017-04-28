@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.109
+Version:       0.0.110
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -297,6 +297,9 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Fri Apr 28 2017 Thomas Wiest <twiest@redhat.com> 0.0.110-1
+- Added cron-send-ec2-ebs-volumes-in-stuck-state.py (twiest@redhat.com)
+
 * Mon Mar 06 2017 Matt Woodson <mwoodson@redhat.com> 0.0.109-1
 - 
 
