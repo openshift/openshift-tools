@@ -415,6 +415,10 @@ host_monitoring_cron:
   minute: "0"
   job: ops-runner -f -s 120 -n cssm.aws /usr/bin/cron-send-s3-metrics
 
+- name: "Check EBS stuck volume attachment state"
+  minute: "*/2"
+  job: "ops-runner -f -s 15 -n cseeviss.ebs.stuck.state cron-send-ec2-ebs-volumes-in-stuck-state --region {{ osohm_region }} --stuck-after 120 --aws-creds-profile snapshotter --verbose"
+
 - name: "Add snapshot tag to autoprovisioned pv volumes"
   hour: "*"
   minute: "30"
