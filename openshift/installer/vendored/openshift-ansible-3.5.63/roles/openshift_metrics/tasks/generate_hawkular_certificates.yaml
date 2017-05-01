@@ -41,9 +41,10 @@
   - hawkular-jgroups-keystore
 
 # Backport of https://github.com/openshift/openshift-ansible/pull/4054/files
+# Include change to avoid use of volume bearing httpd image: centos/php-56-centos7
 - name: generate htpasswd content for hawkular metrics
   shell: >
-    docker run -i -a STDIN -a STDOUT "{{ openshift_metrics_httpd_image }}" htpasswd -ni hawkular
+    docker run -i -a STDIN -a STDOUT centos/php-56-centos7 htpasswd -ni hawkular
     < "{{ mktemp.stdout}}/hawkular-metrics.pwd"
   no_log: true
   register: metrics_htpasswd
