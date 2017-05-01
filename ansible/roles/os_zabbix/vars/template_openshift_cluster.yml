@@ -21,7 +21,7 @@ g_template_openshift_cluster:
   zdiscoveryrules:
   - name: disc.openshift.cluster.router
     key: disc.openshift.cluster.router
-    lifetime: 14
+    lifetime: 1
     description: "Hold cluster-wide dynamic router items"
 
   zitemprototypes:
