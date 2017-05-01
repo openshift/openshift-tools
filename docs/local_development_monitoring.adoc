@@ -64,7 +64,38 @@ cd openshift-tools/docker/local_development
 ./start-local-dev-env.sh
 ----
 
-This will do the following:
+If this is the first time you're running the script, it may fail with a message like this:
+
+----
+-- Checking Docker daemon configuration ... FAIL
+   Error: did not detect an --insecure-registry argument on the Docker daemon
+   Solution:
+
+     Ensure that the Docker daemon is running with the following argument:
+     	--insecure-registry 172.30.0.0/16
+----
+
+Go ahead and add that parameter to docker by editing `/etc/sysconfig/docker` and setting the INSECURE_REGISTRY variable. Something like this:
+
+----
+# If you have a registry secured with https but do not have proper certs
+# distributed, you can tell docker to not look for full authorization by
+# adding the registry to the INSECURE_REGISTRY line and uncommenting it.
+# INSECURE_REGISTRY='--insecure-registry'
+INSECURE_REGISTRY='--insecure-registry 172.30.0.0/16'
+----
+
+Then restart docker.
+
+----
+[user@box ~]$ sudo systemctl restart docker
+[sudo] password for user: 
+[user@box ~]$ 
+----
+
+
+
+start-local-dev-env.sh will do the following:
 
 * Open a firewall port on port 53 so that OpenShift containers can do DNS resolution to other OpenShift containers. The change is ephemeral, so restarting firewalld should undo the change.
 * Run `oc cluster up` to bring up a local OpenShift cluster.
