@@ -114,14 +114,12 @@ host_monitoring_cron:
   minute: "*/5"
   job: ops-runner -f -s 60 -n cspp.pcp.ping /usr/bin/cron-send-pcp-ping
 
-# This is needed every minute for the performance team
-- name: run pcp checks every minute
-  minute: "*"
+- name: run pcp checks every 5 minutes
+  minute: "*/5"
   job: ops-runner -f -s 15 -n ozpc.send.pcp /usr/bin/ops-metric-pcp-client
 
-# This is needed every minute for the performance team
-- name: run pcp sampler every minute
-  minute: "*"
+- name: run pcp sampler every 5 minutes
+  minute: "*/5"
   job: ops-runner -f -s 15 -n cspsm.kernal.all.cpu /usr/bin/cron-send-pcp-sampled-metrics -m kernel.all.cpu.idle -m kernel.all.cpu.nice -m kernel.all.cpu.steal -m kernel.all.cpu.sys -m kernel.all.cpu.user -m kernel.all.cpu.wait.total -m kernel.all.cpu.irq.hard -m kernel.all.cpu.irq.soft
 
 - name: Do a full heartbeat
