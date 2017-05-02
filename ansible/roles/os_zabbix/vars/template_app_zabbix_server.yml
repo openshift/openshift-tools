@@ -299,6 +299,21 @@ g_template_app_zabbix_server:
        required: "account-service"
        'no': 2
 
+   - name: webcheck_developerredhatcom_sso
+     interval: 60
+     application: Zabbix server
+     steps:
+     - name: "webcheck_developerredhatcom_sso auth/version"
+       url: "{{ g_webcheck_developerredhatcom_sso_url_version }}"
+       status_codes: '200'
+       required: "version"
+       'no': 1
+     - name: "webcheck_developerredhatcom_sso auth/realms/rhd"
+       url: "{{ g_webcheck_developerredhatcom_sso_url_rhd }}"
+       status_codes: '200'
+       required: "account-service"
+       'no': 2
+
    ztriggers:
    - description: "Zabbix v2 Web UI is not responding"
      expression: "{Template App Zabbix Server:web.test.fail[check_v2_zabbix_web].last(#1)}<>0 and {Template App Zabbix Server:web.test.fail[check_v2_zabbix_web].last(#2)}<>0"
@@ -315,6 +330,12 @@ g_template_app_zabbix_server:
    - description: "webcheck_v3prodpreview_sso is unhealthy"
      expression: "{Template App Zabbix Server:web.test.fail[webcheck_v3prodpreview_sso].last(#1)}<>0 and {Template App Zabbix Server:web.test.fail[webcheck_v3prodpreview_sso].last(#2)}<>0"
      name: "webcheck_v3prodpreview_sso is unhealthy"
+     priority: high
+     url: https://github.com/openshift/ops-sop/blob/master/V3/SSO.asciidoc
+
+   - description: "webcheck_developerredhatcom_sso is unhealthy"
+     expression: "{Template App Zabbix Server:web.test.fail[webcheck_developerredhatcom_sso].last(#1)}<>0 and {Template App Zabbix Server:web.test.fail[webcheck_developerredhatcom_sso].last(#2)}<>0"
+     name: "webcheck_developerredhatcom_sso is unhealthy"
      priority: high
      url: https://github.com/openshift/ops-sop/blob/master/V3/SSO.asciidoc
 
