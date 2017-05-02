@@ -308,7 +308,7 @@ g_template_app_zabbix_server:
        status_codes: '200'
        required: "version"
        'no': 1
-     - name: "webcheck_developerredhatcom_sso auth/realms/fabric8"
+     - name: "webcheck_developerredhatcom_sso auth/realms/rhd"
        url: "{{ g_webcheck_developerredhatcom_sso_url_rhd }}"
        status_codes: '200'
        required: "account-service"
