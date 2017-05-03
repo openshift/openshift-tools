@@ -14,8 +14,8 @@
   roles:
   - { role: lib_openshift }
   tasks:
-  - name: Check for invalid namespaces and SDN errors
-    oc_objectvalidator:
+#  - name: Check for invalid namespaces and SDN errors
+#    oc_objectvalidator:
 
   # What's all this PetSet business about?
   #
