@@ -115,7 +115,9 @@ while [ "$(curl -k -s -o /dev/null -w %{http_code} https://oso-cent7-zabbix-web/
 	echo "Waiting for zabbix to be ready"
 	sleep 5
 done
-# sleep another 300 so zabbix-web is really up
+
+
+echo "Sleeping for 300 seconds to wait for zabbix-web to really come up..."
 sleep 300
 
 echo "Config zabbix"

@@ -36,7 +36,7 @@
     description: "{{ item.description | default('', True) }}"
     multiplier: "{{ item.multiplier | default('', True) }}"
     units: "{{ item.units | default('', True) }}"
-    history: "{{ item.history | default(omit, True) }}"
+    history: "{{ item.history | default(14, True) }}"
     trends: "{{ item.trends | default(omit, True) }}"
     template_name: "{{ template.name }}"
     applications: "{{ item.applications }}"
