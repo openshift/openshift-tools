@@ -18,6 +18,7 @@ class InfraNodePodStatus(object):
         '''initial for the InfraNodePodStatus'''
         self.kubeconfig = '/tmp/admin.kubeconfig'
         self.oc = OCUtil(namespace='default', config_file=self.kubeconfig)
+        self.pod_report = self.check_pods()
 
     def check_pods(self):
         ''' get all the pod information '''
@@ -30,16 +31,20 @@ class InfraNodePodStatus(object):
             pod_report[pod_name]['status'] = pod['status']['phase']
         return pod_report
 
-    @staticmethod
-    def compare_ip(keyword, pod_info_dict):
+    def get_expected_replicas(self, deploymentconfig):
+        ''' get expected replica count from deploymentconfig '''
+        defined_replicas = self.oc.get_dc(deploymentconfig)['spec']['replicas']
+        return defined_replicas
+
+    def compare_ip(self, keyword):
         ''' to compare the pod host ip and check the pod status '''
-        pod_hostip_status = [pod_info_dict[i] for i in pod_info_dict.keys() if keyword in i]
-#        pod_status = [pod_info_dict[i] for i in pod_info_dict.keys() if keyword in i]
+        pod_hostip_status = [self.pod_report[i] for i in self.pod_report.keys() if keyword in i]
+
         pod_run_num = 0
         for i in pod_hostip_status:
             if i['status'] == "Running":
                 pod_run_num += 1
-        if len(pod_hostip_status) == 2:
+        if len(pod_hostip_status) == self.get_expected_replicas(keyword):
             if pod_hostip_status[0]['hostIP'] != pod_hostip_status[1]['hostIP']:
                 # print "ok, you do not need do anything for {} pod".format(keyword)
                 result_code = 1
@@ -47,7 +52,7 @@ class InfraNodePodStatus(object):
                 # print "there are something wrong, please check the pod"
                 result_code = 0
         else:
-            print "plese check the pod"
+            print "please check the pod"
             result_code = 0
         # result_code 1 means the two pods are on different nodes
         # pod_run_num means the running pod number
@@ -57,11 +62,9 @@ class InfraNodePodStatus(object):
         ''' run the command and send the code to zabbix '''
         ms = MetricSender()
 
-        pod_report = self.check_pods()
-
         # the check_value is the value to send to zabbix
-        router_check_value = self.compare_ip('router', pod_report)
-        registry_check_value = self.compare_ip('registry', pod_report)
+        router_check_value = self.compare_ip('router')
+        registry_check_value = self.compare_ip('docker-registry')
         print router_check_value, registry_check_value
 
         ms.add_metric({'openshift.router.pod.location': router_check_value[0]})
