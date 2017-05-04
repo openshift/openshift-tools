@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.55
+Version:       0.1.56
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -410,6 +410,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Thu May 04 2017 Chris Murphy <chmurphy@redhat.com
+- Added logging to list of allowed operations to verify-cicd-operation.py
+  (chmurphy@redhat.com)
+
 * Fri Apr 28 2017 Thomas Wiest <twiest@redhat.com> 0.1.55-1
 - Added cron-send-ec2-ebs-volumes-in-stuck-state.py (twiest@redhat.com)
 - Removed zagg_client.yaml since we don't use it anymore. (twiest@redhat.com)
