@@ -261,7 +261,7 @@
     user: "{{ ozb_user }}"
     password: "{{ ozb_password }}"
   tags:
-  - config_loop
+  - zabbix_config
 
 - name: Include Template OpenShift Metrics
   include: ../../lib_zabbix/tasks/create_template.yml
