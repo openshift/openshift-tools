@@ -122,7 +122,7 @@ g_template_openshift_node:
     priority: high
 
   - name: "[Heal] OVS may not be running on {HOST.NAME}"
-    expression: "{Template Openshift Node:openshift.node.ovs.pids.count.last(#1)}<>4 and {Template Openshift Node:openshift.node.ovs.pids.count.last(#2)}<>4"
+    expression: "({Template Openshift Node:openshift.node.ovs.pids.count.last(#1)}<>4 and {Template Openshift Node:openshift.node.ovs.pids.count.last(#2)}<>4) and ({Template Openshift Node:openshift.node.ovs.pids.count.last(#1)}<>2 and {Template Openshift Node:openshift.node.ovs.pids.count.last(#2)}<>2)"
     url: "https://github.com/openshift/ops-sop/blob/node/V3/Alerts/openshift_node.asciidoc"
     priority: high
 
