@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.56
+Version:       0.1.57
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -412,6 +412,11 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Mon May 08 2017 Joel Diaz <jdiaz@redhat.com> 0.1.57-1
+- Automatic commit of package [openshift-tools-scripts] release [0.1.56-1].
+  (chmurphy@redhat.com)
+- fix assumption of replicas always equal to '2' (jdiaz@redhat.com)
+
 * Thu May 04 2017 Chris Murphy <chmurphy@redhat.com
 - Added logging to list of allowed operations to verify-cicd-operation.py
   (chmurphy@redhat.com)
