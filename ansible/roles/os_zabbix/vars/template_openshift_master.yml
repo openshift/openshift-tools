@@ -835,6 +835,51 @@ g_template_openshift_master:
     expression: "{Template Openshift Master:openshift.master.etcd.ping.last(#1)}=0 and {Template Openshift Master:openshift.master.etcd.ping.last(#2)}=0"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_etcd.asciidoc"
     priority: high
+  
+  - name: "dnsmasq failed on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.dnsmasq.curl.status.last()}=0 or {Template Openshift Master:openshift.master.dnsmasq.service.status.last()}=0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_dnsmasq.asciidoc"
+    priority: high
+
+  - name: "Number of users for Openshift Master on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.user.count.last()}=0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
+    priority: info
+
+  - name: "There are no projects running on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.project.count.last()}=0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
+    priority: info
+
+  - name: "Failed Persistent Volumes on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.pv.failed.count.min(#2)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pv_failed.asciidoc"
+    priority: high
+
+  - name: "Too many new builds {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.build_state.new.avg(#3)}>10"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/build_count_alerts.asciidoc"
+    priority: high
+
+  - name: "Builds stuck in New state for longer than 3 minutes on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.stuck_builds.new.last()}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/stuck_build_alerts.asciidoc"
+    priority: high
+
+  # Put triggers that depend on other triggers here (deps must be created first)
+  - name: "Application creation has failed on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.app.create.last(#1)}=1 and {Template Openshift Master:openshift.master.app.create.last(#2)}=1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_create_app.asciidoc"
+    dependencies:
+    - "Openshift Master process not running on {HOST.NAME}"
+    priority: avg
+
+  - name: "Application creation with build has failed on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.app.build.create.last(#1)}=1 and {Template Openshift Master:openshift.master.app.build.create.last(#2)}=1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_create_app.asciidoc"
+    dependencies:
+    - "Openshift Master process not running on {HOST.NAME}"
+    priority: avg
 
   - name: "Number of users for Openshift Master on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.user.count.last()}=0"

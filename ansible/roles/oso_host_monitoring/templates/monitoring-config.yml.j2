@@ -263,6 +263,11 @@ host_monitoring_cron:
   minute: "*/30"
   job: "ops-runner -f -t 1300 -s 120 -n csca.openshift.master.app.build.create /usr/bin/cron-send-create-app -v --basename build --loopcount 180 --source https://github.com/openshift/nodejs-ex &>> /var/log/build_app.log"
 
+
+- name: check the dnsmasq status every 5 minutes
+  minute: "*/5"
+  job: ops-runner -f -t 180 -s 60 -n csdc.openshift.master.dnsmasq.status.check /usr/bin/cron-send-dnsmasq-check
+
 {% if osohm_master_ha|bool %}
 - name: send openshift-master process count
   minute: "*/5"
