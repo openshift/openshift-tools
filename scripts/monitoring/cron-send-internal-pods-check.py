@@ -45,7 +45,10 @@ class InfraNodePodStatus(object):
             if i['status'] == "Running":
                 pod_run_num += 1
         if len(pod_hostip_status) == self.get_expected_replicas(keyword):
-            if pod_hostip_status[0]['hostIP'] != pod_hostip_status[1]['hostIP']:
+            # get IP of nodes the pods are running on
+            # so we can see if each pod is on a different node
+            hostip_set = set([x['hostIP'] for x in pod_hostip_status])
+            if len(hostip_set) == len(pod_hostip_status):
                 # print "ok, you do not need do anything for {} pod".format(keyword)
                 result_code = 1
             else:
