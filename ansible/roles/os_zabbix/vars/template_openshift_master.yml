@@ -836,6 +836,11 @@ g_template_openshift_master:
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_etcd.asciidoc"
     priority: high
 
+  - name: "dnsmasq failed on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.dnsmasq.curl.status.last()}=0 or {Template Openshift Master:openshift.master.dnsmasq.service.status.last()}=0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_dnsmasq.asciidoc"
+    priority: high
+
   - name: "Number of users for Openshift Master on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.user.count.last()}=0"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
