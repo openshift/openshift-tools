@@ -111,15 +111,15 @@ if [ "${GREP_RESULT}" == "" ]; then
 	sudo bash -c "echo '127.0.0.1  oso-cent7-zabbix-web' >> /etc/hosts"
 fi
 
-while [ "$(curl -k -s -o /dev/null -w %{http_code} https://oso-cent7-zabbix-web/zabbix/)" != "200" ]; do
-	echo "Waiting for zabbix to be ready"
-	sleep 5
+GREP_RESULT=""
+echo -n "Waiting for zabbix to be ready"
+while [ "$GREP_RESULT" == "" ]; do
+	sleep 1
+	echo -n "."
+	GREP_RESULT=$(curl -k https://oso-cent7-zabbix-web/zabbix/ 2>/dev/null | grep 'sign in as guest' || :)
 done
 
-
-echo "Sleeping for 300 seconds to wait for zabbix-web to really come up..."
-sleep 300
-
+echo " Done"
 echo "Config zabbix"
 PYTHONPATH=${OPENSHIFT_TOOLS_REPO}:${PYTHONPATH} ansible-playbook ../../ansible/playbooks/adhoc/zabbix_setup/oo-clean-zaio.yml -e g_server="https://oso-cent7-zabbix-web/zabbix/api_jsonrpc.php"
 PYTHONPATH=${OPENSHIFT_TOOLS_REPO}:${PYTHONPATH} ansible-playbook ../../ansible/playbooks/adhoc/zabbix_setup/oo-config-zaio.yml -e g_server="https://oso-cent7-zabbix-web/zabbix/api_jsonrpc.php"
