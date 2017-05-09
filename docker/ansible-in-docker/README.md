@@ -21,6 +21,6 @@ test.yaml:
 
   tasks:
 
-  - name: "date -u"
-    command: /bin/bash -c "date -u"
+  - name: show the ansible version
+    debug: var=ansible_version
 ```
