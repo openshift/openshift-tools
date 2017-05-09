@@ -19,10 +19,10 @@ EndOfDockerfile
 #set -vx
 
 sudo docker run --rm -it --privileged \\
-  -v /etc/ansible:/etc/ansible:ro \\
-  -v /usr/share/ansible/inventory/multi_inventory.py:/usr/share/ansible/inventory/multi_inventory.py:ro \\
-  -v /:/host:ro \\
-  -v /dev/shm/.ansible:/dev/shm/.ansible:ro \\
+  -v /etc/ansible:/etc/ansible:ro,rslave \\
+  -v /usr/share/ansible/inventory/multi_inventory.py:/usr/share/ansible/inventory/multi_inventory.py:ro,rslave \\
+  -v /:/host:ro,rslave \\
+  -v /dev/shm/.ansible:/dev/shm/.ansible:ro,rslave \\
   -v \$SSH_AUTH_SOCK:/tmp/sshauth.sock \\
   -e SSH_AUTH_SOCK=/tmp/sshauth.sock \\
   -w /host/\`pwd\` \\
