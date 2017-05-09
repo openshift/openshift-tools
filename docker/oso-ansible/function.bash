@@ -1,13 +1,10 @@
-#!/bin/bash
-set -vx
+function buildAnsibleContainer {
 
-function buildAnsible {
-    dockerTag=oso-ansible:${ansibleVersion}
-
-    bashScript=./oso-ansible-playbook-${ansibleVersion}
+    dockerTag=oso-${baseOS}-ansible:${ansibleVersion}
+    bashScript=./oso-${baseOS}-ansible-playbook-${ansibleVersion}
 
     docker build --tag ${dockerTag} - << EndOfDockerfile
-FROM fedora:25
+FROM ${baseOSfrom}
 
 RUN yum -y update \
  && yum -y install ${ansibleRPM} \
@@ -32,11 +29,3 @@ EndOfBashScript
 
     chmod 755 ${bashScript}
 }
-
-export ansibleRPM=https://kojipkgs.fedoraproject.org/packages/ansible/2.2.2.0/1.fc25/noarch/ansible-2.2.2.0-1.fc25.noarch.rpm
-export ansibleVersion=2.2.2.0-1
-buildAnsible
-
-export ansibleRPM=https://kojipkgs.fedoraproject.org/packages/ansible/2.3.0.0/3.fc25/noarch/ansible-2.3.0.0-3.fc25.noarch.rpm
-export ansibleVersion=2.3.0.0-3
-buildAnsible

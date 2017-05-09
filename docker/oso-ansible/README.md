@@ -18,9 +18,11 @@ Usage:
 test.yaml:
 
 ```
-#!./oso-ansible-playbook-2.3.0.0-3
+#!./oso-${baseOS}-ansible-playbook-${version}
+# - examples -
+#!./oso-centos7-ansible-playbook-2.2.2.0-1
 # - or -
-#!./oso-ansible-playbook-2.2.2.0-1
+#!./oso-centos7-ansible-playbook-2.3.0.0-3
 
 - hosts: my-host
   remote_user: root
