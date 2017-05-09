@@ -1,5 +1,5 @@
-ansible-in-docker
-=================
+oso-ansible
+===========
 
 Creates dockerfile and scripts to use with ansible scripts to version lock ansible without impacting other work.
 
