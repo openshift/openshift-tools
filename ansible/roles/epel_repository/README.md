@@ -11,7 +11,7 @@ N/A
 Role Variables
 --------------
 
-N/A
+epelr_exclude: A space-separated list of packages that should not be pulled from EPEL.
 
 Dependencies
 ------------
