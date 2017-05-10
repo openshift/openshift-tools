@@ -1,0 +1,10 @@
+---
+- name: restart flanneld
+  become: yes
+  systemd: name=flanneld state=restarted
+
+- name: restart docker
+  become: yes
+  systemd:
+    name: "{{ openshift.docker.service_name }}"
+    state: restarted
