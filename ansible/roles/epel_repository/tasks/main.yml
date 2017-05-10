@@ -17,3 +17,23 @@
   with_items:
   - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
   when: not repoquery_epel.results.package_found
+
+- name: Mark undesirable EPEL packages as excluded
+  lineinfile:
+    name: "{{item.filename}}"
+    insertafter: "^\\[{{item.reponame}}\\]$"
+    regexp: "^exclude=.*?fake_package_name-EXCLUDES-FOR-{{item.reponame}}-MANAGED-BY-ANSIBLE$"
+    line: "exclude={{epelr_exclude}} fake_package_name-EXCLUDES-FOR-{{item.reponame}}-MANAGED-BY-ANSIBLE"
+  with_items:
+    - filename: /etc/yum.repos.d/epel.repo
+      reponame: epel
+    - filename: /etc/yum.repos.d/epel.repo
+      reponame: epel-debuginfo
+    - filename: /etc/yum.repos.d/epel.repo
+      reponame: epel-source
+    - filename: /etc/yum.repos.d/epel-testing.repo
+      reponame: epel-testing
+    - filename: /etc/yum.repos.d/epel-testing.repo
+      reponame: epel-testing-debuginfo
+    - filename: /etc/yum.repos.d/epel-testing.repo
+      reponame: epel-testing-source
