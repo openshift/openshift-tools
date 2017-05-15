@@ -859,12 +859,12 @@ g_template_openshift_master:
   - name: "Too many new builds {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.build_state.new.avg(#3)}>10"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/build_count_alerts.asciidoc"
-    priority: high
+    priority: info
 
   - name: "Builds stuck in New state for longer than 3 minutes on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.stuck_builds.new.last()}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/stuck_build_alerts.asciidoc"
-    priority: high
+    priority: info
 
   # Put triggers that depend on other triggers here (deps must be created first)
   - name: "Application creation has failed on {HOST.NAME}"
