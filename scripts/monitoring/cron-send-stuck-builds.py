@@ -69,8 +69,11 @@ def get_stuck_build_count(age, build_state):
     #get_builds="get builds -o=custom-columns=Phase:.status.phase,TS:.status.startTimestamp --all-namespaces"
 
     # go template method - shiny!
+    # template returns creationTimestamp for non-JenkinsPipeline builds in build_state
     get_new_build_timestamps = ("get builds --all-namespaces -o go-template='{{range .items}}"
-                                "{{if eq .status.phase \"%s\"}}{{.metadata.creationTimestamp}}"
+                                "{{if and (eq .status.phase \"%s\")"
+                                " (not (eq .spec.strategy.type \"JenkinsPipeline\"))}}"
+                                "{{.metadata.creationTimestamp}}"
                                 "{{print \"\\n\"}}{{end}}{{end}}'")
 
     all_ts = runOCcmd(get_new_build_timestamps % build_state).split()
