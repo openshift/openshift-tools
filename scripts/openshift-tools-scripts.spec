@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.58
+Version:       0.1.59
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -410,6 +410,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Mon May 15 2017 Blair Morrison <bmorriso@redhat.com> 0.1.59-1
+- Filter out JenkinsPipelines from stuck builds check (bmorriso@redhat.com)
+
 * Mon May 08 2017 Joel Diaz <jdiaz@redhat.com> 0.1.58-1
 - remove assumption about only 2 pods (jdiaz@redhat.com)
 
