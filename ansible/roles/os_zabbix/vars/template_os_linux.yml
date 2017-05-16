@@ -273,28 +273,28 @@ g_template_os_linux:
   ztriggerprototypes:
   - name: "{% raw %}Filesystem: {{ '{#' }}OSO_FILESYS} has less than 10% free disk space on {HOST.NAME}{% endraw %}"
     expression: "{% raw %}{Template OS Linux:disc.filesys.full[{{ '{#' }}OSO_FILESYS}].last()}>90{% endraw %}"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_filesys_full.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_filesys_full.asciidoc"
     priority: high
 
   # This has a dependency on the previous trigger
   # Trigger Prototypes do not work in 2.4.  They will work in Zabbix 3.0
   - name: "{% raw %}Filesystem: {{ '{#' }}OSO_FILESYS} has less than 15% free disk space on {HOST.NAME}{% endraw %}"
     expression: "{% raw %}{Template OS Linux:disc.filesys.full[{{ '{#' }}OSO_FILESYS}].last()}>85{% endraw %}"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_filesys_full.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_filesys_full.asciidoc"
     priority: warn
     dependencies:
     - "{% raw %}Filesystem: {{ '{#' }}OSO_FILESYS} has less than 10% free disk space on {HOST.NAME}{% endraw %}"
 
   - name: "{% raw %}Filesystem: {{ '{#' }}OSO_FILESYS} has less than 5% free inodes on {HOST.NAME}{% endraw %}"
     expression: "{% raw %}{Template OS Linux:disc.filesys.inodes.pused[{{ '{#' }}OSO_FILESYS}].last()}>95{% endraw %}"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_filesys_full.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_filesys_full.asciidoc"
     priority: high
 
   # This has a dependency on the previous trigger
   # Trigger Prototypes do not work in 2.4.  They will work in Zabbix 3.0
   - name: "{% raw %}Filesystem: {{ '{#' }}OSO_FILESYS} has less than 10% free inodes on {HOST.NAME}{% endraw %}"
     expression: "{% raw %}{Template OS Linux:disc.filesys.inodes.pused[{{ '{#' }}OSO_FILESYS}].last()}>90{% endraw %}"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_filesys_full.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_filesys_full.asciidoc"
     priority: warn
     dependencies:
     - "{% raw %}Filesystem: {{ '{#' }}OSO_FILESYS} has less than 5% free inodes on {HOST.NAME}{% endraw %}"
@@ -302,17 +302,17 @@ g_template_os_linux:
   ztriggers:
   - name: "Too many TOTAL processes on {HOST.NAME}"
     expression: "{Template OS Linux:proc.nprocs.last()}>5000"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_proc.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_proc.asciidoc"
     priority: warn
 
   - name: "Critical lack of available memory on {HOST.NAME}"
     expression: "{Template OS Linux:mem.util.available.last()}<314572800"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_memory.asciidoc"
-    priority: avg
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_memory.asciidoc"
+    priority: high
 
   - name: "Lack of available memory on {HOST.NAME}"
     expression: "{Template OS Linux:mem.util.available.last()}<524288000"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_memory.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_memory.asciidoc"
     priority: avg
     dependencies:
     - "Critical lack of available memory on {HOST.NAME}"
@@ -320,13 +320,13 @@ g_template_os_linux:
     #  CPU Utilization #
   - name: "CPU idle less than 5% on {HOST.NAME}"
     expression: "{Template OS Linux:kernel.all.cpu.idle.max(#5)}<5"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_cpu_idle.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_cpu_idle.asciidoc"
     priority: average
     description: "CPU is less than 5% idle"
 
   - name: "CPU idle less than 10% on {HOST.NAME}"
     expression: "{Template OS Linux:kernel.all.cpu.idle.max(#5)}<10"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_cpu_idle.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_cpu_idle.asciidoc"
     priority: average
     description: "CPU is less than 10% idle"
     dependencies:
@@ -334,6 +334,6 @@ g_template_os_linux:
 
   - name: "Security updates available for {HOST.NAME}"
     expression: "{Template OS Linux:yum.security.updates.last(0)}>0"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_yum_update.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_yum_update.asciidoc"
     priority: info
     description: "One or more security updates need to be applied to the host"

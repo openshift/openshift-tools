@@ -1,7 +1,7 @@
 Role Name
 =========
 
-Configure the OpenShift Online haproxy: https://github.com/openshift/ops-sop/blob/master/V3/Setup/Online.asciidoc#configure-ose-haproxy-router
+Configure the OpenShift Online haproxy: https://github.com/openshift/ops-sop/blob/master/v3/setup/online.asciidoc#configure-ose-haproxy-router
 
 Requirements
 ------------

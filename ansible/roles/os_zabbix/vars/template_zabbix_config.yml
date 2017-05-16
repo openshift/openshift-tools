@@ -10,5 +10,5 @@ g_template_zabbix_config:
   ztriggers:
   - name: "zabbix_config.run.exit_code not zero on {HOST.NAME}"
     expression: "{Template Zabbix Config:zabbix_config.run.exit_code.min(#2)}>0"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_zabbix_config.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_zabbix_config.asciidoc"
     priority: average

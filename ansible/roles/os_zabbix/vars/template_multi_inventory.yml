@@ -12,4 +12,4 @@ g_template_multi_inventory:
      description: Ansible multi-inventory is having trouble accessing accounts
      expression: "{Template Multi-Inventory:multi_inventory.account.refresh.min(#3)}>0"
      priority: avg
-     url: https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_multi_inventory.asciidoc
+     url: https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_multi_inventory.asciidoc
