@@ -1010,9 +1010,9 @@ def main():
     if state == 'list':
 
         #pylint: disable=protected-access
-        result = oc_version.get()
+        results = oc_version.get()
 
-        module.exit_json(changed=False, result=result)
+        module.exit_json(changed=False, results=results)
 
 if __name__ == '__main__':
 # pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
