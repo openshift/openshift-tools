@@ -84,6 +84,7 @@ cp -p monitoring/cron-send-zabbix-too-old.py %{buildroot}/usr/bin/cron-send-zabb
 cp -p cicd/verify-cicd-operation.py %{buildroot}/usr/bin/verify-cicd-operation.py
 cp -p monitoring/cron-send-prometheus-data.py %{buildroot}/usr/bin/cron-send-prometheus-data
 cp -p monitoring/cron-send-dnsmasq-check.py %{buildroot}/usr/bin/cron-send-dnsmasq-check
+cp -p monitoring/heal_for_docker_use_too_much_memory.yml %{buildroot}/usr/bin/heal_for_docker_use_too_much_memory.yml
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
@@ -145,6 +146,7 @@ OpenShift Tools Monitoring Remoteheal Scripts
 
 %files monitoring-remoteheal
 /usr/bin/remote-healer
+/usr/bin/heal_for_docker_use_too_much_memory.yml
 %config(noreplace)/etc/openshift_tools/remote_healer.conf
 
 # ----------------------------------------------------------------------------------

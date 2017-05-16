@@ -1,0 +1,84 @@
+#!/usr/bin/ansible-playbook
+---
+# This is the playbook to restart docker
+#
+# To run:
+#
+# 1. This playbook should be run with:
+#   ansible-playbook restart_docker_on_node.yml -e "cli_nodename=dev-preview-int-node-compute-89cf0"
+#
+- name: Ensure cli_clusterid is set
+  hosts: localhost
+
+  pre_tasks:
+  - name: Ensure needed variables are set
+    fail:
+      msg: "Value {{ item }} is not set!"
+    when: "{{ item }} is undefined"
+    with_items:
+    - cli_nodename
+
+- name: Evacute the pods from the old nodes, restart docker
+  user: root
+  hosts: "{{ cli_nodename }}"
+  vars:
+    oo_clusterid:   "{{ hostvars[cli_nodename].ec2_tag_clusterid }}"
+    cli_clusterid: "{{ oo_clusterid }}"
+    #oo_location:    "{{ hostvars['synthetic_' + cli_clusterid].oo_location }}"
+    #oo_account:     "{{ hostvars['synthetic_' + cli_clusterid].oo_account }}"
+    #oo_environment: "{{ hostvars['synthetic_' + cli_clusterid].oo_environment }}"
+    #oo_sublocation: "{{ hostvars['synthetic_' + cli_clusterid].oo_sublocation }}"
+    cluster_master: "{{ groups['oo_master_primary'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
+  roles:
+  - role: tools_roles/lib_openshift_3.2
+  #- role: ops_roles/include_private_vars
+  tasks:
+
+  - name: set the node name
+    set_fact:
+      node_name: "{{ hostvars[inventory_hostname].ec2_private_dns_name }}"
+
+  - debug:
+      var: "{{ item }}"
+    with_items:
+    - node_name
+    - cluster_master
+
+  - name: oadm manage-node --schedulable=false
+    oadm_manage_node:
+      node: "{{ node_name }}"
+      schedulable: False
+    delegate_to: "{{ cluster_master }}"
+
+  - block:
+    - name: oadm manage-node --evacuate
+      oadm_manage_node:
+        node:  "{{ node_name }}"
+        evacuate: True
+        force: True
+      delegate_to: "{{ cluster_master }}"
+
+    - name: get a list of pods from the nodes
+      oadm_manage_node:
+        list_pods: True
+        node: "{{ node_name }}"
+      delegate_to: "{{ cluster_master }}"
+      register: pod_list
+      until: pod_list.results.nodes[node_name] | length == 0
+      retries: 15
+      ignore_errors: yes
+
+
+    - name: restart docker
+      service: name=docker state=restarted
+
+    - name: pause for 30 seconds for docker to start
+      pause:
+        seconds: 30
+    always:
+    - name: oadm manage-node --schedulable=true
+      oadm_manage_node:
+        node: "{{ node_name }}"
+        schedulable: True
+      delegate_to: "{{ cluster_master }}"
+
