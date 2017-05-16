@@ -20,4 +20,4 @@ g_template_app_zabbix_agent:
      description: Zabbix agent is unreachable for 15 minutes.
      expression: "{Template App Zabbix Agent:agent.ping.nodata(15m)}=1"
      priority: high
-     url: https://github.com/openshift/ops-sop/blob/master/Alerts/check_ping.asciidoc
+     url: https://github.com/openshift/ops-sop/blob/master/alerts/check_ping.asciidoc
