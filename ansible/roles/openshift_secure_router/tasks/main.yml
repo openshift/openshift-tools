@@ -19,13 +19,13 @@
 - name: Set router edit(s) list
   set_fact:
     ossr_router_edits: "{{ ossr_default_router_edits }}"
-  when: oc_version['result']['openshift_short'] | version_compare('3.4', '<')
+  when: oc_version['results']['openshift_short'] | version_compare('3.4', '<')
 
 # anything beyond a 3.3 cluster should set the router up for PROXY protocol (from vars/aws.yml)
 - name: Merge default and cloud-specific router edits
   set_fact:
     ossr_router_edits: "{{ ossr_default_router_edits | union(ossr_cloud_router_edits) }}"
-  when: oc_version['result']['openshift_short'] | version_compare('3.4', '>=')
+  when: oc_version['results']['openshift_short'] | version_compare('3.4', '>=')
 
 - name: create routers
   oadm_router:

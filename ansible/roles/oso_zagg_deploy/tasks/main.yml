@@ -73,7 +73,7 @@
     command: "oc deploy --latest -n default oso-rhel7-zagg-web"
     when:
       - '{{ zagg_pods_running | length }} < 2'
-      - l_oc_version.result.oc_short == "3.3"
+      - l_oc_version.results.oc_short == "3.3"
 
   run_once: true
   when: inventory_hostname == ansible_play_hosts[0]
