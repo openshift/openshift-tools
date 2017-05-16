@@ -308,7 +308,7 @@ g_template_os_linux:
   - name: "Critical lack of available memory on {HOST.NAME}"
     expression: "{Template OS Linux:mem.util.available.last()}<314572800"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_memory.asciidoc"
-    priority: avg
+    priority: high
 
   - name: "Lack of available memory on {HOST.NAME}"
     expression: "{Template OS Linux:mem.util.available.last()}<524288000"
