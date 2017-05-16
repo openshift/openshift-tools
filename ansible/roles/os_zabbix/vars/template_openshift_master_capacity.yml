@@ -5,10 +5,10 @@ g_template_openshift_master_capacity:
   ztriggers:
   - name: "Openshift Cluster maximum memory pods schedulable less than 10 on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.cluster.max_mem_pods_schedulable.last(#3)}<10"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_master.asciidoc"
     priority: warn
 
   - name: "Openshift Cluster maximum memory pods schedulable less than 5 on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.cluster.max_mem_pods_schedulable.last(#3)}<5"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_master.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_master.asciidoc"
     priority: high
