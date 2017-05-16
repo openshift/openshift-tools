@@ -85,6 +85,7 @@ cp -p cicd/verify-cicd-operation.py %{buildroot}/usr/bin/verify-cicd-operation.p
 cp -p monitoring/cron-send-prometheus-data.py %{buildroot}/usr/bin/cron-send-prometheus-data
 cp -p monitoring/cron-send-dnsmasq-check.py %{buildroot}/usr/bin/cron-send-dnsmasq-check
 cp -p monitoring/heal_for_docker_use_too_much_memory.yml %{buildroot}/usr/bin/heal_for_docker_use_too_much_memory.yml
+cp -rp ../ansible/roles/lib_openshift_3.2 %{buildroot}/usr/bin/lib_openshift_3.2
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
@@ -147,6 +148,7 @@ OpenShift Tools Monitoring Remoteheal Scripts
 %files monitoring-remoteheal
 /usr/bin/remote-healer
 /usr/bin/heal_for_docker_use_too_much_memory.yml
+/usr/bin/lib_openshift_3.2/*
 %config(noreplace)/etc/openshift_tools/remote_healer.conf
 
 # ----------------------------------------------------------------------------------
