@@ -40,7 +40,7 @@
     hostgroup_name: "{{ ossoz_clusterid }}"
     # Need to escape opening brace so we can avoid templating syntax errors
     expression: "{{ '{'  }}{{ ossoz_clusterid }}-synthetic:grpsum[{{ ossoz_clusterid }},sso.monitoring.container.running,max,15m].max(1800)}<3"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ops_sso.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_ops_sso.asciidoc"
     priority: warning
   delegate_to: localhost
   run_once: true

@@ -27,11 +27,11 @@ g_template_ops_tools:
   ztriggerprototypes:
   - name: "{% raw %}ops-runner[{{ '{#' }}OSO_COMMAND}]: non-zero exit code on {HOST.NAME}{% endraw %}"
     expression: "{% raw %}{Template Operations Tools:disc.ops.runner.command.exitcode[{{ '{#' }}OSO_COMMAND}].last()}<>0{% endraw %}"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ops_runner_command.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_ops_runner_command.asciidoc"
     priority: average
   - name: "{% raw %}ops-runner[{{ '{#' }}OSO_COMMAND}]: timeout on {HOST.NAME}{% endraw %}"
     expression: "{% raw %}{Template Operations Tools:disc.ops.runner.command.timeout[{{ '{#' }}OSO_COMMAND}].last()}<>0{% endraw %}"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ops_runner_command.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_ops_runner_command.asciidoc"
     priority: average
 
 
