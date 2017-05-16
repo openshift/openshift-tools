@@ -24,7 +24,6 @@
     oc_service:
       namespace: default
       name: zagg-service
-      debug: true
       ports:
       - name: 80-tcp
         port: 80
