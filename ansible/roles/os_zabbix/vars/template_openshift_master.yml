@@ -251,6 +251,18 @@ g_template_openshift_master:
     value_type: int
     applications:
     - Openshift Cluster
+ 
+  - key: openshift.master.project.create
+    description: "check the openshift project create status"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.project.delete
+    description: "check the openshift project delete status"
+    value_type: int
+    applications:
+    - Openshift Master
 
   - key: openshift.master.pv.space.total
     description: Shows the total space of pv
@@ -916,6 +928,16 @@ g_template_openshift_master:
     expression: "{Template Openshift Master:openshift.registry.pod.status.last(#1)}<2"
     url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_internal_pod.asciidoc"
     priority: avg
+
+  - name: "openshift project creation failed on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.project.create.last(#1)}=0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_create_app.asciidoc"
+    priority: high
+
+  - name: "openshift project deletion failed on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.project.delete.last(#1)}=1"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_create_app.asciidoc"
+    priority: high
 
   - name: "Openshift Master API health check is failing on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.api.healthz.max(#3)}<1"
