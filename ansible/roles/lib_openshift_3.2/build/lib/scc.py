@@ -103,6 +103,7 @@ class SecurityContextConstraints(Yedit):
         '''RoleBinding constructor'''
         super(SecurityContextConstraints, self).__init__(content=content)
         self._users = None
+        self._groups = None
 
     @property
     def users(self):
@@ -111,14 +112,30 @@ class SecurityContextConstraints(Yedit):
             self._users = self.get_users()
         return self._users
 
+    @property
+    def groups(self):
+        ''' groups property '''
+        if self._groups == None:
+            self._groups = self.get_groups()
+        return self._groups
+
     @users.setter
     def users(self, data):
         ''' users property setter'''
         self._users = data
 
+    @groups.setter
+    def groups(self, data):
+        ''' groups property setter'''
+        self._groups = data
+
     def get_users(self):
         '''get scc users'''
         return self.get(SecurityContextConstraints.users_path) or []
+
+    def get_groups(self):
+        '''get scc groups'''
+        return self.get(SecurityContextConstraints.groups_path) or []
 
     #### ADD #####
     def add_user(self, inc_user):
@@ -130,6 +147,15 @@ class SecurityContextConstraints(Yedit):
 
         return True
 
+    def add_group(self, inc_group):
+        ''' add a subject '''
+        if self.groups:
+            self.groups.append(inc_group)
+        else:
+            self.put(SecurityContextConstraints.groups_path, [inc_group])
+
+        return True
+
     #### /ADD #####
 
     #### Remove #####
@@ -137,6 +163,15 @@ class SecurityContextConstraints(Yedit):
         ''' remove a user '''
         try:
             self.users.remove(inc_user)
+        except ValueError as _:
+            return False
+
+        return True
+
+    def remove_group(self, inc_group):
+        ''' remove a group '''
+        try:
+            self.groups.remove(inc_group)
         except ValueError as _:
             return False
 
@@ -156,6 +191,17 @@ class SecurityContextConstraints(Yedit):
 
         return True
 
+    def update_group(self, inc_group):
+        ''' update a group '''
+        try:
+            index = self.groups.index(inc_group)
+        except ValueError as _:
+            return self.add_group(inc_group)
+
+        self.groups[index] = inc_group
+
+        return True
+
     #### /UPDATE #####
 
     #### FIND ####
@@ -168,3 +214,15 @@ class SecurityContextConstraints(Yedit):
             return index
 
         return index
+
+    def find_group(self, inc_group):
+        ''' find a group '''
+        index = None
+        try:
+            index = self.groups.index(inc_group)
+        except ValueError as _:
+            return index
+
+        return index
+
+    #### /FIND ####
