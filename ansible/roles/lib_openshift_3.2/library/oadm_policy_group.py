@@ -592,8 +592,7 @@ class Yedit(object):
                     continue
 
                 elif data and not isinstance(data, dict):
-                    raise YeditException("Unexpected item type found while going through key " +
-                                         "path: {} (at key: {})".format(key, dict_key))
+                    return None
 
                 data[dict_key] = {}
                 data = data[dict_key]
@@ -601,7 +600,7 @@ class Yedit(object):
             elif arr_ind and isinstance(data, list) and int(arr_ind) <= len(data) - 1:
                 data = data[int(arr_ind)]
             else:
-                raise YeditException("Unexpected item type found while going through key path: {}".format(key))
+                return None
 
         if key == '':
             data = item
@@ -614,12 +613,6 @@ class Yedit(object):
         # expected dict entry
         elif key_indexes[-1][1] and isinstance(data, dict):
             data[key_indexes[-1][1]] = item
-
-        # didn't add/update to an existing list, nor add/update key to a dict
-        # so we must have been provided some syntax like a.b.c[<int>] = "data" for a
-        # non-existent array
-        else:
-            raise YeditException("Error adding data to object at path: {}".format(key))
 
         return data
 
@@ -1458,15 +1451,11 @@ class SecurityContextConstraints(Yedit):
 
     #### /FIND ####
 
-class OadmPolicyException(Exception):
-    ''' Registry Exception Class '''
-    pass
-
-class OadmPolicyUserConfig(OpenShiftCLIConfig):
+class OadmPolicyGroupConfig(OpenShiftCLIConfig):
     ''' RegistryConfig is a DTO for the registry.  '''
     def __init__(self, namespace, kubeconfig, policy_options):
-        super(OadmPolicyUserConfig, self).__init__(policy_options['name']['value'],
-                                                   namespace, kubeconfig, policy_options)
+        super(OadmPolicyGroupConfig, self).__init__(policy_options['name']['value'],
+                                                    namespace, kubeconfig, policy_options)
         self.kind = self.get_kind()
         self.namespace = namespace
 
@@ -1481,14 +1470,14 @@ class OadmPolicyUserConfig(OpenShiftCLIConfig):
 
         return None
 
-class OadmPolicyUser(OpenShiftCLI):
+class OadmPolicyGroup(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
     def __init__(self,
                  policy_config,
                  verbose=False):
-        ''' Constructor for OadmPolicyUser '''
-        super(OadmPolicyUser, self).__init__(policy_config.namespace, policy_config.kubeconfig, verbose)
+        ''' Constructor for OadmPolicyGroup '''
+        super(OadmPolicyGroup, self).__init__(policy_config.namespace, policy_config.kubeconfig, verbose)
         self.config = policy_config
         self.verbose = verbose
         self._rolebinding = None
@@ -1520,14 +1509,18 @@ class OadmPolicyUser(OpenShiftCLI):
         if resource_name == 'cluster-reader':
             resource_name += 's'
 
-        return self._get(self.config.kind, resource_name)
+        results = self._get(self.config.kind, resource_name)
+        if results['returncode'] == 0:
+            return results
+
+        return  self._get(self.config.kind, resource_name+"-binding")
 
     def exists_role_binding(self):
         ''' return whether role_binding exists '''
         results = self.get()
         if results['returncode'] == 0:
             self.role_binding = RoleBinding(results['results'][0])
-            if self.role_binding.find_user_name(self.config.config_options['user']['value']) != None:
+            if self.role_binding.find_group_name(self.config.config_options['group']['value']) != None:
                 return True
 
             return False
@@ -1543,7 +1536,7 @@ class OadmPolicyUser(OpenShiftCLI):
         if results['returncode'] == 0:
             self.security_context_constraint = SecurityContextConstraints(results['results'][0])
 
-            if self.security_context_constraint.find_user(self.config.config_options['user']['value']) != None:
+            if self.security_context_constraint.find_group(self.config.config_options['group']['value']) != None:
                 return True
 
             return False
@@ -1568,7 +1561,7 @@ class OadmPolicyUser(OpenShiftCLI):
         cmd = ['-n', self.config.namespace, 'policy',
                self.config.config_options['action']['value'],
                self.config.config_options['name']['value'],
-               self.config.config_options['user']['value']]
+               self.config.config_options['group']['value']]
 
         return self.openshift_cmd(cmd, oadm=True)
 #Manage policy
@@ -1576,22 +1569,18 @@ class OadmPolicyUser(OpenShiftCLI):
 #Usage:
 #  oadm policy [options]
 #
+
 #Available Commands:
-#  add-role-to-user                Add users to a role in the current project
-#  remove-role-from-user           Remove user from role in the current project
-#  remove-user                     Remove user from the current project
-#  add-cluster-role-to-user        Add users to a role for all projects in the cluster
-#  remove-cluster-role-from-user   Remove user from role for all projects in the cluster
-#  add-scc-to-user                 Add users to a security context constraint
-#  remove-scc-from-user            Remove user from scc
-#
-#Use "oadm help <command>" for more information about a given command.
-#Use "oadm options" for a list of global command-line options (applies to all commands).
-#
+#  add-role-to-group               Add a role to groups for the current project
+#  remove-role-from-group          Remove a role from groups for the current project
+#  add-cluster-role-to-group       Add a role to groups for all projects in the cluster
+#  remove-cluster-role-from-group  Remove a role from groups for all projects in the cluster
+#  add-scc-to-group                Add groups to a security context constraint
+#  remove-scc-from-group           Remove group from scc
 
 def main():
     '''
-    ansible oadm module for user policy
+    ansible oadm module for group policy
     '''
 
     module = AnsibleModule(
@@ -1603,8 +1592,7 @@ def main():
             namespace=dict(default=None, type='str'),
             kubeconfig=dict(default='/etc/origin/master/admin.kubeconfig', type='str'),
 
-            # add-role-to-user
-            user=dict(required=True, type='str'),
+            group=dict(required=True, type='str'),
             resource_kind=dict(required=True, choices=['role', 'cluster-role', 'scc'], type='str'),
         ),
         supports_check_mode=True,
@@ -1613,31 +1601,31 @@ def main():
 
     action = None
     if state == 'present':
-        action = 'add-' + module.params['resource_kind'] + '-to-user'
+        action = 'add-' + module.params['resource_kind'] + '-to-group'
     else:
-        action = 'remove-' + module.params['resource_kind'] + '-from-user'
+        action = 'remove-' + module.params['resource_kind'] + '-from-group'
 
-    uconfig = OadmPolicyUserConfig(module.params['namespace'],
-                                   module.params['kubeconfig'],
-                                   {'action': {'value': action, 'include': False},
-                                    'user': {'value': module.params['user'], 'include': False},
-                                    'resource_kind': {'value': module.params['resource_kind'], 'include': False},
-                                    'name': {'value': module.params['resource_name'], 'include': False},
-                                   })
+    gconfig = OadmPolicyGroupConfig(module.params['namespace'],
+                                    module.params['kubeconfig'],
+                                    {'action': {'value': action, 'include': False},
+                                     'group': {'value': module.params['group'], 'include': False},
+                                     'resource_kind': {'value': module.params['resource_kind'], 'include': False},
+                                     'name': {'value': module.params['resource_name'], 'include': False},
+                                    })
 
-    oadmpolicyuser = OadmPolicyUser(uconfig)
+    oadmpolicygroup = OadmPolicyGroup(gconfig)
 
     ########
     # Delete
     ########
     if state == 'absent':
-        if not oadmpolicyuser.exists():
+        if not oadmpolicygroup.exists():
             module.exit_json(changed=False, state="absent")
 
         if module.check_mode:
             module.exit_json(changed=False, msg='Would have performed a delete.')
 
-        api_rval = oadmpolicyuser.perform()
+        api_rval = oadmpolicygroup.perform()
 
         if api_rval['returncode'] != 0:
             module.fail_json(msg=api_rval)
@@ -1648,7 +1636,7 @@ def main():
         ########
         # Create
         ########
-        results = oadmpolicyuser.exists()
+        results = oadmpolicygroup.exists()
         if isinstance(results, dict) and results.has_key('returncode') and results['returncode'] != 0:
             module.fail_json(msg=results)
 
@@ -1657,7 +1645,7 @@ def main():
             if module.check_mode:
                 module.exit_json(changed=False, msg='Would have performed a create.')
 
-            api_rval = oadmpolicyuser.perform()
+            api_rval = oadmpolicygroup.perform()
 
             if api_rval['returncode'] != 0:
                 module.fail_json(msg=api_rval)

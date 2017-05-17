@@ -1,14 +1,10 @@
 # pylint: skip-file
 
-class OadmPolicyException(Exception):
-    ''' Registry Exception Class '''
-    pass
-
-class OadmPolicyUserConfig(OpenShiftCLIConfig):
+class OadmPolicyGroupConfig(OpenShiftCLIConfig):
     ''' RegistryConfig is a DTO for the registry.  '''
     def __init__(self, namespace, kubeconfig, policy_options):
-        super(OadmPolicyUserConfig, self).__init__(policy_options['name']['value'],
-                                                   namespace, kubeconfig, policy_options)
+        super(OadmPolicyGroupConfig, self).__init__(policy_options['name']['value'],
+                                                    namespace, kubeconfig, policy_options)
         self.kind = self.get_kind()
         self.namespace = namespace
 
@@ -23,14 +19,14 @@ class OadmPolicyUserConfig(OpenShiftCLIConfig):
 
         return None
 
-class OadmPolicyUser(OpenShiftCLI):
+class OadmPolicyGroup(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
     def __init__(self,
                  policy_config,
                  verbose=False):
-        ''' Constructor for OadmPolicyUser '''
-        super(OadmPolicyUser, self).__init__(policy_config.namespace, policy_config.kubeconfig, verbose)
+        ''' Constructor for OadmPolicyGroup '''
+        super(OadmPolicyGroup, self).__init__(policy_config.namespace, policy_config.kubeconfig, verbose)
         self.config = policy_config
         self.verbose = verbose
         self._rolebinding = None
@@ -62,14 +58,18 @@ class OadmPolicyUser(OpenShiftCLI):
         if resource_name == 'cluster-reader':
             resource_name += 's'
 
-        return self._get(self.config.kind, resource_name)
+        results = self._get(self.config.kind, resource_name)
+        if results['returncode'] == 0:
+            return results
+
+        return  self._get(self.config.kind, resource_name+"-binding")
 
     def exists_role_binding(self):
         ''' return whether role_binding exists '''
         results = self.get()
         if results['returncode'] == 0:
             self.role_binding = RoleBinding(results['results'][0])
-            if self.role_binding.find_user_name(self.config.config_options['user']['value']) != None:
+            if self.role_binding.find_group_name(self.config.config_options['group']['value']) != None:
                 return True
 
             return False
@@ -85,7 +85,7 @@ class OadmPolicyUser(OpenShiftCLI):
         if results['returncode'] == 0:
             self.security_context_constraint = SecurityContextConstraints(results['results'][0])
 
-            if self.security_context_constraint.find_user(self.config.config_options['user']['value']) != None:
+            if self.security_context_constraint.find_group(self.config.config_options['group']['value']) != None:
                 return True
 
             return False
@@ -110,6 +110,6 @@ class OadmPolicyUser(OpenShiftCLI):
         cmd = ['-n', self.config.namespace, 'policy',
                self.config.config_options['action']['value'],
                self.config.config_options['name']['value'],
-               self.config.config_options['user']['value']]
+               self.config.config_options['group']['value']]
 
         return self.openshift_cmd(cmd, oadm=True)
