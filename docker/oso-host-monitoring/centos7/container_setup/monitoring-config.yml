@@ -203,3 +203,7 @@ host_monitoring_cron:
   hour: "1"
   minute: "0"
   job: ops-runner -f -s 120 -n csdov.rpm.versions /usr/bin/cron-send-docker-oc-versions
+
+- name: iptables FORWARD chain ordering band-aid script
+  minute: "*"
+  job: ops-runner -f -s 15 -n iptba.foward.chain.ordering.bandaid /root/forward_chain_bandaid.py
