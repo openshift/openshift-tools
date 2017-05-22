@@ -231,6 +231,10 @@ host_monitoring_cron:
 - name: send docker daemon cpu mem per process stats
   minute: "*/5"
   job: ops-runner -f -s 60 -n cscpm.openshift.node.docker.daemon.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'docker-current daemon' openshift.node.docker.daemon
+
+- name: iptables FORWARD chain ordering band-aid script
+  minute: "*"
+  job: ops-runner -f -s 15 -n iptba.foward.chain.ordering.bandaid /root/forward_chain_bandaid.py
 {# end if host master or node #}
 {% endif %}
 
@@ -506,10 +510,6 @@ host_monitoring_cron:
   hour: "*/6"
   minute: "8"
   job: "ops-runner -f -s 30 -n ogct.gcp.tags /usr/bin/ops-gcp-check-tags --gcp-creds-file /root/.gce/creds.json --region {{ osohm_region }} --clusterid {{ osohm_cluster_id }}"
-
-- name: iptables FORWARD chain ordering band-aid script
-  minute: "*"
-  job: ops-runner -f -s 15 -n iptba.foward.chain.ordering.bandaid /root/forward_chain_bandaid.py
 
 {# end if cloud gcp #}
 {% endif %}
