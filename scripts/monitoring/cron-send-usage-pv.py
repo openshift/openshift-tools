@@ -18,6 +18,7 @@
 
 import argparse
 import datetime
+import logging
 import time
 import re
 
@@ -29,7 +30,6 @@ import re
 from openshift_tools.monitoring.ocutil import OCUtil
 from openshift_tools.monitoring.metric_sender import MetricSender
 
-import logging
 logging.basicConfig(
     format='%(asctime)s - %(relativeCreated)6d - %(levelname)-8s - %(message)s',
 )
@@ -110,16 +110,22 @@ def get_pv_usage_clusterresourcequota():
 
 def convert_to_bytes(data):
     """convert to bytes"""
-    (number, unit) = re.search("([0-9]+)([A-Za-z]+)", data.strip()).groups()
+    storage_units = {
+        ''  : 1,
+        'Ki': 2**10,
+        'Mi': 2**20,
+        'Gi': 2**30,
+        'Ti': 2**40,
+        "k" : 10**3,
+        "M" : 10**6,
+        "G" : 10**9,
+        "T" : 10**12,
+    }
 
-    if unit.lower() == 'bi':
-        return int(number)
-    elif unit.lower() == 'ki':
-        return int(number) * 1024
-    elif unit.lower() == 'mi':
-        return int(number) * 1024 * 1024
-    elif unit.lower() == 'gi':
-        return int(number) * 1024 * 1024 * 1024
+    (number, unit) = re.search("([0-9]+)([A-Za-z]*)", data.strip()).groups()
+
+    if unit in storage_units:
+        return int(number) * storage_units[unit]
 
     raise Exception("invalid input data: " + data)
 
@@ -174,4 +180,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
