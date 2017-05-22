@@ -21,7 +21,7 @@ g_template_gcp:
   ztriggers:
   - name: "PD Snapshot deletion failed on {HOST.NAME}"
     expression: "{Template GCP:gcp.pd.snapshotter.deletion_errors.min(#3)}>0"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pd_snapshotter.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_pd_snapshotter.asciidoc"
     priority: average
 
   zdiscoveryrules:
@@ -79,5 +79,5 @@ g_template_gcp:
   ztriggerprototypes:
   - name: "{% raw %}PD Snapshotter[{{ '{#' }}OSO_SNAP_SCHEDULE}]: error creating pd snapshots on {HOST.NAME}{% endraw %}"
     expression: "{% raw %}{Template GCP:disc.gcp.pd.snapshotter.snapshot_creation_errors[{{ '{#' }}OSO_SNAP_SCHEDULE}].min(#3)}>0{% endraw %}"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pd_snapshotter.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_pd_snapshotter.asciidoc"
     priority: average

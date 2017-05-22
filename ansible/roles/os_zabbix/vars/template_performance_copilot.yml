@@ -10,5 +10,5 @@ g_template_performance_copilot:
   ztriggers:
   - name: "pcp.ping failed on {HOST.NAME}"
     expression: "{Template Performance Copilot:pcp.ping.max(#3)}<1"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_pcp_ping.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_pcp_ping.asciidoc"
     priority: average

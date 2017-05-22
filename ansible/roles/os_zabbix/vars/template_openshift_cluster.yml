@@ -15,7 +15,7 @@ g_template_openshift_cluster:
   ztriggers:
   - name: "Config loop failed on {HOST.NAME}"
     expression: "{Template OpenShift Cluster:openshift.cluster.configloop.exitcode.min(#3)}>0"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_config_loop.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_config_loop.asciidoc"
     priority: high
 
   zdiscoveryrules:
@@ -45,10 +45,10 @@ g_template_openshift_cluster:
   ztriggerprototypes:
   - name: "{% raw %}Router: {{ '{#' }}OS_ROUTER} is failing health checks{% endraw %}"
     expression: "{% raw %}{Template OpenShift Cluster:disc.openshift.cluster.router.health[{{ '{#' }}OS_ROUTER}].max(#3)}<1{% endraw %}"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_router.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_router.asciidoc"
     priority: average
 
   - name: "{% raw %}Router: {{ '{#' }}ROUTER_DC} has unexpected number of running PODs{% endraw %}"
     expression: "{% raw %}{Template OpenShift Cluster:disc.openshift.cluster.router.expected_pod_count[{{ '{#' }}ROUTER_DC}].max(#3)}<1{% endraw %}"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/openshift_router.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_router.asciidoc"
     priority: average
