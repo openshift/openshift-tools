@@ -18,6 +18,7 @@
 
 import argparse
 import datetime
+import logging
 import time
 import re
 
@@ -29,7 +30,6 @@ import re
 from openshift_tools.monitoring.ocutil import OCUtil
 from openshift_tools.monitoring.metric_sender import MetricSender
 
-import logging
 logging.basicConfig(
     format='%(asctime)s - %(relativeCreated)6d - %(levelname)-8s - %(message)s',
 )
@@ -180,4 +180,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
