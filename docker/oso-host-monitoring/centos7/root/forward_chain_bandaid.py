@@ -136,6 +136,19 @@ class TopRule(object):
                     self.restore_has_locks = False
         return self.restore_has_locks
 
+    def jump_chain_exists(self):
+        '''Return True if the jump chain exists or False otherwise'''
+        try:
+            # this is definitely going to throw. We're after the error message.
+            subprocess.check_output(self._build_cmd('--rename-chain', self.jump_chain, self.jump_chain),
+                                    stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as ex:
+            if 'File exists.' in ex.output:
+                return True
+            if 'No chain/target/match by that name.' in ex.output:
+                return False
+        raise TopRuleError(msg="Failed to determine if chain exists",
+                           cmd=ex.cmd, exit_code=ex.returncode, output=ex.output)
     def get(self):
         '''Get all the rules of the chain'''
         cmd = self._build_cmd('--list-rules', self.source_chain)
@@ -159,8 +172,9 @@ class TopRule(object):
             # nothing to do, everything already looks good. early return
             return
         in_data = "*%s\n" % self.table
-        # create the jump_chain (if it didn't exist, otherwise this has no effect except to reset the counters)
-        in_data += ":%s - [0:0]\n" % self.jump_chain
+        if not self.jump_chain_exists():
+            # create the jump_chain
+            in_data += ":%s - [0:0]\n" % self.jump_chain
         # assume that source_chain already exists
         # flush the source_chain since we're about to recreate its rules
         in_data += "-F %s\n" % self.source_chain
