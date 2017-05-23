@@ -113,19 +113,28 @@ host_monitoring_cron:
 - name: send pcp ping every 5 mintues
   minute: "*/5"
   job: ops-runner -f -s 60 -n cspp.pcp.ping /usr/bin/cron-send-pcp-ping
+# REMOVE_IH: I'm not sure I see the point of this if we are running pcp checks every minute,  
 
-- name: run pcp checks every 5 minutes
-  minute: "*/5"
+
+# This is needed every minute for the performance team
+- name: run pcp checks every minute
+  minute: "*"
   job: ops-runner -f -s 15 -n ozpc.send.pcp /usr/bin/ops-metric-pcp-client
+# REMOVE_IH: do we still need this? 5m instead
 
-- name: run pcp sampler every 5 minutes
-  minute: "*/5"
+
+# This is needed every minute for the performance team
+- name: run pcp sampler every minute
+  minute: "*"
   job: ops-runner -f -s 15 -n cspsm.kernal.all.cpu /usr/bin/cron-send-pcp-sampled-metrics -m kernel.all.cpu.idle -m kernel.all.cpu.nice -m kernel.all.cpu.steal -m kernel.all.cpu.sys -m kernel.all.cpu.user -m kernel.all.cpu.wait.total -m kernel.all.cpu.irq.hard -m kernel.all.cpu.irq.soft
+# REMOVE_IH: again, do we still need this? 
 
 - name: Do a full heartbeat
   minute: "10"
   hour: "*/4"
   job: ops-runner -f -s 300 -n ozc.send.heartbeat.full /usr/bin/ops-metric-client --send-heartbeat
+# REMOVE_IH: this one is slow enough, and it does more api stuff than items
+
 
 # This is our heart beater and lets us know when a box is down. Too much time
 # between checks means it'll take longer for us to know a box is down. See
@@ -133,53 +142,66 @@ host_monitoring_cron:
 - name: Do a quick heartbeat
   minute: "*"
   job: ops-runner -f -s 60 -n ozc.send.heartbeat.quick /usr/bin/ops-metric-client -k heartbeat.ping -o 1
+# REMOVE_IH: we could do 2 or 3 mins, that drops the amount of items by a half/2third and still be pretty speedy
 
 - name: run filesystem space checks every 10 minutes
   minute: "*/10"
   job: ops-runner -f -s 120 -n csfm.filesys.full /usr/bin/cron-send-filesystem-metrics
+# REMOVE_IH: 10 mins is already pretty slow,
+# REMOVE_IH: eventually check like these could be done in container and only send item if something is wrong, but then we need them to be really robust, otherwise we'll never know
 
 - name: run disk TPS checks every minute
   minute: "*"
   job: ops-runner -f -s 15 -n csdim.disk.tps /usr/bin/cron-send-disk-metrics
+# REMOVE_IH: if iops getting outta hand, what do we want our tolerances to be before we know about it? but we could do 2mins and get half as much items
 
 - name: run network checks every 5 minutes
   minute: "*/5"
   job: ops-runner -f -s 15 -n csnm.network.int /usr/bin/cron-send-network-metrics
+# REMOVE_IH: could decrease to 10m, maybe break this into multiple checks, or send things that are counters less frequently based on something
 
 - name: report rpm versions daily
   hour: "1"
   minute: "0"
   job: ops-runner -f -s 120 -n csdov.rpm.versions /usr/bin/cron-send-docker-oc-versions
+# REMOVE_IH: i don't think there is need to change this
+
 
 # We might want to break docker checks out at some point.
 - name: run docker storage space checks every 15 minutes
   minute: "*/15"
   job: ops-runner -f -s 120 -n csdm.docker.storage /usr/bin/cron-send-docker-metrics
+# REMOVE_IH: pretty infrequent already, probably no need to slow this further
+
 
 # This check shows us when docker is in a bad state (either locked up or too
 # slow to respond).
 - name: run docker info timer
   minute: "*/10"
   job: ops-runner -f -s 120 -n csdt.docker.timer /usr/bin/cron-send-docker-timer
+# REMOVE_IH: this feels too slow, but i see docker dying a lot lately, so maybe i'm just biased because of it
+
 
 # This needs to be run every minute so that we can see accurate depictions of
 # relevant container's usage. Otherwise we might miss CPU or Memory spikes.
 - name: send conatiner usage metrics
   minute: "*"
   job: ops-runner -f -s 15 -n csdcu.docker.containers.usage /usr/bin/cron-send-docker-containers-usage
+# REMOVE_IH: "conatiner" usage is pretty important if we are to be keep everything running smoothly, still, as with other checks, 2mins drops half  
 
 - name: check for pending security updates once per day
   minute: "0"
   hour:   "10"
   # 43200 is 12 hours. Spread the checks out across a half day
   job: ops-runner -f -s 43200 -n cssuc.security.updates.count /usr/bin/cron-send-security-updates-count
-
+# REMOVE_IH: this is fine as is
 
 {% if osohm_host_type != 'ansible-tower' %}
 # This is an active issue, we need it to run on a frequent basis.
 - name: run docker dns test
   minute: "*/5"
   job: source $HOME/.bashrc; ops-runner -f -s 60 -n csddr.docker.dns.resolution /usr/bin/cron-send-docker-dns-resolution
+# REMOVE_IH: is still an active issue?   
 {% endif %}
 
 # This is an active issue, we need it to run on a frequent basis.
@@ -193,10 +215,13 @@ host_monitoring_cron:
 - name: send dnsmasq process count
   minute: "*/5"
   job: ops-runner -f -s 15 -n cspc.openshift.dnsmasq.process.count /usr/bin/cron-send-process-count '^dnsmasq' openshift.dnsmasq.process.count
+# REMOVE_IH: did this ever fail? what does amount of processes tell us besides if it's running or not? 
 
 - name: send openshift-node dnsmasq status every 5 minutes
   minute: "*/5"
   job: ops-runner -f -s 50 -n csosms.openshift.dnsmasq /usr/bin/cron-send-os-dnsmasq-checks
+# REMOVE_IH: can we combine this with the previous check? or use trigger to check for latest of this for readiness?
+
 {# end if dnsmasq #}
 {% endif %}
 
@@ -204,6 +229,7 @@ host_monitoring_cron:
 - name: send ELB status
   minute: "*/15"
   job: ops-runner -f -s 60 -n cses.openshift.aws.elbd.status /usr/bin/cron-send-elb-status
+# REMOVE_IH: should we make this check instead 1 per cluster?
 {% endif %}
 
 {% if osohm_host_type == 'master' or osohm_host_type == 'node' %}
@@ -211,30 +237,33 @@ host_monitoring_cron:
 - name: send openshift-node process count
   minute: "*/5"
   job: ops-runner -f -s 15 -n cspc.openshift.node.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start node' openshift.node.process.count
+# REMOVE_IH: slow down to 10min? as with all process checks we need to do local heals by nudging systemd to deal with process issues
 
 - name: send ovs status data
   minute: "*/5"
   job: ops-runner -f -s 60 -n csos.openshift.master.ovs.status /usr/bin/cron-send-ovs-status
+# REMOVE_IH: need input from watchers on this one  
 
 - name: fix and report on stray OVS rules
   minute: "*/5"
   job: ops-runner -f -s 60 -n cfor.openshift.node.ovs.stray.rules /usr/bin/cron-fix-ovs-rules
+# REMOVE_IH: how stable is ovs nowadays? will slowing this down cause problems for us?
 
 - name: send cluster docker registry checks
   minute: "*/2"
   job: ops-runner -f -s 15 -n csrc.openshift.node.registry.checks /usr/bin/cron-send-registry-checks
+# REMOVE_IH: we probably don't want to mess with this, since we seem to have many problems with registries, although most of it is ops, yeah?
 
 - name: send openshift-node cpu mem per process stats
   minute: "*/5"
   job: ops-runner -f -s 60 -n cscpm.openshift.node.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start node' openshift.node.process
+# REMOVE_IH: reluctant to slow down mem/cpu stats too much, would be neat to have histogram type items, so we can collect and send once, prometheus will have this 
+
 
 - name: send docker daemon cpu mem per process stats
   minute: "*/5"
   job: ops-runner -f -s 60 -n cscpm.openshift.node.docker.daemon.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'docker-current daemon' openshift.node.docker.daemon
-
-- name: iptables FORWARD chain ordering band-aid script
-  minute: "*"
-  job: ops-runner -f -s 15 -n iptba.foward.chain.ordering.bandaid /root/forward_chain_bandaid.py
+# REMOVE_IH: see openshift-node cpu/mem comment
 {# end if host master or node #}
 {% endif %}
 
@@ -243,6 +272,7 @@ host_monitoring_cron:
 - name: check the saml pod status
   minute: "*/2"
   job: ops-runner -f -s 15 -n csss.openshift.master.saml.check /usr/bin/cron-send-saml-status
+# REMOVE_IH: only one cluster right now, not a bit change if we poke this  
 
 {# end of Openshift osohm_saml_auth check #}
 {% endif %}
@@ -251,6 +281,7 @@ host_monitoring_cron:
 - name: haproxy pruner
   minute: "*/5"
   job: "ops-runner -f -s 60 -n chcw.openshift.node.infra.haproxy /usr/bin/cron-haproxy-close-wait"
+# REMOVE_IH: run pruner more often, report less often if this sends a lot of data?
 {% endif %}
 
 {% if osohm_host_type == 'master' %}
@@ -258,85 +289,98 @@ host_monitoring_cron:
 - name: run create app every 10 minutes
   minute: "*/10"
   job: "ops-runner -f -t 480 -s 60 -n csca.openshift.master.app.create /usr/bin/cron-send-create-app -v --basename pull --source openshift/hello-openshift:v1.0.6 &>> /var/log/create_app.log"
+# REMOVE_IH: feels like this is fine as is
 
 - name: run Terminating status project every 5 minutes
   minute: "*/5"
   job: "ops-runner -f -t 180 -s 60 -n csps.openshift.master.project.terminating.status /usr/bin/cron-send-project-stats"
+# REMOVE_IH: need more input on this one
 
 - name: run create app with build process every 30 minutes
   minute: "*/30"
   job: "ops-runner -f -t 1300 -s 120 -n csca.openshift.master.app.build.create /usr/bin/cron-send-create-app -v --basename build --loopcount 180 --source https://github.com/openshift/nodejs-ex &>> /var/log/build_app.log"
-
-
-- name: check the dnsmasq status every 5 minutes
-  minute: "*/5"
-  job: ops-runner -f -t 180 -s 60 -n csdc.openshift.master.dnsmasq.status.check /usr/bin/cron-send-dnsmasq-check
+# REMOVE_IH: as with the other part, feels this is fine  
 
 {% if osohm_master_ha|bool %}
 - name: send openshift-master process count
   minute: "*/5"
   job: ops-runner -f -s 15 -n cspc.openshift.master.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start master controllers' openshift.master.process.count
+# REMOVE_IH: process counts again  
 {% endif %}
 
 {% if not osohm_master_ha|bool %}
 - name: send openshift-master process count
   minute: "*/5"
   job: ops-runner -f -s 15 -n cspc.openshift.master.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start master' openshift.master.process.count
+# REMOVE_IH: process counts...  
 {% endif %}
 
 - name: send openshift-master counts (user, pod, project) every 2 hours
   hour: "*/2"
   minute: "0"
   job: ops-runner -f -s 15 -n csosmm.openshift.master.counts /usr/bin/cron-send-os-master-metrics --project-count --pod-count --user-count --pv-info
+# REMOVE_IH: this is slow enough  
 
 - name: send openshift-master local (test https://127.0.0.1) status every 5 minutes
   minute: "*/5"
   job: ops-runner -f -s 60 -n csosmm.openshift.master.api.local /usr/bin/cron-send-os-master-metrics --local
+# REMOVE_IH: what if we would do every half hour items that say everyhing is ok, but check more often and send erroneous items asap?   
 
 - name: send openshift-master SkyDNS status every 5 minutes
   minute: "*/5"
   job: ops-runner -f -s 50 -n csosms.openshift.master.skydns /usr/bin/cron-send-os-skydns-checks
+# REMOVE_IH: is skydns and dnsmasq the same check? can we combine them into one check and maybe less frequently?
 
 - name: send openshift-master etcd status
   minute: "*/2"
   job: ops-runner -f -s 15 -n cspc.openshift.master.etcd.status /usr/bin/cron-send-etcd-status -c /etc/openshift_tools/etcd_metrics.yml
+# REMOVE_IH: we can probably slow this down to 5mins, we should probably decide what items are actually needed from here, we collect stuff nobody will ever look at
 
 - name: send etcd connections count on port 2379
   minute: "*/5"
   job: ops-runner -f -s 60 -n cscc.openshift.master.etcd.connections.2379 /usr/bin/cron-send-connection-count etcd 2379 openshift.master.etcd.port_2379.connections.established
+# REMOVE_IH: do we want this slower?
 
 - name: send etcd connections count on port 2380
   minute: "*/5"
   job: ops-runner -f -s 60 -n cscc.openshift.master.etcd.connections.2380 /usr/bin/cron-send-connection-count etcd 2380 openshift.master.etcd.port_2380.connections.established
+# REMOVE_IH: slower?
 
 - name: send master api server connections count on port 443
   minute: "*/5"
   job: ops-runner -f -s 60 -n cscc.openshift.master.api.connections.443 /usr/bin/cron-send-connection-count openshift 443 openshift.master.api.port_443.connections.established
+# REMOVE_IH: slower?
 
 - name: send openshift master api cpu mem per process stats
   minute: "*/5"
   job: ops-runner -f -s 60 -n cscpm.openshift.master.api.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start master api' openshift.master.api.process
+# REMOVE_IH: need to find a balance for cpu/mem items, i like 5, others?
 
 - name: send openshift master controllers cpu mem per process stats
   minute: "*/5"
   job: ops-runner -f -s 60 -n cscpm.openshift.master.controllers.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats 'openshift start master controllers' openshift.master.controllers.process
+# REMOVE_IH: see prev comment
 
 - name: send etcd cpu mem per process stats
   minute: "*/5"
   job: ops-runner -f -s 60 -n cscpm.openshift.etcd.process.cpu.mem.stats /usr/bin/cron-send-cpu-mem-stats etcd openshift.etcd.process
+# REMOVE_IH: see prev
 
 - name: "OpenShift event watcher"
   hour: "*"
   minute: "*/2"
   job: ops-runner --flock-no-fail -n oscew.event.watcher /usr/bin/cron-event-watcher
+# REMOVE_IH: unsure what this does, so need input from others  
 
 {% if osohm_enable_cluster_capacity_reporting|bool %}
 - name: "Cluster capacity reporting"
   hour: "*"
   minute: "15"
   job: ops-runner -f -s 120 -n cscc.openshift.master.capacity /usr/bin/cron-send-cluster-capacity
+# REMOVE_IH: this seems slow enough as it is  
 {% endif %}
 
+# REMOVE_IH: should create-app be under primary master only? it's running in all masters' host-mon, not sure if there is another mechanics preventing multiples at same time
 {% if osohm_master_primary | default(False) | bool %}
 {% if osohm_enable_dirty_router_restarts | default(False) | bool %}
 # router pods are getting into a bad state which requires periodic rolling of the pods
@@ -344,76 +388,92 @@ host_monitoring_cron:
   minute: "*/20"
   hour: "*"
   job: KUBECONFIG=/tmp/admin.kubeconfig ops-runner -f -s 15 -t 300 -n dirty.router.503.workaround /usr/bin/oc rollout latest dc/router -n default
+# REMOVE_IH: this is not a thing anymore right? so we could remove this check too
 {% endif %}
 
 - name: send openshift-master /healthz status every 5 minutes
   minute: "*/5"
   job: ops-runner -f -s 15 -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --healthz --api-ping --metrics --node-checks -v &>> /var/log/csosmm-notready.log
+# REMOVE_IH: os-master is a mess, shall we break up the checks into more cronlines?
 
 - name: Do a full heartbeat for synthetic host
   minute: "10"
   hour: "*/4"
   job: ops-runner -f -s 300 -n ozc.send.synthetic.heartbeat.full /usr/bin/ops-metric-client --send-heartbeat --synthetic
+# REMOVE_IH: slow enough
 
 - name: Do a quick heartbeat for synthetic host
   minute: "*"
   job: ops-runner -f -s 60 -n ozc.send.synthetic.heartbeat.quick /usr/bin/ops-metric-client -k heartbeat.ping -o 1 --synthetic
+# REMOVE_IH: do we need it this fast?
 
 - name: send  the pv usage status every 5 minutes
   minute: "*/5"
   job: ops-runner -f -s 15 -n csup.openshift.master.pv.usage /usr/bin/cron-send-usage-pv
+# REMOVE_IH: this can probably be slower
 
 - name: OpenShift Cluster router stats
   minute: "*/10"
   job: ops-runner -f -s 60 -t 120 -n csors.cluster.router.status /usr/bin/cron-send-os-router-status
+# REMOVE_IH: feels fine as it is
 
 - name: Delete stuck projects for bz 1367432
   minute: "*/10"
   job: /usr/bin/delete-stuck-projects &>> /var/log/delete-stuck-projects
+# REMOVE_IH: this doesn't send items  
 
 - name: Do a quick check for the internal pods status and location every 1 hour
   minute: "15"
   job: ops-runner -f -s 15 -n csipc.openshift.internal.status /usr/bin/cron-send-internal-pods-check
+# REMOVE_IH: slow enough  
 
 {% if osohm_pruning.pruning_enabled | default(True) | bool %}
 - name: "Prune builds/deployments/images"
   hour: "{{ osohm_pruning.cron.hour }}"
   minute: "{{ osohm_pruning.cron.minute }}"
   job: "ops-runner -f -s 30 -n cosp.openshift.master.prune /usr/bin/cron-openshift-pruner --image-keep-younger-than {{ osohm_pruning.image_hours_to_keep }} --image-keep-tag-revisions {{ osohm_pruning.image_revisions_to_keep }} >> /var/log/pruner.log 2>&1"
+# REMOVE_IH: adjustable in config loop
 {% endif %}
 
 - name: "Report on certificate expiration dates"
   hour: "1"
   minute: "1"
   job: ops-runner -f -s 30 -n ccexp.openshift.master.certificates /usr/bin/cron-certificate-expirations --cert-list=/etc/origin/master,/etc/origin/node
+# REMOVE_IH: good enough
 
 - name: "Report counts of builds"
   minute: "*/10"
   job: "ops-runner -f -s 30 -n csbc.openshift.build.count cron-send-build-counts"
+# REMOVE_IH: need more info
 
 - name: "Report number of stuck new builds"
   minute: "*/10"
   job: "ops-runner -f -s 30 -n cssb.openshift.stuck_builds.new cron-send-stuck-builds -s New"
+# REMOVE_IH: should we report or try to fix?
 
 - name: "Report number of stuck pending builds"
   minute: "*/10"
   job: "ops-runner -f -s 30 -n cssb.openshift.stuck_builds.pending cron-send-stuck-builds -s Pending"
+# REMOVE_IH: reporting these build numbers at this frequency seems ok, team?
 
 - name: "Report metrics health"
   hour: "*"
   minute: "30"
   job: "ops-runner -f -s 30 -n cosp.openshift.metrics.check cron-send-metrics-checks"
+# REMOVE_IH: seems slow enough
 
 - name: "Report logging health"
   hour: "*"
   minute: "30"
   job: "ops-runner -f -s 30 -n cosp.openshift.logging.check cron-send-logging-checks"
+# REMOVE_IH: seems fine
 
 {% if osohm_monitor_zabbix_infra | default(False) | bool %}
 - name: "Check Zabbix repo to see if newer versions are available"
   minute: "1"
   hour: "8"
   job: ops-runner -f -n cszto.zabbix.too.old cron-send-zabbix-too-old
+# REMOVE_IH: can't wait till this is going away  
 {% endif %}
 
 {% if osohm_cloud == 'aws' %}
@@ -421,51 +481,56 @@ host_monitoring_cron:
   hour: "3"
   minute: "0"
   job: ops-runner -f -s 120 -n cssm.aws /usr/bin/cron-send-s3-metrics
-
-- name: "Check EBS stuck volume attachment state"
-  minute: "*/2"
-  job: "ops-runner -f -s 15 -n cseeviss.ebs.stuck.state cron-send-ec2-ebs-volumes-in-stuck-state --region {{ osohm_region }} --stuck-after 120 --aws-creds-profile snapshotter --verbose"
+# REMOVE_IH: once a day is gotta be slow enough, yeah?
 
 - name: "Add snapshot tag to autoprovisioned pv volumes"
   hour: "*"
   minute: "30"
   job: ops-runner -f -s 120 -n oeasttev.add.snapshot.tag.autopv ops-ec2-add-snapshot-tag-to-ebs-volumes --autoprovisioned-pv-volumes daily --set-purpose-tag --aws-creds-profile snapshotter
+# REMOVE_IH: no items sent
 
 - name: "Snapshot volumes tagged with hourly"
   hour: "*"
   minute: "0"
   job: ops-runner -f -s 120 -n oesev.snapshot.hourly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule hourly
+# REMOVE_IH: slow enough
 
 - name: "Snapshot EBS volumes tagged with daily"
   hour: "0"
   minute: "0"
   job: ops-runner -f -s 120 -n oesev.snapshot.daily ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule daily
+# REMOVE_IH: daily...
 
 - name: "Snapshot EBS volumes tagged with weekly"
   weekday: "0"
   hour: "0"
   minute: "0"
   job: ops-runner -f -s 120 -n oesev.snapshot.weekly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule weekly
+# REMOVE_IH: weekly...
 
 - name: "Snapshot EBS volumes tagged with monthly"
   day: "1"
   hour: "0"
   minute: "0"
   job: ops-runner -f -s 120 -n oesev.snapshot.monthly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule monthly
+# REMOVE_IH: monthly...
 
 # DO NOT CHANGE without first talking to twiest.
 - name: "Trim EBS Snapshot"
   minute: "10"
   job: ops-runner -f -s 120 -n oetes.trim.snapshots ops-ec2-trim-ebs-snapshots --aws-creds-profile snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
+# REMOVE_IH: twiest?
 
 - name: "Trim EBS Snapshot"
   minute: "10"
   job: ops-runner -f -s 120 -n oetes.trim.snapshots ops-ec2-trim-ebs-snapshots --aws-creds-profile snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
+# REMOVE_IH: twiest?
 
 - name: send AWS Tag checks (config loop) every 2 hours
   hour: "*/6"
   minute: "8"
   job: "ops-runner -f -s 30 -n oect.ec2.tags /usr/bin/ops-ec2-check-tags --aws-creds-profile ops_monitoring --clusterid {{ osohm_cluster_id }}"
+# REMOVE_IH: slow enough
 
 {# end if cloud aws #}
 {% endif %}
@@ -474,42 +539,50 @@ host_monitoring_cron:
   hour: "3"
   minute: "0"
   job: ops-runner -f -s 120 -n csgm.gcp /usr/bin/cron-send-gcs-metrics
+# REMOVE_IH: slow enough
 
 - name: "Add snapshot tag to autoprovisioned pv volumes"
   hour: "*"
   minute: "30"
   job: ops-runner -f -s 120 -n ogasttpv.add.snapshot.tag.autopv ops-gcp-add-snapshot-label-to-pd-volumes --autoprovisioned-pv-volumes daily --set-purpose-label --gcp-creds-file /root/.gce/creds.json
+# REMOVE_IH: do we need to discuss these?
 
 - name: "Snapshot volumes tagged with hourly"
   hour: "*"
   minute: "0"
   job: ops-runner -f -s 120 -n ogspv.snapshot.hourly ops-gcp-snapshot-pd-volumes --gcp-creds-file /root/.gce/creds.json --with-schedule hourly
+# REMOVE_IH: see prev
 
 - name: "Snapshot pd volumes tagged with daily"
   hour: "0"
   minute: "0"
   job: ops-runner -f -s 120 -n ogspv.snapshot.daily ops-gcp-snapshot-pd-volumes --gcp-creds-file /root/.gce/creds.json --with-schedule daily
+# REMOVE_IH: see prev
 
 - name: "Snapshot pd volumes tagged with weekly"
   weekday: "0"
   hour: "0"
   minute: "0"
   job: ops-runner -f -s 120 -n ogspv.snapshot.weekly ops-gcp-snapshot-pd-volumes --gcp-creds-file /root/.gce/creds.json --with-schedule weekly
+# REMOVE_IH: see prev
 
 - name: "Snapshot pd volumes tagged with monthly"
   day: "1"
   hour: "0"
   minute: "0"
   job: ops-runner -f -s 120 -n ogspv.snapshot.monthly ops-gcp-snapshot-pd-volumes --gcp-creds-file /root/.gce/creds.json --with-schedule monthly
+# REMOVE_IH: see prev
 
 - name: "Trim pd Snapshot"
   minute: "10"
   job: ops-runner -f -s 120 -n ogtps.trim.snapshots ops-gcp-trim-pd-snapshots --gcp-creds-file /root/.gce/creds.json --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1
+# REMOVE_IH: probably doesn't need change
 
 - name: send GCP Tag checks (config loop) every 2 hours
   hour: "*/6"
   minute: "8"
   job: "ops-runner -f -s 30 -n ogct.gcp.tags /usr/bin/ops-gcp-check-tags --gcp-creds-file /root/.gce/creds.json --region {{ osohm_region }} --clusterid {{ osohm_cluster_id }}"
+# REMOVE_IH: this is also slow enough
 
 {# end if cloud gcp #}
 {% endif %}
