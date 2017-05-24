@@ -5,7 +5,7 @@
     # (unless there are so many new connections as to exceed the limits defined here)
     - chain: oo-outbound-logging
       line:  ":oo-outbound-logging - [0:0]"
-      after: "filter$"
+      after: "^\\*filter$"
       regex: :oo-outbound-logging - \[0:0\]
 
     outbound_logging_rules:
@@ -43,24 +43,19 @@
       after: "id_outbound_tcp_log_4_"
       regex: "id_outbound_tcp_log_5_"
 
-    forward_logging_rules:
+    filtering_rules:
     # Matches first packet in new outbound TCP connections, -A for use in /etc/sysconfig/iptables.
-    - chain: FORWARD
-      line:  "-A FORWARD -o eth0 -p tcp ! -d 172.16.0.0/12 -m state --state NEW -m comment --comment id_outbound_tcp_log_7_ -j oo-outbound-logging"
+    - chain: OPENSHIFT-OUTPUT-FILTERING
+      line:  "-A OPENSHIFT-OUTPUT-FILTERING -o eth0 -p tcp ! -d 172.16.0.0/12 -m state --state NEW -m comment --comment id_outbound_tcp_log_7_ -j oo-outbound-logging"
       after: "^-A INPUT"
       regex: "id_outbound_tcp_log_7_"
 
-    forward_logging_memory:
+    filtering_memory:
     # Matches first packet in new outbound TCP connections, -I to send to the top of the FORWARD chain in memory.
-    - chain: FORWARD
-      line:  "-I FORWARD -o eth0 -p tcp ! -d 172.16.0.0/12 -m state --state NEW -m comment --comment id_outbound_tcp_log_7_ -j oo-outbound-logging"
+    - chain: OPENSHIFT-OUTPUT-FILTERING
+      line:  "-I OPENSHIFT-OUTPUT-FILTERING -o eth0 -p tcp ! -d 172.16.0.0/12 -m state --state NEW -m comment --comment id_outbound_tcp_log_7_ -j oo-outbound-logging"
       after: "^-A INPUT"
       regex: "id_outbound_tcp_log_7_" 
-
-- name: list iptables rules FORWARD chain
-  command: '/usr/sbin/iptables -w -nL FORWARD'
-  changed_when: False
-  register: forwardchain
 
 - name: list iptables rules logging chain
   command: '/usr/sbin/iptables -w -nL oo-outbound-logging'
@@ -68,17 +63,16 @@
   register: loggingchain
   ignore_errors: True
 
-- name: add in-memory iptables chain
+- name: add in-memory logging chain
   command: "/usr/sbin/iptables -N oo-outbound-logging"
   when: not "oo-outbound-logging" in loggingchain.stdout
-  with_items: "{{ outbound_logging_chain }}"
 
 - name: modify in-memory iptables rules
   command: "/usr/sbin/iptables {{ item.line }}"
-  when: not item.regex in forwardchain.stdout and not item.regex in loggingchain.stdout
+  when: not (filteringchain.stdout | search(item.regex)) and not (loggingchain.stdout | search(item.regex))
   with_items: 
   - "{{ outbound_logging_rules }}"
-  - "{{ forward_logging_memory }}"
+  - "{{ filtering_memory }}"
 
 - name: modify /etc/sysconfig/iptables
   lineinfile:
@@ -89,7 +83,7 @@
   with_items:
   - "{{ outbound_logging_chain }}"
   - "{{ outbound_logging_rules }}"
-  - "{{ forward_logging_rules }}"
+  - "{{ filtering_rules }}"
 
 - name: copy tcp_out_logging config file
   copy:
