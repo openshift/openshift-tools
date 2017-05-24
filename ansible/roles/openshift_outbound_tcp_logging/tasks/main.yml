@@ -57,6 +57,11 @@
       after: "^-A INPUT"
       regex: "id_outbound_tcp_log_7_" 
 
+- name: list iptables rules OPENSHIFT-OUTPUT-FILTERING chain
+  command: '/usr/sbin/iptables -w -nL OPENSHIFT-OUTPUT-FILTERING'
+  changed_when: False
+  register: filteringchain
+
 - name: list iptables rules logging chain
   command: '/usr/sbin/iptables -w -nL oo-outbound-logging'
   changed_when: False
@@ -64,11 +69,11 @@
   ignore_errors: True
 
 - name: add in-memory logging chain
-  command: "/usr/sbin/iptables -N oo-outbound-logging"
+  command: "/usr/sbin/iptables -w -N oo-outbound-logging"
   when: not "oo-outbound-logging" in loggingchain.stdout
 
 - name: modify in-memory iptables rules
-  command: "/usr/sbin/iptables {{ item.line }}"
+  command: "/usr/sbin/iptables -w {{ item.line }}"
   when: not (filteringchain.stdout | search(item.regex)) and not (loggingchain.stdout | search(item.regex))
   with_items: 
   - "{{ outbound_logging_rules }}"
