@@ -46,6 +46,12 @@
       regex: :oo-udp-limit - \[0:0\]
       block:  ":oo-udp-limit - [0:0]"
 
+    output_filtering_chain:
+    - chain: OPENSHIFT-OUTPUT-FILTERING
+      line:  ":OPENSHIFT-OUTPUT-FILTERING - [0:0]"
+      after: "^\\*filter$"
+      regex: :OPENSHIFT-OUTPUT-FILTERING - \[0:0\]
+
     filtering_udp_rules:
     # Send network-namespaced pod traffic to the oo-udp chain. 
     - chain: OPENSHIFT-OUTPUT-FILTERING
@@ -116,11 +122,16 @@
 - name: List iptables rules filtering chain
   command: '/usr/sbin/iptables -w -nL OPENSHIFT-OUTPUT-FILTERING'
   changed_when: False
-  register: filtering_chain_check
+  register: filteringchain
+  ignore_errors: True
+
+- name: add in-memory filtering chain
+  command: "/usr/sbin/iptables -w -N OPENSHIFT-OUTPUT-FILTERING"
+  when: not "OPENSHIFT-OUTPUT-FILTERING" in filteringchain.stdout
 
 - name: Modify in-memory filtering chain
   command: "/usr/sbin/iptables -w {{ item.line }}"
-  when: not item.regex in filtering_chain_check.stdout
+  when: not item.regex in filteringchain.stdout
   with_items: "{{ filtering_udp_memory_rules }}"
 
 - name: Modify /etc/sysconfig/iptables filtering
