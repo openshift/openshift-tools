@@ -185,7 +185,7 @@ class OpenshiftMetricsStatus(object):
 
             except urllib2.URLError as e:
                 if self.args.verbose:
-                    print "WARN - Request returned HTTP %s : %s" % (e.code, e.url)
+                    print "ERROR - Failed to query hawkular - %s" % e
                 result = 0
 
         return result
