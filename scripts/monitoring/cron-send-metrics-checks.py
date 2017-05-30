@@ -24,7 +24,6 @@
 #pylint: disable=bare-except
 
 import ssl
-import yaml
 import urllib2
 import argparse
 
@@ -38,6 +37,8 @@ import sys
 import tempfile
 import shutil
 import base64
+
+import yaml
 
 class OpenshiftMetricsStatus(object):
     '''
