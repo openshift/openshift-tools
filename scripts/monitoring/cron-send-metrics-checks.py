@@ -179,9 +179,13 @@ class OpenshiftMetricsStatus(object):
                 resp = urllib2.build_opener(urllib2.HTTPSHandler(context=ctx)).open(request)
                 res = yaml.load(resp.read())
                 if res[0]['empty']:
+                    if self.args.verbose:
+                        print "WARN - Node not reporting metrics: %s" % item['metadata']['name']
                     result = 0
 
-            except urllib2.URLError:
+            except urllib2.URLError as e:
+                if self.args.verbose:
+                    print "WARN - Request returned HTTP %s : %s" % (e.code, e.url)
                 result = 0
 
         return result
