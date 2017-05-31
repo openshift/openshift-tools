@@ -69,8 +69,9 @@ def get_changed_files(repo, pr_num):
     pull = ghc.get_repo(repo).get_pull(int(pr_num))
     filename_list = []
     for prfile in pull.get_files():
-        filename = prfile.filename
-        filename_list.append(filename)
+        if prfile.status != 'removed':
+            filename = prfile.filename
+            filename_list.append(filename)
     return filename_list
 
 # Takes a repo in the form 'org/repo-name' and a pr number string or int
