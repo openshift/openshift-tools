@@ -24,20 +24,21 @@
 #pylint: disable=bare-except
 
 import ssl
-import yaml
 import urllib2
 import argparse
-
-# pylint: disable=import-error
-from openshift_tools.monitoring.ocutil import OCUtil
-from openshift_tools.monitoring.metric_sender import MetricSender
-# pylint: enable=import-error
 
 # These are here for a metrics pre 3.4 workaround
 import sys
 import tempfile
 import shutil
 import base64
+
+import yaml
+
+# pylint: disable=import-error
+from openshift_tools.monitoring.ocutil import OCUtil
+from openshift_tools.monitoring.metric_sender import MetricSender
+# pylint: enable=import-error
 
 class OpenshiftMetricsStatus(object):
     '''
@@ -179,9 +180,13 @@ class OpenshiftMetricsStatus(object):
                 resp = urllib2.build_opener(urllib2.HTTPSHandler(context=ctx)).open(request)
                 res = yaml.load(resp.read())
                 if res[0]['empty']:
+                    if self.args.verbose:
+                        print "WARN - Node not reporting metrics: %s" % item['metadata']['name']
                     result = 0
 
-            except urllib2.URLError:
+            except urllib2.URLError as e:
+                if self.args.verbose:
+                    print "ERROR - Failed to query hawkular - %s" % e
                 result = 0
 
         return result
