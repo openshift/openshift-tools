@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.60
+Version:       0.1.61
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -414,6 +414,15 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Wed May 31 2017 Blair Morrison <bmorriso@redhat.com> 0.1.61-1
+- Import linting (bmorriso@redhat.com)
+- pylint fix for imports (bmorriso@redhat.com)
+- Change language of log messages (bmorriso@redhat.com)
+- Adding verbose output to metrics check to assist in debugging
+  (bmorriso@redhat.com)
+- Fixing some linting issues (bmorriso@redhat.com)
+- Updating cron-send-usage-pv to support SI units (bmorriso@redhat.com)
+
 * Tue May 16 2017 Drew Anderson <dranders@redhat.com> 0.1.60-1
 - add zabbix key for cron-send-project-operation.py (zhiwliu@redhat.com)
 - track global_exception, introduce and use logging, use logging exceptions
