@@ -37,7 +37,7 @@ logger.addHandler(logging.handlers.SysLogHandler('/dev/log'))
 keyname = sys.argv[1] if len(sys.argv) >= 2 else "<none specified>"
 cmd = os.environ.get("SSH_ORIGINAL_COMMAND", "")
 
-match = re.match(r"(?P<operation>install|delete|upgrade|status|logs)", cmd)
+match = re.match(r"(?P<operation>install|delete|upgrade|status|logs|perf1|perf2|perf3)", cmd)
 
 if match:
     logger.info("%s Restricted key '%s' running command: %s" % (os.path.basename(__file__), keyname, cmd))
