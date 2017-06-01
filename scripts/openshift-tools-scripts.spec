@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.61
+Version:       0.1.62
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -414,6 +414,11 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Thu Jun 01 2017 Justin Pierce <jupierce@redhat.com> 0.1.62-1
+- Adding performance test options to cicd flow (jupierce@redhat.com)
+- Automatic commit of package [openshift-tools-scripts] release [0.1.61-1].
+  (bmorriso@redhat.com)
+
 * Wed May 31 2017 Blair Morrison <bmorriso@redhat.com> 0.1.61-1
 - Import linting (bmorriso@redhat.com)
 - pylint fix for imports (bmorriso@redhat.com)
