@@ -105,3 +105,11 @@
         content: "{{ saml2_sso_configdata.saml2_idp_cert_data.cert }}"
       - name: "{{ saml2_sso_configdata.saml_privatekey_file }}"
         content: "{{ saml2_sso_configdata.saml2_idp_cert_data.key }}"
+
+  # NOTE: this must be the final task because it indicates to
+  #       the start-up script that this playbook successfully
+  #       ran to completion.
+  - name: touch file to indicate that the reconfigure was successful
+    copy:
+      content: ""
+      dest: "{{ config_success_touchfile }}"
