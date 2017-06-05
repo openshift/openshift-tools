@@ -230,12 +230,17 @@ def main():
     iptchain = IpTablesChain(table, name, ver)
     changed = False
 
+    iptchain_out = iptchain.get()
+
+    if 'Got the lock' in iptchain_out:
+        iptchain_out.remove('Got the lock')
+
     try:
-        if (not iptchain.exists()) or iptchain.get() != rules:
+        if (not iptchain.exists()) or iptchain_out != rules:
             iptchain.set(rules)
             if not iptchain.exists():
                 module.fail_json(msg="Chain create failed")
-            elif iptchain.get() == rules:
+            elif iptchain_out == rules:
                 changed = True
             else:
                 module.fail_json(msg="Chain update failed. Do input rules match 'iptables -S %s' output?" % name)
