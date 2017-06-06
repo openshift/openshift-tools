@@ -18,6 +18,14 @@
   - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
   when: not repoquery_epel.results.package_found
 
+- name: insert the skip_if_unavailable option
+  ini_file:
+    dest: /etc/yum.repos.d/epel.repo
+    section: epel
+    option: skip_if_unavailable
+    no_extra_spaces: True
+    value: "{{ epelr_skip_if_unavailable | ternary('1','0') }}"
+
 - name: Mark undesirable EPEL packages as excluded
   lineinfile:
     name: "{{item.filename}}"
