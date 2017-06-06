@@ -27,11 +27,10 @@
     value: "{{ epelr_skip_if_unavailable | ternary('1','0') }}"
 
 - name: Mark undesirable EPEL packages as excluded
-  lineinfile:
+  yum_repo_exclude:
     name: "{{item.filename}}"
-    insertafter: "^\\[{{item.reponame}}\\]$"
-    regexp: "^exclude=.*?fake_package_name-EXCLUDES-FOR-{{item.reponame}}-MANAGED-BY-ANSIBLE$"
-    line: "exclude={{epelr_exclude}} fake_package_name-EXCLUDES-FOR-{{item.reponame}}-MANAGED-BY-ANSIBLE"
+    repo: "{{item.reponame}}"
+    patterns: [ 'ansible' ]
   with_items:
     - filename: /etc/yum.repos.d/epel.repo
       reponame: epel
