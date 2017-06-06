@@ -57,7 +57,7 @@ def get_temp_credentials(metadata_id, idp_host, ssh_args=None):
     # through an HTTPS session to idp_host:443.
     ssh_cmd = ['ssh', '-p', '2222', '-a', '-l', 'user', '-o',
                r'''ProxyCommand=bash -c "exec openssl s_client -servername %h -connect %h:443 -quiet 2>/dev/null \
-                                           < <(echo -e 'CONNECT 127.0.0.1:%p HTTP/1.1\nHost: %h:443\n'; cat -)"''']
+                   < <(echo -en 'CONNECT 127.0.0.1:%p HTTP/1.1\r\nHost: %h:443\r\n\r\n'; cat -)"''']
     if ssh_args:
         ssh_cmd.extend(ssh_args)
     ssh_cmd.extend([idp_host, metadata_id])
