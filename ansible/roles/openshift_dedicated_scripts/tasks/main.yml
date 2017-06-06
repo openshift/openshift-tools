@@ -1,0 +1,20 @@
+---
+
+# If openshift-scripts-dedicated is already installed, we don't want to
+# waste time doing anything, just leave it alone.
+
+- name: "Check if openshift-scripts-dedicated needs to be installed"
+  repoquery:
+    name: openshift-scripts-dedicated2
+    query_type: installed
+  register: scripts_installed_result
+  ignore_errors: True
+
+- set_fact:
+    scripts_installed: "{{ scripts_installed_result.results.package_found }}"
+
+# Skip everything if scripts is already installed.
+# NOTE: We may need to pass in an upgrade indicator here in future, but for now
+# the implied full master yum update should pick it up.
+- include: install.yml
+  when: not scripts_installed | bool
