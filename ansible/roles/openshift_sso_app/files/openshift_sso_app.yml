@@ -331,8 +331,8 @@ objects:
               - --insecure
               - https://127.0.0.1:8443/status.php
             failureThreshold: 3
-            initialDelaySeconds: 15
-            periodSeconds: 10
+            initialDelaySeconds: 120
+            periodSeconds: 20
             successThreshold: 1
             timeoutSeconds: 2
           name: oso-saml-sso
@@ -346,8 +346,8 @@ objects:
               - -sf
               - --insecure
               - https://127.0.0.1:8443/status.php
-            failureThreshold: 3
-            initialDelaySeconds: 2
+            failureThreshold: 12
+            initialDelaySeconds: 10
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 2
