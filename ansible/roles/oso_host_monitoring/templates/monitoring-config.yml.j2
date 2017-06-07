@@ -367,6 +367,10 @@ host_monitoring_cron:
   minute: "15"
   job: ops-runner -f -s 15 -n csipc.openshift.internal.status /usr/bin/cron-send-internal-pods-check
 
+- name: Do a quick check for the project creation and deletion
+  minute: "*/15"
+  job: ops-runner -f -s 15 -n cspo.openshift.project.status /usr/bin/cron-send-project-operation
+
 {% if osohm_pruning.pruning_enabled | default(True) | bool %}
 - name: "Prune builds/deployments/images"
   hour: "{{ osohm_pruning.cron.hour }}"
