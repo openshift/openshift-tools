@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.63
+Version:       0.1.64
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -412,6 +412,13 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Wed Jun 07 2017 zhiwliu <zhiwliu@redhat.com> 0.1.64-1
+- fix the pylint complain (zhiwliu@redhat.com)
+- give a second chance for the deletion of the project operation check
+  (zhiwliu@redhat.com)
+- Fix faux-HTTP client of SSO SSH endpoint to send \r\n as per spec
+  (joesmith@redhat.com)
+
 * Fri Jun 02 2017 Justin Pierce <jupierce@redhat.com> 0.1.63-1
 - Enabling ci message generation (jupierce@redhat.com)
 
