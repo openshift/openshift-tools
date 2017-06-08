@@ -119,7 +119,7 @@ def main():
             delete_project_code = check_project(args)
             if delete_project_code == 1:
                 # 1 means project deletion failed, the project still exists
-                # give the deletion second chance. 10 more seconds to check the 
+                # give the deletion second chance. 10 more seconds to check the
                 # teminating status project
                 delete_project_code = check_project(args)
                 if delete_project_code == 1:
