@@ -220,6 +220,12 @@ CustomLog logs/ssl_request_log \
 
         DocumentRoot /var/www/html/
 
+# Only permit CONNECT proxy to local ssh listener from bastion hosts determined by config loop
+{% for addr in saml2_sso_configdata.bastion_ips | default([]) %}
+     {# Format of header:  for=(ip_address); ... #}
+        SetEnvIf Forwarded ^for={{ addr | replace(".", "\\.") }}; bastion_host
+{% endfor %}
+
         SetEnv SIMPLESAMLPHP_CONFIG_DIR /usr/share/simplesamlphp/config
         AllowCONNECT 2222
         ProxyRequests On
@@ -231,11 +237,11 @@ CustomLog logs/ssl_request_log \
         # Allow proxying to localhost:2222 and 127.0.0.1:2222
         <Proxy 127.0.0.1:2222>
           Order allow,deny
-          Allow from all
+          Allow from env=bastion_host
         </Proxy>
         <Proxy localhost:2222>
           Order allow,deny
-          Allow from all
+          Allow from env=bastion_host
         </Proxy>
 
         # add security headers
