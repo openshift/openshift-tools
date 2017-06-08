@@ -119,7 +119,11 @@ def main():
             delete_project_code = check_project(args)
             if delete_project_code == 1:
                 # 1 means project deletion failed, the project still exists
-                logger.info('project deletion failed')
+                # give the deletion second chance. 10 more seconds to check the
+                # teminating status project
+                delete_project_code = check_project(args)
+                if delete_project_code == 1:
+                    logger.info('project deletion failed in 20s')
             else:
                 delete_project_code = 0
     else:
@@ -129,8 +133,8 @@ def main():
     #logger.info("{} {}".format(create_project_code, delete_project_code))
     if create_project_code == 1 and delete_project_code == 0:
         logger.info('creation and deletion succeed, no data was sent to zagg')
-    else:
-        send_metrics(create_project_code, delete_project_code)
+
+    send_metrics(create_project_code, delete_project_code)
 
 if __name__ == "__main__":
     main()
