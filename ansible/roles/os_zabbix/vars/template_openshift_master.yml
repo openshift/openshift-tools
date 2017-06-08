@@ -931,12 +931,12 @@ g_template_openshift_master:
 
   - name: "openshift project creation failed on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.project.create.last(#1)}=0"
-    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_create_app.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_project_operation.asciidoc"
     priority: high
 
   - name: "openshift project deletion failed on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.project.delete.last(#1)}=1"
-    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_create_app.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_project_operation.asciidoc"
     priority: high
 
   - name: "Openshift Master API health check is failing on {HOST.NAME}"
