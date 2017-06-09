@@ -12,18 +12,8 @@
   delegate_to: "{{ cluster_master }}"
   run_once: true
 
-- name: "Get the cluster's network config"
-  oc_obj:
-    state: list
-    kind: clusternetworks
-    name: default
-  register: clusternetworks
-  delegate_to: "{{ cluster_master }}"
-  run_once: true
-
 - set_fact:
-    kubernetes_node_name: "{{ (hostvars[inventory_hostname].ec2_private_dns_name if hostvars[inventory_hostname].oo_location == 'aws' else inventory_hostname) }}"
-    servicenetwork: "{{ clusternetworks.results.results[0].serviceNetwork }}"
+    kubernetes_node_name: "{{ ec2_private_dns_name if oo_location == 'aws' else inventory_hostname }}"
 
 - set_fact:
     node_cidr: |-
@@ -75,7 +65,9 @@
       after: "id_outbound_udp_filtering"
       regex: "id_outbound_udp_rule_1_"
       block: |-
-        -A oo-udp -d {{ servicenetwork }} -o eth0 -p udp -m udp --dport 53 -j RETURN
+        {# Note: sdodson says that pod DNS resolution happens via dnsmasq running on the node. That's
+                 why we only have DNS traffic to the node whitelisted prior to rate limiting. #}
+        -A oo-udp -d {{ oo_private_ip }}/32 -o eth0 -p udp -m udp --dport 53 -j RETURN
         -A oo-udp -s {{ node_cidr }} -o eth0 -p udp -j oo-udp-limit
         -A oo-udp -o eth0 -p udp -m udp --dport 53 -j RETURN
         -A oo-udp -o eth0 -p udp -m udp --dport 67 -j RETURN
