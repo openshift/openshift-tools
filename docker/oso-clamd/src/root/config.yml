@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+  - /root/default_vars.yml
+  tasks:
+  - debug:
+      msg: No start-up configuration tasks to run

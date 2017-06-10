@@ -1,0 +1,14 @@
+#!/usr/bin/ansible-playbook
+---
+# the following variables must be passed in:
+# namespace: the OpenShift project namespace corresponding to the registry repo where the manifest will be pushed
+# imagename: the name of the image for tagging, etc.
+# blobsum: the blobsum of the lone image layer blob that has been pushed to the registry
+#
+# Example:  make-manifest.yaml -e "namespace=management-infra imagename=clamsigs blobsum=sha256:21e3736f5d0f15f10445051db23bc1bcb19be58450677c60f57d950924bb988b"
+
+- hosts: localhost
+  tasks:
+  - template:
+      src: /root/manifest.json.j2
+      dest: /tmp/manifest.json

@@ -1,0 +1,43 @@
+{{ generated_header }}
+# Example docker run command
+# docker run -ti --net=host --name web --rm=true oso-{{ base_os }}-freshclam
+
+{% if base_os == "rhel7" %}
+FROM oso-rhel7-ops-clambase:latest
+{% elif base_os == "centos7" %}
+FROM openshifttools/oso-centos7-ops-clambase:latest
+{% endif %}
+
+# Pause indefinitely if asked to do so.
+ARG OO_PAUSE_ON_BUILD
+RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
+
+RUN yum-install-check.sh -y \
+        clamav-update \
+        clamav-unofficial-sigs \
+        inotify-tools \
+        python-docker-py \
+        && \
+    yum -y update && yum clean all && \
+    chmod -R g+w /var/lib/clamav-unofficial-sigs && \
+    chgrp -R root /var/lib/clamav-unofficial-sigs
+
+
+# Add config file templates and startup playbook
+ADD root/ /root/
+
+ADD start.sh /usr/local/bin/
+
+# Start freshclam updater
+CMD /usr/local/bin/start.sh
+
+# Fix v3 specific environment
+# Make the container work more consistently in and out of openshift
+# BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
+# Also, make symlinks to CAs that boater will need to talk to the cluster registry
+RUN chmod -R g+rwX /etc/passwd /etc/group /run /var/log /var/lib/clamav /etc/pki/ca-trust/extracted/{pem,openssl,java} && \
+    chgrp -R root /run/ /var/log /var/lib/clamav && \
+    ln -sf /pusher-token/ca.crt         /etc/pki/ca-trust/source/anchors/cluster-ca.pem && \
+    ln -sf /pusher-token/service-ca.crt /etc/pki/ca-trust/source/anchors/service-ca.pem && \
+    ansible-playbook /root/build.yaml && \
+    rm -rf /root/.ansible
