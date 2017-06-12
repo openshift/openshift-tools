@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.64
+Version:       0.1.65
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -412,6 +412,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Mon Jun 12 2017 zhiwliu <zhiwliu@redhat.com> 0.1.65-1
+- upgrade cron-send-internal-pods-check (dranders@redhat.com)
+
 * Wed Jun 07 2017 zhiwliu <zhiwliu@redhat.com> 0.1.64-1
 - fix the pylint complain (zhiwliu@redhat.com)
 - give a second chance for the deletion of the project operation check
