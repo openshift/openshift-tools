@@ -13,12 +13,9 @@
   run_once: true
 
 - set_fact:
-    kubernetes_node_name: "{{ ec2_private_dns_name if oo_location == 'aws' else inventory_hostname }}"
-
-- set_fact:
     node_cidr: |-
       {%- for item in hostsubnets['results']['results'][0]['items'] -%}
-       {%- if item.host == kubernetes_node_name -%}
+       {%- if item.host == oudp_node_name -%}
         {{ item.subnet }}
        {%- endif -%}
       {%- endfor -%}
@@ -67,7 +64,7 @@
       block: |-
         {# Note: sdodson says that pod DNS resolution happens via dnsmasq running on the node. That's
                  why we only have DNS traffic to the node whitelisted prior to rate limiting. #}
-        -A oo-udp -d {{ oo_private_ip }}/32 -o eth0 -p udp -m udp --dport 53 -j RETURN
+        -A oo-udp -d {{ oudp_node_ip }}/32 -o eth0 -p udp -m udp --dport 53 -j RETURN
         -A oo-udp -s {{ node_cidr }} -o eth0 -p udp -j oo-udp-limit
         -A oo-udp -o eth0 -p udp -m udp --dport 53 -j RETURN
         -A oo-udp -o eth0 -p udp -m udp --dport 67 -j RETURN
