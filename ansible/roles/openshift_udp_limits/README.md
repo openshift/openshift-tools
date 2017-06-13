@@ -10,6 +10,9 @@ Requirements
 Role Variables
 --------------
 
+`oudp_node_name`: The node name (must agree with the node name shown via `oc nodes`)
+
+`oudp_node_ip`: The node's main network interface IP address (its private IP address in AWS and GCP)
 
 Dependencies
 ------------
