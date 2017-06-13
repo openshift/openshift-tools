@@ -397,7 +397,7 @@ host_monitoring_cron:
 
 - name: "Report metrics health"
   hour: "*"
-  minute: "30"
+  minute: "*/30"
   job: "ops-runner -f -s 30 -n cosp.openshift.metrics.check cron-send-metrics-checks"
 
 - name: "Report logging health"
