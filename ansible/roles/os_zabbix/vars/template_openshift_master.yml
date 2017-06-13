@@ -142,6 +142,18 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.router2.pod.location
+    description: "check the openshift router2 pod location"
+    value_type: int
+    applications:
+    - Openshift Master
+
+  - key: openshift.router2.pod.status
+    description: "check the openshift router2 pod status"
+    value_type: int
+    applications:
+    - Openshift Master
+
   - key: openshift.registry.pod.location
     description: "check the openshift registry pod location"
     value_type: int
@@ -251,7 +263,7 @@ g_template_openshift_master:
     value_type: int
     applications:
     - Openshift Cluster
- 
+
   - key: openshift.master.project.create
     description: "check the openshift project create status"
     value_type: int
@@ -331,7 +343,7 @@ g_template_openshift_master:
     - Openshift Master
 
   - key: openshift.master.smal.status
-    description: Show saml pod status 
+    description: Show saml pod status
     value_type: int
     applications:
     - Openshift Master
@@ -570,7 +582,7 @@ g_template_openshift_master:
     value_type: int
     applications:
     - Openshift Cluster
-  
+
   - key: openshift.master.nodesnotlabeled.count
     description: This check shows how many nodes in a cluster are not labeled.
     value_type: int
