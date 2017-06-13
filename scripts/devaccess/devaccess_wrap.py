@@ -418,10 +418,11 @@ class DevGet(object):
             run a command.
         '''
 
-        print "Command not supported/allowed: {}".format(user_cmd)
+        print "Command not supported/allowed"
         print "Allowed commands:"
         for cmd in self._allowed_commands:
             print cmd
+        sys.exit(1)
 
     def main(self):
         ''' Entry point for class '''
