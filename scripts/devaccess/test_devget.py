@@ -14,7 +14,7 @@ from devaccess_wrap import DevGet, WhitelistedCommands
 class DevGetTest(unittest.TestCase):
     def setUp(self):
         DevGet.CONFIG_FILE = './test_devaccess_config.yaml'
-        sys.argv = ['devaccess_wrap', 'READ_SSH', 'superperson']
+        sys.argv = ['devaccess_wrap', 'READ_SSH', 'nobody']
         pass
 
     def test_unsupported_command(self):
