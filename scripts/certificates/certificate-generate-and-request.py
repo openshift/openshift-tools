@@ -27,8 +27,9 @@
 
 import argparse
 import json
+import os
+import sys
 import requests
-import os, sys
 import yaml
 import base64
 from OpenSSL import crypto
