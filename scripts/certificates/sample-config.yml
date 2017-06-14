@@ -1,3 +1,4 @@
+INC: 
 node: '*.testdontsign.openshift.com'
 keyfile: ./wildcard.testdontsign.openshift.com.key
 csrfile: ./wildcard.testdontsign.openshift.com.csr
