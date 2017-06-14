@@ -134,6 +134,7 @@ class OpenshiftCertificateRequester(object):
             "org_contact_lastname": self.config["org_lastname"],
             "org_contact_email": self.config["org_email"],
             "org_contact_telephone": self.config["org_tel"],
+            "comments": self.config["INC"],
         })
 
         authstring = self.args.accountnumber + ":" + self.args.apikey
@@ -178,6 +179,9 @@ class OpenshiftCertificateRequester(object):
 
         configfile = open(self.args.configfile, 'r')
         self.config = yaml.load(configfile)
+        if not self.config["INC"]:
+            print "INC in the submission yaml is a required field!"
+            sys.exit()
 
 if __name__ == '__main__':
     OWCR = OpenshiftCertificateRequester()
