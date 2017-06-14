@@ -180,8 +180,8 @@ class OpenshiftCertificateRequester(object):
         configfile = open(self.args.configfile, 'r')
         self.config = yaml.load(configfile)
         if not self.config["INC"]:
-          print "INC in the submission yaml is a required field!" 
-          sys.exit()
+            print "INC in the submission yaml is a required field!"
+            sys.exit()
 
 if __name__ == '__main__':
     OWCR = OpenshiftCertificateRequester()
