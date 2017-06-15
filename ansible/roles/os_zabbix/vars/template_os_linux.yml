@@ -274,7 +274,7 @@ g_template_os_linux:
   - name: "{% raw %}Disk: {{ '{#' }}OSO_DISK} has >500 IOPS for 15 minutes on {HOST.NAME}{% endraw %}"
     expression: "{% raw %}{Template OS Linux:disc.disk.tps[{{ '{#' }}OSO_DISK}].min(15m)}>500{% endraw %}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_high_iops.asciidoc"
-    priority: high
+    priority: average
 
   # This has a dependency on the previous trigger
   - name: "{% raw %}Filesystem: {{ '{#' }}OSO_FILESYS} has less than 10% free disk space on {HOST.NAME}{% endraw %}"
