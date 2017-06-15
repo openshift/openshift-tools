@@ -272,7 +272,7 @@ g_template_os_linux:
 
   ztriggerprototypes:
   - name: "{% raw %}Disk: {{ '{#' }}OSO_DISK} has >500 IOPS for 15 minutes on {HOST.NAME}{% endraw %}"
-    expression: "{% raw %}{Template OS Linux:disk.tps[{{ '{#' }}OSO_DISK}].min(15m)}>500{% endraw %}"
+    expression: "{% raw %}{Template OS Linux:disc.disk.tps[{{ '{#' }}OSO_DISK}].min(15m)}>500{% endraw %}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_high_iops.asciidoc"
     priority: high
 
