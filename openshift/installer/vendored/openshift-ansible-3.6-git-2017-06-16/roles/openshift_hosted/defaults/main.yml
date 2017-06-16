@@ -1,0 +1,37 @@
+---
+registry_volume_claim: 'registry-claim'
+
+openshift_hosted_router_edits:
+- key: spec.strategy.rollingParams.intervalSeconds
+  value: 1
+  action: put
+- key: spec.strategy.rollingParams.updatePeriodSeconds
+  value: 1
+  action: put
+- key: spec.strategy.activeDeadlineSeconds
+  value: 21600
+  action: put
+
+openshift_hosted_routers:
+- name: router
+  replicas: "{{ replicas | default(1) }}"
+  namespace: default
+  serviceaccount: router
+  selector: "{{ openshift_hosted_router_selector | default(None) }}"
+  images: "{{ openshift_hosted_router_image | default(None)  }}"
+  edits: "{{ openshift_hosted_router_edits }}"
+  stats_port: 1936
+  ports:
+  - 80:80
+  - 443:443
+  certificate: "{{ openshift_hosted_router_certificate | default({}) }}"
+
+
+openshift_hosted_router_certificate: {}
+openshift_hosted_registry_cert_expire_days: 730
+openshift_hosted_router_create_certificate: False
+
+os_firewall_allow:
+- service: Docker Registry Port
+  port: 5000/tcp
+  when: openshift.common.use_calico | bool

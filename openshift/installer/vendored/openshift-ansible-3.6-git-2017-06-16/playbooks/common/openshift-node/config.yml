@@ -1,0 +1,98 @@
+---
+- name: Gather and set facts for node hosts
+  hosts: oo_nodes_to_config
+  vars:
+    t_oo_option_node_debug_level: "{{ lookup('oo_option', 'openshift_node_debug_level') }}"
+  pre_tasks:
+  - set_fact:
+      openshift_node_debug_level: "{{ t_oo_option_node_debug_level }}"
+    when: openshift_node_debug_level is not defined and t_oo_option_node_debug_level != ""
+  roles:
+  - openshift_facts
+  tasks:
+  # Since the master is generating the node certificates before they are
+  # configured, we need to make sure to set the node properties beforehand if
+  # we do not want the defaults
+  - openshift_facts:
+      role: node
+      local_facts:
+        labels: "{{ openshift_node_labels | default(None) }}"
+        annotations: "{{ openshift_node_annotations | default(None) }}"
+        schedulable: "{{ openshift_schedulable | default(openshift_scheduleable) | default(None) }}"
+
+- name: Evaluate node groups
+  hosts: localhost
+  become: no
+  connection: local
+  tasks:
+  - name: Evaluate oo_containerized_master_nodes
+    add_host:
+      name: "{{ item }}"
+      groups: oo_containerized_master_nodes
+      ansible_ssh_user: "{{ g_ssh_user | default(omit) }}"
+      ansible_become: "{{ g_sudo | default(omit) }}"
+    with_items: "{{ groups.oo_nodes_to_config | default([]) }}"
+    when: hostvars[item].openshift is defined and hostvars[item].openshift.common is defined and hostvars[item].openshift.common.is_containerized | bool and (item in groups.oo_nodes_to_config and item in groups.oo_masters_to_config)
+    changed_when: False
+
+- name: Configure containerized nodes
+  hosts: oo_containerized_master_nodes
+  serial: 1
+  vars:
+    openshift_node_master_api_url: "{{ hostvars[groups.oo_first_master.0].openshift.master.api_url }}"
+    openshift_node_first_master_ip: "{{ hostvars[groups.oo_first_master.0].openshift.common.ip }}"
+    openshift_docker_hosted_registry_network: "{{ hostvars[groups.oo_first_master.0].openshift.common.portal_net }}"
+    openshift_no_proxy_internal_hostnames: "{{ hostvars | oo_select_keys(groups['oo_nodes_to_config']
+                                                    | union(groups['oo_masters_to_config'])
+                                                    | union(groups['oo_etcd_to_config'] | default([])))
+                                                | oo_collect('openshift.common.hostname') | default([]) | join (',')
+                                                }}"
+    when: "{{ (openshift_http_proxy is defined or openshift_https_proxy is defined) and
+            openshift_generate_no_proxy_hosts | default(True) | bool }}"
+  roles:
+  - role: openshift_node
+    openshift_ca_host: "{{ groups.oo_first_master.0 }}"
+
+- name: Configure nodes
+  hosts: oo_nodes_to_config:!oo_containerized_master_nodes
+  vars:
+    openshift_node_master_api_url: "{{ hostvars[groups.oo_first_master.0].openshift.master.api_url }}"
+    openshift_node_first_master_ip: "{{ hostvars[groups.oo_first_master.0].openshift.common.ip }}"
+    openshift_docker_hosted_registry_network: "{{ hostvars[groups.oo_first_master.0].openshift.common.portal_net }}"
+    openshift_no_proxy_internal_hostnames: "{{ hostvars | oo_select_keys(groups['oo_nodes_to_config']
+                                                    | union(groups['oo_masters_to_config'])
+                                                    | union(groups['oo_etcd_to_config'] | default([])))
+                                                | oo_collect('openshift.common.hostname') | default([]) | join (',')
+                                                }}"
+    when: "{{ (openshift_http_proxy is defined or openshift_https_proxy is defined) and
+            openshift_generate_no_proxy_hosts | default(True) | bool }}"
+  roles:
+  - role: openshift_node
+    openshift_ca_host: "{{ groups.oo_first_master.0 }}"
+
+- name: Additional node config
+  hosts: oo_nodes_to_config
+  vars:
+    openshift_node_master_api_url: "{{ hostvars[groups.oo_first_master.0].openshift.master.api_url }}"
+  roles:
+  - role: flannel
+    etcd_urls: "{{ hostvars[groups.oo_first_master.0].openshift.master.etcd_urls }}"
+    embedded_etcd: "{{ hostvars[groups.oo_first_master.0].openshift.master.embedded_etcd }}"
+    etcd_ca_host: "{{ groups.oo_etcd_to_config.0 }}"
+    etcd_cert_subdir: "openshift-node-{{ openshift.common.hostname }}"
+    etcd_cert_config_dir: "{{ openshift.common.config_base }}/node"
+    when: openshift.common.use_flannel | bool
+  - role: calico
+    when: openshift.common.use_calico | bool
+  - role: nuage_node
+    when: openshift.common.use_nuage | bool
+  - role: contiv
+    contiv_role: netplugin
+    when: openshift.common.use_contiv | bool
+  - role: nickhammond.logrotate
+  - role: openshift_manage_node
+    openshift_master_host: "{{ groups.oo_first_master.0 }}"
+  tasks:
+  - name: Create group for deployment type
+    group_by: key=oo_nodes_deployment_type_{{ openshift.common.deployment_type }}
+    changed_when: False
