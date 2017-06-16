@@ -1,0 +1,23 @@
+---
+- name: Additional master configuration
+  hosts: oo_first_master
+  vars:
+    cockpit_plugins: "{{ osm_cockpit_plugins | default(['cockpit-kubernetes']) }}"
+    etcd_urls: "{{ openshift.master.etcd_urls }}"
+    openshift_master_ha: "{{ groups.oo_masters | length > 1 }}"
+    omc_cluster_hosts: "{{ groups.oo_masters | join(' ')}}"
+  roles:
+  - role: openshift_master_cluster
+    when: openshift_master_ha | bool and openshift.master.cluster_method == "pacemaker"
+  - role: openshift_examples
+    registry_url: "{{ openshift.master.registry_url }}"
+    when: openshift.common.install_examples | bool
+  - role: openshift_hosted_templates
+    registry_url: "{{ openshift.master.registry_url }}"
+  - role: openshift_manageiq
+    when: openshift.common.use_manageiq | bool
+  - role: cockpit
+    when: not openshift.common.is_atomic and ( deployment_type in ['atomic-enterprise','openshift-enterprise'] ) and
+      (osm_use_cockpit | bool or osm_use_cockpit is undefined ) and ( openshift.common.deployment_subtype != 'registry' )
+  - role: flannel_register
+    when: openshift.common.use_flannel | bool

@@ -1,0 +1,87 @@
+---
+- include: ../openshift-cluster/evaluate_groups.yml
+
+- name: Gather facts
+  hosts: oo_etcd_to_config:oo_masters_to_config:oo_nodes_to_config
+  roles:
+  - openshift_facts
+
+- name: Update master count
+  hosts: oo_masters:!oo_masters_to_config
+  serial: 1
+  roles:
+  - openshift_facts
+  post_tasks:
+  - openshift_facts:
+      role: master
+      local_facts:
+        ha: "{{ openshift_master_ha | default(groups.oo_masters | length > 1) }}"
+        master_count: "{{ openshift_master_count | default(groups.oo_masters | length) }}"
+  - name: Update master count
+    modify_yaml:
+      dest: "{{ openshift.common.config_base}}/master/master-config.yaml"
+      yaml_key: 'kubernetesMasterConfig.masterCount'
+      yaml_value: "{{ openshift.master.master_count }}"
+    notify:
+    - restart master api
+    - restart master controllers
+  handlers:
+  - name: restart master api
+    service: name={{ openshift.common.service_type }}-master-controllers state=restarted
+    notify: verify api server
+  - name: restart master controllers
+    service: name={{ openshift.common.service_type }}-master-controllers state=restarted
+  - name: verify api server
+    command: >
+      curl --silent --tlsv1.2
+      {% if openshift.common.version_gte_3_2_or_1_2 | bool %}
+      --cacert {{ openshift.common.config_base }}/master/ca-bundle.crt
+      {% else %}
+      --cacert {{ openshift.common.config_base }}/master/ca.crt
+      {% endif %}
+      {{ openshift.master.api_url }}/healthz/ready
+    args:
+      # Disables the following warning:
+      # Consider using get_url or uri module rather than running curl
+      warn: no
+    register: api_available_output
+    until: api_available_output.stdout == 'ok'
+    retries: 120
+    delay: 1
+    changed_when: false
+
+- name: Configure docker hosts
+  hosts: oo_masters_to_config:oo_nodes_to_config
+  vars:
+    docker_additional_registries: "{{ lookup('oo_option', 'docker_additional_registries') | oo_split }}"
+    docker_insecure_registries: "{{ lookup('oo_option',  'docker_insecure_registries') | oo_split }}"
+    docker_blocked_registries: "{{ lookup('oo_option', 'docker_blocked_registries') | oo_split }}"
+  roles:
+  - openshift_facts
+  - openshift_docker
+
+- name: Disable excluders
+  hosts: oo_masters_to_config
+  tags:
+  - always
+  gather_facts: no
+  roles:
+  - role: openshift_excluder
+    r_openshift_excluder_action: disable
+    r_openshift_excluder_service_type: "{{ openshift.common.service_type }}"
+
+- include: ../openshift-master/config.yml
+
+- include: ../openshift-loadbalancer/config.yml
+
+- include: ../openshift-node/config.yml
+
+- name: Re-enable excluder if it was previously enabled
+  hosts: oo_masters_to_config
+  tags:
+  - always
+  gather_facts: no
+  roles:
+  - role: openshift_excluder
+    r_openshift_excluder_action: enable
+    r_openshift_excluder_service_type: "{{ openshift.common.service_type }}"
