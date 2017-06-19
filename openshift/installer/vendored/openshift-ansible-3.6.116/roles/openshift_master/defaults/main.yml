@@ -1,0 +1,3 @@
+---
+openshift_node_ips: []
+r_openshift_master_clean_install: false
