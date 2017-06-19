@@ -56,18 +56,10 @@ class Ohi(object):
             self.aws.print_cluster_list()
             return 0
 
-        if self.args.v3:
-            version = '3'
-        elif self.args.all_versions:
-            version = 'all'
-        else:
-            version = '2'
-
         hosts = self.aws.get_host_list(clusters=self.args.cluster,
                                        host_type=self.args.host_type,
                                        sub_host_type=self.args.sub_host_type,
-                                       envs=self.args.env,
-                                       version=version)
+                                       envs=self.args.env,)
 
         if hosts is None:
             # We weren't able to determine what they wanted to do
@@ -143,17 +135,8 @@ class Ohi(object):
 
         parser.add_argument('-o', '--output', action='store', default=None, help='output')
 
-        parser.add_argument('--v2', action='store_true', default=True,
-                            help='Specify the openshift version. Default is 2')
-
-        parser.add_argument('--v3', action='store_true', default=False,
-                            help='Specify the openshift version.')
-
         parser.add_argument('--ip', action='store_true', default=False,
                             help='Return ip address only.')
-
-        parser.add_argument('--all-versions', action='store_true', default=False,
-                            help='Specify the openshift version. Return all versions')
 
         self.args = parser.parse_args()
 

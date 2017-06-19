@@ -197,7 +197,7 @@ class AwsUtil(object):
 
     # This function uses all of these params to perform a filters on our host inventory.
     # pylint: disable=too-many-arguments
-    def get_host_list(self, clusters=None, host_type=None, sub_host_type=None, envs=None, version=None):
+    def get_host_list(self, clusters=None, host_type=None, sub_host_type=None, envs=None):
         """Get the list of hosts from the inventory using host-type and environment
         """
         retval = set([])
@@ -229,14 +229,8 @@ class AwsUtil(object):
 
             retval.intersection_update(env_hosts)
 
-        if host_type:
-            retval.intersection_update(inv.get(self.gen_host_type_tag(host_type, version), []))
-
         if sub_host_type:
             retval.intersection_update(inv.get(self.gen_sub_host_type_tag(sub_host_type), []))
-
-        if version != 'all':
-            retval.intersection_update(inv.get(AwsUtil.gen_version_tag(version), []))
 
         return list(retval)
 
