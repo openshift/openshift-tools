@@ -33,24 +33,20 @@ ADD check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
 
 
 
-# PYLINT WORKAROUND
-# This is needed until epel is shipping pylint again. These are the packages we
-#   were running on before they were removed from epel.
-#
-# IMPORTANT: Remove this section once pylint is shipping in epel again.
-#
-# More info: https://bugzilla.redhat.com/show_bug.cgi?id=1431835
-##################
-RUN rpm -ivh \
-    https://kojipkgs.fedoraproject.org//packages/pylint/1.3.1/1.el7/noarch/pylint-1.3.1-1.el7.noarch.rpm \
-    https://kojipkgs.fedoraproject.org//packages/python-astroid/1.2.1/2.el7/noarch/python-astroid-1.2.1-2.el7.noarch.rpm \
-    https://kojipkgs.fedoraproject.org//packages/python-logilab-common/0.62.1/1.el7/noarch/python-logilab-common-0.62.1-1.el7.noarch.rpm
-##################
-
-
-
 RUN echo -e "\n\nalias oca='KUBECONFIG=/tmp/admin.kubeconfig oc '" >> /root/.bashrc
 RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oadm '" >> /root/.bashrc
+
+{% if base_os == "rhel7" %}
+# /usr/bin/oc workaround
+# python-openshift-tools-monitoring-openshift depends on /usr/bin/oc
+# since origin-clients and atomic-openshift-clients provide the binary
+# for Origin/OpenShift respectively. yum isn't happy that a package named 'openshift'
+# used to provide /usr/bin/oc, and 'openshift' has been replaced by
+# 'atomic-openshift', but 'atomic-openshift' doesn't provide /usr/bin/oc.
+# So just install atomic-openshift-clients before python-openshift-tools-monitoring-openshift
+# until the yum repo is cleared of the older packages.
+RUN yum-install-check.sh -y atomic-openshift-clients && yum clean metadata
+{% endif %}
 
 RUN yum clean metadata && \
     yum-install-check.sh -y python-pip pcp pcp-conf pcp-testsuite \
