@@ -6,6 +6,13 @@ etcd
 
 [OSEv3:vars]
 {# These are static and will be the same for ALL clusters #}
+# These settings disable the preflight checks for openshift-ansible
+# Added 6/19/17 - kwoodson
+# - disk_availability = 40 GB desired for /var
+# - docker_storage = docker isn't running
+# - memory_availability = 16 GB is desired
+# - package_version = multiple minor versions of packages found in repo
+openshift_disable_check=disk_availability,docker_storage,memory_availability,package_version
 ansible_ssh_user=root
 deployment_type=openshift-enterprise
 openshift_docker_additional_registries=registry.access.redhat.com
