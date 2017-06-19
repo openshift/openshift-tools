@@ -413,7 +413,7 @@ class DevGet(object):
 
         return cmd in self._allowed_commands
 
-    def cmd_not_allowed(self, user_cmd):
+    def cmd_not_allowed(self):
         ''' Print generic info when user isnt' able to
             run a command.
         '''
@@ -441,13 +441,13 @@ class DevGet(object):
                 results = self._command_dict[generic_cmd](self._oc_cmd)
                 print results
             else:
-                self.cmd_not_allowed(full_cmd)
+                self.cmd_not_allowed()
         # non-oc command run handling
         elif self.can_run_cmd(cmd):
             results = self._command_dict[cmd](cmd)
             print results
         else:
-            self.cmd_not_allowed(cmd)
+            self.cmd_not_allowed()
 
 
 if __name__ == '__main__':

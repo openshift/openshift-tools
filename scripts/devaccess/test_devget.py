@@ -1,23 +1,42 @@
 #!/usr/bin/python
 
-from mock import MagicMock, patch
+''' Tests for devaccess_wrap.py tool '''
+
+# Removing invalid variable names for tests so that I can
+# keep them brief
+# pylint: disable=invalid-name
+
+# Allow modifying internal structures for mocking
+# pylint: disable=protected-access
+
+# 'mock' not available in jenkins environment
+# pylint: disable=import-error
+
 import os
 import sys
 import unittest
+from mock import MagicMock, mock, patch
 
 module_path = os.path.join('/'.join(os.path.realpath(__file__).split('/')[:-1]))
 sys.path.insert(0, module_path)
 
-from devaccess_wrap import DevGet, WhitelistedCommands
-
+# Need to set module path (using oc.*) before trying to
+# import devaccess_wrap
+# pylint: disable=wrong-import-position
+from devaccess_wrap import DevGet
 
 class DevGetTest(unittest.TestCase):
+    ''' unittest class for testing devaccess_wrap.py '''
+
+    # No 'self' use is intended here
+    # pylint: disable=no-self-use
     def setUp(self):
+        ''' steps to run before every test run '''
         DevGet.CONFIG_FILE = './test_devaccess_config.yaml'
         sys.argv = ['devaccess_wrap', 'READ_SSH', 'nobody']
-        pass
 
     def test_unsupported_command(self):
+        ''' Test trying to run a command that isn't supported '''
         os.environ['SSH_ORIGINAL_COMMAND'] = '/usr/bin/blah'
         dg = DevGet()
         with self.assertRaises(SystemExit) as cm:
@@ -25,7 +44,9 @@ class DevGetTest(unittest.TestCase):
 
         self.assertEqual(cm.exception.code, 1)
 
-    def test_oc_get_nodes(self):
+    @mock.patch('devaccess_wrap.WhitelistedCommands.oc_get_nodes')
+    def test_oc_get_nodes(self, mock_get_nodes):
+        ''' Test running 'oc get nodes (allowed) '''
         node_list = '''NAME                            STATUS                     AGE
 ip-172-31-49-119.ec2.internal   Ready,SchedulingDisabled   45d
 ip-172-31-49-14.ec2.internal    Ready,SchedulingDisabled   45d
@@ -45,28 +66,29 @@ ip-172-31-62-44.ec2.internal    Ready,SchedulingDisabled   45d
 '''
         os.environ['SSH_ORIGINAL_COMMAND'] = 'oc get nodes'
         dg = DevGet()
-        myfunc = MagicMock()
-        myfunc.side_effect = [node_list]
-        with patch.dict(dg._command_dict, {'oc get nodes -ndefault': myfunc}) as mocked:
-            dg.main()
-            assert myfunc.called
+        mock_get_nodes.side_effect = [node_list]
 
-    def test_oc_get_nodes_json(self):
+        dg.main()
+        assert mock_get_nodes.called
+
+    @mock.patch('devaccess_wrap.WhitelistedCommands.oc_get_nodes')
+    def test_oc_get_nodes_json(self, mock_get_nodes):
+        ''' Test running oc get nodes -ojson (supported) '''
         os.environ['SSH_ORIGINAL_COMMAND'] = 'oc get nodes -ndefault'
         dg = DevGet()
-        myfunc = MagicMock()
-        myfunc.side_effect = ['json list of nodes']
-        with patch.dict(dg._command_dict, {'oc get nodes -ndefault': myfunc}) as mocked:
-            dg.main()
-            assert myfunc.called
+        mock_get_nodes.side_effect = ['json list of nodes ']
+
+        dg.main()
+        assert mock_get_nodes.called
+
 
     def test_group_command_uname(self):
-        ''' test superperson membership in super_role (which allows 'uname') '''
+        ''' Test superperson membership in super_role (which allows 'uname') '''
         os.environ['SSH_ORIGINAL_COMMAND'] = 'uname'
         dg = DevGet()
         myfunc = MagicMock()
         myfunc.side_effect = ['Linux 4.x']
-        with patch.dict(dg._command_dict, {'uname': myfunc}) as mocked:
+        with patch.dict(dg._command_dict, {'uname': myfunc}):
             dg.main()
             assert myfunc.called
 
