@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.66
+Version:       0.1.67
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -414,6 +414,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Wed Jun 21 2017 Matt Woodson <mwoodson@redhat.com> 0.1.67-1
+- added smoketest to verify-cicd script (mwoodson@redhat.com)
+
 * Wed Jun 21 2017 zhiwliu <zhiwliu@redhat.com> 0.1.66-1
 - pylint has an odd idea of before (sten@redhat.com)
 - moar pylint (sten@redhat.com)
