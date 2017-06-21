@@ -283,11 +283,6 @@ host_monitoring_cron:
   job: ops-runner -f -s 15 -n cspc.openshift.master.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start master' openshift.master.process.count
 {% endif %}
 
-- name: send openshift-master counts (user, pod, project)
-  hour: "*/2"
-  minute: "0"
-  job: ops-runner -f -s 15 -n csosmm.openshift.master.counts /usr/bin/cron-send-os-master-metrics --project-count --pod-count --user-count --pv-info
-
 - name: send openshift-master local (test https://127.0.0.1) status
   minute: "*/10"
   job: ops-runner -f -s 60 -n csosmm.openshift.master.api.local /usr/bin/cron-send-os-master-metrics --local
@@ -370,6 +365,12 @@ host_monitoring_cron:
 - name: Do a quick check for the project creation and deletion
   minute: "*/15"
   job: ops-runner -f -s 15 -n cspo.openshift.project.status /usr/bin/cron-send-project-operation
+
+- name: send openshift-master counts (user, pod, project)
+  hour: "*/2"
+  minute: "0"
+  job: ops-runner -f -s 15 -n csosmm.openshift.master.counts /usr/bin/cron-send-os-master-metrics --project-count --pod-count --user-count --pv-info
+
 
 {% if osohm_pruning.pruning_enabled | default(True) | bool %}
 - name: "Prune builds/deployments/images"
