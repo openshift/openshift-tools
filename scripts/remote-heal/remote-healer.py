@@ -5,6 +5,7 @@
 '''
 # Disabling invalid-name because pylint doesn't like the naming conention we have.
 # pylint: disable=invalid-name
+# pylint: disable=line-too-long
 
 import argparse
 import ConfigParser
@@ -118,7 +119,7 @@ class RemoteHealer(object):
         # ... there are exceptions: ansible-tower / puppet / use-ctl
         regex = r'^[a-zA-Z0-9]+[a-zA-Z0-9-]*$'
         match = re.search(regex, self._args.host)
-        if match == None:
+        if match is None:
             logging.info("Host: %s doesn't match a know host pattern",
                          self._args.host)
             sys.exit(1)
@@ -165,6 +166,13 @@ class RemoteHealer(object):
             # Run reporting to quiet down trigger
             cmd = self.ossh_cmd(self._args.host,
                                 'docker exec oso-rhe7-host-monitoring /usr/bin/cron-send-ovs-stats')
+        elif re.search(r'^\[HEAL\] Critically High Memory usage of  docker  on', self._args.trigger):
+            logging.info("Restarting docker on " + self._args.host)
+
+            #run playbook to evacuate the host and restart the docker
+            cmd = 'ansible-playbook -M "/usr/share/ansible/openshift-ansible/roles/" /usr/bin/heal_for_docker_use_too_much_memory.yml -e "cli_nodename='+self._args.host+'"'
+            #run
+            self.run_cmd(cmd.split())
 
         else:
             logging.info("No healing action defined for trigger: " + self._args.trigger)
