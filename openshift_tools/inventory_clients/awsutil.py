@@ -72,7 +72,7 @@ class AwsUtil(object):
 
         tags = []
         inv = self.get_inventory()
-        for key in inv.keys():
+        for key in inv:
             matched = regex.match(key)
             if matched:
                 tags.append(matched.group(1))
@@ -182,11 +182,10 @@ class AwsUtil(object):
         """
         return "oo_environment_%s" % env
 
-    def gen_host_type_tag(self, host_type, version):
+    @staticmethod
+    def gen_host_type_tag(host_type):
         """Generate the host type tag
         """
-        if version == '2':
-            host_type = self.resolve_host_type(host_type)
         return "oo_hosttype_%s" % host_type
 
     @staticmethod
@@ -230,7 +229,7 @@ class AwsUtil(object):
             retval.intersection_update(env_hosts)
 
         if host_type:
-            retval.intersection_update(inv.get(self.gen_host_type_tag(host_type, version), []))
+            retval.intersection_update(inv.get(self.gen_host_type_tag(host_type), []))
 
         if sub_host_type:
             retval.intersection_update(inv.get(self.gen_sub_host_type_tag(sub_host_type), []))
