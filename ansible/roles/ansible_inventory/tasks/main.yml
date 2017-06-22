@@ -54,6 +54,12 @@
         minute: '*/10'
         job: '/usr/bin/ops-runner -n cmirc.multi_inventory.refresh -t 120 /usr/local/bin/inventory.sh &> /dev/null'
 
+    - name: Cron to update cache on reboot
+      cron:
+        name: 'multi_inventory at reboot'
+        job: '/usr/bin/ops-runner -n cmirc.multi_inventory.refresh -t 120 /usr/local/bin/inventory.sh &> /dev/null'
+        special_time: reboot
+
   when: oo_cron_refresh_cache is defined and oo_cron_refresh_cache
 
 - name: Set cache location
