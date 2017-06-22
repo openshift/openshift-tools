@@ -3,7 +3,7 @@
 #
 # To run:
 #
-# 1. This playbook should be run with:
+# 1. This playbook should be run with :
 #   ansible-playbook restart_docker_on_node.yml -e "cli_nodename=dev-preview-int-node-compute-89cf0"
 #
 - name: Ensure cli_nodename is set
