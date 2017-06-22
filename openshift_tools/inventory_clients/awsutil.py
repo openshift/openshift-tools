@@ -229,6 +229,9 @@ class AwsUtil(object):
 
             retval.intersection_update(env_hosts)
 
+        if host_type:
+            retval.intersection_update(inv.get(self.gen_host_type_tag(host_type, version), []))
+
         if sub_host_type:
             retval.intersection_update(inv.get(self.gen_sub_host_type_tag(sub_host_type), []))
 
