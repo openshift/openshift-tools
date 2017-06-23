@@ -14,6 +14,10 @@ import subprocess
 import sys
 import yaml
 
+class DevGetError(Exception):
+    ''' DevGet-specific exceptions '''
+    pass
+
 class OCCmd(object):
     ''' Class to hold and standardize building of /usr/bin/oc commands
         out of raw string command line text '''
@@ -38,38 +42,69 @@ class OCCmd(object):
         self._params['subject'] = None
         self.parse_cmd()
 
+    @staticmethod
+    def valid_param_check(string):
+        ''' Check for valid string parameter '''
+        matched = re.match("^[A-Za-z](?:-?[A-Za-z0-9])*$", string)
+        if matched is None:
+            raise DevGetError("Invalid characters in parameter value")
+
+    @staticmethod
+    def get_param_value(params, short_p):
+        ''' Get value of parameter short_p or long_p out of param_list.
+            Return value and params with the param and value removed. '''
+        params_split = params.split()
+        delete_tokens = []
+        value = None
+
+        x = 0
+        while x < len(params_split):
+            # check for token/param exact match (ie '-n' but not
+            # -nSOMETHING)
+            if params_split[x] == short_p:
+                # Fail if we're at the end of the param/token list
+                if x == len(params_split) - 1:
+                    raise DevGetError("Dangling param without value")
+
+                # A param value starting with '-' is invalid
+                OCCmd.valid_param_check(params_split[x+1])
+
+                value = params_split[x+1]
+
+                delete_tokens.append(x)
+                delete_tokens.append(x+1)
+
+                # skip next token since we already processed it
+                x = x + 1
+            # handle single token with param+value (ie -nVALUE)
+            elif params_split[x].startswith(short_p):
+                value = re.sub(short_p, '', params_split[x])
+                OCCmd.valid_param_check(value)
+
+                delete_tokens.append(x)
+            # TODO: elif match double-dash params (ie --namespace and
+            # --namespace=VALUE type params
+
+            x = x + 1
+
+        # clean up processed tokens before sending back remaining string
+        delete_tokens.sort(reverse=True)
+        for token in delete_tokens:
+            params_split.pop(token)
+
+        params_post_proccessed = ' '.join(params_split)
+
+        return (value, params_post_proccessed)
+
+
     def get_namespace(self, cmd):
         ''' find a namespace (if passed in) and return cmd
             without the namespace-related parameters '''
 
-        cmd_split = cmd.split()
-        delete_tokens = []
+        (value, new_cmd) = OCCmd.get_param_value(cmd, '-n')
 
-        for x in range(0, len(cmd_split)):
-            if cmd_split[x] == '-n':
-                # token was exactly '-n' so next token is the namespace
-                self._params['namespace'] = cmd_split[x+1]
-
-                # make sure to mark these items for removal from list
-                # before returning the command
-                delete_tokens.append(cmd_split[x])
-                delete_tokens.append(cmd_split[x+1])
-
-                # skip next token since we already processed it
-                x = x + 1
-            elif cmd_split[x].startswith('-n'):
-                # we have a namespace in the format of -n<namespace>
-                self._params['namespace'] = re.sub('-n', '', cmd_split[x])
-
-                delete_tokens.append(cmd_split[x])
-            # elif match --namespace and --namespace=<namespace> params
-
-        # now clean up namespace-related tokens before returning
-        # cmd without the namespace-related parameters
-        for token in delete_tokens:
-            cmd_split.remove(token)
-
-        new_cmd = " ".join(cmd_split)
+        if value is not None:
+            self._params['namespace'] = value
         return new_cmd
 
     def get_follow(self, cmd):
@@ -82,10 +117,11 @@ class OCCmd(object):
         for x in range(0, len(cmd_split)):
             if cmd_split[x] == '-f' or cmd_split[x] == '--follow':
                 self._params['follow'] = '--follow'
-                delete_tokens.append(cmd_split[x])
+                delete_tokens.append(x)
 
+        delete_tokens.sort(reverse=True)
         for token in delete_tokens:
-            cmd_split.remove(token)
+            cmd_split.pop(token)
 
         new_cmd = " ".join(cmd_split)
         return new_cmd
@@ -94,60 +130,19 @@ class OCCmd(object):
         ''' find output format parameters (if passed in) and return cmd
             without the format parameters '''
 
-        cmd_split = cmd.split()
-        delete_tokens = []
+        (value, new_cmd) = OCCmd.get_param_value(cmd, '-o')
 
-        for x in range(0, len(cmd_split)):
-            if cmd_split[x] == '-o':
-            # token was exactly '-o' so next token is output format
-                self._params['output_format'] = cmd_split[x+1]
-
-                # mark tokens for removal
-                delete_tokens.append(cmd_split[x])
-                delete_tokens.append(cmd_split[x+1])
-
-                # skip next token since we already processed it
-                x = x + 1
-            elif cmd_split[x].startswith('-o'):
-                # we have an output in format -o<output_format>
-                self._params['output_format'] = re.sub('-o', '', cmd_split[x])
-
-                delete_tokens.append(cmd_split[x])
-
-        # clean up output-related tokens and return resulting string
-        for token in delete_tokens:
-            cmd_split.remove(token)
-
-        new_cmd = " ".join(cmd_split)
+        self._params['output_format'] = value
         return new_cmd
 
     def get_container(self, cmd):
         ''' Take '-c' command line param (for oc logs)
             Return remaining string '''
-        cmd_split = cmd.split()
-        delete_tokens = []
 
-        for x in range(0, len(cmd_split)):
-            if cmd_split[x] == '-c':
-                self._params['container'] = cmd_split[x+1]
+        (value, new_cmd) = OCCmd.get_param_value(cmd, '-c')
 
-                # mark tokens for removal
-                delete_tokens.append(cmd_split[x])
-                delete_tokens.append(cmd_split[x+1])
-
-                # skip next token since we already processed it
-                x = x + 1
-            elif cmd_split[x].startswith('-c'):
-                self._params['container'] = re.sub('-c', '', cmd_split[x])
-
-                delete_tokens.append(cmd_split[x])
-
-        for token in delete_tokens:
-            cmd_split.remove(token)
-
-        new_cmd = " ".join(cmd_split)
+        self._params['container'] = value
         return new_cmd
-
 
     def get_verb_type_subject(self, cmd):
         ''' Take command without parameters and parse it into its
@@ -158,7 +153,7 @@ class OCCmd(object):
 
         # handle 'oc <verb> <type> <optional-subject>' type of cmd
         # ...or even 'oc logs <subject>'
-        cmd_split.remove("oc")
+        cmd_split.pop(0)
 
         # make sure none of the remaining tokens are parameters
         for param in cmd_split:
@@ -290,8 +285,7 @@ class DevGet(object):
     ACL_FILE = '/etc/openshift_tools/devaccess_users.yaml'
     LOG_FILE = '/var/log/devaccess.log'
 
-    def __init__(self, kubeconfig=None):
-        self._debug = False
+    def __init__(self):
         self._args = None
         self._user = None
         self._oc_cmd = None
@@ -304,13 +298,13 @@ class DevGet(object):
 
         self._allowed_commands = self.setup_permissions()
         self._command_dict = self.whitelisted_command_list()
-        if kubeconfig is not None:
-            WhitelistedCommands(kubeconfig_path=kubeconfig)
 
     def parse_config(self):
         ''' Load in config settings '''
         self._config = yaml.load(open(DevGet.CONFIG_FILE, 'r'))
 
+        if self._config.has_key('kubeconfig_path'):
+            WhitelistedCommands(kubeconfig_path=self._config['kubeconfig_path'])
         if not self._config.has_key('aclfile_path'):
             self._config['aclfile_path'] = DevGet.ACL_FILE
 
@@ -382,6 +376,8 @@ class DevGet(object):
             # The user's authorized_keys will force the command run to be:
             # <path to devaccess_wrap> READ_SSH <username>
             # Save the username for permission lookups later.
+            if re.match("^[A-Za-z0-9]+$", sys.argv[2]) is None:
+                raise DevGetError("Invalid username found")
             user = sys.argv[2]
         else:
             # not being launched from ssh authorized_keys, so
@@ -398,7 +394,7 @@ class DevGet(object):
     def setup_logging(self):
         ''' Configure logging '''
 
-        if os.environ.has_key("DEVACC_DEBUG") or self._debug is True:
+        if os.environ.has_key("DEVACC_DEBUG") or self._config['debug'] is True:
             log_level = logging.DEBUG
         else:
             log_level = logging.INFO
@@ -414,7 +410,7 @@ class DevGet(object):
         return cmd in self._allowed_commands
 
     def cmd_not_allowed(self):
-        ''' Print generic info when user isnt' able to
+        ''' Print generic info when user isn't able to
             run a command.
         '''
 

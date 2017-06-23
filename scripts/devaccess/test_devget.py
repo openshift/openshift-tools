@@ -12,6 +12,10 @@
 # 'mock' not available in jenkins environment
 # pylint: disable=import-error
 
+# disable unused variables since we sometimes only need to
+# initiate the variable to perform the test
+# pylint: disable=unused-variable
+
 import os
 import sys
 import unittest
@@ -23,7 +27,7 @@ sys.path.insert(0, module_path)
 # Need to set module path (using oc.*) before trying to
 # import devaccess_wrap
 # pylint: disable=wrong-import-position
-from devaccess_wrap import DevGet
+from devaccess_wrap import DevGet, DevGetError
 
 class DevGetTest(unittest.TestCase):
     ''' unittest class for testing devaccess_wrap.py '''
@@ -91,6 +95,55 @@ ip-172-31-62-44.ec2.internal    Ready,SchedulingDisabled   45d
         with patch.dict(dg._command_dict, {'uname': myfunc}):
             dg.main()
             assert myfunc.called
+
+    def test_leading_dash_parameters(self):
+        ''' Test oc -n -n (next token has leading '-') '''
+        os.environ['SSH_ORIGINAL_COMMAND'] = 'oc -n -n'
+        with self.assertRaises(DevGetError):
+            dg = DevGet()
+
+    def test_leading_dash_param_single_token(self):
+        ''' Test oc -n-blah (leading '-' as value of param) '''
+        os.environ['SSH_ORIGINAL_COMMAND'] = 'oc -n-blah'
+        with self.assertRaises(DevGetError):
+            dg = DevGet()
+
+    def test_param_without_value(self):
+        ''' Test oc get pods -n (no actual namespace) '''
+        os.environ['SSH_ORIGINAL_COMMAND'] = 'oc get pods -n'
+        with self.assertRaises(DevGetError):
+            dg = DevGet()
+
+        os.environ['SSH_ORIGINAL_COMMAND'] = 'oc logs pod -c'
+        with self.assertRaises(DevGetError):
+            dg = DevGet()
+
+        os.environ['SSH_ORIGINAL_COMMAND'] = 'oc get pods -o'
+        with self.assertRaises(DevGetError):
+            dg = DevGet()
+
+    def test_params_with_same_value(self):
+        ''' Test oc get pods -n test -o test (different params with same value) '''
+        os.environ['SSH_ORIGINAL_COMMAND'] = 'oc get pods -n test -o test'
+        dg = DevGet()
+        assert dg._oc_cmd.normalized_cmd() == 'oc get pods -ntest -otest'
+
+    def test_invalid_param_value(self):
+        ''' Test oc get pods -n-test '''
+        os.environ['SSH_ORIGINAL_COMMAND'] = 'oc get pods -n-test'
+        with self.assertRaises(DevGetError):
+            dg = DevGet()
+
+        os.environ['SSH_ORIGINAL_COMMAND'] = 'oc get pods -ntest-'
+        with self.assertRaises(DevGetError):
+            dg = DevGet()
+
+    def test_invalid_username(self):
+        ''' Test invalid user name '''
+        os.environ['SSH_ORIGINAL_COMMAND'] = 'test command'
+        sys.argv = ['devaccess_wrap.py', 'READ_SSH', 'inval$d']
+        with self.assertRaises(DevGetError):
+            dg = DevGet()
 
 if __name__ == '__main__':
     unittest.main()
