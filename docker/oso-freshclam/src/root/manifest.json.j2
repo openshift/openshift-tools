@@ -1,0 +1,16 @@
+{
+   "schemaVersion": 1,
+   "name": "{{ namespace }}/{{ imagename }}",
+   "tag": "latest",
+   "architecture": "amd64",
+   "fsLayers": [
+      {
+         "blobSum": "{{ blobsum }}"
+      }
+   ],
+   "history": [
+      {
+         "v1Compatibility": "{\"id\":\"{{ blobsum | regex_replace('sha256:', '') }}\",\"comment\":\"Imported from -\",\"created\":\"{{ ansible_date_time.iso8601_micro | regex_replace('Z$', '000Z')}}\",\"container_config\":{\"Cmd\":[\"\"]}}"
+      }
+   ]
+}

@@ -1,0 +1,47 @@
+---
+
+#FIXME: this should run on every node
+- name: Create clamav socket hostpath directory
+  file:
+    path: /var/run/clamd.scan
+    state: directory
+    owner: root
+    group: root
+    mode: 2770
+
+- name: "Create bc,is,ds,dc from template for clamd app"
+  oc_process:
+    namespace: management-infra
+    template_name: oso-clamd
+    content: "{{ lookup('file', 'files/openshift_clamd.yml') }}"
+    create: True
+    reconcile: True
+    params:
+      PLAT: rhel7
+
+- name: update clamd-runner sa scc to allow hostpath volumes and SELinux MCS label 0,0
+  oadm_policy_user:
+    user: system:serviceaccount:management-infra:clamd-runner
+    resource_kind: scc
+    resource_name: privileged
+
+- name: bind imagestream-watcher role to clamd-image-watcher service account
+  oadm_policy_user:
+    namespace: management-infra
+    user: system:serviceaccount:management-infra:clamd-image-watcher
+    resource_kind: role
+    resource_name: imagestream-watcher
+
+- name: bind image-builder role to clamd-image-pusher service account
+  oadm_policy_user:
+    namespace: management-infra
+    user: system:serviceaccount:management-infra:clamd-image-pusher
+    resource_kind: role
+    resource_name: image-builder
+
+- name: bind deployer role to clamd-deployer service account
+  oadm_policy_user:
+    namespace: management-infra
+    user: system:serviceaccount:management-infra:clamd-deployer
+    resource_kind: role
+    resource_name: deployer

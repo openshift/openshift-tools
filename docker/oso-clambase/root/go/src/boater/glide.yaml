@@ -1,0 +1,21 @@
+import:
+- package: github.com/dmage/boater
+  vcs: git
+  version: 0c3ce24a7b298fe6b73d948759f259d512a9baf0
+- package: github.com/docker/distribution
+  version: 1e2f10eb65743fed02f573d31a4587de09afb20e
+  vcs: git
+  subpackages:
+  - reference
+  - registry/client/auth
+  - registry/client/auth/challenge
+  - registry/client/transport
+- package: github.com/docker/libtrust
+  vcs: git
+  version: aabc10ec26b754e797f9028f4589c5b7bd90dc20
+- package: github.com/spf13/cobra
+  vcs: git
+  version: 31694f19adeeaeb0a0e5fe95441b390d757753d2
+- package: github.com/spf13/pflag
+  vcs: git
+  version: e57e3eeb33f795204c1ca35f56c44f83227c6e66

@@ -1,0 +1,26 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - lineinfile:
+      name: /etc/freshclam.conf
+      regexp: "{{item.regexp}}"
+      line: "{{item.line}}"
+    with_items:
+    - regexp: '^#?UpdateLogFile /var/log/freshclam\.log$'
+      line: 'UpdateLogFile /var/log/freshclam.log'
+    - regexp: '^#?LogFileMaxSize [^ ]*$'
+      line: 'LogFileMaxSize 2M'
+    - regexp: '^#?LogTime [^ ]*$'
+      line: 'LogTime yes'
+    - regexp: '^#?LogSyslog [^ ]*$'
+      line: 'LogSyslog no'
+    - regexp: '^#?DatabaseOwner [^ ]*$'
+      line: 'DatabaseOwner user'
+    - regexp: '^#?Foreground [^ ]*$'
+      line: 'Foreground yes'
+ 
+  - lineinfile:
+      name: /etc/freshclam.conf
+      regexp: ^Example$
+      state: absent

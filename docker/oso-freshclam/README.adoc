@@ -1,0 +1,30 @@
+= ClamAV signature image updater Docker container
+
+This docker downloads ClamAV signature image databases and
+build them into a single image that can be pushed into an
+image registry.
+
+== Setup
+See https://github.com/openshift/openshift-tools/blob/prod/docker/README.adoc#setup[general setup].
+
+Nothing additional needs to be setup for this container.
+
+== Build
+
+To build this container, simply execute the build script.
+
+.Example:
+[source,bash]
+----
+./[rhel7|centos7]/build.sh
+----
+
+== Run
+
+To run this container, simply execute the run script.
+
+.Example:
+[source,bash]
+----
+./[rhel7|centos7]/run.sh
+----
