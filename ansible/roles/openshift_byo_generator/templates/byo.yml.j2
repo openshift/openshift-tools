@@ -254,34 +254,34 @@ openshift_hosted_metrics_deploy=false
 
 [masters]
 {% for master in obg_masters %}
-{{ hostvars[master].oo_public_ip }}
+{{ hostvars[master][obg_ip_choice] }}
 {% endfor %}
 
 [etcd]
 {% for etcd_host in obg_etcd_hosts %}
-{{ hostvars[etcd_host].oo_public_ip }}
+{{ hostvars[etcd_host][obg_ip_choice] }}
 {% endfor %}
 
 [nodes]
 {% for master in obg_masters %}
 {%     if obg_location == 'gcp' %}
-{{ hostvars[master].oo_public_ip }}        openshift_hostname={{ master }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'master'}"
+{{ hostvars[master][obg_ip_choice] }}        openshift_hostname={{ master }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'master'}"
 {%     else %}
-{{ hostvars[master].oo_public_ip }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'master', 'hostname': '{{ master }}'}"
+{{ hostvars[master][obg_ip_choice] }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'master', 'hostname': '{{ master }}'}"
 {%     endif %}
 {% endfor %}
 {% for infra in obg_infra_nodes %}
 {%     if obg_location == 'gcp' %}
-{{ hostvars[infra].oo_public_ip }}        openshift_hostname={{ infra }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'ops_node': 'old', 'logging-infra-fluentd': 'true'}"
+{{ hostvars[infra][obg_ip_choice] }}        openshift_hostname={{ infra }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'ops_node': 'old', 'logging-infra-fluentd': 'true'}"
 {%     else %}
-{{ hostvars[infra].oo_public_ip }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'hostname': '{{ infra }}', 'ops_node': 'old', 'logging-infra-fluentd': 'true'}"
+{{ hostvars[infra][obg_ip_choice] }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'hostname': '{{ infra }}', 'ops_node': 'old', 'logging-infra-fluentd': 'true'}"
 {%     endif %}
 {% endfor %}
 {% for compute in obg_compute_nodes %}
 {%     if obg_location == 'gcp' %}
-{{ hostvars[compute].oo_public_ip }}       openshift_hostname={{ compute }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'ops_node': 'old', 'logging-infra-fluentd': 'true'}"
+{{ hostvars[compute][obg_ip_choice] }}       openshift_hostname={{ compute }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'ops_node': 'old', 'logging-infra-fluentd': 'true'}"
 {%     else %}
-{{ hostvars[compute].oo_public_ip }}       openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'hostname': '{{ compute }}', 'ops_node': 'old', 'logging-infra-fluentd': 'true'}"
+{{ hostvars[compute][obg_ip_choice] }}       openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'hostname': '{{ compute }}', 'ops_node': 'old', 'logging-infra-fluentd': 'true'}"
 {%     endif %}
 {% endfor %}
 
@@ -289,16 +289,16 @@ openshift_hosted_metrics_deploy=false
 [new_nodes]
 {%     for infra in obg_new_infra_nodes %}
 {%         if obg_location == 'gcp' %}
-{{ hostvars[infra].oo_public_ip }}        openshift_hostname={{ infra }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'ops_node': 'new', 'logging-infra-fluentd': 'true'}" openshift_schedulable=false
+{{ hostvars[infra][obg_ip_choice] }}        openshift_hostname={{ infra }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'ops_node': 'new', 'logging-infra-fluentd': 'true'}" openshift_schedulable=false
 {%         else %}
-{{ hostvars[infra].oo_public_ip }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'hostname': '{{ infra }}', 'ops_node': 'new', 'logging-infra-fluentd': 'true'}" openshift_schedulable=false
+{{ hostvars[infra][obg_ip_choice] }}        openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'infra', 'hostname': '{{ infra }}', 'ops_node': 'new', 'logging-infra-fluentd': 'true'}" openshift_schedulable=false
 {%         endif %}
 {%     endfor %}
 {%     for compute in obg_new_compute_nodes %}
 {%         if obg_location == 'gcp' %}
-{{ hostvars[compute].oo_public_ip }}       openshift_hostname={{ compute }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'ops_node': 'new', 'logging-infra-fluentd': 'true'}" openshift_schedulable=false
+{{ hostvars[compute][obg_ip_choice] }}       openshift_hostname={{ compute }} openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'ops_node': 'new', 'logging-infra-fluentd': 'true'}" openshift_schedulable=false
 {%         else %}
-{{ hostvars[compute].oo_public_ip }}       openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'hostname': '{{ compute }}', 'ops_node': 'new', 'logging-infra-fluentd': 'true'}" openshift_schedulable=false
+{{ hostvars[compute][obg_ip_choice] }}       openshift_node_labels="{'region': '{{ obg_sublocation }}', 'type': 'compute', 'hostname': '{{ compute }}', 'ops_node': 'new', 'logging-infra-fluentd': 'true'}" openshift_schedulable=false
 {%         endif %}
 {%     endfor %}
 {% endif %}
