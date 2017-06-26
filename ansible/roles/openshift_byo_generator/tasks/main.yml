@@ -64,6 +64,10 @@
   when: obg_new_nodes is not defined
 
 - set_fact:
+    obg_ip_choice: oo_private_ip
+  when: obg_use_private_ips
+
+- set_fact:
     obg_install_version_short: "{{ obg_install_version[0:3] }}"
 
 - name: Create output directory structure
