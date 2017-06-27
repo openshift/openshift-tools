@@ -17,3 +17,4 @@ obg_master_portal_net: False
 obg_logging_variables: {}
 obg_metrics_variables: {}
 obg_ip_choice: oo_public_ip
+obg_use_private_ips: False
