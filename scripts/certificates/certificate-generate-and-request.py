@@ -30,10 +30,10 @@ import json
 import os
 import sys
 import base64
+import getpass
 import requests
 import yaml
 from OpenSSL import crypto
-import getpass
 
 class OpenshiftCertificateRequester(object):
     """ Generate ssl key + csr, send csr for signing """
