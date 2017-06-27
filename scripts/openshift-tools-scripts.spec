@@ -86,11 +86,13 @@ cp -p monitoring/cron-send-zabbix-too-old.py %{buildroot}/usr/bin/cron-send-zabb
 cp -p cicd/verify-cicd-operation.py %{buildroot}/usr/bin/verify-cicd-operation.py
 cp -p monitoring/cron-send-prometheus-data.py %{buildroot}/usr/bin/cron-send-prometheus-data
 cp -p monitoring/cron-send-dnsmasq-check.py %{buildroot}/usr/bin/cron-send-dnsmasq-check
+cp -p devaccess/devaccess_wrap.py %{buildroot}/usr/bin/devaccess_wrap
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
 cp -p monitoring/zagg_server.yaml.example %{buildroot}/etc/openshift_tools/zagg_server.yaml
 cp -p remote-heal/remote_healer.conf.example %{buildroot}/etc/openshift_tools/remote_healer.conf
+cp -p devaccess/devaccess_users.yaml %{buildroot}/etc/openshift_tools/devaccess_users.yaml
 
 mkdir -p %{buildroot}/var/run/zagg/data
 
@@ -148,6 +150,21 @@ OpenShift Tools Monitoring Remoteheal Scripts
 %files monitoring-remoteheal
 /usr/bin/remote-healer
 %config(noreplace)/etc/openshift_tools/remote_healer.conf
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-devaccess subpackage
+# ----------------------------------------------------------------------------------
+%package devaccess
+Summary:       OpenShift Tools Developer Access Scripts
+Requires:      python2
+BuildArch:     noarch
+
+%description devaccess
+OpenShift Tools script for allowing limited remote developer access
+
+%files devaccess
+/usr/bin/devaccess_wrap
+%config(noreplace)/etc/openshift_tools/devaccess_users.yaml
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-autoheal subpackage
