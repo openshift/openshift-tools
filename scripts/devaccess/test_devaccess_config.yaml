@@ -1,0 +1,4 @@
+# Just a sample config file for use during testing
+debug: True
+logfile_path: "./devaccess.log"
+aclfile_path: "./devaccess_users.yaml"
