@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.68
+Version:       0.1.69
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -431,6 +431,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Tue Jun 27 2017 Joel Diaz <jdiaz@redhat.com> 0.1.69-1
+- initial version of developer access wrapper tool (jdiaz@redhat.com)
+
 * Mon Jun 26 2017 Joel Diaz <jdiaz@redhat.com> 0.1.68-1
 - Allow ossh to lookup host by ec2_id (eparis@redhat.com)
 - Allow ossh to take ec2 internal dns names (eparis@redhat.com)
