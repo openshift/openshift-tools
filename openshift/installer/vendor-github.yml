@@ -99,3 +99,10 @@
       state: link
       src: "{{ vendored_dir_relative }}"
       dest: "atomic-openshift-{{ openshift_version }}"
+
+  - name: Symlink the openshift version when it is a stable build
+    file:
+      state: link
+      src: "{{ vendored_dir_relative }}"
+      dest: atomic-openshift-stable
+    when: openshift_version | match("^3\.[0-9]+$")
