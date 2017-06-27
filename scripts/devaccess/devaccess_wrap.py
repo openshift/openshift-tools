@@ -376,7 +376,7 @@ class DevGet(object):
             # The user's authorized_keys will force the command run to be:
             # <path to devaccess_wrap> READ_SSH <username>
             # Save the username for permission lookups later.
-            if re.match("^[A-Za-z0-9]+$", sys.argv[2]) is None:
+            if re.match("^[A-Za-z][A-Za-z0-9]*$", sys.argv[2]) is None:
                 raise DevGetError("Invalid username found")
             user = sys.argv[2]
         else:
