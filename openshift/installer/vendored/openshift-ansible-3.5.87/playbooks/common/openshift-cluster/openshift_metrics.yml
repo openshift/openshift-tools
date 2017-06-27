@@ -1,0 +1,16 @@
+---
+- include: evaluate_groups.yml
+
+- name: OpenShift Metrics
+  hosts: oo_first_master
+  roles:
+  - openshift_metrics
+
+- name: Update Master configs
+  hosts: oo_masters:!oo_first_master
+  tasks:
+  - block:
+    - include_role:
+        name: openshift_metrics
+        tasks_from: update_master_config
+    when: openshift_metrics_install_metrics | default(false) | bool
