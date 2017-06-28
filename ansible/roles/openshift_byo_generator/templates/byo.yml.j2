@@ -179,6 +179,11 @@ osm_cluster_network_cidr={{ obg_cluster_network_cidr }}
 openshift_master_portal_net={{ obg_master_portal_net }}
 {% endif %}
 
+# StorageClass Parameters
+{% if obg_encrypted_storage | default(false)%}
+openshift_storageclass_parameters={'type': '{{ obg_storageclass_name | default('gp2') }}', 'encrypted': '{{ obg_encrypted_storage | string }}'{% if obg_kmskeyid is defined %}, 'kmsKeyId': '{{ obg_kmskeyid }}'{% endif %}}
+{% endif %}
+
 # Openshift Router
 {% if obg_install_router %}
 openshift_hosted_manage_router=true
@@ -206,6 +211,10 @@ openshift_hosted_registry_routetermination=reencrypt
 openshift_hosted_registry_registryurl={{ obg_registry_host }}/{{ obg_registry_template }}
 openshift_hosted_registry_routehost={{ obg_registry_routehost }}
 openshift_hosted_registry_routecertificates={{ obg_registry_routehost_routecertificates }}
+openshift_hosted_registry_storage_s3_encrypt={{ obg_encrypted_storage }}
+{%   if obg_kmskeyid is defined %}
+openshift_hosted_registry_storage_s3_kmskeyid={{ obg_kmskeyid }}
+{%   endif %}
 {% else %}
 openshift_hosted_manage_registry=false
 {# END Openshift Registry #}
