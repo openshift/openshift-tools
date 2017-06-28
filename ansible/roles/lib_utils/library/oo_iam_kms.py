@@ -23,8 +23,8 @@ ansible module for creating AWS IAM KMS keys
 #
 # Jenkins environment doesn't have all the required libraries
 # pylint: disable=import-error
-import boto3
 import time
+import boto3
 # Ansible modules need this wildcard import
 # pylint: disable=unused-wildcard-import, wildcard-import, redefined-builtin
 from ansible.module_utils.basic import *
@@ -50,6 +50,25 @@ class AwsIamKms(object):
             return True
 
         return False
+
+    def get_all_kms_info(self):
+        '''fetch all kms info and return them
+
+        list_keys doesn't have information regarding aliases
+        list_aliases doesn't have the full kms arn
+
+        fetch both and join them on the targetKeyId
+        '''
+        aliases = self.kms_client.list_aliases()['Aliases']
+        keys = self.kms_client.list_keys()['Keys']
+
+        for alias in aliases:
+            for key in keys:
+                if 'TargetKeyId' in alias and 'KeyId' in key:
+                    if alias['TargetKeyId'] == key['KeyId']:
+                        alias.update(key)
+
+        return aliases
 
     def get_kms_entry(self, user_alias, alias_list):
         ''' return single alias details from list of aliases '''
@@ -96,7 +115,8 @@ class AwsIamKms(object):
             boto3.setup_default_session(region_name=self.module.params['region'])
 
         self.kms_client = boto3.client('kms')
-        aliases = self.kms_client.list_aliases()['Aliases']
+
+        aliases = self.get_all_kms_info()
 
         if state == 'list':
             if self.module.params['alias'] != None:
