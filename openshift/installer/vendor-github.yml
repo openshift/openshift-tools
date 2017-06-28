@@ -100,9 +100,9 @@
       src: "{{ vendored_dir_relative }}"
       dest: "atomic-openshift-{{ openshift_version }}"
 
-  - name: Symlink the openshift version when it is a stable build
+  - name: Symlink the lib_openshift version when it is a stable build
     file:
       state: link
-      src: "{{ vendored_dir_relative }}"
-      dest: atomic-openshift-stable
+      src: "../../atomic-openshift-{{ openshift_version }}/roles/lib_openshift"
+      dest: ../../ansible/roles/lib_openshift
     when: openshift_version | match("^3\.[0-9]+$")
