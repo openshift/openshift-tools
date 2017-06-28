@@ -30,6 +30,7 @@ import json
 import os
 import sys
 import base64
+import getpass
 import requests
 import yaml
 from OpenSSL import crypto
@@ -135,7 +136,7 @@ class OpenshiftCertificateRequester(object):
             "org_contact_lastname": self.config["org_lastname"],
             "org_contact_email": self.config["org_email"],
             "org_contact_telephone": self.config["org_tel"],
-            "comments": self.config["INC"],
+            "comments": self.config["INC"] + "submitted by " + getpass.getuser(),
         })
 
         authstring = self.args.accountnumber + ":" + self.args.apikey
