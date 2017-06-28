@@ -103,6 +103,6 @@
   - name: Symlink the lib_openshift version when it is a stable build
     file:
       state: link
-      src: "../../atomic-openshift-{{ openshift_version }}/roles/lib_openshift"
+      src: "../../openshift/installer/atomic-openshift-{{ openshift_version }}/roles/lib_openshift"
       dest: ../../ansible/roles/lib_openshift
     when: openshift_version | match("^3\.[0-9]+$")
