@@ -83,7 +83,7 @@ class InfraNodePodStatus(object):
 
         host_ips = set([x['hostIP'] for x in pods])
         logging.getLogger().info("Hosts found: %d", len(host_ips))
-        if (len(host_ips) > len(pods)) or len(host_ips) == 1:
+        if len(host_ips) < 2 or len(pods) < 2:
             result_code = 0
             logging.getLogger().critical(
                 "%s has %d pods on %d hosts, not distributed",
