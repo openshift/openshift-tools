@@ -23,9 +23,10 @@ ansible module for copying AWS AMIs
 #
 # Jenkins environment doesn't have all the required libraries
 # pylint: disable=import-error
+import time
+from dateutil.parser import parse
 import boto3
 import OpenSSL
-import time
 # Ansible modules need this wildcard import
 # pylint: disable=unused-wildcard-import, wildcard-import, redefined-builtin
 from ansible.module_utils.basic import *
@@ -36,19 +37,36 @@ class AwsAmi(object):
     def __init__(self):
         self.module = None
         self.ec2_client = None
+        self.account_id = None
 
     def get_kms_alias_arn(self, alias):
         ''' return IAM KMS arn from provided alias '''
 
+        msg = "Did not find key with alias name: {}".format(alias)
+
         kms_client = boto3.client('kms')
         aliases = kms_client.list_aliases()['Aliases']
-        kms_arns = [x['AliasArn'] for x in aliases if x['AliasName'] == alias]
+        my_alias = [x for x in aliases if x['AliasName'] == alias]
+        if my_alias == []:
+            self.module.exit_json(failed=True, msg=msg)
 
-        if kms_arns:
-            return kms_arns[0]
+        key = [key for key in kms_client.list_keys()['Keys'] if key['KeyId'] == my_alias[0]['TargetKeyId']][0]
 
-        msg = "Did not find key with alias name: {}".format(alias)
+        if key:
+            return key['KeyArn']
+
         self.module.exit_json(failed=True, msg=msg)
+
+    def get_ami_by_id(self, ami_id):
+        ''' return an ami by its id'''
+        response = self.ec2_client.describe_images(ImageIds=[ami_id])
+
+        # if no results, then no AMI by that id
+        if len(response['Images']) == 0:
+            msg = "Could not find ami with id: {}".format(ami_id)
+            self.module.exit_json(failed=True, msg=msg)
+
+        return response['Images'][0]
 
     def get_ami_by_name(self, ami_name):
         ''' check whether AMI with same name already exists '''
@@ -96,6 +114,28 @@ class AwsAmi(object):
                 msg = "Failed to apply tag to AMI {}".format(ami_id)
                 self.module.exit_json(failed=True, changed=True, msg=msg)
 
+    def get_ami_by_kmsid(self, kmsid):
+        '''fetch all amis that were encrypted with a specific kms key'''
+
+        amis = []
+        for image in self.ec2_client.describe_images(Owners=[self.account_id])['Images']:
+            # image information is tied to the snapshot
+            snapshotid = None
+            if ('BlockDeviceMappings' in image and
+                    len(image['BlockDeviceMappings']) > 0 and
+                    'Ebs' in  image['BlockDeviceMappings'][0] and
+                    'SnapshotId' in image['BlockDeviceMappings'][0]['Ebs']):
+                snapshotid = image['BlockDeviceMappings'][0]['Ebs']['SnapshotId']
+
+                snapshot = self.ec2_client.describe_snapshots(SnapshotIds=[snapshotid])
+
+                if (len(snapshot['Snapshots']) > 0 and
+                        'KmsKeyId' in snapshot['Snapshots'][0] and
+                        kmsid == snapshot['Snapshots'][0]['KmsKeyId']):
+                    amis.append(image)
+
+        return sorted(amis, key=lambda img: parse(img['CreationDate']), reverse=True)
+
     def main(self):
         ''' module entrypoint '''
 
@@ -134,6 +174,8 @@ class AwsAmi(object):
             boto3.setup_default_session(region_name=self.module.params['region'])
 
         self.ec2_client = boto3.client('ec2')
+        self.account_id = boto3.client('sts').get_caller_identity()['Account']
+
 
         if state == 'list':
             if ami_id != None:
@@ -152,14 +194,28 @@ class AwsAmi(object):
             if not ami_name:
                 self.module.exit_json(failed=True, changed=False,
                                       msg="No AMI name provided")
-
-            exists = self.get_ami_by_name(ami_name)
-            if exists != None:
-                self.module.exit_json(changed=False, msg="AMI already exists",
-                                      results=exists)
-
             if kms_alias:
                 kms_arn = self.get_kms_alias_arn(kms_alias)
+
+            # get all amis encrypted with the kms
+            amis = self.get_ami_by_kmsid(kms_arn)
+
+            # amis returned, check their dates
+            if amis != []:
+
+                # fetch source ami so we can compare
+                base_ami = self.get_ami_by_id(ami_id)
+
+                # fail if no base ami was found
+                if base_ami is None:
+                    self.module.fail_json(failed=True, msg='Could not find base_ami with id: %s' % ami_id)
+
+                curr_ami_date = parse(amis[0]['CreationDate'])
+
+                base_ami_date = parse(base_ami['CreationDate'])
+
+                if curr_ami_date > base_ami_date:
+                    self.module.exit_json(changed=False, msg="AMI already exists", results=amis[0])
 
             response = self.ec2_client.copy_image(SourceRegion=region,
                                                   SourceImageId=ami_id,
