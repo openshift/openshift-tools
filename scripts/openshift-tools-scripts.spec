@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.69
+Version:       0.1.70
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -431,6 +431,18 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Wed Jun 28 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.70-1
+- clarify what we're alerting on (sten@redhat.com)
+- fix the path of role (zhizhang@zhizhang-laptop-nay.redhat.com)
+- pylint complaining about import order (sten@redhat.com)
+- track who submitted the req (sten@redhat.com)
+- still alert if all pods are on one host (sten@redhat.com)
+- alert if there are more hosts than pods, not !=, to cover where there's e.g.
+  3 or more registry pods (sten@redhat.com)
+- just for the jenkins start (zhizhang@zhizhang-laptop-nay.redhat.com)
+- add heal for docker use too much memory (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+
 * Tue Jun 27 2017 Joel Diaz <jdiaz@redhat.com> 0.1.69-1
 - initial version of developer access wrapper tool (jdiaz@redhat.com)
 
