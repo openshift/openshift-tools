@@ -1,12 +1,12 @@
 ---
 - name: Create IAM group
-  iam20:
+  iam:
     iam_type: group
     name: "{{ osagr_name }}"
     state: present
 
 - name: Associate inline IAM policies with group
-  iam_policy20:
+  iam_policy:
     iam_type: group
     iam_name: "{{ osagr_name }}"
     policy_name: "{{ osagr_policy_name }}"
