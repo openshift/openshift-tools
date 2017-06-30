@@ -19,7 +19,7 @@
   no_log: True
 
 - name: Manage aws users
-  iam20:
+  iam:
     state: "{{ osau_user_state }}"
     iam_type: user
     name: "{{ item[0].username }}"
