@@ -5,6 +5,7 @@
   vars:
     vendored_dir_relative: "vendored/openshift-ansible-{{ installer_version }}"
     vendored_dir: "{{ lookup('env', 'PWD') ~ '/' ~ vendored_dir_relative }}"
+    update_libopenshift: false
     installer_dirs:
     - "{{ vendored_dir }}/filter_plugins"
     - "{{ vendored_dir }}/lookup_plugins"
@@ -105,4 +106,4 @@
       state: link
       src: "../../openshift/installer/atomic-openshift-{{ openshift_version }}/roles/lib_openshift"
       dest: ../../ansible/roles/lib_openshift
-    when: openshift_version | match("^3\.[0-9]+$")
+    when: update_libopenshift is true
