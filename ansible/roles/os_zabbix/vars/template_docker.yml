@@ -123,7 +123,7 @@ g_template_docker:
     expression: "{Template Docker:docker.memoryusage.rss.last()}>6442450944"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_docker_memoryusage.asciidoc"
     dependencies:
-    - "Critically High Memory usage of  docker  on {HOST.NAME}"
+    - "[HEAL] Critically High Memory usage of  docker  on {HOST.NAME}"
     priority: average
 
   - name: "[HEAL] Critically low docker storage metadata space on {HOST.NAME}"
@@ -132,14 +132,14 @@ g_template_docker:
     priority: high
 
   # Put triggers that depend on other triggers here (deps must be created first)
-  - name: "[HEAL] Low docker storage data space on {HOST.NAME}"
+  - name: "Low docker storage data space on {HOST.NAME}"
     expression: "{Template Docker:docker.storage.data.space.percent_available.max(#2)}<10 or {Template Docker:docker.storage.data.space.available.max(#2)}<10" # < 10% or < 10GB
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_docker_storage.asciidoc"
     dependencies:
     - "[HEAL] Critically low docker storage data space on {HOST.NAME}"
     priority: average
 
-  - name: "[HEAL] Low docker storage metadata space on {HOST.NAME}"
+  - name: "Low docker storage metadata space on {HOST.NAME}"
     expression: "{Template Docker:docker.storage.metadata.space.percent_available.max(#2)}<10 or {Template Docker:docker.storage.metadata.space.available.max(#2)}<0.01" # < 10% or < 10MB
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_docker_storage.asciidoc"
     dependencies:
