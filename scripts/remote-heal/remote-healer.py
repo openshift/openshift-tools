@@ -173,6 +173,12 @@ class RemoteHealer(object):
             cmd = 'ansible-playbook  /usr/bin/heal_for_docker_use_too_much_memory.yml -e "cli_nodename='+self._args.host+'"'
             #run
             self.run_cmd(cmd.split())
+        elif re.search(r'^\[HEAL\] Critically low docker storage data|metadata space on ', self._args.trigger):
+            logging.info("Cleaning docker storage on " + self._args.host)
+
+            # Run the cleanup playbook to free docker storage data or metadata
+            cmd = 'ansible-playbook /usr/bin/docker_storage_cleanup_heal.yml -e cli_tag_name=' + self._args.host
+            self.run_cmd(cmd.split())
 
         else:
             logging.info("No healing action defined for trigger: " + self._args.trigger)
