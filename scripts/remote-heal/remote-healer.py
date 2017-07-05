@@ -170,7 +170,7 @@ class RemoteHealer(object):
             logging.info("Restarting docker on " + self._args.host)
 
             #run playbook to evacuate the host and restart the docker
-            cmd = 'ansible-playbook -M "/usr/share/ansible/openshift-ansible/roles/" /usr/bin/heal_for_docker_use_too_much_memory.yml -e "cli_nodename='+self._args.host+'"'
+            cmd = 'ansible-playbook  /usr/bin/heal_for_docker_use_too_much_memory.yml -e "cli_nodename='+self._args.host+'"'
             #run
             self.run_cmd(cmd.split())
 
