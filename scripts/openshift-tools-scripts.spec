@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.70
+Version:       0.1.71
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -431,6 +431,11 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Tue Jul 04 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.71-1
+- add the auto heal file into rpm (zhizhang@zhizhang-laptop-nay.redhat.com)
+- Add wrapper script to gather cluster logs (pep@redhat.com)
+- Enabling docker version argument (jupierce@redhat.com)
+
 * Wed Jun 28 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.70-1
 - clarify what we're alerting on (sten@redhat.com)
 - fix the path of role (zhizhang@zhizhang-laptop-nay.redhat.com)
