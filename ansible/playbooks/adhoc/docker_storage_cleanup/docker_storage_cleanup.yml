@@ -17,7 +17,7 @@
 
 - name: Clean up Docker Storage
   gather_facts: no
-  hosts: "tag_Name_{{ cli_tag_name }}"
+  hosts: "oo_name_{{ cli_tag_name }}"
   user: root
   connection: ssh
 
