@@ -24,7 +24,7 @@
     oo_clusterid:   "{{ hostvars[cli_nodename].oo_clusterid }}"
     cluster_master: "{{ groups['oo_master_primary'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
   roles:
-  - role: lib_openshift
+  - role: /usr/share/ansible/openshift-ansible/roles/lib_openshift
   tasks:
 
   - name: set the node name for aws
