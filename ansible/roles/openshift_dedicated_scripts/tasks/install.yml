@@ -22,7 +22,7 @@
 
 - debug: var=scripts_version_out
 
-- fail:
+- debug:
     msg: "Unable to find a {{ major_version }} version of openshift-scripts-dedicated to install"
   when: not scripts_version_out.results.versions['matched_version_found']
 
@@ -30,3 +30,4 @@
   yum:
     name: "openshift-scripts-dedicated-{{ scripts_version_out.results.versions.matched_version_latest }}"
     state: present
+  when: scripts_version_out.results.versions['matched_version_found']
