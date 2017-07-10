@@ -152,7 +152,7 @@ ip-172-31-62-44.ec2.internal    Ready,SchedulingDisabled   45d
         sys.argv = ['devaccess_wrap.py', 'READ_SSH', 'noroleuser']
         dg = DevGet()
 
-        mock_rpm_qa.side_effect = ['kernel-3.12.22']
+        mock_rpm_qa.side_effect = ['rpm-4.13.0.1-1.fc25.x86_64']
         dg.main()
         assert mock_rpm_qa.called
 
