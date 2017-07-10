@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.72
+Version:       0.1.73
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -431,6 +431,11 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-cicd-operation.py
 
 %changelog
+* Mon Jul 10 2017 Joel Diaz <jdiaz@redhat.com> 0.1.73-1
+- use more valid-looking example output for rpm -qa (jdiaz@redhat.com)
+- allow users to be defined who have no specific role assigned
+  (jdiaz@redhat.com)
+
 * Wed Jul 05 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.72-1
 - change the role path for docker high usage (zhizhang@zhizhang-laptop-
   nay.redhat.com)
