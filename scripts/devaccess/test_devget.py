@@ -145,5 +145,16 @@ ip-172-31-62-44.ec2.internal    Ready,SchedulingDisabled   45d
         with self.assertRaises(DevGetError):
             dg = DevGet()
 
+    @mock.patch('devaccess_wrap.WhitelistedCommands.rpm_qa')
+    def test_user_with_no_defined_roles(self, mock_rpm_qa):
+        ''' Test user with no defined roles (ie only default role membership) '''
+        os.environ['SSH_ORIGINAL_COMMAND'] = 'rpm -qa'
+        sys.argv = ['devaccess_wrap.py', 'READ_SSH', 'noroleuser']
+        dg = DevGet()
+
+        mock_rpm_qa.side_effect = ['rpm-4.13.0.1-1.fc25.x86_64']
+        dg.main()
+        assert mock_rpm_qa.called
+
 if __name__ == '__main__':
     unittest.main()
