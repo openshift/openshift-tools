@@ -8,7 +8,7 @@ Requirements
 
 Ansible Modules:
 
-- tools_roles/lib_openshift_api
+- tools_roles/lib_openshift
 - tools_roles/lib_yaml_editor
 
 
