@@ -320,9 +320,11 @@ class DevGet(object):
 
         perm_dict = yaml.load(open(self._config['aclfile_path'], 'r'))
         # create list of allowed commands for the user
+        allowed_roles = []
         for user in perm_dict['users']:
             if user['username'] == self._user:
-                allowed_roles = user['roles']
+                if user.has_key('roles'):
+                    allowed_roles = user['roles']
                 # the 'ALL' group applies to everyone
                 allowed_roles.append('ALL')
         logging.debug("user: %s roles: %s", self._user, str(allowed_roles))

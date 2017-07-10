@@ -12,3 +12,4 @@ users:
 - username: nobody
   roles:
   - nobody_role
+- username: noroleuser
