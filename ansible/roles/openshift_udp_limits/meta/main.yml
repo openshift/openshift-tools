@@ -11,4 +11,4 @@ galaxy_info:
     - 7
 dependencies:
 - tools_roles/lib_ops_utils 
-- tools_roles/lib_openshift
+- tools_roles/lib_openshift_3.2

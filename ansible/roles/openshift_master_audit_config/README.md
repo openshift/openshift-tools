@@ -13,7 +13,7 @@ Requirements
 
 Ansible Modules:
 
-- tools_roles/lib_openshift
+- tools_roles/lib_openshift_3.2
 - tools_roles/lib_yaml_editor
 
 
