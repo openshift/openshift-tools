@@ -36,7 +36,7 @@
   - restart openshift master services
 
 - name: Create a self-signed cert
-  oadm_ca:
+  oc_adm_ca:
     cmd: create-server-cert
     signer_cert: /etc/origin/master/ca.crt
     signer_key: /etc/origin/master/ca.key
@@ -108,7 +108,7 @@
     msg: "{{ svc_out.changed or cert_secret_out.changed or registry_config_out.changed or sa_out.changed }}"
 
 - name: create a secure registry
-  oadm_registry:
+  oc_adm_registry:
     credentials: /etc/origin/master/openshift-registry.kubeconfig
     name: docker-registry
     force: "{{ svc_out.changed or cert_secret_out.changed or registry_config_out.changed or sa_out.changed }}"
