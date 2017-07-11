@@ -11,5 +11,5 @@ galaxy_info:
     - 7
 dependencies:
 - role: ops_roles/lib_ansible_20
-- role: tools_roles/lib_openshift
+- role: tools_roles/lib_openshift_3.2
 
