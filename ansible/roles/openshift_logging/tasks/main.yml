@@ -23,7 +23,7 @@
   - "{{ osalog_default_logging_cacert }}"
 
 - name: create project
-  oadm_project:
+  oc_adm_project:
     name: logging
     description: logging project
     display_name: logging
@@ -96,7 +96,7 @@
 - debug: var=processout
 
 - name: create role binding to logging-deployer service account
-  oadm_policy_user:
+  oc_adm_policy_user:
     namespace: logging
     user: system:serviceaccount:logging:logging-deployer
     resource_kind: role
@@ -106,7 +106,7 @@
 - debug: var=policyout
 
 - name: add cluster role binding to logging-deployer service account
-  oadm_policy_user:
+  oc_adm_policy_user:
     namespace: logging
     user: system:serviceaccount:logging:logging-deployer
     resource_kind: cluster-role
@@ -116,7 +116,7 @@
 - debug: var=policyout
 
 - name: add scc to aggregated-logging-fluentd service account
-  oadm_policy_user:
+  oc_adm_policy_user:
     namespace: logging
     user: system:serviceaccount:logging:aggregated-logging-fluentd
     resource_kind: scc
@@ -126,7 +126,7 @@
 - debug: var=policyout
 
 - name: add cluster role binding to aggregated-logging-fluentd service account
-  oadm_policy_user:
+  oc_adm_policy_user:
     namespace: logging
     user: system:serviceaccount:logging:aggregated-logging-fluentd
     resource_kind: cluster-role
@@ -167,7 +167,7 @@
   run_once: true
 
 - name: add cluster role binding to aggregated-logging-elasticsearch service account
-  oadm_policy_user:
+  oc_adm_policy_user:
     namespace: logging
     user: system:serviceaccount:logging:aggregated-logging-elasticsearch
     resource_kind: cluster-role

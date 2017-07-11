@@ -1,6 +1,6 @@
 ---
 - name: "create SSO project for {{ osso_namespace }}"
-  oadm_project:
+  oc_adm_project:
     name: "{{ osso_namespace }}"
     display_name: "{{ osso_namespace }}"
     description: "Single Sign-on Service"
