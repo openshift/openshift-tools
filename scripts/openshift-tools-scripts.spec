@@ -84,6 +84,7 @@ cp -p monitoring/ops-ec2-check-tags.py %{buildroot}/usr/bin/ops-ec2-check-tags
 cp -p monitoring/ops-gcp-check-tags.py %{buildroot}/usr/bin/ops-gcp-check-tags
 cp -p monitoring/cron-send-zabbix-too-old.py %{buildroot}/usr/bin/cron-send-zabbix-too-old
 cp -p cicd/verify-cicd-operation.py %{buildroot}/usr/bin/verify-cicd-operation.py
+cp -p cicd/verify-gather-logs-operations.py %{buildroot}/usr/bin/verify-gather-logs-operations.py
 cp -p monitoring/cron-send-prometheus-data.py %{buildroot}/usr/bin/cron-send-prometheus-data
 cp -p monitoring/cron-send-dnsmasq-check.py %{buildroot}/usr/bin/cron-send-dnsmasq-check
 cp -p devaccess/devaccess_wrap.py %{buildroot}/usr/bin/devaccess_wrap
@@ -429,6 +430,7 @@ OpenShift Tools cicd scripts
 
 %files cicd
 /usr/bin/verify-cicd-operation.py
+/usr/bin/verify-gather-logs-operations.py
 
 %changelog
 * Mon Jul 10 2017 Joel Diaz <jdiaz@redhat.com> 0.1.73-1
