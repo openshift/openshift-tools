@@ -61,7 +61,7 @@
 
   ## Enusre project is created
   #- name: create project
-  #  oadm_project:
+  #  oc_adm_project:
   #    name: "{{ ostd_project }}"
   #    node_selector: "{{ ostd_node_selector | default(omit)}}"
   #    display_name: "{{ ostd_project_display_name | default(omit) }}"
