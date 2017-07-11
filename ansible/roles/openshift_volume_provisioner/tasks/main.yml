@@ -47,7 +47,7 @@
   when: master_config_changes.changed
 
 - name: create project
-  oc_adm_project:
+  oadm_project:
     name: openshift-infra
     node_selector: type=infra
     display_name: openshift-infra
