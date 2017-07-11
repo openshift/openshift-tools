@@ -23,7 +23,7 @@
   - "{{ osamet_default_metrics_cacert }}"
 
 - name: create project
-  oc_adm_project:
+  oadm_project:
     name: openshift-infra
     description: openshift-infra
     node_selector: type=infra
@@ -51,7 +51,7 @@
 - debug: var=saout
 
 - name: create role binding to metrics-deployer service account
-  oc_adm_policy_user:
+  oadm_policy_user:
     namespace: openshift-infra
     user: system:serviceaccount:openshift-infra:metrics-deployer
     resource_kind: role
@@ -60,7 +60,7 @@
 - debug: var=policyout
 
 - name: add cluster role binding to heapster service account
-  oc_adm_policy_user:
+  oadm_policy_user:
     namespace: openshift-infra
     user: system:serviceaccount:openshift-infra:heapster
     resource_kind: cluster-role
@@ -79,7 +79,7 @@
   register: templateout
 
 - name: Add the "view" role to system:serviceaccount:openshift-infra:hawkular
-  oc_adm_policy_user:
+  oadm_policy_user:
     namespace: openshift-infra
     user: system:serviceaccount:openshift-infra:hawkular
     resource_kind: role
