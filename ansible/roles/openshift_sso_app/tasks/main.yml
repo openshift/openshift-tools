@@ -3,7 +3,7 @@
   oadm_project:
     name: "{{ osso_namespace }}"
     display_name: "{{ osso_namespace }}"
-    description: "Single Sign-on Service"
+    description: Single Sign-on Service
   register: createout
 
 - name: "Create SSO secrets for {{ osso_namespace }}"
