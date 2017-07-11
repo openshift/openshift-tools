@@ -22,16 +22,27 @@
 #pylint: disable=invalid-name
 #If a check throws an exception it is failed and should alert
 #pylint: disable=bare-except
-
+#pylint: disable=wrong-import-position
+#pylint: disable=line-too-long
 import ssl
 import urllib2
 import argparse
+import time
 
 # These are here for a metrics pre 3.4 workaround
 import sys
 import tempfile
 import shutil
 import base64
+
+
+import logging
+logging.basicConfig(
+    format='%(asctime)s - %(relativeCreated)6d - %(levelname)-8s - %(message)s',
+)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+commandDelay = 5
 
 import yaml
 
@@ -227,6 +238,13 @@ class OpenshiftMetricsStatus(object):
         pod_report = self.check_pods()
         self.get_hawkular_creds()
         metrics_report = self.check_node_metrics()
+        # if metrics_report = 0, we need this check run again
+        if metrics_report == 0:
+            # sleep for 5 seconds, then run the second time node check
+            logger.info("The first time metrics check failed, 5 seconds later will start a second time check")
+            time.sleep(commandDelay)
+            logger.info("starting the second time metrics check")
+            metrics_report = self.check_node_metrics()
 
         self.report_to_zabbix(pod_report, metrics_report)
 
