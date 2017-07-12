@@ -33,6 +33,7 @@
         provisioner: "{{ osmsc_storageclass_provisioner }}"
         parameters:
           type: "{{ osmsc_storageclass_type }}"
+          zone: "{{ osmsc_storageclass_zone }}"
   run_once: true
   notify:
   - restart openshift master services
