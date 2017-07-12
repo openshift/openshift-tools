@@ -72,8 +72,11 @@ def testInstance(region=None, instance=None, problems=None):
         problems['SystemStatus'] = problems['SystemStatus'] + 1
 
     if instance.events:
-        logger.warn("%s %s %s", displayId, "Events", instance.events)
-        problems['Events'] = problems['Events'] + 1
+        for event in instance.events:
+            logger.warn("%s %s %s", displayId, "Events", event.description)
+            if event.description.startswith("[Completed]"):
+                continue
+            problems['Events'] = problems['Events'] + 1
     else:
         logger.info("%s %s %s", displayId, "Events", "OK")
 
