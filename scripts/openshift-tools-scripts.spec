@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.74
+Version:       0.1.75
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -435,6 +435,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Jul 12 2017 zhiwliu <zhiwliu@redhat.com> 0.1.75-1
+- complete events stay in api with [Completed] tag (dranders@redhat.com)
+
 * Tue Jul 11 2017 Pep Turró <pep@redhat.com> 0.1.74-1
 - added the second time metrics check if the first time check failed
   (zhiwliu@redhat.com)
