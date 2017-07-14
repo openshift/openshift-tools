@@ -8,12 +8,13 @@
 # Adding the ignore because it does not like the naming of the script
 # to be different than the class name
 # pylint: disable=invalid-name
+# pylint: disable=line-too-long
+# pylint: disable=wrong-import-position
 
-
+import re
 from openshift_tools.timeout import timeout
 from openshift_tools.cgrouputil import CgroupUtil
-import re
-
+from docker.errors import APIError
 
 class DockerDiskStats(object):
     ''' Class to store docker storage information
@@ -196,3 +197,57 @@ class DockerUtil(object):
             raw_stats = self._docker.stats(ctr['Id'], stream=False)
 
         return CgroupUtil.raw_stats_to_dtos(raw_stats)
+
+class CleanupDockerStorage(object):
+    """clean up the docker storage data and metadata"""
+    def __init__(self, docker_client=None):
+        'initial of the client'
+        self.client = docker_client
+        self.all_exited_con_info = None
+        self.all_dangling_img_info = None
+
+        self.exited_con = []
+        self.useless_img = []
+
+    def get_exited_cons(self):
+        'get the exited containers list'
+        self.all_exited_con_info = self.client.containers(all='true', filters={'status': 'exited'})
+        for container in self.all_exited_con_info:
+            self.exited_con.append(container['Id'])
+        return self.exited_con
+
+    def get_nouse_images(self):
+        'get dangling images'
+        self.all_dangling_img_info = self.client.images(filters={'dangling': 'true'})
+        for dangling_img in self.all_dangling_img_info:
+            self.useless_img.append(dangling_img['Id'])
+        return self.useless_img
+
+    def remove_con(self, exited_cons_list):
+        'remove the exited containers from the exited_cons_list if not empty'
+        if len(exited_cons_list) > 0:
+            for con_id in exited_cons_list:
+                try:
+                    self.client.remove_container(container=con_id)
+                except APIError:
+                    pass
+        else:
+            print "no containers in exited status to remove"
+
+    def remove_dangling_img(self, useless_img_list):
+        'remove the dangling images from the list if the list not empty'
+        if len(useless_img_list) > 0:
+            for img_id in useless_img_list:
+                try:
+                    self.client.remove_image(image=img_id)
+                except APIError:
+                    pass
+        else:
+            print "no dangling images can be removed"
+
+    def run(self):
+        'run this function to remove containers and images'
+        exited_cons_list = self.get_exited_cons()
+        useless_img_list = self.get_nouse_images()
+        self.remove_con(exited_cons_list)
+        self.remove_dangling_img(useless_img_list)
