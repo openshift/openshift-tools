@@ -156,5 +156,24 @@ ip-172-31-62-44.ec2.internal    Ready,SchedulingDisabled   45d
         dg.main()
         assert mock_rpm_qa.called
 
+    @mock.patch('devaccess_wrap.WhitelistedCommands.oc_get_pods')
+    def test_oc_get_pods(self, mock_get_pods):
+        ''' Test oc get pods -ndefault '''
+        pod_list = '''NAME                         READY     STATUS    RESTARTS   AGE
+docker-registry-10-ps647     1/1       Running   0          17d
+docker-registry-10-rx0zx     1/1       Running   1          18d
+oso-rhel7-zagg-web-1-k6hsk   1/1       Running   1          18d
+oso-rhel7-zagg-web-1-thn2z   1/1       Running   1          18d
+router-435-7xjn4             1/1       Running   0          17d
+router-435-zzx1x             1/1       Running   2          18d
+'''
+        os.environ['SSH_ORIGINAL_COMMAND'] = 'oc get pods -n default'
+        dg = DevGet()
+
+        mock_get_pods.side_effect = [pod_list]
+        dg.main()
+
+        assert mock_get_pods.called
+
 if __name__ == '__main__':
     unittest.main()

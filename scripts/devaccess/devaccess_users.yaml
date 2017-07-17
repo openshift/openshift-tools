@@ -4,6 +4,9 @@ roles:
   - oc get nodes -ndefault
   - oc get nodes -ndefault -ojson
   - rpm -qa
+  - oc get pods -ndefault
+  - oc get pods -nopenshift-infra
+  - oc get pods -nlogging
 - name: nobody_role
   commands:
   - uname
