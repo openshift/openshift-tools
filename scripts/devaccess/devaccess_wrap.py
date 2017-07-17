@@ -279,6 +279,16 @@ class WhitelistedCommands(object):
 
         return results
 
+    @staticmethod
+    def oc_get_pods(occmd):
+        ''' provide 'oc get pods' '''
+
+        n_cmd = occmd.normalized_cmd()
+        run_cmd = WhitelistedCommands.oc_cmd_builder(n_cmd)
+        results = subprocess.check_output(run_cmd)
+
+        return results
+
 class DevGet(object):
     ''' Class to wrap approved developer access commands '''
     CONFIG_FILE = '/etc/openshift_tools/devaccess.yaml'
@@ -350,6 +360,9 @@ class DevGet(object):
         command_dict['oc get nodes -ndefault'] = WhitelistedCommands.oc_get_nodes
         command_dict['oc get nodes -ndefault -ojson'] = WhitelistedCommands.oc_get_nodes
         command_dict['rpm -qa'] = WhitelistedCommands.rpm_qa
+        command_dict['oc get pods -ndefault'] = WhitelistedCommands.oc_get_pods
+        command_dict['oc get pods -nlogging'] = WhitelistedCommands.oc_get_pods
+        command_dict['oc get pods -nopenshift-infra'] = WhitelistedCommands.oc_get_pods
 
         return command_dict
 
