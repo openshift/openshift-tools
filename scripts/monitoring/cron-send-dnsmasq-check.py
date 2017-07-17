@@ -16,6 +16,8 @@
 # to be different than the class name
 # pylint: disable=invalid-name
 
+import logging
+import time
 import argparse
 import urllib2
 import psutil
@@ -27,7 +29,7 @@ import psutil
 from openshift_tools.monitoring.ocutil import OCUtil
 from openshift_tools.monitoring.metric_sender import MetricSender
 
-import logging
+
 logging.basicConfig(
     format='%(asctime)s - %(relativeCreated)6d - %(levelname)-8s - %(message)s',
 )
@@ -49,6 +51,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='Check the status of dnsmasq')
     parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
+    parser.add_argument('--url', default='www.redhat.com', help='site to be checked')
     return parser.parse_args()
 
 def send_metrics(curlresult, service_status):
@@ -92,18 +95,29 @@ def get_status_of_service():
             print 'error'
     return status_code
 
+def get_curl_service_result(url_tobe_check):
+    "get curl_result and service_status"
+    curl_result = curl(url_tobe_check, 80)
+    service_status = get_status_of_service()
+    return curl_result, service_status
+
 def main():
     """check status of dnsmq and report"""
     args = parse_args()
     if args.verbose:
         logger.setLevel(logging.DEBUG)
-    curlresult = curl("www.google.com", 80)
-    service_status = get_status_of_service()
-    send_metrics(curlresult, service_status)
-    logger.debug("curlresult:%s", curlresult)
+    curl_service_result = get_curl_service_result(args.url)
+    print curl_service_result
+    if curl_service_result[0] + curl_service_result[1] < 2:
+        time.sleep(5)
+        curl_service_result = get_curl_service_result(args.url)
+
+    curl_result = curl_service_result[0]
+    service_status = curl_service_result[1]
+    send_metrics(curl_result, service_status)
+    logger.debug("curlresult:%s", curl_result)
     logger.debug("service_status:%s", service_status)
 
 
 if __name__ == "__main__":
     main()
-
