@@ -254,6 +254,7 @@ host_monitoring_cron:
 
 {% if osohm_host_type == 'master' %}
 {# Openshift Master checks #}
+{% if osohm_enable_app_create|bool %}
 - name: run create app
   minute: "*/10"
   job: "ops-runner -f -t 480 -s 60 -n csca.openshift.master.app.create /usr/bin/cron-send-create-app -v --basename pull --source openshift/hello-openshift:v1.0.6 &>> /var/log/create_app.log"
@@ -266,6 +267,7 @@ host_monitoring_cron:
 - name: run create app with build process
   minute: "*/30"
   job: "ops-runner -f -t 1300 -s 120 -n csca.openshift.master.app.build.create /usr/bin/cron-send-create-app -v --basename build --loopcount 180 --source https://github.com/openshift/nodejs-ex &>> /var/log/build_app.log"
+{% endif %}
 
 - name: check the dnsmasq status every 5 minutes
   minute: "*/5"
