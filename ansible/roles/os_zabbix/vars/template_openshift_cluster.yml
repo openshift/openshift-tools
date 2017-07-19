@@ -12,6 +12,12 @@ g_template_openshift_cluster:
     - OpenShift Cluster
     value_type: int
 
+  - key: openshift.cluster.service.count
+    description: "Show count of services in cluster"
+    applications:
+    - OpenShift Cluster
+    value_type: int
+
   ztriggers:
   - name: "Config loop failed on {HOST.NAME}"
     expression: "{Template OpenShift Cluster:openshift.cluster.configloop.exitcode.min(#3)}>0"
