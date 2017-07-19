@@ -36,9 +36,8 @@ class CheckStatus(object):
 
         if os.path.isfile(logfile):
             with open(logfile) as open_file:
-                stripped_line = list([line.rstrip() for line in open_file.readlines()])
-                for line in stripped_line:
-                    line_found = re.search(log_message, line, re.IGNORECASE)
+                for line in open_file.readlines():
+                    line_found = re.search(log_message, line.rstrip(), re.IGNORECASE)
                     if line_found:
                         total_issues += 1
 

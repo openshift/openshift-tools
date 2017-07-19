@@ -197,14 +197,29 @@
     - /var/local/rkhunter_tmp/rkhunter/etc
     - /var/local/rkhunter_tmp/rkhunter/scripts
 
+  - name: "Bind rkhunter scan directories"
+    mount:
+      opts: "{{ item.mnt_opts }}"
+      fstype: auto
+      state: mounted
+      name: "{{ item.mnt_name }}"
+      src: "{{ item.mnt_src }}"
+    with_items:
+    - mnt_src: "/usr/bin"
+      mnt_name: "/var/local/rkhunter_tmp/rkhunter/bin"
+      mnt_opts: "bind,ro"
+    - mnt_src:  "/var/lib/rkhunter/db"
+      mnt_name: "/var/local/rkhunter_tmp/rkhunter/db"
+      mnt_opts: "bind"
+    - mnt_src: "/usr/share/rkhunter/scripts/"
+      mnt_name: "/var/local/rkhunter_tmp/rkhunter/scripts/"
+      mnt_opts: "bind,ro"
+
   # Running as commands because mount module doesn't seem to recognize rbind
-  - name: "Mount rkhunter scan directories"
+  - name: "Bind more rkhunter scan directories"
     command: "{{ item }}"
     with_items:
     - "mount --rbind -o ro /host /var/local/rkhunter_chroot"
-    - "mount --bind -o ro /usr/bin  /var/local/rkhunter_tmp/rkhunter/bin"
-    - "mount --bind /var/lib/rkhunter/db /var/local/rkhunter_tmp/rkhunter/db"
-    - "mount --bind -o ro /usr/share/rkhunter/scripts/ /var/local/rkhunter_tmp/rkhunter/scripts/"
     - "mount --rbind /var/local/rkhunter_tmp /var/local/rkhunter_chroot/tmp"
 
   - name: "Set initial values for rkhunter to use"
