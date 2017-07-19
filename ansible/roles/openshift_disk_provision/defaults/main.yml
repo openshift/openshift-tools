@@ -14,10 +14,10 @@
 ### Primary options that should be configured ###
 
 # Name of the disk path (e.g. "/dev/sdb")
-odp_volume_name: ""
+odp_volume_name: "UNDEFINED"
 
 # Location to mount the created volume (e.g. "/mnt")
-odp_mount_location: ""
+odp_mount_location: "UNDEFINED"
 
 ### Lvg / Lvol ###
 

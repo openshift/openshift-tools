@@ -1,5 +1,12 @@
 ---
 # tasks file for openshift_disk_provision
+- name: "check for required values"
+  assert:
+      that:
+          - '"UNDEFINED" not in odp_volume_name'
+          - '"UNDEFINED" not in odp_mount_location'
+      msg: "odp_volume_name and odp_mount_location must be defined."
+
 - name: "create disk partition: {{ odp_volume_name }}{{ odp_partition_number }}"
   parted23:
     device: "{{ odp_volume_name }}"
