@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.38
+Version:        0.0.39
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,150 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Wed Jul 19 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.39-1
+- counting services (ihorvath@redhat.com)
+- add var that can disable app create on special clusters (ihorvath@redhat.com)
+- fix typo (ihorvath@redhat.com)
+- remove quotes around the description (dyocum@redhat.com)
+- Revert "adding zone so config loop won't fail" (dyocum@redhat.com)
+- Revert moving to lib_openshift for existing roles (whearn@redhat.com)
+- changed oc_secret_add to oc_serviceaccount_secret (dyocum@redhat.com)
+- adding zone so config loop won't fail (ihorvath@redhat.com)
+- fixed a typo (dyocum@redhat.com)
+- lib_openshift migration: oadm -> oc_adm (whearn@redhat.com)
+- Adding eu-west-2 to our ami copy. (kwoodson@redhat.com)
+- remove the heal for docker_storage_low (zhiwliu@redhat.com)
+- changed tag_Name to oo_name so that this playbook can also run on gcp hosts
+  (zhiwliu@redhat.com)
+- remove average heal for low docker storage (zhiwliu@redhat.com)
+- added HEAL flag for low docker storage and high docker memory usage
+  (zhiwliu@redhat.com)
+- Update lib_openshift to point to the stable 3.5 version (whearn@redhat.com)
+- reverting back from ops carried iam modules (mwoodson@redhat.com)
+- Adding defaults in case of puddle repos without ssl (kwoodson@redhat.com)
+- Updating module to return arn. (kwoodson@redhat.com)
+- Adding disk encryption and byo options. (kwoodson@redhat.com)
+- first pass of updating meta/main.yml to point to the new upstream
+  lib_openshift (whearn@redhat.com)
+- put in a default for the us_private_ips (mwoodson@redhat.com)
+- made generate byo have capability to do local ip addresses
+  (mwoodson@redhat.com)
+- Adding multi-inventory reboot cron to fix missing inventory.
+  (kwoodson@redhat.com)
+- Don't fail in openshift_dedicated_scripts but just print a message with the
+  error (whearn@redhat.com)
+- changed failed pv alerts only page on primary master (zhiwliu@redhat.com)
+- Bypassing preflight checks. (kwoodson@redhat.com)
+- back iops alert down to average, it's too flappy and generates false alerts
+  as is (sten@redhat.com)
+- missed disc. (sten@redhat.com)
+- missing function name (sten@redhat.com)
+- changed project operation check severity from high to avg
+  (zhiwliu@redhat.com)
+- change sop link (sten@redhat.com)
+- Avoid use of globals in UDP limits role (joesmith@redhat.com)
+- items don't exist at the moment, causing broken zabbix config loop
+  (dranders@redhat.com)
+- metrics every 30m, 2 fails in a row to trigger (dranders@redhat.com)
+- add iops trigger (sten@redhat.com)
+- Fix DNS whitelist destination, clean up node name (joesmith@redhat.com)
+- added router2 key (zhiwliu@redhat.com)
+- modify the sop for the project operation check (zhiwliu@redhat.com)
+- added cron job for /usr/bin/cron-send-project-operation (zhiwliu@redhat.com)
+- fixed epel yum exclude dependency (mwoodson@redhat.com)
+- Touch SSO container's reconfig touchfile via ansible (joesmith@redhat.com)
+- Add module for managing the "exclude" line of a yum repo config
+  (joesmith@redhat.com)
+- added the skip_if_unavailable option to our epel repo (mwoodson@redhat.com)
+- cron changes based on arch meeting discussions (ihorvath@redhat.com)
+- catching when OPENSHIFT-OUTPUT-FILTERING does not yet exist during
+  provisioning (dedgar@redhat.com)
+- catching when OPENSHIFT-OUTPUT-FILTERING does not yet exist during
+  provisioning (dedgar@redhat.com)
+- Re-add mistakenly-removed section to openshift_outbound_tcp_logging
+  (joesmith@redhat.com)
+- moving FORWARD logic to OPENSHIFT-OUTBOUND-FILTERING (dedgar@redhat.com)
+- adding udp limit role with OPENSHIFT-OUTBOUND-FILTERING support
+  (dedgar@redhat.com)
+- Put forward_chain_bandaid.py cron job in correct location
+  (joesmith@redhat.com)
+- Add cron job to run forward_chain_bandaid.py every minute
+  (joesmith@redhat.com)
+- upped the host monitoring service timeout to 10 minutes (mwoodson@redhat.com)
+- update all links to ops-sop (blentz@redhat.com)
+- fixed oc_Version to have results instead of result. This is upstream
+  compatible now (mwoodson@redhat.com)
+- removed the debug for deploying the zagg service (mwoodson@redhat.com)
+- add zabbix key for cron-send-project-operation.py (zhiwliu@redhat.com)
+- Filter out JenkinsPipelines from stuck builds check (bmorriso@redhat.com)
+- lowering alert to avg (mmahut@redhat.com)
+- Add ability to exclude pkgs from EPEL repos (joesmith@redhat.com)
+- zabbix: removed config loop client data from the config loop template
+  (already in config loop client template) (mwoodson@redhat.com)
+- fix a typo (zhizhang@zhizhang-laptop-nay.redhat.com)
+- add cronjob and trigger for dnsmasq (zhizhang@zhizhang-laptop-nay.redhat.com)
+- updated the ovs check to fire if not 2 or 4 nodes are there
+  (mwoodson@redhat.com)
+- add some defaults for httptests (jdiaz@redhat.com)
+- Install correct openshift-dedicated-scripts versios. (dgoodwin@redhat.com)
+- Fix zabbix config loop problems. (twiest@redhat.com)
+- Change the zabbix history from the default of 90 days to a default of 14
+  days. (twiest@redhat.com)
+- Revert "Changed base OS level checks to run every minute so that Jeremy
+  Eder's team can use our zabbix data." (twiest@redhat.com)
+- correcting description (dranders@redhat.com)
+- webcheck for developer.redhat.com sso (dranders@redhat.com)
+- Changed the priority of the 'ebs volume stuck in transition state' check from
+  average to high. (twiest@redhat.com)
+- Reduced the amount of time that a router dynamic item macro stays around.
+  (twiest@redhat.com)
+- Added host monitoring cron job for cron-send-ec2-ebs-volumes-in-stuck-state.
+  (twiest@redhat.com)
+- Added cron-send-ec2-ebs-volumes-in-stuck-state.py (twiest@redhat.com)
+- as per bign, we are doing rslave every cluster and no more /var/lib/docker
+  mounting (ihorvath@redhat.com)
+- zabbix webchecks for v3 SSO (dranders@redhat.com)
+- adding default for v2_url, so local dev works (ihorvath@redhat.com)
+- allow dig ansible lookups (jdiaz@redhat.com)
+- ansible suggests this is how we should run on one host only with serial
+  (ihorvath@redhat.com)
+- allow overriding the way / ismounted (jdiaz@redhat.com)
+- don't restart service if it's disabled (jdiaz@redhat.com)
+- fix description of rss alert (zhizhang@zhizhang-laptop-nay.redhat.com)
+- add check for dnsmasq (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix typo for memory_rss (zhizhang@zhizhang-laptop-nay.redhat.com)
+- Added container usage regexes for zabbix and ops registry pods.
+  (twiest@redhat.com)
+- fix the value trans for the G (zhizhang@zhizhang-laptop-nay.redhat.com)
+- add sop for the alert (zhizhang@zhizhang-laptop-nay.redhat.com)
+- add alert for docker usage (zhizhang@zhizhang-laptop-nay.redhat.com)
+- change metrics check alert from average to high (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+- added some debug to the zagg deployer (mwoodson@redhat.com)
+- fixed the template deployer role (mwoodson@redhat.com)
+- Add new role binding for logging for 3.4 (whearn@redhat.com)
+- changing template and run file to get local dev working with 1.4
+  (ihorvath@redhat.com)
+- added the aws pre warm role (mwoodson@redhat.com)
+- Increasing timeout after restart (jupierce@redhat.com)
+- add openjdk rpm for systems that we initiate installations from
+  (jdiaz@redhat.com)
+- add cron job that cycles router pods if a cluster requires this
+  (jdiaz@redhat.com)
+- added httpd-tools to the os_utils to get installed during image creating and
+  bootstrap (mwoodson@redhat.com)
+- Lowering metrics alert severity to average (bmorriso@redhat.com)
+- Improve documentation on iptables_chain module (joesmith@redhat.com)
+- Add lib_ops_utils roles & iptables_chain module (joesmith@redhat.com)
+- Restart Apache httpd if secrets change (joesmith@redhat.com)
+- Don't restart SSO pods on secrets change (joesmith@redhat.com)
+- check for pruning flag (sten@redhat.com)
+- Vendoring openshift-ansible 3.6 (jupierce@redhat.com)
+- updated the byo for rencrypt on the registry (mwoodson@redhat.com)
+- Added fix for contiv role to the vendoring openshift-ansible role.
+  (twiest@redhat.com)
+- log pruning output to a file in the container (sten@redhat.com)
+
 * Thu Apr 06 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.38-1
 - Raising heartbeat frequency for synthetic hosts to every minute
   (bmorriso@redhat.com)
