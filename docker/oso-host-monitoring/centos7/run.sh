@@ -32,6 +32,7 @@ sudo docker run --rm=true -it --name oso-centos7-host-monitoring \
            -v /var/lib/docker/volumes/shared:/shared:rw     \
            -v /var/run/docker.sock:/var/run/docker.sock     \
            -v /:/host:ro                                    \
+           -v /host:/var/local/rkhunter_chroot:ro           \
            -v /var/cache/yum:/host/var/cache/yum:rw         \
            -v ${CONFIG_SOURCE}:/container_setup:ro \
            --memory 512m \
