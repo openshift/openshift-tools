@@ -201,6 +201,18 @@ g_template_os_linux:
     value_type: int
     description: "The number of security updates that are pending on the host but are ignored by yum.security.updates as they are whitelisted"
 
+  - key: rkhunter.found.warning
+    applications:
+    - Security
+    value_type: int
+    description: "The number of occurrences of warning messages found in rkhunter.log"
+
+  - key: rkhunter.found.infection
+    applications:
+    - Security
+    value_type: int
+    description: "The number of occurrences of infection messages found in rkhunter.log"
+
   zdiscoveryrules:
   - name: disc.filesys
     key: disc.filesys
@@ -343,3 +355,15 @@ g_template_os_linux:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_yum_update.asciidoc"
     priority: info
     description: "One or more security updates need to be applied to the host"
+
+  - name: "RKHunter scan found warnings for {HOST.NAME}"
+    expression: "{Template OS Linux:rkhunter.found.warning.last(0)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_rkhunter.asciidoc"
+    priority: warning
+    description: "RKHunter found one or more warning-level issues issues"
+
+  - name: "RKHunter scan found infections on {HOST.NAME}"
+    expression: "{Template OS Linux:rkhunter.found.infection.last(0)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_rkhunter.asciidoc"
+    priority: average
+    description: "RKHunter found one or more infected system files"
