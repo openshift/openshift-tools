@@ -88,6 +88,8 @@ cp -p cicd/verify-gather-logs-operations.py %{buildroot}/usr/bin/verify-gather-l
 cp -p monitoring/cron-send-prometheus-data.py %{buildroot}/usr/bin/cron-send-prometheus-data
 cp -p monitoring/cron-send-dnsmasq-check.py %{buildroot}/usr/bin/cron-send-dnsmasq-check
 cp -p devaccess/devaccess_wrap.py %{buildroot}/usr/bin/devaccess_wrap
+cp -p monitoring/cron-send-service-web-check.py %{buildroot}/usr/bin/cron-send-service-web-check
+
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
@@ -343,6 +345,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-docker-oc-versions
 /usr/bin/cron-send-prometheus-data
 /usr/bin/cron-send-dnsmasq-check
+/usr/bin/cron-send-service-web-check
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage

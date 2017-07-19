@@ -26,11 +26,11 @@
 #pylint: disable=import-error
 
 import argparse
-from openshift_tools.monitoring.metric_sender import MetricSender
-from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
-import yaml
 import urllib2
 import socket
+import yaml
+from openshift_tools.monitoring.metric_sender import MetricSender
+from openshift_tools.web.openshift_rest_api import OpenshiftRestApi
 
 class OpenshiftWebServiceChecker(object):
     """ Checks for Openshift Pods """
@@ -41,6 +41,7 @@ class OpenshiftWebServiceChecker(object):
         self.metric_sender = None
         self.service_ip = None
         self.service_port = '443'
+        self.servicecount = 0
 
     def run(self):
         """  Main function to run the check """
@@ -49,16 +50,20 @@ class OpenshiftWebServiceChecker(object):
         self.ora = OpenshiftRestApi()
         self.metric_sender = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
 
+        status = None
         try:
             self.get_service()
-            status = self.check_service()
+            if not self.args.service_count:
+                status = self.check_service()
 
         except Exception as ex:
             print "Problem retreiving data: %s " % ex.message
 
-        self.metric_sender.add_metric({
-            "openshift.webservice.{}.status".format(self.args.pod) : status})
+        if status:
+            self.metric_sender.add_metric({
+                "openshift.webservice.{}.status".format(self.args.pod) : status})
 
+        self.metric_sender.add_metric({'openshift.cluster.service.count': self.servicecount}, synthetic=True)
         self.metric_sender.send_metrics()
 
     def get_service(self):
@@ -76,6 +81,7 @@ class OpenshiftWebServiceChecker(object):
         api_yaml = self.ora.get(api_url, rtype='text')
         services = yaml.safe_load(api_yaml)
 
+        self.servicecount = len(services['items'])
         for service in services["items"]:
             if self.args.pod and \
                 self.args.pod in service["metadata"]["name"]:
@@ -112,7 +118,7 @@ class OpenshiftWebServiceChecker(object):
             response = urllib2.urlopen(url, timeout=30)
 
             if str(response.getcode()) == self.args.status:
-                if self.args.content == None \
+                if self.args.content is None \
                     or self.args.content in response.read():
                     return True
 
@@ -137,6 +143,8 @@ class OpenshiftWebServiceChecker(object):
         parser.add_argument('-i', '--insecure', help='Use insecure http connection')
         parser.add_argument('-S', '--secure', help='Use secure https connection (default)')
         parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
+        parser.add_argument('-x', '--service-count', action='store_true', default=0,
+                            help='Find the total count of services')
         parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
 
         self.args = parser.parse_args()

@@ -334,6 +334,9 @@ host_monitoring_cron:
 {% endif %}
 
 {% if osohm_master_primary | default(False) | bool %}
+- name: send services count
+  minute: "*/10"
+  job: ops-runner -f -s 30 0n csswc.openshift.master.service.web.check /usr/bin/cron-send-service-web-check --service-count
 
 - name: send openshift-master /healthz status
   minute: "*/5"
