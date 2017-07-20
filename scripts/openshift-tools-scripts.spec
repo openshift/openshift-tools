@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.77
+Version:       0.1.78
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -438,6 +438,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Jul 20 2017 Doug Edgar <dedgar@redhat.com> 0.1.78-1
+- rkhunter check addition to monitoring package (dedgar@redhat.com)
+
 * Wed Jul 19 2017 Doug Edgar <dedgar@redhat.com> 0.1.77-1
 - consolidating log check loop into 1 pass (dedgar@redhat.com)
 - Adding necessary config to run and report rkhunter scans from host monitoring
