@@ -15,7 +15,7 @@
     - name: check_rkhunter
       minute: "30"
       hour: 21
-      job: "/bin/cron-send-rkhunter-checks"
+      job: "/usr/bin/cron-send-rkhunter-checks"
 
     - name: rkhunter_scan
       minute: "0"
