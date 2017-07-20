@@ -90,6 +90,7 @@ cp -p monitoring/cron-send-prometheus-data.py %{buildroot}/usr/bin/cron-send-pro
 cp -p monitoring/cron-send-dnsmasq-check.py %{buildroot}/usr/bin/cron-send-dnsmasq-check
 cp -p devaccess/devaccess_wrap.py %{buildroot}/usr/bin/devaccess_wrap
 cp -p monitoring/cron-send-service-web-check.py %{buildroot}/usr/bin/cron-send-service-web-check
+cp -p monitoring/cron-send-rkhunter-checks.py %{buildroot}/usr/bin/cron-send-rkhunter-checks
 
 
 mkdir -p %{buildroot}/etc/openshift_tools
@@ -348,6 +349,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-prometheus-data
 /usr/bin/cron-send-dnsmasq-check
 /usr/bin/cron-send-service-web-check
+/usr/bin/cron-send-rkhunter-checks
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
