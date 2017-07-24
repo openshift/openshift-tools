@@ -1,0 +1,13 @@
+---
+# test requires: lvm2, parted, xfsprogs
+
+- hosts: localhost
+  remote_user: root
+  roles:
+    - role: openshift_disk_provision
+      odp_volume_name: "/dev/null"
+      odp_mount_location: "/mnt"
+      odp_lvm_vg_name: 'testvg'
+      odp_lvm_lv_name: 'testlv'
+      odp_filesystem_type: "ext2"
+      ignore_errors: true
