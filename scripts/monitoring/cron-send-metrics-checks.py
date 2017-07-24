@@ -275,6 +275,13 @@ class OpenshiftMetricsStatus(object):
             logger.warn("Cannot found cassandra-1 PV, the results cannot be persisted")
 
         remote_details_directory = os.path.join(remote_details_directory, 'failure_reports/')
+
+        # Make sure directory exists or create if not exists.
+        try:
+            self.oc.run_user_cmd('exec {} -- mkdir -p {}'.format(cassandra_main_pod_name, remote_details_directory))
+        except subprocess.CalledProcessError:
+            logger.error("Cannot create reports directory inside cassandra PV")
+
         # Trim files, this delete old files and make sure that only have certain number of files
         # this is to prevent fill up the PV.
 
