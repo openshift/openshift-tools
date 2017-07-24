@@ -301,12 +301,12 @@ class OpenshiftMetricsStatus(object):
             for old_file in time_sorted_list[:-max_details_report_files]:
                 os.unlink(old_file)
 
-            try:
-                self.oc.run_user_cmd("rsync --delete=true  --no-perms=true {} {}:{}".format(local_report_details_dir,
-                                                                                            cassandra_main_pod_name,
-                                                                                            remote_details_directory))
-            except subprocess.CalledProcessError:
-                logger.error("Error trying to sync local volume and cassandra-1")
+        try:
+            self.oc.run_user_cmd("rsync --delete=true  --no-perms=true {} {}:{}".format(local_report_details_dir,
+                                                                                        cassandra_main_pod_name,
+                                                                                        remote_details_directory))
+        except subprocess.CalledProcessError:
+            logger.error("Error trying to sync local volume and cassandra-1")
 
 
 
