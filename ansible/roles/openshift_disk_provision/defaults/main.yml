@@ -1,0 +1,47 @@
+---
+# defaults file for openshift_disk_provision
+#
+# Many of these values are pass-throughs to the underlying modules.
+#
+# For more details see these docs:
+# https://docs.ansible.com/ansible/filesystem_module.html
+# https://docs.ansible.com/ansible/lvol_module.html
+# https://docs.ansible.com/ansible/lvg_module.html
+# https://docs.ansible.com/ansible/mount_module.html
+# https://docs.ansible.com/ansible/parted_module.html
+#
+
+### Primary options that should be configured ###
+
+# Name of the disk path (e.g. "/dev/sdb")
+odp_volume_name: "UNDEFINED"
+
+# Location to mount the created volume (e.g. "/mnt")
+odp_mount_location: "UNDEFINED"
+
+### Lvg / Lvol ###
+
+# Name of LVM volume group
+odp_lvm_vg_name: 'volgrp'
+
+# Name of LVM logical volume
+odp_lvm_lv_name: 'logvol'
+
+# Volume Size of LVM logical volume
+odp_lvm_lvol_size: '100%FREE'
+
+# LVM device name. This shouldn't need to be changed
+odp_lvm_volume_name: "/dev/mapper/{{ odp_lvm_vg_name }}-{{ odp_lvm_lv_name }}"
+
+### Parted ###
+
+# Partition number
+odp_partition_number: 1
+
+# Name of the partition being created. This shouldn't need to be changed
+odp_partition_name: "{{ odp_volume_name }}{{ odp_partition_number }}"
+
+### Filesystem ###
+
+# Filesystem type to use for formatting the new partition
+odp_filesystem_type: "xfs"
