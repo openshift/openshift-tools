@@ -1,9 +1,10 @@
 ---
 - name: manage_user_policy
   oc_adm_policy_user:  # call openshift-ansible lib_openshift module
-    namespace: "{{ osup_namespace }}"
-    user: "{{ osup_user }}"
-    resource_kind: "{{ osup_resource_kind }}"
-    resource_name: "{{ osup_resource_name }}"
-    state: "{{ osup_state }}"
+    namespace: "{{ item.namespace | default(omit) }}"
+    user: "{{ item.user }}"
+    resource_kind: "{{ item.resource_kind }}"
+    resource_name: "{{ item.resource_name }}"
+    state: "{{ item.state | default(omit) }}"
   run_once: true
+  with_items: "{{ osup_user_policy_bindings }}"
