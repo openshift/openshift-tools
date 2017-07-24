@@ -1,0 +1,55 @@
+---
+# tasks file for openshift_disk_provision
+- name: "check for required values"
+  assert:
+      that:
+          - '"UNDEFINED" not in odp_volume_name'
+          - '"UNDEFINED" not in odp_mount_location'
+      msg: "odp_volume_name and odp_mount_location must be defined."
+
+- name: "create disk partition: {{ odp_volume_name }}{{ odp_partition_number }}"
+  parted23:
+    device: "{{ odp_volume_name }}"
+    number: "{{ odp_partition_number }}"
+    flags: [ lvm ]
+    state: present
+  when: odp_volume_name is defined
+  register: odp_parted_result
+
+- name: "create LVM volume group: {{ odp_lvm_vg_name }}"
+  lvg:
+    vg: "{{ odp_lvm_vg_name }}"
+    pvs: "{{ odp_partition_name }}"
+    state: present
+  when: odp_volume_name is defined and odp_parted_result | succeeded
+  register: odp_lvg_result
+
+- name: "create LVM volume: {{ odp_lvm_lv_name }}"
+  lvol:
+    vg: "{{ odp_lvm_vg_name }}"
+    lv: "{{ odp_lvm_lv_name }}"
+    size: "{{ odp_lvm_lvol_size }}"
+    pvs: "{{ odp_partition_name }}"
+    shrink: false
+    state: present
+  when: odp_volume_name is defined and odp_lvg_result | succeeded
+  register: odp_lvol_result
+
+- name: "make filesystem: {{ odp_lvm_volume_name }}"
+  filesystem:
+    dev: "{{ odp_lvm_volume_name }}"
+    fstype: "{{ odp_filesystem_type }}"
+  when: odp_lvol_result | succeeded
+  register: odp_mkfs_result
+
+- name: "mount volume: {{ odp_lvm_volume_name }}"
+  mount:
+    # FIXME: changed to path in 2.3
+    name: "{{ odp_mount_location }}"
+    src: "{{ odp_lvm_volume_name }}"
+    fstype: "{{ odp_filesystem_type }}"
+    opts: defaults
+    passno: 0
+    dump: 0
+    state: present
+  when: odp_mkfs_result | succeeded
