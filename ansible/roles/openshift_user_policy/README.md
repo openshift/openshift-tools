@@ -28,11 +28,17 @@ Example Playbook
   - include_role:
       name: tools_roles/openshift_user_policy
     vars:
-      osup_namespace: default
-      osup_resource_kind: cluster-role
-      osup_resource_name: system:build-strategy-docker
-      osup_user: username
-      osup_state: absent 
+      osup_user_policy_bindings:
+      - user: bill
+        resource_kind: cluster-role
+        resource_name: cluster-reader
+
+      - user: someuser
+        namespace: default
+        resource_kind: cluster-role
+        resource_name: system:build-strategy-docker
+        state: absent
+
 
 License
 -------
