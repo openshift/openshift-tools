@@ -39,6 +39,15 @@ VALID_CLUSTER_NAMES = [
     'starter-us-west-2'
 ]
 
+# This regex matches a valid hostname: an optional set of DNS labels each
+# ending with dot, followed by a final DNS label. Each DNS label is 1 to
+# 63 digits, letters or '-', but '-' can't be the first or last character.
+HOSTNAME_RE = re.compile(
+    r'((?!-)[a-z\d-]{1,63}(?<!-)\.)*'
+    r'((?!-)[a-z\d-]{1,63}(?<!-))$',
+    re.IGNORECASE
+)
+
 # The command that is invoked to perform the actual log collection.  This
 # command should expect one argument, the cluster name on which to operate, and
 # produce the logs as a tarball in stdout, which gets passed directly as the
@@ -60,6 +69,13 @@ def valid_krbid(username):
     else:
         raise argparse.ArgumentTypeError("Kerberos ID was not provided in acceptable format")
 
+def hostname(arg):
+    '''Check that an argument looks like a valid hostname'''
+    if HOSTNAME_RE.match(arg) and len(arg) < 256:
+        return arg
+    else:
+        raise argparse.ArgumentTypeError("Invalid node name format")
+
 def gather_logs(command):
     '''Main function that parses arguments and execs the cluster log
     gathering command.
@@ -73,9 +89,15 @@ def gather_logs(command):
                         required=True, type=valid_krbid)
     parser.add_argument('-c', dest='cluster', help="Cluster name",
                         required=True, choices=VALID_CLUSTER_NAMES)
+    parser.add_argument('-n', dest='nodes', help="Nodes to gather logs from",
+                        required=False, metavar='node',
+                        type=hostname, nargs='+')
 
     args = parser.parse_args(command.split())
-    os.execlp(LOG_GATHER_CMD, LOG_GATHER_CMD, args.cluster)
+    if args.nodes:
+        os.execlp(LOG_GATHER_CMD, LOG_GATHER_CMD, args.cluster, *args.nodes)
+    else:
+        os.execlp(LOG_GATHER_CMD, LOG_GATHER_CMD, args.cluster)
 
 if __name__ == '__main__':
     cmd = os.environ.get("SSH_ORIGINAL_COMMAND", "")
