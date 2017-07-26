@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.78
+Version:       0.1.79
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -452,6 +452,14 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Jul 26 2017 Joel Smith <joesmith@redhat.com> 0.1.79-1
+- Add in-memory scanner (joesmith@redhat.com)
+- Fix indentation issue that puts rsync in a conditional
+  (ruben.vp8510@gmail.com)
+- Make sure directory exists on the PV or create if not exists.
+  (ruben.vp8510@gmail.com)
+- Provide Context as to why the check is failing (ruben.vp8510@gmail.com)
+
 * Thu Jul 20 2017 Doug Edgar <dedgar@redhat.com> 0.1.78-1
 - rkhunter check addition to monitoring package (dedgar@redhat.com)
 
