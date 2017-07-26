@@ -91,7 +91,7 @@ cp -p monitoring/cron-send-dnsmasq-check.py %{buildroot}/usr/bin/cron-send-dnsma
 cp -p devaccess/devaccess_wrap.py %{buildroot}/usr/bin/devaccess_wrap
 cp -p monitoring/cron-send-service-web-check.py %{buildroot}/usr/bin/cron-send-service-web-check
 cp -p monitoring/cron-send-rkhunter-checks.py %{buildroot}/usr/bin/cron-send-rkhunter-checks
-
+cp -p scan/scanpod-inmem.py %{buildroot}/usr/bin/scanpod-inmem
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
@@ -171,6 +171,20 @@ OpenShift Tools script for allowing limited remote developer access
 %files devaccess
 /usr/bin/devaccess_wrap
 %config(noreplace)/etc/openshift_tools/devaccess_users.yaml
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-scanpod subpackage
+# ----------------------------------------------------------------------------------
+%package scanpod
+Summary:       OpenShift Tools scanning scripts
+Requires:      python2,python2-clamd
+BuildArch:     noarch
+
+%description scanpod
+OpenShift Tools script to scan running pod
+
+%files scanpod
+/usr/bin/scanpod-inmem
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-autoheal subpackage
