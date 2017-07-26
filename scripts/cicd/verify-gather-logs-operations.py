@@ -23,6 +23,7 @@ kerberosID is the Kerberos ID of the developer requesting logs, for tracking pur
 #  command="verify-gather-logs-operations.py" ssh-rsa ThePublicKey logs_access_key_week_22-YMD-H:M:S
 
 import argparse
+import getpass
 import os
 import re
 import sys
@@ -41,10 +42,11 @@ VALID_CLUSTER_NAMES = [
 
 # This regex matches a valid hostname: an optional set of DNS labels each
 # ending with dot, followed by a final DNS label. Each DNS label is 1 to
-# 63 digits, letters or '-', but '-' can't be the first or last character.
+# 63 digits, letters or '-', but must start with a letter. This is used
+# to match each of the provided node names
 HOSTNAME_RE = re.compile(
-    r'((?!-)[a-z\d-]{1,63}(?<!-)\.)*'
-    r'((?!-)[a-z\d-]{1,63}(?<!-))$',
+    r'([a-z][a-z\d-]{0,62}\.)*'
+    r'([a-z][a-z\d-]{0,62})$',
     re.IGNORECASE
 )
 
@@ -55,6 +57,8 @@ HOSTNAME_RE = re.compile(
 LOG_GATHER_CMD = '/home/opsmedic/aos-cd/git/aos-cd-jobs/tower-scripts/bin/gather-logs.sh'
 
 HOSTNAME = socket.gethostname()
+USERNAME = getpass.getuser()
+INVOCATION = "%s@%s" % (USERNAME, HOSTNAME)
 
 logger = logging.getLogger('verify_command_logger')
 logger.setLevel(logging.INFO)
@@ -83,8 +87,8 @@ def gather_logs(command):
     This function never returns (it can raise exceptions though)
     '''
 
-    invocation = "ssh -i gather_logs_key %s --" % HOSTNAME
-    parser = argparse.ArgumentParser(prog=invocation)
+    usage = "ssh -i gather_logs_key %(prog)s -- -u USER -c CLUSTER [-n node1 node2...]"
+    parser = argparse.ArgumentParser(prog=INVOCATION, usage=usage)
     parser.add_argument('-u', dest='user', help="Your kerberos ID",
                         required=True, type=valid_krbid)
     parser.add_argument('-c', dest='cluster', help="Cluster name",
