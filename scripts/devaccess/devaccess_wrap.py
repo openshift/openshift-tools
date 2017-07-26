@@ -8,11 +8,17 @@
 # pylint: disable=invalid-name
 
 import logging
+import logging.config
 import os
 import re
 import subprocess
 import sys
 import yaml
+
+with open('/etc/openshift_tools/devaccesslogging.conf') as f:
+    logging.config.dictConfig(yaml.load(f))
+
+log = logging.getLogger('devget')
 
 class DevGetError(Exception):
     ''' DevGet-specific exceptions '''
@@ -21,9 +27,14 @@ class DevGetError(Exception):
 class OCCmd(object):
     ''' Class to hold and standardize building of /usr/bin/oc commands
         out of raw string command line text '''
-    def __init__(self, raw_cmd):
+
+    def __init__(self, raw_cmd, allowed_commands):
         # original command line text
         self._raw_cmd = raw_cmd
+        self._allowed_commands = allowed_commands
+        self._current_command = None
+        self._current_type = None
+        self.runner = None
 
         self._params = {}
         # always define a namespace
@@ -103,6 +114,12 @@ class OCCmd(object):
 
         (value, new_cmd) = OCCmd.get_param_value(cmd, '-n')
 
+        cmd_split = new_cmd.split()
+        for param in cmd_split:
+            if param == '--all-namespaces':
+                value = 'all'
+                new_cmd = new_cmd.replace('--all-namespaces', '')
+
         if value is not None:
             self._params['namespace'] = value
         return new_cmd
@@ -162,6 +179,11 @@ class OCCmd(object):
 
         self._params['verb'] = cmd_split[0]
         self._params['type'] = cmd_split[1]
+        for command_type in self._current_command['types']:
+            if self._params['type'] in command_type['names']:
+                self._current_type = command_type
+                self.runner = command_type['runner']
+
         if len(cmd_split) > 2:
             self._params['subject'] = cmd_split[2]
 
@@ -186,24 +208,33 @@ class OCCmd(object):
         #
         # Get all params first
         #
-        cmd_no_namespace = self.get_namespace(self._raw_cmd)
 
-        cmd_no_output_formatting = self.get_output_format(cmd_no_namespace)
+        for command in self._allowed_commands:
+            if self._raw_cmd.startswith(command['base']):
+                self._current_command = command
 
-        cmd_no_follow = self.get_follow(cmd_no_output_formatting)
+                cmd_no_namespace = self.get_namespace(self._raw_cmd)
+                log.debug('no ns: %s', cmd_no_namespace)
 
-        cmd_no_container = self.get_container(cmd_no_follow)
+                cmd_no_output_formatting = self.get_output_format(cmd_no_namespace)
+                log.debug('no format: %s', cmd_no_output_formatting)
 
-        #
-        # all that is left should be: 'oc <verb> <type> <optional-subject>'
-        #
-        cmd = self.get_verb_type_subject(cmd_no_container)
+                cmd_no_follow = self.get_follow(cmd_no_output_formatting)
+                log.debug('no follow: %s', cmd_no_follow)
 
+                cmd_no_container = self.get_container(cmd_no_follow)
+                log.debug('no container: %s', cmd_no_container)
 
-        # should be nothing left after we parsed all the tokens
-        if cmd != "":
-            raise Exception("Unprocessed command tokens left.")
+                #
+                # all that is left should be: 'oc <verb> <type> <optional-subject>'
+                #
+                cmd = self.get_verb_type_subject(cmd_no_container)
 
+                # should be nothing left after we parsed all the tokens
+                if cmd != "":
+                    raise Exception("Unprocessed command tokens left.")
+
+    #pylint: disable=too-many-branches
     def normalized_cmd(self, generic=False):
         ''' return 'normalized' string in the format:
             oc <action> <type> <opt-subject> -n<namespace> -o<output_format> --follow
@@ -232,8 +263,12 @@ class OCCmd(object):
                 normalized_cmd = "{orig} -c{container}".format(orig=normalized_cmd,
                                                                container=self._params['container'])
         # add namespace
-        normalized_cmd = "{orig} -n{namespace}".format(orig=normalized_cmd,
-                                                       namespace=self._params['namespace'])
+        if self._current_command.has_key('namespaces'):
+            if self._params['namespace'] == 'all':
+                normalized_cmd = '{orig} --all-namespaces'.format(orig=normalized_cmd)
+            else:
+                normalized_cmd = "{orig} -n{namespace}".format(orig=normalized_cmd,
+                                                               namespace=self._params['namespace'])
         # add output formatting
         if self._params['output_format'] is not None:
             normalized_cmd = "{cmd} -o{oformat}".format(cmd=normalized_cmd,
@@ -245,7 +280,6 @@ class OCCmd(object):
                                                      follow=self._params['follow'])
 
         return normalized_cmd
-
 
 class WhitelistedCommands(object):
     ''' Class to hold functions implementing allowed functionality '''
@@ -270,19 +304,52 @@ class WhitelistedCommands(object):
         return results
 
     @staticmethod
-    def oc_get_nodes(occmd):
-        ''' provide 'oc get nodes' '''
+    def cmd_with_tail(cmd):
+        ''' replace process with called one to keep getting updates '''
+        args = cmd.split()
+        os.execvp(args[0], args)
 
-        n_cmd = occmd.normalized_cmd()
-        run_cmd = WhitelistedCommands.oc_cmd_builder(n_cmd)
+    @staticmethod
+    def safe_command(cmd):
+        ''' return any safe command output
+            this is for all commands that should not have any type of sensitive data in them
+        '''
+        results = ''
+        our_env = os.environ
+        our_env['PATH'] = '/usr/sbin:' + our_env['PATH']
+        try:
+            results = subprocess.check_output(cmd.split(), env=our_env)
+        except subprocess.CalledProcessError:
+            log.exception("Call to process (%s) failed", cmd)
+
+        return results
+
+    @staticmethod
+    def sudo_command(cmd):
+        ''' return the output running it through sudo
+        TODO: try to make it work with one external script that has elevated privileges
+        '''
+        results = ''
+        our_env = os.environ
+        our_env['PATH'] = '/usr/sbin:' + our_env['PATH']
+        try:
+            results = subprocess.check_output(['/usr/bin/sudo'] + cmd.split(), env=our_env)
+        except subprocess.CalledProcessError:
+            log.exception("Call to process (%s) failed", cmd)
+
+        return results
+
+    @staticmethod
+    def oc_get_generic(occmd):
+        ''' provide a generic 'oc get ' artifact '''
+        run_cmd = WhitelistedCommands.oc_cmd_builder(occmd)
         results = subprocess.check_output(run_cmd)
 
         return results
 
     @staticmethod
-    def oc_get_pods(occmd):
-        ''' provide 'oc get pods' '''
-
+    def oc_get_clusterwide(occmd):
+        ''' provide non namespaced objects '''
         n_cmd = occmd.normalized_cmd()
         run_cmd = WhitelistedCommands.oc_cmd_builder(n_cmd)
         results = subprocess.check_output(run_cmd)
@@ -306,21 +373,23 @@ class DevGet(object):
     ''' Class to wrap approved developer access commands '''
     CONFIG_FILE = '/etc/openshift_tools/devaccess.yaml'
     ACL_FILE = '/etc/openshift_tools/devaccess_users.yaml'
-    LOG_FILE = '/var/log/devaccess.log'
 
     def __init__(self):
         self._args = None
         self._user = None
         self._oc_cmd = None
         self._config = None
+        self._runner = None
 
         self.parse_args()
+        log.debug("Got args: " + str(self._args))
         self.parse_config()
-        self.setup_logging()
-        logging.debug("Got args: " + str(self._args))
 
         self._allowed_commands = self.setup_permissions()
-        self._command_dict = self.whitelisted_command_list()
+        self._default_params = None
+
+        if self._args.startswith('oc'):
+            self._oc_cmd = OCCmd(self._args, self._allowed_commands)
 
     def parse_config(self):
         ''' Load in config settings '''
@@ -334,9 +403,6 @@ class DevGet(object):
             WhitelistedCommands(kubeconfig_path=self._config['kubeconfig_path'])
         if not self._config.has_key('aclfile_path'):
             self._config['aclfile_path'] = DevGet.ACL_FILE
-
-        if not self._config.has_key('logfile_path'):
-            self._config['logfile_path'] = DevGet.LOG_FILE
 
         if not self._config.has_key('debug'):
             self._config['debug'] = False
@@ -354,7 +420,7 @@ class DevGet(object):
                     allowed_roles = user['roles']
                 # the 'ALL' group applies to everyone
                 allowed_roles.append('ALL')
-        logging.debug("user: %s roles: %s", self._user, str(allowed_roles))
+        log.debug("user: %s roles: %s", self._user, str(allowed_roles))
 
         commands = []
         # get list of allowed commands for each role
@@ -362,28 +428,8 @@ class DevGet(object):
             if role['name'] in allowed_roles:
                 commands.extend(role['commands'])
 
-        logging.debug("user: %s commands: %s", self._user, str(commands))
+        log.debug("user: %s commands: %s", self._user, str(commands))
         return commands
-
-    @staticmethod
-    def whitelisted_command_list():
-        ''' Dict with key of whitelisted commmands mapped to their
-            actual implementation.
-            The commands should be in 'normalized' output style from OCCmd.
-        '''
-        command_dict = {}
-
-        ### commands for everyone (the 'ALL' group)
-        command_dict['oc get nodes -ndefault'] = WhitelistedCommands.oc_get_nodes
-        command_dict['oc get nodes -ndefault -ojson'] = WhitelistedCommands.oc_get_nodes
-        command_dict['rpm -qa'] = WhitelistedCommands.rpm_qa
-        command_dict['oc get pods -ndefault'] = WhitelistedCommands.oc_get_pods
-        command_dict['oc get pods -nlogging'] = WhitelistedCommands.oc_get_pods
-        command_dict['oc get pods -nopenshift-infra'] = WhitelistedCommands.oc_get_pods
-        command_dict['oc get routes -ndefault'] = WhitelistedCommands.oc_get_routes
-        command_dict['oc get routes -nlogging'] = WhitelistedCommands.oc_get_routes
-
-        return command_dict
 
     def parse_args(self):
         ''' Parse command line arguments passed in through the
@@ -422,63 +468,119 @@ class DevGet(object):
         self._args = args
         self._user = user
 
-        if self._args.startswith('oc'):
-            self._oc_cmd = OCCmd(self._args)
 
-    def setup_logging(self):
-        ''' Configure logging '''
-
-        if os.environ.has_key("DEVACC_DEBUG") or self._config['debug'] is True:
-            log_level = logging.DEBUG
-        else:
-            log_level = logging.INFO
-
-        logging.basicConfig(filename=self._config['logfile_path'],
-                            format="%(asctime)s %(message)s",
-                            level=log_level)
-
+    #pylint: disable=too-many-nested-blocks
     def can_run_cmd(self, cmd):
         ''' Return True/False for whether user is allowed to run the command
         '''
+        can_run = False
 
-        return cmd in self._allowed_commands
+        for command in self._allowed_commands:
+            # incoming command starts with one of the known command bases
+            if cmd.startswith(command['base']):
+                # found our matched command, set the function that should run it
+                self._runner = command['runner']
+                # remove the matched part, strip whitespace
+                # TODO: check if doing this with regex is faster to process
+                cmd = cmd.replace(command['base'], '').strip()
+                # if command has no switches or other params but matched, then we just run it
+                if len(cmd) == 0:
+                    can_run = True
+                    break
+
+                # tokenizing the param list
+                all_tokens = cmd.split()
+                delete_tokens = []
+                # switches need to be present, partial matches are ok
+                if command.has_key('switches'):
+                    log.debug('all switches for command: %s', all_tokens)
+                    for token in all_tokens:
+                        for switch in command['switches']:
+                            if token == switch:
+                                delete_tokens.append(token)
+                        log.debug('accepted tokens: %s', delete_tokens)
+
+                # removing tokens found by switches before moving on
+                leftover_tokens = [token for token in all_tokens if token not in delete_tokens]
+                leftover_command = ' '.join(leftover_tokens)
+                # whatever was left over of the command should match one in the list
+                if command.has_key('leftover'):
+                    for leftover in command['leftover']:
+                        patt = re.compile(leftover, flags=re.DOTALL)
+                        if patt.match(leftover_command):
+                            leftover_tokens = []
+
+                if command.has_key('defaultparams'):
+                    self._default_params = command['defaultparams']
+
+                # we processed every part of the command, might as well run it
+                if len(leftover_tokens) == 0:
+                    can_run = True
+
+        return can_run
 
     def cmd_not_allowed(self):
         ''' Print generic info when user isn't able to
             run a command.
         '''
 
-        print "Command not supported/allowed"
+        print "\nCommand not supported/allowed"
+        print "#############################"
         print "Allowed commands:"
-        for cmd in self._allowed_commands:
-            print cmd
+
+        for command in self._allowed_commands:
+            outputline = '{}'.format(command['base'])
+            if command.has_key('types'):
+                for cmdtype in command['types']:
+                    tmpstr = '{} [{}]'.format(outputline, '/'.join(cmdtype['names']))
+                    if cmdtype.has_key('namespaces'):
+                        if 'all' in cmdtype['namespaces']:
+                            tmpstr += ' --all-namespaces'
+                            tmpns = [x for x in cmdtype['namespaces'] if x not in ['all']]
+                        else:
+                            tmpns = cmdtype['namespaces']
+                        if len(tmpns) > 0:
+                            tmpstr += ' -n <{}>'.format('/'.join(tmpns))
+                    if cmdtype.has_key('output'):
+                        tmpstr += ' -o {}'.format('|'.join(cmdtype['output']))
+                    print tmpstr
+            else:
+                tmpstr = '{}'.format(outputline)
+                if command.has_key('switches'):
+                    tmpstr += ' {}'.format(' '.join(command['switches']))
+                if command.has_key('leftover'):
+                    tmpstr += ' ({})'.format(' | '.join(command['leftover']))
+                print tmpstr
         sys.exit(1)
 
     def main(self):
         ''' Entry point for class '''
         cmd = self._args
-        logging.info("user: %s command: %s", self._user, self._args)
+        log.debug("user: %s command: %s", self._user, self._args)
 
         # Check whether user has permissions to run command.
         # oc commands are handled in a special way, since those
         # whitelisted function handlers expect an OCCmd object to be passed
         if self._oc_cmd is not None:
-            generic_cmd = self._oc_cmd.normalized_cmd(generic=True)
-            full_cmd = self._oc_cmd.normalized_cmd()
-            logging.debug("user: %s Normalized cmd: %s", self._user, full_cmd)
+            try:
+                full_cmd = self._oc_cmd.normalized_cmd()
+                log.debug("user: %s Normalized cmd: %s", self._user, full_cmd)
 
-            if self.can_run_cmd(generic_cmd):
-                results = self._command_dict[generic_cmd](self._oc_cmd)
+                results = getattr(WhitelistedCommands, self._oc_cmd.runner)(full_cmd)
                 print results
-            else:
+            #pylint: disable=broad-except
+            except Exception:
+                log.exception('Command failed to run. %s', cmd)
                 self.cmd_not_allowed()
         # non-oc command run handling
         elif self.can_run_cmd(cmd):
-            results = self._command_dict[cmd](cmd)
+            if self._default_params is not None:
+                cmd_split = cmd.split()
+                cmd = '{} {} {}'.format(cmd_split[0], ' '.join(self._default_params), ' '.join(cmd_split[1:]))
+            results = getattr(WhitelistedCommands, self._runner)(cmd)
             print results
         else:
             self.cmd_not_allowed()
-
 
 if __name__ == '__main__':
     devget = DevGet()
