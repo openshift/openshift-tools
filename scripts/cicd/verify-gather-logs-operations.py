@@ -87,7 +87,7 @@ def gather_logs(command):
     This function never returns (it can raise exceptions though)
     '''
 
-    usage = "ssh -i gather_logs_key %(prog)s -- -u USER -c CLUSTER [-n node1 node2...]"
+    usage = "ssh -i gather_logs_key %(prog)s -- -u USER -c CLUSTER [-n node1 node2...] > logs.tar.gz"
     parser = argparse.ArgumentParser(prog=INVOCATION, usage=usage)
     parser.add_argument('-u', dest='user', help="Your kerberos ID",
                         required=True, type=valid_krbid)
