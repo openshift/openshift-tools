@@ -38,7 +38,13 @@ objects:
             protocol: TCP
           - containerPort: 8443
             protocol: TCP
-          resources: {}
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1512Mi
+            requests:
+              cpu: 1000m
+              memory: 1512Mi
           terminationMessagePath: /dev/termination-log
           volumeMounts:
           - mountPath: /secrets
@@ -51,13 +57,6 @@ objects:
         - name: monitoring-secrets
           secret:
             secretName: monitoring-secrets
-        resources:
-          limits:
-            cpu: 1000m
-            memory: 512Mi
-          requests:
-            cpu: 1000m
-            memory: 512Mi
     test: false
     triggers:
     - type: ConfigChange
