@@ -7,6 +7,8 @@ roles:
   - oc get pods -ndefault
   - oc get pods -nopenshift-infra
   - oc get pods -nlogging
+  - oc get routes -ndefault
+  - oc get routes -nlogging
 - name: nobody_role
   commands:
   - uname

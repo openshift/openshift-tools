@@ -289,6 +289,19 @@ class WhitelistedCommands(object):
 
         return results
 
+    @staticmethod
+    def oc_get_routes(occmd):
+        ''' provide 'oc get routes' '''
+
+        n_cmd = occmd.normalized_cmd()
+        run_cmd = WhitelistedCommands.oc_cmd_builder(n_cmd)
+        # -o yaml and -o json output of routes can expose
+        # certificate details. will need to redact those
+        # bits if more detailed output is requested
+        results = subprocess.check_output(run_cmd)
+
+        return results
+
 class DevGet(object):
     ''' Class to wrap approved developer access commands '''
     CONFIG_FILE = '/etc/openshift_tools/devaccess.yaml'
@@ -311,7 +324,11 @@ class DevGet(object):
 
     def parse_config(self):
         ''' Load in config settings '''
-        self._config = yaml.load(open(DevGet.CONFIG_FILE, 'r'))
+        custom_config = os.environ.get('DEVACCESS_CONFIG')
+        if custom_config is not None:
+            self._config = yaml.load(open(custom_config, 'r'))
+        else:
+            self._config = yaml.load(open(DevGet.CONFIG_FILE, 'r'))
 
         if self._config.has_key('kubeconfig_path'):
             WhitelistedCommands(kubeconfig_path=self._config['kubeconfig_path'])
@@ -363,6 +380,8 @@ class DevGet(object):
         command_dict['oc get pods -ndefault'] = WhitelistedCommands.oc_get_pods
         command_dict['oc get pods -nlogging'] = WhitelistedCommands.oc_get_pods
         command_dict['oc get pods -nopenshift-infra'] = WhitelistedCommands.oc_get_pods
+        command_dict['oc get routes -ndefault'] = WhitelistedCommands.oc_get_routes
+        command_dict['oc get routes -nlogging'] = WhitelistedCommands.oc_get_routes
 
         return command_dict
 
