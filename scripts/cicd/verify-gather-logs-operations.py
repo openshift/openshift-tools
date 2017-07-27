@@ -40,10 +40,20 @@ VALID_CLUSTER_NAMES = [
     'starter-us-west-2'
 ]
 
-# This regex matches a valid hostname: an optional set of DNS labels each
-# ending with dot, followed by a final DNS label. Each DNS label is 1 to
-# 63 digits, letters or '-', but must start with a letter. This is used
-# to match each of the provided node names
+# This regex is used to check that the provided node names look like a valid
+# node name (i.e. from "oc get node") or an inventory host name.
+#
+# In order to keep the check simple this doesn't aim at RFC 1123 compliance,
+# only that the provided node name is "similar enough" to a valid hostname
+# and that it matches what our cluster's node names/inventory names look like
+#
+# Here labels must start with a letter. This prevents using IPs to identify
+# nodes (the log gathering script should be modified to allow IPs).
+#
+# NOTE: this is only an input sanity check, not a full verification that the
+# provided node names actually exist. The full/final hostname validation
+# happens in the log gathering script itself by accessing the cluster's
+# ansible inventory
 HOSTNAME_RE = re.compile(
     r'([a-z][a-z\d-]{0,62}\.)*'
     r'([a-z][a-z\d-]{0,62})$',
