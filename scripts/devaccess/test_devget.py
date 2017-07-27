@@ -16,6 +16,10 @@
 # initiate the variable to perform the test
 # pylint: disable=unused-variable
 
+# disable line-too-long b/c we sometimes store simulated output
+# of commands which have their own line lengths
+# pylint: disable=line-too-long
+
 import os
 import sys
 import unittest
@@ -174,6 +178,20 @@ router-435-zzx1x             1/1       Running   2          18d
         dg.main()
 
         assert mock_get_pods.called
+
+    @mock.patch('devaccess_wrap.WhitelistedCommands.oc_get_routes')
+    def test_oc_get_routes(self, mock_get_routes):
+        ''' Test oc get routes -ndefault '''
+        route_list = '''NAME              HOST/PORT                         PATH      SERVICES          PORT      TERMINATION   WILDCARD
+docker-registry   registry.free-stg.openshift.com             docker-registry   <all>     reencrypt     None
+'''
+        os.environ['SSH_ORIGINAL_COMMAND'] = 'oc get routes -n default'
+        dg = DevGet()
+
+        mock_get_routes.side_effect = [route_list]
+        dg.main()
+
+        assert mock_get_routes.called
 
 if __name__ == '__main__':
     unittest.main()
