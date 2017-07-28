@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.79
+Version:       0.1.80
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -452,6 +452,14 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Fri Jul 28 2017 Pep Turró <pep@redhat.com> 0.1.80-1
+- Clarify the scope of node name checking (pep@redhat.com)
+- Mention the necessary output redirection in gather logs usage
+  (pep@redhat.com)
+- Simplify node name regex and improve usage help (pep@redhat.com)
+- Allow optional nodes for gather logs script (pep@redhat.com)
+- tiered-access: add 'oc get routes' (jdiaz@redhat.com)
+
 * Wed Jul 26 2017 Joel Smith <joesmith@redhat.com> 0.1.79-1
 - Add in-memory scanner (joesmith@redhat.com)
 - Fix indentation issue that puts rsync in a conditional
