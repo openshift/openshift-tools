@@ -90,7 +90,7 @@ def scanpid(pid, scancache, clam):
                     except OSError:
                         # no worries if we tried to open it and failed. The process has probably gone away
                         pass
-    except OSError:
+    except (OSError, IOError):
         pass
     return retval
 
