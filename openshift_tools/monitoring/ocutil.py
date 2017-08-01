@@ -133,3 +133,7 @@ class OCUtil(object):
         """ Gets the log for the specified container """
         return self._run_cmd("logs {}".format(name))
 
+    def delete_pod(self, name):
+        """ Gets the log for the specified container """
+        return self._run_cmd("delete pod {}".format(name))
+
