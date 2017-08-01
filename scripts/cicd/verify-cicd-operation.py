@@ -25,7 +25,38 @@ import socket
 import logging
 import logging.handlers
 
+
+
+
+valid_operations = ['build-ci-msg',
+                    'commit-config-loop',
+                    'delete',
+                    'disable-config-loop',
+                    'disable-statuspage',
+                    'disable-zabbix-maint',
+                    'enable-config-loop',
+                    'enable-statuspage',
+                    'enable-zabbix-maint',
+                    'generate-byo-inventory',
+                    'install',
+                    'perf1',
+                    'perf2',
+                    'perf3',
+                    'pre-check',
+                    'run-config-loop',
+                    'smoketest',
+                    'status',
+                    'update-inventory',
+                    'update-yum-extra-repos',
+                    'upgrade',
+                    'upgrade-control-plane',
+                    'upgrade-logging',
+                    'upgrade-metrics',
+                    'upgrade-nodes',
+                   ]
+
 def runner(program, *args):
+    ''' run the script that is intended '''
     try:
         os.execlp(program, program, *args)
     except:
@@ -53,15 +84,17 @@ if not re.match("(^[a-zA-Z0-9][a-zA-Z0-9._-]+$)", cluster_id):
     sys.exit(13)
 
 cmd = os.environ.get("SSH_ORIGINAL_COMMAND", "")
-args = cmd.split()
+cmd_args = cmd.split()
 
-if len(args) == 0:
+if len(cmd_args) == 0:
     print("No operation specified")
     sys.exit(11)
 
-op = args.pop(0)  # Remove operation string from argument list and store
+op = cmd_args.pop(0)  # Remove operation string from argument list and store
 
-match = re.match(r"(?P<operation>install|delete|upgrade|status|logs|perf1|perf2|perf3|build-ci-msg|smoketest)", op)
+#match = re.match(r"(?P<operation>install|delete|upgrade|status|logs|perf1|perf2|perf3|build-ci-msg|smoketest)", op)
+valid_operations_string = '|'.join(valid_operations)
+match = re.match(r"(?P<operation>" + valid_operations_string + ")", op)
 
 if not match:
     logger.info("%s Restricted key '%s' disallowed operation: %s" % (os.path.basename(__file__), cluster_id, op))
@@ -73,7 +106,7 @@ if not match:
 # Only matched patters may be passed on to cicd-control. See approved list
 # at the top of this file.
 operation_args = []
-for s in args:
+for s in cmd_args:
     if re.match("(^docker-version=[a-zA-Z0-9._-]+$)", s):  # Example docker version: docker-1.12.6-30.git97ba2c0.el7
         operation_args.append("--" + s)
     else:
@@ -88,4 +121,3 @@ runner("/home/opsmedic/aos-cd/git/aos-cd-jobs/tower-scripts/bin/cicd-control.sh"
        cluster_id,
        match.group("operation"),
        *operation_args)
-
