@@ -11,13 +11,11 @@ Examples:
     from openshift_tools.monitoring.hawk_sender import HawkSender
     HOSTNAME = 'host.example.com'
 
-    ZAGGCONN = HawkConnection(url='https://172.17.0.151', user='admin', password='pass')
-    ZAGGHEARTBEAT = HawkHeartbeat(templates=['template1', 'template2'], hostgroups=['hostgroup1', 'hostgroup2'])
+    HAWKCONN = HawkConnection(url='https://172.17.0.151', user='admin', password='pass')
 
-    zs = HawkSender(host=HOSTNAME, hawk_connection=ZAGGCONN)
-    zs.add_heartbeat(ZAGGHEARTBEAT)
-    zs.add_zabbix_keys({ 'test.key' : '1' })
-    zs.send_metrics()
+    hs = HawkSender(host=HOSTNAME, hawk_connection=HAWKCONN)
+    hs.add_metric({ 'test.key' : '1' })
+    hs.send_metrics()
 """
 import re
 from openshift_tools.monitoring.metricmanager import UniqueMetric
@@ -45,6 +43,7 @@ class HawkSender(GenericMetricSender):
         self.unique_metrics = []
         self.verbose = verbose
         self.debug = debug
+        self.dynamic_tag_rules = []
 
         if not host:
             host = self.get_default_host()
@@ -90,6 +89,15 @@ class HawkSender(GenericMetricSender):
 
         return hawk_connection
 
+    @staticmethod
+    def update_tags_for_key(key, metric_tags, rules):
+        ''' check rules and add tags that match this key '''
+
+        for rule in rules:
+            compiled_rule = re.compile(rule.get('regex'))
+            if compiled_rule.match(key):
+                metric_tags.update(rule.get('tags') or {})
+
     def add_metric(self, metrics, host=None, synthetic=False, key_tags=None):
         """ create unique metric from key value pair """
 
@@ -108,11 +116,10 @@ class HawkSender(GenericMetricSender):
         metric_tags = {}
 
         for key, value in metrics.iteritems():
-            #check config rules - add tags that match this key
-            for rule in config_rules:
-                compiled_rule = re.compile(rule.get('regex'))
-                if compiled_rule.match(key):
-                    metric_tags.update(rule.get('tags') or {})
+            self.update_tags_for_key(key, metric_tags, config_rules)
+
+            #override configuration with dynamic tags
+            self.update_tags_for_key(key, metric_tags, self.dynamic_tag_rules)
 
             #override configuration with runtime parameters
             metric_tags.update(key_tags)
@@ -135,3 +142,16 @@ class HawkSender(GenericMetricSender):
         self.hawkclient.push_metrics(self.unique_metrics)
         self.unique_metrics = []
 
+
+    def add_dynamic_metric(self, discovery_key, macro_string, macro_array, host=None, synthetic=False):
+        """
+        Create regular expressions adding tag - macro_string - to each key in macro_array.
+        discovery key is the key prefix
+        """
+
+        for macro in macro_array:
+            regex = r'%s.*\[%s\]' % (discovery_key, macro)
+            # strip "#" from macro string (zabbix specific formatting. irrelevant to hawk
+            tag = macro_string[1:] if macro_string.startswith("#") else macro_string
+            rule = {'regex': regex, 'tags': {tag: macro}}
+            self.dynamic_tag_rules.append(rule)
