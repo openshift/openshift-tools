@@ -29,6 +29,8 @@ import subprocess
 import yaml
 
 # pylint: disable=bare-except
+# pylint: disable=redefined-variable-type
+
 def cleanup_file(inc_file):
     """ clean up """
     try:
@@ -69,6 +71,7 @@ class OCUtil(object):
         if self.logger:
             self.logger.debug("ocutil._run_cmd( {} )".format(cmd))
 
+        # FIXME: pylint redefined-variable-type doesn't like this, but it's working?
         cmd = shlex.split(cmd)
 
         if self.verbose:
