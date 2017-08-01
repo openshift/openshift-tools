@@ -25,8 +25,8 @@ import atexit
 import shutil
 import string
 import random
-import yaml
 import subprocess
+import yaml
 
 # pylint: disable=bare-except
 def cleanup_file(inc_file):
@@ -136,4 +136,3 @@ class OCUtil(object):
     def delete_pod(self, name):
         """ Gets the log for the specified container """
         return self._run_cmd("delete pod {}".format(name))
-

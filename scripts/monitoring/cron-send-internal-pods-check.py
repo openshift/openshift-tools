@@ -101,6 +101,7 @@ class InfraNodePodStatus(object):
         self.send_metrics(keybase=keybase, location=result_code, status=count_pods_running)
 
     def delete_pod(self, pod):
+        """ delete a pod """
         self.oc.delete_pod(pod['name'])
 
     def send_metrics(self, keybase="", location="", status=""):
