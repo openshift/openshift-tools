@@ -27,6 +27,7 @@ import logging
 import logging.handlers
 
 program_to_run = "/home/opsmedic/aos-cd/git/aos-cd-jobs/tower-scripts/bin/cicd-control.sh"
+
 valid_operations = ['build-ci-msg',
                     'commit-config-loop',
                     'delete',
@@ -99,14 +100,11 @@ if len(cmd_args) == 0:
     print("No operation specified")
     sys.exit(11)
 
-op = cmd_args.pop(0)  # Remove operation string from argument list and store
-
-valid_operations_string = '|'.join(valid_operations)
-match = re.match(r"(?P<operation>" + valid_operations_string + ")", op)
-
-if not match:
-    logger.info("%s Restricted key '%s' disallowed operation: %s" % (os.path.basename(__file__), cluster_id, op))
-    print("Operation doesn't match an allowed pattern ")
+operation_from_ssh = cmd_args.pop(0)  # Remove operation string from argument list and store
+if operation_from_ssh not in valid_operations:
+    logger.info("%s Restricted key '%s' disallowed operation: %s" % (os.path.basename(__file__),
+                                                                     cluster_id, operation_from_ssh))
+    print("The requested operation isn't in the set of pre-approved operations")
     print("REJECTED ON HOST: " + socket.gethostname())
     sys.exit(10)
 
@@ -128,5 +126,5 @@ for s in cmd_args:
 
 logger.info("%s Restricted key '%s' running command: %s" % (os.path.basename(__file__), cluster_id, cmd))
 
-args_to_send = build_arg_list(cluster_id, match.group('operation'), *operation_args)
+args_to_send = build_arg_list(cluster_id, operation_from_ssh, *operation_args)
 runner(program_to_run, *args_to_send)
