@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.80
+Version:       0.1.81
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -454,6 +454,12 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Aug 02 2017 Matt Woodson <mwoodson@redhat.com> 0.1.81-1
+- updated verify-cicd-operation (mwoodson@redhat.com)
+- updated verify cicd with more verbs (mwoodson@redhat.com)
+- scanpod-inmem: also swallow IOError to handle disappearing processes
+  (joesmith@redhat.com)
+
 * Fri Jul 28 2017 Pep Turró <pep@redhat.com> 0.1.80-1
 - Clarify the scope of node name checking (pep@redhat.com)
 - Mention the necessary output redirection in gather logs usage
