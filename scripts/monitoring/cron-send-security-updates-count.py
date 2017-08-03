@@ -82,7 +82,7 @@ class SecurityUpdates(object):
             self.sec_updates = []
             raise subprocess.CalledProcessError(proc.returncode, subprocess.list2cmdline(cmd), output=stdout+stderr)
         lineslist = [line for line in stdout.split('\n') if line and 'Errno' not in line]
-        self.sec_updates = [UpdateItem(*re.split(r'\s+', line)) for line in lineslist]
+        self.sec_updates = [UpdateItem(*re.split(r'\s+', line)) for line in lineslist if re.split(r'\s+', line) == 3]
         # now sec_updates looks like:
         #     [ UpdateItem(advisory='RHSA-1999:1234', type='Important/Sec.', package='pkgname:1.2.3-0.el7.x86_64'),
         #       UpdateItem(advisory='RHSA-2000:4321', type='Moderate/Sec.', package='somepkt-3:0.19.3-14.el7.x86_64') ]
