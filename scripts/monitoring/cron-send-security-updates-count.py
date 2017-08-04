@@ -29,12 +29,12 @@ import fileinput
 import subprocess
 from collections import namedtuple
 #pylint: disable=import-error
-from openshift_tools.monitoring.metric_sender import MetricSender
 from configobj import ConfigObj
 #pylint: enable=import-error
 import glob
 import yaml
 import logging
+from openshift_tools.monitoring.metric_sender import MetricSender
 
 ROOT = '/var/local/hostpkg'
 LOGFILE = '/var/log/cron-send-security-updates-count.log'
@@ -81,8 +81,15 @@ class SecurityUpdates(object):
         if proc.returncode != 0:
             self.sec_updates = []
             raise subprocess.CalledProcessError(proc.returncode, subprocess.list2cmdline(cmd), output=stdout+stderr)
-        lineslist = [line for line in stdout.split('\n') if line and 'Errno' not in line]
-        self.sec_updates = [UpdateItem(*re.split(r'\s+', line)) for line in lineslist if re.split(r'\s+', line) == 3]
+        for line in stdout.split('\n'):
+            if line and 'Errno' not in line:
+                if len(re.split(r'\s+', line)) == 3:
+                    self.sec_updates.append(UpdateItem(*re.split(r'\s+', line)))
+                else:
+                    logging.error('Security update %s looks like error output', line)
+            else:
+                logging.error('Unable to parse data from security update output: %s\n', line)
+
         # now sec_updates looks like:
         #     [ UpdateItem(advisory='RHSA-1999:1234', type='Important/Sec.', package='pkgname:1.2.3-0.el7.x86_64'),
         #       UpdateItem(advisory='RHSA-2000:4321', type='Moderate/Sec.', package='somepkt-3:0.19.3-14.el7.x86_64') ]
