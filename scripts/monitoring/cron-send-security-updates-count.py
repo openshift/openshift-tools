@@ -29,11 +29,11 @@ import fileinput
 import subprocess
 from collections import namedtuple
 #pylint: disable=import-error
-from configobj import ConfigObj
 #pylint: enable=import-error
 import glob
 import yaml
 import logging
+from configobj import ConfigObj
 from openshift_tools.monitoring.metric_sender import MetricSender
 
 ROOT = '/var/local/hostpkg'
@@ -69,6 +69,8 @@ class SecurityUpdates(object):
                 print(err)
             logging.error('Unable to read %s. Continuing.\n%s', wlfile, err)
 
+    #pylint: disable=too-many-branches
+    # fixme: pylint doesn't like the nested ifs here
     def get_security_updates(self):
         '''Run yum to get a list of pending security updates'''
         cmd = ['/usr/bin/yum', '--installroot='+ROOT, '-c', ROOT+'/etc/yum.conf',
