@@ -31,8 +31,8 @@ from collections import namedtuple
 #pylint: disable=import-error
 #pylint: enable=import-error
 import glob
-import yaml
 import logging
+import yaml
 from configobj import ConfigObj
 from openshift_tools.monitoring.metric_sender import MetricSender
 
