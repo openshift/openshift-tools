@@ -2,7 +2,7 @@
 - name: manage_user_policy
   oc_adm_policy_user:  # call openshift-ansible lib_openshift module
     namespace: "{{ item.namespace | default(omit) }}"
-    user: "{{ item.user }}"
+    user: "{{ item.username }}"
     resource_kind: "{{ item.resource_kind }}"
     resource_name: "{{ item.resource_name }}"
     state: "{{ item.state | default(omit) }}"

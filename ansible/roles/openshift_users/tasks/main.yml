@@ -1,0 +1,3 @@
+---
+- include: manage_user.yml
+  with_items: "{{ osu_users }}"
