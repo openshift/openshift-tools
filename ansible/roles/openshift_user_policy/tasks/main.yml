@@ -7,4 +7,5 @@
     resource_name: "{{ item.resource_name }}"
     state: "{{ item.state | default(omit) }}"
   run_once: true
+  when: inventory_hostname == ansible_play_hosts[0]
   with_items: "{{ osup_user_policy_bindings }}"
