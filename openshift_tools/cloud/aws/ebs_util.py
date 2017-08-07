@@ -37,7 +37,7 @@ OpenShiftVolumeIdTypes = namedtuple('OpenShiftVolumeIdTypes',
 PURPOSE_TAG_KEY = 'purpose'
 NAME_TAG_KEY = 'Name'
 
-STABLE_ATTACH_STATUSES = ['attached', 'detached', None]
+STABLE_ATTACH_STATUSES = ['attached', 'detached','in-use', None]
 
 class EbsUtil(Base):
     """ Useful utility methods for EBS """
