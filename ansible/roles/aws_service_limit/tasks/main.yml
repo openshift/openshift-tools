@@ -1,0 +1,10 @@
+---
+# tasks file for aws_service_limit
+- name: ensure als_region is defined
+  assert:
+    that: asl_region is defined
+    msg: "asl_region must be set"
+
+- name: include service limits facts
+  aws_service_limit:
+    region: "{{ asl_region }}"
