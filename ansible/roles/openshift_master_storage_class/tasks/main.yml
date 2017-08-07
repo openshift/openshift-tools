@@ -17,6 +17,20 @@
   notify:
   - restart openshift master services
 
+- name: get openshift version
+  oc_version:
+  register: oc_version
+
+- name: set api version for versions greater or eq than 3.6
+  set_fact:
+    l_storageclass_api_version: "storage.k8s.io/v1"
+  when: "{{ oc_version.results.oc_short | version_compare(3.6, '>=') }}"
+
+- name: set api version for versions less than 3.6
+  set_fact:
+    l_storageclass_api_version: "storage.k8s.io/v1beta1"
+  when: "{{ oc_version.results.oc_short | version_compare(3.6, 'lt') }}"
+
 - name: Ensure storageclass object
   oc_obj:
     kind: storageclass
@@ -25,7 +39,7 @@
       path: /tmp/osmsc_storageclass
       data:
         kind: StorageClass
-        apiVersion: storage.k8s.io/v1beta1
+        apiVersion: "{{ l_storageclass_api_version }}"
         metadata:
           name: "{{ osmsc_storageclass_name }}"
           annotations:
@@ -35,6 +49,7 @@
           type: "{{ osmsc_storageclass_type }}"
           zone: "{{ osmsc_storageclass_zone }}"
   run_once: true
+  when: inventory_hostname == ansible_play_hosts[0]
   notify:
   - restart openshift master services
 
