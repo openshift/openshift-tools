@@ -1,4 +1,4 @@
-aws_service_limit
+lib_aws_service_limit
 =========
 
 This module exposes AWS service limits and account attributes as Ansible
@@ -39,9 +39,11 @@ Example Playbook
 
 - name: include service limits role
   include_role:
-    name: aws_service_limit
-  vars:
-    asl_region: 'us-east-1'
+    name: lib_aws_service_limit
+
+- name: load service limits module
+  aws_service_limit:
+    region: 'us-east-1'
 
 Example Output
 ----------------

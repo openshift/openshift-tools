@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: aws_service_limit
+module: lib_aws_service_limit
 short_description: Provides AWS service limits as facts.
 requirements:
   - boto3 >= 1.4.4
@@ -163,12 +163,15 @@ def main():
                                   endpoint=ec2_url,
                                   **aws_connect_params)
 
+            # region is hard-coded because there is only one support endpoint.
+            # see: https://docs.aws.amazon.com/general/latest/gr/rande.html#awssupport_region
             ta_conn = boto3_conn(module,
                                  conn_type='client',
                                  resource='support',
-                                 region=region,
+                                 region='us-east-1',
                                  endpoint=ec2_url,
                                  **aws_connect_params)
+
         except (botocore.exceptions.NoCredentialsError,
                 botocore.exceptions.ProfileNotFound) as exc:
             module.fail_json(msg=exc.message,
