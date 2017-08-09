@@ -1,0 +1,40 @@
+---
+- name: Pre-pull master system container image
+  command: >
+    atomic pull --storage=ostree {{ openshift.common.system_images_registry }}/{{ openshift.master.master_system_image }}:{{ openshift_image_tag }}
+  register: pull_result
+  changed_when: "'Pulling layer' in pull_result.stdout"
+
+- name: Check Master system container package
+  command: >
+    atomic containers list --no-trunc -a -f container={{ openshift.common.service_type }}-master
+  register: result
+
+- name: Install or Update master system container
+  oc_atomic_container:
+    name: "{{ openshift.common.service_type }}-master"
+    image: "{{ openshift.common.system_images_registry }}/{{ openshift.master.master_system_image }}:{{ openshift_image_tag }}"
+    state: latest
+  when:
+    - not l_is_ha
+
+# HA
+- name: Install or Update HA api master system container
+  oc_atomic_container:
+    name: "{{ openshift.common.service_type }}-master-api"
+    image: "{{ openshift.common.system_images_registry }}/{{ openshift.master.master_system_image }}:{{ openshift_image_tag }}"
+    state: latest
+    values:
+      - COMMAND=api
+  when:
+    - l_is_ha
+
+- name: Install or Update HA controller master system container
+  oc_atomic_container:
+    name: "{{ openshift.common.service_type }}-master-controllers"
+    image: "{{ openshift.common.system_images_registry }}/{{ openshift.master.master_system_image }}:{{ openshift_image_tag }}"
+    state: latest
+    values:
+      - COMMAND=controllers
+  when:
+    - l_is_ha

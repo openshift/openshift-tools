@@ -1,0 +1,15 @@
+---
+- name: update ca trust
+  command: update-ca-trust
+  notify:
+    - restart docker after updating ca trust
+
+- name: restart docker after updating ca trust
+  systemd:
+    name: "{{ openshift.docker.service_name }}"
+    state: restarted
+  when: not openshift_certificates_redeploy | default(false) | bool
+  register: l_docker_restart_docker_in_cert_result
+  until: not l_docker_restart_docker_in_cert_result | failed
+  retries: 3
+  delay: 30
