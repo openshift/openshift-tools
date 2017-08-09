@@ -1,0 +1,81 @@
+---
+# TODO: refactor this into its own include
+# and pass a variable for ctx
+- name: Verify Requirements
+  hosts: oo_all_hosts
+  roles:
+  - openshift_health_checker
+  vars:
+  - r_openshift_health_checker_playbook_context: "install"
+  post_tasks:
+  - action: openshift_health_check
+    args:
+      checks:
+      - disk_availability
+      - memory_availability
+      - package_availability
+      - package_version
+      - docker_image_availability
+      - docker_storage
+
+- include: initialize_oo_option_facts.yml
+  tags:
+  - always
+
+- name: Disable excluders
+  hosts: oo_masters_to_config:oo_nodes_to_config
+  tags:
+  - always
+  gather_facts: no
+  roles:
+  - role: openshift_excluder
+    r_openshift_excluder_action: disable
+    r_openshift_excluder_service_type: "{{ openshift.common.service_type }}"
+
+- include: ../openshift-etcd/config.yml
+  tags:
+  - etcd
+
+- include: ../openshift-nfs/config.yml
+  tags:
+  - nfs
+
+- include: ../openshift-loadbalancer/config.yml
+  tags:
+  - loadbalancer
+
+- include: ../openshift-master/config.yml
+  tags:
+  - master
+
+- include: additional_config.yml
+  tags:
+  - master
+
+- include: ../openshift-node/config.yml
+  tags:
+  - node
+
+- include: ../openshift-glusterfs/config.yml
+  tags:
+  - glusterfs
+
+- include: openshift_hosted.yml
+  tags:
+  - hosted
+
+- include: service_catalog.yml
+  when:
+  - openshift_enable_service_catalog | default(false) | bool
+  tags:
+  - servicecatalog
+
+- name: Re-enable excluder if it was previously enabled
+  hosts: oo_masters_to_config:oo_nodes_to_config
+  tags:
+  - always
+  gather_facts: no
+  roles:
+  - role: openshift_excluder
+    r_openshift_excluder_action: enable
+    r_openshift_excluder_service_type: "{{ openshift.common.service_type }}"

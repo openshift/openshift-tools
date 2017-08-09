@@ -1,0 +1,3 @@
+---
+r_etcd_upgrade_action: upgrade
+r_etcd_upgrade_mechanism: rpm
