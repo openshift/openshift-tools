@@ -1,1 +1,0 @@
-../../lib_openshift/library/oc_obj.py
