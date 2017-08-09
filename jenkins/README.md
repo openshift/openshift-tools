@@ -34,27 +34,30 @@ oc set volumes dc/jenkins --add -t secret --secret-name=openshift-ops-bot-secret
 
 4. Log into the jenkins instance using the default credentials. Navigate to 'Manage Jenkins' > 'Manage Users' and click the 'config' icon for the admin user. Change the admin users password to something much more secure.
 
-5. In jenkins, navigate to 'Manage Jenkins' > 'Configure Global Security'. Under 'Access Control' > 'Authorization', the radio button 'Matrix-based security' should be checked by default. In the matrix, select 'Read' access for the Anonymous group under 'Job'. Additionally, select 'Build' for the Anonymous group under 'Job'. This will allow github to post to jenkins via webhooks.
+5. In jenkins, navigate to 'Manage Jenkins' > 'Configure Global Security'. Under 'Access Control' > 'Authorization', the radio button 'Matrix-based security' should be checked by default. In the matrix, select 'Read' access for the Anonymous group under 'Global' and under 'Job'. Additionally, select 'Build' for the Anonymous group under 'Job'. This will allow github to post to jenkins via webhooks.
 
 6. Due to a [bug in jenkins](https://issues.jenkins-ci.org/browse/JENKINS-28466), it is necessary to navigate to 'Manage Jenkins' > 'Configure System' and hit 'Save'. If this is not done, certain environment variables, such as `BUILD_URL` will not be available to jenkins pipeline builds.
 
-7. In Jenkins, create a new jenkins pipeline job. Configure the following:
+7. Due to a bug in the jenkins pipeline plugin, it is necessary to update to at least version 1.0.42 of the plugin. Navigate to 'Manage Jenkins' > 'Manage plugins' and find the openshift pipeline plugin in the list of plugins with updates. Select the plugin and click update. Jenkins will need to restart once the plugin is installed.
+
+8. In the main Jenkins menu, click 'New Item' and create a new jenkins pipeline job. Configure the following:
   1. Check the 'This project is parameterized' box and add a 'String Parameter' with the Name 'payload' (case-sensitive). Leave all other boxes empty.
   2. Under 'Build Triggers', check the 'Trigger builds remotely' checkbox and specify any string to use as the authorization token. This same token will be used later to configure the github webhook.
   3. Under 'Pipeline', you can either have jenkins pull the pipeline instructions Jenkinsfile from github, or you can copy and paste the Jenkinsfile contents from `jenkins/test/Jenkinsfile` into the text box. Grabbing the Jenkinsfile from Github will add 10-20 seconds to the build time. Select 'Pipeline script from SCM' as the pipeline definition. Choose 'Git' as the SCM and specify `https://github.com/openshift/openshift-tools` as the repository url. Leave the 'Branches to build' blank. For the 'Script path', set to 'jenkins/Jenkinsfile'
   4. Uncheck the "use groovy sandbox" checkbox. The mounted secret volume cannot be accessed by the pipeline from within the sandbox.
   5. Save the job
     
-8. In github, navigate to the settings for openshift-tools with administrator permissions. Under webhooks, create a new webhook and configure the following:
+9. In github, navigate to the settings for openshift-tools with administrator permissions. Under webhooks, create a new webhook and configure the following:
   1. The Payload URL will be the url of the jenkins build trigger configured earlier. Here is an example where 'someuniquestring' is specified as the build trigger token: `https://jenkins-exampleproject.example.com/job/job_name/buildWithParameters?token=someuniquestring`
   2. Set the 'Content type' to `application/x-www-form-urlencoded`. This enabled the webhook payload to be sent as a parameter to the jenkins job.
   3. Under "Which events would you like to trigger", select only 'Pull request'.
   4. Check the 'Active' box to ensure the github webhook is active
   5. Hit 'Update webhook' to save the changes.
 
-9. Ensure that the github user used to update pull requests has push permissions to the repository. As an adiministrator of the repository, navigate to 'Settings' > 'Collaborators' to invite the user to have 'Write' permissions.
+10. Ensure that the github user used to update pull requests has push permissions to the repository. As an adiministrator of the repository, navigate to 'Settings' > 'Collaborators' to invite the user to have 'Write' permissions.
 
 ## Possible Gotchas
+- Upon re-deploy, its possible that the jenkins username and password have been reset to the default `admin:password`. A system needs to be put into place to set the password properly from a secret. The `JENKINS_PASSWORD` env variable can be passed into the jenkins deployment through the deploymentConfig to set the password approriately. Optionally, oauth can be enabled to use SSO.
 - The `test/run_tests.py` file is the only file that is not dynamically updated with changes. This means that if you modify `test/run_tests.py` in a pull request, those changes will not take affect during testing until the changes have been merged. This occurs because `test/run_tests.py` is the entrypoint to testing that pulls in the changes. Something must run to pull in the changes made in a pull request that will be unaffected by the pull request. The testing currently runs from the 'stg' branch to help with this. Once the commit is merged to stg, the pull request submitting the changes to the prod branch will run with the updated `test/run_tests.py` to allow for proper verification.
 - Tests in the `test/Validators/` directory are run dynamically. If a pull request includes a new *.py or *.sh executable script in this directory, it will be run during testing. Because of the possible security implications, there are whitelists that must be used to specify only trusted individuals allowed to run tests.
 - To build and install rpms, the testing must run as root. This requires the testing to be run as a docker build. The docker build adds some extra complexity and a good deal of additional time to the testing process. Pull requests will not be updated with an indication that testing is in progress until the `test/run_tests.py` executable has been called during the docker build. This delay can cause some confusion.
