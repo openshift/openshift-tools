@@ -1,0 +1,18 @@
+---
+openshift:
+  hosted:
+    registry:
+      storage:
+        nfs:
+          directory: "/exports"
+          options: "*(rw,root_squash)"
+        volume:
+          name: "registry"
+    metrics:
+      deploy: False
+      storage:
+        nfs:
+          directory: "/exports"
+          options: "*(rw,root_squash)"
+        volume:
+          name: "metrics"
