@@ -1,14 +1,192 @@
+# devaccess_user sample config file: purpose is to have example for local development
+# the real data is stored in the private repo, while this may seem like it is in sync with
+# the command list in private that might not be always the case, thus changes to this file
+# won't appear on deployed systems
+---
 roles:
 - name: ALL
   commands:
-  - oc get nodes -ndefault
-  - oc get nodes -ndefault -ojson
-  - rpm -qa
-  - oc get pods -ndefault
-  - oc get pods -nopenshift-infra
-  - oc get pods -nlogging
-  - oc get routes -ndefault
-  - oc get routes -nlogging
+    - base: oc get
+      types:
+        - names:
+            - node
+            - nodes
+          runner: oc_get_generic
+          output:
+            - json
+        - names:
+            - pod
+            - pods
+          runner: oc_get_generic
+          namespaces:
+            - default
+            - logging
+            - openshift-infra
+        - names:
+            - dc
+            - deploymentconfig
+          runner: oc_get_generic
+          namespaces:
+            - default
+            - openshift-infra
+        - names:
+            - route
+            - routes
+          runner: oc_get_routes
+          namespaces:
+            - default
+            - logging
+        - names:
+            - storageclass
+          runner: oc_get_generic
+        - names:
+            - pvc
+          runner: oc_get_generic
+          namespaces:
+            - all
+        - names:
+            - ns
+            - project
+            - projects
+            - namespace
+            - namespaces
+          runner: oc_get_generic
+        - names:
+            - svc
+            - service
+            - services
+          runner: oc_get_generic
+          namespaces:
+            - all
+
+    - base: oc describe
+      types:
+        - names:
+            - clusterresourcequota
+
+    - base: rpm
+      runner: safe_command
+      switches:
+        - -qa
+
+    - base: cat
+      runner: sudo_command
+      switches:
+        - /proc/cpuinfo
+        - /proc/meminfo
+        - /proc/vmstat
+        - /proc/interrupts
+        - /proc/slabinfo
+        - /proc/cmdline
+        - /etc/origin/node/node-config.yaml
+
+    - base: ethtool
+      runner: safe_command
+      switches:
+        - -i
+      leftover:
+        - '^eth[0-9]$'
+        - '^enp\ds\d$'
+    - base: uptime
+      runner: safe_command
+    - base: lsblk
+      runner: safe_command
+      switches:
+        - -at
+        - --output
+      leftover:
+        - NAME,KNAME,FSTYPE,RA,SIZE,SCHED,TYPE
+    - base: lscpu
+      runner: safe_command
+    - base: uname
+      runner: safe_command
+      switches:
+        - -r
+    - base: df
+      runner: safe_command
+      switches:
+        - -h
+    - base: iostat
+      runner: cmd_with_tail
+      switches:
+        - -x
+        - -y
+    - base: mpstat
+      runner: cmd_with_tail
+      switches:
+        - -P
+        - ALL
+      leftover:
+        - '^\d+ \d+$'
+    - base: vmstat
+      runner: cmd_with_tail
+      switches:
+        - -w
+      leftover:
+        - '^\d+ \d+$'
+    - base: hostname
+      runner: safe_command
+    - base: date
+      runner: safe_command
+    - base: dmidecode
+      runner: safe_command
+    - base: sysctl
+      runner: safe_command
+      switches:
+        - -a
+    - base: tuned-adm
+      runner: safe_command
+      switches:
+        - list
+    - base: ip
+      runner: safe_command
+      switches:
+        - a
+        - neigh
+        - show
+    - base: docker
+      runner: sudo_command
+      switches:
+        - version
+        - info
+        - ps
+        - -a
+        - stats
+        - --no-stream
+    - base: pstree
+      runner: safe_command
+    - base: pidstat
+      runner: safe_command
+      switches:
+        - -l
+        - -w
+        - -u
+        - -d
+        - -r
+        - -t
+        - -p
+        - ALL
+    - base: systemctl
+      runner: safe_command
+      switches:
+        - status
+        - -al
+        - --no-pager
+    - base: systemd-cgls
+      runner: safe_command
+    - base: ps
+      runner: safe_command
+      switches:
+        - auxwww
+        - aux
+    - base: etcdctl
+      runner: sudo_command
+      defaultparams:
+        - --ca-file /etc/etcd/ca.crt  --cert-file /etc/etcd/peer.crt --key-file /etc/etcd/peer.key
+      switches:
+        - member
+        - list
+
 - name: nobody_role
   commands:
   - uname
@@ -18,3 +196,5 @@ users:
   roles:
   - nobody_role
 - username: noroleuser
+
+  
