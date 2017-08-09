@@ -8,4 +8,4 @@
     exclude: "{{ oul_exclude }}"
     state: latest
   when: os_update is defined
-  
+
