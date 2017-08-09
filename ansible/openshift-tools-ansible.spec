@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.39
+Version:        0.0.40
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,22 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Wed Aug 09 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.40-1
+- Set a default to false for generate certificate for hosted router
+  (kwoodson@redhat.com)
+- Changed openshift_user_policy and openshift_users to only run once.
+  (twiest@redhat.com)
+- Added openshift_users role. (twiest@redhat.com)
+- adding version check for proper storage api (ihorvath@redhat.com)
+- moving the limits, it was in the wrong section in the template
+  (ihorvath@redhat.com)
+- Updating to 3.6 lib_openshift (whearn@redhat.com)
+- add openshift_disk_provision role (#2748) (blentz@users.noreply.github.com)
+- Changed openshift_user_policy to take a list of cluster role bindings instead
+  of a single one. (twiest@redhat.com)
+- Adding necessary config to run and report rkhunter scans from host monitoring
+  container (dedgar@redhat.com)
+
 * Wed Jul 19 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.39-1
 - counting services (ihorvath@redhat.com)
 - add var that can disable app create on special clusters (ihorvath@redhat.com)
