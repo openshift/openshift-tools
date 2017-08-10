@@ -24,10 +24,10 @@ Requirements
 
 boto 3.x+
 
-Role Variables
+Module Variables
 --------------
 
-asl_region:  String - The AWS region that boto should use for creating the AWS connection.
+region:  String - The AWS region that boto should use for creating the AWS connection.
 
 Dependencies
 ------------
@@ -47,6 +47,7 @@ Example Playbook
 
 Example Output
 ----------------
+
 "aws_service_limits": [
     {
         "current_value": integer,
