@@ -69,8 +69,6 @@ class SecurityUpdates(object):
                 print(err)
             logging.error('Unable to read %s. Continuing.\n%s', wlfile, err)
 
-    #pylint: disable=too-many-branches
-    # fixme: pylint doesn't like the nested ifs here
     def get_security_updates(self):
         '''Run yum to get a list of pending security updates'''
         cmd = ['/usr/bin/yum', '--installroot='+ROOT, '-c', ROOT+'/etc/yum.conf',
@@ -84,13 +82,10 @@ class SecurityUpdates(object):
             self.sec_updates = []
             raise subprocess.CalledProcessError(proc.returncode, subprocess.list2cmdline(cmd), output=stdout+stderr)
         for line in stdout.split('\n'):
-            if line and 'Errno' not in line:
-                if len(re.split(r'\s+', line)) == 3:
-                    self.sec_updates.append(UpdateItem(*re.split(r'\s+', line)))
-                else:
-                    logging.error('Security update %s looks like error output', line)
+            if line and 'Errno' not in line and len(re.split(r'\s+', line)) == 3:
+                self.sec_updates.append(UpdateItem(*re.split(r'\s+', line)))
             else:
-                logging.error('Unable to parse data from security update output: %s\n', line)
+                logging.error('Unable to parse data from security update output:\n%s\n', line)
 
         # now sec_updates looks like:
         #     [ UpdateItem(advisory='RHSA-1999:1234', type='Important/Sec.', package='pkgname:1.2.3-0.el7.x86_64'),
