@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+''' module for retrieving AWS service limits '''
+
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
@@ -174,6 +176,7 @@ def main():
 
         except (botocore.exceptions.NoCredentialsError,
                 botocore.exceptions.ProfileNotFound) as exc:
+            # pylint: disable=no-member
             module.fail_json(msg=exc.message,
                              exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(exc.response))
