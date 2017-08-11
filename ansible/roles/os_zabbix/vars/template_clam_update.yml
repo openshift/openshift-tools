@@ -1,0 +1,14 @@
+---
+g_template_ops_clam_update:
+  name: Template Ops Clam Update
+  zitems:
+  - key: clam.update.signatures.not.updating
+    applications:
+    - Ops Clam Update
+    value_type: int
+
+  ztriggers:
+  - name: "Clam signatures older than 2 weeks"
+    expression: "{Template Ops Clam Update:clam.update.signatures.not.updating.min(#3)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_clam_update.asciidoc"
+    priority: warning

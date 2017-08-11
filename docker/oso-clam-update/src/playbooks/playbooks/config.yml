@@ -1,0 +1,22 @@
+---
+- hosts: localhost
+  # need this for ansible_nodename
+  gather_facts: yes
+  vars_files:
+  - /var/lib/clamav/playbooks/default_vars.yml
+  vars:
+
+  tasks:
+  - include_vars:
+      file: "{{ item.file }}"
+      name: "{{ item.name }}"
+    with_items:
+      - name: zagg_configdata
+        file: /secrets/zagg-config-values.yaml
+
+  - name: populate templated config file
+    vars:
+      hostname: "{{ ansible_nodename }}"
+    template:
+      src: "/var/lib/clamav/playbooks/templates/metric_sender.yaml.j2"
+      dest: "/var/lib/clamav/playbooks/metric_sender.yaml"
