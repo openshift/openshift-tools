@@ -1,0 +1,29 @@
+---
+- hosts: localhost
+  remote_user: root
+  gather_facts: true
+  tasks:
+    - name: include service limits role
+      include_role:
+        name: lib_aws_service_limit
+
+    - name: call service limits module
+      aws_service_limit:
+        region: 'us-west-2'
+
+    - name: test service limit
+      debug:
+        msg: "{{ aws_service_limits }}"
+
+    - name: test selecting a single service limit entry
+      debug:
+        msg: "{{ aws_service_limits | selectattr('limit_name', 'match', '^Active volumes$') | selectattr('region', 'match', '^us-east-1$') | list | first }}"
+
+    - name: test account attributes
+      debug:
+        msg: "{{ aws_account_attributes }}"
+
+    - name: test fetching a single account attribute
+      debug:
+        msg: "{{ aws_account_attributes['max-instances'] }}"
+
