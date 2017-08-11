@@ -74,6 +74,10 @@
   tags:
   - sso_app
 
+- include_vars: template_clam_update.yml
+  tags:
+  - clam_update
+
 - include_vars: template_multi_inventory.yml
   tags:
   - multi_inventory
@@ -292,6 +296,16 @@
     password: "{{ ozb_password }}"
   tags:
   - sso_app
+
+- name: Include Template Ops Clam Update
+  include: ../../lib_zabbix/tasks/create_template.yml
+  vars:
+    template: "{{ g_template_ops_clam_update }}"
+    server: "{{ ozb_server }}"
+    user: "{{ ozb_user }}"
+    password: "{{ ozb_password }}"
+  tags:
+  - clam_update
 
 - name: Include Template MultiInventory
   include: ../../lib_zabbix/tasks/create_template.yml
