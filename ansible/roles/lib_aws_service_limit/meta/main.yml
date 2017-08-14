@@ -1,0 +1,8 @@
+galaxy_info:
+  author: Brett Lentz <blentz@redhat.com>
+  description: Module for exposing AWS service limits
+  company: Red Hat, Inc.
+  license: Apache Software License 2.0
+  min_ansible_version: 2.0
+  galaxy_tags: ['aws', 'cloud']
+dependencies: []
