@@ -12,8 +12,8 @@ shift
 
 # The purpose of this script is to run something in an infinite loop
 while $? ; do
-    "$@"
     sleep $SLEEP_TIME
+    "$@"
 done
 
 killall httpd
