@@ -340,6 +340,20 @@ class WhitelistedCommands(object):
         return results
 
     @staticmethod
+    def script_command(cmd):
+        ''' run a script from /usr/local/bin folder that we install via rpm
+        '''
+        results = ''
+        try:
+            cmd_split = cmd.split()
+            cmd_split[0] = '/usr/local/bin/' + cmd_split[0]
+            results = subprocess.check_output(['/usr/bin/sudo'] + cmd_split)
+        except subprocess.CalledProcessError:
+            log.exception("Call to process (%s) failed", cmd)
+
+        return results
+
+    @staticmethod
     def oc_get_generic(occmd):
         ''' provide a generic 'oc get ' artifact '''
         run_cmd = WhitelistedCommands.oc_cmd_builder(occmd)
@@ -482,14 +496,14 @@ class DevGet(object):
                 self._runner = command['runner']
                 # remove the matched part, strip whitespace
                 # TODO: check if doing this with regex is faster to process
-                cmd = cmd.replace(command['base'], '').strip()
+                tmp_cmd = cmd.replace(command['base'], '').strip()
                 # if command has no switches or other params but matched, then we just run it
-                if len(cmd) == 0:
+                if len(tmp_cmd) == 0:
                     can_run = True
                     break
 
                 # tokenizing the param list
-                all_tokens = cmd.split()
+                all_tokens = tmp_cmd.split()
                 delete_tokens = []
                 # switches need to be present, partial matches are ok
                 if command.has_key('switches'):
@@ -556,7 +570,7 @@ class DevGet(object):
     def main(self):
         ''' Entry point for class '''
         cmd = self._args
-        log.debug("user: %s command: %s", self._user, self._args)
+        log.info("user: %s command: %s", self._user, self._args)
 
         # Check whether user has permissions to run command.
         # oc commands are handled in a special way, since those

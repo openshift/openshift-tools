@@ -1,0 +1,3 @@
+#!/bin/bash
+/usr/bin/etcdctl --ca-file /etc/etcd/ca.crt  --cert-file /etc/etcd/peer.crt --key-file /etc/etcd/peer.key --endpoints https://$(hostname):2379 $@
+
