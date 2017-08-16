@@ -174,6 +174,9 @@ class RemoteHealer(object):
             #run
             self.run_cmd(cmd.split())
 
+        elif re.search(r'^\[HEAL\] Heartbeat.ping has failed (15 min) on', self._args.trigger):
+            cmd = '/usr/bin/delete_host_from_zabbix.py "'+self._args.host+'"'
+            self.run_cmd(cmd.split())
         else:
             logging.info("No healing action defined for trigger: " + self._args.trigger)
 
