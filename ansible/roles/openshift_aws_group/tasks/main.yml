@@ -4,6 +4,10 @@
     iam_type: group
     name: "{{ osagr_name }}"
     state: present
+  register: result
+  until: result | success
+  retries: 10
+  delay: 10
 
 - name: Associate inline IAM policies with group
   iam_policy:
@@ -12,3 +16,7 @@
     policy_name: "{{ osagr_policy_name }}"
     policy_json: "{{ osagr_json_policy|to_json }}"
     state: present
+  register: result
+  until: result | success
+  retries: 10
+  delay: 10
