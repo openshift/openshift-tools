@@ -176,10 +176,11 @@ The purpose of this rule is to make it easy to include custom modules in our pla
 ----
 - hosts: openshift_hosts
   gather_facts: no
-  roles:
-  - role: openshift_facts
-  post_tasks:
-  - openshift_facts
+  tasks:
+  - include_role:
+      name: openshift_facts
+
+  - openshift_facts:
       role: common
       hostname: host
       public_hostname: host.example.com
@@ -359,8 +360,9 @@ Therefore, we SHOULD use pre_tasks and post_tasks to make it more clear when the
   tasks:
   - name: This will execute AFTER the example_role, so it's confusing
     debug: msg="in tasks list"
-  roles:
-  - role: example_role
+
+  - include_role:
+      name: example_role
 
 # roles/example_role/tasks/main.yml
 - debug: msg="in example_role"
@@ -373,11 +375,11 @@ Therefore, we SHOULD use pre_tasks and post_tasks to make it more clear when the
 # playbook.yml
 - hosts: localhost
   gather_facts: no
-  pre_tasks:
+  tasks:
   - name: This will execute BEFORE the example_role, so it makes sense
     debug: msg="in pre_tasks list"
-  roles:
-  - role: example_role
+  - include_role:
+      name: example_role
 
 # roles/example_role/tasks/main.yml
 - debug: msg="in example_role"
@@ -535,4 +537,79 @@ modules.
 - name: Install etcd (for etcdctl)
   action: "{{ ansible_pkg_mgr }} name=etcd state=latest"
   register: install_result
-  ----
+----
+
+=== Playbook flow and stages
+'''
+[[Playbooks-MUST-use-include_role]]
+[cols="2v,v"]
+|===
+| <<Playbooks-MUST-use-include_role, Rule>>
+| Playbooks MUST use include_role instead of roles:
+|===
+
+[[Playbooks-SHOULD-NOT-use-the-pre-roles-post-tasks-sections]]
+[cols="2v,v"]
+|===
+| <<Playbooks-SHOULD-NOT-use-the-pre-roles-post-tasks-sections, Rule>>
+| Playbooks SHOULD NOT use pre_tasks, post_tasks, and roles: sections.  Should use tasks: and include_role:.
+|===
+
+Playbook execution should be top-to-bottom.  The user should not be required to determine execution order of plays or sections.  This
+is accomplished by removing the pre_tasks:, roles:, and post_tasks: sections in a playbook.  When a role is needed then include_role SHOULD be used instead.
+
+
+include_role is the future of ansible.  It introduces a way to call roles that is flexible and allows for looping.  With the playbooks reading top-to-bottom the 
+playbook execution is much easier to read and understand.
+
+.Bad:
+[source,yaml]
+----
+---
+# tasks.yml
+- hosts: somehost
+  post_tasks:
+  - name: Install etcd (for etcdctl)
+    yum: name=etcd state=latest"
+    when: "ansible_pkg_mgr == yum"
+    register: install_result
+
+  roles:
+  - somerole
+  - someotherrole
+
+  pre_tasks:
+  - name: Install etcd (for etcdctl)
+    dnf: name=etcd state=latest"
+    when: "ansible_pkg_mgr == dnf"
+    register: install_result
+----
+
+
+.Good:
+[source,yaml]
+----
+---
+# tasks.yml
+- hosts: somehost
+  tasks:
+  - name: required package
+    package: 
+      name: my_preinstall_requirement_package 
+      state: latest"
+    register: install_result
+
+  - name: dosomething
+    include_role:
+      name: somerole
+
+  - name: dosomethingelse
+    include_role:
+      name: someotherrole
+
+  - name: Install etcd (for etcdctl)
+    package: 
+      name: etcd 
+      state: latest"
+    register: install_result
+----
