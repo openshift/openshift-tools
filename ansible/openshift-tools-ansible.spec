@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.40
+Version:        0.0.41
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,16 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Mon Aug 21 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.41-1
+- add retries to openshift_aws_group to avoid failures due to api rate limiting
+  (blentz@redhat.com)
+- obg_kmskeyid is omitted which means it is defined (jdiaz@redhat.com)
+- clean up docs (blentz@redhat.com)
+- fix pylint issues (blentz@redhat.com)
+- Exclude yum update when not updating (whearn@redhat.com)
+- rename module to lib_aws_service_limit (blentz@redhat.com)
+- create aws_service_limit module (blentz@redhat.com)
+
 * Wed Aug 09 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.40-1
 - Set a default to false for generate certificate for hosted router
   (kwoodson@redhat.com)
