@@ -1,0 +1,129 @@
+# This playbook installs the latest OS updates on a cluster and reboots all updated cluster hosts.
+# It's idempotent and safe to run repeatedly. Only hosts that have been updated will be rebooted.
+# Usage example:
+#  ansible-playbook os_update.yml -e cli_kernel_version=3.10.0-693.1.1.el7 -e cli_clusterid=dakinitest
+
+- hosts: localhost
+  gather_facts: no
+  become: no
+  user: root
+
+  tasks:
+
+  - name: Check for required variables
+    fail:
+      msg: "Please define {{ item }}"
+    when: "{{ item }} is undefined"
+    with_items:
+    - cli_clusterid
+    - cli_kernel_version
+    run_once: True
+
+##############################################
+# Master upgrade
+##############################################
+
+- hosts: "oo_clusterid_{{ cli_clusterid }}:&oo_hosttype_master"
+  gather_facts: no
+  become: no
+  user: root
+  serial: 1
+
+  roles:
+  - role: ../../../roles/package_update_needed
+    pun_package_name: kernel
+    pun_wanted_version: "{{ cli_kernel_version }}"
+
+  - role: ../../../roles/openshift_aws_elb_instance_manager
+    osaeim_elb_name: "{{ cli_clusterid }}-master"
+    osaeim_state: absent
+    osaeim_instance_ids: "{{ ec2_id }}"
+    osaeim_region: "{{ oo_sublocation }}"
+    osaeim_aws_access_key: "{{ lookup('env', 'ACCESS_KEY_ID') }}"
+    osaeim_aws_secret_key: "{{ lookup('env', 'SECRET_ACCESS_KEY') }}"
+    when: pun_retval_update_needed
+
+  - role: ../../../roles/os_update_latest
+    oul_package_names: "*"
+    oul_exclude: "docker*, atomic-openshift*"
+    oul_os_update: True
+    when: pun_retval_update_needed
+
+  - role: ../../../roles/os_reboot_server
+    when: pun_retval_update_needed
+
+  - role: ../../../roles/openshift_aws_elb_instance_manager
+    osaeim_elb_name: "{{ cli_clusterid }}-master"
+    osaeim_state: present
+    osaeim_instance_ids: "{{ ec2_id }}"
+    osaeim_region: "{{ oo_sublocation }}"
+    osaeim_aws_access_key: "{{ lookup('env', 'ACCESS_KEY_ID') }}"
+    osaeim_aws_secret_key: "{{ lookup('env', 'SECRET_ACCESS_KEY') }}"
+    when: pun_retval_update_needed
+    run_once: True
+
+##############################################
+# Infra upgrade
+##############################################
+
+- hosts: "oo_clusterid_{{ cli_clusterid }}:&oo_subhosttype_infra"
+  gather_facts: no
+  become: no
+  user: root
+  serial: 1
+
+  roles:
+  - role: ../../../roles/package_update_needed
+    pun_package_name: kernel
+    pun_wanted_version: "{{ cli_kernel_version }}"
+
+  - role: ../../../roles/openshift_node_schedulable
+    osns_is_schedulable: False
+    osns_drain: True
+    osns_cluster_master: "{{ groups['oo_hosttype_master'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
+    
+  - role: ../../../roles/os_update_latest
+    oul_package_names: "*"
+    oul_exclude: "docker*, atomic-openshift*"
+    oul_os_update: True
+    when: pun_retval_update_needed
+
+  - role: ../../../roles/os_reboot_server
+    when: pun_retval_update_needed
+
+  - role: ../../../roles/openshift_node_schedulable
+    osns_is_schedulable: True
+    osns_cluster_master: "{{ groups['oo_hosttype_master'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
+    
+##############################################
+# Compute upgrade
+##############################################
+
+- hosts: "oo_clusterid_{{ cli_clusterid }}:&oo_subhosttype_compute"
+  gather_facts: no
+  become: no
+  user: root
+  serial: 10%
+
+  roles:
+  - role: ../../../roles/package_update_needed
+    pun_package_name: kernel
+    pun_wanted_version: "{{ cli_kernel_version }}"
+
+  - role: ../../../roles/openshift_node_schedulable
+    osns_is_schedulable: False
+    osns_drain: True
+    osns_cluster_master: "{{ groups['oo_hosttype_master'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
+
+  - role: ../../../roles/os_update_latest
+    oul_package_names: "*"
+    oul_exclude: "docker*, atomic-openshift*"
+    oul_os_update: True
+    when: pun_retval_update_needed
+ 
+  - role: ../../../roles/os_reboot_server
+    when: pun_retval_update_needed
+
+  - role: ../../../roles/openshift_node_schedulable
+    osns_is_schedulable: True
+    osns_cluster_master: "{{ groups['oo_hosttype_master'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
