@@ -1,0 +1,16 @@
+---
+- include: openshift-cluster/initialize_groups.yml
+  tags:
+  - always
+
+- name: Subscribe hosts, update repos and update OS packages
+  # Temporarily reverting to OSEv3 until group standardization is complete
+  hosts: OSEv3
+  roles:
+  - role: rhel_subscribe
+    when: deployment_type in ['atomic-enterprise', 'enterprise', 'openshift-enterprise'] and
+          ansible_distribution == "RedHat" and
+          lookup('oo_option', 'rhel_skip_subscription') | default(rhsub_skip, True) |
+          default('no', True) | lower in ['no', 'false']
+  - openshift_repos
+  - os_update_latest
