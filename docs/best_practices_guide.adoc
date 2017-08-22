@@ -434,7 +434,7 @@ This is very useful when developing and debugging new tasks. It can also signifi
 [[Ansible-Roles-SHOULD-be-named-like-technology_component_subcomponent]]
 [cols="2v,v"]
 |===
-| [[Ansible-Roles-SHOULD-be-named-like-technology_component_subcomponent, Rule]]
+| <<Ansible-Roles-SHOULD-be-named-like-technology_component_subcomponent, Rule>>
 | Ansible Roles SHOULD be named like technology_component[_subcomponent].
 |===
 
@@ -445,6 +445,45 @@ Many times the `technology` portion of the pattern will line up with a package n
 .Examples:
 * The role to configure a master is called `openshift_master`
 * The role to configure OpenShift specific yum repositories is called `openshift_repos`
+
+
+'''
+[[Ansible-Roles-SHOULD-use-lib-roles-for-functionality-sharing]]
+[cols="2v,v"]
+|===
+| <<Ansible-Roles-SHOULD-use-lib-roles-for-functionality-sharing, Rule>>
+| Ansible Roles SHOULD use lib_* roles for sharing functionality among multiple roles.
+|===
+
+Being able to share code among multiple Ansible roles is highly desired. The lib_* pattern is a pattern that allows for code resusability without needing to worry about tightly coupling functionality from one role to another.
+
+.Lib_* roles:
+* MUST NOT depend on other roles except possibly other lib_* roles.
+* MUST NOT have a `tasks/main.yml` file (shouldn't execute any tasks by default).
+* MAY include modules in a `library` directory.
+* MAY include task files in `tasks` (include_role can execute these task files directly).
+
+For roles, it is preferred to use loose coupling. Lib_* roles is one of the patterns that allows for this loose coupling.
+
+
+'''
+[[Ansible-Roles-MUST-NOT-depend-on-other-roles]]
+[cols="2v,v"]
+|===
+| <<Ansible-Roles-MUST-NOT-depend-on-other-roles, Rule>>
+| Ansible Roles MUST NOT depend or call into other roles.
+|===
+
+The purpose of this rule is to make individual roles more easily callable. When roles depend on other roles, they are very hard to maintain as well as to satisfy all of the dependencies.
+
+For roles, it is preferred to use loose coupling.
+
+Roles that depend on other roles quickly create a situation where all dependencies of all roles must be met
+
+.Exceptions:
+* Tech profiles are allowed to depend / call into other roles.
+* All roles are allowed to depend / call into lib_* roles.
+
 
 === Filters
 .Context:
