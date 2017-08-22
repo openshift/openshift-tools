@@ -1,0 +1,97 @@
+---
+# delete the deployment objects that we had created
+- name: delete logging api objects
+  oc_obj:
+    state: absent
+    kind: "{{ item }}"
+    namespace: "{{ openshift_logging_namespace }}"
+    selector: "logging-infra"
+  with_items:
+    - dc
+    - rc
+    - svc
+    - routes
+    - templates
+    - ds
+
+# delete the oauthclient
+- name: delete oauthclient kibana-proxy
+  oc_obj:
+    state: absent
+    kind: oauthclient
+    namespace: "{{ openshift_logging_namespace }}"
+    name: kibana-proxy
+
+# delete any image streams that we may have created
+- name: delete logging is
+  oc_obj:
+    state: absent
+    kind: is
+    namespace: "{{ openshift_logging_namespace }}"
+    selector: "logging-infra=support"
+
+# delete our old secrets
+- name: delete logging secrets
+  oc_secret:
+    state: absent
+    namespace: "{{ openshift_logging_namespace }}"
+    name: "{{ item }}"
+  with_items:
+    - logging-fluentd
+    - logging-elasticsearch
+    - logging-kibana
+    - logging-kibana-proxy
+    - logging-curator
+    - logging-mux
+
+# delete our service accounts
+- name: delete service accounts
+  oc_serviceaccount:
+    state: absent
+    namespace: "{{ openshift_logging_namespace }}"
+    name: "{{ item }}"
+  with_items:
+    - aggregated-logging-elasticsearch
+    - aggregated-logging-kibana
+    - aggregated-logging-curator
+    - aggregated-logging-fluentd
+
+# delete role bindings
+- name: delete rolebindings
+  oc_obj:
+    state: absent
+    kind: rolebinding
+    namespace: "{{ openshift_logging_namespace }}"
+    name: logging-elasticsearch-view-role
+
+# delete cluster role bindings
+- name: delete cluster role bindings
+  oc_obj:
+    state: absent
+    kind: clusterrolebindings
+    namespace: "{{ openshift_logging_namespace }}"
+    name: rolebinding-reader
+
+# delete cluster roles
+- name: delete cluster roles
+  oc_obj:
+    state: absent
+    kind: clusterrole
+    namespace: "{{ openshift_logging_namespace }}"
+    name: "{{ item }}"
+  with_items:
+    - rolebinding-reader
+    - daemonset-admin
+
+# delete our configmaps
+- name: delete configmaps
+  oc_obj:
+    state: absent
+    kind: configmap
+    namespace: "{{ openshift_logging_namespace }}"
+    name: "{{ item }}"
+  with_items:
+    - logging-curator
+    - logging-elasticsearch
+    - logging-fluentd
+    - logging-mux
