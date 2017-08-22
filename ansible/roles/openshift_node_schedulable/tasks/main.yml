@@ -1,0 +1,24 @@
+---
+
+- name: Grab private DNS name of node
+  set_fact:
+    node_dns_name: "{{ ec2_private_dns_name }}"
+
+- name: "Set node schedulable == {{ osns_is_schedulable }}"
+  oadm_manage_node:
+    node: "{{ node_dns_name }}"
+    schedulable: "{{ osns_is_schedulable }}"
+  delegate_to: "{{ osns_cluster_master }}"
+  retries: 10
+  delay: 5
+  register: result_node_schedulable
+  until: result_node_schedulable|succeeded
+
+- name: Drain Node (when specified)
+  command: /usr/bin/oadm drain "{{ node_dns_name }}"  --force --delete-local-data --ignore-daemonsets
+  delegate_to: "{{ osns_cluster_master }}"
+  retries: 10
+  delay: 5
+  register: result_drain
+  until: result_drain|succeeded
+  when: osns_drain is defined
