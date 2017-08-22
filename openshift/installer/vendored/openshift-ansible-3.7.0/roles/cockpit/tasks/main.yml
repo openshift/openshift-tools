@@ -1,0 +1,21 @@
+---
+- name: setup firewall
+  include: firewall.yml
+  static: yes
+
+- name: Install cockpit-ws
+  package: name={{ item }} state=present
+  with_items:
+    - cockpit-ws
+    - cockpit-system
+    - cockpit-bridge
+    - cockpit-docker
+    - "{{ cockpit_plugins }}"
+  when: not openshift.common.is_containerized | bool
+
+- name: Enable cockpit-ws
+  systemd:
+    name: cockpit.socket
+    enabled: true
+    state: started
+  when: not openshift.common.is_containerized | bool

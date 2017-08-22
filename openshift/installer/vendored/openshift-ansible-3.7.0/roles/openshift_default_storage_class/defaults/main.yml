@@ -1,0 +1,19 @@
+---
+openshift_storageclass_defaults:
+  aws:
+    provisioner: aws-ebs
+    name: gp2
+    parameters:
+      type: gp2
+      kmsKeyId: ''
+      encrypted: 'false'
+  gce:
+    name: standard
+    provisioner: gce-pd
+    parameters:
+      type: pd-standard
+
+openshift_storageclass_default: "true"
+openshift_storageclass_name: "{{ openshift_storageclass_defaults[openshift_cloudprovider_kind]['name'] }}"
+openshift_storageclass_provisioner: "{{ openshift_storageclass_defaults[openshift_cloudprovider_kind]['provisioner'] }}"
+openshift_storageclass_parameters: "{{ openshift_storageclass_defaults[openshift_cloudprovider_kind]['parameters'] }}"
