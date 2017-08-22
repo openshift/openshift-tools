@@ -471,7 +471,7 @@ For roles, it is preferred to use loose coupling. Lib_* roles is one of the patt
 [cols="2v,v"]
 |===
 | <<Ansible-Roles-MUST-NOT-depend-on-other-roles, Rule>>
-| Ansible Roles MUST NOT depend or call into other roles.
+| Ansible Roles MUST NOT depend on or call into other roles.
 |===
 
 The purpose of this rule is to make individual roles more easily callable. When roles depend on other roles, they are very hard to maintain as well as to satisfy all of the dependencies.
@@ -481,8 +481,8 @@ For roles, it is preferred to use loose coupling.
 Roles that depend on other roles quickly create a situation where all dependencies of all roles must be met
 
 .Exceptions:
-* Tech profiles are allowed to depend / call into other roles.
-* All roles are allowed to depend / call into lib_* roles.
+* Tech profiles are allowed to depend on / call into other roles.
+* All roles are allowed to depend on / call into lib_* roles.
 
 
 === Filters
