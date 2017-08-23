@@ -1,7 +1,17 @@
 # This playbook installs the latest OS updates on a cluster and reboots all updated cluster hosts.
 # It's idempotent and safe to run repeatedly. Only hosts that have been updated will be rebooted.
-# Usage example:
-#  ansible-playbook os_update.yml -e cli_kernel_version=3.10.0-693.1.1.el7 -e cli_clusterid=dakinitest
+# To use this script, choose either a kernel version or a package name + version.
+# The name and version of the package chosen is used to determine if the OS upgrades are complete. An entire system update will be performed if the specified version is not already installed.
+# If the package+version is already installed, no updates will be performed.
+#
+# Usage examples:
+#
+# To update to kernel version 3.10.0-693.1.1.el7, use either of the following commands
+#  ansible-playbook os_update.yml -e cli_package_version=3.10.0-693.1.1.el7 -e cli_clusterid=dakinitest
+#  ansible-playbook os_update.yml -e cli_package_name=kernel -e cli_package_version=3.10.0-693.1.1.el7 -e cli_clusterid=dakinitest
+#
+# To update to an arbitrary package name/verison, for example libgcc 4.8.5-16.el7, use this:
+#  ansible-playbook os_update.yml -e cli_package_name=libgcc -e cli_package_version=4.8.5-16.el7 -e cli_clusterid=dakinitest
 
 - hosts: localhost
   gather_facts: no
@@ -16,7 +26,7 @@
     when: "{{ item }} is undefined"
     with_items:
     - cli_clusterid
-    - cli_kernel_version
+    - cli_package_version
     run_once: True
 
 ##############################################
@@ -31,8 +41,8 @@
 
   roles:
   - role: ../../../roles/package_update_needed
-    pun_package_name: kernel
-    pun_wanted_version: "{{ cli_kernel_version }}"
+    pun_package_name: "{{ cli_package_name| default('kernel') }}"
+    pun_wanted_version: "{{ cli_package_version }}"
 
   - role: ../../../roles/openshift_aws_elb_instance_manager
     osaeim_elb_name: "{{ cli_clusterid }}-master"
@@ -74,13 +84,14 @@
 
   roles:
   - role: ../../../roles/package_update_needed
-    pun_package_name: kernel
-    pun_wanted_version: "{{ cli_kernel_version }}"
+    pun_package_name: "{{ cli_package_name| default('kernel') }}"
+    pun_wanted_version: "{{ cli_package_version }}"
 
   - role: ../../../roles/openshift_node_schedulable
     osns_is_schedulable: False
     osns_drain: True
     osns_cluster_master: "{{ groups['oo_hosttype_master'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
+    when: pun_retval_update_needed
     
   - role: ../../../roles/os_update_latest
     oul_package_names: "*"
@@ -94,6 +105,7 @@
   - role: ../../../roles/openshift_node_schedulable
     osns_is_schedulable: True
     osns_cluster_master: "{{ groups['oo_hosttype_master'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
+    when: pun_retval_update_needed
     
 ##############################################
 # Compute upgrade
@@ -107,13 +119,14 @@
 
   roles:
   - role: ../../../roles/package_update_needed
-    pun_package_name: kernel
-    pun_wanted_version: "{{ cli_kernel_version }}"
+    pun_package_name: "{{ cli_package_name| default('kernel') }}"
+    pun_wanted_version: "{{ cli_package_version }}"
 
   - role: ../../../roles/openshift_node_schedulable
     osns_is_schedulable: False
     osns_drain: True
     osns_cluster_master: "{{ groups['oo_hosttype_master'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
+    when: pun_retval_update_needed
 
   - role: ../../../roles/os_update_latest
     oul_package_names: "*"
@@ -127,3 +140,4 @@
   - role: ../../../roles/openshift_node_schedulable
     osns_is_schedulable: True
     osns_cluster_master: "{{ groups['oo_hosttype_master'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
+    when: pun_retval_update_needed
