@@ -33,6 +33,7 @@ Dependencies
 ------------
 
 lib_ansible20
+lib_openshift
 
 Example Playbook
 ----------------

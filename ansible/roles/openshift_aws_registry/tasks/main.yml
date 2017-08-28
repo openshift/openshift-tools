@@ -1,4 +1,8 @@
 ---
+- name: Include lib_openshift
+  include_role:
+    name: ../lib_openshift
+
 - name: debug masters
   debug:
     var: osareg_master_nodes
@@ -41,8 +45,7 @@
   when: not serial_stat_result.stat.exists
 
 - name: Create a self-signed cert
-  oadm_ca:
-    cmd: create-server-cert
+  oc_adm_ca_server_cert:
     signer_cert: /etc/origin/master/ca.crt
     signer_key: /etc/origin/master/ca.key
     signer_serial: /etc/origin/master/ca.serial.txt
@@ -107,9 +110,9 @@
   register: sa_out
 
 - name: add secrets to service accounts
-  oc_secret_add:
+  oc_serviceaccount_secret:
     service_account: "{{ item.name }}"
-    secrets: "{{ item.value }}"
+    secret: "{{ item.value }}"
     namespace: default
   with_items:
   - name: registry
@@ -125,7 +128,7 @@
     msg: "{{ svc_out.changed or cert_secret_out.changed or registry_config_out.changed or sa_out.changed }}"
 
 - name: create a secure registry
-  oadm_registry:
+  oc_adm_registry:
     credentials: /etc/origin/master/openshift-registry.kubeconfig
     name: docker-registry
     force: "{{ svc_out.changed or cert_secret_out.changed or registry_config_out.changed or sa_out.changed }}"
@@ -149,15 +152,33 @@
       type: secret
       secret_name: docker-registry-config
     edits:
-        spec.template.spec.containers[0].livenessProbe.httpGet.scheme: HTTPS
-        spec.template.spec.containers[0].readinessProbe.httpGet.scheme: HTTPS
-        spec.strategy.rollingParams.intervalSeconds: 1
-        spec.strategy.rollingParams.maxSurge: 50%
-        spec.strategy.rollingParams.maxUnavailable: 50%
-        spec.strategy.rollingParams.timeoutSeconds: 600
-        spec.strategy.rollingParams.updatePeriodSeconds: 1
-        spec.template.spec.containers[0].resources.limits.memory: 2G
-        spec.template.spec.containers[0].resources.requests.memory: 1G
+    - key: spec.template.spec.containers[0].livenessProbe.httpGet.scheme
+      value: HTTPS
+      action: put
+    - key: spec.template.spec.containers[0].readinessProbe.httpGet.scheme
+      value: HTTPS
+      action: put
+    - key: spec.strategy.rollingParams.intervalSeconds
+      value: 1
+      action: put
+    - key: spec.strategy.rollingParams.maxSurge
+      value: 50%
+      action: put
+    - key: spec.strategy.rollingParams.maxUnavailable
+      value: 50%
+      action: put
+    - key: spec.strategy.rollingParams.timeoutSeconds
+      value: 600
+      action: put
+    - key: spec.strategy.rollingParams.updatePeriodSeconds
+      value: 1
+      action: put
+    - key: spec.template.spec.containers[0].resources.limits.memory
+      value: 2G
+      action: put
+    - key: spec.template.spec.containers[0].resources.requests.memory
+      value: 1G
+      action: put
   register: registryout
 
 - name: Pause for race conditions

@@ -1,4 +1,8 @@
 ---
+- name: Include lib_openshift
+  include_role:
+    name: ../lib_openshift
+
 - name: debug masters
   debug:
     var: osgreg_master_nodes
@@ -36,8 +40,7 @@
   - restart openshift master services
 
 - name: Create a self-signed cert
-  oadm_ca:
-    cmd: create-server-cert
+  oc_adm_ca_server_cert:
     signer_cert: /etc/origin/master/ca.crt
     signer_key: /etc/origin/master/ca.key
     signer_serial: /etc/origin/master/ca.serial.txt
@@ -89,9 +92,9 @@
   register: sa_out
 
 - name: add secrets to service accounts
-  oc_secret_add:
+  oc_serviceaccount_secret:
     service_account: "{{ item.name }}"
-    secrets: "{{ item.value }}"
+    secret: "{{ item.value }}"
     namespace: default
   with_items:
   - name: registry
@@ -108,7 +111,7 @@
     msg: "{{ svc_out.changed or cert_secret_out.changed or registry_config_out.changed or sa_out.changed }}"
 
 - name: create a secure registry
-  oadm_registry:
+  oc_adm_registry:
     credentials: /etc/origin/master/openshift-registry.kubeconfig
     name: docker-registry
     force: "{{ svc_out.changed or cert_secret_out.changed or registry_config_out.changed or sa_out.changed }}"

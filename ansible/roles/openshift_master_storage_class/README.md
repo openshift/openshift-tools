@@ -22,7 +22,7 @@ osmsc_projects_to_exclude: list of projects to exclude from the cluster quota
 Dependencies
 ------------
 
-lib_openshift_3.2
+lib_openshift
 lib_yaml_editor
 
 Example Playbook
