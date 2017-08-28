@@ -1,4 +1,8 @@
 ---
+- name: Include lib_openshift
+  include_role:
+    name: ../lib_openshift
+
 - name: ensure that the /etc/origin/node/ca.crt is there
   stat:
     path: /etc/origin/node/ca.crt

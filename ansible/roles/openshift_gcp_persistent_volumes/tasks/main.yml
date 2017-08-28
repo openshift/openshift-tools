@@ -5,6 +5,10 @@
   - "{{ osgpv_volumes }}"
   when: item is undefined
 
+- name: Include lib_openshift
+  include_role:
+    name: ../lib_openshift
+
 - name: Change restriced scc fsgroup to MustRunAs
   oc_edit:
     kind: scc
