@@ -174,7 +174,8 @@ class OpenshiftCertificateRequester(object):
           default='https://api.digicert.com/')
         parser.add_argument('-a', '--apikey', help='Digicert api key')
         parser.add_argument('-n', '--accountnumber', help='Digicert account number')
-        parser.add_argument('-i', '--ignorenamelength', action='store_true', default=None, help='Do not enforce node name length limit')
+        parser.add_argument('-i', '--ignorenamelength', action='store_true', \
+          default=None, help='Do not enforce node name length limit')
         parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
         parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
 
