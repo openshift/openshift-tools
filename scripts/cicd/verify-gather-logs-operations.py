@@ -35,8 +35,10 @@ import logging.handlers
 VALID_CLUSTER_NAMES = [
     'free-int',
     'free-stg',
+    'starter-ca-central-1',
     'starter-us-east-1',
     'starter-us-east-2',
+    'starter-us-west-1',
     'starter-us-west-2'
 ]
 
