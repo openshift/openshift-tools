@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.84
+Version:       0.1.85
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -452,6 +452,11 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Tue Aug 29 2017 Pep Turró <pep@redhat.com> 0.1.85-1
+- Add us-west-1 and ca-central-1 as starter clusters for log gathering
+  (pep@redhat.com)
+- renaming script to not cause problems (ihorvath@redhat.com)
+
 * Mon Aug 21 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.84-1
 - adding scripts to devaccess and new runner (ihorvath@redhat.com)
 - Handle errors from unexpected output in "yum check-update"  (#2797)
