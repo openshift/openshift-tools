@@ -63,9 +63,12 @@ class OpenshiftCertificateRequester(object):
             if self.args.verbose or self.args.debug:
                 print "Node name %s is valid" % node_name
         else:
-            print "First element of node name (%s) must be <= 16 characters" % node_name
-            sys.exit(1)
-
+            print "First element of node name (%s) should be be <= 16 characters" % node_name
+            if self.args.ignorenamelength:
+                print "Ignoring node name length. You will have to manually change the ELB name"
+            else:
+                print "Exiting. Re-run with --ignorenamelength to override."
+                sys.exit(1)
 
     def check_host(self):
         """ Limit running to bastion hosts """
@@ -171,6 +174,8 @@ class OpenshiftCertificateRequester(object):
           default='https://api.digicert.com/')
         parser.add_argument('-a', '--apikey', help='Digicert api key')
         parser.add_argument('-n', '--accountnumber', help='Digicert account number')
+        parser.add_argument('-i', '--ignorenamelength', action='store_true', \
+          default=None, help='Do not enforce node name length limit')
         parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
         parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
 
