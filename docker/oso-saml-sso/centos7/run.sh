@@ -10,5 +10,5 @@
 
 
 echo -n "Running oso-centos7-saml-sso... "
-sudo docker run -ti --net=host --rm=true --name saml-sso oso-centos7-saml-sso $@
+docker run -ti --net=host --rm=true --name saml-sso oso-centos7-saml-sso $@
 echo "Done."
