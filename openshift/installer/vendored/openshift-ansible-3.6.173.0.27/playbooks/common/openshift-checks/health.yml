@@ -1,0 +1,13 @@
+---
+- include: ../openshift-cluster/evaluate_groups.yml
+
+- name: Run OpenShift health checks
+  hosts: OSEv3
+  roles:
+  - openshift_health_checker
+  vars:
+  - r_openshift_health_checker_playbook_context: health
+  post_tasks:
+  - action: openshift_health_check
+    args:
+      checks: ['@health']
