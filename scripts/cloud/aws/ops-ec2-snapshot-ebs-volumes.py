@@ -26,7 +26,7 @@ import argparse
 # Reason: disable pylint import-error because our libs aren't loaded on jenkins.
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.cloud.aws import ebs_snapshotter
 
 
@@ -109,28 +109,28 @@ class SnapshotterCli(object):
 
     def report_to_zabbix(self, total_snapshottable_vols, total_snapshots_created, total_snapshot_creation_errors):
         """ Sends the commands exit code to zabbix. """
-        zs = ZaggSender(verbose=True)
+        mts = MetricSender(verbose=True)
 
 
         # Populate EBS_SNAPSHOTTER_DISC_SCHEDULE_MACRO with the schedule
-        zs.add_zabbix_dynamic_item(EBS_SNAPSHOTTER_DISC_KEY, EBS_SNAPSHOTTER_DISC_SCHEDULE_MACRO, \
+        mts.add_dynamic_metric(EBS_SNAPSHOTTER_DISC_KEY, EBS_SNAPSHOTTER_DISC_SCHEDULE_MACRO, \
                                    [self.args.with_schedule])
 
         # Send total_snapshottable_vols prototype item key and value
-        zs.add_zabbix_keys({'%s[%s]' % (EBS_SNAPSHOTTER_SNAPSHOTTABLE_VOLUMES_KEY, self.args.with_schedule): \
+        mts.add_metric({'%s[%s]' % (EBS_SNAPSHOTTER_SNAPSHOTTABLE_VOLUMES_KEY, self.args.with_schedule): \
                            total_snapshottable_vols})
 
         # Send total_snapshots_created prototype item key and value
-        zs.add_zabbix_keys({'%s[%s]' % (EBS_SNAPSHOTTER_SNAPSHOTS_CREATED_KEY, self.args.with_schedule): \
+        mts.add_metric({'%s[%s]' % (EBS_SNAPSHOTTER_SNAPSHOTS_CREATED_KEY, self.args.with_schedule): \
                            total_snapshots_created})
 
         # Send total_snapshot_creation_errors prototype item key and value
-        zs.add_zabbix_keys({'%s[%s]' % (EBS_SNAPSHOTTER_SNAPSHOT_CREATION_ERRORS_KEY, self.args.with_schedule): \
+        mts.add_metric({'%s[%s]' % (EBS_SNAPSHOTTER_SNAPSHOT_CREATION_ERRORS_KEY, self.args.with_schedule): \
                            total_snapshot_creation_errors})
 
 
         # Actually send them
-        zs.send_metrics()
+        mts.send_metrics()
 
 
 if __name__ == "__main__":

@@ -12,20 +12,20 @@
 # pylint: disable=too-many-lines
 
 import atexit
-import copy
 import json
 import os
 import re
 import shutil
 import subprocess
-import yaml
-
-# This is here because of a bug that causes yaml
-# to incorrectly handle timezone info on timestamps
-def timestamp_constructor(_, node):
-    '''return timestamps as strings'''
-    return str(node.value)
-yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
+import ruamel.yaml as yaml
+#import yaml
+#
+## This is here because of a bug that causes yaml
+## to incorrectly handle timezone info on timestamps
+#def timestamp_constructor(_, node):
+#    '''return timestamps as strings'''
+#    return str(node.value)
+#yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
 
 class OpenShiftCLIError(Exception):
     '''Exception class for openshiftcli'''
@@ -37,22 +37,24 @@ class OpenShiftCLI(object):
     def __init__(self,
                  namespace,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
-                 verbose=False):
+                 verbose=False,
+                 all_namespaces=False):
         ''' Constructor for OpenshiftCLI '''
         self.namespace = namespace
         self.verbose = verbose
         self.kubeconfig = kubeconfig
+        self.all_namespaces = all_namespaces
 
     # Pylint allows only 5 arguments to be passed.
     # pylint: disable=too-many-arguments
-    def _replace_content(self, resource, rname, content, force=False):
+    def _replace_content(self, resource, rname, content, force=False, sep='.'):
         ''' replace the current object with the content '''
         res = self._get(resource, rname)
         if not res['results']:
             return res
 
         fname = '/tmp/%s' % rname
-        yed = Yedit(fname, res['results'][0])
+        yed = Yedit(fname, res['results'][0], separator=sep)
         changes = []
         for key, value in content.items():
             changes.append(yed.put(key, value))
@@ -95,15 +97,19 @@ class OpenShiftCLI(object):
 
         return self.openshift_cmd(cmd)
 
-    def _process(self, template_name, create=False, params=None):
+    def _process(self, template_name, create=False, params=None, template_data=None):
         '''return all pods '''
-        cmd = ['process', template_name, '-n', self.namespace]
+        cmd = ['process', '-n', self.namespace]
+        if template_data:
+            cmd.extend(['-f', '-'])
+        else:
+            cmd.append(template_name)
         if params:
             param_str = ["%s=%s" % (key, value) for key, value in params.items()]
             cmd.append('-v')
             cmd.extend(param_str)
 
-        results = self.openshift_cmd(cmd, output=True)
+        results = self.openshift_cmd(cmd, output=True, input_data=template_data)
 
         if results['returncode'] != 0 or not create:
             return results
@@ -121,7 +127,9 @@ class OpenShiftCLI(object):
         cmd = ['get', resource]
         if selector:
             cmd.append('--selector=%s' % selector)
-        if self.namespace:
+        if self.all_namespaces:
+            cmd.extend(['--all-namespaces'])
+        elif self.namespace:
             cmd.extend(['-n', self.namespace])
 
         cmd.extend(['-o', 'json'])
@@ -191,7 +199,26 @@ class OpenShiftCLI(object):
 
         return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
 
-    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json'):
+    def _import_image(self, url=None, name=None, tag=None):
+        ''' perform image import '''
+        cmd = ['import-image']
+
+        image = '{0}'.format(name)
+        if tag:
+            image += ':{0}'.format(tag)
+
+        cmd.append(image)
+
+        if url:
+            cmd.append('--from={0}/{1}'.format(url, image))
+
+        cmd.append('-n{0}'.format(self.namespace))
+
+        cmd.append('--confirm')
+        return self.openshift_cmd(cmd)
+
+    #pylint: disable=too-many-arguments
+    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json', input_data=None):
         '''Base command for oc '''
         cmds = []
         if oadm:
@@ -209,11 +236,12 @@ class OpenShiftCLI(object):
             print ' '.join(cmds)
 
         proc = subprocess.Popen(cmds,
+                                stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 env={'KUBECONFIG': self.kubeconfig})
 
-        stdout, stderr = proc.communicate()
+        stdout, stderr = proc.communicate(input_data)
         rval = {"returncode": proc.returncode,
                 "results": results,
                 "cmd": ' '.join(cmds),
@@ -257,7 +285,7 @@ class Utils(object):
         path = os.path.join('/tmp', rname)
         with open(path, 'w') as fds:
             if ftype == 'yaml':
-                fds.write(yaml.safe_dump(data, default_flow_style=False))
+                fds.write(yaml.dump(data, Dumper=yaml.RoundTripDumper))
 
             elif ftype == 'json':
                 fds.write(json.dumps(data))
@@ -321,7 +349,7 @@ class Utils(object):
             contents = sfd.read()
 
         if sfile_type == 'yaml':
-            contents = yaml.safe_load(contents)
+            contents = yaml.load(contents, yaml.RoundTripLoader)
         elif sfile_type == 'json':
             contents = json.loads(contents)
 
@@ -352,7 +380,7 @@ class Utils(object):
 
                 if not isinstance(user_def[key], list):
                     if debug:
-                        print 'user_def[key] is not a list'
+                        print 'user_def[key] is not a list key=[%s] user_def[key]=%s' % (key, user_def[key])
                     return False
 
                 if len(user_def[key]) != len(value):
@@ -363,9 +391,6 @@ class Utils(object):
                         print "value: %s" % value
                     return False
 
-
-                user_def[key].sort()
-                value.sort()
                 for values in zip(user_def[key], value):
                     if isinstance(values[0], dict) and isinstance(values[1], dict):
                         if debug:
@@ -453,6 +478,7 @@ class OpenShiftCLIConfig(object):
                 rval.append('--%s=%s' % (key.replace('_', '-'), data['value']))
 
         return rval
+
 
 class YeditException(Exception):
     ''' Exception class for Yedit '''
@@ -566,7 +592,8 @@ class Yedit(object):
                     continue
 
                 elif data and not isinstance(data, dict):
-                    return None
+                    raise YeditException("Unexpected item type found while going through key " +
+                                         "path: {} (at key: {})".format(key, dict_key))
 
                 data[dict_key] = {}
                 data = data[dict_key]
@@ -574,7 +601,7 @@ class Yedit(object):
             elif arr_ind and isinstance(data, list) and int(arr_ind) <= len(data) - 1:
                 data = data[int(arr_ind)]
             else:
-                return None
+                raise YeditException("Unexpected item type found while going through key path: {}".format(key))
 
         if key == '':
             data = item
@@ -587,6 +614,12 @@ class Yedit(object):
         # expected dict entry
         elif key_indexes[-1][1] and isinstance(data, dict):
             data[key_indexes[-1][1]] = item
+
+        # didn't add/update to an existing list, nor add/update key to a dict
+        # so we must have been provided some syntax like a.b.c[<int>] = "data" for a
+        # non-existent array
+        else:
+            raise YeditException("Error adding data to object at path: {}".format(key))
 
         return data
 
@@ -624,12 +657,10 @@ class Yedit(object):
         tmp_filename = self.filename + '.yedit'
         try:
             with open(tmp_filename, 'w') as yfd:
-                yml_dump = yaml.safe_dump(self.yaml_dict, default_flow_style=False)
-                for line in yml_dump.strip().split('\n'):
-                    if '{{' in line and '}}' in line:
-                        yfd.write(line.replace("'{{", '"{{').replace("}}'", '}}"') + '\n')
-                    else:
-                        yfd.write(line + '\n')
+                # pylint: disable=no-member,maybe-no-member
+                if hasattr(self.yaml_dict, 'fa'):
+                    self.yaml_dict.fa.set_block_style()
+                yfd.write(yaml.dump(self.yaml_dict, Dumper=yaml.RoundTripDumper))
         except Exception as err:
             raise YeditException(err.message)
 
@@ -673,12 +704,15 @@ class Yedit(object):
         # check if it is yaml
         try:
             if content_type == 'yaml' and contents:
-                self.yaml_dict = yaml.load(contents)
+                self.yaml_dict = yaml.load(contents, yaml.RoundTripLoader)
+                # pylint: disable=no-member,maybe-no-member
+                if hasattr(self.yaml_dict, 'fa'):
+                    self.yaml_dict.fa.set_block_style()
             elif content_type == 'json' and contents:
                 self.yaml_dict = json.loads(contents)
         except yaml.YAMLError as err:
             # Error loading yaml or json
-            YeditException('Problem with loading yaml file. %s' % err)
+            raise YeditException('Problem with loading yaml file. %s' % err)
 
         return self.yaml_dict
 
@@ -838,7 +872,11 @@ class Yedit(object):
         if entry == value:
             return (False, self.yaml_dict)
 
-        tmp_copy = copy.deepcopy(self.yaml_dict)
+        # deepcopy didn't work
+        tmp_copy = yaml.load(yaml.round_trip_dump(self.yaml_dict, default_flow_style=False), yaml.RoundTripLoader)
+        # pylint: disable=no-member
+        if hasattr(self.yaml_dict, 'fa'):
+            tmp_copy.fa.set_block_style()
         result = Yedit.add_entry(tmp_copy, path, value, self.separator)
         if not result:
             return (False, self.yaml_dict)
@@ -850,7 +888,11 @@ class Yedit(object):
     def create(self, path, value):
         ''' create a yaml file '''
         if not self.file_exists():
-            tmp_copy = copy.deepcopy(self.yaml_dict)
+            # deepcopy didn't work
+            tmp_copy = yaml.load(yaml.round_trip_dump(self.yaml_dict, default_flow_style=False), yaml.RoundTripLoader)
+            # pylint: disable=no-member
+            if hasattr(self.yaml_dict, 'fa'):
+                tmp_copy.fa.set_block_style()
             result = Yedit.add_entry(tmp_copy, path, value, self.separator)
             if result:
                 self.yaml_dict = tmp_copy
@@ -858,6 +900,7 @@ class Yedit(object):
 
         return (False, self.yaml_dict)
 
+# pylint: disable=too-many-instance-attributes
 class OCProcess(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
@@ -869,11 +912,13 @@ class OCProcess(OpenShiftCLI):
                  params=None,
                  create=False,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
+                 tdata=None,
                  verbose=False):
         ''' Constructor for OpenshiftOC '''
         super(OCProcess, self).__init__(namespace, kubeconfig)
         self.namespace = namespace
         self.name = tname
+        self.data = tdata
         self.params = params
         self.create = create
         self.kubeconfig = kubeconfig
@@ -884,7 +929,7 @@ class OCProcess(OpenShiftCLI):
     def template(self):
         '''template property'''
         if self._template == None:
-            results = self._process(self.name, False, self.params)
+            results = self._process(self.name, False, self.params, self.data)
             if results['returncode'] != 0:
                 raise OpenShiftCLIError('Error processing template [%s].' % self.name)
             self._template = results['results']['items']
@@ -908,7 +953,7 @@ class OCProcess(OpenShiftCLI):
         return self._delete(obj['kind'], obj['metadata']['name'])
 
     def create_obj(self, obj):
-        '''delete a resource'''
+        '''create a resource'''
         return self._create_from_content(obj['metadata']['name'], obj)
 
     def process(self, create=None):
@@ -919,10 +964,13 @@ class OCProcess(OpenShiftCLI):
         else:
             do_create = self.create
 
-        return self._process(self.name, do_create, self.params)
+        return self._process(self.name, do_create, self.params, self.data)
 
     def exists(self):
         '''return whether the template exists'''
+        # Always return true if we're being passed template data
+        if self.data:
+            return True
         t_results = self._get('template', self.name)
 
         if t_results['returncode'] != 0:
@@ -944,8 +992,14 @@ class OCProcess(OpenShiftCLI):
 
             if obj['kind'] == 'ServiceAccount':
                 skip.extend(['secrets', 'imagePullSecrets'])
+            if obj['kind'] == 'BuildConfig':
+                skip.extend(['lastTriggeredImageID'])
+            if obj['kind'] == 'ImageStream':
+                skip.extend(['generation'])
+            if obj['kind'] == 'DeploymentConfig':
+                skip.extend(['lastTriggeredImage'])
 
-             # fetch the current object
+            # fetch the current object
             curr_obj_results = self._get(obj['kind'], obj['metadata']['name'])
             if curr_obj_results['returncode'] != 0:
                 # Does the template exist??
@@ -976,6 +1030,7 @@ def main():
             debug=dict(default=False, type='bool'),
             namespace=dict(default='default', type='str'),
             template_name=dict(default=None, type='str'),
+            content=dict(default=None, type='str'),
             params=dict(default=None, type='dict'),
             create=dict(default=False, type='bool'),
             reconcile=dict(default=True, type='bool'),
@@ -987,6 +1042,7 @@ def main():
                           module.params['params'],
                           module.params['create'],
                           kubeconfig=module.params['kubeconfig'],
+                          tdata=module.params['content'],
                           verbose=module.params['debug'])
 
     state = module.params['state']
@@ -1001,6 +1057,16 @@ def main():
 
     elif state == 'present':
         if not ocprocess.exists() or not module.params['reconcile']:
+            #FIXME: this code will never get run in a way that succeeds when
+            #       module.params['reconcile'] is true. Because oc_process doesn't
+            #       create the actual template, the check of ocprocess.exists()
+            #       is meaningless. Either it's already here and this code
+            #       won't be run, or this code will fail because there is no
+            #       template available for oc process to use. Have we conflated
+            #       the template's existence with the existence of the objects
+            #       it describes?
+
+
             # Create it here
             api_rval = ocprocess.process()
             if api_rval['returncode'] != 0:

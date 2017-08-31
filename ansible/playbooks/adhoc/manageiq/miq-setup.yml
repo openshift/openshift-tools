@@ -1,0 +1,44 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+  - vars.yml
+  roles:
+  - role: "{{ cli_miq_ans_module_path }}"
+
+  post_tasks:
+  - manageiq_provider:
+      name: "{{ g_miq_os_provider_name }}"
+      provider_type: openshift-enterprise
+      state: present
+      miq_url: "{{ g_miq_url }}"
+      miq_username: "{{ g_miq_username }}"
+      miq_password: "{{ g_miq_password }}"
+      provider_api_hostname: "{{ g_provider_api_hostname }}"
+      provider_api_port: "{{ g_provider_api_port }}"
+      provider_api_auth_token: "{{ g_provider_api_auth_token }}"
+      metrics: True
+      hawkular_hostname: "{{ g_hawular_hostname }}"
+      hawkular_port: "{{ g_hawkular_port }}"
+
+  #- manageiq_provider:
+  #    name: "{{ g_miq_aws_provider_name }}"
+  #    provider_type: amazon
+  #    provider_region: us-east-1
+  #    access_key_id: "{{ g_miq_access_key_id }}"
+  #    secret_access_key: "{{ g_miq_secret_access_key }}"
+  #    state: present
+  #    miq_url: "{{ g_miq_url }}"
+  #    miq_username: "{{ g_miq_username }}"
+  #    miq_password: "{{ g_miq_password }}"
+
+  #- manageiq_custom_attributes:
+  #    entity_type: provider
+  #    entity_name: '{{ g_miq_os_provider_name }}'
+  #    state: present
+  #    miq_url: "{{ g_miq_url }}"
+  #    miq_username: "{{ g_miq_username }}"
+  #    miq_password: "{{ g_miq_password }}"
+  #    custom_attributes:
+  #    - name: "oo_account"
+  #      value: "{{ g_aws_account }}"

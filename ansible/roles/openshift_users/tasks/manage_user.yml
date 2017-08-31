@@ -1,0 +1,73 @@
+---
+# note: This was ported from Ivan's add_ocp_user role in openshift-ansible-ops.
+# Refer to it for more git history.
+# TODO: right now this role is re-runnable, but not fully idempotent. The tasks
+# below register "changed" each time. See the comments on each task as to why
+# this is the case.
+
+
+- name: manage a user
+  # TODO: current oc_user module doesn't provide a way to set
+  # the identities field on the user object. Can move back to
+  # oc_user once that support is added.
+  oc_obj:
+    state: "{{ item.state | default(omit) }}"
+    kind: user
+    name: "{{ item.username }}"
+    content:
+      path: /tmp/user
+      data:
+        kind: User
+        fullName: "{{ item.full_name }}"
+        metadata:
+          name: "{{ item.username }}"
+          labels:
+            admin: "true"
+        identities:
+        - "{{ osu_provider }}:{{ item.idp_username }}"
+  register: osu_user_creation
+  run_once: true
+  when: inventory_hostname == ansible_play_hosts[0]
+
+
+- debug:
+    var: osu_user_creation
+    verbosity: 3
+  run_once: true
+  when: inventory_hostname == ansible_play_hosts[0]
+
+- set_fact:
+    osu_user_uid: "{{ osu_user_creation['results']['results'][0]['metadata']['uid'] }}"
+  when: inventory_hostname == ansible_play_hosts[0] and
+        (item.state is not defined or item.state != 'absent')
+  run_once: true
+
+- name: manage an identity
+  # TODO: no oc_identity module yet to create/manage identity objects.
+  # An argument can be made to just extend oc_user to create Identity
+  # objects when necessary.
+  oc_obj:
+    state: "{{ item.state | default(omit) }}"
+    kind: identity
+    namespace: default
+    name: "{{ osu_provider }}:{{ item.idp_username }}"
+    content:
+      path: /tmp/identity
+      data:
+        kind: Identity
+        metadata:
+          name: "{{ osu_provider }}:{{ item.idp_username }}"
+        providerName: "{{ osu_provider }}"
+        providerUserName: "{{ item.idp_username }}"
+        user:
+          name: "{{ item.username }}"
+          uid: "{{ osu_user_uid | default(omit) }}"
+  register: osu_identity_creation
+  run_once: true
+  when: inventory_hostname == ansible_play_hosts[0]
+
+- debug:
+    var: osu_identity_creation
+    verbosity: 3
+  run_once: true
+  when: inventory_hostname == ansible_play_hosts[0]

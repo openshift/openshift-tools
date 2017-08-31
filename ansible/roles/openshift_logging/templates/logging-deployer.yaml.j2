@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logging-deployer
+data:
+  curator-nodeselector: type=infra
+  kibana-nodeselector: type=infra
+  es-nodeselector: type=infra
+  es-cluster-size: "{{ osalog_es_cluster_size | default(2) }}"
+  es-instance-ram: {{ osalog_es_cluster_ram | default("7680M") }}
+  kibana-hostname: logs.{{ osalog_clusterid }}.openshift.com
+  public-master-url: https://api.{{ osalog_clusterid  }}.openshift.com
+  master-url: https://internal.api.{{ osalog_clusterid  }}.openshift.com

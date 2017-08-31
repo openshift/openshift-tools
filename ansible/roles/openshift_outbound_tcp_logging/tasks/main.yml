@@ -1,0 +1,128 @@
+---
+- set_fact:
+    output_filtering_chain:
+    - chain: OPENSHIFT-OUTPUT-FILTERING
+      line:  ":OPENSHIFT-OUTPUT-FILTERING - [0:0]"
+      after: "^\\*filter$"
+      regex: :OPENSHIFT-OUTPUT-FILTERING - \[0:0\]
+
+    outbound_logging_chain:
+    # This chain doesn't block anything, but does log one message per new outbound TCP connection
+    # (unless there are so many new connections as to exceed the limits defined here)
+    - chain: oo-outbound-logging
+      line:  ":oo-outbound-logging - [0:0]"
+      after: "^\\*filter$"
+      regex: :oo-outbound-logging - \[0:0\]
+
+    outbound_logging_rules:
+    # Log outbound TCP connections with this chain.
+    - chain: oo-outbound-logging
+      line:  "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_1_ -m limit --limit 50/second --limit-burst 50 -j LOG --log-prefix \"tcp_out_logging: \""
+      after: "^-A FORWARD"
+      regex: "id_outbound_tcp_log_1_"
+
+    # The above and below rules should have the same limits. We use this pattern since there is no LOG_AND_RETURN target.
+    - chain: oo-outbound-logging
+      line:  "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_2_ -m limit --limit 50/second --limit-burst 50 -j RETURN"
+      after: "id_outbound_tcp_log_1_"
+      regex: "id_outbound_tcp_log_2_"
+
+    # This message will show up in the main tcp_out_logging log file to indicate
+    # that for 60 seconds after this message, we're dropping one or more log messages.
+    - chain: oo-outbound-logging
+      line: "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_3_ -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix \"tcp_out_logging: logdrop \"" 
+      after: "id_outbound_tcp_log_2_"
+      regex: "id_outbound_tcp_log_3_"
+
+    - chain: oo-outbound-logging
+      line:  "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_4_ -m limit --limit 1000/second -j RETURN"
+      after: "id_outbound_tcp_log_3_"
+      regex: "id_outbound_tcp_log_4_"
+
+    # This message will show up only if we're doing more than 1000 connections/second.
+    # This message has a different prefix so that it will go to syslog. We should probably alert when we see it.
+    # The contents of this message aren't necessarily representitive of what is causing the log flood.
+    # The tcp_out_logging messages should be examined to see the actual cause.
+    # If we're exceeding all the above limits, we won't be logging the rest.
+    - chain: oo-outbound-logging
+      line:  "-A oo-outbound-logging -m comment --comment id_outbound_tcp_log_5_ -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix \"tcp_out_logflood: \""
+      after: "id_outbound_tcp_log_4_"
+      regex: "id_outbound_tcp_log_5_"
+
+    filtering_rules:
+    # Matches first packet in new outbound TCP connections, -A for use in /etc/sysconfig/iptables.
+    - chain: OPENSHIFT-OUTPUT-FILTERING
+      line:  "-A OPENSHIFT-OUTPUT-FILTERING -o eth0 -p tcp ! -d 172.16.0.0/12 -m state --state NEW -m comment --comment id_outbound_tcp_log_7_ -j oo-outbound-logging"
+      after: "^-A INPUT"
+      regex: "id_outbound_tcp_log_7_"
+
+    filtering_memory:
+    # Matches first packet in new outbound TCP connections, -I to send to the top of the FORWARD chain in memory.
+    - chain: OPENSHIFT-OUTPUT-FILTERING
+      line:  "-I OPENSHIFT-OUTPUT-FILTERING -o eth0 -p tcp ! -d 172.16.0.0/12 -m state --state NEW -m comment --comment id_outbound_tcp_log_7_ -j oo-outbound-logging"
+      after: "^-A INPUT"
+      regex: "id_outbound_tcp_log_7_" 
+
+- name: list iptables rules OPENSHIFT-OUTPUT-FILTERING chain
+  command: '/usr/sbin/iptables -w -nL OPENSHIFT-OUTPUT-FILTERING'
+  changed_when: False
+  register: filteringchain
+  ignore_errors: True
+
+- name: list iptables rules logging chain
+  command: '/usr/sbin/iptables -w -nL oo-outbound-logging'
+  changed_when: False
+  register: loggingchain
+  ignore_errors: True
+
+- name: add in-memory filtering chain
+  command: "/usr/sbin/iptables -w -N OPENSHIFT-OUTPUT-FILTERING"
+  when: not "OPENSHIFT-OUTPUT-FILTERING" in filteringchain.stdout
+
+- name: add in-memory logging chain
+  command: "/usr/sbin/iptables -w -N oo-outbound-logging"
+  when: not "oo-outbound-logging" in loggingchain.stdout
+
+- name: modify in-memory iptables rules
+  command: "/usr/sbin/iptables -w {{ item.line }}"
+  when: not (filteringchain.stdout | search(item.regex)) and not (loggingchain.stdout | search(item.regex))
+  with_items: 
+  - "{{ outbound_logging_rules }}"
+  - "{{ filtering_memory }}"
+
+- name: modify /etc/sysconfig/iptables
+  lineinfile:
+    dest: /etc/sysconfig/iptables
+    insertafter: "{{ item.after }}"
+    line: "{{ item.line }}"
+    regexp: "{{ item.regex }}"
+  with_items:
+  - "{{ output_filtering_chain }}"
+  - "{{ outbound_logging_chain }}"
+  - "{{ outbound_logging_rules }}"
+  - "{{ filtering_rules }}"
+
+- name: copy tcp_out_logging config file
+  copy:
+    src: tcp_out_logging.conf
+    dest: /etc/rsyslog.d/tcp_out_logging.conf
+    mode: "0644"
+    owner: root
+    group: root
+  notify: restart rsyslog
+
+- name: setup outbound TCP log rotate
+  copy:
+    content: |
+      /var/log/tcp_out.log.gz {
+          nocopytruncate
+          missingok
+          nocompress
+          nomail
+          weekly
+          rotate 5
+      }
+    dest: /etc/logrotate.d/log_outbound_tcp
+    mode: "0640"
+    owner: root
+    group: root

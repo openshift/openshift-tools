@@ -1,0 +1,7 @@
+---
+- name: install openshift packages
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items: "{{ oap_package_list }}"
+

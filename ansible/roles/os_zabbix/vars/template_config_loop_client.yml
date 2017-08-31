@@ -1,0 +1,25 @@
+---
+g_template_config_loop_client:
+  name: Template Config Loop Client
+  zitems:
+  - key: config_loop.enabled
+    applications:
+    - Config Loop
+    value_type: int
+
+  ztriggers:
+  - name: "config_loop not enabled {HOST.NAME}"
+    expression: "{Template Config Loop Client:config_loop.enabled.min(#4)}=1"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_config_loop_enabled.asciidoc"
+    priority: avg
+
+  - name: "config_loop tag not found on {HOST.NAME}"
+    expression: "{Template Config Loop Client:config_loop.enabled.min(#2)}=2"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_config_loop_enabled.asciidoc"
+    priority: avg
+
+# This might alert if no data is sent. Commenting out for now
+#  - name: "No data for config_loop.enabled {HOST.NAME}"
+#    expression: "{Template Config Loop Client:config_loop.enabled.nodata(2880m)}=1"
+#    priority: avg
+#    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_config_loop.asciidoc"

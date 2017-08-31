@@ -1,4 +1,10 @@
 ---
+
+# When a cluster has just been installed, it takes several
+# minutes for a complete zabbix registration to occur.
+# To accommodate this delay, the zabbix interactions below
+# retry for up to 10 minutes before failing.
+
   - name: "item: openshift.node.mem.used_per_user"
     zbx_item:
       zbx_server: "{{ ozcs_zbx_server }}"
@@ -19,6 +25,10 @@
     with_items: "{{ ozcs_infra_nodes }}"
     delegate_to: localhost
     run_once: true
+    register: result
+    retries: 10
+    delay: 60
+    until: result|succeeded
 
   - name: "item: openshift.node.mem.users_available"
     zbx_item:
@@ -39,6 +49,10 @@
     with_items: "{{ ozcs_infra_nodes }}"
     delegate_to: localhost
     run_once: true
+    register: result
+    retries: 10
+    delay: 60
+    until: result|succeeded
 
   - name: "item: openshift.node.cpu.used_per_user"
     zbx_item:
@@ -60,6 +74,10 @@
     with_items: "{{ ozcs_infra_nodes }}"
     delegate_to: localhost
     run_once: true
+    register: result
+    retries: 10
+    delay: 60
+    until: result|succeeded
 
   - name: "item: openshift.node.cpu.users_available"
     zbx_item:
@@ -80,6 +98,10 @@
     with_items: "{{ ozcs_infra_nodes }}"
     delegate_to: localhost
     run_once: true
+    register: result
+    retries: 10
+    delay: 60
+    until: result|succeeded
 
   - name: "item: openshift.master.cluster.all.cpu.idle_sum"
     zbx_item:
@@ -100,6 +122,10 @@
     with_items: "{{ ozcs_masters }}"
     delegate_to: localhost
     run_once: true
+    register: result
+    retries: 10
+    delay: 60
+    until: result|succeeded
 
   - name: "item: openshift.master.cluster.compute_nodes.cpu.idle_avg"
     zbx_item:
@@ -126,6 +152,10 @@
     with_items: "{{ ozcs_masters }}"
     delegate_to: localhost
     run_once: true
+    register: result
+    retries: 10
+    delay: 60
+    until: result|succeeded
 
   - name: "item: openshift.master.cluster.all.mem.util.available_sum"
     zbx_item:
@@ -146,6 +176,10 @@
     with_items: "{{ ozcs_masters }}"
     delegate_to: localhost
     run_once: true
+    register: result
+    retries: 10
+    delay: 60
+    until: result|succeeded
 
   - name: "item: openshift.master.cluster.all.mem.physmem_sum"
     zbx_item:
@@ -166,6 +200,10 @@
     with_items: "{{ ozcs_masters }}"
     delegate_to: localhost
     run_once: true
+    register: result
+    retries: 10
+    delay: 60
+    until: result|succeeded
 
   - name: "item: openshift.master.cluster.compute_nodes.mem.util.available_avg"
     zbx_item:
@@ -192,6 +230,10 @@
     with_items: "{{ ozcs_masters }}"
     delegate_to: localhost
     run_once: true
+    register: result
+    retries: 10
+    delay: 60
+    until: result|succeeded
 
   - name: "item: openshift.master.cluster.compute_nodes.mem.util.available_avg_pct"
     zbx_item:
@@ -220,6 +262,10 @@
     with_items: "{{ ozcs_masters }}"
     delegate_to: localhost
     run_once: true
+    register: result
+    retries: 10
+    delay: 60
+    until: result|succeeded
 
   - name: "graph: OpenShift Masters and Infra Nodes cpu and mem users_available"
     zbx_graph:
@@ -242,6 +288,10 @@
         hosts: "{{ ozcs_infra_nodes }}"
     delegate_to: localhost
     run_once: true
+    register: result
+    retries: 10
+    delay: 60
+    until: result|succeeded
 
   - name: "graph: OpenShift Compute Nodes Unscheduled vs Idle resources"
     zbx_graph:
@@ -272,6 +322,10 @@
         - "{{ ozcs_masters | first }}"
     delegate_to: localhost
     run_once: true
+    register: result
+    retries: 10
+    delay: 60
+    until: result|succeeded
 
   - name: "graph: OpenShift Compute Nodes Average Memory Available"
     zbx_graph:
@@ -288,3 +342,7 @@
         color: green
     delegate_to: localhost
     run_once: true
+    register: result
+    retries: 10
+    delay: 60
+    until: result|succeeded

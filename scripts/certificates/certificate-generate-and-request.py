@@ -27,10 +27,12 @@
 
 import argparse
 import json
-import requests
-import os, sys
-import yaml
+import os
+import sys
 import base64
+import getpass
+import requests
+import yaml
 from OpenSSL import crypto
 
 class OpenshiftCertificateRequester(object):
@@ -49,9 +51,21 @@ class OpenshiftCertificateRequester(object):
         self.parse_args()
         self.check_host()
         self.parse_config()
+        self.check_node_name()
         self.gen_key()
         self.gen_csr()
         self.digicert_submit_csr()
+
+    def check_node_name(self):
+        """ Refuse certs where nodename > 16b """
+        node_name = self.config["node"].split('.')[1]
+        if len(node_name) <= 16:
+            if self.args.verbose or self.args.debug:
+                print "Node name %s is valid" % node_name
+        else:
+            print "First element of node name (%s) must be <= 16 characters" % node_name
+            sys.exit(1)
+
 
     def check_host(self):
         """ Limit running to bastion hosts """
@@ -122,6 +136,7 @@ class OpenshiftCertificateRequester(object):
             "org_contact_lastname": self.config["org_lastname"],
             "org_contact_email": self.config["org_email"],
             "org_contact_telephone": self.config["org_tel"],
+            "comments": self.config["INC"] + "submitted by " + getpass.getuser(),
         })
 
         authstring = self.args.accountnumber + ":" + self.args.apikey
@@ -166,6 +181,9 @@ class OpenshiftCertificateRequester(object):
 
         configfile = open(self.args.configfile, 'r')
         self.config = yaml.load(configfile)
+        if not self.config["INC"]:
+            print "INC in the submission yaml is a required field!"
+            sys.exit()
 
 if __name__ == '__main__':
     OWCR = OpenshiftCertificateRequester()

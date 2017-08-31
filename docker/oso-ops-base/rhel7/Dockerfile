@@ -10,14 +10,16 @@
 FROM rhel7:latest
 
 # Pause indefinitely if asked to do so.
-RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
+ARG OO_PAUSE_ON_BUILD
+RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
-# get rid of subscript manager (we use our own mirrors)
-RUN touch /var/run/rhsm ; rpm -evh subscription-manager
+ADD usr_local_bin/* /usr/local/bin/
 
 # setup yum repos
-ADD setup-yum.sh /usr/local/bin/setup-yum.sh
 RUN /usr/local/bin/setup-yum.sh
+RUN yum repolist --disablerepo=* && \
+    yum-config-manager --disable \* > /dev/null && \
+    yum-config-manager --enable rhel-7-server-rpms rhel-7-server-extras-rpms
 
 # creature comforts (make it feel like a normal linux environment)
 ENV LANG en_US.UTF-8
@@ -36,9 +38,10 @@ ENV PYTHONSTARTUP=/root/.pythonrc
 # setup epel repo
 RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 
+
 RUN yum clean metadata && \
     yum -y update && \
-    yum -y install iputils cronie ansible vim procps less ack tar psmisc python-scandir lsof && \
+    yum-install-check.sh -y wget iputils cronie ansible vim procps less ack tar psmisc python-scandir lsof && \
     yum clean all
 
 # Setup locales.  It comes broken (probably a size issue) by default in the docker image.

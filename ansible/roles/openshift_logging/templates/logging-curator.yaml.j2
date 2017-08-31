@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    logging-infra: support
+  name: logging-curator
+data:
+  config.yaml: |+
+    # Logging example curator config file
+
+    # uncomment and use this to override the defaults from env vars
+    .defaults:
+      delete:
+        days: {{ osalog_curator_days_to_keep | default(14) }}
+    #  runhour: 0
+    #  runminute: 0
+
+    # to keep ops logs for a different duration:
+    #.operations:
+    #  delete:
+    #    weeks: 8
+
+    # example for a normal project
+    #myapp:
+    #  delete:
+    #    weeks: 1

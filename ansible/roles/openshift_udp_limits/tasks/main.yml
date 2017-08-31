@@ -1,0 +1,168 @@
+---
+- name: Choose a master on which to run
+  set_fact:
+    cluster_master: "{{ groups['oo_hosttype_master'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
+  run_once: true
+
+- name: "Get the host's pod network subnet"
+  oc_obj:
+    state: list
+    kind: hostsubnet
+  register: hostsubnets
+  delegate_to: "{{ cluster_master }}"
+  run_once: true
+
+- set_fact:
+    node_cidr: |-
+      {%- for item in hostsubnets['results']['results'][0]['items'] -%}
+       {%- if item.host == oudp_node_name -%}
+        {{ item.subnet }}
+       {%- endif -%}
+      {%- endfor -%}
+
+- set_fact:
+    oo_udp_chain:
+    - chain: oo-udp
+      after: "^\\*filter$"
+      regex: :oo-udp - \[0:0\]
+      block:  ":oo-udp - [0:0]"
+
+    oo_udp_limit_chain:
+    - chain: oo-udp-limit
+      after: "^\\*filter$"
+      regex: :oo-udp-limit - \[0:0\]
+      block:  ":oo-udp-limit - [0:0]"
+
+    output_filtering_chain:
+    - chain: OPENSHIFT-OUTPUT-FILTERING
+      line:  ":OPENSHIFT-OUTPUT-FILTERING - [0:0]"
+      after: "^\\*filter$"
+      regex: :OPENSHIFT-OUTPUT-FILTERING - \[0:0\]
+
+    filtering_udp_rules:
+    # Send network-namespaced pod traffic to the oo-udp chain. 
+    - chain: OPENSHIFT-OUTPUT-FILTERING
+      after: "OPENSHIFT-OUTPUT-FILTERING"
+      regex: "id_outbound_udp_filtering_1_"
+      line: "-I OPENSHIFT-OUTPUT-FILTERING -m comment --comment id_outbound_udp_filtering_1_ -s {{ node_cidr }} -o eth0 -p udp -j oo-udp"
+
+    filtering_udp_memory_rules:
+    - chain: OPENSHIFT-OUTPUT-FILTERING
+      regex: "id_outbound_udp_filtering_1_"
+      line: "-I OPENSHIFT-OUTPUT-FILTERING -m comment --comment id_outbound_udp_filtering_1_ -s {{ node_cidr }} -o eth0 -p udp -j oo-udp"
+
+    outbound_udp_rules:
+    # Allow all DNS traffic to DNS servers, with no limits.
+    # Limit any remaining permitted UDP traffic to 30 datagrams per second,
+    # and define permitted UDP traffic for un-privileged pods
+    # Finally, drop all other UDP traffic. Log dropped traffic up to once per minute.
+    # Because all dropped traffic is crammed into this single limited log rule,
+    # log entries will only be a sampling of actual dropped traffic.
+    - chain: oo-udp
+      after: "id_outbound_udp_filtering"
+      regex: "id_outbound_udp_rule_1_"
+      block: |-
+        {# Note: sdodson says that pod DNS resolution happens via dnsmasq running on the node. That's
+                 why we only have DNS traffic to the node whitelisted prior to rate limiting. #}
+        -A oo-udp -d {{ oudp_node_ip }}/32 -o eth0 -p udp -m udp --dport 53 -j RETURN
+        -A oo-udp -s {{ node_cidr }} -o eth0 -p udp -j oo-udp-limit
+        -A oo-udp -o eth0 -p udp -m udp --dport 53 -j RETURN
+        -A oo-udp -o eth0 -p udp -m udp --dport 67 -j RETURN
+        -A oo-udp -o eth0 -p udp -m udp --dport 123 -j RETURN
+        -A oo-udp -o eth0 -p udp -m udp --dport 161 -j RETURN
+        -A oo-udp -o eth0 -p udp -m udp --dport 500 -j RETURN
+        -A oo-udp -o eth0 -p udp -m udp --dport 1514 -j RETURN
+        -A oo-udp -o eth0 -p udp -m udp --dport 4500 -j RETURN
+        -A oo-udp -o eth0 -p udp -m udp --dport 25826 -j RETURN
+        -A oo-udp -o eth0 -p udp -m limit --limit 1/min --limit-burst 1 -j LOG --log-prefix "UDP outlog: DROPPED_ALL:"
+        -A oo-udp -p udp -j DROP
+
+    outbound_udp_limit_rules:
+    # Generate per-user outbound UDP limits for every IP in the host subnet
+    - chain: oo-udp-limit
+      after: "id_outbound_udp_rule_1_"
+      regex: "id_outbound_udp_rule_2_"
+      block: |-
+         {%- for i in range(1, (node_cidr | ipaddr('size'))-1) -%}
+         -A oo-udp-limit -s {{ node_cidr | ipaddr(i) | ipaddr('address') }}/32 -m limit --limit 30/sec -j RETURN
+         {% endfor -%}
+
+    # Drop all UDP traffic that exceeds the per-user limits. 
+    # Log dropped traffic up to once per minute.
+    # Because all dropped traffic is crammed into this single limited log rule,
+    # log entries will only be a sampling of actual dropped traffic.
+    - chain: oo-udp-limit
+      after: "id_outbound_udp_rule_2_"
+      regex: "id_outbound_udp_rule_3_"
+      block: |-
+        -A oo-udp-limit -m limit --limit 1/min --limit-burst 1 -j LOG --log-prefix "UDP outlog: DROPPED_FLOOD:"
+        -A oo-udp-limit -j DROP
+
+- name: Create the udp limit chain
+  iptables_chain:
+    name: oo-udp-limit
+    rules: "{{ (outbound_udp_limit_rules|map(attribute='block')|join('')).splitlines() }}"
+
+- name: Create the udp chain
+  iptables_chain:
+    name: oo-udp
+    rules: "{{ (outbound_udp_rules|map(attribute='block')|join('')).splitlines() }}"
+
+- name: List iptables rules filtering chain
+  command: '/usr/sbin/iptables -w -nL OPENSHIFT-OUTPUT-FILTERING'
+  changed_when: False
+  register: filteringchain
+  ignore_errors: True
+
+- name: add in-memory filtering chain
+  command: "/usr/sbin/iptables -w -N OPENSHIFT-OUTPUT-FILTERING"
+  when: not "OPENSHIFT-OUTPUT-FILTERING" in filteringchain.stdout
+
+- name: Modify in-memory filtering chain
+  command: "/usr/sbin/iptables -w {{ item.line }}"
+  when: not item.regex in filteringchain.stdout
+  with_items: "{{ filtering_udp_memory_rules }}"
+
+- name: Modify /etc/sysconfig/iptables filtering
+  lineinfile:
+    dest: /etc/sysconfig/iptables
+    insertafter: "{{ item.after }}"
+    line: "{{ item.line }}"
+    regexp: "{{ item.regex }}"
+  with_items: "{{ filtering_udp_rules }}"
+
+- name: Modify /etc/sysconfig/iptables udp
+  blockinfile:
+    dest: /etc/sysconfig/iptables
+    insertafter: "{{ item.after }}"
+    block: "{{ item.block }}"
+    marker: "# {mark} Ansible-managed {{ item.regex }} UDP limit rules"
+  with_items: 
+  - "{{ oo_udp_chain }}"
+  - "{{ oo_udp_limit_chain}}"
+  - "{{ outbound_udp_rules }}"
+  - "{{ outbound_udp_limit_rules }}"
+
+- name: Copy tcp_out_logging config file
+  copy:
+    src: iptables_udp.conf
+    dest: /etc/rsyslog.d/iptables_udp.conf
+    mode: "0644"
+    owner: root
+    group: root
+  notify: restart rsyslog
+
+- name: Setup iptables UDP log rotate
+  copy:
+    content: |
+      /var/log/iptables.log {
+          copytruncate
+          missingok
+          notifyifempty
+          compress
+          weekly
+      }
+    dest: /etc/logrotate.d/iptables_udp
+    mode: "0640"
+    owner: root
+    group: root

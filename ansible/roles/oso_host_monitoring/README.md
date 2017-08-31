@@ -71,6 +71,10 @@ Is this a primary master in a HA configuration
 
 Should dnsmasq be monitored on the node. `True` or `False`
 
+### osohm_monitor_zabbix_infra
+
+Is Zabbix running on the cluster and should it be monitored? `True` or `False`
+
 ### osohm_pruning:
 
 A dictionary of the configuration for the pruning cron job. It has the following keys
@@ -104,13 +108,21 @@ The AWS access key to use for the snapshotter
 
 The AWS secret access key to use for the snapshotter
 
+### osohm_ops_monitoring_aws_access_key_id
+
+The AWS access key to use for monitoring scripts
+
+### osohm_ops_monitoring_aws_secret_access_key
+
+The AWS secret access key to use for monitoring scripts
+
 ### osohm_zagg_client
 
 Name of container with the Zabbix client
 
 ### osohm_zagg_verify_ssl
 
-Sould the zagg client verify SSL connections. `True` or `False`
+Should the zagg client verify SSL connections. `True` or `False`
 
 ### osohm_zagg_web_url
 

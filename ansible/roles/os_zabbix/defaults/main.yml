@@ -1,1 +1,10 @@
 ---
+g_v2_monitor_url: 'https://www.google.com'
+g_webcheck_v3prodpreview_sso_url_version: 'https://www.redhat.com'
+g_webcheck_v3prodpreview_sso_url_fabric8: 'https://www.redhat.com'
+
+g_webcheck_v3prod_sso_url_version: 'https://www.openshift.com'
+g_webcheck_v3prod_sso_url_fabric8: 'https://www.openshift.com'
+
+g_webcheck_developerredhatcom_sso_url_version: 'https://www.openshift.org'
+g_webcheck_developerredhatcom_sso_url_rhd: 'https://www.openshift.org'

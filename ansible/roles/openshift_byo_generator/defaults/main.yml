@@ -3,7 +3,6 @@ obg_output_path: /tmp
 obg_registry_template: openshift3/ose-${component}:${version}
 obg_install_metrics: false
 obg_install_logging: false
-obg_install_provisioner: false
 obg_inventory_sdn: redhat/openshift-ovs-subnet
 obg_master_cluster_hostname: internal.api.example.com
 obg_master_public_hostname: api.example.com
@@ -11,4 +10,11 @@ obg_master_public_api_url: https://api.example.com
 obg_master_public_console_url: https://console.example.com/console
 obg_router_domain: apps.example.com
 obg_custom_cors_origins: [ 'console.example.com', 'api.example.com' ]
-obg_install_version: False
+obg_install_router: False
+obg_install_registry: False
+obg_cluster_network_cidr: False
+obg_master_portal_net: False
+obg_logging_variables: {}
+obg_metrics_variables: {}
+obg_ip_choice: oo_public_ip
+obg_use_private_ips: False

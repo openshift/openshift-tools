@@ -87,7 +87,7 @@ options:
     required: false
     default: None
     aliases: []
-  start_time:
+  start_date:
     description:
     - The epoch representation of the start of the maintenance time
     required: false
@@ -118,7 +118,7 @@ EXAMPLES = '''
       zbx_sslverify: True
       name: maintenance test
       description: testing my maintenance
-      start_time: 1473861286
+      start_date: 1473861286
       duration: 15
       data_collection: False
       hostgroups:
@@ -132,13 +132,13 @@ EXAMPLES = '''
       zbx_server: 'https://localhost/zabbix/api_jsonrpc.php'
       name: maintenance test
       description: testing my maintenance
-      start_time: "{{ lookup('pipe', 'date +%s') }}"
+      start_date: "{{ lookup('pipe', 'date +%s') }}"
       duration: 15
       data_collection: False
       hosts:
       - host1
       - host2
-# Note: when creating a maintenance with a variable for start_time it will
+# Note: when creating a maintenance with a variable for start_date it will
 # continue to change when rerunning the module as the time will be different
 # and require an update.
 '''

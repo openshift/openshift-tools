@@ -8,6 +8,25 @@
   - "{{ ossr_default_router_keys }}"
   - "{{ ossr_default_router_cacert }}"
 
+- name: get OpenShift version
+  oc_version:
+  register: oc_version
+
+- name: Include cloud-specific router edits
+  include_vars: "{{ ossr_cloud }}.yml"
+
+# pre-3.4 clusters should ignore PROXY env var settings from vars/aws.yml
+- name: Set router edit(s) list
+  set_fact:
+    ossr_router_edits: "{{ ossr_default_router_edits }}"
+  when: oc_version['results']['openshift_short'] | version_compare('3.4', '<')
+
+# anything beyond a 3.3 cluster should set the router up for PROXY protocol (from vars/aws.yml)
+- name: Merge default and cloud-specific router edits
+  set_fact:
+    ossr_router_edits: "{{ ossr_default_router_edits | union(ossr_cloud_router_edits) }}"
+  when: oc_version['results']['openshift_short'] | version_compare('3.4', '>=')
+
 - name: create routers
   oadm_router:
     name: "{{ item.0.name }}"
@@ -21,7 +40,7 @@
     cert_file: "/etc/origin/master/named_certificates/{{ item.1 | basename }}"
     key_file: "/etc/origin/master/named_certificates/{{ item.2 | basename }}"
     cacert_file: "/etc/origin/master/named_certificates/{{ ossr_default_router_cacert | basename }}"
-    edits: "{{ item.0.router_edits | default([]) | union(ossr_default_router_edits) }}"
+    edits: "{{ ossr_router_edits | union(item.0.router_edits | default([])) }}"
   with_together:
   - "{{ ossr_routers }}" # item.0
   - "{{ ossr_default_router_certs }}" # item.1
@@ -32,3 +51,4 @@
 - debug:
     var: router_out
   run_once: true
+

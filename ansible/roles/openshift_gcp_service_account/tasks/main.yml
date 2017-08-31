@@ -66,7 +66,7 @@
 
 - name: Set the private key
   set_fact:
-    private_key: "{{ sa_key_out.results.results | to_yaml }}"
+    private_key: "{{ sa_key_out.results.results }}"
   when: sa_key_out.changed
 
 - name: Write out the multi_inventory file
@@ -79,5 +79,5 @@
   yedit:
     src: "{{ osgcpsa_destination }}/gcp_user_{{ osgcpsa_username}}.yml"
     key: "g_gcp_user_{{ osgcpsa_username }}"
-    value: "{{ private_key }}"
+    value: "{{ private_key  | to_yaml }}"
   when: (private_key is defined) and (osgcpsa_output_type == "json")

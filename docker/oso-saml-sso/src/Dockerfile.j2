@@ -10,15 +10,17 @@ FROM openshifttools/oso-centos7-ops-base:latest
 {% endif %}
 
 # Pause indefinitely if asked to do so.
-RUN test "$OO_PAUSE_ON_BUILD" = "true" && while true ; do sleep 10 ; done || :
+ARG OO_PAUSE_ON_BUILD
+RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 EXPOSE 8443
 
 ADD prep_simplesaml.sh start.sh /usr/local/bin/
 
 # Install SimpleSAML and modules from RPMs, then run our setup/hardening script for SimpleSAML
-RUN yum install -y \
+RUN yum-install-check.sh -y \
         httpd \
+        inotify-tools \
         mod_ssl \
         openshift-tools-web-simplesamlphp-modules \
         openssh-server \

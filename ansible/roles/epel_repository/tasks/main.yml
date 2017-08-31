@@ -1,7 +1,46 @@
 ---
 # tasks file for epel_repository
+- name: Check if epel-release is installed
+  repoquery:
+    name: epel-release
+    query_type: installed
+  register: repoquery_epel
+
+- name: debug
+  debug:
+    msg: "{{ repoquery_epel }}"
 
 - name: Install EPEL Repo RPM
-  action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
+  package:
+    name: "{{ item }}"
+    state: present
   with_items:
   - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+  when: not repoquery_epel.results.package_found
+
+- name: insert the skip_if_unavailable option
+  ini_file:
+    dest: /etc/yum.repos.d/epel.repo
+    section: epel
+    option: skip_if_unavailable
+    no_extra_spaces: True
+    value: "{{ epelr_skip_if_unavailable | ternary('1','0') }}"
+
+- name: Mark undesirable EPEL packages as excluded
+  yum_repo_exclude:
+    name: "{{item.filename}}"
+    repo: "{{item.reponame}}"
+    patterns: [ 'ansible' ]
+  with_items:
+    - filename: /etc/yum.repos.d/epel.repo
+      reponame: epel
+    - filename: /etc/yum.repos.d/epel.repo
+      reponame: epel-debuginfo
+    - filename: /etc/yum.repos.d/epel.repo
+      reponame: epel-source
+    - filename: /etc/yum.repos.d/epel-testing.repo
+      reponame: epel-testing
+    - filename: /etc/yum.repos.d/epel-testing.repo
+      reponame: epel-testing-debuginfo
+    - filename: /etc/yum.repos.d/epel-testing.repo
+      reponame: epel-testing-source

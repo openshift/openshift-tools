@@ -1,5 +1,6 @@
 # pylint: skip-file
 
+# pylint: disable=too-many-instance-attributes
 class OCObject(OpenShiftCLI):
     ''' Class to wrap the oc command line tools '''
 
@@ -11,9 +12,11 @@ class OCObject(OpenShiftCLI):
                  rname=None,
                  selector=None,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
-                 verbose=False):
+                 verbose=False,
+                 all_namespaces=False):
         ''' Constructor for OpenshiftOC '''
-        super(OCObject, self).__init__(namespace, kubeconfig)
+        super(OCObject, self).__init__(namespace, kubeconfig,
+                                       all_namespaces=all_namespaces)
         self.kind = kind
         self.namespace = namespace
         self.name = rname
@@ -35,12 +38,19 @@ class OCObject(OpenShiftCLI):
         return self._delete(self.kind, self.name)
 
     def create(self, files=None, content=None):
-        '''Create a deploymentconfig '''
+        '''
+           Create a config
+
+           NOTE: This creates the first file OR the first conent.
+           TODO: Handle all files and content passed in
+        '''
         if files:
             return self._create(files[0])
 
-        return self._create(Utils.create_files_from_contents(content))
+        content['data'] = yaml.dump(content['data'])
+        content_file = Utils.create_files_from_contents(content)[0]
 
+        return self._create(content_file['path'])
 
     # pylint: disable=too-many-function-args
     def update(self, files=None, content=None, force=False):

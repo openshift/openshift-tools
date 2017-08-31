@@ -1,0 +1,15 @@
+---
+g_template_multi_inventory:
+   name: Template Multi-Inventory
+   zitems:
+   - key: multi_inventory.account.refresh
+     applications:
+     - MultiInventory
+     value_type: int
+
+   ztriggers:
+   - name: Multi-Inventory account connectivity issues
+     description: Ansible multi-inventory is having trouble accessing accounts
+     expression: "{Template Multi-Inventory:multi_inventory.account.refresh.min(#3)}>0"
+     priority: avg
+     url: https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_multi_inventory.asciidoc

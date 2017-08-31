@@ -13,4 +13,4 @@ if [ $? -ne 0 ] ; then
 fi
 
 # Send results to zabbix
-ops-zagg-client -k "pcp.ping" -o "$PING_RETURN"
+ops-metric-client -k "pcp.ping" -o "$PING_RETURN"

@@ -21,7 +21,7 @@ g_template_aws:
   ztriggers:
   - name: "EBS Snapshot deletion failed on {HOST.NAME}"
     expression: "{Template AWS:aws.ebs.snapshotter.deletion_errors.min(#3)}>0"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ebs_snapshotter.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_ebs_snapshotter.asciidoc"
     priority: average
 
   zdiscoveryrules:
@@ -34,6 +34,11 @@ g_template_aws:
     key: disc.aws.ebs.snapshotter
     lifetime: 1
     description: "Dynamically register EBS Snapshotter items"
+
+  - name: disc.aws.ebs
+    key: disc.aws.ebs
+    lifetime: 1
+    description: "Dynamically register EBS related macros"
 
   zitemprototypes:
   - discoveryrule_key: disc.aws
@@ -76,8 +81,21 @@ g_template_aws:
     applications:
     - EBS Snapshotter
 
+  - discoveryrule_key: disc.aws.ebs
+    name: "{% raw %}EBS Attachment State[{{ '{#' }}OSO_EBS_VOLUME_URI}]{% endraw %}"
+    key: "{% raw %}disc.aws.ebs.attach_state[{{ '{#' }}OSO_EBS_VOLUME_URI}]{% endraw %}"
+    value_type: int
+    description: "EBS Attachment State (stuck or not)"
+    applications:
+    - EBS Attachment State
+
   ztriggerprototypes:
   - name: "{% raw %}EBS Snapshotter[{{ '{#' }}OSO_SNAP_SCHEDULE}]: error creating ebs snapshots on {HOST.NAME}{% endraw %}"
     expression: "{% raw %}{Template AWS:disc.aws.ebs.snapshotter.snapshot_creation_errors[{{ '{#' }}OSO_SNAP_SCHEDULE}].min(#3)}>0{% endraw %}"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_ebs_snapshotter.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_ebs_snapshotter.asciidoc"
     priority: average
+
+  - name: "{% raw %}EBS Attach State[{{ '{#' }}OSO_EBS_VOLUME_URI}]: EBS volume stuck attaching or detaching{% endraw %}"
+    expression: "{% raw %}{Template AWS:disc.aws.ebs.attach_state[{{ '{#' }}OSO_EBS_VOLUME_URI}].last()}>0{% endraw %}"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_ebs_stuck_attaching_detaching.asciidoc"
+    priority: high

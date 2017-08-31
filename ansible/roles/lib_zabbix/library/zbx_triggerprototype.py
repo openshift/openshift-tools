@@ -142,7 +142,7 @@ def main():
             content = zapi.get_content(zbx_class_name, 'create', params)
 
             if content.has_key('error'):
-                module.exit_json(failed=True, changed=True, results=content['error'], state="present")
+                module.fail_json(msg=content['error'])
 
             module.exit_json(changed=True, results=content['result'], state='present')
 
@@ -162,6 +162,10 @@ def main():
         # We have differences and need to update
         differences[idname] = zab_results[idname]
         content = zapi.get_content(zbx_class_name, 'update', differences)
+
+        if content.has_key('error'):
+            module.fail_json(msg=content['error'])
+
         module.exit_json(changed=True, results=content['result'], state="present")
 
 

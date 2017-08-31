@@ -29,6 +29,17 @@
   notify:
   - restart openshift master services
 
+- name: Check that the serial file exists
+  stat:
+    path: /etc/origin/master/ca.serial.txt
+  register: serial_stat_result
+
+- name: Create the serial file, if it doesnt exist already
+  file:
+    path: /etc/origin/master/ca.serial.txt
+    state: touch
+  when: not serial_stat_result.stat.exists
+
 - name: Create a self-signed cert
   oadm_ca:
     cmd: create-server-cert
@@ -145,6 +156,8 @@
         spec.strategy.rollingParams.maxUnavailable: 50%
         spec.strategy.rollingParams.timeoutSeconds: 600
         spec.strategy.rollingParams.updatePeriodSeconds: 1
+        spec.template.spec.containers[0].resources.limits.memory: 2G
+        spec.template.spec.containers[0].resources.requests.memory: 1G
   register: registryout
 
 - name: Pause for race conditions

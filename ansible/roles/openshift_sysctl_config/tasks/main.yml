@@ -1,0 +1,14 @@
+---
+- fail:
+    msg: "{{ item }} is undefined"
+  when: ossc_settings is undefined
+
+- name: set sysctl values
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_file: "{{ item.sysctl_file | default(omit)}}"
+    reload: True
+  with_items: "{{ ossc_settings }}"
+
+

@@ -5,4 +5,5 @@ galaxy_info:
   issue_tracker_url: https://github.com/openshift/openshift-ansible-ops/issues
   license: Apache
   min_ansible_version: 1.9
-dependencies: []
+dependencies:
+- tools_roles/lib_git

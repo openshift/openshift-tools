@@ -1,0 +1,6 @@
+---
+ostd_rpm: False
+ostd_template_edits: False
+ostd_master_config_edits: False
+ostd_node_selector: type=infra
+ostd_project_display_name: "{{ ostd_project }}"

@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.94
+Version:       0.0.110
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -134,6 +134,12 @@ Zagg Python libraries developed for monitoring OpenShift.
 %{python_sitelib}/openshift_tools/monitoring/zagg*.py[co]
 %{python_sitelib}/openshift_tools/monitoring/zabbix_metric_processor.py
 %{python_sitelib}/openshift_tools/monitoring/zabbix_metric_processor.py[co]
+%{python_sitelib}/openshift_tools/monitoring/generic_metric_sender.py
+%{python_sitelib}/openshift_tools/monitoring/generic_metric_sender.py[co]
+%{python_sitelib}/openshift_tools/monitoring/metric_sender.py
+%{python_sitelib}/openshift_tools/monitoring/metric_sender.py[co]
+%{python_sitelib}/openshift_tools/monitoring/hawk*.py
+%{python_sitelib}/openshift_tools/monitoring/hawk*.py[co]
 
 # ----------------------------------------------------------------------------------
 # python-openshift-tools-monitoring-aws subpackage
@@ -291,6 +297,62 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Fri Apr 28 2017 Thomas Wiest <twiest@redhat.com> 0.0.110-1
+- Added cron-send-ec2-ebs-volumes-in-stuck-state.py (twiest@redhat.com)
+
+* Mon Mar 06 2017 Matt Woodson <mwoodson@redhat.com> 0.0.109-1
+- 
+
+* Mon Mar 06 2017 Matt Woodson <mwoodson@redhat.com> 0.0.108-1
+- 
+
+* Mon Mar 06 2017 Matt Woodson <mwoodson@redhat.com> 0.0.107-1
+- config loop tag monitoring work (mwoodson@redhat.com)
+
+* Wed Feb 22 2017 Dan Yocum <dyocum@redhat.com> 0.0.106-1
+- 
+
+* Wed Feb 22 2017 Dan Yocum <dyocum@redhat.com> 0.0.105-1
+- 
+
+* Mon Feb 20 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.104-1
+- Fix typo that cause script failure (zgalor@redhat.com)
+
+* Wed Feb 15 2017 zhiwliu <zhiwliu@redhat.com> 0.0.103-1
+- Translate metrics with key "heartbeat.ping" to Hawkular Availability Metrics
+  (zgalor@redhat.com)
+
+* Thu Jan 19 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.102-1
+- use metric_sender.yaml as default config file for zagg_sender
+  (zgalor@redhat.com)
+- use metric_sender.yaml as default config file for hawk_sender
+  (zgalor@redhat.com)
+
+* Fri Jan 06 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.101-1
+- yesterday's fix had an extra letter (ihorvath@redhat.com)
+
+* Thu Jan 05 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.100-1
+- fix broken function call (ihorvath@redhat.com)
+
+* Wed Jan 04 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.99-1
+- Fix hawk_client to properly send unicode string metrics (zgalor@redhat.com)
+- moved to openshift_tools (dyocum@redhat.com)
+
+* Thu Dec 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.98-1
+- Add tags to metric sender (zgalor@redhat.com)
+
+* Wed Dec 07 2016 Joel Diaz <jdiaz@redhat.com> 0.0.97-1
+- Elegant ImportError handling of hawkular-client (zgalor@redhat.com)
+- Add MetricSender to monitoring lib (zgalor@redhat.com)
+- Add a hawkular configuration, client and sender classes to the monitoring lib
+  (kobi.zamir@gmail.com)
+
+* Mon Nov 14 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.96-1
+- add region for the s3 check (zhizhang@zhizhang-laptop-nay.redhat.com)
+
+* Tue Nov 08 2016 Joel Diaz <jdiaz@redhat.com> 0.0.95-1
+- router monitoring (jdiaz@redhat.com)
+
 * Tue Oct 25 2016 Drew Anderson <dranders@redhat.com> 0.0.94-1
 - 
 

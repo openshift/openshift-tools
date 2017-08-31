@@ -5,20 +5,20 @@
 # pylint: disable=too-many-lines
 
 import atexit
-import copy
 import json
 import os
 import re
 import shutil
 import subprocess
-import yaml
-
-# This is here because of a bug that causes yaml
-# to incorrectly handle timezone info on timestamps
-def timestamp_constructor(_, node):
-    '''return timestamps as strings'''
-    return str(node.value)
-yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
+import ruamel.yaml as yaml
+#import yaml
+#
+## This is here because of a bug that causes yaml
+## to incorrectly handle timezone info on timestamps
+#def timestamp_constructor(_, node):
+#    '''return timestamps as strings'''
+#    return str(node.value)
+#yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
 
 class OpenShiftCLIError(Exception):
     '''Exception class for openshiftcli'''
@@ -30,22 +30,24 @@ class OpenShiftCLI(object):
     def __init__(self,
                  namespace,
                  kubeconfig='/etc/origin/master/admin.kubeconfig',
-                 verbose=False):
+                 verbose=False,
+                 all_namespaces=False):
         ''' Constructor for OpenshiftCLI '''
         self.namespace = namespace
         self.verbose = verbose
         self.kubeconfig = kubeconfig
+        self.all_namespaces = all_namespaces
 
     # Pylint allows only 5 arguments to be passed.
     # pylint: disable=too-many-arguments
-    def _replace_content(self, resource, rname, content, force=False):
+    def _replace_content(self, resource, rname, content, force=False, sep='.'):
         ''' replace the current object with the content '''
         res = self._get(resource, rname)
         if not res['results']:
             return res
 
         fname = '/tmp/%s' % rname
-        yed = Yedit(fname, res['results'][0])
+        yed = Yedit(fname, res['results'][0], separator=sep)
         changes = []
         for key, value in content.items():
             changes.append(yed.put(key, value))
@@ -88,15 +90,19 @@ class OpenShiftCLI(object):
 
         return self.openshift_cmd(cmd)
 
-    def _process(self, template_name, create=False, params=None):
+    def _process(self, template_name, create=False, params=None, template_data=None):
         '''return all pods '''
-        cmd = ['process', template_name, '-n', self.namespace]
+        cmd = ['process', '-n', self.namespace]
+        if template_data:
+            cmd.extend(['-f', '-'])
+        else:
+            cmd.append(template_name)
         if params:
             param_str = ["%s=%s" % (key, value) for key, value in params.items()]
             cmd.append('-v')
             cmd.extend(param_str)
 
-        results = self.openshift_cmd(cmd, output=True)
+        results = self.openshift_cmd(cmd, output=True, input_data=template_data)
 
         if results['returncode'] != 0 or not create:
             return results
@@ -114,7 +120,9 @@ class OpenShiftCLI(object):
         cmd = ['get', resource]
         if selector:
             cmd.append('--selector=%s' % selector)
-        if self.namespace:
+        if self.all_namespaces:
+            cmd.extend(['--all-namespaces'])
+        elif self.namespace:
             cmd.extend(['-n', self.namespace])
 
         cmd.extend(['-o', 'json'])
@@ -184,7 +192,26 @@ class OpenShiftCLI(object):
 
         return self.openshift_cmd(cmd, oadm=True, output=True, output_type='raw')
 
-    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json'):
+    def _import_image(self, url=None, name=None, tag=None):
+        ''' perform image import '''
+        cmd = ['import-image']
+
+        image = '{0}'.format(name)
+        if tag:
+            image += ':{0}'.format(tag)
+
+        cmd.append(image)
+
+        if url:
+            cmd.append('--from={0}/{1}'.format(url, image))
+
+        cmd.append('-n{0}'.format(self.namespace))
+
+        cmd.append('--confirm')
+        return self.openshift_cmd(cmd)
+
+    #pylint: disable=too-many-arguments
+    def openshift_cmd(self, cmd, oadm=False, output=False, output_type='json', input_data=None):
         '''Base command for oc '''
         cmds = []
         if oadm:
@@ -202,11 +229,12 @@ class OpenShiftCLI(object):
             print ' '.join(cmds)
 
         proc = subprocess.Popen(cmds,
+                                stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 env={'KUBECONFIG': self.kubeconfig})
 
-        stdout, stderr = proc.communicate()
+        stdout, stderr = proc.communicate(input_data)
         rval = {"returncode": proc.returncode,
                 "results": results,
                 "cmd": ' '.join(cmds),
@@ -250,7 +278,7 @@ class Utils(object):
         path = os.path.join('/tmp', rname)
         with open(path, 'w') as fds:
             if ftype == 'yaml':
-                fds.write(yaml.safe_dump(data, default_flow_style=False))
+                fds.write(yaml.dump(data, Dumper=yaml.RoundTripDumper))
 
             elif ftype == 'json':
                 fds.write(json.dumps(data))
@@ -314,7 +342,7 @@ class Utils(object):
             contents = sfd.read()
 
         if sfile_type == 'yaml':
-            contents = yaml.safe_load(contents)
+            contents = yaml.load(contents, yaml.RoundTripLoader)
         elif sfile_type == 'json':
             contents = json.loads(contents)
 
@@ -345,7 +373,7 @@ class Utils(object):
 
                 if not isinstance(user_def[key], list):
                     if debug:
-                        print 'user_def[key] is not a list'
+                        print 'user_def[key] is not a list key=[%s] user_def[key]=%s' % (key, user_def[key])
                     return False
 
                 if len(user_def[key]) != len(value):
@@ -356,9 +384,6 @@ class Utils(object):
                         print "value: %s" % value
                     return False
 
-
-                user_def[key].sort()
-                value.sort()
                 for values in zip(user_def[key], value):
                     if isinstance(values[0], dict) and isinstance(values[1], dict):
                         if debug:

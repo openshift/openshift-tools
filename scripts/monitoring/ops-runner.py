@@ -24,7 +24,7 @@ import socket
 # Reason: disable pylint import-error because our libs aren't loaded on jenkins.
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.timeout import timeout, TimeoutException
 
 
@@ -43,6 +43,7 @@ class OpsRunner(object):
 
     def __init__(self):
         """ constructor """
+        self.args = None
         self.parse_args()
         self.tmp_file_handle = None
         self.lock_file_handle = None
@@ -86,7 +87,12 @@ class OpsRunner(object):
     def check_sleep(self):
         """ pause for a random number (bounded) of seconds if needed"""
         if self.args.random_sleep:
-            seconds = random.randrange(int(self.args.random_sleep))
+            rand = random.Random()
+            # seed the rng using the hostname and check name. That means that for each hostname/check,
+            # it will sleep the same amount every time for a given self.args.random_sleep
+            rand.seed(hash(socket.gethostname()+self.args.name))
+
+            seconds = rand.randrange(int(self.args.random_sleep))
             self.verbose_print("Sleeping %s seconds..." % seconds)
             time.sleep(seconds)
 
@@ -172,21 +178,21 @@ class OpsRunner(object):
 
     def report_to_zabbix(self, disc_key, disc_macro, item_proto_key, value):
         """ Sends the commands exit code to zabbix. """
-        zs = ZaggSender()
+        mts = MetricSender()
 
 
         # Add the dynamic item
         self.verbose_print("Adding the dynamic item to Zabbix - %s, %s, [%s]" % \
                            (disc_key, disc_macro, self.args.name))
-        zs.add_zabbix_dynamic_item(disc_key, disc_macro, [self.args.name])
+        mts.add_dynamic_metric(disc_key, disc_macro, [self.args.name])
 
         # Send the value for the dynamic item
         self.verbose_print("Sending metric to Zabbix - %s[%s]: %s" % \
                            (item_proto_key, self.args.name, value))
-        zs.add_zabbix_keys({'%s[%s]' % (item_proto_key, self.args.name): value})
+        mts.add_metric({'%s[%s]' % (item_proto_key, self.args.name): value})
 
         # Actually send them
-        zs.send_metrics()
+        mts.send_metrics()
 
     def parse_args(self):
         """ parse the args from the cli """
@@ -230,8 +236,14 @@ class OpsRunner(object):
 
     def run_cmd_with_output(self, cmd, log=True):
         """ Runs a command and optionally logs it's output """
-        process = Popen(cmd, stdout=PIPE, stderr=STDOUT,
-                        universal_newlines=True)
+        try:
+            process = Popen(cmd, stdout=PIPE, stderr=STDOUT,
+                            universal_newlines=True)
+        except OSError as e:
+            self.verbose_print("Error while trying to run: {}".format(cmd))
+            self.verbose_print(e)
+            # return non-zero exit
+            return 1
 
         while True:
             out = process.stdout.read(1)

@@ -1,5 +1,6 @@
 # pylint: skip-file
 
+
 class YeditException(Exception):
     ''' Exception class for Yedit '''
     pass
@@ -112,7 +113,8 @@ class Yedit(object):
                     continue
 
                 elif data and not isinstance(data, dict):
-                    return None
+                    raise YeditException("Unexpected item type found while going through key " +
+                                         "path: {} (at key: {})".format(key, dict_key))
 
                 data[dict_key] = {}
                 data = data[dict_key]
@@ -120,7 +122,7 @@ class Yedit(object):
             elif arr_ind and isinstance(data, list) and int(arr_ind) <= len(data) - 1:
                 data = data[int(arr_ind)]
             else:
-                return None
+                raise YeditException("Unexpected item type found while going through key path: {}".format(key))
 
         if key == '':
             data = item
@@ -133,6 +135,12 @@ class Yedit(object):
         # expected dict entry
         elif key_indexes[-1][1] and isinstance(data, dict):
             data[key_indexes[-1][1]] = item
+
+        # didn't add/update to an existing list, nor add/update key to a dict
+        # so we must have been provided some syntax like a.b.c[<int>] = "data" for a
+        # non-existent array
+        else:
+            raise YeditException("Error adding data to object at path: {}".format(key))
 
         return data
 
@@ -170,12 +178,10 @@ class Yedit(object):
         tmp_filename = self.filename + '.yedit'
         try:
             with open(tmp_filename, 'w') as yfd:
-                yml_dump = yaml.safe_dump(self.yaml_dict, default_flow_style=False)
-                for line in yml_dump.strip().split('\n'):
-                    if '{{' in line and '}}' in line:
-                        yfd.write(line.replace("'{{", '"{{').replace("}}'", '}}"') + '\n')
-                    else:
-                        yfd.write(line + '\n')
+                # pylint: disable=no-member,maybe-no-member
+                if hasattr(self.yaml_dict, 'fa'):
+                    self.yaml_dict.fa.set_block_style()
+                yfd.write(yaml.dump(self.yaml_dict, Dumper=yaml.RoundTripDumper))
         except Exception as err:
             raise YeditException(err.message)
 
@@ -219,12 +225,15 @@ class Yedit(object):
         # check if it is yaml
         try:
             if content_type == 'yaml' and contents:
-                self.yaml_dict = yaml.load(contents)
+                self.yaml_dict = yaml.load(contents, yaml.RoundTripLoader)
+                # pylint: disable=no-member,maybe-no-member
+                if hasattr(self.yaml_dict, 'fa'):
+                    self.yaml_dict.fa.set_block_style()
             elif content_type == 'json' and contents:
                 self.yaml_dict = json.loads(contents)
         except yaml.YAMLError as err:
             # Error loading yaml or json
-            YeditException('Problem with loading yaml file. %s' % err)
+            raise YeditException('Problem with loading yaml file. %s' % err)
 
         return self.yaml_dict
 
@@ -384,7 +393,11 @@ class Yedit(object):
         if entry == value:
             return (False, self.yaml_dict)
 
-        tmp_copy = copy.deepcopy(self.yaml_dict)
+        # deepcopy didn't work
+        tmp_copy = yaml.load(yaml.round_trip_dump(self.yaml_dict, default_flow_style=False), yaml.RoundTripLoader)
+        # pylint: disable=no-member
+        if hasattr(self.yaml_dict, 'fa'):
+            tmp_copy.fa.set_block_style()
         result = Yedit.add_entry(tmp_copy, path, value, self.separator)
         if not result:
             return (False, self.yaml_dict)
@@ -396,7 +409,11 @@ class Yedit(object):
     def create(self, path, value):
         ''' create a yaml file '''
         if not self.file_exists():
-            tmp_copy = copy.deepcopy(self.yaml_dict)
+            # deepcopy didn't work
+            tmp_copy = yaml.load(yaml.round_trip_dump(self.yaml_dict, default_flow_style=False), yaml.RoundTripLoader)
+            # pylint: disable=no-member
+            if hasattr(self.yaml_dict, 'fa'):
+                tmp_copy.fa.set_block_style()
             result = Yedit.add_entry(tmp_copy, path, value, self.separator)
             if result:
                 self.yaml_dict = tmp_copy

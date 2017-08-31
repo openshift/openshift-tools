@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.0.165
+Version:       0.1.82
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -17,14 +17,16 @@ OpenShift Tools Scripts
 
 %install
 
-# openshift-tools-scripts-monitoring install
 mkdir -p %{buildroot}/usr/bin
+cp -p monitoring/ops-metric-client.py %{buildroot}/usr/bin/ops-metric-client
+cp -p monitoring/ops-metric-pcp-client.py %{buildroot}/usr/bin/ops-metric-pcp-client
 cp -p monitoring/ops-zagg-client.py %{buildroot}/usr/bin/ops-zagg-client
 cp -p monitoring/ops-zagg-pcp-client.py %{buildroot}/usr/bin/ops-zagg-pcp-client
 cp -p monitoring/ops-zagg-metric-processor.py %{buildroot}/usr/bin/ops-zagg-metric-processor
 cp -p monitoring/ops-zagg-heartbeat-processor.py %{buildroot}/usr/bin/ops-zagg-heartbeat-processor
 cp -p monitoring/ops-zagg-heartbeater.py %{buildroot}/usr/bin/ops-zagg-heartbeater
 cp -p monitoring/cron-send-process-count.sh %{buildroot}/usr/bin/cron-send-process-count
+cp -p monitoring/cron-send-security-updates-count.py %{buildroot}/usr/bin/cron-send-security-updates-count
 cp -p monitoring/cron-send-filesystem-metrics.py %{buildroot}/usr/bin/cron-send-filesystem-metrics
 cp -p monitoring/cron-send-pcp-sampled-metrics.py %{buildroot}/usr/bin/cron-send-pcp-sampled-metrics
 cp -p monitoring/ops-runner.py %{buildroot}/usr/bin/ops-runner
@@ -34,6 +36,7 @@ cp -p monitoring/cron-send-pcp-ping.sh %{buildroot}/usr/bin/cron-send-pcp-ping
 cp -p monitoring/cron-send-etcd-status.py %{buildroot}/usr/bin/cron-send-etcd-status
 cp -p monitoring/cron-send-disk-metrics.py %{buildroot}/usr/bin/cron-send-disk-metrics
 cp -p monitoring/cron-send-metrics-checks.py %{buildroot}/usr/bin/cron-send-metrics-checks
+cp -p monitoring/cron-send-logging-checks.py %{buildroot}/usr/bin/cron-send-logging-checks
 cp -p monitoring/cron-send-network-metrics.py %{buildroot}/usr/bin/cron-send-network-metrics
 cp -p monitoring/cron-send-s3-metrics.py %{buildroot}/usr/bin/cron-send-s3-metrics
 cp -p monitoring/cron-send-gcs-metrics.py %{buildroot}/usr/bin/cron-send-gcs-metrics
@@ -44,14 +47,21 @@ cp -p monitoring/cron-send-docker-containers-usage.py %{buildroot}/usr/bin/cron-
 cp -p monitoring/cron-send-docker-dns-resolution.py %{buildroot}/usr/bin/cron-send-docker-dns-resolution
 cp -p monitoring/cron-send-docker-existing-dns-resolution.py %{buildroot}/usr/bin/cron-send-docker-existing-dns-resolution
 cp -p monitoring/cron-send-registry-checks.py %{buildroot}/usr/bin/cron-send-registry-checks
+cp -p monitoring/cron-send-docker-oc-versions.py %{buildroot}/usr/bin/cron-send-docker-oc-versions
 cp -p monitoring/ops-zbx-event-processor.py %{buildroot}/usr/bin/ops-zbx-event-processor
 cp -p monitoring/cron-send-os-skydns-checks.py %{buildroot}/usr/bin/cron-send-os-skydns-checks
 cp -p monitoring/cron-send-os-dnsmasq-checks.py %{buildroot}/usr/bin/cron-send-os-dnsmasq-checks
 cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
+cp -p monitoring/cron-send-aws-instance-health.py %{buildroot}/usr/bin/cron-send-aws-instance-health
+cp -p monitoring/cron-send-ec2-ebs-volumes-in-stuck-state.py %{buildroot}/usr/bin/cron-send-ec2-ebs-volumes-in-stuck-state
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
+cp -p monitoring/cron-send-internal-pods-check.py %{buildroot}/usr/bin/cron-send-internal-pods-check
+cp -p monitoring/cron-send-usage-pv.py %{buildroot}/usr/bin/cron-send-usage-pv
+cp -p monitoring/cron-send-project-operation.py %{buildroot}/usr/bin/cron-send-project-operation
 cp -p monitoring/cron-send-project-stats.py %{buildroot}/usr/bin/cron-send-project-stats
 cp -p monitoring/cron-openshift-pruner.py %{buildroot}/usr/bin/cron-openshift-pruner
 cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
+cp -p remote-heal/heal_for_docker_use_too_much_memory.yml %{buildroot}/usr/bin/heal_for_docker_use_too_much_memory.yml
 cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
 cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
 cp -p cloud/aws/ops-ec2-trim-ebs-snapshots.py %{buildroot}/usr/bin/ops-ec2-trim-ebs-snapshots
@@ -66,11 +76,27 @@ cp -p monitoring/cron-haproxy-close-wait.py %{buildroot}/usr/bin/cron-haproxy-cl
 cp -p monitoring/delete-stuck-projects.sh %{buildroot}/usr/bin/delete-stuck-projects
 cp -p monitoring/cron-send-saml-status.py %{buildroot}/usr/bin/cron-send-saml-status
 cp -p monitoring/cron-certificate-expirations.py %{buildroot}/usr/bin/cron-certificate-expirations
+cp -p monitoring/cron-send-os-router-status.py %{buildroot}/usr/bin/cron-send-os-router-status
+cp -p monitoring/cron-send-build-counts.py %{buildroot}/usr/bin/cron-send-build-counts
+cp -p monitoring/cron-send-stuck-builds.py %{buildroot}/usr/bin/cron-send-stuck-builds
+cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
+cp -p monitoring/ops-ec2-check-tags.py %{buildroot}/usr/bin/ops-ec2-check-tags
+cp -p monitoring/ops-gcp-check-tags.py %{buildroot}/usr/bin/ops-gcp-check-tags
+cp -p monitoring/cron-send-zabbix-too-old.py %{buildroot}/usr/bin/cron-send-zabbix-too-old
+cp -p cicd/verify-cicd-operation.py %{buildroot}/usr/bin/verify-cicd-operation.py
+cp -p cicd/verify-gather-logs-operations.py %{buildroot}/usr/bin/verify-gather-logs-operations.py
+cp -p monitoring/cron-send-prometheus-data.py %{buildroot}/usr/bin/cron-send-prometheus-data
+cp -p monitoring/cron-send-dnsmasq-check.py %{buildroot}/usr/bin/cron-send-dnsmasq-check
+cp -p devaccess/devaccess_wrap.py %{buildroot}/usr/bin/devaccess_wrap
+cp -p monitoring/cron-send-service-web-check.py %{buildroot}/usr/bin/cron-send-service-web-check
+cp -p monitoring/cron-send-rkhunter-checks.py %{buildroot}/usr/bin/cron-send-rkhunter-checks
+cp -p scan/scanpod-inmem.py %{buildroot}/usr/bin/scanpod-inmem
 
 mkdir -p %{buildroot}/etc/openshift_tools
-cp -p monitoring/zagg_client.yaml.example %{buildroot}/etc/openshift_tools/zagg_client.yaml
+cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
 cp -p monitoring/zagg_server.yaml.example %{buildroot}/etc/openshift_tools/zagg_server.yaml
 cp -p remote-heal/remote_healer.conf.example %{buildroot}/etc/openshift_tools/remote_healer.conf
+cp -p devaccess/devaccess_users.yaml %{buildroot}/etc/openshift_tools/devaccess_users.yaml
 
 mkdir -p %{buildroot}/var/run/zagg/data
 
@@ -84,10 +110,15 @@ cp -p inventory-clients/openshift_tools.conf.example %{buildroot}/etc/openshift_
 
 # openshift-tools-scripts-iam-tools install
 mkdir -p %{buildroot}/usr/local/bin
-install -m 755 iam-tools/aws_api_key_manager.py %{buildroot}/usr/local/bin
-install -m 755 iam-tools/change_iam_password.py %{buildroot}/usr/local/bin
-install -m 755 iam-tools/delete_iam_account.py %{buildroot}/usr/local/bin
-install -m 755 iam-tools/saml_aws_creds.py %{buildroot}/usr/local/bin
+install -m 755 iam-tools/aws_api_key_manager.py %{buildroot}/usr/local/bin/aws_api_key_manager
+install -m 755 iam-tools/change_iam_password.py %{buildroot}/usr/local/bin/change_iam_password
+install -m 755 iam-tools/delete_iam_account.py %{buildroot}/usr/local/bin/delete_iam_account
+install -m 755 iam-tools/check_sso_service.py %{buildroot}/usr/local/bin/check_sso_service
+install -m 755 iam-tools/check_sso_http_status.py %{buildroot}/usr/local/bin/check_sso_http_status
+install -m 755 iam-tools/aws_creds_check.sh %{buildroot}/usr/local/bin/aws_creds_check
+mkdir -p %{buildroot}%{python_sitelib}/openshift_tools
+install -m 755 iam-tools/saml_aws_creds.py %{buildroot}%{python_sitelib}/openshift_tools/
+ln -sf %{python_sitelib}/openshift_tools/saml_aws_creds.py %{buildroot}/usr/local/bin/saml_aws_creds
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-inventory-clients subpackage
@@ -114,7 +145,7 @@ OpenShift Tools Clients for interacting with hosts/inventory
 # ----------------------------------------------------------------------------------
 %package monitoring-remoteheal
 Summary:       OpenShift Tools Monitoring Remote Heal Scripts
-Requires:      python2,openshift-tools-scripts-inventory-clients
+Requires:      python2,openshift-tools-scripts-inventory-clients,openshift-ansible-roles
 BuildArch:     noarch
 
 %description monitoring-remoteheal
@@ -122,7 +153,37 @@ OpenShift Tools Monitoring Remoteheal Scripts
 
 %files monitoring-remoteheal
 /usr/bin/remote-healer
+/usr/bin/heal_for_docker_use_too_much_memory.yml
 %config(noreplace)/etc/openshift_tools/remote_healer.conf
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-devaccess subpackage
+# ----------------------------------------------------------------------------------
+%package devaccess
+Summary:       OpenShift Tools Developer Access Scripts
+Requires:      python2
+BuildArch:     noarch
+
+%description devaccess
+OpenShift Tools script for allowing limited remote developer access
+
+%files devaccess
+/usr/bin/devaccess_wrap
+%config(noreplace)/etc/openshift_tools/devaccess_users.yaml
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-scanpod subpackage
+# ----------------------------------------------------------------------------------
+%package scanpod
+Summary:       OpenShift Tools scanning scripts
+Requires:      python2,python2-clamd
+BuildArch:     noarch
+
+%description scanpod
+OpenShift Tools script to scan running pod
+
+%files scanpod
+/usr/bin/scanpod-inmem
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-autoheal subpackage
@@ -145,7 +206,7 @@ OpenShift Tools Monitoring Autoheal Scripts
 # ----------------------------------------------------------------------------------
 %package monitoring-pcp
 Summary:       OpenShift Tools PCP Monitoring Scripts
-Requires:      python2,openshift-tools-scripts-monitoring-zagg-client,python-openshift-tools-monitoring-zagg,python-openshift-tools-monitoring-pcp,python-docker-py
+Requires:      python2,openshift-tools-scripts-monitoring,python-openshift-tools-monitoring-zagg,python-openshift-tools-monitoring-pcp,python-docker-py
 BuildRequires: python2-devel
 BuildArch:     noarch
 
@@ -159,6 +220,7 @@ OpenShift Tools PCP Monitoring Scripts
 /usr/bin/cron-send-disk-metrics
 /usr/bin/cron-send-network-metrics
 /usr/bin/ops-zagg-pcp-client
+/usr/bin/ops-metric-pcp-client
 
 
 # ----------------------------------------------------------------------------------
@@ -182,22 +244,24 @@ OpenShift Tools Docker Monitoring Scripts
 
 
 # ----------------------------------------------------------------------------------
-# openshift-tools-scripts-monitoring-zagg-client subpackage
+# openshift-tools-scripts-monitoring subpackage
 # ----------------------------------------------------------------------------------
-%package monitoring-zagg-client
-Summary:       OpenShift Tools Zagg Client Monitoring Scripts
+%package monitoring
+Summary:       OpenShift Tools Monitoring Client Scripts
 Requires:      python2,python-openshift-tools-monitoring-zagg
 BuildRequires: python2-devel
 BuildArch:     noarch
 
-%description monitoring-zagg-client
-OpenShift Tools Zagg Client Monitoring Scripts
+%description monitoring
+OpenShift Tools Monitoring Client Scripts
 
-%files monitoring-zagg-client
+%files monitoring
 /usr/bin/cron-send-process-count
+/usr/bin/cron-send-security-updates-count
 /usr/bin/ops-runner
 /usr/bin/ops-zagg-client
-%config(noreplace)/etc/openshift_tools/zagg_client.yaml
+/usr/bin/ops-metric-client
+%config(noreplace)/etc/openshift_tools/metric_sender.yaml
 
 
 # ----------------------------------------------------------------------------------
@@ -234,6 +298,9 @@ OpenShift Tools AWS Monitoring Scripts
 
 %files monitoring-aws
 /usr/bin/cron-send-s3-metrics
+/usr/bin/ops-ec2-check-tags
+/usr/bin/cron-send-aws-instance-health
+/usr/bin/cron-send-ec2-ebs-volumes-in-stuck-state
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-gcp subpackage
@@ -249,7 +316,7 @@ OpenShift Tools GCP Monitoring Scripts
 
 %files monitoring-gcp
 /usr/bin/cron-send-gcs-metrics
-
+/usr/bin/ops-gcp-check-tags
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-openshift subpackage
@@ -270,6 +337,9 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-etcd-status
 /usr/bin/cron-send-os-master-metrics
 /usr/bin/cron-send-create-app
+/usr/bin/cron-send-internal-pods-check
+/usr/bin/cron-send-usage-pv
+/usr/bin/cron-send-project-operation
 /usr/bin/cron-send-project-stats
 /usr/bin/cron-send-os-dnsmasq-checks
 /usr/bin/cron-send-os-skydns-checks
@@ -281,6 +351,17 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-saml-status
 /usr/bin/cron-certificate-expirations
 /usr/bin/cron-send-metrics-checks
+/usr/bin/cron-send-os-router-status
+/usr/bin/cron-send-logging-checks
+/usr/bin/cron-send-build-counts
+/usr/bin/cron-send-stuck-builds
+/usr/bin/cron-send-elb-status
+/usr/bin/cron-send-zabbix-too-old
+/usr/bin/cron-send-docker-oc-versions
+/usr/bin/cron-send-prometheus-data
+/usr/bin/cron-send-dnsmasq-check
+/usr/bin/cron-send-service-web-check
+/usr/bin/cron-send-rkhunter-checks
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -345,12 +426,506 @@ BuildArch:     noarch
 OpenShift Tools IAM specific scripts
 
 %files iam-tools
-/usr/local/bin/aws_api_key_manager.py
-/usr/local/bin/change_iam_password.py
-/usr/local/bin/delete_iam_account.py
-/usr/local/bin/saml_aws_creds.py
+/usr/local/bin/aws_api_key_manager
+/usr/local/bin/change_iam_password
+/usr/local/bin/delete_iam_account
+/usr/local/bin/saml_aws_creds
+/usr/local/bin/check_sso_service
+/usr/local/bin/check_sso_http_status
+/usr/local/bin/aws_creds_check
+%{python_sitelib}/openshift_tools/saml_aws_creds*
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-cicd subpackage
+# ----------------------------------------------------------------------------------
+%package cicd
+Summary:       OpenShift Tools CICD Scripts
+Requires:      python2
+#BuildRequires: python2-devel
+BuildArch:     noarch
+
+%description cicd
+OpenShift Tools cicd scripts
+
+%files cicd
+/usr/bin/verify-cicd-operation.py
+/usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Aug 02 2017 Matt Woodson <mwoodson@redhat.com> 0.1.82-1
+- made the operation check easier in python (mwoodson@redhat.com)
+
+* Wed Aug 02 2017 Matt Woodson <mwoodson@redhat.com> 0.1.81-1
+- updated verify-cicd-operation (mwoodson@redhat.com)
+- updated verify cicd with more verbs (mwoodson@redhat.com)
+- scanpod-inmem: also swallow IOError to handle disappearing processes
+  (joesmith@redhat.com)
+
+* Fri Jul 28 2017 Pep Turró <pep@redhat.com> 0.1.80-1
+- Clarify the scope of node name checking (pep@redhat.com)
+- Mention the necessary output redirection in gather logs usage
+  (pep@redhat.com)
+- Simplify node name regex and improve usage help (pep@redhat.com)
+- Allow optional nodes for gather logs script (pep@redhat.com)
+- tiered-access: add 'oc get routes' (jdiaz@redhat.com)
+
+* Wed Jul 26 2017 Joel Smith <joesmith@redhat.com> 0.1.79-1
+- Add in-memory scanner (joesmith@redhat.com)
+- Fix indentation issue that puts rsync in a conditional
+  (ruben.vp8510@gmail.com)
+- Make sure directory exists on the PV or create if not exists.
+  (ruben.vp8510@gmail.com)
+- Provide Context as to why the check is failing (ruben.vp8510@gmail.com)
+
+* Thu Jul 20 2017 Doug Edgar <dedgar@redhat.com> 0.1.78-1
+- rkhunter check addition to monitoring package (dedgar@redhat.com)
+
+* Wed Jul 19 2017 Doug Edgar <dedgar@redhat.com> 0.1.77-1
+- consolidating log check loop into 1 pass (dedgar@redhat.com)
+- Adding necessary config to run and report rkhunter scans from host monitoring
+  container (dedgar@redhat.com)
+* Wed Jul 19 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.76-1
+- counting services (ihorvath@redhat.com)
+- tiered-access: add 'oc get pods' (jdiaz@ip-172-31-78-254.us-
+  east-2.compute.internal)
+- added a second time check for dnsmasq to aviod some false alerts
+  (zhiwliu@redhat.com)
+
+* Wed Jul 12 2017 zhiwliu <zhiwliu@redhat.com> 0.1.75-1
+- complete events stay in api with [Completed] tag (dranders@redhat.com)
+
+* Tue Jul 11 2017 Pep Turró <pep@redhat.com> 0.1.74-1
+- added the second time metrics check if the first time check failed
+  (zhiwliu@redhat.com)
+- Package log gathering wrapper script (pep@redhat.com)
+
+* Mon Jul 10 2017 Joel Diaz <jdiaz@redhat.com> 0.1.73-1
+- use more valid-looking example output for rpm -qa (jdiaz@redhat.com)
+- allow users to be defined who have no specific role assigned
+  (jdiaz@redhat.com)
+
+* Wed Jul 05 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.72-1
+- change the role path for docker high usage (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+
+* Tue Jul 04 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.71-1
+- add the auto heal file into rpm (zhizhang@zhizhang-laptop-nay.redhat.com)
+- Add wrapper script to gather cluster logs (pep@redhat.com)
+- Enabling docker version argument (jupierce@redhat.com)
+
+* Wed Jun 28 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.70-1
+- clarify what we're alerting on (sten@redhat.com)
+- fix the path of role (zhizhang@zhizhang-laptop-nay.redhat.com)
+- pylint complaining about import order (sten@redhat.com)
+- track who submitted the req (sten@redhat.com)
+- still alert if all pods are on one host (sten@redhat.com)
+- alert if there are more hosts than pods, not !=, to cover where there's e.g.
+  3 or more registry pods (sten@redhat.com)
+- just for the jenkins start (zhizhang@zhizhang-laptop-nay.redhat.com)
+- add heal for docker use too much memory (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+
+* Tue Jun 27 2017 Joel Diaz <jdiaz@redhat.com> 0.1.69-1
+- initial version of developer access wrapper tool (jdiaz@redhat.com)
+
+* Mon Jun 26 2017 Joel Diaz <jdiaz@redhat.com> 0.1.68-1
+- Allow ossh to lookup host by ec2_id (eparis@redhat.com)
+- Allow ossh to take ec2 internal dns names (eparis@redhat.com)
+- Metrics: move back the check by one minute (mwringe@redhat.com)
+
+* Wed Jun 21 2017 Matt Woodson <mwoodson@redhat.com> 0.1.67-1
+- added smoketest to verify-cicd script (mwoodson@redhat.com)
+
+* Wed Jun 21 2017 zhiwliu <zhiwliu@redhat.com> 0.1.66-1
+- pylint has an odd idea of before (sten@redhat.com)
+- moar pylint (sten@redhat.com)
+- fixed pylint errors (sten@redhat.com)
+- require an INC field which is stored as a comment on digicert's side
+  (sten@redhat.com)
+
+* Mon Jun 12 2017 zhiwliu <zhiwliu@redhat.com> 0.1.65-1
+- upgrade cron-send-internal-pods-check (dranders@redhat.com)
+
+* Wed Jun 07 2017 zhiwliu <zhiwliu@redhat.com> 0.1.64-1
+- fix the pylint complain (zhiwliu@redhat.com)
+- give a second chance for the deletion of the project operation check
+  (zhiwliu@redhat.com)
+- Fix faux-HTTP client of SSO SSH endpoint to send \r\n as per spec
+  (joesmith@redhat.com)
+
+* Fri Jun 02 2017 Justin Pierce <jupierce@redhat.com> 0.1.63-1
+- Enabling ci message generation (jupierce@redhat.com)
+
+* Thu Jun 01 2017 Justin Pierce <jupierce@redhat.com> 0.1.62-1
+- Adding performance test options to cicd flow (jupierce@redhat.com)
+- Automatic commit of package [openshift-tools-scripts] release [0.1.61-1].
+  (bmorriso@redhat.com)
+
+* Wed May 31 2017 Blair Morrison <bmorriso@redhat.com> 0.1.61-1
+- Import linting (bmorriso@redhat.com)
+- pylint fix for imports (bmorriso@redhat.com)
+- Change language of log messages (bmorriso@redhat.com)
+- Adding verbose output to metrics check to assist in debugging
+  (bmorriso@redhat.com)
+- Fixing some linting issues (bmorriso@redhat.com)
+- Updating cron-send-usage-pv to support SI units (bmorriso@redhat.com)
+
+* Tue May 16 2017 Drew Anderson <dranders@redhat.com> 0.1.60-1
+- add zabbix key for cron-send-project-operation.py (zhiwliu@redhat.com)
+- track global_exception, introduce and use logging, use logging exceptions
+  (dranders@redhat.com)
+
+* Mon May 15 2017 Blair Morrison <bmorriso@redhat.com> 0.1.59-1
+- Filter out JenkinsPipelines from stuck builds check (bmorriso@redhat.com)
+
+* Mon May 08 2017 Joel Diaz <jdiaz@redhat.com> 0.1.58-1
+- remove assumption about only 2 pods (jdiaz@redhat.com)
+
+* Mon May 08 2017 Joel Diaz <jdiaz@redhat.com> 0.1.57-1
+- Automatic commit of package [openshift-tools-scripts] release [0.1.56-1].
+  (chmurphy@redhat.com)
+- fix assumption of replicas always equal to '2' (jdiaz@redhat.com)
+
+* Thu May 04 2017 Chris Murphy <chmurphy@redhat.com
+- Added logging to list of allowed operations to verify-cicd-operation.py
+  (chmurphy@redhat.com)
+
+* Fri Apr 28 2017 Thomas Wiest <twiest@redhat.com> 0.1.55-1
+- Added cron-send-ec2-ebs-volumes-in-stuck-state.py (twiest@redhat.com)
+- Removed zagg_client.yaml since we don't use it anymore. (twiest@redhat.com)
+- relocate the pylint position, fixed the pylint complain (zhiwliu@redhat.com)
+- added cron-send-project-operation.py and make it reading more easily
+  (zhiwliu@redhat.com)
+
+* Fri Apr 21 2017 Thomas Wiest <twiest@redhat.com> 0.1.54-1
+- Fix the bot errors. (twiest@redhat.com)
+- Changed ops-zagg-metric-processor.py to not do multi-processing. We
+  determined that each subprocess is sending the same data multiple times. This
+  is hammering on the DB unnecessarily. (twiest@redhat.com)
+- jenkens-ci says something wrong ,but I don't think so (zhizhang@zhizhang-
+  laptop-nay.redhat.com)
+- add check for dnsmasq (zhizhang@zhizhang-laptop-nay.redhat.com)
+
+* Wed Apr 19 2017 Justin Pierce <jupierce@redhat.com> 0.1.53-1
+- Changing path for tower-scripts (jupierce@redhat.com)
+
+* Tue Apr 18 2017 Joel Diaz <jdiaz@redhat.com> 0.1.52-1
+- catch and ignore epipe errors (jdiaz@redhat.com)
+
+* Thu Apr 13 2017 Justin Pierce <jupierce@redhat.com> 0.1.51-1
+- Adding status operation to cicd-verify (jupierce@redhat.com)
+- limit certificate node names to 16 characters (sten@redhat.com)
+- using debug flag runs oadm with loglevel 4 (sten@redhat.com)
+
+* Thu Apr 06 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.50-1
+- adding generic prometheus endpoint reading script (ihorvath@redhat.com)
+- adding user message for invalid account names, fix zsh message quoting
+  (dedgar@redhat.com)
+
+* Wed Mar 29 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.49-1
+- 
+
+* Wed Mar 29 2017 Drew Anderson <dranders@redhat.com> 0.1.48-1
+- 
+
+* Wed Mar 29 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.47-1
+- 
+
+* Wed Mar 29 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.46-1
+- add new mothed to get pv usage in new version of openshift (zhizhang
+  @zhizhang-laptop-nay.redhat.com)
+- add checks for docker usage of rss and vms (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+- Support gauge values from ops-metric-client cli (zgalor@redhat.com)
+
+* Tue Mar 28 2017 Drew Anderson <dranders@redhat.com> 0.1.45-1
+- 
+
+* Wed Mar 22 2017 Chris Murphy <chmurphy@redhat.com> - 0.1.44-1
+- Rerverting verify-cicd-operation.py to original version (jupierce@redhat.com)
+
+* Wed Mar 22 2017 Matt Woodson <mwoodson@redhat.com> 0.1.43-1
+- added the /usr/bin/cron-send-aws-instance-health to the aws script section of
+  the spec file (mwoodson@redhat.com)
+
+* Wed Mar 22 2017 Matt Woodson <mwoodson@redhat.com> 0.1.42-1
+- added cicd to the openshift-tools-scripts spec file (mwoodson@redhat.com)
+- cron-send-aws-instance-health.py uses the aws api check for known host issues
+  across all regions (dranders@redhat.com)
+
+* Thu Mar 09 2017 Joel Smith <joesmith@redhat.com> 0.1.41-1
+- Add check to see if Zabbix is running the most recent LTS version
+  (joesmith@redhat.com)
+
+* Mon Mar 06 2017 Matt Woodson <mwoodson@redhat.com> 0.1.40-1
+- moved config scripts around, re-ordered rpm spec file (mwoodson@redhat.com)
+- fixed spec file for config tag checks (mwoodson@redhat.com)
+
+* Mon Mar 06 2017 Matt Woodson <mwoodson@redhat.com> 0.1.39-1
+- 
+
+* Mon Mar 06 2017 Matt Woodson <mwoodson@redhat.com> 0.1.38-1
+- config loop tag monitoring work (mwoodson@redhat.com)
+- Rename version metrics with zabbix compatible prefix (zgalor@redhat.com)
+
+* Mon Feb 27 2017 Joel Smith <joesmith@redhat.com> 0.1.37-1
+- Disable rhsm while running hostpkg checks (joesmith@redhat.com)
+
+* Mon Feb 27 2017 Wesley Hearn <whearn@redhat.com> 0.1.36-1
+- Forgot rsh in the run_usr_cmd to get the password (whearn@redhat.com)
+
+* Mon Feb 27 2017 Joel Smith <joesmith@redhat.com> 0.1.35-1
+- Fix at-login check for AWS creds for zsh users (joesmith@redhat.com)
+- Add cron-send-security-updates-count (joesmith@redhat.com)
+- Make ops-runner random sleeps deterministic by host & check name
+  (joesmith@redhat.com)
+- command examples for ossh-local-helper (dranders@redhat.com)
+- ossh can now pass commands along too (dranders@redhat.com)
+- fixed the verbose output issue for ossh.py3 (zhiwliu@redhat.com)
+- added the -t for ossh.py3 when need login monitoring container
+  (zhiwliu@redhat.com)
+- updated ossh.py3 (zhiwliu@redhat.com)
+
+* Wed Feb 22 2017 Dan Yocum <dyocum@redhat.com> 0.1.34-1
+- ES for 3.4 uses pod ip for the host, so we need to check the pod name and pod
+  ip (whearn@redhat.com)
+- refining account matching (dedgar@redhat.com)
+
+* Tue Feb 21 2017 Wesley Hearn <whearn@redhat.com> 0.1.33-1
+- Fix pylint issues (whearn@redhat.com)
+- Fix fluentd check to work with both 3.4 and 3.3 (whearn@redhat.com)
+
+* Mon Feb 20 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.32-1
+- Update Metrics and Logging to work with 3.4 (whearn@redhat.com)
+
+* Wed Feb 15 2017 Doug Edgar <dedgar@redhat.com> 0.1.31-1
+- update iam-tools (dedgar@redhat.com)
+
+* Tue Feb 14 2017 zhiwliu <zhiwliu@redhat.com> 0.1.30-1
+- added cron-send-internal-pods-check.py (zhiwliu@redhat.com)
+- testing bot status check (dedgar@redhat.com)
+- adding pylint disable (dedgar@redhat.com)
+- ossh local helper (dranders@redhat.com)
+- adding stale credential entry removal option (dedgar@redhat.com)
+
+* Thu Feb 09 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.29-1
+- change_iam_password: Capture a few of the common expected exceptions
+  (joesmith@redhat.com)
+- Don't swallow other flavors of botocore.exceptions.ClientError on failed pw
+  change (joesmith@redhat.com)
+- change from Gi to G , change the code (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+
+* Thu Feb 09 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.28-1
+- 
+
+* Wed Feb 08 2017 zhiwliu <zhiwliu@redhat.com> 0.1.27-1
+- 
+
+* Wed Feb 08 2017 Drew Anderson <dranders@redhat.com> 0.1.26-1
+- Automatic commit of package [openshift-tools-scripts] release [0.1.25-1].
+  (zhiwliu@redhat.com)
+- added the check for the internal pod (zhiwliu@redhat.com)
+
+* Wed Feb 08 2017 zhiwliu <zhiwliu@redhat.com> 0.1.25-1
+- added the check for the internal pod (zhiwliu@redhat.com)
+
+* Tue Jan 31 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.24-1
+- Adding 'unknown' build state to the count script (bmorriso@redhat.com)
+- Fix docker oc version script (zgalor@redhat.com)
+- fixing converter function (ihorvath@redhat.com)
+
+* Thu Jan 26 2017 Marek Mahut <mmahut@redhat.com> 0.1.23-1
+- Disable bare-except as we know this function fails with EC2
+  (mmahut@redhat.com)
+- If get fails, we exceeded API rate of amazon (mmahut@redhat.com)
+- was changed inappropriately (dranders@redhat.com)
+
+* Tue Jan 24 2017 Joel Diaz <jdiaz@redhat.com> 0.1.22-1
+- take into account when value returned is not 'Gi' (jdiaz@redhat.com)
+
+* Mon Jan 23 2017 Marek Mahut <mmahut@redhat.com> 0.1.21-1
+- cron-send-elb-status: fixing the metric sender file name (mmahut@redhat.com)
+- cron-send-stuck-builds: use the creationTimestamp for new builds
+  (mmahut@redhat.com)
+
+* Thu Jan 19 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.20-1
+- fix the pylint (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix a bug of loopcount (zhizhang@zhizhang-laptop-nay.redhat.com)
+
+* Thu Jan 19 2017 Sten Turpin <sten@redhat.com> 0.1.19-1
+- debug run time of oc commands, line up in-script timeouts so ops-runner
+  timeout is less likely to fire (sten@redhat.com)
+
+* Thu Jan 19 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.18-1
+- Updating SOP URL and adding script to spec file (bmorriso@redhat.com)
+- Fixing linting issues (bmorriso@redhat.com)
+- Updated script and cronjob to work with any build state.
+  (bmorriso@redhat.com)
+- Adding stuck build check, cronjob, zitem, ztrigger (bmorriso@redhat.com)
+- Added bug link for haproxy-close-wait mitigation script. (twiest@redhat.com)
+- fix a var from string to int (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix a pylint (zhizhang@zhizhang-laptop-nay.redhat.com)
+- remove useless ling (zhizhang@zhizhang-laptop-nay.redhat.com)
+- add checks for pv usage (zhizhang@zhizhang-laptop-nay.redhat.com)
+- Add a script that sends docker and openshift versions to metric_sender
+  (zgalor@redhat.com)
+- Replace calls to ZaggSender with MetricSender in monitoring scripts
+  (zgalor@redhat.com)
+- add the script to report usage of pv (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+
+* Tue Jan 10 2017 Joel Diaz <jdiaz@redhat.com> 0.1.17-1
+- convert router-stats to use MetricSender (jdiaz@redhat.com)
+- remove unused kubeconfig check (jdiaz@redhat.com)
+
+* Mon Jan 09 2017 Sten Turpin <sten@redhat.com> 0.1.16-1
+- use jsonpath to avoid parsing yaml, misc cleanup (sten@redhat.com)
+- add count of unknown and total states (sten@redhat.com)
+- more cleanup (sten@redhat.com)
+- merge changes to monitor-build process from stg branch (sten@redhat.com)
+- line up count vs counts, replace sh with py (sten@redhat.com)
+- add build count script, cronjob, zitem, ztrigger (sten@redhat.com)
+
+* Mon Jan 09 2017 Marek Mahut <mmahut@redhat.com> 0.1.15-1
+- Forgot to copy the script during the build (mmahut@redhat.com)
+
+* Mon Jan 09 2017 Marek Mahut <mmahut@redhat.com> 0.1.14-1
+- 
+
+* Mon Jan 09 2017 Marek Mahut <mmahut@redhat.com> 0.1.13-1
+- Adding cron-send-elb-status script (mmahut@redhat.com)
+
+* Fri Jan 06 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.12-1
+- catch missing executable file exception (jdiaz@redhat.com)
+
+* Thu Jan 05 2017 Drew Anderson <dranders@redhat.com> 0.1.11-1
+- send metrics always (drewandersonnz@users.noreply.github.com)
+
+* Wed Jan 04 2017 Joel Diaz <jdiaz@redhat.com> 0.1.10-1
+- rename openshift-tools-scripts-monitoring-zagg-client (jdiaz@redhat.com)
+
+* Wed Jan 04 2017 Joel Diaz <jdiaz@redhat.com> 0.1.9-1
+- one one try to add -s to make curl less verbose (dyocum@redhat.com)
+- Change send-pcp-ping script to use ops-metric-client (zgalor@redhat.com)
+- Change check sending scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change cloud scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change ops-runner and some cron scripts to Use MetricSender instead of
+  ZaggSender (zgalor@redhat.com)
+- Change stats scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change metrics scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change os scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change docker scripts to use MetricSender instead of ZaggSender
+  (zgalor@redhat.com)
+- Change scripts to use MetricSender instead of ZaggSender (zgalor@redhat.com)
+
+* Tue Jan 03 2017 Marek Mahut <mmahut@redhat.com> 0.1.8-1
+- Adding cron-send-elb-status.py to monitoring (mmahut@redhat.com)
+- added ca-central-1 (mwoodson@redhat.com)
+- Add tags to ops-metric-client cli (zgalor@redhat.com)
+- Add ops-metric-client cli (zgalor@redhat.com)
+- changing the user to ops_monitoring (mmahut@redhat.com)
+- Adding cron-send-elb-status.py (mmahut@redhat.com)
+
+* Wed Dec 14 2016 Drew Anderson <dranders@redhat.com> 0.1.7-1
+- change the way we test for pods and pod status increase test duration by 50%%
+  (dranders@redhat.com)
+
+* Tue Dec 13 2016 Kenny Woodson <kwoodson@redhat.com> 0.1.6-1
+- Allow AWS creds to be stored anywhere in ~/.private (joesmith@redhat.com)
+
+* Thu Dec 08 2016 Joel Smith <joesmith@redhat.com> 0.1.5-1
+- Fiz aws_creds_check for zsh, new accounts (joesmith@redhat.com)
+
+* Thu Dec 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.1.4-1
+- Fix logging checks (whearn@redhat.com)
+- Add tags to metric sender (zgalor@redhat.com)
+
+* Wed Dec 07 2016 Joel Diaz <jdiaz@redhat.com> 0.1.3-1
+- remove unpackaged files from rpm spec (jdiaz@redhat.com)
+
+* Wed Dec 07 2016 Joel Diaz <jdiaz@redhat.com> 0.1.2-1
+- Add MetricSender to monitoring lib (zgalor@redhat.com)
+- Add a hawkular configuration, client and sender classes to the monitoring lib
+  (kobi.zamir@gmail.com)
+
+* Mon Dec 05 2016 Joel Smith <joesmith@redhat.com> 0.1.1-1
+- adding value for aggregate check (dedgar@redhat.com)
+- Add cron-send-logging-checks to the rpm (whearn@redhat.com)
+- increase to 15m (dranders@redhat.com)
+- Fix return code getting overwritten (whearn@redhat.com)
+
+* Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.1.0-1
+- Version bump
+
+* Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.0.175-1
+- adding error handling, fixing pylint issues (dedgar@redhat.com)
+- Skip SSL verification step from SSO monitoring container
+  (joesmith@redhat.com)
+
+* Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.0.174-1
+- Add aws_creds_check to openshift-tools-scripts-iam-tools RPM
+  (joesmith@redhat.com)
+- Add at-login AWS credential checker script (joesmith@redhat.com)
+- Minor fixes to openshift-tools-scripts-iam-tools RPM (joesmith@redhat.com)
+- adding scripts to iam-tools package (dedgar@redhat.com)
+- saml_aws_creds.py: permit callers to pass additionall ssh options
+  (joesmith@redhat.com)
+- saml_aws_creds.py: switch from shell string to execv array for popen
+  (joesmith@redhat.com)
+- Switch line endings from DOS to UNIX for saml_aws_creds.py
+  (joesmith@redhat.com)
+- updating after initial PR review (dedgar@redhat.com)
+- adding sso service check for the oso-monitor-sso container
+  (dedgar@redhat.com)
+- Get hawkular creds expects to have the deployers pod name which is set in
+  check_pods (whearn@redhat.com)
+- addressing requested changes (dedgar@redhat.com)
+
+* Mon Nov 14 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.173-1
+- add region for the s3 check (zhizhang@zhizhang-laptop-nay.redhat.com)
+- * logger.critical on timeout * section heading comments * magic variables
+  bought to top * write logs to file for further review, only show last 20
+  lines * add basename to differentiate between processes * noPodCount should
+  be active even if there's been a pod found (dranders@redhat.com)
+- correcting file name so it matches what we create from the config
+  (ihorvath@redhat.com)
+
+* Wed Nov 09 2016 Drew Anderson <dranders@redhat.com> 0.0.172-1
+- allow use of oadm command for new-project setup(), if not exception: test()
+  (dranders@redhat.com)
+
+* Wed Nov 09 2016 Drew Anderson <dranders@redhat.com> 0.0.171-1
+- V2 app create script: (dranders@redhat.com)
+
+* Wed Nov 09 2016 Joel Diaz <jdiaz@redhat.com> 0.0.170-1
+- check for other potential exception on failed router health check
+  (jdiaz@redhat.com)
+
+* Wed Nov 09 2016 Drew Anderson <dranders@redhat.com> 0.0.169-1
+- 
+
+* Tue Nov 08 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.168-1
+- curl function tidy-up (dranders@redhat.com)
+- logger.debug curlCount (dranders@redhat.com)
+- retry curl of not successful (dranders@redhat.com)
+
+* Tue Nov 08 2016 Kenny Woodson <kwoodson@redhat.com> 0.0.167-1
+- add router monitoring script to scripts-monitoring-openshift RPM
+  (jdiaz@redhat.com)
+
+* Tue Nov 08 2016 Joel Diaz <jdiaz@redhat.com> 0.0.166-1
+- use image uuid instead of image name (dranders@redhat.com)
+- router monitoring (jdiaz@redhat.com)
+- oinv - fix method docstring for transpose (blentz@redhat.com)
+- oinv - update default columns (blentz@redhat.com)
+- add oinv cli tool (blentz@redhat.com)
+
 * Fri Oct 28 2016 Zhiming Zhang <zhizhang@redhat.com> 0.0.165-1
 - unused-variable (dranders@redhat.com)
 - force teardown if error with es_index (dranders@redhat.com)

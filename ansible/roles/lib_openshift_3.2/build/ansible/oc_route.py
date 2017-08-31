@@ -7,7 +7,7 @@ def get_cert_data(path, content):
 
     rval = None
     if path and os.path.exists(path) and os.access(path, os.R_OK):
-        rval = open(path).read()
+        rval = open(path, 'rU').read()
     elif content:
         rval = content
 

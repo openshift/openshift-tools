@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: Devan Goodwin
+  description: Installs the correct version of openshift-dedicated-scripts for the major OpenShift version.
+  company: Red Hat
+  license: Apache
+  min_ansible_version: 1.9
+  platforms:
+  - name: EL
+    verisons:
+    - 7
+  categories:
+  - cloud
+dependencies:
+- role: tools_roles/lib_repoquery

@@ -1,0 +1,179 @@
+#!/usr/bin/env python2
+# vim: expandtab:tabstop=4:shiftwidth=4
+''' multi-inventory attribute lister
+
+    This tool displays inventory data in a column-based format. The user can
+    specify which columns to display. The tool displays those columns in the
+    order specified.
+'''
+
+import argparse
+import logging
+import sys
+
+# openshift-tools python RPMs not installed on jenkins instance
+# pylint: disable=import-error
+from openshift_tools.inventory_clients import awsutil
+
+from signal import signal, SIGPIPE, SIG_DFL
+# Ignore SIG_PIPE and don't throw exceptions on it so that we can pipe output
+# to the standard tools (e.g. ${CMD} | head).
+# See: http://docs.python.org/library/signal.html
+signal(SIGPIPE, SIG_DFL)
+
+# Simple log format to mimic print output. Enables simple debug filtering.
+FORMAT = '%(message)s'
+logging.basicConfig(format=FORMAT, stream=sys.stdout, level=logging.INFO)
+LOG = logging.getLogger(__name__)
+
+class InventoryCli(object):
+    ''' multi-inventory CLI '''
+    args = None
+    parser = None
+
+    # which inventory fields to display by default
+    default_columns = ['oo_accountid', 'oo_name',
+                       'oo_clusterid', 'oo_environment',
+                       'oo_id']
+
+    def __init__(self):
+        self.parse_cli_args()
+
+        if self.args.debug:
+            LOG.setLevel(logging.DEBUG)
+            LOG.debug(self.args)
+
+        self.columns = self.args.columns
+        self.inventory = self.get_host_inventory()
+
+        if self.args.list_cols:
+            self.list_columns()
+        else:
+            lines = self.list_inventory()
+            self.print_inventory(lines)
+
+    # pylint: disable=no-self-use
+    def parse_cli_args(self):
+        ''' read cli parameters '''
+        self.parser = argparse.ArgumentParser(description=\
+                                            'OpenShift Online Inventory Tool')
+
+        self.parser.add_argument('columns', metavar='C', type=str, nargs='*',
+                                 default=self.default_columns,
+                                 help="columns to display. Default: %s" % \
+                                         self.default_columns)
+
+        self.parser.add_argument('-l', '--list-cols', default=False,
+                                 action="store_true",
+                                 help="list available column names")
+
+        self.parser.add_argument('--headers', default=False,
+                                 action="store_true",
+                                 help="include column headers")
+
+        self.parser.add_argument('--padding', default=2,
+                                 type=int, metavar='PAD',
+                                 help="whitespace padding between columns")
+
+        self.parser.add_argument('-d', '--debug', default=False,
+                                 action="store_true",
+                                 help="show extra debugging info")
+        self.args = self.parser.parse_args()
+
+    def get_host_inventory(self):
+        ''' Query our host inventory and return a dict where the format
+
+            Returns: dict
+        '''
+        aws = awsutil.AwsUtil()
+        return aws.get_inventory()['_meta']['hostvars']
+
+    def list_columns(self):
+        ''' return the set of the columns being used by the inventory
+
+            Returns: set
+        '''
+        cols = set()
+        for _, server_info in self.inventory.items():
+            cols.update(server_info.keys())
+        LOG.info('\n'.join(sorted(cols)))
+
+    def max_width(self, wordlist, padding=2):
+        ''' given a list of word columns, return the width of the biggest
+            word, plus padding
+        '''
+        return max(len(str(word)) for word in wordlist)+padding
+
+    def transpose(self, keys, vals):
+        ''' using a list of keys, transpose a list of row elements into a dict
+            of columnar elements
+
+            Input:
+            [ 'col1', 'col2', col3' ]
+
+            [{ 'col1':'a',   'col2':'b',   'col3':'c' },
+             { 'col1':'aa',  'col2':'bb',  'col3':'cc' },
+             { 'col1':'aaa', 'col2':'bbb', 'col3':'ccc' }]
+
+            Output:
+
+            { col1: [ 'a', 'aa', 'aaa' ],
+              col2: [ 'b', 'bb', 'bbb' ],
+              col3: [ 'c', 'cc', 'ccc' ] }
+        '''
+
+        cols = {}
+        for val in vals:
+            for key in keys:
+                if key in cols.keys():
+                    cols[key].append(val.get(key, 'None'))
+                else:
+                    cols[key] = [val.get(key, 'None')]
+        return cols
+
+    def list_inventory(self):
+        ''' compile the requested host inventory.
+
+            Returns: list of strings
+        '''
+        pad = self.args.padding
+
+        # calculate the max width of each column of data.
+        widths = {}
+        cols = self.transpose(self.columns, self.inventory.values())
+        for key, val in cols.items():
+            # ensure that headers aren't wider than the column contents
+            widths[key] = max(len(key)+pad, self.max_width(val, padding=pad))
+
+        if self.args.headers:
+            header = ' '.join(str(col).ljust(widths[col]
+                                            ) for col in self.columns)
+            LOG.info(header)
+            # friendly demarcation line below the header
+            LOG.info(' '.join(('-'*widths[col]
+                              ).ljust(widths[col]) for col in self.columns))
+
+        # collect intended output for final sorting & uniq-ing
+        out = []
+        for _, server_info in self.inventory.items():
+            if not server_info.get('synthetic', False):
+                out.append(' '.join(str(server_info.get(col, 'None')
+                                       ).ljust(widths[col]
+                                              ) for col in self.columns))
+        return out
+
+    def print_inventory(self, inventory):
+        ''' Given a list of output lines, sort them and print them to the
+            logger
+
+            Param: list of strings
+        '''
+        for line in sorted(set(inventory)):
+            LOG.info(line)
+
+if __name__ == '__main__':
+    try:
+        InventoryCli()
+    except KeyboardInterrupt:
+        print "Ctrl-C detected. Exiting..."
+        sys.exit()

@@ -1,0 +1,23 @@
+---
+- fail:
+    msg: "Value {{ item }} needs to be defined."
+  when: "{{ item }} is undefined"
+  with_items:
+  - apwe_volume
+
+- name: install fio
+  yum:
+    name: fio
+    state: present
+
+# This command was copied from the AWS documentation:
+# http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-initialize.html
+- name: "run fio read operation on volume {{ apwe_volume }} on aws instance. NOTE: This could take awhile!"
+  command: "fio --filename={{ apwe_volume }} --rw=randread --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize"
+  async: 14400
+  poll: 30
+  register: fio_out
+
+- name: debug fio_out
+  debug:
+    var: fio_out

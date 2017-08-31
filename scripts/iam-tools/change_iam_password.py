@@ -1,6 +1,20 @@
 #!/bin/env python
 # vim: expandtab:tabstop=4:shiftwidth=4
 
+#   Copyright 2016 Red Hat Inc.
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
 """
  This script can be used to reset the passwords for your AWS IAM user accounts.
  It can be used for individual accounts or for all your accounts at once.
@@ -93,7 +107,12 @@ class ChangePassword(object):
     def change_password(self, aws_account, user_name, new_password):
         """ Change the password for the specified account. """
 
-        session = boto3.Session(profile_name=aws_account)
+        try:
+            session = boto3.Session(profile_name=aws_account)
+        except botocore.exceptions.ProfileNotFound:
+            print('Error: ProfileNotFound. AWS credentials must be generated first using')
+            print('       the command: aws_api_key_manager -p', aws_account)
+            return False
         client = session.client('iam')
 
         try:
@@ -108,6 +127,16 @@ class ChangePassword(object):
                     UserName=user_name,
                     Password=new_password
                     )
+            elif client_exception.response['Error']['Code'] == 'InvalidClientTokenId':
+                print('Error: InvalidClientTokenId. Your API key may have expired or may have been replaced.')
+                print('       Generate new credentials using this command: aws_api_key_manager -p', aws_account)
+                return False
+            elif client_exception.response['Error']['Code'] == 'SignatureDoesNotMatch':
+                print('Error: SignatureDoesNotMatch. Credentials for this account may have been corrupted. You may')
+                print('       need to generate new credentials using this command: aws_api_key_manager -p', aws_account)
+                return False
+            else:
+                raise # re-raise for any other flavor of botocore.exceptions.ClientError
 
         print('Password successfully changed for:', aws_account)
         return self.response

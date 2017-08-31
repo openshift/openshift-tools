@@ -11,11 +11,11 @@ Yum or dnf
 Role Variables
 --------------
 
-| Name              | Default value |                                            |
-|-------------------|---------------|--------------------------------------------|
-| repo_files        | None          |                                            |
-| repo_enabled      | 1             | Should repos be enabled by default         |
-| repo_gpgcheck     | 1             | Should repo gpgcheck be enabled by default |
+yr_yum_cert_content: yum certificate content
+yr_yum_key_content: yum certificate key content
+yr_yum_cert_dir: Location to place yum certificates
+yr_yum_repo_list: List of dictionaries representing a yum repository
+
 
 Dependencies
 ------------
@@ -23,85 +23,11 @@ Dependencies
 Example Playbook
 ----------------
 
-A single repo file containing a single repo:
-  - hosts: servers
-    roles:
-    - role: yum_repos
-      repo_files:
-      - id: my_repo
-        repos:
-        - id: my_repo
-          name: My Awesome Repo
-          baseurl: https://my.awesome.repo/is/available/here
-          skip_if_unavailable: yes
-	  gpgkey: https://my.awesome.repo/pubkey.gpg
-        
-A single repo file containing a single repo, disabling gpgcheck
-  - hosts: servers
-    roles:
-    - role: yum_repos
-      repo_files:
-      - id: my_other_repo
-        repos:
-        - id: my_other_repo
-          name: My Other Awesome Repo
-          baseurl: https://my.other.awesome.repo/is/available/here
-          gpgcheck: no
+- role: tools_roles/yum_repos
+  oyr_yum_cert_content: "{{ client_cert_content }}"
+  oyr_yum_key_content: "{{ client_key_content }}"
+  oyr_yum_repo_list: "{{ yum_repos }}"
 
-A single repo file containing a single disabled repo
-  - hosts: servers
-    roles:
-    - role: yum_repos
-      repo_files:
-      - id: my_other_repo
-        repos:
-        - id: my_other_repo
-          name: My Other Awesome Repo
-          baseurl: https://my.other.awesome.repo/is/available/here
-          enabled: no
-
-A single repo file containing multiple repos
-  - hosts: servers
-    roles:
-    - role: yum_repos
-      repo_files:
-        id: my_repos
-        repos:
-        - id: my_repo
-          name: My Awesome Repo
-          baseurl: https://my.awesome.repo/is/available/here
-	  gpgkey: https://my.awesome.repo/pubkey.gpg
-        - id: my_other_repo
-          name: My Other Awesome Repo
-          baseurl: https://my.other.awesome.repo/is/available/here
-          gpgkey: https://my.other.awesome.repo/pubkey.gpg
-
-Multiple repo files containing multiple repos
-  - hosts: servers
-    roles:
-    - role: yum_repos
-      repo_files:
-      - id: my_repos
-        repos:
-          - id: my_repo
-            name: My Awesome Repo
-            baseurl: https://my.awesome.repo/is/available/here
-	    gpgkey: https://my.awesome.repo/pubkey.gpg
-          - id: my_other_repo
-            name: My Other Awesome Repo
-            baseurl: https://my.other.awesome.repo/is/available/here
-	    gpgkey: https://my.other.awesome.repo/pubkey.gpg
-      - id: joes_repos
-        repos:
-          - id: joes_repo
-            name: Joe's Less Awesome Repo
-            baseurl: https://joes.repo/is/here
-	    gpgkey: https://joes.repo/pubkey.gpg
-          - id: joes_otherrepo
-            name: Joe's Other Less Awesome Repo
-            baseurl: https://joes.repo/is/there
-	    gpgkey: https://joes.repo/pubkey.gpg
- 
 License
 -------
 

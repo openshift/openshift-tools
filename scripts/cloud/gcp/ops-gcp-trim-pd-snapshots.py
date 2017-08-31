@@ -14,7 +14,7 @@
 
 """
 # Ignoring module name
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name,import-error
 
 import json
 import argparse
@@ -23,7 +23,7 @@ from openshift_tools.cloud.gcp import gcp_snapshotter
 # Reason: disable pylint import-error because our libs aren't loaded on jenkins.
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 
 EXPIRED_SNAPSHOTS_KEY = 'gcp.pd.snapshotter.expired_snapshots'
 DELETED_SNAPSHOTS_KEY = 'gcp.pd.snapshotter.deleted_snapshots'
@@ -108,15 +108,15 @@ class TrimmerCli(object):
     @staticmethod
     def report_to_zabbix(total_expired_snapshots, total_deleted_snapshots, total_deletion_errors):
         """ Sends the commands exit code to zabbix. """
-        zs = ZaggSender(verbose=True)
+        mts = MetricSender(verbose=True)
 
-        zs.add_zabbix_keys({
+        mts.add_metric({
             EXPIRED_SNAPSHOTS_KEY: total_expired_snapshots,
             DELETED_SNAPSHOTS_KEY: total_deleted_snapshots,
             DELETION_ERRORS_KEY: total_deletion_errors
         })
 
-        zs.send_metrics()
+        mts.send_metrics()
 
 if __name__ == "__main__":
     TrimmerCli().main()

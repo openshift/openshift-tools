@@ -1,0 +1,461 @@
+---
+apiVersion: v1
+kind: Template
+metadata:
+  name: oso-saml-sso
+objects:
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: "oso-${PLAT}-ops-base"
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: "oso-${PLAT}-ops-base:latest"
+    postCommit: {}
+    resources: {}
+    source:
+      contextDir: "docker/oso-ops-base/${PLAT}"
+      git:
+        ref: prod
+        uri: https://github.com/openshift/openshift-tools
+      secrets: []
+      type: Git
+    strategy:
+      dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: "false"
+        from:
+          kind: ImageStreamTag
+          name: "${PLAT}:latest"
+      type: Docker
+    triggers:
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: oso-saml-sso
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: "oso-${PLAT}-saml-sso:latest"
+    postCommit: {}
+    resources: {}
+    source:
+      contextDir: "docker/oso-saml-sso/${PLAT}"
+      git:
+        ref: prod
+        uri: https://github.com/openshift/openshift-tools
+      secrets: []
+      type: Git
+    strategy:
+      dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: "false"
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-ops-base:latest"
+      type: Docker
+    triggers:
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: oso-memcached-sso
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: "oso-${PLAT}-memcached-sso:latest"
+    postCommit: {}
+    resources: {}
+    source:
+      contextDir: "docker/oso-memcached-sso/${PLAT}"
+      git:
+        ref: prod
+        uri: https://github.com/openshift/openshift-tools
+      secrets: []
+      type: Git
+    strategy:
+      dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: "false"
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-ops-base:latest"
+      type: Docker
+    triggers:
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: oso-monitor-sso
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: "oso-${PLAT}-monitor-sso:latest"
+    postCommit: {}
+    resources: {}
+    source:
+      contextDir: "docker/oso-monitor-sso/${PLAT}"
+      git:
+        ref: prod
+        uri: https://github.com/openshift/openshift-tools
+      secrets: []
+      type: Git
+    strategy:
+      dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: "false"
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-ops-base:latest"
+      type: Docker
+    triggers:
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: "${PLAT}"
+  spec:
+    dockerImageRepository: "library/${PLAT}"
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "registry.access.redhat.com/${PLAT}:latest"
+      importPolicy: {}
+      name: latest
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: "oso-${PLAT}-ops-base"
+  spec:
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "library/oso-${PLAT}-ops-base:latest"
+      importPolicy: {}
+      name: latest
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: "oso-${PLAT}-saml-sso"
+  spec:
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "library/oso-${PLAT}-saml-sso:latest"
+      importPolicy: {}
+      name: latest
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: "oso-${PLAT}-memcached-sso"
+  spec:
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "library/oso-${PLAT}-memcached-sso:latest"
+      importPolicy: {}
+      name: latest
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: "oso-${PLAT}-monitor-sso"
+  spec:
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "library/oso-${PLAT}-monitor-sso:latest"
+      importPolicy: {}
+      name: latest
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: oso-memcached-sso1
+  spec:
+    replicas: 1
+    selector:
+      deploymentconfig: oso-memcached-sso1
+    strategy:
+      resources: {}
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          deploymentconfig: oso-memcached-sso1
+      spec:
+        containers:
+        - env:
+          - name: OO_PAUSE_ON_START
+            value: "false"
+          image: "oso-sso-saml/oso-${PLAT}-memcached-sso:latest"
+          imagePullPolicy: Always
+          name: oso-memcached-sso
+          ports:
+          - containerPort: 11211
+            protocol: TCP
+          resources: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-memcached-sso
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-memcached-sso:latest"
+      type: ImageChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: oso-memcached-sso2
+  spec:
+    replicas: 1
+    selector:
+      deploymentconfig: oso-memcached-sso2
+    strategy:
+      resources: {}
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          deploymentconfig: oso-memcached-sso2
+      spec:
+        containers:
+        - env:
+          - name: OO_PAUSE_ON_START
+            value: "false"
+          image: "oso-sso-saml/oso-${PLAT}-memcached-sso:latest"
+          imagePullPolicy: Always
+          name: oso-memcached-sso
+          ports:
+          - containerPort: 11211
+            protocol: TCP
+          resources: {}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-memcached-sso
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-memcached-sso:latest"
+      type: ImageChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: oso-saml-sso
+  spec:
+    replicas: 3
+    selector:
+      deploymentconfig: oso-saml-sso
+    strategy:
+      resources: {}
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          deploymentconfig: oso-saml-sso
+      spec:
+        containers:
+        - env:
+          - name: OO_PAUSE_ON_START
+            value: "false"
+          image: "oso-sso-saml/oso-${PLAT}-saml-sso:latest"
+          imagePullPolicy: Always
+          livenessProbe:
+            exec:
+              command:
+              - curl
+              - -sf
+              - --insecure
+              - https://127.0.0.1:8443/status.php
+            failureThreshold: 3
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            successThreshold: 1
+            timeoutSeconds: 2
+          name: oso-saml-sso
+          ports:
+          - containerPort: 8443
+            protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+              - curl
+              - -sf
+              - --insecure
+              - https://127.0.0.1:8443/status.php
+            failureThreshold: 12
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 2
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /secrets
+            name: oso-sso-secrets
+          - mountPath: /configdata
+            name: oso-sso-configdata
+        - env:
+          - name: OO_PAUSE_ON_START
+            value: "false"
+          image: "oso-sso-saml/oso-${PLAT}-monitor-sso:latest"
+          imagePullPolicy: Always
+          name: oso-monitor-sso
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /secrets
+            name: oso-sso-monitoring-secrets
+          - mountPath: /configdata
+            name: oso-sso-monitoring-configdata
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: oso-sso-secrets
+          secret:
+            secretName: oso-sso-secrets
+        - name: oso-sso-monitoring-secrets
+          secret:
+            secretName: oso-sso-monitoring-secrets
+        - name: oso-sso-configdata
+          emptyDir:
+            medium: Memory
+        - name: oso-sso-monitoring-configdata
+          emptyDir:
+            medium: Memory
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-saml-sso
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-saml-sso:latest"
+      type: ImageChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-monitor-sso
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-monitor-sso:latest"
+      type: ImageChange
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: sso
+  spec:
+    ports:
+    - name: 443-tcp
+      port: 443
+      protocol: TCP
+      targetPort: 8443
+    selector:
+      deploymentconfig: oso-saml-sso
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: oso-memcached-sso1
+  spec:
+    ports:
+    - name: 11211-tcp
+      port: 11211
+      protocol: TCP
+      targetPort: 11211
+    selector:
+      deploymentconfig: oso-memcached-sso1
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      template: oso-saml-sso
+    name: oso-memcached-sso2
+  spec:
+    ports:
+    - name: 11211-tcp
+      port: 11211
+      protocol: TCP
+      targetPort: 11211
+    selector:
+      deploymentconfig: oso-memcached-sso2
+    sessionAffinity: None
+    type: ClusterIP
+parameters:
+- description: Platform name
+  name: PLAT
+  value: rhel7

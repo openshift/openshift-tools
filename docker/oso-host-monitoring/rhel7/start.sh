@@ -6,8 +6,8 @@ if [ "$OO_PAUSE_ON_START" = "true" ] ; then
   echo
   echo "This container's startup has been paused indefinitely because OO_PAUSE_ON_START has been set."
   echo
-  while true ; do
-    sleep 10
+  while sleep 10; do
+    true
   done
 fi
 
@@ -18,7 +18,7 @@ source /root/.bashrc
 time ansible-playbook /root/config.yml
 
 # Send a heartbeat when the container starts up
-/usr/bin/ops-zagg-client --send-heartbeat
+/usr/bin/ops-metric-client --send-heartbeat
 
 # fire off the check pmcd status script
 check-pmcd-status.sh &

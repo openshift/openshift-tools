@@ -282,7 +282,7 @@ class StatusPageIncident(StatusPageIOAPI):
                                   params['incident_type'],
                                   params['status'],
                                   params['update_twitter'],
-                                  params['message'],
+                                  params['msg'],
                                   params['components'],
                                   params['scheduled_for'],
                                   params['scheduled_until'],

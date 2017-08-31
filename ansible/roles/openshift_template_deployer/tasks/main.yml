@@ -1,0 +1,98 @@
+---
+# Ensure needed variables are set
+# This is a a place to verify needed values
+- name: Ensure that ostd vars are set
+  fail:
+    msg:  "Please ensure that 'ostd_<variables>' are set!"
+  when: item is undefined
+  with_items:
+  - "{{ ostd_template_name }}"
+  - "{{ ostd_template_file }}"
+  - "{{ ostd_project }}"
+  run_once: true
+
+# install rpm if needed aos_3.5_roles/openshift_hosted_templates/
+- name: install the "{{ ostd_rpm }}"
+  yum:
+    name: "{{ ostd_rpm }}"
+    state: installed
+  when: ostd_rpm != False
+
+- name: Make template changes if needed
+  yedit:
+    src: "{{ ostd_template_file }}"
+    key: "{{ item.key }}"
+    value: "{{ item.value }}"
+  when: ostd_template_edits != False
+  with_items: "{{ ostd_template_edits }}"
+
+  # TODO: Think about moving this role back into main playbook and remove it from here
+  # make master-config.yaml changes if needed to make sure master-config is up to date/truth
+- name: Configure the master config file with parameters needed for the provisioner pod
+  yedit:
+    src: /etc/origin/master/master-config.yaml
+    key: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    backup: False
+  with_items: "{{ ostd_master_config_edits }}"
+  when: ostd_master_config_edits != False
+
+  register: master_config_changes
+
+# restart master if needed
+# either here or in a handler
+- name: restart openshift master services
+  service:
+    name: "{{ item[1] }}"
+    state: restarted
+  delegate_to: "{{ item[0] }}"
+  with_nested:
+  - "{{ ansible_play_hosts }}"
+  - [ 'atomic-openshift-master-api', 'atomic-openshift-master-controllers' ]
+  run_once: true
+  when: master_config_changes.changed
+
+# pause if restarted
+- name: pause 60 seconds when services are restarted
+  pause:
+    seconds: 60
+  when: master_config_changes.changed
+
+  ## Enusre project is created
+  #- name: create project
+  #  oadm_project:
+  #    name: "{{ ostd_project }}"
+  #    node_selector: "{{ ostd_node_selector | default(omit)}}"
+  #    display_name: "{{ ostd_project_display_name | default(omit) }}"
+  #    description: "{{ ostd_project_description | default(omit) }}"
+  #  register: projectout
+  #  run_once: true
+  # - debug: var=projectout
+
+# This installs the template to memory
+- name: Create the openshift template
+  oc_obj:
+    state: present
+    namespace: "{{ ostd_project }}"
+    name: "{{ ostd_template_name }}"
+    kind: template
+    files:
+    - "{{ ostd_template_file }}"
+  register: templateout
+  run_once: true
+  #- debug: var=templateout
+
+# TODO: What if we want to create the template in namespace A but create it's objects in namespace B?
+# This processes the template with variables
+- name: Deploy the app
+  oc_process:
+    namespace: "{{ ostd_project }}"
+    template_name: "{{ ostd_template_name }}"
+    create: True
+    params: "{{ ostd_template_params | default(omit) }}"
+    reconcile: True
+  register: processout
+  run_once: true
+  #- debug: var=processout
+

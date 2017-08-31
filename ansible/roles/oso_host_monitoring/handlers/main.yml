@@ -3,4 +3,4 @@
   service:
     name: "{{ osohm_host_monitoring }}"
     state: restarted
-    enabled: yes
+  when: osohm_service_enabled | bool

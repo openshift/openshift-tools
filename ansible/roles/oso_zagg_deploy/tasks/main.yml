@@ -1,0 +1,81 @@
+---
+- block:
+  - name: importing the zagg web image
+    oc_image:
+      registry_url: registry.ops.openshift.com/ops
+      image_name: oso-rhel7-zagg-web
+      image_tag: "{{ oo_environment }}"
+
+  - name: create secrets
+    oc_secret:
+      namespace: default
+      name: monitoring-secrets
+      delete_after: true
+      contents:
+        - path: zagg-server-vars.yml
+          data: |
+            ---
+            g_default_zagg_server_config: "{{ g_default_zagg_cluster_config }}"
+            g_default_zagg_server_user: "{{ g_default_zagg_server_user }}"
+            g_default_zagg_server_password: "{{ g_default_zagg_server_password }}"
+            g_default_zagg_server_api_password: "{{ g_default_zagg_server_api_password }}"
+
+  - name: create the zagg service
+    oc_service:
+      namespace: default
+      name: zagg-service
+      ports:
+      - name: 80-tcp
+        port: 80
+        protocol: TCP
+        targetPort: 8000
+      - name: 443-tcp
+        port: 443
+        protocol: TCP
+        targetPort: 8000
+      selector:
+        deploymentconfig: oso-rhel7-zagg-web
+      service_type: ClusterIP
+
+  - name: checking for existing pods
+    oc_obj:
+      state: list
+      namespace: default
+      kind: pods
+    register: podlist
+
+  - set_fact:
+      zagg_pods_running: "{{ podlist.results | get_running_pods(['oso-rhel7-zagg-web']) }}"
+
+  - name: debug the podlist
+    debug:
+      msg: "{{ zagg_pods_running}}"
+
+  - name: create app from template
+    oc_process:
+      namespace: default
+      template_name: oso-zagg
+      content: "{{ lookup('template', 'templates/zagg.yml.j2') }}"
+      create: True
+      reconcile: True
+    register: zagg_oc_process
+    when: '{{ zagg_pods_running | length }} < 2'
+
+  - name: debug the zagg_oc_process
+    debug:
+      msg: "{{ zagg_oc_process }}"
+
+  - name: get oc version
+    oc_version:
+    register: l_oc_version
+
+  - name: deploy in 3.3
+    command: "oc deploy --latest -n default oso-rhel7-zagg-web"
+    when:
+      - '{{ zagg_pods_running | length }} < 2'
+      - l_oc_version.results.oc_short == "3.3"
+
+  run_once: true
+  when: inventory_hostname == ansible_play_hosts[0]
+  tags:
+    - zagg

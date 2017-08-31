@@ -5,14 +5,9 @@
   with_dict: "{{ osvp_provisioner_params }}"
   when: osvp_provisioner_params is undefined
 
-- name: install the openshift-scripts-online
-  yum:
-    name: openshift-scripts-online
-    state: installed
-
-- name: ensure the template file from openshift-scripts-online has metadate.name. This should not be needed in the future
+- name: ensure the template file from openshift-scripts-dedicated has metadate.name. This should not be needed in the future
   yedit:
-    src: /etc/openshift-online/templates/volume-provisioner.yaml
+    src: /etc/openshift-dedicated/templates/volume-provisioner.yaml
     key: metadata
     value:
       name: online-volume-provisioner
@@ -46,9 +41,9 @@
   run_once: true
   when: master_config_changes.changed
 
-- name: pause 10 seconds when services are restarted
+- name: pause 60 seconds when services are restarted
   pause:
-    seconds: 10
+    seconds: 60
   when: master_config_changes.changed
 
 - name: create project
@@ -68,7 +63,7 @@
     name: online-volume-provisioner
     kind: template
     files:
-    - "/etc/openshift-online/templates/volume-provisioner.yaml"
+    - "/etc/openshift-dedicated/templates/volume-provisioner.yaml"
   register: templateout
   run_once: true
 #- debug: var=templateout

@@ -16,7 +16,7 @@ After=docker.service
 
 [Service]
 Type=simple
-TimeoutStartSec=5m
+TimeoutStartSec=10m
 Environment=HOME=/etc/docker/ops
 #Slice=container-small.slice
 
@@ -43,7 +43,6 @@ ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                
            -v /etc/localtime:/etc/localtime                                                         \
            -v /sys:/sys:ro                                                                          \
            -v /var/lib/docker/volumes-ops/oso-rhel7-host-monitoring/empty_selinux:/sys/fs/selinux   \
-           -v /var/lib/docker:/var/lib/docker:ro                                                    \
            -v /var/run/docker.sock:/var/run/docker.sock                                             \
            -v /var/run/openvswitch:/var/run/openvswitch                                             \
 {% if osohm_host_type == 'master' %}
@@ -53,6 +52,8 @@ ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                
 {% endif %}
            -v /usr/bin/oc:/usr/bin/oc                                                               \
            -v /usr/bin/oadm:/usr/bin/oadm                                                           \
+           -v /:/host:ro,rslave                                                                     \
+           -v /var/cache/yum:/host/var/cache/yum:rw                                                 \
            -v /etc/openshift_tools:/container_setup:ro                                              \
            {{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}:{{ osohm_environment }}
 

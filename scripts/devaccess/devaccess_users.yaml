@@ -1,0 +1,20 @@
+roles:
+- name: ALL
+  commands:
+  - oc get nodes -ndefault
+  - oc get nodes -ndefault -ojson
+  - rpm -qa
+  - oc get pods -ndefault
+  - oc get pods -nopenshift-infra
+  - oc get pods -nlogging
+  - oc get routes -ndefault
+  - oc get routes -nlogging
+- name: nobody_role
+  commands:
+  - uname
+
+users:
+- username: nobody
+  roles:
+  - nobody_role
+- username: noroleuser

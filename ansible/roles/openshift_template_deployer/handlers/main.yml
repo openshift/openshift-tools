@@ -1,0 +1,10 @@
+---
+- name: restart openshift master services
+  service:
+    name: "{{ item[1] }}"
+    state: restarted
+  delegate_to: "{{ item[0] }}"
+  with_nested:
+  - "{{ ansible_play_hosts }}"
+  - [ 'atomic-openshift-master-api', 'atomic-openshift-master-controllers' ]
+  run_once: true

@@ -1,6 +1,20 @@
 #!/bin/env python
 # vim: expandtab:tabstop=4:shiftwidth=4
 
+#   Copyright 2016 Red Hat Inc.
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
 """
  This script can be used to create API keys for your AWS IAM user accounts.
  It can be used for individual accounts or for all your accounts at once.
@@ -10,14 +24,17 @@
  Usage:
 
  For individual accounts:
- aws_api_key_manager.py -p ded-stage-aws -p ded-int-aws -p <some-other-account>
+ aws_api_key_manager -p ded-stage-aws -p ded-int-aws -p <some-other-account>
 
 
  For all accounts found in /etc/openshift_tools/aws_accounts.txt:
- aws_api_key_manager.py --all
+ aws_api_key_manager --all
 
  To manage keys for another user, use the '-u' option:
- aws_api_key_manager.py -u <some-other-user> -p ded-stage-aws
+ aws_api_key_manager -u <some-other-user> -p ded-stage-aws
+
+ To remove a stale entry found in your credentials file, use the '-c' option:
+ aws_api_key_manager -p <outdated-profile> -c
 """
 
 from __future__ import print_function
@@ -36,7 +53,8 @@ import yaml
 import boto3
 import botocore
 
-import saml_aws_creds
+# pylint: disable=no-name-in-module
+from openshift_tools import saml_aws_creds
 
 
 class ManageKeys(object):
@@ -63,6 +81,9 @@ class ManageKeys(object):
         parser.add_argument('-p', '--profile',
                             help='Create new API keys for the specified profile.',
                             action='append')
+        parser.add_argument('-c', '--clean',
+                            help='Specify an unwanted profile entry to remove.',
+                            action='store_true')
         parser.add_argument('-u', '--user',
                             help='Specify a username for the account.')
         args = parser.parse_args()
@@ -73,7 +94,9 @@ class ManageKeys(object):
                   'Usage:\n'
                   'example: {0} -p <account-name>\n'
                   'example: {0} -u <some-other-user> -p <account-name>\n'
-                  'example: {0} --all'.format(parser.prog))
+                  'example: {0} --all\n'
+                  'To clean an outdated profile entry from the credentials file, use "-c"\n'
+                  'example: {0} -p <outdated-account-name> -c'.format(parser.prog))
             sys.exit(10)
 
         if not args.user:
@@ -142,7 +165,11 @@ class ManageKeys(object):
 
     @staticmethod
     def create_user(aws_account, user_name, client):
-        """ Create an IAM user account. """
+        """ Create an IAM user account and add them to the admin group.
+
+        Returns:
+            True, after successful account creation.
+        """
 
         client.create_user(
             UserName=user_name
@@ -150,7 +177,7 @@ class ManageKeys(object):
 
         client.add_user_to_group(GroupName='admin', UserName=user_name)
         print("A new user account was added.\n"
-              "Use change_iam_password.py -p %s to set your password" % aws_account.split(':')[0])
+              "Use change_iam_password -p %s to set your password" % aws_account.split(':')[0])
 
         return True
 
@@ -225,26 +252,70 @@ class ManageKeys(object):
                 if yaml_config["idp_host"]:
                     ops_idp_host = yaml_config["idp_host"]
 
-                creds = saml_aws_creds.get_temp_credentials(
-                    metadata_id='urn:amazon:webservices:%s' % aws_account,
-                    idp_host=ops_idp_host
-                    )
+                try:
+                    creds = saml_aws_creds.get_temp_credentials(
+                        metadata_id='urn:amazon:webservices:%s' % aws_account,
+                        idp_host=ops_idp_host
+                        )
 
-                client = boto3.client(
-                    'iam',
-                    aws_access_key_id=creds['AccessKeyId'],
-                    aws_secret_access_key=creds['SecretAccessKey'],
-                    aws_session_token=creds['SessionToken']
-                    )
+                    client = boto3.client(
+                        'iam',
+                        aws_access_key_id=creds['AccessKeyId'],
+                        aws_secret_access_key=creds['SecretAccessKey'],
+                        aws_session_token=creds['SessionToken']
+                        )
+                    return client
 
-                return client
+                except ValueError as client_exception:
+                    if 'Error retrieving SAML token' in client_exception.message and \
+                    'Metadata not found' in client_exception.message:
+                        print(client_exception)
+                        print('Metadata for %s missing or misconfigured, skipping' % aws_account)
+
+                    else:
+                        raise
 
         else:
             raise ValueError(sso_config_path + 'does not exist.')
 
+
+    @staticmethod
+    def clean_entry(args):
+        """ Cleans an unwanted entry from the credentials file.
+
+        Returns:
+            True, after cleaning the unwanted entry.
+
+        Raises:
+            A ValueError if the path to the credentials file does not exist.
+        """
+
+        path = os.path.join(os.path.expanduser('~'), '.aws/credentials')
+
+        if os.path.isfile(path):
+            config = ConfigParser.RawConfigParser()
+            config.read(path)
+
+            for aws_account in args.profile:
+                try:
+                    config.remove_section(aws_account)
+
+                    with open(path, 'w') as configfile:
+                        config.write(configfile)
+
+                    print('Successfully removed entry for %s' % aws_account)
+
+                except ConfigParser.NoSectionError:
+                    print('Section for account %s could not be found, skipping' % aws_account)
+
+
+        else:
+            raise ValueError(path + ' does not exist.')
+
+
     @staticmethod
     def create_key(aws_account, user_name, client):
-        """ Change an API key for the specified account.
+        """ Create a new API key for the specified account.
 
         Returns:
             A response object from boto3, which contains information about the new IAM key.
@@ -257,7 +328,7 @@ class ManageKeys(object):
             UserName=user_name
             )
 
-        print('key successfully created for:', aws_account)
+        print('Key successfully created for:', aws_account)
         return response
 
 
@@ -300,7 +371,7 @@ class ManageKeys(object):
     def write_credentials(aws_account, key_object):
         """ Write the profile for the user account to the AWS credentials file.
 
-        Raise:
+        Raises:
             A ValueError if the path to the credentials file does not exist.
         """
 
@@ -336,40 +407,15 @@ class ManageKeys(object):
             raise ValueError(path + ' does not exist.')
 
 
-    def main(self):
-        """ Main function. """
-        args = self.check_arguments()
-        ops_accounts = self.check_accounts()
+    def run_all(self, args, ops_accounts):
+        """ Loop through a list of every ops-managed AWS account and create API keys for each. """
 
-        if args.profile and args.user:
+        for aws_account in ops_accounts:
+            account_name = aws_account.split(':')[0]
+            account_number = aws_account.split(':')[1]
+            client = self.get_token(account_number)
 
-            for aws_account in args.profile:
-                matching = [s for s in ops_accounts if aws_account in s]
-                account_name = matching[0].split(':')[0]
-                account_number = matching[0].split(':')[1]
-                client = self.get_token(account_number)
-                self.check_user(aws_account, args.user, client)
-                existing_keys = self.get_keys(args.user, client)
-
-                if existing_keys:
-                    for key in existing_keys:
-                        self.delete_key(aws_account, args.user, key, client)
-                        key_object = self.create_key(aws_account, args.user, client)
-                        self.write_credentials(account_name, key_object)
-
-                else:
-                    key_object = self.create_key(aws_account, args.user, client)
-                    self.write_credentials(account_name, key_object)
-
-            self.manage_timestamp()
-
-        elif args.all and args.user:
-
-            for aws_account in ops_accounts:
-                matching = [s for s in ops_accounts if aws_account in s]
-                account_name = matching[0].split(':')[0]
-                account_number = matching[0].split(':')[1]
-                client = self.get_token(account_number)
+            if client:
                 self.check_user(aws_account, args.user, client)
                 current_accounts = self.get_all_profiles()
                 existing_keys = self.get_keys(args.user, client)
@@ -382,7 +428,60 @@ class ManageKeys(object):
                     key_object = self.create_key(aws_account, args.user, client)
                     self.write_credentials(account_name, key_object)
 
-            self.manage_timestamp(True)
+        self.manage_timestamp(True)
+
+
+    def run_one(self, args, ops_accounts):
+        """ Create API keys for only the specified ops-managed AWS accounts. """
+
+        match_list = []
+        for aws_account in args.profile:
+            for line in ops_accounts:
+                new_reg = r'(?P<account_name>\b' + aws_account + r'\b)'\
+                + ':' + r'(?P<account_number>\d+)'
+                match = re.search(new_reg, line)
+
+                if match:
+                    match_list.append(match)
+                    account_name = match.group('account_name')
+                    account_number = match.group('account_number')
+
+                    client = self.get_token(account_number)
+
+                    if client:
+                        self.check_user(aws_account, args.user, client)
+                        existing_keys = self.get_keys(args.user, client)
+
+                        if existing_keys:
+                            for key in existing_keys:
+                                self.delete_key(aws_account, args.user, key, client)
+                                key_object = self.create_key(aws_account, args.user, client)
+                                self.write_credentials(account_name, key_object)
+
+                        else:
+                            key_object = self.create_key(aws_account, args.user, client)
+                            self.write_credentials(account_name, key_object)
+
+            if not match_list:
+                print('Account %s does not match any current ops accounts.' % aws_account)
+
+        self.manage_timestamp()
+
+
+    def main(self):
+        """ Main function. """
+
+        args = self.check_arguments()
+        ops_accounts = self.check_accounts()
+
+        if args.clean and args.profile:
+            self.clean_entry(args)
+
+        elif args.profile and args.user:
+            self.run_one(args, ops_accounts)
+
+        elif args.all and args.user:
+            self.run_all(args, ops_accounts)
 
         else:
             raise ValueError('No suitable arguments provided.')

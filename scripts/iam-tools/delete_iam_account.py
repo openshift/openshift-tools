@@ -1,6 +1,20 @@
 #!/bin/env python
 # vim: expandtab:tabstop=4:shiftwidth=4
 
+#   Copyright 2016 Red Hat Inc.
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
 """
  This script can be used to delete unwanted AWS IAM user accounts.
  It can be used on individual AWS accounts or for all ops accounts at once.
@@ -8,11 +22,11 @@
  Usage:
 
  For individual accounts:
- delete_iam_account.py -u <user-to-delete> -p ded-stage-aws -p ded-int-aws -p <some-other-account>
+ delete_iam_account -u <user-to-delete> -p ded-stage-aws -p ded-int-aws -p <some-other-account>
 
 
  For all accounts found in /etc/openshift_tools/aws_accounts.txt:
- delete_iam_account.py -u <user-to-delete> --all
+ delete_iam_account -u <user-to-delete> --all
 """
 
 from __future__ import print_function
@@ -26,7 +40,7 @@ import yaml
 import boto3
 import botocore
 
-import saml_aws_creds
+from openshift_tools import saml_aws_creds
 
 
 class DeleteUser(object):

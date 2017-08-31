@@ -51,21 +51,22 @@ class AuthData
 
     public function getRoles($resource, $user, $groups)
     {
+        $retval = array();
         if (is_null($resource))
-            return null;
+            return $retval;
         $roles = array_key_exists('roles', $resource) ? $resource['roles'] : $this->data['default_roles'];
         foreach ($roles as $role)
         {
-            if (array_key_exists('members', $role) && array_search($user, $role['members']))
+            if (array_key_exists('members', $role) && FALSE !== array_search($user, $role['members']))
             {
-                return $role['name'];
+                array_push($retval, $role['name']);
             }
             if (array_key_exists('groups', $role) && count(array_uintersect($groups, $role['groups'], 'strcmp')))
             {
-                return $role['name'];
+                array_push($retval, $role['name']);
             }
         }
-        return null;
+        return $retval;
     }
     public function getResourceIds()
     {

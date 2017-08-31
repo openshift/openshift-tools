@@ -1,0 +1,10 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+  - /root/default_vars.yml
+  vars:
+
+  tasks:
+  - name: Placeholder task
+    debug: msg="This task does nothing"

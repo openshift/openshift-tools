@@ -7,9 +7,10 @@ class GitRebase(GitCLI):
     def __init__(self,
                  path,
                  branch,
-                 rebase_branch):
+                 rebase_branch,
+                 ssh_key=None):
         ''' Constructor for GitPush '''
-        super(GitRebase, self).__init__(path)
+        super(GitRebase, self).__init__(path, ssh_key=ssh_key)
         self.path = path
         self.branch = branch
         self.rebase_branch = rebase_branch

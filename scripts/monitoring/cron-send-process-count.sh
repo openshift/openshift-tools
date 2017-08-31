@@ -11,6 +11,6 @@ COUNT=$(pgrep -c -a -f "$1")
 echo
 echo "Number of processes matching [$1]: $COUNT"
 echo
-echo "Running: ops-zagg-client -k '$2' -o '$COUNT'"
-ops-zagg-client -k "$2" -o "$COUNT"
+echo "Running: ops-metric-client -k '$2' -o '$COUNT'"
+ops-metric-client -k "$2" -o "$COUNT"
 echo

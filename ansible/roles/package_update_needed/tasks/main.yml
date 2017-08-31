@@ -18,6 +18,6 @@
 - debug:
     msg: "{{ item }}"
   with_items:
-  - "Update needed? {{ pun_retval_update_needed }}"
-  - "RPM version wanted {{ pun_wanted_version }}"
-  - "RPM version installed {{ package_check_out.results.versions.available_versions_full }}"
+  - "Update needed?: {{ pun_retval_update_needed }}"
+  - "RPM version wanted: {{ pun_wanted_version }}"
+  - "RPM version installed: {{ package_check_out.results.versions.available_versions_full }}"

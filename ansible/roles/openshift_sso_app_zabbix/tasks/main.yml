@@ -1,0 +1,46 @@
+---
+- name: "check whether openshift master cluster synthetic exists"
+  zbx_host:
+    zbx_server: "{{ ossoz_zbx_server }}"
+    zbx_user: "{{ ossoz_zbx_user }}"
+    zbx_password: "{{ ossoz_zbx_password }}"
+    name: "{{ ossoz_clusterid }}-synthetic"
+    state: list
+  delegate_to: localhost
+  register: out
+  run_once: true
+
+- name: "Add oso sso app aggregate count item"
+  # only add item when synthetic host exists
+  when: "{{ out.results | length == 1 }}"
+  zbx_item:
+    zbx_server: "{{ ossoz_zbx_server }}"
+    zbx_user: "{{ ossoz_zbx_user }}"
+    zbx_password: "{{ ossoz_zbx_password }}"
+    name: "oso.sso.app.aggregate"
+    key: "grpsum[{{ ossoz_clusterid }},sso.monitoring.container.running,max,15m]"
+    value_type: int
+    data_type: decimal
+    description: "The sum of oso-monitor-sso containers checking in."
+    multiplier: ""
+    hostname: "{{ ossoz_clusterid }}-synthetic"
+    zabbix_type: aggregate
+    interval: 900
+    delta: 0
+    units: ""
+  delegate_to: localhost 
+  run_once: true
+
+- name: "Add alert for when not enough SSO containers are running for 30 minutes"
+  zbx_trigger:
+    zbx_server: "{{ ossoz_zbx_server }}"
+    zbx_user: "{{ ossoz_zbx_user }}"
+    zbx_password: "{{ ossoz_zbx_password }}"
+    name: "Not enough SSO containers running for 30 minutes"
+    hostgroup_name: "{{ ossoz_clusterid }}"
+    # Need to escape opening brace so we can avoid templating syntax errors
+    expression: "{{ '{'  }}{{ ossoz_clusterid }}-synthetic:grpsum[{{ ossoz_clusterid }},sso.monitoring.container.running,max,15m].max(1800)}<3"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_ops_sso.asciidoc"
+    priority: warning
+  delegate_to: localhost
+  run_once: true

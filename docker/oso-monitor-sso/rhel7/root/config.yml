@@ -1,0 +1,36 @@
+---
+- hosts: localhost
+  # need this for ansible_nodename
+  gather_facts: yes
+  vars_files:
+  - /root/default_vars.yml
+  vars:
+
+  tasks:
+  - include_vars:
+      file: "{{ item.file }}"
+      name: "{{ item.name }}"
+    with_items:
+      - name: zagg_configdata
+        file: /secrets/zagg-config-values.yaml
+
+  - name: populate templated config files
+    vars:
+      hostname: "{{ ansible_nodename }}"
+    template:
+      src: "/root/templates/{{ item }}.j2"
+      dest: "/configdata/{{ item }}"
+      owner: user
+      group: root
+      mode: 0600
+    with_items:
+      - zagg_client.yaml
+      - metric_sender.yaml
+
+  - name: install a copy of the SSH known hosts file
+    copy:
+      dest: /configdata/ssh_known_hosts
+      src: /secrets/ssh-known-hosts
+      owner: user
+      group: root
+      mode: 0600

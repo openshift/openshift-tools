@@ -7,6 +7,23 @@
 #   |   \ / _ \  | \| |/ _ \_   _| | __|   \_ _|_   _|
 #   | |) | (_) | | .` | (_) || |   | _|| |) | |  | |
 #   |___/ \___/  |_|\_|\___/ |_|   |___|___/___| |_|
+#
+# Copyright 2016 Red Hat, Inc. and/or its affiliates
+# and other contributors as indicated by the @author tags.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 
 DOCUMENTATION = '''
 ---
@@ -135,18 +152,18 @@ EXAMPLES = '''
 module for managing yaml files
 '''
 
+import json
 import os
 import re
-import copy
+import ruamel.yaml as yaml
 
-import json
-import yaml
 # This is here because of a bug that causes yaml
 # to incorrectly handle timezone info on timestamps
-def timestamp_constructor(_, node):
-    ''' return timestamps as strings'''
-    return str(node.value)
-yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
+#def timestamp_constructor(_, node):
+#    ''' return timestamps as strings'''
+#    return str(node.value)
+#yaml.add_constructor(u'tag:yaml.org,2002:timestamp', timestamp_constructor)
+
 
 
 class YeditException(Exception):
@@ -261,7 +278,8 @@ class Yedit(object):
                     continue
 
                 elif data and not isinstance(data, dict):
-                    return None
+                    raise YeditException("Unexpected item type found while going through key " +
+                                         "path: {} (at key: {})".format(key, dict_key))
 
                 data[dict_key] = {}
                 data = data[dict_key]
@@ -269,7 +287,7 @@ class Yedit(object):
             elif arr_ind and isinstance(data, list) and int(arr_ind) <= len(data) - 1:
                 data = data[int(arr_ind)]
             else:
-                return None
+                raise YeditException("Unexpected item type found while going through key path: {}".format(key))
 
         if key == '':
             data = item
@@ -282,6 +300,12 @@ class Yedit(object):
         # expected dict entry
         elif key_indexes[-1][1] and isinstance(data, dict):
             data[key_indexes[-1][1]] = item
+
+        # didn't add/update to an existing list, nor add/update key to a dict
+        # so we must have been provided some syntax like a.b.c[<int>] = "data" for a
+        # non-existent array
+        else:
+            raise YeditException("Error adding data to object at path: {}".format(key))
 
         return data
 
@@ -319,12 +343,10 @@ class Yedit(object):
         tmp_filename = self.filename + '.yedit'
         try:
             with open(tmp_filename, 'w') as yfd:
-                yml_dump = yaml.safe_dump(self.yaml_dict, default_flow_style=False)
-                for line in yml_dump.strip().split('\n'):
-                    if '{{' in line and '}}' in line:
-                        yfd.write(line.replace("'{{", '"{{').replace("}}'", '}}"') + '\n')
-                    else:
-                        yfd.write(line + '\n')
+                # pylint: disable=no-member,maybe-no-member
+                if hasattr(self.yaml_dict, 'fa'):
+                    self.yaml_dict.fa.set_block_style()
+                yfd.write(yaml.dump(self.yaml_dict, Dumper=yaml.RoundTripDumper))
         except Exception as err:
             raise YeditException(err.message)
 
@@ -368,12 +390,15 @@ class Yedit(object):
         # check if it is yaml
         try:
             if content_type == 'yaml' and contents:
-                self.yaml_dict = yaml.load(contents)
+                self.yaml_dict = yaml.load(contents, yaml.RoundTripLoader)
+                # pylint: disable=no-member,maybe-no-member
+                if hasattr(self.yaml_dict, 'fa'):
+                    self.yaml_dict.fa.set_block_style()
             elif content_type == 'json' and contents:
                 self.yaml_dict = json.loads(contents)
         except yaml.YAMLError as err:
             # Error loading yaml or json
-            YeditException('Problem with loading yaml file. %s' % err)
+            raise YeditException('Problem with loading yaml file. %s' % err)
 
         return self.yaml_dict
 
@@ -533,7 +558,11 @@ class Yedit(object):
         if entry == value:
             return (False, self.yaml_dict)
 
-        tmp_copy = copy.deepcopy(self.yaml_dict)
+        # deepcopy didn't work
+        tmp_copy = yaml.load(yaml.round_trip_dump(self.yaml_dict, default_flow_style=False), yaml.RoundTripLoader)
+        # pylint: disable=no-member
+        if hasattr(self.yaml_dict, 'fa'):
+            tmp_copy.fa.set_block_style()
         result = Yedit.add_entry(tmp_copy, path, value, self.separator)
         if not result:
             return (False, self.yaml_dict)
@@ -545,7 +574,11 @@ class Yedit(object):
     def create(self, path, value):
         ''' create a yaml file '''
         if not self.file_exists():
-            tmp_copy = copy.deepcopy(self.yaml_dict)
+            # deepcopy didn't work
+            tmp_copy = yaml.load(yaml.round_trip_dump(self.yaml_dict, default_flow_style=False), yaml.RoundTripLoader)
+            # pylint: disable=no-member
+            if hasattr(self.yaml_dict, 'fa'):
+                tmp_copy.fa.set_block_style()
             result = Yedit.add_entry(tmp_copy, path, value, self.separator)
             if result:
                 self.yaml_dict = tmp_copy
@@ -579,8 +612,11 @@ def parse_value(inc_value, vtype=''):
     elif isinstance(inc_value, bool) and 'str' in vtype:
         inc_value = str(inc_value)
 
+    # There is a special case where '' will turn into None after yaml loading it so skip
+    if isinstance(inc_value, str) and inc_value == '':
+        pass
     # If vtype is not str then go ahead and attempt to yaml load it.
-    if isinstance(inc_value, str) and 'str' not in vtype:
+    elif isinstance(inc_value, str) and 'str' not in vtype:
         try:
             inc_value = yaml.load(inc_value)
         except Exception as _:
@@ -664,7 +700,7 @@ def main():
             yamlfile.yaml_dict = content
 
         # we were passed a value; parse it
-        if module.params['value']:
+        if module.params['value'] is not None:
             value = parse_value(module.params['value'], module.params['value_type'])
             key = module.params['key']
             if module.params['update']:

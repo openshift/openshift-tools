@@ -48,11 +48,11 @@ except ImportError:
 def get_aws_accountid():
     ''' get the aws account id '''
 
-    iam_user = {}
-    iam_user_raw = boto3.client('iam').get_user()['User']['Arn']
+    identity = boto3.client('sts').get_caller_identity()
 
-    iam_user['accountid'] = iam_user_raw.split(':')[4]
-    iam_user['user'] = iam_user_raw.split(':')[5].split('/')[1]
+    iam_user = {}
+    iam_user['accountid'] = identity['Account']
+    iam_user['user'] = identity['Arn'].split('/')[-1]
 
     return iam_user
 

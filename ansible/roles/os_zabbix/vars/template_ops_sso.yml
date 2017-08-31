@@ -1,0 +1,35 @@
+---
+g_template_ops_sso:
+  name: Template Ops SSO
+  zitems:
+  - key: sso.iam.not.reachable
+    applications:
+    - Ops SSO
+    value_type: int
+  - key: sso.service.not.reachable
+    applications:
+    - Ops SSO
+    value_type: int
+  - key: sso.container.not.reachable
+    applications:
+    - Ops SSO
+    value_type: int
+  - key: sso.monitoring.container.running
+    applications:
+    - Ops SSO
+    value_type: int
+
+
+  ztriggers:
+  - name: "SSO functions failing on one or more AWS accounts"
+    expression: "{Template Ops SSO:sso.iam.not.reachable.min(#1)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_ops_sso.asciidoc"
+    priority: warning
+  - name: "HTTP connectivity failing for SSO service"
+    expression: "{Template Ops SSO:sso.service.not.reachable.min(#3)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_ops_sso.asciidoc"
+    priority: warning
+  - name: "SSO container services unreachable"
+    expression: "{Template Ops SSO:sso.container.not.reachable.min(#3)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_ops_sso.asciidoc"
+    priority: warning

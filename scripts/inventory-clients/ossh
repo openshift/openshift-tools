@@ -3,6 +3,7 @@
 ''' ssh wrapper with multi-inventory capabilities '''
 
 import argparse
+import errno
 import traceback
 import sys
 import os
@@ -48,7 +49,16 @@ class Ossh(object):
 
         # perform the SSH
         if self.args.list:
-            self.list_hosts()
+            try:
+                self.list_hosts()
+            # You can get IOErrors when piping output to another tool
+            # (ie 'head') b/c the pipe being written to is closed by
+            # the reader. This is okay. Catch and ignore EPIPE errors.
+            except IOError as e:
+                if e.errno == errno.EPIPE:
+                    pass
+                else:
+                    raise e
         else:
             self.ssh()
 
@@ -108,14 +118,34 @@ class Ossh(object):
         '''select host attempts to match the host specified
            on the command line with a list of hosts.
         '''
-        results = None
+        results = {}
         if self.host_inventory.has_key(self.host):
-            results = (self.host, self.host_inventory[self.host])
+            results[self.host] = self.host_inventory[self.host]
+        # check for an ec2_private_dns_name, like: ip-172-31-49-44.ec2.internal
+        elif self.host.startswith("ip-"):
+            for host, values in self.host_inventory.iteritems():
+                if not values.has_key("ec2_private_dns_name"):
+                    continue
+                if self.host == values["ec2_private_dns_name"]:
+                    results[host] = values
+        # check for an aws instance id, like: i-0015104cc95b00f77
+        elif self.host.startswith("i-"):
+            for host, values in self.host_inventory.iteritems():
+                if not values.has_key("ec2_id"):
+                    continue
+                if self.host == values["ec2_id"]:
+                    results[host] = values
         else:
             print "Could not find specified host: %s." % self.host
 
-        # default - no results found.
-        return results
+        if len(results) > 1:
+            print("Found multiple possible hosts: %s" % ",".join(results))
+            return None
+
+        if len(results) == 0:
+            return None
+
+        return results.items()[0]
 
     def list_hosts(self):
         '''Function to print out the host inventory.

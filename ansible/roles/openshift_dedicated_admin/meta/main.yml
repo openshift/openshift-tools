@@ -11,4 +11,5 @@ galaxy_info:
     - 7
   categories:
   - cloud
-  dependencies: []
+dependencies:
+- role: tools_roles/openshift_dedicated_scripts

@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: OpenShift Operations
+  description: A role to manage OpenShift users
+  company: Red Hat
+  license: Apache
+  min_ansible_version: 2.0
+  platforms:
+  - name: EL
+    versions:
+    - 7
+  categories:
+  - cloud
+dependencies:
+  - "aos_{{ g_play_openshift_version }}_roles/lib_openshift"

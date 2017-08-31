@@ -10,5 +10,10 @@ g_template_config_loop:
   ztriggers:
   - name: "config_loop.run.exit_code not zero on {HOST.NAME}"
     expression: "{Template Config Loop:config_loop.run.exit_code.min(#2)}>0"
-    url: "https://github.com/openshift/ops-sop/blob/master/V3/Alerts/check_config_loop.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_config_loop.asciidoc"
     priority: high
+
+  - name: "No data for config_loop.run.exit_code on {HOST.NAME}"
+    expression: "{Template Config Loop:config_loop.run.exit_code.nodata(540m)}=1"
+    priority: avg
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_config_loop.asciidoc"

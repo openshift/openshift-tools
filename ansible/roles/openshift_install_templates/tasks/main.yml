@@ -5,10 +5,10 @@
 
 - name: set the kube version
   set_fact:
-    kube_version: "{{ oc_version.result.kubernetes_short }}"
+    kube_version: "{{ oc_version.results.kubernetes_short }}"
 
 - name: Ensure openshift-ansible-roles is installed
-  action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
+  action: "{{ ansible_pkg_mgr }} name={{ item }} state=latest"
   with_items:
   - openshift-ansible-roles
 
@@ -29,19 +29,5 @@
   - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/db-templates"
   - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/quickstart-templates"
   - "/usr/share/ansible/openshift-ansible/roles/openshift_examples/files/examples/v{{ kube_version }}/xpaas*"
-  ignore_errors: yes
-  run_once: yes
-
-- name: get list of image streams
-  oc_obj:
-    state: list
-    kind: imagestreams
-    namespace: openshift
-  register: imagestreams_out
-  run_once: yes
-
-- name: Import the image stream images
-  command: "/usr/bin/oc --config /etc/origin/master/admin.kubeconfig -n openshift import-image {{ item }}"
-  with_items: "{{ imagestreams_out.results.results[0]['items'] | map(attribute='metadata') | map(attribute='name') | list }}"
   ignore_errors: yes
   run_once: yes

@@ -11,7 +11,8 @@ N/A
 Role Variables
 --------------
 
-N/A
+epelr_exclude: A space-separated list of packages that should not be pulled from EPEL.
+epelr_skip_if_unavailable: Bool.  will set the "skip_if_unavailable" to the repo file. Defaults to true
 
 Dependencies
 ------------

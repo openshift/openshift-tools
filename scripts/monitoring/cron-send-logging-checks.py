@@ -25,10 +25,11 @@
 import argparse
 import ssl
 import urllib2
+import json
 
 # pylint: disable=import-error
 from openshift_tools.monitoring.ocutil import OCUtil
-from openshift_tools.monitoring.zagg_sender import ZaggSender
+from openshift_tools.monitoring.metric_sender import MetricSender
 # pylint: enable=import-error
 
 class OpenshiftLoggingStatus(object):
@@ -37,14 +38,14 @@ class OpenshiftLoggingStatus(object):
     '''
     def __init__(self):
         ''' Initialize OpenShiftLoggingStatus class '''
-        self.zagg_sender = None
+        self.metric_sender = None
         self.oc = None
         self.args = None
         self.es_pods = []
         self.fluentd_pods = []
 
         es_cert = '/etc/elasticsearch/secret/admin-'
-        self.es_curl = "curl --cert {}cert --key {}key --cacert {}ca -XGET ".format(es_cert, es_cert, es_cert)
+        self.es_curl = "curl -s --cert {}cert --key {}key --cacert {}ca -XGET ".format(es_cert, es_cert, es_cert)
 
     def parse_args(self):
         ''' Parse arguments passed to the script '''
@@ -91,10 +92,19 @@ class OpenshiftLoggingStatus(object):
             elif es_master_name != master_name:
                 es_status['single_master'] = 0
 
+        # fix for 3.4 logging where es_master_name is getting set to an ip.
+        # so we set a try check around incase it fails just so it keeps working for 3.3
+        for pod in self.es_pods:
+            try:
+                if pod['status']['podIP'] == es_master_name:
+                    es_master_name = pod['metadata']['name']
+            except:
+                continue
+
         # get cluster nodes
         curl_cmd = "{} 'https://localhost:9200/_nodes'".format(self.es_curl)
         node_cmd = "exec -ti {} -- {}".format(es_master_name, curl_cmd)
-        cluster_nodes = self.oc.run_user_cmd(node_cmd)['nodes']
+        cluster_nodes = json.loads(self.oc.run_user_cmd(node_cmd))['nodes']
         es_status['all_nodes_registered'] = 1
         # The internal ES node name is a random string we do not track anywhere
         # pylint: disable=unused-variable
@@ -102,7 +112,7 @@ class OpenshiftLoggingStatus(object):
         # pylint: enable=unused-variable
             has_matched = False
             for pod in self.es_pods:
-                if data['host'] == pod['metadata']['name']:
+                if data['host'] == pod['metadata']['name'] or data['host'] == pod['status']['podIP']:
                     has_matched = True
                     break
 
@@ -116,7 +126,7 @@ class OpenshiftLoggingStatus(object):
         try:
             curl_cmd = "{} 'https://localhost:9200/_cluster/health?pretty=true'".format(self.es_curl)
             cluster_health = "exec -ti {} -- {}".format(es_pod, curl_cmd)
-            health_res = self.oc.run_user_cmd(cluster_health)
+            health_res = json.loads(self.oc.run_user_cmd(cluster_health))
 
             if health_res['status'] == 'green':
                 return 2
@@ -179,14 +189,26 @@ class OpenshiftLoggingStatus(object):
                 fluentd_status['running'] = 0
 
             # If there is already a problem don't worry about looping over the remaining pods/nodes
-            if fluentd_status['node_mismatch'] == 0:
-                for node in fluentd_nodes:
+            for node in fluentd_nodes:
+                internal_ip = ""
+                for address in node['status']['addresses']:
+                    if address['type'] == "InternalIP":
+                        internal_ip = address['address']
+
+                try:
                     if node['metadata']['labels']['kubernetes.io/hostname'] == pod['spec']['host']:
+                        node_matched = True
+                        break
+
+                    raise ValueError('')
+                except:
+                    if internal_ip == pod['spec']['nodeName'] or node['metadata']['name'] == pod['spec']['nodeName']:
                         node_matched = True
                         break
 
             if node_matched == False:
                 fluentd_status['node_mismatch'] = 1
+                break
 
 
         return fluentd_status
@@ -218,38 +240,38 @@ class OpenshiftLoggingStatus(object):
 
     def report_to_zabbix(self, logging_status):
         ''' Report all of our findings to zabbix '''
-        self.zagg_sender.add_zabbix_dynamic_item('openshift.logging.elasticsarch.pods',
-                                                 '#OSO_ELASTIC',
-                                                 logging_status['elasticsearch']['pods'].keys())
+        self.metric_sender.add_dynamic_metric('openshift.logging.elasticsarch.pods',
+                                              '#OSO_ELASTIC',
+                                              logging_status['elasticsearch']['pods'].keys())
         for item, data in logging_status.iteritems():
             if item == "fluentd":
-                self.zagg_sender.add_zabbix_keys({
+                self.metric_sender.add_metric({
                     'openshift.logging.fluentd.running': data['running'],
                     'openshift.logging.fluentd.number_pods': data['number_pods'],
                     'openshift.logging.fluentd.node_mismatch': data['node_mismatch'],
                     'openshift.logging.fluentd.number_expected_pods': data['number_expected_pods']
                 })
             elif item == "kibana":
-                self.zagg_sender.add_zabbix_keys({'openshift.logging.kibana.site_up': data['site_up']})
+                self.metric_sender.add_metric({'openshift.logging.kibana.site_up': data['site_up']})
             elif item == "elasticsearch":
-                self.zagg_sender.add_zabbix_keys({
+                self.metric_sender.add_metric({
                     'openshift.logging.elasticsearch.single_master': data['single_master'],
                     'openshift.logging.elasticsearch.all_nodes_registered': data['all_nodes_registered']
                 })
                 for pod, value in data['pods'].iteritems():
-                    self.zagg_sender.add_zabbix_keys({
+                    self.metric_sender.add_metric({
                         "openshift.logging.elasticsarch.pod_health[%s]" %(pod): value['elasticsearch_health'],
                         "openshift.logging.elasticsarch.disk_used[%s]" %(pod): value['disk']['used'],
                         "openshift.logging.elasticsarch.disk_free[%s]" %(pod): value['disk']['free']
                     })
-        self.zagg_sender.send_metrics()
+        self.metric_sender.send_metrics()
 
     def run(self):
         ''' Main function that runs the check '''
         self.parse_args()
-        self.get_pods()
-        self.zagg_sender = ZaggSender(verbose=self.args.verbose, debug=self.args.debug)
+        self.metric_sender = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
         self.oc = OCUtil(namespace='logging', config_file='/tmp/admin.kubeconfig', verbose=self.args.verbose)
+        self.get_pods()
 
         logging_status = {}
         logging_status['elasticsearch'] = self.check_elasticsearch()

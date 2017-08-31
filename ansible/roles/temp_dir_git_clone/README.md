@@ -14,6 +14,7 @@ Role Variables
 - tdgc_repo_name: name of the repository, used for the directory to checkout into
 - tdgc_repo: The git repository. ex: git@github.com:openshift/openshift-ansible.git
 - tdgc_branch: The branch to checkout
+- tdgc_ssh_key: Variable of the ssh private to to use to do a clone
 
 Dependencies
 ------------

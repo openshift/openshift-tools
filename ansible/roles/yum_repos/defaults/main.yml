@@ -1,3 +1,2 @@
 ---
-repo_enabled: 1
-repo_gpgcheck: 1
+yr_yum_cert_dir: /var/lib/yum/

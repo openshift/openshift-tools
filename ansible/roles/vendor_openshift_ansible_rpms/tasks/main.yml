@@ -1,0 +1,225 @@
+---
+- fail:
+    msg: "{{ item }} is required."
+  when: "{{ item }} is not defined"
+  with_items:
+  - vosar_output_directory
+  - vosar_rpm_directory
+
+# Check for rpm dir
+- stat:
+    path: "{{ vosar_rpm_directory }}"
+  register: rpm_dir_stat_output
+
+- fail:
+    msg: "{{ vosar_rpm_directory }} doesn't exist, or isn't a directory."
+  when: not rpm_dir_stat_output.stat.exists
+
+- name: Extract the contents of the installer RPMs
+  shell: "rpm2cpio {{ item | quote }} | cpio -idmv"
+  args:
+    chdir: "{{ vosar_output_directory }}"
+  with_fileglob:
+  - "{{ vosar_rpm_directory }}/openshift-ansible-*.rpm"
+
+- name: Fix up the extracted contents into a normal ansible layout
+  command: "mv {{ item | quote }} {{ vosar_output_directory }}"
+  with_items:
+  - "{{ vosar_output_directory }}/usr/share/ansible_plugins/filter_plugins/"
+  - "{{ vosar_output_directory }}/usr/share/ansible_plugins/lookup_plugins/"
+  - "{{ vosar_output_directory }}/usr/share/ansible/openshift-ansible/playbooks/"
+  - "{{ vosar_output_directory }}/usr/share/ansible/openshift-ansible/roles/"
+  - "{{ vosar_output_directory }}/usr/share/ansible/openshift-ansible/library/"
+
+- name: Make the vendored directory ONLY be the BYO installer
+  file:
+    state: absent
+    path: "{{ vosar_output_directory }}/{{ item }}"
+  with_items:
+  - usr
+  - rpms
+  - playbooks/adhoc
+  - playbooks/aws
+  - playbooks/gce
+  - playbooks/libvirt
+  - playbooks/openstack
+  - roles/ansible
+  - roles/ansible_tower
+  - roles/ansible_tower_cli
+  - roles/chrony
+  - roles/copr_cli
+  - roles/docker_storage
+  - roles/fluentd_master
+  - roles/dns
+  - roles/kube_nfs_volumes
+  - roles/lib_dyn
+  - roles/lib_timedatectl
+  - roles/lib_zabbix
+  - roles/os_ipv6_disable
+  - roles/oso_host_monitoring
+  - roles/oso_monitoring_tools
+  - roles/os_update_latest
+  - roles/os_zabbix
+  - roles/rhel_subscribe
+  - roles/rhel_unsubscribe
+  - roles/tito
+  - roles/yum_repos
+
+- name: Symlink the filter and lookup plugins (no longer shipped with rpm) for byo/config
+  file:
+    state: link
+    src: "../../{{ item }}"
+    dest: "{{ vosar_output_directory }}/playbooks/byo/{{ item }}"
+  with_items:
+  - filter_plugins
+  - lookup_plugins
+
+- name: Symlink the filter and lookup plugins (no longer shipped with rpm) byo/<subdirs>
+  file:
+    state: link
+    src: "../../../{{ item[0] }}"
+    dest: "{{ vosar_output_directory }}/playbooks/byo/{{ item[1] }}/{{ item[0] }}"
+  with_nested:
+  - [ 'filter_plugins', 'lookup_plugins' ]
+  - [ 'openshift-cluster', 'openshift-master', 'openshift-node']
+
+- name: Symlink the filter and lookup plugins roles/openshift_master_facts
+  file:
+    state: link
+    src: "../../../{{ item.dirname }}/{{ item.linkname }}"
+    dest: "{{ vosar_output_directory }}/roles/openshift_master_facts/{{ item.dirname }}/{{ item.linkname }}"
+    force: yes
+  with_items:
+  - dirname: filter_plugins
+    linkname: oo_filters.py
+  - dirname: lookup_plugins
+    linkname: oo_option.py
+
+# Each OpenShift release ships with 1-2 supported upgrade paths in a
+# version specific directory like "v3_4". Search for anything that looks like
+# one, and create the required symlinks within it.
+- name: Lookup versioned upgrade directories
+  find:
+    paths: "{{ vosar_output_directory }}/playbooks/byo/openshift-cluster/upgrades/"
+    patterns: "v3_*"
+    file_type: directory
+  register: upgrade_versions
+
+- fail:
+    msg: "No upgrade directories found."
+  when: upgrade_versions.files | length == 0
+
+- name: Symlink the filter and lookup plugins (no longer shipped with rpm) for byo/openshift-cluster/upgrades
+  file:
+    state: link
+    src: "../../../../../{{ item[0] }}"
+    dest: "{{ vosar_output_directory }}/playbooks/byo/openshift-cluster/upgrades/{{ item[1].path | basename }}/{{ item[0] }}"
+  with_nested:
+  - [ 'filter_plugins', 'lookup_plugins' ]
+  - "{{ upgrade_versions.files }}"
+
+# Create the lib_vendored_deps role which includes necessary deps for easy use
+- name: Make the lib_vendored_deps role
+  file:
+    state: directory
+    path: "{{ item }}"
+    recurse: true
+  with_items:
+  - "{{ vosar_output_directory }}/roles/lib_vendored_deps/library"
+  - "{{ vosar_output_directory }}/roles/lib_vendored_deps/filter_plugins"
+  - "{{ vosar_output_directory }}/roles/lib_vendored_deps/lookup_plugins"
+
+- name: Ensure contiv role gets committed to git
+  file:
+    state: touch
+    path: "{{ vosar_output_directory }}/roles/contiv/empty_file"
+
+#######################################################################
+# This section creates a lib_vendored_deps role that includes all of
+# the deps from openshift-ansible that can be included in playbook to
+# source dependencies
+
+###############################
+# This is the roles/lib_* dirs
+###############################
+- find:
+    path: "{{ vosar_output_directory }}/roles"
+    patterns: lib_*
+    file_type: directory
+  register: lib_dirs
+
+- find:
+    path: "{{ item }}/library"
+    patterns: "*.py"
+    file_type: file
+  with_items:
+  - "{{ lib_dirs.files | map(attribute='path') | list }}"
+  register: lib_files
+
+- debug:
+    msg: "{{ lib_files.results | map(attribute='files') | list | ops_flatten | map(attribute='path') | list }}"
+
+- name: set the paths into a var
+  set_fact:
+    lib_roles_files_path: "{{ lib_files.results | map(attribute='files') | list | ops_flatten | map(attribute='path') | list }}"
+
+- name: Symlink the files into the appropriate spots
+  file:
+    state: link
+    src: "{{ item | replace(vosar_output_directory + '/roles', '../..') }}"
+    path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/library/' + (item | basename) }}"
+  with_items: "{{ lib_roles_files_path }}"
+###############################
+# END roles/lib_* dirs
+###############################
+
+###############################
+# library dir
+###############################
+- find:
+    path: "{{ vosar_output_directory }}/library"
+    patterns: "*.py"
+    file_type: file
+  register: lib_files
+
+- name: Symlink the files into the appropriate spots
+  file:
+    state: link
+    src: "{{ item | replace(vosar_output_directory, '../../..') }}"
+    path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/library/' + (item | basename) }}"
+  with_items: "{{ lib_files.files | map(attribute='path') | list }}"
+###############################
+# End library dir
+###############################
+
+###############################
+# fitler_plugin dir
+###############################
+- find:
+    path: "{{ vosar_output_directory }}/filter_plugins"
+    patterns: "*.py"
+    file_type: file
+  register: lib_files
+
+- name: Symlink the files into the appropriate spots
+  file:
+    state: link
+    src: "{{ item | replace(vosar_output_directory, '../../..') }}"
+    path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/filter_plugins/' + (item | basename) }}"
+  with_items: "{{ lib_files.files | map(attribute='path') | list }}"
+
+###############################
+# lookup_plugin dir
+###############################
+- find:
+    path: "{{ vosar_output_directory }}/lookup_plugins"
+    patterns: "*.py"
+    file_type: file
+  register: lib_files
+
+- name: Symlink the files into the appropriate spots
+  file:
+    state: link
+    src: "{{ item | replace(vosar_output_directory, '../../..') }}"
+    path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/lookup_plugins/' + (item | basename) }}"
+  with_items: "{{ lib_files.files | map(attribute='path') | list }}"
