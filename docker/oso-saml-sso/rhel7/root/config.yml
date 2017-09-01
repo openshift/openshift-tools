@@ -3,6 +3,7 @@
   gather_facts: no
   vars_files:
   - /root/default_vars.yml
+  - /root/aws_saml_cert.yml
   tasks:
   - include_vars:
       file: "{{ item.file }}"
