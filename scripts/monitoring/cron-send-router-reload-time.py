@@ -7,6 +7,7 @@
 
 import argparse
 import time
+import logging
 
 # Our jenkins server does not include these rpms.
 # In the future we might move this to a container where these
@@ -15,7 +16,6 @@ import time
 from openshift_tools.monitoring.ocutil import OCUtil
 from openshift_tools.monitoring.metric_sender import MetricSender
 
-import logging
 logging.basicConfig(
     format='%(asctime)s - %(relativeCreated)6d - %(levelname)-8s - %(message)s',
 )
