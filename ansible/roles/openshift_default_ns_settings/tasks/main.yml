@@ -1,7 +1,7 @@
 ---
 - name: Include lib_openshift
   include_role:
-    name: ../lib_openshift
+    name: tools_roles/lib_openshift
 
 - name: Change node-selector on default
   oc_edit:

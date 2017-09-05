@@ -1,7 +1,7 @@
 ---
 - name: Include lib_openshift
   include_role:
-    name: ../lib_openshift
+    name: tools_roles/lib_openshift
 
 - name: admissionConfig.pluginConfig.DefaultStorageClass.configuration
   yedit:
