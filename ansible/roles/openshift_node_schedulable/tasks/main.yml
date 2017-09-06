@@ -1,11 +1,14 @@
 ---
+- name: Include lib_openshift
+  include_role:
+    name: tools_roles/lib_openshift
 
 - name: Grab private DNS name of node
   set_fact:
     node_dns_name: "{{ ec2_private_dns_name }}"
 
 - name: "Set node schedulable == {{ osns_is_schedulable }}"
-  oadm_manage_node:
+  oc_adm_manage_node:
     node: "{{ node_dns_name }}"
     schedulable: "{{ osns_is_schedulable }}"
   delegate_to: "{{ osns_cluster_master }}"
