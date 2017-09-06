@@ -8,7 +8,7 @@ Requirements
 
 Ansible Modules:
 
-- role: lib_openshift_3.2
+- role: lib_openshift
 
 
 Role Variables
