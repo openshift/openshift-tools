@@ -174,6 +174,13 @@ class RemoteHealer(object):
             #run
             self.run_cmd(cmd.split())
 
+        elif re.search(r'^Filesystem: /dev/mapper/rootvg-var has less than 15% free disk space on', self._args.trigger) \
+        or re.search(r'^Filesystem: /dev/mapper/rootvg-var has less than 10% free disk space on', self._args.trigger):
+            logging.info("Cleaningup /var on " + self._args.host)
+            # run the playbook to cleanup the log files
+            cmd = 'ansible-playbook /usr/bin/heal_cleanup_rootvg-var.yml -e "cli_tag_name=' + self._args.host + '"'
+            self.run_cmd(cmd.split())
+
         else:
             logging.info("No healing action defined for trigger: " + self._args.trigger)
 

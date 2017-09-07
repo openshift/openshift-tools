@@ -1,0 +1,43 @@
+#!/usr/bin/ansible-playbook
+# this playblook is used to cleanup /var disk space low
+# it will gzip openshift-master-audit-* log files and 
+# remove openshift-master-audit-*.log.gz older than 14 days
+# this playbook only run on master
+#
+# To run
+# 1. run the playbook
+#   ansible-playbook cleanup_var.yaml -e cli_tag_name=opstest1234
+---
+- name: check the log file and remove it if necessary.
+  hosts: "oo_name_{{ cli_tag_name }}"
+  gather_facts: no
+  remote_user: root
+
+  tasks:
+  - name: find the openshift-master-audit-* files greater than 99M
+    shell: find /var/log -size +99M -name "openshift-master-audit-*"
+    register: audit_file
+
+  - name: output the audit_files
+    debug:
+      var: audit_file.stdout_lines
+
+  - name: find the openshift-master-audit-* files greater than 99M and gzip it
+    shell: find /var/log -size +99M -name "openshift-master-audit-*" -exec gzip {} \;
+    when: "{{ audit_file.stdout_lines | length }} != 0"
+
+  - name: find the openshift-master-audit-*.log.gz files older than 14 days
+    shell: find /var/log -name "openshift-master-audit-*.log.gz" -mtime +13
+    register: audit_file_old
+
+  - name: output the audit_files
+    debug:
+      msg: "we have {{ audit_file_old.stdout_lines | length }} old files over 14 days" 
+    when: "{{ audit_file_old.stdout_lines | length }} != 0"
+
+  - name: find the openshift-master-audit-*.log.gz files older than 14 days and remove them
+    shell: find /var/log -name "openshift-master-audit-*.log.gz" -mtime +13 -exec rm -f {} \;
+    when: "{{ audit_file_old.stdout_lines | length }} != 0"
+
+  - name: update zabbix filesystem items
+    command: docker exec -i oso-rhel7-host-monitoring /usr/bin/cron-send-filesystem-metrics
