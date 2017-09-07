@@ -1,5 +1,5 @@
 #!/usr/bin/python
-''' string '''
+''' verify the cicd operation command coming in from Jenkins via SSH '''
 
 # pylint: disable=invalid-name
 # pylint: disable=superfluous-parens
@@ -8,7 +8,8 @@
 # pylint: disable=star-args
 
 #Jenkins:
-#ssh use-tower1.ops.rhcloud.com <operation> [approved_arg1] [approved_arg2] ...
+#ssh use-tower1.ops.rhcloud.com -c clustername -o <operation> -e [approved_arg1] -e [approved_arg2] ...
+
 # Current approved arguments:
 #   "docker-version=<rpmname-version-release>"
 #       This argument specifies a docker RPM NVR that should be used for openshift-ansible upgrade operations.
@@ -17,18 +18,19 @@
 # Pull requests which add new arguments must be approved by the security team.
 #
 #Associate the cluster to operate on with an ssh key in .ssh/authorized_keys
-# command=verify-cicd-operation.py <clusterid> <really long key right here>
+# command=verify-cicd-operation.py -e <environment> <really long key right here>
 
-import re
-import os
-import sys
-import socket
+import argparse
 import logging
 import logging.handlers
+import os
+import re
+import sys
+import yaml
 
-program_to_run = "/home/opsmedic/aos-cd/git/aos-cd-jobs/tower-scripts/bin/cicd-control.sh"
+PROGRAM_TO_RUN = "/home/opsmedic/aos-cd/git/aos-cd-jobs/tower-scripts/bin/cicd-control.sh"
 
-valid_operations = ['build-ci-msg',
+VALID_OPERATIONS = ['build-ci-msg',
                     'commit-config-loop',
                     'delete',
                     'disable-config-loop',
@@ -54,77 +56,173 @@ valid_operations = ['build-ci-msg',
                     'upgrade-logging',
                     'upgrade-metrics',
                     'upgrade-nodes',
+                    'update-jenkins-imagestream',
                    ]
 
-def build_arg_list(clusterid, operation, *args):
-    ''' build a list of args '''
+# this is a list of extra arguments that are valid and their corresponding regular expression.
+VALID_EXTRA_ARGUMENTS = {'docker_version' : '[a-zA-Z0-9._-]+$',
+                         'openshift_ansible_build' : '[a-zA-Z0-9./-]+$',
+                        }
 
-    arg_list = ['-c', clusterid, '-o', operation]
+class VerifyCICDOperation(object):
+    """ Verify CICD SSH Command """
 
-    for arg in args:
-        arg_list += ['-a', arg]
+    def __init__(self):
+        """ This is the init function """
 
-    return arg_list
+        self.clustername = None
+        self.operation = None
+        self.environment = None
+        self.ssh_original_args = None
+        self.extra_arguments = []
+        self.cicd_control_args = None
 
-def runner(program, *args):
-    ''' run the script that is intended '''
-    try:
-        os.execlp(program, program, *args)
-    except:
-        pass
-    sys.exit(11)
-    # runner never returns
+        # set up the logger
+        self.logger = logging.getLogger('verify_cicid_command_logger')
+        self.logger.setLevel(logging.INFO)
+        self.logger.addHandler(logging.handlers.SysLogHandler('/dev/log'))
 
-logger = logging.getLogger('verify_command_logger')
-logger.setLevel(logging.INFO)
-logger.addHandler(logging.handlers.SysLogHandler('/dev/log'))
+    def run(self):
+        """ Main function to run the script """
 
-# The cluster_id argument is provided by the authorized_keys command entry for the ssh user's private key.
-# In other words, the ssh user cannot specify the cluster_id directly (they must have the correct private key
-# AND the key must be setup in the authorized_keys file appropriately).
-if len(sys.argv) != 2:
-    print("No cluster identifier specified")
-    sys.exit(12)
+        self.logger.info("{}: Args: {}, SSH_ORIGINAL_COMMAND: '{}'".format(os.path.basename(__file__), sys.argv,
+                                                                           os.environ.get("SSH_ORIGINAL_COMMAND", "")))
 
-cluster_id = sys.argv[1]
+        self.cli_parse_args()
+        self.ssh_original_parse_args()
 
-# Sanity check the cluster_id from authorized_keys
-if not re.match("(^[a-zA-Z0-9][a-zA-Z0-9._-]+$)", cluster_id):
-    print("Invalid cluster identifier specified")
-    sys.exit(13)
+        self.verify_cluster()
+        self.verify_operation()
+        if self.ssh_original_args.extra_args:
+            self.verify_extra_arguments()
 
-cmd = os.environ.get("SSH_ORIGINAL_COMMAND", "")
-cmd_args = cmd.split()
+        self.build_arg_list()
+        VerifyCICDOperation.runner(self.cicd_control_args)
 
-if len(cmd_args) == 0:
-    print("No operation specified")
-    sys.exit(11)
+    def cli_parse_args(self):
+        """ parse the args from the cli """
 
-operation_from_ssh = cmd_args.pop(0)  # Remove operation string from argument list and store
-if operation_from_ssh not in valid_operations:
-    logger.info("%s Restricted key '%s' disallowed operation: %s" % (os.path.basename(__file__),
-                                                                     cluster_id, operation_from_ssh))
-    print("The requested operation isn't in the set of pre-approved operations")
-    print("REJECTED ON HOST: " + socket.gethostname())
-    sys.exit(10)
+        parser = argparse.ArgumentParser(description='Verify CICD Arg Parsing')
 
-# Validate remaining arguments against strict patterns.
-# Only matched patters may be passed on to cicd-control. See approved list
-# at the top of this file.
-# TODO: This needs to be streamlined
-operation_args = []
-for s in cmd_args:
-    if re.match("(^docker_version=[a-zA-Z0-9._-]+$)", s):  # Example docker version: docker-1.12.6-30.git97ba2c0.el7
-        operation_args.append(s)
-    elif re.match("(^openshift_ansible_build=[a-zA-Z0-9./-]+$)", s):  # Example: 3.6.126.11/1.git.0.bd61c80.el7
-        operation_args.append(s)
-    else:
-        logger.info("%s Restricted key '%s' disallowed argument: %s" % (os.path.basename(__file__), cluster_id, s))
-        print("Argument doesn't match an allowed pattern")
-        print("REJECTED ON HOST: " + socket.gethostname())
+        parser.add_argument('-e', '--environment', help='Environment', default=None, required=True)
+
+        cli_args = parser.parse_args()
+        self.environment = cli_args.environment
+
+    def ssh_original_parse_args(self):
+        """ parse the args from the SSH_ORIGINAL_COMMAND env var """
+
+        parser = argparse.ArgumentParser(description='Verify CICD SSH_ORIGINAL_COMMAND Arg Parsing',
+                                         usage="ENV Var: 'SSH_ORIGINAL_COMMAND' needs to be set correctly")
+
+        parser.add_argument('-c', '--cluster', help='Ops Cluster name', default=None, required=True)
+
+        parser.add_argument('-o', '--operation', help='Operation to perform', choices=VALID_OPERATIONS,
+                            default=None, required=True)
+
+        parser.add_argument('-e', '--extra-args', help='Extra argmuments to pass on', action='append',
+                            default=None, required=False)
+
+        # We want to parse the SSH_ORIGINAL_COMMAND ENV var which comes through SSH
+        ssh_cmd = os.environ.get("SSH_ORIGINAL_COMMAND", "")
+        ssh_cmd_args = ssh_cmd.split()
+
+        if not ssh_cmd_args:
+            self.exit_with_msg("Environment variable 'SSH_ORIGINAL_COMMAND' is empty. Exiting...")
+
+        self.ssh_original_args = parser.parse_args(ssh_cmd_args)
+
+        self.clustername = self.ssh_original_args.cluster
+        self.operation = self.ssh_original_args.operation
+
+    def exit_with_msg(self, message, exit_code=13):
+        ''' Let's do all of our exiting here.  With logging '''
+
+        self.logger.info("{}: Exiting on Error: {}".format(os.path.basename(__file__), message))
+        print(message)
+        sys.exit(exit_code)
+
+    @staticmethod
+    def get_clusters():
+        ''' get the clusters from the inventory file '''
+
+        with open('/etc/ansible/multi_inventory.yaml') as f:
+            inventory_data = yaml.safe_load(f)
+
+        clusters = {}
+        for account, account_vars in inventory_data['accounts'].iteritems():
+            for cluster, cluster_vars in account_vars["cluster_vars"]["clusters"].iteritems():
+
+                clusters[cluster] = {'environment': cluster_vars["oo_environment"],
+                                     'account': account
+                                    }
+
+        # Hard coding the "test-key cluster, which is int env"
+        clusters['test-key'] = {'environment': 'int',
+                                'account': 'test'
+                               }
+        return clusters
+
+    def verify_cluster(self):
+        ''' verify the cluster is valid '''
+
+        # Sanity check the cluster_id
+        if not re.match("(^[a-zA-Z0-9][a-zA-Z0-9._-]+$)", self.clustername):
+            print("Clustername did not match the approved Regular Expression.")
+            sys.exit(13)
+
+        clusters = VerifyCICDOperation.get_clusters()
+
+        if self.clustername not in clusters:
+            self.exit_with_msg("Clustername was not found in the list of known clusters. Exiting...")
+
+        if self.environment != clusters[self.clustername]['environment']:
+            self.exit_with_msg("The environment passed does NOT match the cluster's env. Exiting...")
+
+    def verify_operation(self):
+        ''' verify the operation is valid '''
+
+        # Sanity check the operation
+        if not re.match("(^[a-zA-Z0-9][a-zA-Z0-9._-]+$)", self.operation):
+            self.exit_with_msg("operation did not match the approved Regular Expression.")
+
+    def verify_extra_arguments(self):
+        ''' verify the extra arguments are valid '''
+
+        for arg in self.ssh_original_args.extra_args:
+            split_arg = arg.split("=")
+
+            if len(split_arg) != 2:
+                self.exit_with_msg("Extra argmument: '{}' did not match the the approved var structure".format(arg))
+
+            if split_arg[0] not in VALID_EXTRA_ARGUMENTS.keys():
+                self.exit_with_msg("Extra argmument: '{}' is not an approved extra argument".format(arg))
+
+            if not re.match(VALID_EXTRA_ARGUMENTS[split_arg[0]], split_arg[1]):
+                self.exit_with_msg("Extra argmument: '{}' does not match approved regular expression: "
+                                   "'{}'".format(arg, VALID_EXTRA_ARGUMENTS[split_arg[0]]))
+
+            self.extra_arguments.append(arg)
+
+    def build_arg_list(self):
+        ''' build a list of args '''
+
+        self.cicd_control_args = ['-c', self.clustername, '-o', self.operation]
+
+        for arg in self.extra_arguments:
+            self.cicd_control_args += ['-a', arg]
+
+    @staticmethod
+    def runner(*args):
+        ''' run the script that is intended '''
+
+        try:
+            os.execlp(PROGRAM_TO_RUN, PROGRAM_TO_RUN, *args)
+        except:
+            pass
         sys.exit(11)
+        # runner (exec) never returns
 
-logger.info("%s Restricted key '%s' running command: %s" % (os.path.basename(__file__), cluster_id, cmd))
-
-args_to_send = build_arg_list(cluster_id, operation_from_ssh, *operation_args)
-runner(program_to_run, *args_to_send)
+if __name__ == "__main__":
+    VCO = VerifyCICDOperation()
+    VCO.run()
