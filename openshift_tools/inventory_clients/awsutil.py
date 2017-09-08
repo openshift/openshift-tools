@@ -252,3 +252,16 @@ class AwsUtil(object):
             ips.append(inv['_meta']['hostvars'][host]['oo_public_ip'])
 
         return ips
+
+    def get_cluster_variable(self, cluster, variable):
+        """ return an inventory variable that is common to a cluster"""
+
+        inv = self.get_inventory()
+        variables = []
+        for host in inv['oo_clusterid_' + cluster]:
+            variables.append(inv['_meta']['hostvars'][host][variable])
+
+        if len(list(set(variables))) == 1:
+            return variables[0]
+        else:
+            return "Unable to determine cluster variable: %s" %variable
