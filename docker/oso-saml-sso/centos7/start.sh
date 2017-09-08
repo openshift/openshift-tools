@@ -33,6 +33,10 @@ reconf_touchfile="/configdata/reconfigure_successful"
   set +e
   while true; do
 
+    echo
+    echo "Starting configuration loop at" `date`
+    echo
+
     # The AWS cert might be ready to expire soon.  Try to refresh
     # the cert content (this does nothing if the existing cert is
     # new enough, or if what we download isn't valid)
