@@ -97,7 +97,7 @@ class VerifyCICDOperation(object):
             self.verify_extra_arguments()
 
         self.build_arg_list()
-        VerifyCICDOperation.runner(self.cicd_control_args)
+        VerifyCICDOperation.runner(*self.cicd_control_args)
 
     def cli_parse_args(self):
         """ parse the args from the cli """
