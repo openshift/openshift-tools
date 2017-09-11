@@ -38,10 +38,10 @@ class MultiInventoryAccount(object):
             self.cache_max_age = self.config['cache_max_age']
 
         # set to global account cache_path
-        self.cache_path = cache_path
+        self.cache_path = os.path.expanduser(cache_path)
         # if an account setting exists, set to account cache_path
         if self.config.has_key('cache_path'):
-            self.cache_path = self.config['cache_path']
+            self.cache_path = os.path.expanduser(self.config['cache_path'])
 
         # collect a list of clusters for this account
         self.clusters = []
@@ -218,11 +218,52 @@ class MultiInventoryAccount(object):
             for data in self.inventory['_meta']['hostvars'].values():
                 MultiInventoryUtils.add_entry(data, new_var, value)
 
+    # pylint: disable=too-many-branches,too-many-nested-blocks
     def apply_clone_vars(self):
         """Apply the account config clone vars """
         # Clone vars go here
         for to_name, from_name in self.config.get('clone_vars', {}).items():
-            for data in self.inventory['_meta']['hostvars'].values():
+            for name, data in self.inventory['_meta']['hostvars'].items():
+                # we need to handle oo_name
+                # if gce_name or ec2_tag_Name is defined, use it for legacy mode
+                # Next, we process the from_name if its a list and build the names
+                if to_name == 'oo_name':
+                    if 'synthetic_' in name:
+                        MultiInventoryUtils.add_entry(data, to_name, name)
+
+                    # if name tag exists give it!
+                    if 'ec2_tag_Name' in data:
+                        # pylint: disable=line-too-long
+                        MultiInventoryUtils.add_entry(data, to_name, MultiInventoryUtils.get_entry(data, 'ec2_tag_Name'))
+
+                    # if name tag exists give it!
+                    elif 'gce_name' in data:
+                        # pylint: disable=line-too-long
+                        MultiInventoryUtils.add_entry(data, to_name, MultiInventoryUtils.get_entry(data, 'gce_data'))
+
+                    # process the format of {['host-type': 'master', 'name': [attr1, attr2]]}
+                    elif isinstance(from_name, list):
+                        name_vars = []
+                        for name_info in from_name:
+                            # pylint: disable=line-too-long
+                            if (('ec2_tag_host-type' in data and data['ec2_tag_host-type'] == name_info['host-type']) or
+                                    ('gce_metadata' in data and data['gce_metadata']['host-type'] == name_info['host-type'])):
+                                name_vars = [data.get(tag, 'nil') for tag in name_info['name']]
+                                value = '-'.join(name_vars)
+
+                                MultiInventoryUtils.add_entry(data, to_name, value)
+                                continue
+
+                    # user wants something else for from_name
+                    elif from_name in data:
+                        MultiInventoryUtils.add_entry(data, to_name, MultiInventoryUtils.get_entry(data, from_name))
+
+                    # We didn't match a host-type so assign the current name to the oo_name (best attempt)
+                    if 'oo_name' not in data:
+                        MultiInventoryUtils.add_entry(data, to_name, name)
+
+                    continue
+
                 MultiInventoryUtils.add_entry(data, to_name, MultiInventoryUtils.get_entry(data, from_name))
 
     def apply_extra_groups(self):
@@ -265,21 +306,43 @@ class MultiInventoryAccount(object):
                         self.inventory[selector['name']] = hosts[0:selector['count']]
 
                     for host in hosts:
-                        if host in self.inventory[selector['name']]:
-                            self.inventory['_meta']['hostvars'][host][selector['name']] = True
-                        else:
-                            self.inventory['_meta']['hostvars'][host][selector['name']] = False
-
+                        # pylint: disable=line-too-long
+                        self.inventory['_meta']['hostvars'][host][selector['name']] = host in self.inventory[selector['name']]
 
     def apply_account_config(self):
         """ Apply account config settings """
-        self.inventory['all_hosts'] = self.inventory['_meta']['hostvars'].keys()
-
         self.apply_cluster_vars()
 
         self.apply_extra_vars()
 
         self.apply_clone_vars()
+
+        # apply_cluster_vars creates oo_name and also synthetic hosts.
+        # apply_clone_vars sets oo_name when its not defined already.
+        # We need to copy the new hosts into their oo_name and use it for their
+        # inventory name.  This code copies the hosts and renames them with oo_name
+        # skip synthetic_hosts
+        hosts = {}
+        syn = []
+        for name, host in self.inventory['_meta']['hostvars'].items():
+            if 'synthetic_' in name:
+                syn.append(name)
+                hosts[name] = host
+
+            elif 'oo_name' in host and host['oo_name'] is not None:
+                hosts[host['oo_name']] = host
+                continue
+
+            elif name is None:
+                hosts[host['oo_public_ip']] = host
+
+            # last ditch effort, give the host its dns name
+            else:
+                hosts[name] = host
+
+        self.inventory['_meta']['hostvars'] = hosts
+
+        self.inventory['all_hosts'] = list(set(self.inventory['_meta']['hostvars'].keys()) - set(syn))
 
         self.apply_extra_groups()
 

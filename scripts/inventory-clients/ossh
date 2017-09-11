@@ -114,6 +114,17 @@ class Ossh(object):
         '''Query our host inventory and return a dict where the format '''
         self.host_inventory = self.aws.get_inventory()['_meta']['hostvars']
 
+    def find_host_by_attr(self, attribute):
+        '''find self.host by an attribute'''
+        results = {}
+        for host, values in self.host_inventory.iteritems():
+            if not values.has_key(attribute):
+                continue
+            if self.host == values[attribute]:
+                results[host] = values
+
+        return results
+
     def select_host(self):
         '''select host attempts to match the host specified
            on the command line with a list of hosts.
@@ -123,19 +134,16 @@ class Ossh(object):
             results[self.host] = self.host_inventory[self.host]
         # check for an ec2_private_dns_name, like: ip-172-31-49-44.ec2.internal
         elif self.host.startswith("ip-"):
-            for host, values in self.host_inventory.iteritems():
-                if not values.has_key("ec2_private_dns_name"):
-                    continue
-                if self.host == values["ec2_private_dns_name"]:
-                    results[host] = values
+            results.update(self.find_host_by_attr('ec2_private_dns_name'))
         # check for an aws instance id, like: i-0015104cc95b00f77
         elif self.host.startswith("i-"):
-            for host, values in self.host_inventory.iteritems():
-                if not values.has_key("ec2_id"):
-                    continue
-                if self.host == values["ec2_id"]:
-                    results[host] = values
+            results.update(self.find_host_by_attr('oo_id'))
+
+        # if all else fails, try to match oo_name
         else:
+            results.update(self.find_host_by_attr('oo_name'))
+
+        if results == {}:
             print "Could not find specified host: %s." % self.host
 
         if len(results) > 1:
@@ -182,7 +190,7 @@ class Ossh(object):
 
             results = self.select_host()
             if not results:
-                return # early exit, no results
+                return  # early exit, no results
 
             # Assume we have one and only one.
             server_info = results[1]
