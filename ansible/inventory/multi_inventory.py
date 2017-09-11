@@ -239,7 +239,7 @@ class MultiInventoryAccount(object):
                     # if name tag exists give it!
                     elif 'gce_name' in data:
                         # pylint: disable=line-too-long
-                        MultiInventoryUtils.add_entry(data, to_name, MultiInventoryUtils.get_entry(data, 'gce_data'))
+                        MultiInventoryUtils.add_entry(data, to_name, MultiInventoryUtils.get_entry(data, 'gce_name'))
 
                     # process the format of {['host-type': 'master', 'name': [attr1, attr2]]}
                     elif isinstance(from_name, list):
