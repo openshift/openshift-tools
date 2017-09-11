@@ -72,7 +72,7 @@ class AwsUtil(object):
 
         tags = []
         inv = self.get_inventory()
-        for key in inv.keys():
+        for key in inv:
             matched = regex.match(key)
             if matched:
                 tags.append(matched.group(1))
@@ -252,3 +252,17 @@ class AwsUtil(object):
             ips.append(inv['_meta']['hostvars'][host]['oo_public_ip'])
 
         return ips
+
+    def get_cluster_variable(self, cluster, variable):
+        """ return an inventory variable that is common to a cluster"""
+
+        inv = self.get_inventory()
+        variables = []
+        for host in inv['oo_clusterid_' + cluster]:
+            if variable in inv['_meta']['hostvars'][host]:
+                variables.append(inv['_meta']['hostvars'][host][variable])
+
+        if len(list(set(variables))) == 1:
+            return variables[0]
+
+        return None

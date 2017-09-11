@@ -7,6 +7,7 @@ This script provides an easy way to look at your host inventory.
 This depends on multi_inventory being setup correctly.
 '''
 # vim: expandtab:tabstop=4:shiftwidth=4
+# pylint: disable=too-many-branches
 
 import argparse
 import sys
@@ -48,6 +49,19 @@ class Ohi(object):
             Call into awsutil and retrieve the desired hosts and environments
         '''
 
+        if self.args.get_cluster_var:
+            if self.args.cluster:
+                if len(self.args.cluster) == 1:
+                    cluster_var = self.aws.get_cluster_variable(self.args.cluster[0], self.args.get_cluster_var)
+                    if cluster_var is None:
+                        print "Unable to determine cluster variable: %s" %self.args.get_cluster_var
+                        return 1
+                    print cluster_var
+                    return 0
+
+            print "Please specify a single cluster when using --get-cluster-var"
+            return 1
+
         if self.args.list_host_types:
             self.aws.print_host_types()
             return 0
@@ -56,12 +70,12 @@ class Ohi(object):
             self.aws.print_cluster_list()
             return 0
 
-        if self.args.v3:
-            version = '3'
+        if self.args.v2:
+            version = '2'
         elif self.args.all_versions:
             version = 'all'
         else:
-            version = '2'
+            version = '3'
 
         hosts = self.aws.get_host_list(clusters=self.args.cluster,
                                        host_type=self.args.host_type,
@@ -130,6 +144,8 @@ class Ohi(object):
 
         parser.add_argument('--list-host-types', default=False, action='store_true', help='List all of the host types')
         parser.add_argument('--list-clusters', default=False, action='store_true', help='List all of the clusters')
+        parser.add_argument('--get-cluster-var', default=False, action='store',
+                            help='Return a var that is the same across a clusters')
         parser.add_argument('--list', default=False, action='store_true', help='List all hosts')
 
         parser.add_argument('-c', '--cluster', action="append", help="Which clusterid to use")
@@ -174,4 +190,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
