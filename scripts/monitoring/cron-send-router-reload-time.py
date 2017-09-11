@@ -56,8 +56,8 @@ def get_router_reload_time():
         Return time in seconds it takes to reload HAProxy config
     """
 
-    start_reload_time = time.time()
     reload_proxy = ('rsh -n default dc/router "../reload-haproxy"')
+    start_reload_time = time.time()
     reload_proxy_run = runOCcmd(reload_proxy)
     reload_time = time.time() - start_reload_time
     logger.debug(reload_proxy_run)

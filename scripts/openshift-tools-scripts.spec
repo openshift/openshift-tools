@@ -363,6 +363,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-dnsmasq-check
 /usr/bin/cron-send-service-web-check
 /usr/bin/cron-send-rkhunter-checks
+/usr/bin/cron-send-router-reload-time
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
