@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.41
+Version:        0.0.42
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,21 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Mon Sep 11 2017 Kenny Woodson <kwoodson@redhat.com> 0.0.42-1
+- Adding oo_name as the default to the inventory display name.
+  (kwoodson@redhat.com)
+- oc_adm_project doesn't exist in lib_openshift. switching to oc_project
+  (dedgar@redhat.com)
+- Fix include_role (whearn@redhat.com)
+- Raising EBS alert severity back to high (bmorriso@redhat.com)
+- add timeout to drain step (sedgar@redhat.com)
+- lower severity of EBS volumes stuck in attaching to average for the weekend
+  (bmorriso@redhat.com)
+- Tech Debt: Migrate to new lib_openshift (whearn@redhat.com)
+- added option to specify package name (sedgar@redhat.com)
+- add symlink to roles dir (sedgar@redhat.com)
+- add update script for RHEL 7.4 (sedgar@redhat.com)
+
 * Mon Aug 21 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.41-1
 - add retries to openshift_aws_group to avoid failures due to api rate limiting
   (blentz@redhat.com)
