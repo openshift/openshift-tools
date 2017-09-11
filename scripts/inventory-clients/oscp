@@ -118,18 +118,46 @@ class Oscp(object):
         '''Query our host inventory and return a dict where the format '''
         self.host_inventory = self.aws.get_inventory()['_meta']['hostvars']
 
+    def find_host_by_attr(self, attribute):
+        '''find self.host by an attribute'''
+        results = {}
+        for host, values in self.host_inventory.iteritems():
+            if not values.has_key(attribute):
+                continue
+            if self.host == values[attribute]:
+                results[host] = values
+
+        return results
+
     def select_host(self):
         '''select host attempts to match the host specified
            on the command line with a list of hosts.
         '''
-        results = None
+        results = {}
         if self.host_inventory.has_key(self.host):
-            results = (self.host, self.host_inventory[self.host])
+            results[self.host] = self.host_inventory[self.host]
+        # check for an ec2_private_dns_name, like: ip-172-31-49-44.ec2.internal
+        elif self.host.startswith("ip-"):
+            results.update(self.find_host_by_attr('ec2_private_dns_name'))
+        # check for an aws instance id, like: i-0015104cc95b00f77
+        elif self.host.startswith("i-"):
+            results.update(self.find_host_by_attr('oo_id'))
+
+        # if all else fails, try to match oo_name
         else:
+            results.update(self.find_host_by_attr('oo_name'))
+
+        if results == {}:
             print "Could not find specified host: %s." % self.host
 
-        # default - no results found.
-        return results
+        if len(results) > 1:
+            print("Found multiple possible hosts: %s" % ",".join(results))
+            return None
+
+        if len(results) == 0:
+            return None
+
+        return results.items()[0]
 
     def list_hosts(self):
         '''Function to print out the host inventory.
@@ -166,7 +194,7 @@ class Oscp(object):
                 print results
 
             if not results:
-                return # early exit, no results
+                return  # early exit, no results
 
             # Assume we have one and only one.
             server_info = results[1]
