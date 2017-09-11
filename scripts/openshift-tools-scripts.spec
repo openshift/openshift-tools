@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.88
+Version:       0.1.89
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -452,6 +452,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Mon Sep 11 2017 Kenny Woodson <kwoodson@redhat.com> 0.1.89-1
+- fixed a v3 vs v2 in ohi (mwoodson@redhat.com)
+
 * Mon Sep 11 2017 Kenny Woodson <kwoodson@redhat.com> 0.1.88-1
 - more updates to verify-cicd (mwoodson@redhat.com)
 - Adding oo_name as the default to the inventory display name.
