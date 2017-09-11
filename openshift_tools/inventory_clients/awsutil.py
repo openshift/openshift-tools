@@ -72,7 +72,7 @@ class AwsUtil(object):
 
         tags = []
         inv = self.get_inventory()
-        for key in inv.keys():
+        for key in inv:
             matched = regex.match(key)
             if matched:
                 tags.append(matched.group(1))
@@ -182,11 +182,10 @@ class AwsUtil(object):
         """
         return "oo_environment_%s" % env
 
-    def gen_host_type_tag(self, host_type, version):
+    @staticmethod
+    def gen_host_type_tag(host_type):
         """Generate the host type tag
         """
-        if version == '2':
-            host_type = self.resolve_host_type(host_type)
         return "oo_hosttype_%s" % host_type
 
     @staticmethod
@@ -197,7 +196,7 @@ class AwsUtil(object):
 
     # This function uses all of these params to perform a filters on our host inventory.
     # pylint: disable=too-many-arguments
-    def get_host_list(self, clusters=None, host_type=None, sub_host_type=None, envs=None, version=None):
+    def get_host_list(self, clusters=None, host_type=None, sub_host_type=None, envs=None):
         """Get the list of hosts from the inventory using host-type and environment
         """
         retval = set([])
@@ -230,13 +229,10 @@ class AwsUtil(object):
             retval.intersection_update(env_hosts)
 
         if host_type:
-            retval.intersection_update(inv.get(self.gen_host_type_tag(host_type, version), []))
+            retval.intersection_update(inv.get(self.gen_host_type_tag(host_type), []))
 
         if sub_host_type:
             retval.intersection_update(inv.get(self.gen_sub_host_type_tag(sub_host_type), []))
-
-        if version != 'all':
-            retval.intersection_update(inv.get(AwsUtil.gen_version_tag(version), []))
 
         return list(retval)
 

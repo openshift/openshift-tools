@@ -16,7 +16,6 @@ Options:
   -c CLUSTER, --cluster CLUSTER
                         which cluster to use
   -e ENV, --env ENV     which environment to use
-  --v3                  When working with v3 environments.  v2 by default
   -t HOST_TYPE, --host-type HOST_TYPE
                         which host type to use
   --list-host-types     list all of the host types
@@ -73,11 +72,6 @@ while [ $# -gt 0 ] ; do
         -e)
             shift # get past the option
             ENV=$1
-            shift # get past the value of the option
-            ;;
-
-        --v3)
-            OPENSHIFT_VERSION="--v3 --ip"
             shift # get past the value of the option
             ;;
 
