@@ -159,10 +159,10 @@ class Ohi(object):
 
         parser.add_argument('-o', '--output', action='store', default=None, help='output')
 
-        parser.add_argument('--v2', action='store_true', default=True,
+        parser.add_argument('--v2', action='store_true', default=False,
                             help='Specify the openshift version. Default is 2')
 
-        parser.add_argument('--v3', action='store_true', default=False,
+        parser.add_argument('--v3', action='store_true', default=True,
                             help='Specify the openshift version.')
 
         parser.add_argument('--ip', action='store_true', default=False,
