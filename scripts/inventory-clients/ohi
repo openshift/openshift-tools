@@ -7,6 +7,7 @@ This script provides an easy way to look at your host inventory.
 This depends on multi_inventory being setup correctly.
 '''
 # vim: expandtab:tabstop=4:shiftwidth=4
+# pylint: disable=too-many-branches
 
 import argparse
 import sys
@@ -51,12 +52,15 @@ class Ohi(object):
         if self.args.get_cluster_var:
             if self.args.cluster:
                 if len(self.args.cluster) == 1:
-                    print self.aws.get_cluster_variable(self.args.cluster[0], self.args.get_cluster_var)
+                    cluster_var = self.aws.get_cluster_variable(self.args.cluster[0], self.args.get_cluster_var)
+                    if cluster_var is None:
+                        print "Unable to determine cluster variable: %s" %self.args.get_cluster_var
+                        return 1
+                    print cluster_var
                     return 0
 
-            print "\nError: Please specify a cluster name to return an cluster var. Exiting...\n"
+            print "Please specify a single cluster when using --get-cluster-var"
             return 1
-
 
         if self.args.list_host_types:
             self.aws.print_host_types()
