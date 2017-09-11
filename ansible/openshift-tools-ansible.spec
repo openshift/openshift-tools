@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.42
+Version:        0.0.43
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,9 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Mon Sep 11 2017 Kenny Woodson <kwoodson@redhat.com> 0.0.43-1
+- Fixed a bug in gce_ variable. (kwoodson@redhat.com)
+
 * Mon Sep 11 2017 Kenny Woodson <kwoodson@redhat.com> 0.0.42-1
 - Adding oo_name as the default to the inventory display name.
   (kwoodson@redhat.com)
