@@ -3,9 +3,8 @@
 
 # pylint: disable=invalid-name
 # pylint: disable=superfluous-parens
-# pylint: disable=logging-not-lazy
 # pylint: disable=bare-except
-# pylint: disable=star-args
+# pylint: disable=too-many-instance-attributes
 
 #Jenkins:
 #ssh use-tower1.ops.rhcloud.com -c clustername -o <operation> -e [approved_arg1] -e [approved_arg2] ...
@@ -60,8 +59,9 @@ VALID_OPERATIONS = ['build-ci-msg',
                    ]
 
 # this is a list of extra arguments that are valid and their corresponding regular expression.
-VALID_EXTRA_ARGUMENTS = {'docker_version' : '[a-zA-Z0-9._-]+$',
-                         'openshift_ansible_build' : '[a-zA-Z0-9./-]+$',
+VALID_EXTRA_ARGUMENTS = {'cicd_docker_version' : '^$|^[a-zA-Z0-9._-]+$',
+                         'cicd_openshift_ansible_build' : '^$|^[a-zA-Z0-9./-]+$',
+                         'cicd_openshift_version' : '^$|^[a-zA-Z0-9./-]+$',
                         }
 
 class VerifyCICDOperation(object):
@@ -73,6 +73,7 @@ class VerifyCICDOperation(object):
         self.clustername = None
         self.operation = None
         self.environment = None
+        self.deployment_type = None
         self.ssh_original_args = None
         self.extra_arguments = []
         self.cicd_control_args = None
@@ -120,6 +121,9 @@ class VerifyCICDOperation(object):
         parser.add_argument('-o', '--operation', help='Operation to perform', choices=VALID_OPERATIONS,
                             default=None, required=True)
 
+        parser.add_argument('-d', '--deployment', help='Deployment Type', choices=['dedicated', 'online', 'pro'],
+                            default='online', required=False)
+
         parser.add_argument('-e', '--extra-args', help='Extra argmuments to pass on', action='append',
                             default=None, required=False)
 
@@ -134,6 +138,7 @@ class VerifyCICDOperation(object):
 
         self.clustername = self.ssh_original_args.cluster
         self.operation = self.ssh_original_args.operation
+        self.deployment_type = self.ssh_original_args.deployment
 
     def exit_with_msg(self, message, exit_code=13):
         ''' Let's do all of our exiting here.  With logging '''
@@ -207,10 +212,11 @@ class VerifyCICDOperation(object):
     def build_arg_list(self):
         ''' build a list of args '''
 
-        self.cicd_control_args = ['-c', self.clustername, '-o', self.operation]
+        self.cicd_control_args = ['-c', self.clustername, '-o', self.operation,
+                                  '-d', self.deployment_type]
 
         for arg in self.extra_arguments:
-            self.cicd_control_args += ['-a', arg]
+            self.cicd_control_args += ['-e', arg]
 
     @staticmethod
     def runner(*args):
