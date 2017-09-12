@@ -162,7 +162,6 @@
       /var/log/iptables.log {
           copytruncate
           missingok
-          notifyifempty
           compress
           weekly
       }
