@@ -84,6 +84,7 @@ cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-stat
 cp -p monitoring/ops-ec2-check-tags.py %{buildroot}/usr/bin/ops-ec2-check-tags
 cp -p monitoring/ops-gcp-check-tags.py %{buildroot}/usr/bin/ops-gcp-check-tags
 cp -p monitoring/cron-send-zabbix-too-old.py %{buildroot}/usr/bin/cron-send-zabbix-too-old
+cp -p monitoring/cron-send-router-reload-time.py %{buildroot}/usr/bin/cron-send-router-reload-time
 cp -p cicd/verify-cicd-operation.py %{buildroot}/usr/bin/verify-cicd-operation.py
 cp -p cicd/verify-gather-logs-operations.py %{buildroot}/usr/bin/verify-gather-logs-operations.py
 cp -p monitoring/cron-send-prometheus-data.py %{buildroot}/usr/bin/cron-send-prometheus-data
@@ -364,6 +365,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-dnsmasq-check
 /usr/bin/cron-send-service-web-check
 /usr/bin/cron-send-rkhunter-checks
+/usr/bin/cron-send-router-reload-time
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
