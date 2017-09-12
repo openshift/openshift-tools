@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.89
+Version:       0.1.90
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -456,6 +456,11 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Tue Sep 12 2017 Sten Turpin <sten@redhat.com> 0.1.90-1
+- fixes requested by jdiaz (sten@redhat.com)
+- pylint being a hater again (sten@redhat.com)
+- added cron-send-router-reload-time check (sten@redhat.com)
+
 * Mon Sep 11 2017 Kenny Woodson <kwoodson@redhat.com> 0.1.89-1
 - fixed a v3 vs v2 in ohi (mwoodson@redhat.com)
 
