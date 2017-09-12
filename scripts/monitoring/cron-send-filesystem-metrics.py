@@ -22,6 +22,8 @@
 #pylint: disable=invalid-name,import-error
 
 import argparse
+import re
+
 from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.monitoring import pminfo
 
@@ -31,7 +33,10 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Disk metric sender')
     parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
     parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
-
+    parser.add_argument('--filter-pod-pv', action='store_true', default=None,
+                        help="Filter out OpenShift Pod PV mounts")
+    parser.add_argument('--force-send-zeros', action='store_true', default=None,
+                        help="Send 0% full for mounts, useful for clearing existing bad alerts")
     return parser.parse_args()
 
 def filter_out_docker_filesystems(metric_dict, filesystem_filter):
@@ -41,6 +46,20 @@ def filter_out_docker_filesystems(metric_dict, filesystem_filter):
                      if 'docker' not in k
                     }
     return filtered_dict
+
+def filter_out_customer_pv_filesystems(metric_dict):
+    """ Remove customer PVs from list """
+    r = re.compile("^/dev/xvd[a-z]{2}$")
+
+    return {
+        k:v for (k, v) in metric_dict.iteritems() if not r.match(k)
+    }
+
+def zero_mount_percentages(metric_dict):
+    """ Make all mounts report 0% used """
+    return {
+        k:0 for (k, v) in metric_dict.iteritems()
+    }
 
 def main():
     """  Main function to run the check """
@@ -58,25 +77,34 @@ def main():
     item_prototype_key_full = 'disc.filesys.full'
     item_prototype_key_inode = 'disc.filesys.inodes.pused'
 
-
-
     # Get the disk space
     filesys_full_metrics = pminfo.get_metrics(filesys_full_metric)
 
     filtered_filesys_metrics = filter_out_docker_filesystems(filesys_full_metrics, 'filesys.full.')
 
+    if args.filter_pod_pv:
+        filtered_filesys_metrics = filter_out_customer_pv_filesystems(filtered_filesys_metrics)
+
+    if args.force_send_zeros:
+        filtered_filesys_metrics = zero_mount_percentages(filtered_filesys_metrics)
+
     metric_sender.add_dynamic_metric(discovery_key_fs, item_prototype_macro_fs, filtered_filesys_metrics.keys())
     for filesys_name, filesys_full in filtered_filesys_metrics.iteritems():
         metric_sender.add_metric({'%s[%s]' % (item_prototype_key_full, filesys_name): filesys_full})
-
 
     # Get filesytem inode metrics
     filesys_inode_metrics = pminfo.get_metrics(derived_metrics=filesys_inode_derived_metrics)
 
     filtered_filesys_inode_metrics = filter_out_docker_filesystems(filesys_inode_metrics, 'filesys.inodes.pused.')
+
+    if args.filter_pod_pv:
+        filtered_filesys_inode_metrics = filter_out_customer_pv_filesystems(filtered_filesys_inode_metrics)
+
+    if args.force_send_zeros:
+        filtered_filesys_inode_metrics = zero_mount_percentages(filtered_filesys_inode_metrics)
+
     for filesys_name, filesys_inodes in filtered_filesys_inode_metrics.iteritems():
         metric_sender.add_metric({'%s[%s]' % (item_prototype_key_inode, filesys_name): filesys_inodes})
-
 
     metric_sender.send_metrics()
 
