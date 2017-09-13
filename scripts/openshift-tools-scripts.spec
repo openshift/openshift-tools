@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.92
+Version:       0.1.93
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -456,6 +456,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Sep 13 2017 Matt Woodson <mwoodson@redhat.com> 0.1.93-1
+- added a fix to get clusters in verify-cicd (mwoodson@redhat.com)
+
 * Wed Sep 13 2017 zhiwliu <zhiwliu@redhat.com> 0.1.92-1
 - added heal_cleanup_rootvg-var.yml to scripts/openshift-tools-scripts.spec
   (zhiwliu@redhat.com)
