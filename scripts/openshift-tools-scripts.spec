@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.90
+Version:       0.1.91
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -454,6 +454,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Sep 13 2017 Drew Anderson <dranders@redhat.com> 0.1.91-1
+- Add filter to hide customer PVs add --filter-pod-pv and --force-send-zeros
+  (dranders@redhat.com)
+
 * Tue Sep 12 2017 Sten Turpin <sten@redhat.com> 0.1.90-1
 - fixes requested by jdiaz (sten@redhat.com)
 - pylint being a hater again (sten@redhat.com)
