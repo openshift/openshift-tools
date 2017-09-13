@@ -156,8 +156,11 @@ class VerifyCICDOperation(object):
 
         clusters = {}
         for account, account_vars in inventory_data['accounts'].iteritems():
-            for cluster, cluster_vars in account_vars["cluster_vars"]["clusters"].iteritems():
 
+            if 'cluster_vars' not in account_vars:
+                continue
+
+            for cluster, cluster_vars in account_vars["cluster_vars"]["clusters"].iteritems():
                 clusters[cluster] = {'environment': cluster_vars["oo_environment"],
                                      'account': account
                                     }
