@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.91
+Version:       0.1.92
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -458,6 +458,11 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Sep 13 2017 zhiwliu <zhiwliu@redhat.com> 0.1.92-1
+- added heal_cleanup_rootvg-var.yml to scripts/openshift-tools-scripts.spec
+  (zhiwliu@redhat.com)
+- added the remote heal for the disk space /var low (zhiwliu@redhat.com)
+
 * Wed Sep 13 2017 Drew Anderson <dranders@redhat.com> 0.1.91-1
 - Add filter to hide customer PVs add --filter-pod-pv and --force-send-zeros
   (dranders@redhat.com)
