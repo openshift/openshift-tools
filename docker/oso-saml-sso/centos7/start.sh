@@ -23,12 +23,26 @@ echo user:x:$(id -u):0:USER:/root:/bin/bash >> /etc/passwd
 echo group:x:$(id -G | awk '{print $2}'):user >> /etc/group
 reconf_touchfile="/configdata/reconfigure_successful"
 
+
+
+
 # This backgrounded block will run in a loop forever.
 # Its job is to monitor for secrets changes and
 # re-run the config playbook when secrets change.
 {
   set +e
   while true; do
+
+    echo
+    echo "Starting configuration loop at" `date`
+    echo
+
+    # The AWS cert might be ready to expire soon.  Try to refresh
+    # the cert content (this does nothing if the existing cert is
+    # new enough, or if what we download isn't valid)
+    echo "Refreshing AWS SAML cert"
+    /root/download-aws-saml.sh /root/aws_saml_cert.yml
+
     config_version_dir=$(readlink -f /secrets/..data)
     echo "Running config playbook"
     for attempt_number in {1..3}; do
