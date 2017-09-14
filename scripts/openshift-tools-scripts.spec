@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.94
+Version:       0.1.95
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -458,6 +458,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Sep 14 2017 zhiwliu <zhiwliu@redhat.com> 0.1.95-1
+- changed HEAL to Heal (zhiwliu@redhat.com)
+
 * Thu Sep 14 2017 zhiwliu <zhiwliu@redhat.com> 0.1.94-1
 - added HEAL for the trigger (zhiwliu@redhat.com)
 
