@@ -25,6 +25,7 @@
 # REVISION HISTORY
 #   2017-08-09    Dave Baker    Script Created
 #   2017-08-29    Dave Baker    Update - download/compare/patch
+#   2017-09-14    Dave Baker    Manage trailing whitespace
 #
 
 
@@ -157,7 +158,7 @@ echo "Writing $YML"
   echo "---"
   echo "aws_saml_subject: $SUBJECT"
   echo "aws_saml_expire: $EXPIRES"
-  echo "aws_saml_x509: |"
+  echo "aws_saml_x509: |-"
 
   cat $NEWCERT | grep -v "^---" | sed -e 's/^/   /'
 
