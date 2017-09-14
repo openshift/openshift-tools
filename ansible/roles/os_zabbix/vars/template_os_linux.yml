@@ -289,19 +289,19 @@ g_template_os_linux:
     priority: average
 
   # This has a dependency on the previous trigger
-  - name: "{% raw %}Filesystem: {{ '{#' }}OSO_FILESYS} has less than 10% free disk space on {HOST.NAME}{% endraw %}"
+  - name: "{% raw %}[HEAL] Filesystem: {{ '{#' }}OSO_FILESYS} has less than 10% free disk space on {HOST.NAME}{% endraw %}"
     expression: "{% raw %}{Template OS Linux:disc.filesys.full[{{ '{#' }}OSO_FILESYS}].last()}>90{% endraw %}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_filesys_full.asciidoc"
     priority: high
 
   # This has a dependency on the previous trigger
   # Trigger Prototypes do not work in 2.4.  They will work in Zabbix 3.0
-  - name: "{% raw %}Filesystem: {{ '{#' }}OSO_FILESYS} has less than 15% free disk space on {HOST.NAME}{% endraw %}"
+  - name: "{% raw %}[HEAL] Filesystem: {{ '{#' }}OSO_FILESYS} has less than 15% free disk space on {HOST.NAME}{% endraw %}"
     expression: "{% raw %}{Template OS Linux:disc.filesys.full[{{ '{#' }}OSO_FILESYS}].last()}>85{% endraw %}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_filesys_full.asciidoc"
     priority: warn
     dependencies:
-    - "{% raw %}Filesystem: {{ '{#' }}OSO_FILESYS} has less than 10% free disk space on {HOST.NAME}{% endraw %}"
+    - "{% raw %}[HEAL] Filesystem: {{ '{#' }}OSO_FILESYS} has less than 10% free disk space on {HOST.NAME}{% endraw %}"
 
   - name: "{% raw %}Filesystem: {{ '{#' }}OSO_FILESYS} has less than 5% free inodes on {HOST.NAME}{% endraw %}"
     expression: "{% raw %}{Template OS Linux:disc.filesys.inodes.pused[{{ '{#' }}OSO_FILESYS}].last()}>95{% endraw %}"
