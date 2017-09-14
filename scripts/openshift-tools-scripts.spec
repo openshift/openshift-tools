@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.96
+Version:       0.1.97
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -458,6 +458,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Sep 14 2017 Marek Mahut <mmahut@redhat.com> 0.1.97-1
+- Using the autoloader (mmahut@redhat.com)
+
 * Thu Sep 14 2017 Marek Mahut <mmahut@redhat.com> 0.1.96-1
 - empty space (mmahut@redhat.com)
 - escaping causing trouble in the container (mmahut@redhat.com)
