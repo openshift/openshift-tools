@@ -59,3 +59,4 @@ RUN echo -e '[local]\nlocalhost       ansible_connection=local\n' > /etc/ansible
 # Make the container work more consistently in and out of openshift
 # BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
 RUN chmod -R g+rwX /root/
+

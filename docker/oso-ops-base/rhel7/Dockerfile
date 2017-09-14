@@ -7,7 +7,7 @@
 #   |___/ \___/  |_|\_|\___/ |_|   |___|___/___| |_|  
 # 
 
-FROM rhel7:latest
+FROM rhel7:7.3-97
 
 # Pause indefinitely if asked to do so.
 ARG OO_PAUSE_ON_BUILD
@@ -60,3 +60,5 @@ RUN echo -e '[local]\nlocalhost       ansible_connection=local\n' > /etc/ansible
 # Make the container work more consistently in and out of openshift
 # BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
 RUN chmod -R g+rwX /root/
+
+RUN yum-config-manager --enable rhel-7-server-rpms rhel-7-server-extras-rpms epel
