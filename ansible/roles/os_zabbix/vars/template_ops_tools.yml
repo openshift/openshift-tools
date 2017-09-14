@@ -56,7 +56,7 @@ g_template_ops_tools:
       esc_period: 0
       operationtype: remote command
       opcommand:
-        command: "ssh -i /etc/openshift_tools/scriptrunner_id_rsa {{ ozb_scriptrunner_user }}@{{ ozb_scriptrunner_bastion_host }} remote-healer --host \"{HOST.NAME}\" --trigger \"{TRIGGER.NAME}\" --trigger-val \"{TRIGGER.VALUE}\""
+        command: "ssh -i /etc/openshift_tools/scriptrunner_id_rsa {{ ozb_scriptrunner_user }}@{{ ozb_scriptrunner_bastion_host }} remote-healer --host \\\"{HOST.NAME}\\\" --trigger \\\"{TRIGGER.NAME}\\\" --trigger-val \\\"{TRIGGER.VALUE}\\\" >> /var/log/zabbix/zabbix_server_action.log"
         execute_on: "zabbix server"
         type: "custom script"
       target_hosts:
