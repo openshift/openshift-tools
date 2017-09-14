@@ -32,7 +32,7 @@
 
   - name: output the audit_files
     debug:
-      msg: "we have {{ audit_file_old.stdout_lines | length }} old files over 14 days" 
+      msg: "we have {{ audit_file_old.stdout_lines | length }} old files over 14 days"
     when: "audit_file_old.stdout_lines | length != 0"
 
   - name: find the openshift-master-audit-*.log.gz files older than 14 days and remove them
