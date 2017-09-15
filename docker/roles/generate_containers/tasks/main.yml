@@ -16,46 +16,28 @@
     src: ./src/
     dest: ./{{ base_os }}/
 
-- name: get stat for templates (ansible 1.x)
-  stat:
-    path: "{{ item }}"
-  with_fileglob: "../../../{{ base_os }}/*.j2"
-  register: stat_templates
-  when: ansible_version.major == 1
-
-
-- name: save stat output
-  set_fact:
-    template_list: "{{ stat_templates }}"
-  when: not stat_templates|skipped
-
-- name: get stat for templates (ansible 2.x)
-  stat:
-    path: "{{ item }}"
-  with_fileglob: "{{ base_os }}/*.j2"
-  register: stat_templates
-  when: ansible_version.major > 1
-
-- name: save stat output
-  set_fact:
-    template_list: "{{ stat_templates }}"
-  when: not stat_templates|skipped
+- name: find templates
+  find:
+    paths: '{{ base_os }}/'
+    patterns: '*.j2'
+    recurse: yes
+  register: template_list
 
 - name: create templates
   template:
-    src: "{{ item.stat.path }}"
-    dest: "{{ item.stat.path | regex_replace('.j2', '') }}"
-    mode: "{{ item.stat.mode }}"
-  with_items: "{{ template_list.results }}"
+    src: "{{ item.path }}"
+    dest: "{{ item.path | regex_replace('.j2', '') }}"
+    mode: "{{ item.mode }}"
+  with_items: "{{ template_list.files }}"
   when: (not (base_os == "rhel7"
-              and item.stat.path|basename == 'push.sh.j2'
+              and item.path|basename == 'push.sh.j2'
               and ansible_env['PWD']|basename == 'oso-host-monitoring'))
 
 - name: Remove templates
   file:
-    path: "{{ item.stat.path }}"
+    path: "{{ item.path }}"
     state: absent
-  with_items: "{{ template_list.results }}"
+  with_items: "{{ template_list.files }}"
 
 - name: Insert auto-generated readme
   copy:
