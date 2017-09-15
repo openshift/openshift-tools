@@ -1,0 +1,198 @@
+#!/usr/bin/ansible
+
+---
+
+- hosts: localhost
+  gather_facts: false
+
+  pre_tasks:
+
+  - name: cluster_name must be set
+    fail:
+       msg: "cluster_name parameter cannot be empty"
+    when: cluster_name is not defined or cluster_name == ''
+
+  tasks:
+
+  - name: Attempt OC login
+    # FIXME - passing intermediate CA
+    command: "oc login --server=https://api.{{ cluster_name }}.openshift.com --certificate-authority=DigiCertCA.crt"
+    register: oc_login_result
+    ignore_errors: true
+    changed_when: false
+
+  - name: Attempt to collect a token if simple login failed
+    uri: 
+      url: "https://api.{{ cluster_name }}.openshift.com/oauth/token/request"
+      method: GET
+      validate_certs: no #FIXME
+    register: token_result
+    when: oc_login_result|failed
+    ignore_errors: true #FIXME
+    # FIXME: how do we auth this? 
+
+  - name: Attempt oc login with token if needed
+    command: "oc login --token={{ fixme }} --server=https://api.{{ cluster_name }}.openshift.com --certificate-authority=DigiCertCA.crt" 
+    register: oc_login_result
+    when: token_result is defined
+    changed_when: false
+
+  - name: Login succeeded
+    assert: 
+      that: 
+        - oc_login_result.rc == 0
+
+  - name: Create a new project
+    command: "oc new-project ansible-cluster-verifier"
+    register: new_project_result
+    changed_when: false
+
+  - name: Create test app
+    command: "oc new-app cakephp-example"
+    register: new_app_result
+    changed_when: false
+
+  - name: Create test persistent app
+    command: "oc new-app jenkins-persistent" 
+    register: new_persistent_app_result
+    changed_when: false
+
+  - name: Check for pvc
+    command: "oc get pvc"
+    register: check_pvc_result
+    changed_when: false
+    ignore_errors: true
+
+  - name: PVC created
+    assert:
+      that:
+        - "'jenkins' in check_pvc_result.stdout"
+
+  ### the next task can be removed after we get PV recycling working
+  - name: Delete PVC - you must manually log in, create a new pv and delete the failed one
+    command: "oc delete svc/jenkins dc/jenkins pvc/jenkins"
+    changed_when: false
+    ignore_errors: true
+
+  # FIXME: oc get pv - from a master? different account?
+  
+  # FIXME: grep network /etc/origin/master/master-config.yaml
+  
+  # FIXME: Verify ELBs
+  
+  # FIXME: Check registries
+  
+  - name: Create app using STI builder
+    command: "oc new-app https://github.com/openshift/sti-ruby.git --context-dir=2.0/test/puma-test-app"
+    register: check_sti_result
+    changed_when: false
+
+  - name: Get system imagestreams
+    command: "oc get imagestreams -n openshift"
+    register: get_imagestreams_result
+    ignore_errors: true
+    changed_when: false
+
+  - name: All imagestreams loaded
+    assert:
+      that:
+        - "'{{ item }}' in get_imagestreams_result.stdout"
+    with_items:
+      - fis-java-openshift
+      - fis-karaf-openshift
+      - jboss-amq-62
+      - jboss-datagrid65-openshift
+      - jboss-decisionserver62-openshift
+      - jboss-eap64-openshift
+      - jboss-eap70-openshift
+      - jboss-webserver30-tomcat7-openshift
+      - jboss-webserver30-tomcat8-openshift
+      - jenkins
+      - mongodb
+      - mysql
+      - nodejs
+      - perl
+      - php
+      - postgresql
+      - python
+      - redhat-sso70-openshift
+      - ruby
+
+  - name: Check web console
+    uri:
+      url: "https://console.{{ cluster_name }}.openshift.com/"
+      method: GET
+      validate_certs: no #FIXME
+    register: web_console_result
+
+  - name: Web console is accessible
+    assert:
+      that:
+        - "web_console_result.status == 200"
+
+  - name: Check api
+    uri:
+      url: "https://api.{{ cluster_name }}.openshift.com/"
+      method: GET
+      validate_certs: no #FIXME
+    register: api_console_result
+
+  - debug: var=web_console_result
+
+  - name: API console is accessible
+    assert:
+      that:
+        - "api_console_result.status == 200"
+
+  - name: Check hawkular
+    uri:
+      url: "https://metrics.{{ cluster_name }}.openshift.com/hawkular/metrics"
+      method: GET
+      validate_certs: no #FIXME
+    register: hawkular_console_result
+    ignore_errors: true
+
+  - debug: var=hawkular_console_result
+
+  - name: Hawkular is accessible
+    assert:
+      that:
+        - "hawkular_console_result.status == 200"
+    ignore_errors: true
+
+  - name: Check kibana
+    uri:
+      url: "https://kibana.{{ cluster_name }}.openshift.com/"
+      method: GET
+      validate_certs: no #FIXME
+    register: kibana_console_result
+    ignore_errors: true
+
+  - debug: var=kibana_console_result
+
+  - name: Kibana is accessible
+    assert:
+      that:
+        - "kibana_console_result.status == 200"
+    ignore_errors: true
+
+  - name: Check registry
+    uri:
+      url: "https://registry.{{ cluster_name }}.openshift.com/"
+      method: GET
+      validate_certs: no #FIXME
+    register: registry_console_result
+    ignore_errors: true
+
+  - debug: var=registry_console_result
+
+  - name: Registry is accessible
+    assert:
+      that:
+        - "registry_console_result.status == 200"
+    ignore_errors: true
+
+  - name: Clean up project
+    command: "oc delete project ansible-cluster-verifier"
+    register: delete_project_result
+    changed_when: false
