@@ -31,16 +31,14 @@ To run this container, simply execute the run script.
 ./[rhel7|centos7]/run.sh
 ----
 
-== Maintain
+== Maintain Certs
 
-Inside of `saml20-sp-remote.php.j2` is an Amazon signed certificate for `Subject: CN=urn:amazon:webservices, O=Amazon Web Services, Inc., ST=Washington, C=US` with a one year lifetime.
+The self-provided cert might typically have a long (10 year) expiry to make maintaining it a non-issue.
 
-This certificate will expire yearly, on or around August 1st.
+The AWS provided cert is embedded inside `/root/aws_saml_cert.yml` and has a one year expiry.  The cert is available online at https://signin.aws.amazon.com/static/saml-metadata.xml and re-downloading it will provide a fresh cert that expires approximately one year from the time of your request.
 
-Before this happens, gather the information from https://signin.aws.amazon.com/static/saml-metadata.xml and cut/paste the x509 cert into the j2 template.
+When you rebuild a new Docker image you should manually use `/root/download-aws-saml.sh` to refresh the YML file (commit this change to git).
 
-Remember to generate the rhel/centos images with generate-containers.yml before creating your PR.
-
-NOTE: This step needs to be automated, such that the pod can retrieve the updates automatically whenever it detects the notAfter date is approaching.
+When the pod starts, and when it updates it's content due to accounts being updated, it will also run this command to try to freshen the cert.  A few safety checks are in place to avoid refreshing too often, and to avoid replacing the cert with a different/unexpected cert regardless of expiry.
 
 
