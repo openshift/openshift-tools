@@ -8,8 +8,8 @@
 {% for resource in saml2_sso_authdata.resources %}
 {%- if 'urn:amazon:webservices:' in resource.id -%}
 {%- set acct = resource.id | replace('urn:amazon:webservices:', '', 1) -%}
-// Converted from https://signin.aws.amazon.com/static/saml-metadata.xml on 2016/08/23
-// using /admin/metadata-converter.php
+// Originally converted from https://signin.aws.amazon.com/static/saml-metadata.xml on 2016/08/23
+// using /admin/metadata-converter.php.  Update with new expiry and cert data as needed.
 // Metadata for AWS account {{acct}} ({{resource.name}})
 $metadata['urn:amazon:webservices:{{acct}}'] = array (
   'entityid' => 'urn:amazon:webservices:{{acct}}',
@@ -21,7 +21,7 @@ $metadata['urn:amazon:webservices:{{acct}}'] = array (
   'OrganizationURL' => array ('en' => 'https://aws.amazon.com'),
   'contacts' => array (),
   'metadata-set' => 'saml20-sp-remote',
-  'expire' => 1533081600,
+  'expire' => {{aws_saml_expire}},
   'AssertionConsumerService' => array ( 0 => array (
       'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
       'Location' => 'https://signin.aws.amazon.com/saml',
@@ -60,25 +60,7 @@ $metadata['urn:amazon:webservices:{{acct}}'] = array (
       'encryption' => false,
       'signing' => true,
       'type' => 'X509Certificate',
-      'X509Certificate' => 'MIIDbTCCAlWgAwIBAgIEQ2pPQzANBgkqhkiG9w0BAQsFADBnMR8wHQYDVQQDExZ1
-cm46YW1hem9uOndlYnNlcnZpY2VzMSIwIAYDVQQKExlBbWF6b24gV2ViIFNlcnZp
-Y2VzLCBJbmMuMRMwEQYDVQQIEwpXYXNoaW5ndG9uMQswCQYDVQQGEwJVUzAeFw0x
-NzA4MDEwMDAwMDBaFw0xODA4MDEwMDAwMDBaMGcxHzAdBgNVBAMTFnVybjphbWF6
-b246d2Vic2VydmljZXMxIjAgBgNVBAoTGUFtYXpvbiBXZWIgU2VydmljZXMsIElu
-Yy4xEzARBgNVBAgTCldhc2hpbmd0b24xCzAJBgNVBAYTAlVTMIIBIjANBgkqhkiG
-9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk0ezHV4+IWfFiZnAoNk0NAvyzahQCr/AXKEr
-0gCUuLyVnQGIDvX8oo8mymY8AJ1pVQSWqMHdsv6/15wxxDhrJmr6vz/1ilP8LJTz
-aj9P+Zx9O6bgCVyy/2gkpUl4mAmZI+1JTgbGzbuBQIQAGNHfYSQwDaeDF/ygBZ05
-g0BZinYyanxC0une6opDafvk9GZNz2908rJy78Z0Co7OWDqE88lprqYOP9TKosUI
-W/Nkc5edZ5bR2SpiPUCSVyCzy4/aHmXqZHImlFEiHVw9z9/w/3s+We0pgs/Xh2FR
-Hl8YlpY6KjBU6YNXwkaWgrNN2u9FkKJApYW1GUKDOVcRKbUDvwIDAQABoyEwHzAd
-BgNVHQ4EFgQUFwqhUTFIM2NKAkNJiHgZgKC7UD4wDQYJKoZIhvcNAQELBQADggEB
-AAFyoVx2lhEICIQlfwwUv+IRvN+j6VjalxjjMXFJBlXJJF8OGjyrv4lNcco6l348
-kIW8Gf+WJnd3RLGGO+V72L4o2ST5Y4GLJ5jQhrCRc6f8+4tb6Iy7Qm/Go183LtS/
-x7qpTtWKROjB5ZqHgJTPz46oGZzest/Dn4nQlXoksBVjK7NVVunahhQqLAn6oP58
-QYRP/mOUCsdMORQH6AZAs9BQBcUJP+qU6XM0MZXQ7otaDH5vaV2J5wTaEmc53+Rg
-6Q+Vyrw6Pup0kpTp6z3iUqvhpvqnsX0q+Xy5wZDZj374VE1sN97IBUqPhKw90fho
-f4EpP169VKY4KiMUOf8Nm/o=',
+      'X509Certificate' => '{{aws_saml_x509}}',
     ),
   ),
   'saml20.sign.assertion' => true,
