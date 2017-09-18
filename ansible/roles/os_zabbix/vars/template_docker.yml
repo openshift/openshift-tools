@@ -114,7 +114,7 @@ g_template_docker:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_docker_storage.asciidoc"
     priority: high
 
-  - name: "[HEAL] Critically High Memory usage of  docker  on {HOST.NAME}"
+  - name: "[Heal] Critically High Memory usage of  docker  on {HOST.NAME}"
     expression: "{Template Docker:docker.memoryusage.rss.last()}>10737418240"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_docker_memoryusage.asciidoc"
     priority: high
@@ -123,7 +123,7 @@ g_template_docker:
     expression: "{Template Docker:docker.memoryusage.rss.last()}>6442450944"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_docker_memoryusage.asciidoc"
     dependencies:
-    - "[HEAL] Critically High Memory usage of  docker  on {HOST.NAME}"
+    - "[Heal] Critically High Memory usage of  docker  on {HOST.NAME}"
     priority: average
 
   - name: "Critically low docker storage metadata space on {HOST.NAME}"
