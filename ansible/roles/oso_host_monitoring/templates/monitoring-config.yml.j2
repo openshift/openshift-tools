@@ -134,9 +134,19 @@ host_monitoring_cron:
   minute: "*/3"
   job: ops-runner -f -s 60 -n ozc.send.heartbeat.quick /usr/bin/ops-metric-client -k heartbeat.ping -o 1
 
+{% if ( osohm_host_type == 'master' ) %}
 - name: run filesystem space checks
   minute: "*/30"
   job: ops-runner -f -s 120 -n csfm.filesys.full /usr/bin/cron-send-filesystem-metrics
+{% elif (osohm_host_type == 'node') and (osohm_sub_host_type == 'infra') %}
+- name: run filesystem space checks
+  minute: "*/30"
+  job: ops-runner -f -s 120 -n csfm.filesys.full /usr/bin/cron-send-filesystem-metrics
+{% else %}
+- name: run filesystem space checks
+  minute: "*/30"
+  job: ops-runner -f -s 120 -n csfm.filesys.full /usr/bin/cron-send-filesystem-metrics --filter-pod-pv
+{% endif %}
 
 - name: run disk TPS checks
   minute: "*"
@@ -411,7 +421,7 @@ host_monitoring_cron:
   minute: "30"
   job: "ops-runner -f -s 30 -n cosp.openshift.logging.check cron-send-logging-checks"
 
-#- name: "Report time to reload haproxy config" 
+#- name: "Report time to reload haproxy config"
 #  hour: "*"
 #  minute: "*/10"
 #  job: "ops-runner -f -s 30 -n csrrt.openshift.haproxy.check cron-send-router-reload-time"
