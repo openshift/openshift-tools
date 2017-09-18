@@ -166,7 +166,7 @@ class RemoteHealer(object):
             # Run reporting to quiet down trigger
             cmd = self.ossh_cmd(self._args.host,
                                 'docker exec oso-rhe7-host-monitoring /usr/bin/cron-send-ovs-stats')
-        elif re.search(r'^\[HEAL\] Critically High Memory usage of  docker  on', self._args.trigger):
+        elif re.search(r'^\[Heal\] Critically High Memory usage of  docker  on', self._args.trigger):
             logging.info("Restarting docker on " + self._args.host)
 
             #run playbook to evacuate the host and restart the docker
