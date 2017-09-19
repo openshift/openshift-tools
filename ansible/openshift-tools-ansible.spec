@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.43
+Version:        0.0.44
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,16 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Tue Sep 19 2017 Kenny Woodson <kwoodson@redhat.com> 0.0.44-1
+- stop checking customer pods storage utilisation (dranders@redhat.com)
+- fix the auto heal from HEAL to Heal (zhizhang@zhizhang-laptop-nay.redhat.com)
+- Proper escaping in zabbix (mmahut@redhat.com)
+- changed HEAL to Heal (zhiwliu@redhat.com)
+- added HEAL for the trigger (zhiwliu@redhat.com)
+- removing deprecated logrotate option (dedgar@redhat.com)
+- fixes requested by jdiaz (sten@redhat.com)
+- added cron-send-router-reload-time check (sten@redhat.com)
+
 * Mon Sep 11 2017 Kenny Woodson <kwoodson@redhat.com> 0.0.43-1
 - Fixed a bug in gce_ variable. (kwoodson@redhat.com)
 
