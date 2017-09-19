@@ -456,10 +456,6 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
-* Tue Sep 19 2017 Matt Woodson <mwoodson@redhat.com> 0.1.98-1
-- added the online-deployer as a valid operation (mwoodson@redhat.com)
-- fix the auto heal from HEAL to Heal (zhizhang@zhizhang-laptop-nay.redhat.com)
-
 * Thu Sep 14 2017 Marek Mahut <mmahut@redhat.com> 0.1.97-1
 - Using the autoloader (mmahut@redhat.com)
 
