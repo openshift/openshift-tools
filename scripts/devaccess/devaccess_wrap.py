@@ -19,6 +19,7 @@ with open('/etc/openshift_tools/devaccesslogging.conf') as f:
     logging.config.dictConfig(yaml.load(f))
 
 log = logging.getLogger('devget')
+console = logging.getLogger('consoleonly')
 
 class DevGetError(Exception):
     ''' DevGet-specific exceptions '''
@@ -263,12 +264,16 @@ class OCCmd(object):
                 normalized_cmd = "{orig} -c{container}".format(orig=normalized_cmd,
                                                                container=self._params['container'])
         # add namespace
-        if self._current_command.has_key('namespaces'):
-            if self._params['namespace'] == 'all':
-                normalized_cmd = '{orig} --all-namespaces'.format(orig=normalized_cmd)
+        if self._current_type.has_key('namespaces'):
+            if self._params['namespace'] in self._current_type['namespaces']:
+                if self._params['namespace'] == 'all':
+                    normalized_cmd = '{orig} --all-namespaces'.format(orig=normalized_cmd)
+                else:
+                    normalized_cmd = "{orig} -n{namespace}".format(orig=normalized_cmd,
+                                                                   namespace=self._params['namespace'])
             else:
-                normalized_cmd = "{orig} -n{namespace}".format(orig=normalized_cmd,
-                                                               namespace=self._params['namespace'])
+                raise Exception("That namespace is not in the allowed list")
+
         # add output formatting
         if self._params['output_format'] is not None:
             normalized_cmd = "{cmd} -o{oformat}".format(cmd=normalized_cmd,
@@ -583,8 +588,9 @@ class DevGet(object):
                 results = getattr(WhitelistedCommands, self._oc_cmd.runner)(full_cmd)
                 print results
             #pylint: disable=broad-except
-            except Exception:
+            except Exception as ex:
                 log.exception('Command failed to run. %s', cmd)
+                console.error('Command failed to run: %s\n%s', cmd, ex.message)
                 self.cmd_not_allowed()
         # non-oc command run handling
         elif self.can_run_cmd(cmd):
