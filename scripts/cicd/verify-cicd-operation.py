@@ -2,7 +2,6 @@
 ''' verify the cicd operation command coming in from Jenkins via SSH '''
 
 # pylint: disable=invalid-name
-# pylint: disable=superfluous-parens
 # pylint: disable=bare-except
 # pylint: disable=too-many-instance-attributes
 
@@ -145,7 +144,7 @@ class VerifyCICDOperation(object):
         ''' Let's do all of our exiting here.  With logging '''
 
         self.logger.info("{}: Exiting on Error: {}".format(os.path.basename(__file__), message))
-        print(message)
+        print message
         sys.exit(exit_code)
 
     @staticmethod
@@ -177,7 +176,7 @@ class VerifyCICDOperation(object):
 
         # Sanity check the cluster_id
         if not re.match("(^[a-zA-Z0-9][a-zA-Z0-9._-]+$)", self.clustername):
-            print("Clustername did not match the approved Regular Expression.")
+            print "Clustername did not match the approved Regular Expression."
             sys.exit(13)
 
         clusters = VerifyCICDOperation.get_clusters()
