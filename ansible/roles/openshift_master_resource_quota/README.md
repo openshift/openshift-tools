@@ -1,4 +1,4 @@
-openshift_master_storage_class
+openshift_master_resource_quota
 =========
 
 A role that deploys quotas for Openshift cluster resources
@@ -11,10 +11,10 @@ None
 Role Variables
 --------------
 
-osmsc_enable_quotas: BOOL.  Should quotas be enabled.
-osmsc_cluster_pv_quota: Cluster wide storage quota
-osmsc_exclude_quota_label: labe of the projects that will indicate project is excluded
-osmsc_projects_to_exclude: list of projects to exclude from the cluster quota
+osmrq_enable_quotas: BOOL.  Should quotas be enabled.
+osmrq_cluster_pv_quota: Cluster wide storage quota
+osmrq_exclude_quota_label: labe of the projects that will indicate project is excluded
+osmrq_projects_to_exclude: list of projects to exclude from the cluster quota
 
 Dependencies
 ------------
@@ -26,10 +26,10 @@ Example Playbook
 ----------------
 
 - role: tools_roles/openshift_master_resource_quota
-  osmsc_enable_quotas: True
-  osmsc_cluster_pv_quota: 100Gi
-  osmsc_exclude_quota_label: exclude_pv_quota
-  osmsc_projects_to_exclude:
+  osmrq_enable_quotas: True
+  osmrq_cluster_pv_quota: 100Gi
+  osmrq_exclude_quota_label: exclude_pv_quota
+  osmrq_projects_to_exclude:
   - default
   - openshift-infra
 

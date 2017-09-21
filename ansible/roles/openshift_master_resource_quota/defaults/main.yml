@@ -1,8 +1,8 @@
 ---
-osmsc_enable_quotas: True
-osmsc_cluster_pv_quota: 100Gi
-osmsc_exclude_quota_label: storage_pv_quota
-osmsc_projects_to_exclude:
+osmrq_enable_quotas: True
+osmrq_cluster_pv_quota: 100Gi
+osmrq_exclude_quota_label: storage_pv_quota
+osmrq_projects_to_exclude:
 - default
 - openshift-infra
 - logging
