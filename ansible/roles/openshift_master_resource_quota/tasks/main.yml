@@ -1,8 +1,4 @@
 ---
-- name: Include lib_openshift
-  include_role:
-    name: tools_roles/lib_openshift
-
 # Quota support
 # Can disable quota support by passing in "osmrq_enable_quota: False"
 #
