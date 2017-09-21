@@ -1,5 +1,5 @@
-
-        elybook will try heal for the hear.beat.ping alert 
+---
+#playbook will try heal for the hear.beat.ping alert 
 # * oso-moniotoring pod dead (restarted)
 # * atomic-node service dead（restarted)
 # * host lost connection (try to restart the instance)
