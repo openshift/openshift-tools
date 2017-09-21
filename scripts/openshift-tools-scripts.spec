@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.98
+Version:       0.1.99
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -456,6 +456,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Sep 21 2017 Matt Woodson <mwoodson@redhat.com> 0.1.99-1
+- ohi: get node var (mwoodson@redhat.com)
+- fixing namespace selection (ihorvath@redhat.com)
+
 * Tue Sep 19 2017 Matt Woodson <mwoodson@redhat.com> 0.1.98-1
 - more tito cleanup (mwoodson@redhat.com)
 - cleaned up old bad tag (mwoodson@redhat.com)
