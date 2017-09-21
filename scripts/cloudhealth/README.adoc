@@ -1,0 +1,10 @@
+This script is used to configure cross-service permissions required to
+allow CloudHealth to collect cost-related data.
+
+It creates AWS IAM Role, Profile, and Role->Profile link. Then, it adds the AWS
+Account info to CloudHealth.
+
+Usage:
+
+        $ export CLOUDHEALTH_API_KEY='some-api-key'
+        $ add-billing-role.py -p AWS_PROFILE -k random-string -n role-name
