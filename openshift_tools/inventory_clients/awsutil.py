@@ -266,3 +266,12 @@ class AwsUtil(object):
             return variables[0]
 
         return None
+
+    def get_node_variable(self, host, variable):
+        """ return an inventory variable from a host"""
+
+        inv = self.get_inventory()
+        if host in inv['_meta']['hostvars'] and variable in inv['_meta']['hostvars'][host]:
+            return inv['_meta']['hostvars'][host][variable]
+
+        return None

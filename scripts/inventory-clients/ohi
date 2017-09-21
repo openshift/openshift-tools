@@ -8,6 +8,7 @@ This depends on multi_inventory being setup correctly.
 '''
 # vim: expandtab:tabstop=4:shiftwidth=4
 # pylint: disable=too-many-branches
+# pylint: disable=too-many-return-statements
 
 import argparse
 import sys
@@ -48,6 +49,19 @@ class Ohi(object):
         '''
             Call into awsutil and retrieve the desired hosts and environments
         '''
+
+        if self.args.get_node_var:
+            if self.args.node:
+                node_var = self.aws.get_node_variable(self.args.node, self.args.get_node_var)
+                if node_var is None:
+                    print "Unable to determine variable.  node: %s   variable: %s" %(self.args.node,
+                                                                                     self.args.get_node_var)
+                    return 1
+                print node_var
+                return 0
+
+            print "Please specify a node (--node) when using --get-node-var"
+            return 1
 
         if self.args.get_cluster_var:
             if self.args.cluster:
@@ -144,8 +158,15 @@ class Ohi(object):
 
         parser.add_argument('--list-host-types', default=False, action='store_true', help='List all of the host types')
         parser.add_argument('--list-clusters', default=False, action='store_true', help='List all of the clusters')
+
         parser.add_argument('--get-cluster-var', default=False, action='store',
                             help='Return a var that is the same across a clusters')
+
+        parser.add_argument('--get-node-var', default=False, action='store',
+                            help='Return a var from a specific node')
+
+        parser.add_argument('-n', '--node', action='store', default=None, help='node to use')
+
         parser.add_argument('--list', default=False, action='store_true', help='List all hosts')
 
         parser.add_argument('-c', '--cluster', action="append", help="Which clusterid to use")
@@ -158,6 +179,7 @@ class Ohi(object):
         parser.add_argument('-l', '--user', action='store', default=None, help='username')
 
         parser.add_argument('-o', '--output', action='store', default=None, help='output')
+
 
         parser.add_argument('--v2', action='store_true', default=False,
                             help='Specify the openshift version. Default is 2')
