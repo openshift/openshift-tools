@@ -236,10 +236,6 @@ class RemoteHealer(object):
                     self.run_cmd(cmd.split())
                     
 
-
-            cmd = '/usr/local/bin/autokeys_loader ansible-playbook /usr/bin/heal_cleanup_rootvg-var.yml -e cli_tag_name=' + self._args.host
-            self.run_cmd(cmd.split())
-
         else:
             logging.info("No healing action defined for trigger: " + self._args.trigger)
 
