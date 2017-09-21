@@ -125,6 +125,41 @@ class RemoteHealer(object):
             sys.exit(1)
         self._args.host = match.group(0)
 
+    def get_instance_info(self, nodename):
+        #run command to get the host info
+        s = subprocess.check_output('/etc/ansible/inventory/multi_inventory.py', shell=True)
+
+        s_json = json.loads(s)
+
+        #print s_json
+        hostinfo = None
+
+        if s_json['_meta']['hostvars'].has_key(hostname):
+            hostinfo = s_json['_meta']['hostvars'][hostname]
+        else:
+            pass
+
+        return hostinfo
+
+    def get_readytorun(self, filepath)
+    #check if there any auto-heal on this cluster in 30 mintes
+        readytorun = False
+        if os.path.exists(file_path):
+            stat = os.stat(file_path)
+            create_time = stat.st_birthtime
+            now = datetime.datetime.now()
+            #if there is no auto-heal for this cluster in 30 minutes , set the readytorun to true
+            if (now-create_time).seconds > 1800:
+                readytorun = True
+                os.remove(file_path)
+                file = open(filepath,'w')
+
+        else:
+            file = open(filepath,'w')
+            readytorun = True
+
+        return readytorun
+
     def main(self):
         ''' Entry point for class '''
         logging.info("host: " + self._args.host + " trigger: " +
@@ -177,6 +212,31 @@ class RemoteHealer(object):
         elif re.search(r'^\[Heal\] Filesystem: /dev/mapper/rootvg-var has less than 1[05]% free disk space on', self._args.trigger):
             logging.info("Cleaningup /var on " + self._args.host)
             # run the playbook to cleanup the log files
+            cmd = '/usr/local/bin/autokeys_loader ansible-playbook /usr/bin/heal_cleanup_rootvg-var.yml -e cli_tag_name=' + self._args.host
+            self.run_cmd(cmd.split())
+
+        elif re.search(r'^\[Heal\] Heartbeat.ping has failed (5min) on ', self._args.trigger):
+            logging.info("Auto heal for heartbeat.ping on " + self._args.host)
+            #get all the needed info from the hostname including: cluster_id,account_id,instance_id
+            hostinfo = self.get_instance_info(self._args.trigger)
+            #if we could get the info
+            if hostinfo:
+                cluster_id = hostinfo['ec2_tag_clusterid']
+                account_id = hostinfo['oo_accountid']
+                instance_id = hostinfo['ec2_id']
+                # check the cluster lock file see if this cluster already have some instance auto-heal run in 30 minutes
+                filepath = '/tmp/auto-heal-lock-'+cluster_id
+                readytorun = self.get_readytorun(filepath)
+                #to run the create cred part
+                if readytorun:
+                    cmd_cred = '/path/need/fix/refresh_aws_tmp_credentials.py --aws-account_id '+account_id+' --aws-account_name '+cluster_id+'      --aws-credentials-file ~/.aws/credentials.tmp --idp-host login.ops.openshift.com'
+                    self.run_cmd(cmd_cred.split())
+                    #after get the cred , run the playbook
+                    cmd = 'ansible-playbook  /usr/bin/heal_for_heartbeat.yml -e "cli_nodename='+self._args.host+'" -e "oo_instance_id='+instance_id+'"'
+                    self.run_cmd(cmd.split())
+                    
+
+
             cmd = '/usr/local/bin/autokeys_loader ansible-playbook /usr/bin/heal_cleanup_rootvg-var.yml -e cli_tag_name=' + self._args.host
             self.run_cmd(cmd.split())
 
