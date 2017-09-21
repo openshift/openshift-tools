@@ -1,0 +1,41 @@
+---
+# Quota support
+# Can disable quota support by passing in "osmrq_enable_quota: False"
+#
+- name: label designated projects to exclude from pv quotas
+  oc_label:
+    state: add
+    kind: namespace
+    name: "{{ item }}"
+    labels:
+    - key: "{{ osmrq_exclude_quota_label }}"
+      value: "False"
+  with_items: "{{ osmrq_projects_to_exclude }}"
+  run_once: True
+  when: osmrq_enable_quotas
+
+- name: Ensure Quotas are set for storage
+  oc_obj:
+    kind: ClusterResourceQuota
+    name: persistent-volume
+    content:
+      path: /tmp/osmrq_persistent_volume_quota
+      data:
+        kind: ClusterResourceQuota
+        apiVersion: v1
+        metadata:
+          name: persistent-volume
+        spec:
+          selector:
+            annotations: null
+            labels:
+              matchExpressions:
+              - key: "{{ osmrq_exclude_quota_label }}"
+                operator: DoesNotExist
+          quota:
+            hard:
+              requests.storage: "{{ osmrq_cluster_pv_quota }}"
+  run_once: true
+  when: osmrq_enable_quotas
+  notify:
+  - restart openshift master services
