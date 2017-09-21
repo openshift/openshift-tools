@@ -232,7 +232,7 @@ class RemoteHealer(object):
                     cmd_cred = '/path/need/fix/refresh_aws_tmp_credentials.py --aws-account_id '+account_id+' --aws-account_name '+cluster_id+'      --aws-credentials-file ~/.aws/credentials.tmp --idp-host login.ops.openshift.com'
                     self.run_cmd(cmd_cred.split())
                     #after get the cred , run the playbook
-                    cmd = 'ansible-playbook  /usr/bin/heal_for_heartbeat.yml -e "cli_nodename='+self._args.host+'" -e "oo_instance_id='+instance_id+'"'
+                    cmd = 'ansible-playbook  /usr/bin/heal_for_heartbeat.yml -e "cli_nodename='+self._args.host+'" -e "cluster_id='+cluster_id+'"'
                     self.run_cmd(cmd.split())
                     
 
