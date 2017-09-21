@@ -7,4 +7,4 @@
     name:  "{{ oul_package_names }}"
     exclude: "{{ oul_exclude }}"
     state: latest
-  when: oul_os_update is defined
+  when: oul_os_update
