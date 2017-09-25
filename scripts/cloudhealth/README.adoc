@@ -7,5 +7,6 @@ Account info to CloudHealth.
 Usage:
 
         $ export CLOUDHEALTH_API_KEY='some-api-key'
-        $ add-billing-role.py -p AWS_PROFILE -k random-string -n role-name
+        $ add-billing-role.py -p AWS_PROFILE -n role-name
+
 
