@@ -31,7 +31,6 @@ import requests.exceptions
 from cloudhealth import CloudHealthAwsAccount
 
 LOG_FORMAT = '%(asctime)-15s [%(levelname)s] (%(name)s.%(funcName)s) %(message)s'
-AWS_CREDENTIALS = os.environ['HOME'] + '/.aws/credentials'
 
 def setup_logging(level=logging.NOTSET):
     ''' configure logging'''
@@ -49,7 +48,7 @@ def parse_args():
                         help='aws credentials file')
     parser.add_argument('-k', '--cloudhealth-key', type=str, dest='cht_api_key',
                         help="The API Key for CloudHealth")
-    parser.add_argument('-n', '--name', type=str, dest='aws_name',
+    parser.add_argument('-n', '--role-name', type=str, dest='aws_role_name',
                         default='default',
                         help="The name used for the AWS Role and Policy. Must match permissions file name, too.")
     parser.add_argument('-p', '--profile', type=str,
@@ -134,8 +133,8 @@ def setup_cloudhealth_account(api_key, account_number, external_id=None):
     if not getattr(cht, 'id', None):
         cht.authentication = {'assume_role_external_id': external_id,
                               'protocol': 'assume_role',
-                              'assume_role_arn': 'arn:aws:iam::%s:role/oso-billing' % \
-                                    str(account_number)}
+                              'assume_role_arn': 'arn:aws:iam::%s:role/%s ' % \
+                                    (str(account_number), ARGS.aws_role_name)}
         cht.name = "%s (%s)" % (os.environ['AWS_PROFILE'], account_number)
         try:
             resp = cht.create()
@@ -146,8 +145,8 @@ def setup_cloudhealth_account(api_key, account_number, external_id=None):
     elif cht.authentication['assume_role_external_id'] != external_id:
         cht.authentication = {'assume_role_external_id': external_id,
                               'protocol': 'assume_role',
-                              'assume_role_arn': 'arn:aws:iam::%s:role/oso-billing' % \
-                                    str(account_number)}
+                              'assume_role_arn': 'arn:aws:iam::%s:role/%s' % \
+                                    (str(account_number), ARGS.aws_role_name)}
         try:
             resp = cht.update()
             LOG.debug('CHT Response: %s', resp)
