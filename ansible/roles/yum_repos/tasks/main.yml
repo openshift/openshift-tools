@@ -19,7 +19,7 @@
   when: yr_yum_cert_content is defined
   no_log: true
 
-- name: Create our repositories
+- name: Manage yum repositories
   yum_repository:
     name: "{{ item.name }}"
     state: "{{ item.state | default(present)}}"
