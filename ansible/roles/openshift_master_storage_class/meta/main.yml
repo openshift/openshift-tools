@@ -13,3 +13,4 @@ galaxy_info:
   - cloud
 dependencies:
 - role: tools_roles/lib_yaml_editor
+- role: tools_roles/lib_openshift
