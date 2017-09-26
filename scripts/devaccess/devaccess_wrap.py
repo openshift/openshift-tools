@@ -123,6 +123,7 @@ class OCCmd(object):
 
         if value is not None:
             self._params['namespace'] = value
+
         return new_cmd
 
     def get_follow(self, cmd):
@@ -179,21 +180,23 @@ class OCCmd(object):
                 raise Exception('Should not have any more parameters left for processing')
 
         self._params['verb'] = cmd_split[0]
-        self._params['type'] = cmd_split[1]
-        for command_type in self._current_command['types']:
-            if self._params['type'] in command_type['names']:
-                self._current_type = command_type
-                self.runner = command_type['runner']
-
-        if len(cmd_split) > 2:
-            self._params['subject'] = cmd_split[2]
 
         if self._params['verb'] == 'logs':
             # logs commands aren't in the form of verb type subject
-            # just verb subject, so wipe out _type and store it in
-            # _subject instead
-            self._params['subject'] = self._params['type']
-            self._params['type'] = None
+            # just verb subject, so store first arg in _subject
+            # and leave _type as None
+            self._params['subject'] = cmd_split[1]
+            self.runner = self._current_command['types'][0]['runner']
+            self._current_type = self._current_command['types'][0]
+        else:
+            self._params['type'] = cmd_split[1]
+            for command_type in self._current_command['types']:
+                if self._params['type'] in command_type['names']:
+                    self._current_type = command_type
+                    self.runner = command_type['runner']
+
+            if len(cmd_split) > 2:
+                self._params['subject'] = cmd_split[2]
 
         cmd_split.remove(self._params['verb'])
         if self._params['type'] is not None:
