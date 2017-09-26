@@ -31,7 +31,7 @@
 
     - name: pull the private repo for the cred
       git:
-        repo: https://github.com/openshift/openshift-ansible-ops.git`
+        repo: https://github.com/openshift/openshift-ansible-ops.git
         dest: /tmp/auto-heal-repo/openshift-ansible-ops
         update: yes
 
@@ -41,12 +41,12 @@
   pre_tasks:
     - set_fact:
         oo_instance_id: "{{ hostvars[''+cli_nodename].ec2_id }}"
-      when: zag_pod_or_not is not definded
+      when: zag_pod_or_not is not defined
 
     - name: load private vars
       include_role:
           name: /tmp/auto-heal-repo/openshift-ansible-ops/ops_roles/include_private_vars
-      when: zag_pod_or_not is not definded
+      when: zag_pod_or_not is not defined
 
   tasks:
 
@@ -56,19 +56,19 @@
           host: "{{ cli_nodename }}"
           port: 22
           timeout: 60
-        when: zag_pod_or_not is not definded
+        when: zag_pod_or_not is not defined
 
       - name: make sure oso-moniotoring restarted
         service:
           name: oso-rhel7-host-monitoring.service
           state: restarted
-        when: zag_pod_or_not is not definded
+        when: zag_pod_or_not is not defined
 
       - name: make sure atomic-openshift-node.service restarted
         service:
           name: atomic-openshift-node.service
           state: restarted
-        when: zag_pod_or_not is not definded
+        when: zag_pod_or_not is not defined
 
     rescue:
       - name: reboot the instance
@@ -77,7 +77,7 @@
           aws_secret_key: " {{ lookup('ini', 'aws_secret_access_key section='+cluster_id+' file=~/.aws/credentials.tmp') }} "
           instance_ids: " {{ oo_instance_id }} "
           state: restarted
-        when: zag_pod_or_not is not definded
+        when: zag_pod_or_not is not defined
 
     always:
       - name: delete the host from zabbix
