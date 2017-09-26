@@ -231,6 +231,11 @@ class MultiInventoryAccount(object):
                     if 'synthetic_' in name:
                         MultiInventoryUtils.add_entry(data, to_name, name)
 
+                    # REMOVE when v2 goes extinct
+                    if 'oo_version' in data and data['oo_version'] == 2:
+                        MultiInventoryUtils.add_entry(data, to_name, MultiInventoryUtils.get_entry(data, name))
+                        continue
+
                     # if name tag exists give it!
                     if 'ec2_tag_Name' in data:
                         # pylint: disable=line-too-long
