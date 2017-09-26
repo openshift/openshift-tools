@@ -22,12 +22,12 @@
 - name: Manage yum repositories
   yum_repository:
     name: "{{ item.name }}"
-    state: "{{ item.state | default(present)}}"
+    state: "{{ item.state | default(present) }}"
     file: "{{ item.file }}"
     description: "{{ item.description }}"
-    baseurl: "{{ item.baseurl | default(omit)}}"
-    enabled: "{{ item.enabled | default(1)}}"
-    gpgkey: "{{ item.gpgkey | default(omit)}}"
+    baseurl: "{{ item.baseurl | default(omit) }}"
+    enabled: "{{ item.enabled | default(1) }}"
+    gpgkey: "{{ item.gpgkey | default(omit) }}"
     gpgcheck: "{{ item.gpgcheck | default(1) }}"
     sslverify: "{{ item.sslverify | default(1) }}"
     sslclientkey: "{{ item.sslclientkey | default(omit) }}"
