@@ -6,10 +6,6 @@
   when: item is undefined
   run_once: true
 
-- name: Include lib_openshift
-  include_role:
-    name: tools_roles/lib_openshift
-
 - name: Change restriced scc fsgroup to MustRunAs
   run_once: true
   oc_edit:

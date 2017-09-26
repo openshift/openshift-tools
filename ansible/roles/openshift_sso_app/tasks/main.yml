@@ -1,8 +1,4 @@
 ---
-- name: Include lib_openshift
-  include_role:
-    name: tools_roles/lib_openshift
-
 - name: "create SSO project for {{ osso_namespace }}"
   oc_project:
     name: "{{ osso_namespace }}"

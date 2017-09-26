@@ -10,4 +10,5 @@ galaxy_info:
     versions:
     - 7
 dependencies:
- - role: tools_roles/lib_utils
+- role: tools_roles/lib_utils
+- role: tools_roles/lib_openshift
