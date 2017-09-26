@@ -1,8 +1,4 @@
 ---
-- name: Include lib_openshift
-  include_role:
-    name: tools_roles/lib_openshift
-
 - name: debug masters
   debug:
     var: osareg_master_nodes
