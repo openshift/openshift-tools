@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.44
+Version:        0.0.45
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,18 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Tue Sep 26 2017 Kenny Woodson <kwoodson@redhat.com> 0.0.45-1
+- Fix for inventory on v2. (kwoodson@redhat.com)
+- fixed some dependencies for lib_openshift roles (mwoodson@redhat.com)
+- monitor certs in /etc/etcd (sten@redhat.com)
+- removed include lib_openshift from tasks (dyocum@redhat.com)
+- renamed osmsc_ vars to osmrq_ (dyocum@redhat.com)
+- rewrote README for resource_quota (dyocum@redhat.com)
+- splitting out clusterresourcequotas from storageclasses role
+  (dyocum@redhat.com)
+- set the default to False (dyocum@redhat.com)
+- changed oul_os_update to type bool (dyocum@redhat.com)
+
 * Tue Sep 19 2017 Kenny Woodson <kwoodson@redhat.com> 0.0.44-1
 - stop checking customer pods storage utilisation (dranders@redhat.com)
 - fix the auto heal from HEAL to Heal (zhizhang@zhizhang-laptop-nay.redhat.com)
