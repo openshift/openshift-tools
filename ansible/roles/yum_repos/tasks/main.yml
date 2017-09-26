@@ -19,16 +19,17 @@
   when: yr_yum_cert_content is defined
   no_log: true
 
-- name: Create our repositories
+- name: Manage yum repositories
   yum_repository:
-    description: "{{ item.description }}"
     name: "{{ item.name }}"
-    baseurl: "{{ item.baseurl }}"
-    gpgkey: "{{ item.gpgkey | default(omit)}}"
+    state: "{{ item.state | default(present) }}"
+    file: "{{ item.file }}"
+    description: "{{ item.description }}"
+    baseurl: "{{ item.baseurl | default(omit) }}"
+    enabled: "{{ item.enabled | default(1) }}"
+    gpgkey: "{{ item.gpgkey | default(omit) }}"
     gpgcheck: "{{ item.gpgcheck | default(1) }}"
     sslverify: "{{ item.sslverify | default(1) }}"
     sslclientkey: "{{ item.sslclientkey | default(omit) }}"
     sslclientcert: "{{ item.sslclientcert | default(omit) }}"
-    file: "{{ item.file }}"
-    enabled: "{{ item.enabled }}"
   with_items: "{{ yr_yum_repo_list }}"
