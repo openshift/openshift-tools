@@ -10,6 +10,5 @@ galaxy_info:
     versions:
     - 7
 dependencies:
-#- role: ops_roles/lib_ansible_20
+- role: ops_roles/lib_openshift
 - role: tools_roles/lib_gcloud
-

@@ -1,8 +1,4 @@
 ---
-- name: Include lib_openshift
-  include_role:
-    name: tools_roles/lib_openshift
-
 - name: get oc version
   oc_version:
   register: oc_version
