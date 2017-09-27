@@ -34,12 +34,17 @@
                 "elasticbeanstalk:List*",
                 "elasticbeanstalk:RequestEnvironmentInfo",
                 "elasticbeanstalk:RetrieveEnvironmentInfo",
+                "elasticfilesystem:Describe*",
                 "elasticloadbalancing:Describe*",
                 "elasticmapreduce:Describe*",
                 "elasticmapreduce:List*",
+                "es:Describe*",
+                "es:List*",
+                "es:ListTags",
                 "iam:List*",
                 "iam:Get*",
                 "iam:GenerateCredentialReport",
+                "kinesis:List*",
                 "lambda:List*",
                 "redshift:Describe*",
                 "route53:Get*",
@@ -61,7 +66,8 @@
                 "sqs:GetQueueAttributes",
                 "sqs:ListQueues",
                 "storagegateway:List*",
-                "storagegateway:Describe*"
+                "storagegateway:Describe*",
+                "workspaces:Describe*"
             ],
             "Resource": "*"
         },
