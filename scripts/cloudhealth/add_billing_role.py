@@ -199,7 +199,8 @@ def main():
         account_number = get_account_number()
         LOG.info('using AWS Account: %s', account_number)
         setup_role_policy(account_number, name=ARGS.aws_role_name)
-        setup_cloudhealth_account(api_key, account_number)
+        setup_cloudhealth_account(api_key, account_number,
+                                  external_id=ARGS.aws_external_id)
     else:
         LOG.warn('No profile specified. Looping through all profiles in credentials file.')
         awscreds = ConfigParser()
@@ -210,7 +211,8 @@ def main():
             account_number = get_account_number()
             LOG.info('using AWS Account: %s', account_number)
             setup_role_policy(account_number, name=ARGS.name)
-            setup_cloudhealth_account(api_key, account_number)
+            setup_cloudhealth_account(api_key, account_number,
+                                      external_id=ARGS.aws_external_id)
 
 if '__main__' in __name__:
     ARGS = parse_args()
