@@ -71,58 +71,88 @@ def get_account_number():
 def setup_role_policy(account_number, name='default'):
     ''' create the role and policy in AWS '''
 
-    role_policy_document = load_json('%s.json' % name)
     policy_document = load_json('%s.json' % name)
     policy_arn = 'arn:aws:iam::%s:policy/%s' % (account_number, name)
 
     session = boto3.Session(profile_name=os.environ['AWS_PROFILE'])
     iam = session.client('iam')
 
-    check_role = None
+    # putting the "Allow read-only S3" permissions here to allow us to do string
+    # interpolation on them.
+    read_s3_policy_arn = 'arn:aws:iam::%s:policy/read_s3_%s' % (account_number,
+                                                                name)
+    read_s3_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "s3:Get*",
+                    "s3:List*"
+                ],
+                "Resource": [
+                    "arn:aws:s3:::%s" % name,
+                    "arn:aws:s3:::%s/*" % name
+                ]
+            }
+        ]
+    }
+
+    check_create(conn=iam,
+                 check_func='get_role',
+                 check_args={'RoleName':name},
+                 create_func='create_role',
+                 create_args={'RoleName':name,
+                              'AssumeRolePolicyDocument':json.dumps(
+                                  policy_document)})
+
+    check_create(conn=iam,
+                 check_func='get_policy',
+                 check_args={'PolicyArn':policy_arn},
+                 create_func='create_policy',
+                 create_args={'PolicyName':name,
+                              'PolicyDocument':json.dumps(policy_document)})
+
+    check_create(conn=iam,
+                 check_func='get_policy',
+                 check_args={'PolicyArn':read_s3_policy_arn},
+                 create_func='create_policy',
+                 create_args={'PolicyName':"read_s3_%s" % name,
+                              'PolicyDocument':json.dumps(read_s3_policy)})
+
+    check_create(conn=iam,
+                 check_func='get_role_policy',
+                 check_args={'RoleName':name, 'PolicyName':name},
+                 create_func='attach_role_policy',
+                 create_args={'RoleName':name, 'PolicyArn':policy_arn})
+
+    check_create(conn=iam,
+                 check_func='get_role_policy',
+                 check_args={'RoleName':name, 'PolicyName':"read_s3_%s" % name},
+                 create_func='attach_role_policy',
+                 create_args={'RoleName':name,
+                              'PolicyArn':read_s3_policy_arn})
+
+def check_create(**kwargs):
+    ''' check for an AWS object, then create the object if it doesn't exist '''
+    # pylint: disable=star-args
+    check = None
     try:
-        check_role = iam.get_role(RoleName=name)
-        LOG.info(check_role)
+        check = getattr(kwargs['conn'],
+                        kwargs['check_func'])(**kwargs['check_args'])
+        LOG.info(check)
     except botocore.exceptions.ClientError as exc:
         LOG.debug(exc.message)
 
-    if not check_role:
-        # pylint: disable=line-too-long
-        resp = iam.create_role(RoleName=name,
-                               AssumeRolePolicyDocument=json.dumps(role_policy_document))
+    if not check:
+        resp = getattr(kwargs['conn'],
+                       kwargs['create_func'])(**kwargs['create_args'])
         LOG.info(resp)
-        LOG.warn('AWS Role created.')
+        LOG.warn('AWS %s completed.', kwargs['create_func'])
     else:
-        LOG.warn('AWS Role found. Skipping creation.')
+        LOG.warn('AWS %s found a valid object. Skipping creation.',
+                 kwargs['check_func'])
 
-    check_policy = None
-    try:
-        check_policy = iam.get_policy(PolicyArn=policy_arn)
-        LOG.info(check_policy)
-    except botocore.exceptions.ClientError as exc:
-        LOG.debug(exc.message)
-
-    if not check_policy:
-        resp = iam.create_policy(PolicyName=name,
-                                 PolicyDocument=json.dumps(policy_document))
-        LOG.info(resp)
-        LOG.warn('AWS Policy created.')
-    else:
-        LOG.warn('AWS Policy found. Skipping creation.')
-
-    check_role_policy = None
-    try:
-        check_role_policy = iam.get_role_policy(RoleName=name,
-                                                PolicyName=name)
-        LOG.info(check_role_policy)
-    except botocore.exceptions.ClientError as exc:
-        LOG.debug(exc.message)
-
-    if not check_role_policy:
-        resp = iam.attach_role_policy(RoleName=name, PolicyArn=policy_arn)
-        LOG.info(resp)
-        LOG.warn('AWS Role Policy created.')
-    else:
-        LOG.warn('AWS Role Policy found. Skipping creation.')
 
 def setup_cloudhealth_account(api_key, account_number, external_id=None):
     ''' create an account listing in cloudhealth '''
@@ -142,7 +172,7 @@ def setup_cloudhealth_account(api_key, account_number, external_id=None):
             LOG.warn('CloudHealth Account created.')
         except requests.exceptions.HTTPError as exc:
             LOG.error('CloudHealth Account create FAILED: %s', exc.message)
-    elif cht.authentication['assume_role_external_id'] != external_id:
+    elif cht.authentication.get('assume_role_external_id', None) != external_id:
         cht.authentication = {'assume_role_external_id': external_id,
                               'protocol': 'assume_role',
                               'assume_role_arn': 'arn:aws:iam::%s:role/%s' % \
@@ -188,7 +218,7 @@ def main():
             os.environ['AWS_PROFILE'] = ARGS.profile
         account_number = get_account_number()
         LOG.info('using AWS Account: %s', account_number)
-        setup_role_policy(account_number, name=ARGS.name)
+        setup_role_policy(account_number, name=ARGS.aws_role_name)
         setup_cloudhealth_account(api_key, account_number)
     else:
         LOG.warn('No profile specified. Looping through all profiles in credentials file.')
