@@ -10,7 +10,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed
 # under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 # CONDITIONS OF ANY KIND, either express or implied. See the License for the
-# specific language governing permissions and limitations under the License.""
+# specific language governing permissions and limitations under the License.
 
 '''
 This script adds a role to AWS accounts to enable access from cloudhealth
@@ -30,6 +30,10 @@ import requests.exceptions
 
 from cloudhealth import CloudHealthAwsAccount
 
+# From:
+# https://help.cloudhealthtech.com/administration/aws/setup-iam-role-linked.html
+CLOUDHEALTH_AWS_ACCOUNT = '454464851268'
+
 LOG_FORMAT = '%(asctime)-15s [%(levelname)s] (%(name)s.%(funcName)s) %(message)s'
 
 def setup_logging(level=logging.NOTSET):
@@ -40,6 +44,7 @@ def setup_logging(level=logging.NOTSET):
 
 def parse_args():
     ''' parse CLI args '''
+    # pylint: disable=line-too-long
     parser = argparse.ArgumentParser(description='MY SCRIPT DESCRIPTION')
     parser.add_argument('-e', '--external-id', type=str, dest='aws_external_id',
                         help="External ID String for AWS cross-account trust")
@@ -71,32 +76,23 @@ def get_account_number():
 def setup_role_policy(account_number, name='default'):
     ''' create the role and policy in AWS '''
 
+    role_trust_document = {"Version": "2012-10-17",
+                           "Statement": [{
+                               "Sid": "",
+                               "Effect": "Allow",
+                               "Principal": {"AWS": "arn:aws:iam::%s:root" % \
+                                   CLOUDHEALTH_AWS_ACCOUNT},
+                               "Action": "sts:AssumeRole",
+                           }]}
+    if ARGS.aws_external_id:
+        role_trust_document['Statement'][0]['Condition'] = {"StringEquals":{
+            "sts:ExternalId": "%s" % ARGS.aws_external_id}}
+
     policy_document = load_json('%s.json' % name)
     policy_arn = 'arn:aws:iam::%s:policy/%s' % (account_number, name)
 
     session = boto3.Session(profile_name=os.environ['AWS_PROFILE'])
     iam = session.client('iam')
-
-    # putting the "Allow read-only S3" permissions here to allow us to do string
-    # interpolation on them.
-    read_s3_policy_arn = 'arn:aws:iam::%s:policy/read_s3_%s' % (account_number,
-                                                                name)
-    read_s3_policy = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Action": [
-                    "s3:Get*",
-                    "s3:List*"
-                ],
-                "Resource": [
-                    "arn:aws:s3:::%s" % name,
-                    "arn:aws:s3:::%s/*" % name
-                ]
-            }
-        ]
-    }
 
     check_create(conn=iam,
                  check_func='get_role',
@@ -104,7 +100,7 @@ def setup_role_policy(account_number, name='default'):
                  create_func='create_role',
                  create_args={'RoleName':name,
                               'AssumeRolePolicyDocument':json.dumps(
-                                  policy_document)})
+                                  role_trust_document)})
 
     check_create(conn=iam,
                  check_func='get_policy',
@@ -112,26 +108,11 @@ def setup_role_policy(account_number, name='default'):
                  create_func='create_policy',
                  create_args={'PolicyName':name,
                               'PolicyDocument':json.dumps(policy_document)})
-
-    check_create(conn=iam,
-                 check_func='get_policy',
-                 check_args={'PolicyArn':read_s3_policy_arn},
-                 create_func='create_policy',
-                 create_args={'PolicyName':"read_s3_%s" % name,
-                              'PolicyDocument':json.dumps(read_s3_policy)})
-
     check_create(conn=iam,
                  check_func='get_role_policy',
                  check_args={'RoleName':name, 'PolicyName':name},
                  create_func='attach_role_policy',
                  create_args={'RoleName':name, 'PolicyArn':policy_arn})
-
-    check_create(conn=iam,
-                 check_func='get_role_policy',
-                 check_args={'RoleName':name, 'PolicyName':"read_s3_%s" % name},
-                 create_func='attach_role_policy',
-                 create_args={'RoleName':name,
-                              'PolicyArn':read_s3_policy_arn})
 
 def check_create(**kwargs):
     ''' check for an AWS object, then create the object if it doesn't exist '''
@@ -152,7 +133,6 @@ def check_create(**kwargs):
     else:
         LOG.warn('AWS %s found a valid object. Skipping creation.',
                  kwargs['check_func'])
-
 
 def setup_cloudhealth_account(api_key, account_number, external_id=None):
     ''' create an account listing in cloudhealth '''
