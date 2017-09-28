@@ -342,8 +342,8 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
-  - key: openshift.master.smal.status
-    description: Show saml pod status
+  - key: openshift.master.saml.status
+    description: Show SAML pod status
     value_type: int
     applications:
     - Openshift Master
@@ -836,7 +836,7 @@ g_template_openshift_master:
     priority: high
 
   - name: "Openshift SAML pod is in bad healthz status on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.smal.status.last()}>1"
+    expression: "{Template Openshift Master:openshift.master.saml.status.last()}>1"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_saml_status.asciidoc"
     priority: high
 
@@ -846,7 +846,7 @@ g_template_openshift_master:
     priority: warn
 
   - name: "Openshift SAML pod is not running on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.smal.status.last()}<1"
+    expression: "{Template Openshift Master:openshift.master.saml.status.last()}<1"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_saml_status.asciidoc"
     priority: high
 
