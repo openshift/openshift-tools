@@ -32,8 +32,8 @@ class OCCmd(object):
     def __init__(self, raw_cmd, allowed_commands):
         # original command line text
         self._raw_cmd = raw_cmd
-        self._allowed_commands = allowed_commands
-        self._current_command = None
+        self._command_base = raw_cmd.split()[:2] # since we are in oc, there should be 2 min
+        self._current_command = allowed_commands[' '.join(self._command_base)]
         self._current_type = None
         self.runner = None
 
@@ -188,6 +188,9 @@ class OCCmd(object):
             self._params['subject'] = cmd_split[1]
             self.runner = self._current_command['types'][0]['runner']
             self._current_type = self._current_command['types'][0]
+        elif self._params['verb'] == 'version':
+            self.runner = self._current_command['types'][0]['runner']
+            self._current_type = self._current_command['types'][0]
         else:
             self._params['type'] = cmd_split[1]
             for command_type in self._current_command['types']:
@@ -212,31 +215,26 @@ class OCCmd(object):
         #
         # Get all params first
         #
+        cmd_no_namespace = self.get_namespace(self._raw_cmd)
+        log.debug('no ns: %s', cmd_no_namespace)
 
-        for command in self._allowed_commands:
-            if self._raw_cmd.startswith(command['base']):
-                self._current_command = command
+        cmd_no_output_formatting = self.get_output_format(cmd_no_namespace)
+        log.debug('no format: %s', cmd_no_output_formatting)
 
-                cmd_no_namespace = self.get_namespace(self._raw_cmd)
-                log.debug('no ns: %s', cmd_no_namespace)
+        cmd_no_follow = self.get_follow(cmd_no_output_formatting)
+        log.debug('no follow: %s', cmd_no_follow)
 
-                cmd_no_output_formatting = self.get_output_format(cmd_no_namespace)
-                log.debug('no format: %s', cmd_no_output_formatting)
+        cmd_no_container = self.get_container(cmd_no_follow)
+        log.debug('no container: %s', cmd_no_container)
 
-                cmd_no_follow = self.get_follow(cmd_no_output_formatting)
-                log.debug('no follow: %s', cmd_no_follow)
+        #
+        # all that is left should be: 'oc <verb> <type> <optional-subject>'
+        #
+        cmd = self.get_verb_type_subject(cmd_no_container)
 
-                cmd_no_container = self.get_container(cmd_no_follow)
-                log.debug('no container: %s', cmd_no_container)
-
-                #
-                # all that is left should be: 'oc <verb> <type> <optional-subject>'
-                #
-                cmd = self.get_verb_type_subject(cmd_no_container)
-
-                # should be nothing left after we parsed all the tokens
-                if cmd != "":
-                    raise Exception("Unprocessed command tokens left.")
+        # should be nothing left after we parsed all the tokens
+        if cmd != "":
+            raise Exception("Unprocessed command tokens left.")
 
     #pylint: disable=too-many-branches
     def normalized_cmd(self, generic=False):
@@ -407,7 +405,10 @@ class DevGet(object):
         log.debug("Got args: " + str(self._args))
         self.parse_config()
 
-        self._allowed_commands = self.setup_permissions()
+        # populate allowed commands based on user and its roles
+        self._allowed_commands = {}
+        self.setup_permissions()
+
         self._default_params = None
 
         if self._args.startswith('oc'):
@@ -436,22 +437,35 @@ class DevGet(object):
         perm_dict = yaml.load(open(self._config['aclfile_path'], 'r'))
         # create list of allowed commands for the user
         allowed_roles = []
-        for user in perm_dict['users']:
-            if user['username'] == self._user:
-                if user.has_key('roles'):
-                    allowed_roles = user['roles']
-                # the 'ALL' group applies to everyone
-                allowed_roles.append('ALL')
+
+        if any(d['username'] == self._user for d in perm_dict['users']):
+            for user_role in perm_dict['user_roles']:
+                if user_role['username'] == self._user:
+                    allowed_roles = user_role['roles']
+
         log.debug("user: %s roles: %s", self._user, str(allowed_roles))
 
-        commands = []
         # get list of allowed commands for each role
+        # first add commands from ALL, everybody gets this no matter what
+        for role in perm_dict['roles']:
+            if role['name'] == 'ALL':
+                self.add_to_commands(role['commands'])
+
+        # add the other roles' commands but overwrite the same ones,
+        # this is how we overload some commands for some users
         for role in perm_dict['roles']:
             if role['name'] in allowed_roles:
-                commands.extend(role['commands'])
+                self.add_to_commands(role['commands'])
 
-        log.debug("user: %s commands: %s", self._user, str(commands))
-        return commands
+        log.debug("user: %s commands: %s", self._user, str(self._allowed_commands))
+
+    def add_to_commands(self, commandlist):
+        ''' Iterate through command list and add them to allowed_command dict by making
+            their 'base' field the key in dict
+        '''
+        for command in commandlist:
+            commandbase = command['base']
+            self._allowed_commands.update({commandbase: command})
 
     def parse_args(self):
         ''' Parse command line arguments passed in through the
@@ -497,9 +511,10 @@ class DevGet(object):
         '''
         can_run = False
 
-        for command in self._allowed_commands:
+        cmd_first_token = cmd.split()[0]
+        for commandbase, command in self._allowed_commands.iteritems():
             # incoming command starts with one of the known command bases
-            if cmd.startswith(command['base']):
+            if cmd_first_token == commandbase:
                 # found our matched command, set the function that should run it
                 self._runner = command['runner']
                 # remove the matched part, strip whitespace
@@ -539,19 +554,21 @@ class DevGet(object):
                 if len(leftover_tokens) == 0:
                     can_run = True
 
+                # no reason to keep checking all the other commands, so terminate the loop
+                break
+
         return can_run
 
     def cmd_not_allowed(self):
         ''' Print generic info when user isn't able to
             run a command.
         '''
-
         print "\nCommand not supported/allowed"
         print "#############################"
         print "Allowed commands:"
 
-        for command in self._allowed_commands:
-            outputline = '{}'.format(command['base'])
+        for commandbase, command in self._allowed_commands.iteritems():
+            outputline = '{}'.format(commandbase)
             if command.has_key('types'):
                 for cmdtype in command['types']:
                     tmpstr = '{} [{}]'.format(outputline, '/'.join(cmdtype['names']))
