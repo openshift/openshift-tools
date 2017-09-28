@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.101
+Version:       0.1.102
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -458,6 +458,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Sep 28 2017 Matt Woodson <mwoodson@redhat.com> 0.1.102-1
+- cicd: added some extra functions (mwoodson@redhat.com)
+- fixing logic to enable oc logs to work right (ihorvath@redhat.com)
+
 * Tue Sep 26 2017 Kenny Woodson <kwoodson@redhat.com> 0.1.101-1
 - handle multiple hawkular password file locations (dyocum@redhat.com)
 - better logic (dyocum@redhat.com)
