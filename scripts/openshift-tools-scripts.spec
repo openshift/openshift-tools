@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.102
+Version:       0.1.103
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -456,6 +456,11 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Sun Oct 01 2017 Drew Anderson <dranders@redhat.com> 0.1.103-1
+- Script re-write * remove test code * use logger * use library functions
+  OCUtil * check Deployment Config * show caught errors from curl function *
+  verbosity levels * rename smal to saml (dranders@redhat.com)
+
 * Thu Sep 28 2017 Matt Woodson <mwoodson@redhat.com> 0.1.102-1
 - cicd: added some extra functions (mwoodson@redhat.com)
 - fixing logic to enable oc logs to work right (ihorvath@redhat.com)
