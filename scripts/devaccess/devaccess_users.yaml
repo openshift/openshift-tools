@@ -59,6 +59,11 @@ roles:
           namespaces:
             - all
 
+    - base: oc version
+      types:
+        - names:
+            - ignoreme
+          runner: oc_get_generic
     - base: oc describe
       types:
         - names:
@@ -186,15 +191,38 @@ roles:
       switches:
         - member
         - list
+    - base: curl
+      runner: safe_command
+      switches:
+        - http://169.254.169.254/latest/meta-data/instance-id
+        - http://169.254.169.254/latest/meta-data/instance-type
 
 - name: nobody_role
   commands:
-  - uname
+    - base: uname
+      runner: safe_command
+
+- name: NETWORK
+  commands:
+    - base: curl
+      runner: safe_command
+      leftover:
+        - ^[a-zA-Z0-9._-/]*$
 
 users:
-- username: nobody
-  roles:
-  - nobody_role
-- username: noroleuser
+- username: user1
+- username: user2
+- username: user3
 
-  
+
+user_roles:
+  - username: user1
+    roles:
+      - NETWORK
+  - username: user2
+    roles:
+      - STUFF
+
+# I know this doesn't seem to make sense, to separate these two structure, sadly
+# our config management gets the users and the roles from separate sources, changing
+# it here was easier for now, than rearchitecting the other end
