@@ -18,6 +18,11 @@
     name: docker
     state: started
 
+- name: Ensure docker is enabled to start on boot
+  service:
+    name: docker
+    state: enabled
+
 - name: docker info
   command: docker info
   register: dockerinfo
