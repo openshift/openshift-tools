@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: Andrew Butcher
+  description: OpenShift NFS Server
+  company: Red Hat, Inc.
+  license: Apache License, Version 2.0
+  min_ansible_version: 2.2
+  platforms:
+  - name: EL
+    versions:
+    - 7
+dependencies:
+- role: os_firewall
+  os_firewall_allow:
+  - service: nfs
+    port: "2049/tcp"
+- role: openshift_hosted_facts
+- role: openshift_repos
