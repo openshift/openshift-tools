@@ -1477,7 +1477,12 @@ class OCObject(OpenShiftCLI):
         if files:
             return self._create(files[0])
 
-        content['data'] = yaml.dump(content['data'])
+
+        #pylint: disable=no-member
+        if hasattr(yaml, 'RoundTripDumper'):
+            content['data'] = yaml.dump(content['data'], Dumper=yaml.RoundTripDumper)
+        else:
+            content['data'] = yaml.safe_dump(content['data'], default_flow_style=False)
         content_file = Utils.create_tmp_files_from_contents(content)[0]
 
         return self._create(content_file['path'])
