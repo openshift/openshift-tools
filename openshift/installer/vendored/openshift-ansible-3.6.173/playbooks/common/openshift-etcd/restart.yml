@@ -1,0 +1,9 @@
+---
+- name: Restart etcd
+  hosts: oo_etcd_to_config
+  serial: 1
+  tasks:
+    - name: restart etcd
+      service:
+        name: "{{ 'etcd_container' if openshift.common.etcd_runtime == 'docker' else 'etcd' }}"
+        state: restarted
