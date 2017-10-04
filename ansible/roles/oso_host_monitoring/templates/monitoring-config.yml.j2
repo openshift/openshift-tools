@@ -457,6 +457,7 @@ host_monitoring_cron:
   hour: "0"
   minute: "0"
   job: ops-runner -f -s 120 -n oesev.snapshot.daily ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule daily
+  state: absent 
 
 - name: "Snapshot EBS volumes tagged with weekly"
   weekday: "0"
