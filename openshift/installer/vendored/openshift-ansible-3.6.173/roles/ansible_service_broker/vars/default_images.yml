@@ -1,0 +1,14 @@
+---
+
+__ansible_service_broker_image_prefix: ansibleplaybookbundle/
+__ansible_service_broker_image_tag: latest
+
+__ansible_service_broker_etcd_image_prefix: quay.io/coreos/
+__ansible_service_broker_etcd_image_tag: latest
+__ansible_service_broker_etcd_image_etcd_path: /usr/local/bin/etcd
+
+__ansible_service_broker_registry_type: dockerhub
+__ansible_service_broker_registry_url: null
+__ansible_service_broker_registry_user: null
+__ansible_service_broker_registry_password: null
+__ansible_service_broker_registry_organization: null
