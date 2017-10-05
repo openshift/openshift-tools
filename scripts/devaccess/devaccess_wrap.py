@@ -439,9 +439,10 @@ class DevGet(object):
         allowed_roles = []
 
         if any(d['username'] == self._user for d in perm_dict['users']):
-            for user_role in perm_dict['user_roles']:
-                if user_role['username'] == self._user:
-                    allowed_roles = user_role['roles']
+            if perm_dict['user_roles'] is not None:
+                for user_role in perm_dict['user_roles']:
+                    if user_role['username'] == self._user:
+                        allowed_roles = user_role['roles']
 
         log.debug("user: %s roles: %s", self._user, str(allowed_roles))
 
@@ -505,13 +506,19 @@ class DevGet(object):
         self._user = user
 
 
-    #pylint: disable=too-many-nested-blocks
+    # pylint: disable=too-many-nested-blocks
+    # pylint: disable=too-many-branches
     def can_run_cmd(self, cmd):
         ''' Return True/False for whether user is allowed to run the command
         '''
         can_run = False
 
-        cmd_first_token = cmd.split()[0]
+        try:
+            cmd_first_token = cmd.split()[0]
+        except IndexError:
+            log.exception('Cannot run command: %s', cmd)
+            return can_run
+
         for commandbase, command in self._allowed_commands.iteritems():
             # incoming command starts with one of the known command bases
             if cmd_first_token == commandbase:
