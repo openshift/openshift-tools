@@ -1,0 +1,75 @@
+allowDisabledDocker: false
+apiVersion: v1
+{% if openshift.common.version_gte_3_6 %}
+dnsBindAddress: 127.0.0.1:53
+dnsRecursiveResolvConf: /etc/origin/node/resolv.conf
+{% endif %}
+dnsDomain: {{ openshift.common.dns_domain }}
+{% if 'dns_ip' in openshift.node %}
+dnsIP: {{ openshift.node.dns_ip }}
+{% endif %}
+dockerConfig:
+  execHandlerName: ""
+iptablesSyncPeriod: "{{ openshift.node.iptables_sync_period }}"
+imageConfig:
+  format: {{ openshift.node.registry_url }}
+  latest: false
+kind: NodeConfig
+kubeletArguments: {{ openshift.node.kubelet_args | default(None) | to_padded_yaml(level=1) }}
+{% if openshift_use_crio | default(False) %}
+  container-runtime:
+  - remote
+  container-runtime-endpoint:
+  - /var/run/crio.sock
+  image-service-endpoint:
+  - /var/run/crio.sock
+  node-labels:
+  - router=true
+  - registry=true
+  runtime-request-timeout:
+  - 10m
+{% endif %}
+{% if openshift.common.version_gte_3_3_or_1_3 | bool %}
+masterClientConnectionOverrides:
+  acceptContentTypes: application/vnd.kubernetes.protobuf,application/json
+  contentType: application/vnd.kubernetes.protobuf
+  burst: 200
+  qps: 100
+{% endif %}
+masterKubeConfig: system:node:{{ openshift.common.hostname }}.kubeconfig
+{% if openshift_node_use_openshift_sdn | bool %}
+networkPluginName: {{ openshift_node_sdn_network_plugin_name }}
+{% endif %}
+# networkConfig struct introduced in origin 1.0.6 and OSE 3.0.2 which
+# deprecates networkPluginName above. The two should match.
+networkConfig:
+   mtu: {{ openshift.node.sdn_mtu }}
+{% if openshift_node_use_openshift_sdn | bool or openshift_node_use_nuage | bool or openshift_node_use_contiv | bool or openshift_node_sdn_network_plugin_name == 'cni' %}
+   networkPluginName: {{ openshift_node_sdn_network_plugin_name }}
+{% endif %}
+{% if openshift.node.set_node_ip | bool %}
+nodeIP: {{ openshift.common.ip }}
+{% endif %}
+nodeName: {{ openshift.node.nodename }}
+podManifestConfig:
+servingInfo:
+  bindAddress: 0.0.0.0:10250
+  certFile: server.crt
+  clientCA: ca.crt
+  keyFile: server.key
+{% if openshift_node_min_tls_version is defined %}
+  minTLSVersion: {{ openshift_node_min_tls_version }}
+{% endif %}
+{% if openshift_node_cipher_suites is defined %}
+  cipherSuites:
+{% for cipher_suite in openshift_node_cipher_suites %}
+  - {{ cipher_suite }}
+{% endfor %}
+{% endif %}
+volumeDirectory: {{ openshift_node_data_dir }}/openshift.local.volumes
+proxyArguments:
+  proxy-mode:
+     - {{ openshift.node.proxy_mode }}
+volumeConfig:
+  localQuota:
+    perFSGroup: {{ openshift.node.local_quota_per_fsgroup }}

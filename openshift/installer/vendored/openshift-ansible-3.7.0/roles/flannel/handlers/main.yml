@@ -1,0 +1,14 @@
+---
+- name: restart flanneld
+  become: yes
+  systemd: name=flanneld state=restarted
+
+- name: restart docker
+  become: yes
+  systemd:
+    name: "{{ openshift.docker.service_name }}"
+    state: restarted
+  register: l_docker_restart_docker_in_flannel_result
+  until: not l_docker_restart_docker_in_flannel_result | failed
+  retries: 3
+  delay: 30
