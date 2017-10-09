@@ -69,5 +69,5 @@
     owner: root
     group: libra_ops
     recurse: yes
-    mode: '2770'
+    mode: '2775'
   when: oo_inventory_cache_location is defined
