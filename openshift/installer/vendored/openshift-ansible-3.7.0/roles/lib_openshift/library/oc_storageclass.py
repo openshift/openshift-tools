@@ -729,7 +729,7 @@ class Yedit(object):  # pragma: no cover
                 yamlfile.yaml_dict = content
 
             if params['key']:
-                rval = yamlfile.get(params['key']) or {}
+                rval = yamlfile.get(params['key'])
 
             return {'changed': False, 'result': rval, 'state': state}
 
@@ -1272,13 +1272,12 @@ class Utils(object):  # pragma: no cover
     @staticmethod
     def openshift_installed():
         ''' check if openshift is installed '''
-        import yum
+        import rpm
 
-        yum_base = yum.YumBase()
-        if yum_base.rpmdb.searchNevra(name='atomic-openshift'):
-            return True
+        transaction_set = rpm.TransactionSet()
+        rpmquery = transaction_set.dbMatch("name", "atomic-openshift")
 
-        return False
+        return rpmquery.count() > 0
 
     # Disabling too-many-branches.  This is a yaml dictionary comparison function
     # pylint: disable=too-many-branches,too-many-return-statements,too-many-statements
@@ -1406,7 +1405,7 @@ class OpenShiftCLIConfig(object):
         for key in sorted(self.config_options.keys()):
             data = self.config_options[key]
             if data['include'] \
-               and (data['value'] or isinstance(data['value'], int)):
+               and (data['value'] is not None or isinstance(data['value'], int)):
                 if key == ascommalist:
                     val = ','.join(['{}={}'.format(kk, vv) for kk, vv in sorted(data['value'].items())])
                 else:
