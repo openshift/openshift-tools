@@ -13,12 +13,12 @@
   - name: Evaluate groups - g_master_hosts or g_new_master_hosts required
     fail:
       msg: This playbook requires g_master_hosts or g_new_master_hosts to be set
-    when: g_master_hosts is not defined or g_new_master_hosts is not defined
+    when: g_master_hosts is not defined and g_new_master_hosts is not defined
 
   - name: Evaluate groups - g_node_hosts or g_new_node_hosts required
     fail:
       msg: This playbook requires g_node_hosts or g_new_node_hosts to be set
-    when: g_node_hosts is not defined or g_new_node_hosts is not defined
+    when: g_node_hosts is not defined and g_new_node_hosts is not defined
 
   - name: Evaluate groups - g_lb_hosts required
     fail:
@@ -33,12 +33,25 @@
   - name: Evaluate groups - g_nfs_hosts is single host
     fail:
       msg: The nfs group must be limited to one host
-    when: (groups[g_nfs_hosts] | default([])) | length > 1
+    when: g_nfs_hosts | default([]) | length > 1
 
   - name: Evaluate groups - g_glusterfs_hosts required
     fail:
       msg: This playbook requires g_glusterfs_hosts to be set
     when: g_glusterfs_hosts is not defined
+
+  - name: Evaluate groups - Fail if no etcd hosts group is defined
+    fail:
+      msg: >
+        Running etcd as an embedded service is no longer supported. If this is a
+        new install please define an 'etcd' group with either one or three
+        hosts. These hosts may be the same hosts as your masters. If this is an
+        upgrade you may set openshift_master_unsupported_embedded_etcd=true
+        until a migration playbook becomes available.
+    when:
+    - g_etcd_hosts | default([]) | length not in [3,1]
+    - not openshift_master_unsupported_embedded_etcd | default(False)
+    - not openshift_node_bootstrap | default(False)
 
   - name: Evaluate oo_all_hosts
     add_host:
@@ -117,7 +130,7 @@
     add_host:
       name: "{{ item }}"
       groups: oo_etcd_hosts_to_backup
-    with_items: "{{ groups.oo_etcd_to_config if groups.oo_etcd_to_config is defined and groups.oo_etcd_to_config | length > 0 else groups.oo_first_master }}"
+    with_items: "{{ groups.oo_etcd_to_config if groups.oo_etcd_to_config is defined and groups.oo_etcd_to_config | length > 0 else (groups.oo_first_master | default([])) }}"
     changed_when: False
 
   - name: Evaluate oo_nodes_to_config
@@ -173,5 +186,5 @@
       groups: oo_etcd_to_migrate
       ansible_ssh_user: "{{ g_ssh_user | default(omit) }}"
       ansible_become: "{{ g_sudo | default(omit) }}"
-    with_items: "{{ groups.oo_etcd_to_config if groups.oo_etcd_to_config | default([]) | length != 0 else groups.oo_first_master }}"
+    with_items: "{{ groups.oo_etcd_to_config if groups.oo_etcd_to_config | default([]) | length != 0 else (groups.oo_first_master |default([]))}}"
     changed_when: no

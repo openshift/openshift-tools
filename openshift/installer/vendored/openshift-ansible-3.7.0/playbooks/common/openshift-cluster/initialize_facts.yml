@@ -93,8 +93,8 @@
         state: present
       with_items:
       - iproute
-      - "{{ 'python3-dbus' if ansible_distribution == 'Fedora' else 'python-dbus' }}"
-      - PyYAML
+      - "{{ 'python3-dbus' if ansible_distribution == 'Fedora' else 'dbus-python' }}"
+      - "{{ 'python3-PyYAML' if ansible_distribution == 'Fedora' else 'PyYAML' }}"
       - yum-utils
 
     - name: Ensure various deps for running system containers are installed
@@ -108,14 +108,27 @@
       when:
       - l_any_system_container | bool
 
+  - name: Default system_images_registry to a enterprise registry
+    set_fact:
+      system_images_registry: "registry.access.redhat.com"
+    when:
+    - system_images_registry is not defined
+    - openshift_deployment_type == "openshift-enterprise"
+
+  - name: Default system_images_registry to community registry
+    set_fact:
+      system_images_registry: "docker.io"
+    when:
+    - system_images_registry is not defined
+    - openshift_deployment_type == "origin"
+
   - name: Gather Cluster facts and set is_containerized if needed
     openshift_facts:
       role: common
       local_facts:
-        debug_level: "{{ openshift_debug_level | default(2) }}"
         deployment_type: "{{ openshift_deployment_type }}"
         deployment_subtype: "{{ openshift_deployment_subtype | default(None) }}"
-        cluster_id: "{{ openshift_cluster_id | default('default') }}"
+        cli_image: "{{ osm_image | default(None) }}"
         hostname: "{{ openshift_hostname | default(None) }}"
         ip: "{{ openshift_ip | default(None) }}"
         is_containerized: "{{ l_is_containerized | default(None) }}"
@@ -124,7 +137,7 @@
         is_master_system_container: "{{ l_is_master_system_container | default(false) }}"
         is_etcd_system_container: "{{ l_is_etcd_system_container | default(false) }}"
         etcd_runtime: "{{ l_etcd_runtime }}"
-        system_images_registry: "{{ system_images_registry | default('') }}"
+        system_images_registry: "{{ system_images_registry }}"
         public_hostname: "{{ openshift_public_hostname | default(None) }}"
         public_ip: "{{ openshift_public_ip | default(None) }}"
         portal_net: "{{ openshift_portal_net | default(openshift_master_portal_net) | default(None) }}"
@@ -133,8 +146,6 @@
         no_proxy: "{{ openshift_no_proxy | default(None) }}"
         generate_no_proxy_hosts: "{{ openshift_generate_no_proxy_hosts | default(True) }}"
         no_proxy_internal_hostnames: "{{ openshift_no_proxy_internal_hostnames | default(None) }}"
-        sdn_network_plugin_name: "{{ os_sdn_network_plugin_name | default(None) }}"
-        use_openshift_sdn: "{{ openshift_use_openshift_sdn | default(None) }}"
 
   - name: initialize_facts set_fact repoquery command
     set_fact:
@@ -142,4 +153,4 @@
 
   - name: initialize_facts set_fact on openshift_docker_hosted_registry_network
     set_fact:
-      openshift_docker_hosted_registry_network: "{{ hostvars[groups.oo_first_master.0].openshift.common.portal_net }}"
+      openshift_docker_hosted_registry_network: "{{ '' if 'oo_first_master' not in groups else hostvars[groups.oo_first_master.0].openshift.common.portal_net }}"

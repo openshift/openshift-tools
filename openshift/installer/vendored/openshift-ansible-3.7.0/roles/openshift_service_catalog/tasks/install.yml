@@ -6,8 +6,6 @@
   register: mktemp
   changed_when: False
 
-- include: wire_aggregator.yml
-
 - name: Set default image variables based on deployment_type
   include_vars: "{{ item }}"
   with_first_found:
@@ -25,10 +23,22 @@
     name: "kube-service-catalog"
     node_selector: ""
 
-- name: Make kube-service-catalog project network global
-  command: >
-    oc adm pod-network make-projects-global kube-service-catalog
-  when: os_sdn_network_plugin_name | default('') == 'redhat/openshift-ovs-multitenant'
+- when: os_sdn_network_plugin_name == 'redhat/openshift-ovs-multitenant'
+  block:
+    - name: Waiting for netnamespace kube-service-catalog to be ready
+      oc_obj:
+        kind: netnamespace
+        name: kube-service-catalog
+        state: list
+      register: get_output
+      until: not get_output.results.stderr is defined
+      retries: 30
+      delay: 1
+      changed_when: false
+
+    - name: Make kube-service-catalog project network global
+      command: >
+        oc adm pod-network make-projects-global kube-service-catalog
 
 - include: generate_certs.yml
 
@@ -112,15 +122,6 @@
   when:
     - not admin_yaml.results.results[0] | oo_contains_rule(['servicecatalog.k8s.io'], ['instances', 'bindings'], ['create', 'update', 'delete', 'get', 'list', 'watch']) or not admin_yaml.results.results[0] | oo_contains_rule(['settings.k8s.io'], ['podpresets'], ['create', 'update', 'delete', 'get', 'list', 'watch'])
 
-- shell: >
-    oc get policybindings/kube-system:default -n kube-system || echo "not found"
-  register: get_kube_system
-  changed_when: no
-
-- command: >
-    oc create policybinding kube-system -n kube-system
-  when: "'not found' in get_kube_system.stdout"
-
 - oc_adm_policy_user:
     namespace: kube-service-catalog
     resource_kind: scc
@@ -168,19 +169,19 @@
       - "{{ mktemp.stdout }}/service_catalog_api_server.yml"
     delete_after: yes
 
-- template:
-    src: api_server_service.j2
-    dest: "{{ mktemp.stdout }}/service_catalog_api_service.yml"
-
 - name: Set Service Catalog API Server service
-  oc_obj:
-    state: present
-    namespace: "kube-service-catalog"
-    kind: service
+  oc_service:
     name: apiserver
-    files:
-      - "{{ mktemp.stdout }}/service_catalog_api_service.yml"
-    delete_after: yes
+    namespace: kube-service-catalog
+    state: present
+    ports:
+      - name: secure
+        port: 443
+        protocol: TCP
+        targetPort: 6443
+    selector:
+      app: apiserver
+    session_affinity: None
 
 - template:
     src: api_server_route.j2
@@ -216,19 +217,19 @@
       - "{{ mktemp.stdout }}/controller_manager.yml"
     delete_after: yes
 
-- template:
-    src: controller_manager_service.j2
-    dest: "{{ mktemp.stdout }}/controller_manager_service.yml"
-
 - name: Set Controller Manager service
-  oc_obj:
-    state: present
-    namespace: "kube-service-catalog"
-    kind: service
+  oc_service:
     name: controller-manager
-    files:
-      - "{{ mktemp.stdout }}/controller_manager_service.yml"
-    delete_after: yes
+    namespace: kube-service-catalog
+    state: present
+    ports:
+      - port: 6443
+        protocol: TCP
+        targetPort: 6443
+    selector:
+      app: controller-manager
+    session_affinity: None
+    service_type: ClusterIP
 
 - include: start_api_server.yml
 

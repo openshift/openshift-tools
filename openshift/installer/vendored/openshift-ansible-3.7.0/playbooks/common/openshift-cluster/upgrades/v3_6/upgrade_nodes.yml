@@ -48,6 +48,10 @@
   tags:
   - pre_upgrade
 
+- include: ../pre/verify_health_checks.yml
+  tags:
+  - pre_upgrade
+
 - include: ../disable_node_excluders.yml
   tags:
   - pre_upgrade
@@ -90,7 +94,7 @@
 - name: Verify docker upgrade targets
   hosts: oo_nodes_to_upgrade
   tasks:
-  - include: ../pre/verify_docker_upgrade_targets.yml
+  - include: ../pre/tasks/verify_docker_upgrade_targets.yml
   tags:
   - pre_upgrade
 

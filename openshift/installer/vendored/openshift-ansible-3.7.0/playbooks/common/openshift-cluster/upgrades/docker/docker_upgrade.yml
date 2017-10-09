@@ -4,7 +4,6 @@
     # Do not allow adding hosts during upgrade.
     g_new_master_hosts: []
     g_new_node_hosts: []
-    openshift_cluster_id: "{{ cluster_id | default('default') }}"
 
 - include: ../initialize_nodes_to_upgrade.yml
 
@@ -60,7 +59,7 @@
     retries: 60
     delay: 60
 
-  - include: upgrade.yml
+  - include: tasks/upgrade.yml
     when: l_docker_upgrade is defined and l_docker_upgrade | bool
 
   - name: Set node schedulability
