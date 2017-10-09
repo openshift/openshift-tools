@@ -1,1 +1,0 @@
-../../lib_openshift/library/oc_atomic_container.py
