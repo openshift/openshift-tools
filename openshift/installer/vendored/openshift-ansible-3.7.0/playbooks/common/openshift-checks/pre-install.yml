@@ -1,0 +1,11 @@
+---
+- name: run OpenShift pre-install checks
+  hosts: oo_all_hosts
+  roles:
+  - openshift_health_checker
+  vars:
+  - r_openshift_health_checker_playbook_context: pre-install
+  post_tasks:
+  - action: openshift_health_check
+    args:
+      checks: ['@preflight']

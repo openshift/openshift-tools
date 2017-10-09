@@ -1,0 +1,65 @@
+---
+# TODO: refactor this into its own include
+# and pass a variable for ctx
+- name: Verify Requirements
+  hosts: oo_all_hosts
+  roles:
+  - openshift_health_checker
+  vars:
+  - r_openshift_health_checker_playbook_context: install
+  post_tasks:
+  - action: openshift_health_check
+    args:
+      checks:
+      - disk_availability
+      - memory_availability
+      - package_availability
+      - package_version
+      - docker_image_availability
+      - docker_storage
+
+- include: ../openshift-etcd/ca.yml
+
+- include: ../openshift-etcd/certificates.yml
+
+- include: ../openshift-etcd/config.yml
+
+- include: ../openshift-nfs/config.yml
+  when: groups.oo_nfs_to_config | default([]) | count > 0
+
+- include: ../openshift-loadbalancer/config.yml
+  when: groups.oo_lb_to_config | default([]) | count > 0
+
+- include: ../openshift-master/ca.yml
+
+- include: ../openshift-master/certificates.yml
+
+- include: ../openshift-master/config.yml
+
+- include: ../openshift-master/additional_config.yml
+
+- include: ../openshift-node/certificates.yml
+
+- include: ../openshift-node/config.yml
+
+- include: ../openshift-glusterfs/config.yml
+  when: groups.oo_glusterfs_to_config | default([]) | count > 0
+
+- include: openshift_hosted.yml
+
+- include: openshift_metrics.yml
+  when: openshift_metrics_install_metrics | default(false) | bool
+
+- include: openshift_logging.yml
+  when: openshift_logging_install_logging | default(false) | bool
+
+- include: service_catalog.yml
+  when: openshift_enable_service_catalog | default(false) | bool
+
+- name: Print deprecated variable warning message if necessary
+  hosts: oo_first_master
+  gather_facts: no
+  tasks:
+  - debug: msg="{{__deprecation_message}}"
+    when:
+    - __deprecation_message | default ('') | length > 0

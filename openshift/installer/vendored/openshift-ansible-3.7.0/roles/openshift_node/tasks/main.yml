@@ -1,0 +1,100 @@
+---
+- fail:
+    msg: "SELinux is disabled, This deployment type requires that SELinux is enabled."
+  when:
+    - (not ansible_selinux or ansible_selinux.status != 'enabled')
+    - deployment_type == 'openshift-enterprise'
+    - not openshift_use_crio | default(false)
+
+- name: setup firewall
+  include: firewall.yml
+  static: yes
+
+#### Disable SWAP #####
+# https://docs.openshift.com/container-platform/3.4/admin_guide/overcommit.html#disabling-swap-memory
+- name: Check for swap usage
+  command: grep "^[^#].*swap" /etc/fstab
+  # grep: match any lines which don't begin with '#' and contain 'swap'
+  changed_when: false
+  failed_when: false
+  register: swap_result
+
+- when:
+    - swap_result.stdout_lines | length > 0
+    - openshift_disable_swap | default(true) | bool
+  block:
+    - name: Disable swap
+      command: swapoff --all
+
+    - name: Remove swap entries from /etc/fstab
+      replace:
+        dest: /etc/fstab
+        regexp: '(^[^#].*swap.*)'
+        replace: '# \1'
+        backup: yes
+
+    - name: Add notice about disabling swap
+      lineinfile:
+        dest: /etc/fstab
+        line: '# OpenShift-Ansible Installer disabled swap per overcommit guidelines'
+        state: present
+#### End Disable Swap Block ####
+
+- name: include node installer
+  include: install.yml
+
+- name: Restart cri-o
+  systemd:
+    name: cri-o
+    enabled: yes
+    state: restarted
+  when: openshift_use_crio | default(false)
+
+- name: restart NetworkManager to ensure resolv.conf is present
+  systemd:
+    name: NetworkManager
+    enabled: yes
+    state: restarted
+  when: openshift_node_bootstrap | bool
+
+# The atomic-openshift-node service will set this parameter on
+# startup, but if the network service is restarted this setting is
+# lost. Reference: https://bugzilla.redhat.com/show_bug.cgi?id=1372388
+- sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+    sysctl_file: "/etc/sysctl.d/99-openshift.conf"
+    reload: yes
+
+- name: include bootstrap node config
+  include: bootstrap.yml
+  when: openshift_node_bootstrap
+
+- include: registry_auth.yml
+
+- name: include standard node config
+  include: config.yml
+  when: not openshift_node_bootstrap
+
+#### Storage class plugins here ####
+- name: NFS storage plugin configuration
+  include: storage_plugins/nfs.yml
+  tags:
+    - nfs
+
+- name: GlusterFS storage plugin configuration
+  include: storage_plugins/glusterfs.yml
+  when: "'glusterfs' in openshift.node.storage_plugin_deps"
+
+- name: Ceph storage plugin configuration
+  include: storage_plugins/ceph.yml
+  when: "'ceph' in openshift.node.storage_plugin_deps"
+
+- name: iSCSI storage plugin configuration
+  include: storage_plugins/iscsi.yml
+  when: "'iscsi' in openshift.node.storage_plugin_deps"
+
+##### END Storage #####
+
+- include: config/workaround-bz1331590-ovs-oom-fix.yml
+  when: openshift_node_use_openshift_sdn | default(true) | bool

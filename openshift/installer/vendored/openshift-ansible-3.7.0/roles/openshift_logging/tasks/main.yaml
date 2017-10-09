@@ -1,0 +1,44 @@
+---
+- fail:
+    msg: Only one Fluentd nodeselector key pair should be provided
+  when: openshift_logging_fluentd_nodeselector.keys() | count > 1
+
+- name: Set default image variables based on deployment_type
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ openshift_deployment_type | default(deployment_type) }}.yml"
+    - "default_images.yml"
+
+- name: Set logging image facts
+  set_fact:
+    openshift_logging_image_prefix: "{{ openshift_logging_image_prefix | default(__openshift_logging_image_prefix) }}"
+    openshift_logging_image_version: "{{ openshift_logging_image_version | default(__openshift_logging_image_version) }}"
+
+- name: Create temp directory for doing work in
+  command: mktemp -d /tmp/openshift-logging-ansible-XXXXXX
+  register: mktemp
+  changed_when: False
+  check_mode: no
+  tags: logging_init
+
+- debug: msg="Created temp dir {{mktemp.stdout}}"
+
+- name: Create local temp directory for doing work in
+  local_action: command mktemp -d /tmp/openshift-logging-ansible-XXXXXX
+  register: local_tmp
+  changed_when: False
+  check_mode: no
+  become: no
+
+- include: install_logging.yaml
+  when:
+    - openshift_logging_install_logging | default(false) | bool
+
+- include: delete_logging.yaml
+  when:
+    - not openshift_logging_install_logging | default(false) | bool
+
+- name: Cleaning up local temp dir
+  local_action: file path="{{local_tmp.stdout}}" state=absent
+  tags: logging_cleanup
+  changed_when: False
