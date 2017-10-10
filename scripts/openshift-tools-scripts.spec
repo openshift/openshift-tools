@@ -62,6 +62,7 @@ cp -p monitoring/cron-send-project-stats.py %{buildroot}/usr/bin/cron-send-proje
 cp -p monitoring/cron-openshift-pruner.py %{buildroot}/usr/bin/cron-openshift-pruner
 cp -p remote-heal/remote-healer.py %{buildroot}/usr/bin/remote-healer
 cp -p remote-heal/heal_for_docker_use_too_much_memory.yml %{buildroot}/usr/bin/heal_for_docker_use_too_much_memory.yml
+cp -p remote-heal/heal_for_heartbeat.yml %{buildroot}/usr/bin/heal_for_heartbeat.yml
 cp -p remote-heal/heal_cleanup_rootvg-var.yml %{buildroot}/usr/bin/heal_cleanup_rootvg-var.yml
 cp -p cloud/aws/ops-ec2-copy-ami-to-all-regions.py %{buildroot}/usr/bin/ops-ec2-copy-ami-to-all-regions
 cp -p cloud/aws/ops-ec2-snapshot-ebs-volumes.py %{buildroot}/usr/bin/ops-ec2-snapshot-ebs-volumes
@@ -156,6 +157,7 @@ OpenShift Tools Monitoring Remoteheal Scripts
 %files monitoring-remoteheal
 /usr/bin/remote-healer
 /usr/bin/heal_for_docker_use_too_much_memory.yml
+/usr/bin/heal_for_heartbeat.yml
 /usr/bin/heal_cleanup_rootvg-var.yml
 %config(noreplace)/etc/openshift_tools/remote_healer.conf
 

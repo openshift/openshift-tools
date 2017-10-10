@@ -1,0 +1,108 @@
+---
+#prybook will try heal for the hear.beat.ping alert
+# * oso-moniotoring pod dead (restarted)
+# * atomic-node service dead（restarted)
+# * host lost connection (try to restart the instance)
+# * if this is a zag pod , delete it from the zabbix
+
+
+- name: check if the this is zag pod
+  hosts: localhost
+
+  pre_tasks:
+    - name: Ensure needed variables are set
+      fail:
+        msg: "Value {{ item }} is not set!"
+      when: "{{ item }} is undefined"
+      with_items:
+      - cli_nodename
+
+    - name: check if the alert is a zag pod
+      set_fact :
+        zag_pod_or_not : true
+      when: cli_nodename | search("oso-rhel7-zagg-web")
+#     when: "'oso-rhel7-zagg-web' in cli_nodename"
+
+    - name: pull the openshift-ansible-private repo for the cred
+      git:
+        repo: /srv/git/openshift-ansible-private
+        dest: /tmp/auto-heal-repo/openshift-ansible-private
+        update: yes
+
+    - name: pull the private repo for the cred
+      git:
+        repo: git@github.com:openshift/openshift-ansible-ops.git
+        dest: /tmp/auto-heal-repo/openshift-ansible-ops
+        update: yes
+
+    - name: pull the openshift-tools to get the lib-zabbix module
+      git:
+        repo: git@github.com:openshift/openshift-tools.git
+        dest: /tmp/auto-heal-repo/openshift-tools
+        update: yes
+
+    - name: set the right hostname to run command on
+      set_fact:
+        target_host : "{{ cli_nodename }}"
+
+    - name: set the right hostname to run command on
+      set_fact:
+        target_host : "localhost"
+      when: cli_nodename | search("oso-rhel7-zagg-web")
+
+
+- name: heal for the heartbeat failed
+  hosts: localhost
+
+
+  tasks:
+
+    - set_fact:
+        oo_instance_id: "{{ hostvars[''+cli_nodename].ec2_id }}"
+      when: zag_pod_or_not is not defined
+
+    - name: load private vars
+      include_role:
+          name: /tmp/auto-heal-repo/openshift-tools/ansible/roles/lib_zabbix
+
+    - name: include zabbix info
+      include_vars: /tmp/auto-heal-repo/openshift-ansible-private/private_vars/global/zabbix_server.yml
+
+    - name: try to auto heal
+      block:
+        - name: check if the host is alive
+          wait_for:
+            host: "{{ cli_nodename }}"
+            port: 22
+            timeout: 60
+          when: zag_pod_or_not is not defined
+
+        - name: make sure oso-moniotoring restarted
+          service:
+            name: oso-rhel7-host-monitoring.service
+            state: restarted
+          delegate_to: "{{ cli_nodename }}"
+          when: zag_pod_or_not is not defined
+
+        - name: make sure atomic-openshift-node.service restarted
+          service:
+            name: atomic-openshift-node.service
+            state: restarted
+          delegate_to: "{{ cli_nodename }}"
+          when: zag_pod_or_not is not defined
+
+      rescue:
+        - name: skip the reboot part 
+          debug: msg="something wrong when try to auto-heal"
+      always:
+        - debug: msg="the hostname we are going to delete is {{ cli_nodename }}"
+
+        - name: delete the host from zabbix
+          zbx_host:
+            zbx_server: "{{ g_zbx_monitoring_servers['ops']['api_url'] }}"
+            zbx_user: "{{ g_zbx_monitoring_servers['ops']['user'] }}"
+            zbx_password: "{{ g_zbx_monitoring_servers['ops']['password'] }}"
+            name: "{{ cli_nodename }}"
+            state: absent
+            zbx_debug: True
+          when: zag_pod_or_not is defined
