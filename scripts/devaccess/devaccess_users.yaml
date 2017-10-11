@@ -32,7 +32,7 @@ roles:
         - names:
             - route
             - routes
-          runner: oc_get_routes
+          runner: oc_get_generic
           namespaces:
             - default
             - logging
@@ -58,22 +58,39 @@ roles:
           runner: oc_get_generic
           namespaces:
             - all
-
+        - names:
+            - ep
+            - endpoints
+          runner: oc_get_generic
+          namespaces:
+            - all
+    - base: oc describe
+      types:
+        - names:
+            - clusterresourcequota
+          runner: oc_get_generic
+        - names:
+            - node
+            - nodes
+          runner: oc_get_generic
+    - base: oc logs
+      types:
+        - names:
+            - ignoreme
+          runner: oc_get_generic
+          namespaces:
+            - default
+            - openshift-infra
+            - logging
     - base: oc version
       types:
         - names:
             - ignoreme
           runner: oc_get_generic
-    - base: oc describe
-      types:
-        - names:
-            - clusterresourcequota
-
     - base: rpm
       runner: safe_command
       switches:
         - -qa
-
     - base: cat
       runner: sudo_command
       switches:
@@ -84,14 +101,14 @@ roles:
         - /proc/slabinfo
         - /proc/cmdline
         - /etc/origin/node/node-config.yaml
-
+        - /etc/etcd/etcd.conf
     - base: ethtool
       runner: safe_command
       switches:
         - -i
       leftover:
         - '^eth[0-9]$'
-        - '^enp\ds\d$'
+        - '^enp[0-9]s[0-9]$'
     - base: uptime
       runner: safe_command
     - base: lsblk
@@ -107,6 +124,11 @@ roles:
       runner: safe_command
       switches:
         - -r
+    - base: ps
+      runner: safe_command
+      switches:
+        - auxwww
+        - aux
     - base: df
       runner: safe_command
       switches:
@@ -116,19 +138,25 @@ roles:
       switches:
         - -x
         - -y
+      leftover:
+        - '^[0-9]+$'
     - base: mpstat
       runner: cmd_with_tail
       switches:
         - -P
         - ALL
       leftover:
-        - '^\d+ \d+$'
+        - '^[0-9]+ [0-9]+$'
     - base: vmstat
       runner: cmd_with_tail
       switches:
         - -w
       leftover:
-        - '^\d+ \d+$'
+        - '^[0-9]+ [0-9]+$'
+    - base: ss
+      runner: safe_command
+      switches:
+      - -peaonmi
     - base: hostname
       runner: safe_command
     - base: date
@@ -149,6 +177,10 @@ roles:
         - a
         - neigh
         - show
+    - base: free
+      runner: safe_command
+      switches:
+      - -m
     - base: docker
       runner: sudo_command
       switches:
@@ -169,6 +201,7 @@ roles:
         - -d
         - -r
         - -t
+        - -h
         - -p
         - ALL
     - base: systemctl
@@ -179,23 +212,87 @@ roles:
         - --no-pager
     - base: systemd-cgls
       runner: safe_command
-    - base: ps
+    - base: systemctl
       runner: safe_command
       switches:
-        - auxwww
-        - aux
-    - base: etcdctl
-      runner: sudo_command
-      defaultparams:
-        - --ca-file /etc/etcd/ca.crt  --cert-file /etc/etcd/peer.crt --key-file /etc/etcd/peer.key
+      - status
+      - atomic-openshift-master-api
+      - atomic-openshift-master-controllers
+      - atomic-openshift-node
+      - docker
+      - etcd
+      - ovs-vswitchd
+      - ovsdb-server
+      - NetworkManager
+      - dnsmasq
+    - base: etcdctlx
+      runner: script_command
       switches:
         - member
         - list
+        - alarm
+        - endpoint
+        - health
+        - status
+        - version
     - base: curl
       runner: safe_command
       switches:
+        - -s
         - http://169.254.169.254/latest/meta-data/instance-id
         - http://169.254.169.254/latest/meta-data/instance-type
+    - base: journalctl
+      runner: sudo_command
+      switches:
+      - -u
+      - atomic-openshift-node
+      - atomic-openshift-master-api
+      - atomic-openshift-master-controllers
+      - docker
+      - etcd
+      - ovs-vswitchd
+      - ovsdb-server
+      - NetworkManager
+      - dnsmasq
+      - --since
+      - --until
+      - -1h
+      - -2h
+      - -3h
+      - -6h
+      - -12h
+      - -24h
+      - today
+      - yesterday
+      defaultparams:
+      - --no-pager
+    - base: ping
+      runner: cmd_with_tail
+      leftover:
+      - ^[a-zA-Z0-9.-]+$
+      defaultparams:
+      - -c 5
+    - base: iptables-save
+      runner: sudo_command
+    - base: iptables
+      runner: sudo_command
+      switches:
+        - -nvL
+        - -t
+        - nat
+      leftover:
+        - ^(?!-)[_a-zA-Z0-9-]*$
+    - base: ovs-ofctl
+      runner: sudo_command
+      switches:
+        - dump-flows
+        - br0
+        - -O
+        - OpenFlow13
+    - base: redacted.py
+      runner: script_command
+      switches:
+        - master-config
 
 - name: nobody_role
   commands:
