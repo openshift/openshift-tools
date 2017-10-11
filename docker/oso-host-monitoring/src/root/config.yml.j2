@@ -1,16 +1,19 @@
+{{ generated_header }}
 ---
 - hosts: localhost
   gather_facts: no
   vars:
     hostpkg_bindmnt_dirs:
+{% if base_os == "rhel7" %}
     - /etc/rhsm/ca
     - /etc/pki/entitlement
+{% endif %}
     - /etc/pki/rpm-gpg
     - /etc/rpm
     - /var/lib/rpm
     - /var/lib/yum
     - /var/cache/yum
-
+{% raw %}
     rkhunter_cron:
     - name: check_rkhunter
       minute: "30"
@@ -64,15 +67,16 @@
         patterns: "system*kubeconfig"
         use_regex: False
       register: files
+{% endraw %}
 
     # FIXME: change to use openshift ansible module when it is packaged and installed in host-mon container
     - name: get service IP for the service
       command: >
-        /usr/bin/oc --config={{ files.files.0['path'] }}
+        /usr/bin/oc --config={{ '{{' }} files.files.0['path'] }}
         get svc zagg-service
-        --template='{% raw %}{{.spec.clusterIP}}{% endraw %}'
+        --template='{{ '{%' }} raw %}{{ '{{' }}.spec.clusterIP}}{{ '{%' }} endraw %}'
       register: svcipout
-
+{% raw %}
     - name: change zaggtarget to IP if uses local cluster zagg
       set_fact:
         metric_sender_config="{{metric_sender_config|combine({'zagg':{'url':'http://'+svcipout.stdout}},recursive=True)}}"
@@ -248,3 +252,4 @@
         ALLOWDEVDIR=/dev/shm/.ansible/tmp/account/*
         ALLOWDEVFILE=/dev/shm/.ansible/tmp/*
         ALLOWDEVFILE=/dev/shm/.ansible/tmp/account/*
+{% endraw %}
