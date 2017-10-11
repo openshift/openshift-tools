@@ -43,7 +43,7 @@ stream_port = "10010"
 # This is a mandatory setting as this runtime will be the default one
 # and will also be used for untrusted container workloads if
 # runtime_untrusted_workload is not set.
-runtime = "/usr/libexec/crio/runc"
+runtime = "/usr/bin/runc"
 
 # runtime_untrusted_workload is the OCI compatible runtime used for untrusted
 # container workloads. This is an optional setting, except if
@@ -120,6 +120,11 @@ insecure_registries = [
 {{ l_insecure_crio_registries|default("") }}
 ]
 
+# registries is used to specify a comma separated list of registries to be used
+# when pulling an unqualified image (e.g. fedora:rawhide).
+registries = [
+{{ l_additional_crio_registries|default("") }}
+]
 # The "crio.network" table contains settings pertaining to the
 # management of CNI plugins.
 [crio.network]

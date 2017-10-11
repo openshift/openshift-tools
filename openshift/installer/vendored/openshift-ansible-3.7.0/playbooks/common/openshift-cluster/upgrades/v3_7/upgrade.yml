@@ -21,6 +21,10 @@
   tags:
   - pre_upgrade
 
+- include: ../pre/verify_etcd3_backend.yml
+  tags:
+  - pre_upgrade
+
 - name: Update repos and initialize facts on all hosts
   hosts: oo_masters_to_config:oo_nodes_to_upgrade:oo_etcd_to_config:oo_lb_to_config
   tags:
@@ -44,6 +48,14 @@
     - openshift_generate_no_proxy_hosts | default(True) | bool
 
 - include: ../pre/verify_inventory_vars.yml
+  tags:
+  - pre_upgrade
+
+- include: ../pre/verify_health_checks.yml
+  tags:
+  - pre_upgrade
+
+- include: ../pre/verify_control_plane_running.yml
   tags:
   - pre_upgrade
 
@@ -71,14 +83,6 @@
     # docker is configured and running.
     skip_docker_role: True
 
-- include: ../pre/verify_health_checks.yml
-  tags:
-  - pre_upgrade
-
-- include: ../pre/verify_control_plane_running.yml
-  tags:
-  - pre_upgrade
-
 - include: ../../../openshift-master/validate_restart.yml
   tags:
   - pre_upgrade
@@ -93,7 +97,7 @@
 - name: Verify docker upgrade targets
   hosts: oo_masters_to_config:oo_nodes_to_upgrade:oo_etcd_to_config
   tasks:
-  - include: ../pre/verify_docker_upgrade_targets.yml
+  - include: ../pre/tasks/verify_docker_upgrade_targets.yml
   tags:
   - pre_upgrade
 

@@ -1,0 +1,5 @@
+---
+- name: Create Hosted Resources - openshift_prometheus
+  hosts: oo_first_master
+  roles:
+  - role: openshift_prometheus

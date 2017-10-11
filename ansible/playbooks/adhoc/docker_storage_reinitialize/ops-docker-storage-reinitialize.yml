@@ -88,7 +88,7 @@
     command: "dd if=/dev/zero of='{{ docker_storage_setup.DEVS }}' bs=4096 count=1024"
 
   - name: Make /var/lib/docker mutable
-    command: chattr -i /var/lib/docker
+    command: chattr -iR /var/lib/docker
     ignore_errors: True
 
   - name: Remove custom Online docker settings temporarily

@@ -1,0 +1,8 @@
+---
+config:
+- name: master-config
+  path: /etc/origin/master/master-config.yaml
+  attributes:
+  - oauthConfig.identityProviders.provider.bindPassword
+  - oauthConfig.identityProviders.provider.clientID
+  - oauthConfig.identityProviders.provider.clientSecret
