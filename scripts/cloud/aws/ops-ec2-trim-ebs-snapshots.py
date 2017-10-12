@@ -55,6 +55,8 @@ class TrimmerCli(object):
                             help='The AWS credentials profile to use.')
         parser.add_argument('--dry-run', action='store_true', default=False,
                             help='Say what would have been done, but don\'t actually do it.')
+        parser.add_argument('--delete-orphans-older-than', required=True, type=int,
+                            help='Delete orphaned snapshots if they are older than given days')
 
         self.args = parser.parse_args()
 
@@ -64,6 +66,7 @@ class TrimmerCli(object):
 
         total_expired_snapshots = 0
         total_deleted_snapshots = 0
+        total_orphans_deleted = 0
         total_deletion_errors = 0
 
         if self.args.aws_creds_profile:
@@ -75,17 +78,19 @@ class TrimmerCli(object):
             print "Region: %s:" % region
             ss = ebs_snapshotter.EbsSnapshotter(region.name, verbose=True)
 
-            expired_snapshots, deleted_snapshots, snapshot_deletion_errors = \
+            expired_snapshots, deleted_snapshots, deleted_orphans, snapshot_deletion_errors = \
                 ss.trim_snapshots(hourly_backups=self.args.keep_hourly, \
                                   daily_backups=self.args.keep_daily, \
                                   weekly_backups=self.args.keep_weekly, \
                                   monthly_backups=self.args.keep_monthly, \
-                                  dry_run=self.args.dry_run)
+                                  dry_run=self.args.dry_run, \
+                                  delete_orphans_older_than=self.args.delete_orphans_older_than)
 
             num_deletion_errors = len(snapshot_deletion_errors)
 
             total_expired_snapshots += len(expired_snapshots)
             total_deleted_snapshots += len(deleted_snapshots)
+            total_orphans_deleted += deleted_orphans
             total_deletion_errors += num_deletion_errors
 
             if num_deletion_errors > 0:
@@ -96,6 +101,7 @@ class TrimmerCli(object):
         print
         print "       Total number of expired snapshots: %d" % total_expired_snapshots
         print "       Total number of deleted snapshots: %d" % total_deleted_snapshots
+        print "       Total number of orphaned snapshots deleted: {}".format(total_orphans_deleted)
         print "Total number of snapshot deletion errors: %d" % total_deletion_errors
         print
 
@@ -105,7 +111,6 @@ class TrimmerCli(object):
             print "  *** DRY RUN, NO ACTION TAKEN ***"
         else:
             TrimmerCli.report_to_zabbix(total_expired_snapshots, total_deleted_snapshots, total_deletion_errors)
-
 
     @staticmethod
     def report_to_zabbix(total_expired_snapshots, total_deleted_snapshots, total_deletion_errors):
