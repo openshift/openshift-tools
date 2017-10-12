@@ -42,13 +42,16 @@
                               dry_run=dry_run)
 """
 
-from openshift_tools.cloud.aws.base import Base
-from openshift_tools.cloud.aws.instance_util import InstanceUtil
 
 from datetime import datetime
 from datetime import timedelta
 
+from collections import defaultdict
+
 from time import sleep
+
+from openshift_tools.cloud.aws.base import Base
+from openshift_tools.cloud.aws.instance_util import InstanceUtil
 
 from boto.exception import EC2ResponseError
 
@@ -151,6 +154,10 @@ class EbsSnapshotter(Base):
             # Status: permanently disabled
             # pylint: disable=broad-except
             except Exception as ex:
+                # Reason: disable pylint no-member because this was acceptable before,
+                # pylint got stricter, but we do not want to modify this code currently
+                # Status: permanently disabled
+                # pylint: disable=no-member
                 if isinstance(ex, EC2ResponseError) and \
                    ex.error_code == "SnapshotCreationPerVolumeRateExceeded":
                     # This message means that a snapshot of this volume was recently taken,
@@ -182,6 +189,7 @@ class EbsSnapshotter(Base):
                                                datetime.strptime(b.start_time[:-5], '%Y-%m-%dT%H:%M:%S'))
 
         snaps.sort(cmp=snap_start_time_cmp)
+        return snaps
 
 
     #
@@ -272,6 +280,9 @@ class EbsSnapshotter(Base):
         temp = []
 
         for t in target_backup_times:
+            # Reason: disable pylint singleton-comparison, pylint got stricter from before
+            # Status: permanently disabled
+            # pylint: disable=singleton-comparison
             if temp.__contains__(t) == False:
                 temp.append(t)
 
@@ -301,6 +312,9 @@ class EbsSnapshotter(Base):
                     #date the date ranges and the snapshots
                     # are sorted chronologically, we know this
                     #snapshot isn't in an earlier date range):
+                    # Reason: disable pylint singleton-comparison, pylint got stricter from before
+                    # Status: permanently disabled
+                    # pylint: disable=singleton-comparison
                     if snap_found_for_this_time_period == True:
                         if not snap.tags.get('preserve_snapshot'):
                             # as long as the snapshot wasn't marked
@@ -324,42 +338,97 @@ class EbsSnapshotter(Base):
         # We want to make sure we're only sending back 1 copy of each snapshot to trim.
         return list(set(snaps_to_trim))
 
-    @staticmethod
-    def get_volume_snapshots(volume, all_snapshots):
-        """ Filters out the snapshots for a given volume from the entire list of snapshots. """
-        # Get this volume's specific snapshots
-        vol_snaps = [s for s in all_snapshots if s.volume_id == volume.id]
-        EbsSnapshotter.sort_snapshots(vol_snaps)
-        return vol_snaps
+    def categorize_snapshots(self, volume_ids):
+        """
+         Goes through all snapshots that we own and puts them into the following categories:
+         - snapshots with a volume that currently exists
+         - snapshots that are orphaned and have no volume anymore
+         - ignore orphaned snapshots that we did not create, those do not have 'snapshot' tag
+
+        """
+        volume_snaps = defaultdict(list)
+        orphan_snaps = []
+
+        # get a list of snapshots that we own from AWS
+        all_snapshots = self.ec2.get_all_snapshots(owner='self')
+
+        for snapshot in all_snapshots:
+            if snapshot.volume_id in volume_ids:
+                volume_snaps[snapshot.volume_id].append(snapshot)
+            else:
+                # Please do not remove the second part of this conditional,
+                # talking about snapshot.tags['snapshot'] check against SUPPORTED_SCHEDULES
+                # this is imperative to stay because the trimmer should not touch snapshots it
+                # didn't create
+                if 'snapshot' in snapshot.tags and snapshot.tags['snapshot'] in SUPPORTED_SCHEDULES:
+                    orphan_snaps.append(snapshot)
+
+        return volume_snaps, orphan_snaps
+
+
+    def delete_orphan_snapshots(self, orphan_snaps, days, dry_run):
+        """
+        Delete all orphaned snapshots older than N days
+        """
+
+        errors = []
+        self.verbose_print("Removing orphaned snapshots older than {} days.\n".format(days), prefix=" " * 2)
+
+        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        orphan_delete_counter = 0
+        for snapshot in orphan_snaps:
+            snap_date = datetime.strptime(snapshot.start_time, '%Y-%m-%dT%H:%M:%S.000Z')
+            if snap_date < cutoff_date:
+                try:
+                    if dry_run:
+                        self.print_dry_run_msg(prefix=" " * 10, end=' Would delete {}\n'.format(snapshot.tags['Name']))
+                    else:
+                        snapshot.delete()
+                        orphan_delete_counter += 1
+                except EC2ResponseError as ex:
+                    errors.append(ex)
+
+        return orphan_delete_counter, errors
 
     # Reason: disable pylint too-many-arguments because this is the API I want to expose.
     # Status: permanently disabled
     # pylint: disable=too-many-arguments
-    def trim_snapshots(self, hourly_backups, daily_backups, weekly_backups, monthly_backups, dry_run=False):
+    def trim_snapshots(self, hourly_backups,
+                       daily_backups,
+                       weekly_backups,
+                       monthly_backups,
+                       delete_orphans_older_than,
+                       dry_run=False):
         """ Finds expired snapshots given the number of hourly, daily, weekly and monthly backups
             to keep, then removes them.
         """
 
         all_expired_snapshots = []
         deleted_snapshots = []
+        volume_snapshots = defaultdict(list)
+        orphan_snapshots = []
         errors = []
+        orphan_delete_counter = 0
 
         volumes = self.get_volumes_with_schedule(ALL_SCHEDULES)
 
-        if len(volumes) == 0:
-            # Early exit for any region that doesn't have snapshotable volumes
-            return (all_expired_snapshots, deleted_snapshots, errors)
+        volume_ids = []
+        for volume in volumes:
+            volume_ids.append(volume.id)
 
-        all_snapshots = self.ec2.get_all_snapshots()
+        volume_snapshots, orphan_snapshots = self.categorize_snapshots(volume_ids)
 
-        self.verbose_print("Removing snapshots for:", prefix="  ")
+        if not volumes and not orphan_snapshots:
+            return(all_expired_snapshots, deleted_snapshots, orphan_delete_counter, errors)
+
+        self.verbose_print("Removing snapshots for:", prefix=" " * 2)
 
         for volume in volumes:
-            vol_snaps = EbsSnapshotter.get_volume_snapshots(volume, all_snapshots)
+            vol_snaps = EbsSnapshotter.sort_snapshots(volume_snapshots[volume.id])
 
-            self.print_volume(volume, prefix="    ")
+            self.print_volume(volume, prefix=" " * 4)
 
-            self.print_snapshots(vol_snaps, msg="All Snapshots (%d):" % len(vol_snaps), prefix="      ")
+            self.print_snapshots(vol_snaps, msg="All Snapshots (%d):" % len(vol_snaps), prefix=" " * 6)
             self.verbose_print()
 
             expired_snapshots = EbsSnapshotter.get_expired_snapshots(vol_snaps, hourly_backups, \
@@ -370,17 +439,17 @@ class EbsSnapshotter(Base):
             all_expired_snapshots.extend(expired_snapshots)
 
             self.print_snapshots(expired_snapshots, \
-                                 msg="Expired Snapshots (%d):" % len(expired_snapshots), prefix="      ")
+                                 msg="Expired Snapshots (%d):" % len(expired_snapshots), prefix=" " * 6)
             self.verbose_print()
 
-            self.verbose_print("Removing snapshots (%d):" % len(expired_snapshots), prefix="      ")
+            self.verbose_print("Removing snapshots (%d):" % len(expired_snapshots), prefix=" " * 6)
 
             # actually remove expired snapshots
             for exp_snap in expired_snapshots:
-                self.verbose_print(exp_snap.id, prefix="        ")
+                self.verbose_print(exp_snap.id, prefix=" " * 8)
                 try:
                     if dry_run:
-                        self.print_dry_run_msg(prefix="          ")
+                        self.print_dry_run_msg(prefix=" " * 10)
                     else:
                         exp_snap.delete()
                         deleted_snapshots.append(exp_snap)
@@ -388,6 +457,10 @@ class EbsSnapshotter(Base):
                 # Status: permanently disabled
                 # pylint: disable=broad-except
                 except Exception as ex:
+                    # Reason: disable pylint no-member because this was acceptable before,
+                    # pylint got stricter, but we do not want to modify this code currently
+                    # Status: permanently disabled
+                    # pylint: disable=no-member
                     if isinstance(ex, EC2ResponseError) and ex.error_code == "InvalidSnapshot.NotFound":
                         # This message means that the snapshot is gone, which is what we
                         # were trying to do anyway. So, count this snap among the deleted.
@@ -396,9 +469,15 @@ class EbsSnapshotter(Base):
                         errors.append(ex)
                 self.verbose_print()
 
-        self.verbose_print("Number of expired snapshots: %d" % len(all_expired_snapshots), prefix="  ")
-        self.verbose_print("Number of snapshots deleted: %d" % len(deleted_snapshots), prefix="  ")
-        self.verbose_print("Number of snapshot deletion errors: %d" % len(errors), prefix="  ")
+        orphan_delete_counter, orphan_delete_errors = self.delete_orphan_snapshots(orphan_snapshots,
+                                                                                   delete_orphans_older_than,
+                                                                                   dry_run)
+        errors.extend(orphan_delete_errors)
+
+        self.verbose_print("Number of expired snapshots: %d" % len(all_expired_snapshots), prefix=" " * 2)
+        self.verbose_print("Number of snapshots deleted: %d" % len(deleted_snapshots), prefix=" " * 2)
+        self.verbose_print("Number of orphaned snapshots deleted: {}".format(orphan_delete_counter), prefix=" " * 2)
+        self.verbose_print("Number of snapshot deletion errors: %d" % len(errors), prefix=" " * 2)
         self.verbose_print()
 
-        return (all_expired_snapshots, deleted_snapshots, errors)
+        return (all_expired_snapshots, deleted_snapshots, orphan_delete_counter, errors)
