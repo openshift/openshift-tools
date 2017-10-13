@@ -127,12 +127,19 @@ class Ohi(object):
         '''
             Prints the name and ip in json format, useful for reading the output into ansible
         '''
+        inv = self.aws.get_inventory()
         out_hosts = []
         for host in hosts:
             temp_host = {
                 'name': host,
-                'ip': self.aws.convert_to_ip(host)[0]
+                'ip': inv['_meta']['hostvars'][host]['oo_public_ip']
             }
+            if 'oo_clusterid' in inv['_meta']['hostvars'][host]:
+                temp_host['cluster']  = inv['_meta']['hostvars'][host]['oo_clusterid']
+            if 'oo_hosttype' in inv['_meta']['hostvars'][host]:
+                temp_host['hosttype']  = inv['_meta']['hostvars'][host]['oo_hosttype']
+            if 'oo_subhosttype' in inv['_meta']['hostvars'][host]:
+                temp_host['subhosttype']  = inv['_meta']['hostvars'][host]['oo_subhosttype']
             out_hosts.append(temp_host)
         print json.dumps(out_hosts)
 
