@@ -11,7 +11,9 @@ SLEEP_TIME=$1
 shift
 
 # The purpose of this script is to run something in an infinite loop
-while true ; do
-    "$@"
+while $? ; do
     sleep $SLEEP_TIME
+    "$@"
 done
+
+killall httpd
