@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.45
+Version:        0.0.46
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,22 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Mon Oct 16 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.46-1
+- allow world read for the multi_inventory.cache file (jdiaz@redhat.com)
+- chattr recursively, or we get blocked on rm
+  /var/lib/docker/volumes/metadata.db (sten@redhat.com)
+- Removing duplicate snapshot trim call. (kwoodson@redhat.com)
+- fix syntax in docker role (sedgar@redhat.com)
+- start docker on boot (sedgar@redhat.com)
+- add support for registry auth to byo generator (sedgar@redhat.com)
+- Script re-write * remove test code * use logger * use library functions
+  OCUtil * check Deployment Config * show caught errors from curl function *
+  verbosity levels * rename smal to saml (dranders@redhat.com)
+- text in quotes (dyocum@redhat.com)
+- addded some spaces to make it look pretty (dyocum@redhat.com)
+- better task name (dyocum@redhat.com)
+- added     state: "{{ item.state | default(present)}}" (dyocum@redhat.com)
+
 * Tue Sep 26 2017 Kenny Woodson <kwoodson@redhat.com> 0.0.45-1
 - Fix for inventory on v2. (kwoodson@redhat.com)
 - fixed some dependencies for lib_openshift roles (mwoodson@redhat.com)
