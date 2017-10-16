@@ -36,7 +36,7 @@
     - path: clam_bucket_rw
       data: "{{ ocav_aws_creds_content }}"
     - path: zagg-config-values.yaml
-      data: "{{ ocav_zagg_config | to_nice_yaml }}"
+      data: "{{ ocav_zagg_config }}"
     - path: openshift_config.cfg
       data: "{{ ocav_clam_config }}"
     - path: openshift_known_vulnerabilities.ldb
