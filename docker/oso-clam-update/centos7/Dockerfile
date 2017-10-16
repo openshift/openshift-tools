@@ -22,6 +22,7 @@ ADD playbooks/ /var/lib/clamav/
 RUN chown -R clamupdate:clamupdate /etc/clamav-unofficial-sigs && \
     chown -R clamupdate:clamupdate /usr/local/sbin /var/log/clamav-unofficial-sigs /var/lib/clamav-unofficial-sigs && \
     chown -R clamupdate:clamupdate /var/lib/clamav/ && \
+    chown -R clamupdate:clamupdate /etc/openshift_tools && \
     chown clamupdate:clamupdate /usr/bin/clamav-unofficial-sigs.sh && \
     chown clamupdate:clamupdate /usr/bin/freshclam
 
@@ -38,6 +39,7 @@ RUN rm -f /etc/cron.d/clamav-update /etc/cron.d/clamav-unofficial-sigs
 RUN ln -sf /secrets/openshift_config.cfg /var/lib/clamav/openshift_config.cfg && \
     ln -sf /secrets/openshift_known_vulnerabilities.ldb /var/lib/clamav/openshift_known_vulnerabilities.ldb && \
     ln -sf /secrets/openshift_signatures.db /var/lib/clamav/openshift_signatures.db && \
+    ln -sf /secrets/zagg-config-values.yaml /etc/openshift_tools/metric_sender.yaml && \
     ln -sf /secrets/openshift_signatures.hdb /var/lib/clamav/openshift_signatures.hdb && \
     ln -sf /secrets/openshift_signatures.ign2 /var/lib/clamav/openshift_signatures.ign2 && \
     ln -sf /secrets/openshift_signatures.ldb /var/lib/clamav/openshift_signatures.ldb && \
