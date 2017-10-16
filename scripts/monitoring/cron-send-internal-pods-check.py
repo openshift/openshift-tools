@@ -37,6 +37,7 @@ class InfraNodePodStatus(object):
         for pod in pods['items']:
             pod_name = pod['metadata']['name']
             pod_report[pod_name] = {}
+            pod_report[pod_name]['name'] = pod_name
             pod_report[pod_name]['hostIP'] = pod['status']['hostIP']
             pod_report[pod_name]['status'] = pod['status']['phase']
         return pod_report
@@ -86,8 +87,9 @@ class InfraNodePodStatus(object):
         if len(host_ips) < 2 or len(pods) < 2:
             result_code = 0
             logging.getLogger().critical(
-                "%s has %d pods on %d hosts, not distributed",
+                "%s has %d pods on %d hosts, not distributed, attempting to fix",
                 podname, len(pods), len(host_ips))
+            self.delete_pod(pods[0])
 
         if result_code == 0:
             logging.getLogger().critical("Please check pods are in running "
@@ -97,6 +99,10 @@ class InfraNodePodStatus(object):
         # result_code 1 means the pods are on different nodes
         # count_pods_running means the running pod number
         self.send_metrics(keybase=keybase, location=result_code, status=count_pods_running)
+
+    def delete_pod(self, pod):
+        """ delete a pod """
+        self.oc.delete_pod(pod['name'])
 
     def send_metrics(self, keybase="", location="", status=""):
         """send_metrics"""

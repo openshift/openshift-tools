@@ -25,10 +25,11 @@ import atexit
 import shutil
 import string
 import random
-import yaml
 import subprocess
+import yaml
 
 # pylint: disable=bare-except
+
 def cleanup_file(inc_file):
     """ clean up """
     try:
@@ -69,13 +70,13 @@ class OCUtil(object):
         if self.logger:
             self.logger.debug("ocutil._run_cmd( {} )".format(cmd))
 
-        cmd = shlex.split(cmd)
+        cmd_split = shlex.split(cmd)
 
         if self.verbose:
-            print "Running command: {}".format(str(cmd))
+            print "Running command: {}".format(str(cmd_split))
 
         try:
-            return subprocess.check_output(cmd)
+            return subprocess.check_output(cmd_split)
         except subprocess.CalledProcessError as err:
             if self.logger:
                 self.logger.exception('Error from server: %s' % err.output)
@@ -133,3 +134,6 @@ class OCUtil(object):
         """ Gets the log for the specified container """
         return self._run_cmd("logs {}".format(name))
 
+    def delete_pod(self, name):
+        """ Gets the log for the specified container """
+        return self._run_cmd("delete pod {}".format(name))
