@@ -21,7 +21,7 @@ objects:
       contextDir: "docker/oso-ops-base/${PLAT}"
       git:
         ref: clam_update_container
-        uri: https://github.com/rhdedgar/openshift-tools
+        uri: https://github.com/openshift/openshift-tools
       secrets: []
       type: Git
     strategy:
@@ -53,7 +53,7 @@ objects:
       contextDir: "docker/oso-clam-update/${PLAT}"
       git:
         ref: clam_update_container
-        uri: https://github.com/rhdedgar/openshift-tools
+        uri: https://github.com/openshift/openshift-tools
       secrets: []
       type: Git
     strategy:
