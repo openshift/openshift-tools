@@ -1,7 +1,6 @@
 ---
 - name: Master Install Checkpoint Start
-  hosts: localhost
-  connection: local
+  hosts: oo_all_hosts
   gather_facts: false
   tasks:
   - name: Set Master install 'In Progress'
@@ -9,6 +8,8 @@
       data:
         installer_phase_master: "In Progress"
       aggregate: false
+
+- include: certificates.yml
 
 - name: Disable excluders
   hosts: oo_masters_to_config
@@ -196,6 +197,7 @@
     openshift_master_default_registry_value: "{{ hostvars[groups.oo_first_master.0].l_default_registry_value }}"
     openshift_master_default_registry_value_api: "{{ hostvars[groups.oo_first_master.0].l_default_registry_value_api }}"
     openshift_master_default_registry_value_controllers: "{{ hostvars[groups.oo_first_master.0].l_default_registry_value_controllers }}"
+  - role: tuned
   - role: nuage_ca
     when: openshift_use_nuage | default(false) | bool
   - role: nuage_common
@@ -224,8 +226,7 @@
     r_openshift_excluder_service_type: "{{ openshift.common.service_type }}"
 
 - name: Master Install Checkpoint End
-  hosts: localhost
-  connection: local
+  hosts: oo_all_hosts
   gather_facts: false
   tasks:
   - name: Set Master install 'Complete'
