@@ -8,7 +8,10 @@
   vars:
   - r_openshift_health_checker_playbook_context: install
   post_tasks:
-  - action: openshift_health_check
+
+  - name: Verify Requirements - EL
+    when: ansible_distribution != "Fedora"
+    action: openshift_health_check
     args:
       checks:
       - disk_availability
@@ -17,10 +20,12 @@
       - package_version
       - docker_image_availability
       - docker_storage
-
-- include: ../openshift-etcd/ca.yml
-
-- include: ../openshift-etcd/certificates.yml
+  - name: Verify Requirements - Fedora
+    when: ansible_distribution == "Fedora"
+    action: openshift_health_check
+    args:
+      checks:
+      - docker_image_availability
 
 - include: ../openshift-etcd/config.yml
 
@@ -30,15 +35,9 @@
 - include: ../openshift-loadbalancer/config.yml
   when: groups.oo_lb_to_config | default([]) | count > 0
 
-- include: ../openshift-master/ca.yml
-
-- include: ../openshift-master/certificates.yml
-
 - include: ../openshift-master/config.yml
 
 - include: ../openshift-master/additional_config.yml
-
-- include: ../openshift-node/certificates.yml
 
 - include: ../openshift-node/config.yml
 
@@ -55,6 +54,9 @@
 
 - include: service_catalog.yml
   when: openshift_enable_service_catalog | default(false) | bool
+
+- include: openshift_management.yml
+  when: openshift_management_install_management | default(false) | bool
 
 - name: Print deprecated variable warning message if necessary
   hosts: oo_first_master
