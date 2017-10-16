@@ -40,27 +40,22 @@ class AwsUtil(object):
         self.file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)))
 
         self.setup_host_type_alias_lookup()
+        self._inventory = None
+
+    @property
+    def inventory(self):
+        """ Sets up a class property named inventory, this is the getter
+        It will pull in the file if the property is empty, otherwise just returns the variable
+        """
+        if self._inventory is None:
+            self._inventory = multi_inventory.MultiInventory(None).run()
+        return self._inventory
 
     def setup_host_type_alias_lookup(self):
         """Sets up the alias to host-type lookup table."""
         for key, values in self.host_type_aliases.iteritems():
             for value in values:
                 self.alias_lookup[value] = key
-
-    def get_inventory(self, args=None):
-        """Calls the inventory script and returns a dictionary containing the inventory."
-
-        Keyword arguments:
-        args -- optional arguments to pass to the inventory script
-        """
-        t_args = None
-        if args:
-            t_args = args
-        elif self.cached:
-            t_args = {'from_cache': self.cached}
-
-        minv = multi_inventory.MultiInventory(t_args)
-        return  minv.run()
 
     def _get_tags_(self, regex):
         """ Searches for tags in the inventory and returns all of the tags
@@ -71,8 +66,7 @@ class AwsUtil(object):
         """
 
         tags = []
-        inv = self.get_inventory()
-        for key in inv:
+        for key in self.inventory:
             matched = regex.match(key)
             if matched:
                 tags.append(matched.group(1))
@@ -108,10 +102,9 @@ class AwsUtil(object):
     def build_host_dict_by_env(self, args=None):
         """Searches the inventory for hosts in an env and returns their hostvars."""
         args = args or []
-        inv = self.get_inventory(args)
 
         inst_by_env = {}
-        for _, host in inv['_meta']['hostvars'].items():
+        for _, host in self.inventory['_meta']['hostvars'].items():
             # If you don't have an environment tag, we're going to ignore you
             if 'oo_environment' not in host:
                 continue
@@ -203,18 +196,16 @@ class AwsUtil(object):
         retval = set([])
         envs = envs or []
 
-        inv = self.get_inventory()
-
-        retval.update(inv.get('all_hosts', []))
+        retval.update(self.inventory.get('all_hosts', []))
 
         if clusters:
             cluster_hosts = set([])
             if len(clusters) > 1:
                 for cluster in clusters:
                     clu_tag = AwsUtil.gen_clusterid_tag(cluster)
-                    cluster_hosts.update(inv.get(clu_tag, []))
+                    cluster_hosts.update(self.inventory.get(clu_tag, []))
             else:
-                cluster_hosts.update(inv.get(AwsUtil.gen_clusterid_tag(clusters[0]), []))
+                cluster_hosts.update(self.inventory.get(AwsUtil.gen_clusterid_tag(clusters[0]), []))
 
             retval.intersection_update(cluster_hosts)
 
@@ -223,20 +214,20 @@ class AwsUtil(object):
             if len(envs) > 1:
                 for env in envs:
                     env_tag = AwsUtil.gen_env_tag(env)
-                    env_hosts.update(inv.get(env_tag, []))
+                    env_hosts.update(self.inventory.get(env_tag, []))
             else:
-                env_hosts.update(inv.get(AwsUtil.gen_env_tag(envs[0]), []))
+                env_hosts.update(self.inventory.get(AwsUtil.gen_env_tag(envs[0]), []))
 
             retval.intersection_update(env_hosts)
 
         if host_type:
-            retval.intersection_update(inv.get(self.gen_host_type_tag(host_type, version), []))
+            retval.intersection_update(self.inventory.get(self.gen_host_type_tag(host_type, version), []))
 
         if sub_host_type:
-            retval.intersection_update(inv.get(self.gen_sub_host_type_tag(sub_host_type), []))
+            retval.intersection_update(self.inventory.get(self.gen_sub_host_type_tag(sub_host_type), []))
 
         if version != 'all':
-            retval.intersection_update(inv.get(AwsUtil.gen_version_tag(version), []))
+            retval.intersection_update(self.inventory.get(AwsUtil.gen_version_tag(version), []))
 
         return list(retval)
 
@@ -246,21 +237,19 @@ class AwsUtil(object):
         if not isinstance(hosts, list):
             hosts = [hosts]
 
-        inv = self.get_inventory()
         ips = []
         for host in hosts:
-            ips.append(inv['_meta']['hostvars'][host]['oo_public_ip'])
+            ips.append(self.inventory['_meta']['hostvars'][host]['oo_public_ip'])
 
         return ips
 
     def get_cluster_variable(self, cluster, variable):
         """ return an inventory variable that is common to a cluster"""
 
-        inv = self.get_inventory()
         variables = []
-        for host in inv['oo_clusterid_' + cluster]:
-            if variable in inv['_meta']['hostvars'][host]:
-                variables.append(inv['_meta']['hostvars'][host][variable])
+        for host in self.inventory['oo_clusterid_' + cluster]:
+            if variable in self.inventory['_meta']['hostvars'][host]:
+                variables.append(self.inventory['_meta']['hostvars'][host][variable])
 
         if len(list(set(variables))) == 1:
             return variables[0]
@@ -270,8 +259,7 @@ class AwsUtil(object):
     def get_node_variable(self, host, variable):
         """ return an inventory variable from a host"""
 
-        inv = self.get_inventory()
-        if host in inv['_meta']['hostvars'] and variable in inv['_meta']['hostvars'][host]:
-            return inv['_meta']['hostvars'][host][variable]
+        if host in self.inventory['_meta']['hostvars'] and variable in self.inventory['_meta']['hostvars'][host]:
+            return self.inventory['_meta']['hostvars'][host][variable]
 
         return None
