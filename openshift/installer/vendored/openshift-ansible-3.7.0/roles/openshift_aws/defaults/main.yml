@@ -1,5 +1,4 @@
 ---
-openshift_aws_create_vpc: True
 openshift_aws_create_s3: True
 openshift_aws_create_iam_cert: True
 openshift_aws_create_security_groups: True
@@ -142,6 +141,11 @@ openshift_aws_elb_instance_filter:
   "tag:clusterid": "{{ openshift_aws_clusterid }}"
   "tag:host-type": "{{ openshift_aws_node_group_type }}"
   instance-state-name: running
+
+openshift_aws_launch_config_security_groups:
+- "{{ openshift_aws_clusterid }}"  # default sg
+- "{{ openshift_aws_clusterid }}_{{ openshift_aws_node_group_type }}"  # node type sg
+- "{{ openshift_aws_clusterid }}_{{ openshift_aws_node_group_type }}_k8s"  # node type sg k8s
 
 openshift_aws_node_security_groups:
   default:
