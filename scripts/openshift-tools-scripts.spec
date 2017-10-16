@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.103
+Version:       0.1.104
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -456,6 +456,23 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Mon Oct 16 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.104-1
+- adding orphaned snapshot delete support (ihorvath@redhat.com)
+- etcdctlx extending to api 3 (ihorvath@redhat.com)
+- two quick fixes for edgecase errors (ihorvath@redhat.com)
+- It is yaml not yml (whearn@redhat.com)
+- Put redactd in the correct directory (whearn@redhat.com)
+- Add redacted script that filters yaml config files for developers
+  (whearn@redhat.com)
+- changing user role handling around to accomodate overloading commands
+  (ihorvath@redhat.com)
+- add more perms to policy template (blentz@redhat.com)
+- add external_id to cloudhealth setup call (blentz@redhat.com)
+- fix role trust doc and policy templating. (blentz@redhat.com)
+- reduce code duplication, fix a couple bugs (blentz@redhat.com)
+- clarify readme & fix aws_role_name references (blentz@redhat.com)
+- add cloudhealth scripts (blentz@redhat.com)
+
 * Sun Oct 01 2017 Drew Anderson <dranders@redhat.com> 0.1.103-1
 - Script re-write * remove test code * use logger * use library functions
   OCUtil * check Deployment Config * show caught errors from curl function *
