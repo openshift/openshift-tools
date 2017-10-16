@@ -34,3 +34,9 @@ echo
 echo 'Pushing signatures to bucket every 12 hours'
 echo '----------------'
 /usr/local/bin/ops-run-in-loop 43200 /usr/local/bin/push_clam_signatures &>/dev/null
+# Pause for another 5 minutes and send timestamp info to zabbix
+sleep 300
+echo
+echo 'Pushing signatures to bucket every 12 hours'
+echo '----------------'
+/usr/local/bin/ops-run-in-loop 43200 /usr/local/bin/check_clam_update &>/dev/null

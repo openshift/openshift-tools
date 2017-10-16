@@ -126,6 +126,7 @@ ln -sf %{python_sitelib}/openshift_tools/saml_aws_creds.py %{buildroot}/usr/loca
 mkdir -p %{buildroot}/usr/local/bin
 install -m 755 clam-update/push_clam_signatures.py %{buildroot}/usr/local/bin/push_clam_signatures
 install -m 755 clam-update/pull_clam_signatures.py %{buildroot}/usr/local/bin/pull_clam_signatures
+install -m 755 clam-update/check_clam_update.py %{buildroot}/usr/local/bin/check_clam_update
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-inventory-clients subpackage
@@ -193,6 +194,7 @@ OpenShift Tools scripts to update clam signature databases
 %files clam-update
 /usr/local/bin/push_clam_signatures
 /usr/local/bin/pull_clam_signatures
+/usr/local/bin/check_clam_update
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-scanpod subpackage
