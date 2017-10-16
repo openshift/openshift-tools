@@ -130,9 +130,12 @@ class Ohi(object):
         out_hosts = []
         for host in hosts:
             temp_host = {
-                'name': host,
-                'ip': self.aws.convert_to_ip(host)[0]
+                'name': host
             }
+            for key in ['oo_public_ip', 'oo_clusterid', 'oo_hosttype', 'oo_subhosttype']:
+                if key in self.aws.inventory.get('_meta').get('hostvars').get(host):
+                    temp_host[key] = self.aws.inventory.get('_meta').get('hostvars').get(host).get(key)
+
             out_hosts.append(temp_host)
         print json.dumps(out_hosts)
 
