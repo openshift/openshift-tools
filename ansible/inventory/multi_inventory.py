@@ -355,6 +355,15 @@ class MultiInventoryAccount(object):
 
         self.apply_group_selectors()
 
+        # remove any extra groups that are not prefixed by oo_
+        # this removes all of the ec2.py's default groups: vpc, ami, security, etc
+        # revisit these when needed
+        for key in self.inventory.keys():
+            if key in ['_meta', 'all_hosts'] or key.startswith('oo_'):
+                continue
+
+            del self.inventory[key]
+
     def generate_config(self):
         """Generate the provider_files in a temporary directory"""
         prefix = 'multi_inventory.'
