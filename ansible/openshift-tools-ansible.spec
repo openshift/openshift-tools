@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.46
+Version:        0.0.47
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,10 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Tue Oct 17 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.47-1
+- Removing all groups except all_hosts and oo_ (kwoodson@redhat.com)
+- adding the new cli option to the running config (ihorvath@redhat.com)
+
 * Mon Oct 16 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.46-1
 - allow world read for the multi_inventory.cache file (jdiaz@redhat.com)
 - chattr recursively, or we get blocked on rm
