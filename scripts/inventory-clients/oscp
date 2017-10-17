@@ -116,7 +116,7 @@ class Oscp(object):
 
     def get_hosts(self):
         '''Query our host inventory and return a dict where the format '''
-        self.host_inventory = self.aws.get_inventory()['_meta']['hostvars']
+        self.host_inventory = self.aws.inventory['_meta']['hostvars']
 
     def find_host_by_attr(self, attribute):
         '''find self.host by an attribute'''
