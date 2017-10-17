@@ -86,7 +86,7 @@ class InventoryCli(object):
             Returns: dict
         '''
         aws = awsutil.AwsUtil()
-        return aws.get_inventory()['_meta']['hostvars']
+        return aws.inventory['_meta']['hostvars']
 
     def list_columns(self):
         ''' return the set of the columns being used by the inventory
