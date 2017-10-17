@@ -1,13 +1,12 @@
 ---
 - name: Ensure docker is installed
-  action: "{{ ansible_pkg_mgr }} name={{ item }} state=present"
-  with_items:
-  - docker
-  #- docker-1.9.1
+  package:
+    name: docker
+    state: present
 
-- name: copy the docker-storage-setup config file
+- name: Copy the docker-storage-setup config file
   template:
-    src: docker-storage-setup.j2
+    src: "{{ dss_docker_storage_driver }}_dss.j2"
     dest: /etc/sysconfig/docker-storage-setup
     owner: root
     group: root
