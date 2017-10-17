@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.104
+Version:       0.1.105
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -456,6 +456,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Tue Oct 17 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.105-1
+- forgot to change these calls after altering the library (ihorvath@redhat.com)
+- changing how it aws util helper class reads inventory (ihorvath@redhat.com)
+
 * Mon Oct 16 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.104-1
 - adding orphaned snapshot delete support (ihorvath@redhat.com)
 - etcdctlx extending to api 3 (ihorvath@redhat.com)
