@@ -54,6 +54,7 @@ from openshift_tools.cloud.aws.base import Base
 from openshift_tools.cloud.aws.instance_util import InstanceUtil
 
 from boto.exception import EC2ResponseError
+from boto.exception import BotoServerError
 
 SNAP_TAG_KEY = 'snapshot'
 
@@ -386,6 +387,8 @@ class EbsSnapshotter(Base):
                         snapshot.delete()
                         orphan_delete_counter += 1
                 except EC2ResponseError as ex:
+                    errors.append(ex)
+                except BotoServerError as ex:
                     errors.append(ex)
 
         return orphan_delete_counter, errors
