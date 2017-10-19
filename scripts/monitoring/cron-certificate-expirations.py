@@ -5,13 +5,13 @@
 # Reason: disable invalid-name because pylint does not like our naming convention
 # pylint: disable=invalid-name
 
+import os
+import re
 import argparse
 import datetime
+from stat import S_ISDIR, S_ISREG
 from dateutil import parser
 import OpenSSL.crypto
-import os
-from stat import S_ISDIR, S_ISREG
-import re
 
 # Reason: disable pylint import-error because our libs aren't loaded on jenkins.
 # Status: temporary until we start testing in a container where our stuff is ins talled.
@@ -69,11 +69,11 @@ class CertificateReporting(object):
         ''' set days left per cert type to closest to now '''
 
         if self.openshift_cert_issuer(cert_file):
-            if (self.days_left_internal > days_left) or (self.days_left_internal == None):
+            if (self.days_left_internal > days_left) or (self.days_left_internal is None):
                 self.days_left_internal = days_left
             #self.dprint("{} days left on internal certs".format(self.days_left_internal))
         else:
-            if (self.days_left_external > days_left) or (self.days_left_external == None):
+            if (self.days_left_external > days_left) or (self.days_left_external is None):
                 self.days_left_external = days_left
             #self.dprint("{} days left on external certs".format(self.days_left_external))
 
