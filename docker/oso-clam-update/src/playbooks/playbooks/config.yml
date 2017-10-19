@@ -1,0 +1,36 @@
+---
+- hosts: localhost
+  # need this for ansible_nodename
+  gather_facts: yes
+  vars_files:
+  - /var/lib/clamav/playbooks/default_vars.yml
+  vars:
+
+  tasks:
+  - name: Placeholder task
+    debug: msg="This task does nothing"
+#  - include_vars:
+#      file: "{{ item.file }}"
+#      name: "{{ item.name }}"
+#    with_items:
+#      - name: zagg_configdata
+#        file: /secrets/zagg-config-values.yaml
+#
+#  - name: populate templated config file
+#    vars:
+#      hostname: "{{ ansible_nodename }}"
+#    template:
+#      src: "/var/lib/clamav/playbooks/templates/metric_sender.yaml.j2"
+#      dest: "/var/lib/clamav/playbooks/metric_sender.yaml"
+
+#  - name: Grab all content of the yaml files as vars
+#    include_vars: "{{ item }}"
+#    with_fileglob:
+#    - /container_setup/*.yml
+
+#  - name: write out the vars coming in container_metrics.yml to a file
+#    copy:
+#      content: "{{ container_metrics_config | to_nice_yaml }}"
+#      dest: /etc/openshift_tools/container_metrics.yml
+#      mode: 0644
+#    when: container_metrics_config is defined
