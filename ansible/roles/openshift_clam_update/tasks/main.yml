@@ -1,0 +1,85 @@
+---
+- name: Include private vars
+  include_role:
+    name: ops_roles/include_private_vars
+
+- name: Include ops clam signatures and config
+  include_role:
+    name: private_roles/oso_clam_signatures
+
+- name: "create project for {{ ocav_namespace }}"
+  oadm_project:
+    name: "{{ ocav_namespace }}"
+    display_name: "{{ ocav_namespace }}"
+    description: ClamAV Signature Updater
+  register: createout
+
+- name: create clamup serviceaccount
+  oc_serviceaccount:
+    name: clamup
+    namespace: clam-update
+
+- name: add clamup to nonroot SCC
+  oadm_policy_user:
+    namespace: clam-update
+    user: system:serviceaccount:clam-update:clamup
+    resource_kind: scc
+    resource_name: nonroot
+
+- name: "Create Clam Update secrets for {{ ocav_namespace }}"
+  oc_secret:
+    namespace: "{{ ocav_namespace }}"
+    name: oso-clam-update-secrets 
+    contents:
+    - path: aws_config.yml
+      data: "{{ ocav_aws_config_content }}"
+    - path: clam_bucket_rw
+      data: "{{ ocav_aws_creds_content }}"
+    - path: zagg-config-values.yaml
+      data: "{{ ocav_zagg_config }}"
+    - path: openshift_config.cfg
+      data: "{{ ocav_clam_config }}"
+    - path: openshift_known_vulnerabilities.ldb
+      data: "{{ ocav_vuln_ldb }}"
+    - path: openshift_signatures.db
+      data: "{{ ocav_sig_db }}"
+    - path: openshift_signatures.hdb
+      data: "{{ ocav_sig_hdb }}"
+    - path: openshift_signatures.ign2
+      data: "{{ ocav_sig_ign }}"
+    - path: openshift_signatures.ldb
+      data: "{{ ocav_sig_ldb }}"
+    - path: openshift_whitelist.sfp
+      data: "{{ ocav_whitelist_sfp }}"
+
+- name: "Check to see if Clam Update pod exists in {{ ocav_namespace }}"
+  oc_obj:
+    state: list
+    namespace: "{{ ocav_namespace }}"
+    kind: pods
+  register: podlist
+
+- set_fact:
+    ocav_pods_running: "{{ podlist.results | get_running_pods(['oso-clam-update']) }}"
+
+# As of now, this task basically only works for a newly-created project
+# and until oc_process switches from a delete/re-create model to a
+# replace model, don't be surprised if this task breaks things. We try 
+# to skip it by only running it if the clam-update pods isn't running.
+- name: "Create bc,is,dc for apps in {{ ocav_namespace }} from template"
+  oc_process:
+    namespace: "{{ ocav_namespace }}"
+    template_name: oso-clam-update
+    content: "{{ lookup('file', 'files/openshift_clam_update.yml') }}"
+    create: True
+    reconcile: True
+    debug: True
+    params:
+      PLAT: rhel7
+  when: '{{ ocav_pods_running | length }} < 1'
+
+- name: "Redeploy Clam Update app in {{ ocav_namespace }} when not running"
+  command: "oc deploy --latest -n {{ ocav_namespace }} oso-clam-update"
+  # if we just created the project, we should not try a re-deploy. Otherwise, we'll try if the pods don't seem to be running
+  when: "{{ not createout.changed and (ocav_pods_running | select('match', '^oso-clam-update$') | list | length < 1) }}"
+
