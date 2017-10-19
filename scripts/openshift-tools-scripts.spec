@@ -123,6 +123,12 @@ mkdir -p %{buildroot}%{python_sitelib}/openshift_tools
 install -m 755 iam-tools/saml_aws_creds.py %{buildroot}%{python_sitelib}/openshift_tools/
 ln -sf %{python_sitelib}/openshift_tools/saml_aws_creds.py %{buildroot}/usr/local/bin/saml_aws_creds
 
+# openshift-tools-scripts-clam-update install
+mkdir -p %{buildroot}/usr/local/bin
+install -m 755 clam-update/push_clam_signatures.py %{buildroot}/usr/local/bin/push_clam_signatures
+install -m 755 clam-update/pull_clam_signatures.py %{buildroot}/usr/local/bin/pull_clam_signatures
+install -m 755 clam-update/check_clam_update.py %{buildroot}/usr/local/bin/check_clam_update
+
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-inventory-clients subpackage
 # ----------------------------------------------------------------------------------
@@ -174,6 +180,22 @@ OpenShift Tools script for allowing limited remote developer access
 %files devaccess
 /usr/bin/devaccess_wrap
 %config(noreplace)/etc/openshift_tools/devaccess_users.yaml
+
+# ----------------------------------------------------------------------------------
+# openshift-tools-scripts-clam-update subpackage
+# ----------------------------------------------------------------------------------
+%package clam-update
+Summary:       OpenShift Tools scanning scripts
+Requires:      python2
+BuildArch:     noarch
+
+%description clam-update
+OpenShift Tools scripts to update clam signature databases
+
+%files clam-update
+/usr/local/bin/push_clam_signatures
+/usr/local/bin/pull_clam_signatures
+/usr/local/bin/check_clam_update
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-scanpod subpackage

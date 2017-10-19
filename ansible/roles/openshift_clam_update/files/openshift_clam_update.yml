@@ -1,0 +1,181 @@
+---
+apiVersion: v1
+kind: Template
+metadata:
+  name: oso-clam-update
+objects:
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      template: oso-clam-update
+    name: "oso-${PLAT}-ops-base"
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: "oso-${PLAT}-ops-base:latest"
+    postCommit: {}
+    resources: {}
+    source:
+      contextDir: "docker/oso-ops-base/${PLAT}"
+      git:
+        ref: clam_update_container
+        uri: https://github.com/openshift/openshift-tools
+      secrets: []
+      type: Git
+    strategy:
+      dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: "false"
+        from:
+          kind: ImageStreamTag
+          name: "${PLAT}:latest"
+      type: Docker
+    triggers:
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      template: oso-clam-update
+    name: oso-clam-update
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: "oso-${PLAT}-clam-update:latest"
+    postCommit: {}
+    resources: {}
+    source:
+      contextDir: "docker/oso-clam-update/${PLAT}"
+      git:
+        ref: clam_update_container
+        uri: https://github.com/openshift/openshift-tools
+      secrets: []
+      type: Git
+    strategy:
+      dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: "false"
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-ops-base:latest"
+      type: Docker
+    triggers:
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-clam-update
+    name: "${PLAT}"
+  spec:
+    dockerImageRepository: "library/${PLAT}"
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "registry.access.redhat.com/${PLAT}:latest"
+      importPolicy: {}
+      name: latest
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-clam-update
+    name: "oso-${PLAT}-ops-base"
+  spec:
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "library/oso-${PLAT}-ops-base:latest"
+      importPolicy: {}
+      name: latest
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-clam-update
+    name: "oso-${PLAT}-clam-update"
+  spec:
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "library/oso-${PLAT}-clam-update:latest"
+      importPolicy: {}
+      name: latest
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      template: oso-clam-update
+    name: oso-clam-update
+  spec:
+    replicas: 1
+    selector:
+      deploymentconfig: oso-clam-update
+    strategy:
+      resources: {}
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          deploymentconfig: oso-clam-update
+      spec:
+        containers:
+        - env:
+          - name: OO_PAUSE_ON_START
+            value: "false"
+          image: "oso-clam-update/oso-${PLAT}-clam-update:latest"
+          imagePullPolicy: Always
+          name: oso-clam-update
+          resources: {}
+          securityContext:
+            runAsUser: 999
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /secrets
+            name: oso-clam-update-secrets
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        serviceAccount: clamup
+        serviceAccountName: clamup
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: oso-clam-update-secrets
+          secret:
+            secretName: oso-clam-update-secrets
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-clam-update
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-clam-update:latest"
+      type: ImageChange
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      template: oso-clam-update
+    name: clam-update
+  spec:
+    selector:
+      deploymentconfig: oso-clam-update
+    sessionAffinity: None
+    type: ClusterIP
+parameters:
+- description: Platform name
+  name: PLAT
+  value: rhel7
