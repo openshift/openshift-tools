@@ -1,3 +1,7 @@
 ---
 dss_docker_device: /dev/xvdb
-dss_docker_storage_dm_basesize: 3G
+dss_docker_storage_driver: devicemapper
+
+dss_default_container_size: 3G
+dss_docker_storage_dm_basesize: "{{ dss_default_container_size }}"
+dss_docker_storage_overlay2_size: "{{ dss_default_container_size }}"

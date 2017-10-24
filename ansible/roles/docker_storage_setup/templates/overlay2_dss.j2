@@ -1,0 +1,12 @@
+# Edit this file to override any configuration options specified in
+# /usr/lib/docker-storage-setup/docker-storage-setup.
+#
+# For more details refer to "man docker-storage-setup"
+DEVS={{ dss_docker_device }}
+VG=docker_vg
+DATA_SIZE=99%VG
+STORAGE_DRIVER="overlay2"
+CONTAINER_ROOT_LV_NAME="docker-root-lv"
+CONTAINER_ROOT_LV_SIZE="100%FREE"
+CONTAINER_ROOT_LV_MOUNT_PATH="/var/lib/docker"
+EXTRA_STORAGE_OPTIONS="--storage-opt overlay2.size={{ dss_docker_storage_overlay2_size }}"
