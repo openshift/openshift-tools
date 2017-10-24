@@ -1,0 +1,79 @@
+---
+#prybook will try heal for the hear.beat.ping alert
+# * oso-moniotoring pod dead (restarted)
+# * atomic-node service dead（restarted)
+# * host lost connection (try to restart the instance)
+# * if this is a zag pod , delete it from the zabbix
+
+
+- name: check if the this is zag pod
+  hosts: localhost
+
+  pre_tasks:
+    - name: Ensure needed variables are set
+      fail:
+        msg: "Value {{ item }} is not set!"
+      when: "{{ item }} is undefined"
+      with_items:
+      - cli_nodename
+
+    - name: check if the alert is a zag pod
+      set_fact :
+        is_zagg_pod : true
+      when: cli_nodename | search("oso-rhel7-zagg-web")
+
+
+- name: heal for the heartbeat failed
+  hosts: localhost
+
+
+  tasks:
+
+    - set_fact:
+        oo_instance_id: "{{ hostvars[''+cli_nodename].ec2_id }}"
+      when: is_zagg_pod is not defined
+
+
+    - name: include zabbix info
+      include_vars: /home/opsmedic/zabbix_server.yml
+
+    - name: try to auto heal
+      block:
+        - name: check if the host is alive
+          wait_for:
+            host: "{{ cli_nodename }}"
+            port: 22
+            timeout: 60
+          when: is_zagg_pod is not defined
+
+        - name: make sure oso-moniotoring restarted
+          service:
+            name: oso-rhel7-host-monitoring.service
+            state: restarted
+          delegate_to: "{{ cli_nodename }}"
+          when: is_zagg_pod is not defined
+
+        - name: make sure atomic-openshift-node.service restarted
+          service:
+            name: atomic-openshift-node.service
+            state: restarted
+          delegate_to: "{{ cli_nodename }}"
+          when: is_zagg_pod is not defined
+
+      rescue:
+        - name: skip the reboot part 
+          debug: msg="something wrong when try to auto-heal"
+      always:
+        - debug: msg="the hostname we are going to delete is {{ cli_nodename }}"
+
+        - name: delete the host from zabbix
+          zbx_host:
+            zbx_server: "{{ zabbix_url }}"
+            zbx_user: "{{ zabbix_user }}"
+            zbx_password: "{{ zabbix_pass }}"
+            name: "{{ cli_nodename }}"
+            state: absent
+            zbx_debug: True
+          when: is_zagg_pod is defined
+
+
