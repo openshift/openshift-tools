@@ -31,7 +31,8 @@ import json
 from openshift_tools.monitoring.ocutil import OCUtil
 from openshift_tools.monitoring.metric_sender import MetricSender
 # pylint: enable=import-error
-
+# pylint think check_fluentd is too complex
+#pylint: disable=too-many-branches
 class OpenshiftLoggingStatus(object):
     '''
         This is a check for the entire EFK stack shipped with OCP
@@ -86,7 +87,7 @@ class OpenshiftLoggingStatus(object):
             es_master = "exec -ti {} -- {}".format(pod_name, curl_cmd)
             master_name = self.oc.run_user_cmd(es_master).split(' ')[1]
 
-            if es_status['single_master'] == None:
+            if es_status['single_master'] is None:
                 es_status['single_master'] = 1
                 es_master_name = master_name
             elif es_master_name != master_name:
@@ -116,7 +117,7 @@ class OpenshiftLoggingStatus(object):
                     has_matched = True
                     break
 
-            if has_matched == False:
+            if has_matched is False:
                 es_status['all_nodes_registered'] = 0
 
         return es_status
@@ -185,7 +186,11 @@ class OpenshiftLoggingStatus(object):
         for pod in self.fluentd_pods:
             node_matched = False
 
-            if pod['status']['containerStatuses'][0]['ready'] == False:
+            try:
+                if pod['status']['containerStatuses'][0]['ready'] is False:
+                    fluentd_status['running'] = 0
+            # do not want to see too much info if pod outofcpu
+            except KeyError:
                 fluentd_status['running'] = 0
 
             # If there is already a problem don't worry about looping over the remaining pods/nodes
@@ -206,7 +211,7 @@ class OpenshiftLoggingStatus(object):
                         node_matched = True
                         break
 
-            if node_matched == False:
+            if node_matched is False:
                 fluentd_status['node_mismatch'] = 1
                 break
 
