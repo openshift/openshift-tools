@@ -1,8 +1,0 @@
----
-- include: ../openshift-cluster/initialize_groups.yml
-  tags:
-  - always
-
-- include: ../../common/openshift-etcd/migrate.yml
-  tags:
-  - always
