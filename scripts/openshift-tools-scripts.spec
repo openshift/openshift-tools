@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.105
+Version:       0.1.106
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -480,6 +480,13 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Tue Oct 24 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.106-1
+- added the exception for the pods without status (zhiwliu@redhat.com)
+- add auto-heal for heartbeat.ping (zhizhang@zhizhang-laptop-nay.redhat.com)
+- adding clam update container (dedgar@redhat.com)
+- Revert "Clam update container (#2997)" (dedgar@redhat.com)
+- Clam update container (#2997) (dedgar@redhat.com)
+
 * Tue Oct 17 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.105-1
 - forgot to change these calls after altering the library (ihorvath@redhat.com)
 - changing how it aws util helper class reads inventory (ihorvath@redhat.com)
