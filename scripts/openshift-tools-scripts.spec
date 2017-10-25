@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.106
+Version:       0.1.107
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -480,6 +480,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Tue Oct 24 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.107-1
+-
+
 * Tue Oct 24 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.106-1
 - added the exception for the pods without status (zhiwliu@redhat.com)
 - add auto-heal for heartbeat.ping (zhizhang@zhizhang-laptop-nay.redhat.com)
