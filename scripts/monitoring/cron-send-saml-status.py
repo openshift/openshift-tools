@@ -11,7 +11,7 @@
 import argparse
 import time
 import urllib2
-
+import ssl
 import logging
 logging.basicConfig(
     format='%(asctime)s - %(relativeCreated)6d - %(levelname)-8s - %(message)s',
@@ -52,6 +52,7 @@ def parse_args():
                         help='verbosity level, specify multiple')
     parser.add_argument('--dc', default="saml-auth", help='deployment config name')
     parser.add_argument('--service', default="saml-auth", help='service name')
+    parser.add_argument('--route', default="saml-auth", help='route name')
     parser.add_argument('--namespace', default="default", help='service namespace')
 
     args = parser.parse_args()
@@ -65,15 +66,17 @@ def parse_args():
 
 def gen_test_url(service):
     """ Generate Test URL """
-    return "https://%s:%s/logged_out.html" % (
-        service['spec']['clusterIP'],
-        443
+    return "https://%s/logged_out.html" % (
+        service['spec']['host']
     )
 
 def curl(url):
     """ Test URL, return http code """
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
     try:
-        return urllib2.urlopen(url, timeout=30).getcode()
+        return urllib2.urlopen(url, context=ctx, timeout=30).getcode()
     except urllib2.HTTPError as e:
         return e.fp.getcode()
     except Exception:
@@ -99,9 +102,12 @@ def test_saml_pod(args=None, ):
     logger.info('Service: %s', args.service)
     logger.debug(service)
 
-    url = gen_test_url(service)
-    logger.info('Service IP: %s', service['spec']['clusterIP'])
-    logger.info('Service URL: %s', url)
+    route = runOCcmd_yaml("get route {}".format(args.route))
+    logger.info('Route : %s',args.route)
+    logger.debug(route)
+
+    url = gen_test_url(route)
+    logger.info('Route URL: %s', url)
 
     curl_status = curl(url)
     logger.info("HTTP response (curl): %s", curl_status)
