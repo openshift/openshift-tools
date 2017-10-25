@@ -1,6 +1,0 @@
----
-- name: Install excluders
-  include: install.yml
-
-- name: Enable excluders
-  include: exclude.yml
