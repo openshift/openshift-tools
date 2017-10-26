@@ -31,7 +31,7 @@ objects:
             value: ${MYSQL_DATABASE}
           - name: MYSQL_ROOT_PASSWORD
             value: ${MYSQL_PASSWORD}
-          image: openshift/mysql-55-centos7:latest
+          image: openshift/mysql-56-centos7:latest
           imagePullPolicy: Always
           name: mysql
           ports:
