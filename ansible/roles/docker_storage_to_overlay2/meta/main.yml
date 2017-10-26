@@ -1,0 +1,3 @@
+---
+dependencies:
+- tools_roles/lib_repoquery
