@@ -180,7 +180,7 @@ class RemoteHealer(object):
             cmd = '/usr/local/bin/autokeys_loader ansible-playbook /usr/bin/heal_cleanup_rootvg-var.yml -e cli_tag_name=' + self._args.host
             self.run_cmd(cmd.split())
 
-        elif re.search(r'^\[Heal\] Heartbeat.ping has failed (15 min) on', self._args.trigger):
+        elif re.search(r'^\[Heal\] Heartbeat.ping has failed 15 min on', self._args.trigger):
             logging.info("Auto heal for heartbeat.ping on " + self._args.host)
             cmd = 'ansible-playbook -M /usr/share/ansible/zabbix/ /usr/bin/heal_for_heartbeat.yml -e "cli_nodename='+self._args.host+'"'
             self.run_cmd(cmd.split())
