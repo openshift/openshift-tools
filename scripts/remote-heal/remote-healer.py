@@ -170,7 +170,7 @@ class RemoteHealer(object):
             logging.info("Restarting docker on " + self._args.host)
 
             #run playbook to evacuate the host and restart the docker
-            cmd = 'ansible-playbook  /usr/bin/heal_for_docker_use_too_much_memory.yml -e "cli_nodename='+self._args.host+'"'
+            cmd = 'ansible-playbook  /usr/bin/heal_for_docker_use_too_much_memory.yml -e cli_nodename='+self._args.host
             #run
             self.run_cmd(cmd.split())
 
@@ -182,7 +182,7 @@ class RemoteHealer(object):
 
         elif re.search(r'^\[Heal\] Heartbeat.ping has failed 15 min on', self._args.trigger):
             logging.info("Auto heal for heartbeat.ping on " + self._args.host)
-            cmd = 'ansible-playbook -M /usr/share/ansible/zabbix/ /usr/bin/heal_for_heartbeat.yml -e "cli_nodename='+self._args.host+'"'
+            cmd = 'ansible-playbook -M /usr/share/ansible/zabbix/ /usr/bin/heal_for_heartbeat.yml -e cli_nodename='+self._args.host
             self.run_cmd(cmd.split())
 
         else:
