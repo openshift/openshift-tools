@@ -37,6 +37,13 @@ ADD zabbix/conf/zabbix_agent.conf /etc/zabbix/
 # DB creation
 ADD zabbix/db_create/createdb.sh /root/zabbix/
 
+# DB paritioning procedure creation
+ADD zabbix/db_create/create_db_partitioning_procedures.sh /root/zabbix/
+
+# Add the zabbix partitioning script and partitioning monitoring script
+ADD zabbix/db_create/zabbix_partition_maintenance.sh /usr/local/bin/
+ADD zabbix/db_create/zabbix_partition_monitoring.sh /usr/local/bin/
+
 # Add crontab for root
 # Re-enable once we figure out how to run cron inside of openshift.
 #ADD cronroot /var/spool/cron/root
