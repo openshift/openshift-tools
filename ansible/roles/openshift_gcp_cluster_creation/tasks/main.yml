@@ -2,7 +2,6 @@
 - name: generate dm yaml
   gcloud_dm_resource_builder:
     clusterid: "{{ osgcc_clusterid }}"
-    account: "{{ osgcc_account }}"
     sublocation: "{{ osgcc_sublocation }}"
     zone: "{{ osgcc_zone }}"
     health_checks: "{{ osgcc_health_checks }}"
@@ -70,21 +69,16 @@
 - name: Get Master LB IP Address
   gcloud_compute_addresses:
     state: list
+    region: "{{ osgcc_sublocation }}"
     name: "{{ osgcc_clusterid }}-master-lb-address"
   register: master_lb_addrout
-  until: master_lb_addrout.rc == 0
-  retries: 20
-  delay: 6
 
 - name: Get Infra LB IP Address
   gcloud_compute_addresses:
     state: list
+    region: "{{ osgcc_sublocation }}"
     name: "{{ osgcc_clusterid }}-infra-lb-address"
   register: infra_lb_addrout
-  until: infra_lb_addrout.rc == 0
-  retries: 20
-  delay: 6
-
 
 - name: Update DNS for GCP Master LB
   dyn_record:
