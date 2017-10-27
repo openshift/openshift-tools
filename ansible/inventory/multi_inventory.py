@@ -14,6 +14,7 @@ import errno
 import fcntl
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -26,9 +27,11 @@ FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)))
 
 class MultiInventoryAccount(object):
     """Object to represent an account"""
-    def __init__(self, name, config, cache_path, cache_max_age=1800):
+    #pylint: disable=too-many-arguments
+    def __init__(self, name, config, cache_path, cache_max_age=1800, group_whitelist=None):
         self.name = name
         self.config = config
+        self.group_whitelist = group_whitelist
         self._inventory = None
 
         # set to global cache_max_age
@@ -355,11 +358,24 @@ class MultiInventoryAccount(object):
 
         self.apply_group_selectors()
 
-        # remove any extra groups that are not prefixed by oo_
-        # this removes all of the ec2.py's default groups: vpc, ami, security, etc
-        # revisit these when needed
+
+        ######################################################################
+        # If no groups specified in the whitelist then return all groups
+        ######################################################################
+        if self.group_whitelist is None or len(self.group_whitelist) == 0:
+            return
+
+        ######################################################################
+        # remove any extra groups that are not provided in the group_whitelist
+        ######################################################################
         for key in self.inventory.keys():
-            if key in ['_meta', 'all_hosts'] or key.startswith('oo_'):
+            match = False
+            for regex in self.group_whitelist:
+                if re.search(regex, key) is not None:
+                    match = True
+                    break
+
+            if match:
                 continue
 
             del self.inventory[key]
@@ -498,8 +514,9 @@ class MultiInventory(object):
 
             self.accounts.append(MultiInventoryAccount(acc_name,
                                                        account,
-                                                       self.config['cache_account_location'],
-                                                       self.config['cache_max_age']))
+                                                       self.config.get('cache_account_location', '/tmp/account'),
+                                                       self.config.get('cache_max_age', 1800),
+                                                       self.config.get('group_whitelist', [])))
 
     def get_account_from_cluster(self, cluster):
         '''return the account if it has the specified cluster'''
