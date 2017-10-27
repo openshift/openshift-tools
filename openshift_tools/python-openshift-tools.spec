@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.115
+Version:       0.0.116
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -297,6 +297,10 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Fri Oct 27 2017 Kenny Woodson <kwoodson@redhat.com> 0.0.116-1
+- adding another exception catch so the execution continues
+  (ihorvath@redhat.com)
+
 * Tue Oct 17 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.115-1
 - changing how it aws util helper class reads inventory (ihorvath@redhat.com)
 
