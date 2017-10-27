@@ -2,7 +2,7 @@
 osmsc_storageclass_cloud: aws
 osmsc_storageclass_defaults:
   aws:
-    name: ebs
+    name: gp2
     provisioner: kubernetes.io/aws-ebs
     type: gp2
   gcp:
