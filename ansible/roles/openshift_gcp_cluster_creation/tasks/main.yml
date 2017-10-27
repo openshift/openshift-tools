@@ -71,6 +71,7 @@
     state: list
     region: "{{ osgcc_sublocation }}"
     name: "{{ osgcc_clusterid }}-master-lb-address"
+    region: "{{ osgcc_sublocation }}"
   register: master_lb_addrout
 
 - name: Get Infra LB IP Address
@@ -78,6 +79,7 @@
     state: list
     region: "{{ osgcc_sublocation }}"
     name: "{{ osgcc_clusterid }}-infra-lb-address"
+    region: "{{ osgcc_sublocation }}"
   register: infra_lb_addrout
 
 - name: Update DNS for GCP Master LB
