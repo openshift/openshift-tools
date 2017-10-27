@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.47
+Version:        0.0.48
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,19 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Fri Oct 27 2017 Kenny Woodson <kwoodson@redhat.com> 0.0.48-1
+- Making group whitelisting easier. (kwoodson@redhat.com)
+- gcp lb takes a while to come alive - let's wait 2 minutes and keep trying
+  every 6s (dyocum@redhat.com)
+- zabbix server partitioning bits (mwoodson@redhat.com)
+- fix the trigger name for re issue (zhizhang@zhizhang-laptop-nay.redhat.com)
+- fix autoheal for high alert (zhizhang@zhizhang-laptop-nay.redhat.com)
+- add auto-heal for heartbeat.ping (zhizhang@zhizhang-laptop-nay.redhat.com)
+- roles/docker_storage_setup: Support overlay2 (mbarnes@fedoraproject.org)
+- adding clam update container (dedgar@redhat.com)
+- Revert "Clam update container (#2997)" (dedgar@redhat.com)
+- Clam update container (#2997) (dedgar@redhat.com)
+
 * Tue Oct 17 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.47-1
 - Removing all groups except all_hosts and oo_ (kwoodson@redhat.com)
 - adding the new cli option to the running config (ihorvath@redhat.com)
