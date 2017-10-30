@@ -531,7 +531,7 @@ class GcloudComputeAddresses(GcloudCLI):
 
     def list_addresses(self, address_name=None, region_name=None):
         '''return a list of addresses'''
-        results = self._list_addresses(address_name)
+        results = self._list_addresses(address_name, region_name)
         if results['returncode'] == 0:
             if not address_name:
                 rval = []
