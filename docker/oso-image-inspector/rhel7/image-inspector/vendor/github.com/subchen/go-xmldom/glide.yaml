@@ -1,0 +1,3 @@
+package: github.com/subchen/go-xmldom
+import:
+- package: github.com/antchfx/xpath

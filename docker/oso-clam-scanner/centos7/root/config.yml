@@ -1,0 +1,43 @@
+---
+- hosts: localhost
+  # need this for ansible_nodename
+  gather_facts: yes
+  vars_files:
+  - /root/default_vars.yml
+  vars:
+
+  tasks:
+  - name: Placeholder task
+    debug: msg="This task does nothing"
+
+#  - name: "Create bind mountpoints for rkhunter scans"
+#    file:
+#      path: "{{ item }}"
+#      state: directory
+#      recurse: yes
+#    with_items:
+#    - /var/local/host
+#
+#  - name: "Bind rkhunter scan directories"
+#    mount:
+#      opts: "{{ item.mnt_opts }}"
+#      fstype: auto
+#      state: mounted
+#      name: "{{ item.mnt_name }}"
+#      src: "{{ item.mnt_src }}"
+#    with_items:
+#    - mnt_src: "/usr/bin"
+#      mnt_name: "/var/local/rkhunter_tmp/rkhunter/bin"
+#      mnt_opts: "bind,ro"
+
+#  - name: Setup Cron
+#    cron:
+#      name: "{{ item.name }}"
+#      job: "{{ item.job }}"
+#      minute: "{{ item.minute | default('*', True) }}"
+#      hour: "{{ item.hour | default('*', True) }}"
+#      day: "{{ item.day | default('*', True) }}"
+#      month: "{{ item.month | default('*', True) }}"
+#      weekday: "{{ item.weekday | default('*', True) }}"
+#    with_items:
+#    - "{{ clam_scanning_cron }}"

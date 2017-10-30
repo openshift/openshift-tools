@@ -35,12 +35,12 @@ def get_mnt_ns(containerid):
     if containerid.startswith('docker://'):
         containerid = containerid[len('docker://'):]
         # get the pid of the main process in the container
-        pid = subprocess.check_output(['/usr/bin/docker', 'inspect', '--format={{.State.Pid}}', containerid]).rstrip()
+        pid = subprocess.check_output(['/host/usr/bin/docker', 'inspect', '--format={{.State.Pid}}', containerid]).rstrip()
         try:
             # get and return the inode of the process's mount namespace. All other processes in the container will
             # have the same mount namespace (assuming non-privileged containers that don't have CAP_SYS_ADMIN and
             # can't call setns()).
-            return os.stat('/proc/{pid}/ns/mnt'.format(pid=pid)).st_ino
+            return os.stat('/host/proc/{pid}/ns/mnt'.format(pid=pid)).st_ino
         except OSError:
             # The process has probably gone away
             return None
@@ -58,7 +58,7 @@ def scanpid(pid, scancache, clam):
                 # not an executable segment - skip it
                 if not match:
                     continue
-                toscan = '/proc/{pid}/map_files/{range}'.format(pid=pid, range=match.group('name'))
+                toscan = '/host/proc/{pid}/map_files/{range}'.format(pid=pid, range=match.group('name'))
                 try:
                     statval = os.stat(toscan)
                 # if the process goes away while we're scanning, we'll hit this exception. Also,
@@ -78,11 +78,6 @@ def scanpid(pid, scancache, clam):
                     except IOError:
                         # if the process has gone away, we won't be able to open toscan. No worries
                         continue
-                    # we only ever scan one file at a time, so the result is always the only
-                    # item in the the dictionary. The key will be 'fd'.
-                    result = ": ".join(scanned['fd'])
-                    # cache the result
-                    scancache[filetuple] = result
                 # for any non-'OK' results, get the container-local file path and return it with the results
                 if result != 'OK':
                     try:
@@ -96,12 +91,12 @@ def scanpid(pid, scancache, clam):
 
 def scanall(mntns, namespace, podname, container, scancache):
     '''Scan all processes in a given mount namespace'''
-    clam = clamd.ClamdUnixSocket(path='/var/run/clamd.scan/clamd.sock')
+    clam = clamd.ClamdUnixSocket(path='/host/var/run/clamd.scan/clamd.sock')
     # iterated over all running processes
-    for pid in [pid for pid in os.listdir('/proc') if pid.isdigit()]:
+    for pid in [pid for pid in os.listdir('/host/proc') if pid.isdigit()]:
         try:
             # get the process's mount namespace
-            this_mntns = os.stat('/proc/{pid}/ns/mnt'.format(pid=pid)).st_ino
+            this_mntns = os.stat('/host/proc/{pid}/ns/mnt'.format(pid=pid)).st_ino
         except OSError:
             # no worries if we tried to open it and failed. The process has probably gone away
             pass
@@ -127,9 +122,10 @@ def main():
 
     # Get details of pods running on this node (like "oadm manage-node --lits-pods")
     # Retry up to 7 times with exponential back-off
-    certbase = '/etc/origin/node/system:node:{nodename}'.format(nodename=node)
+    certbase = '/host/etc/origin/node/system:node:{nodename}'.format(nodename=node)
     for i in range(1, 8):
         response = requests.get(URL, params={'fieldSelector': "spec.nodeName={nodename}".format(nodename=node)},
+                                verify="/host/etc/pki/ca-trust/source/anchors/openshift-ca.crt",
                                 cert=(certbase + '.crt', certbase + '.key'))
         if response.ok:
             break
