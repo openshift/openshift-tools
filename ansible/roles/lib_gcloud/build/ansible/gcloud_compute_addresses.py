@@ -27,7 +27,8 @@ def main():
 
     state = module.params['state']
 
-    api_rval = gcloud.list_addresses(module.params['name'])
+    api_rval = gcloud.list_addresses(module.params['name'],
+                                     module.params['region'])
 
     #####
     # Get

@@ -162,13 +162,13 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
-    def _list_addresses(self, aname=None):
+    def _list_addresses(self, aname=None, region=None):
         ''' list addresses
             if a name is specified then perform a describe
         '''
         cmd = ['compute', 'addresses']
         if aname:
-            cmd.extend(['describe', aname])
+            cmd.extend(['describe', aname, '--region', region])
         else:
             cmd.append('list')
 
@@ -529,9 +529,9 @@ class GcloudComputeAddresses(GcloudCLI):
         self.address = address
         self.verbose = verbose
 
-    def list_addresses(self, address_name=None):
+    def list_addresses(self, address_name=None, region_name=None):
         '''return a list of addresses'''
-        results = self._list_addresses(address_name)
+        results = self._list_addresses(address_name, region_name)
         if results['returncode'] == 0:
             if not address_name:
                 rval = []
@@ -595,7 +595,8 @@ def main():
 
     state = module.params['state']
 
-    api_rval = gcloud.list_addresses(module.params['name'])
+    api_rval = gcloud.list_addresses(module.params['name'],
+                                     module.params['region'])
 
     #####
     # Get

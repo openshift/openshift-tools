@@ -162,13 +162,13 @@ class GcloudCLI(object):
 
         return self.gcloud_cmd(cmd, output=True, output_type='raw')
 
-    def _list_addresses(self, aname=None):
+    def _list_addresses(self, aname=None, region=None):
         ''' list addresses
             if a name is specified then perform a describe
         '''
         cmd = ['compute', 'addresses']
         if aname:
-            cmd.extend(['describe', aname])
+            cmd.extend(['describe', aname, '--region', region])
         else:
             cmd.append('list')
 
@@ -632,7 +632,7 @@ class GcloudComputeLabel(GcloudCLI):
                 return {'failed': True, 'msg': api_rval, 'state': state}
 
             if "no_deletes_needed" in api_rval:
-                return {'changed': False, 'state': "absent", 'resultes': api_rval}
+                return {'changed': False, 'state': "absent", 'results': api_rval}
 
             return {'changed': True, 'results': api_rval, 'state': state}
 
