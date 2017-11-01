@@ -29,10 +29,17 @@ if [ "${OC_RUNNING}" -eq "200" ]; then
 fi
 
 echo "Opening ports on default zone for DNS and container traffic (non-permanent)"
-sudo firewall-cmd --add-source 172.17.0.0/16
-sudo firewall-cmd --add-port 8443/tcp
-sudo firewall-cmd --add-port 53/udp
-sudo firewall-cmd --add-port 8053/udp
+if [ $(systemctl is-active firewalld) == "active" ]; then 
+    sudo firewall-cmd --add-source 172.17.0.0/16
+    sudo firewall-cmd --add-port 8443/tcp
+    sudo firewall-cmd --add-port 53/udp
+    sudo firewall-cmd --add-port 8053/udp
+else
+    sudo iptables -A INPUT -s 172.17.0.0/16 -j ACCEPT
+    sudo iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 8443 -s 172.17.0.0/16 -j ACCEPT
+    sudo iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 53 -s 172.17.0.0/16 -j ACCEPT
+    sudo iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 8053 -s 172.17.0.0/16 -j ACCEPT
+fi
 
 sudo ${OC} cluster up
 ${OC} login localhost:8443 -u developer -p developer --insecure-skip-tls-verify
