@@ -71,20 +71,15 @@
   gcloud_compute_addresses:
     state: list
     name: "{{ osgcc_clusterid }}-master-lb-address"
+    region: "{{ osgcc_sublocation }}"
   register: master_lb_addrout
-  until: master_lb_addrout.rc == 0
-  retries: 20
-  delay: 6
 
 - name: Get Infra LB IP Address
   gcloud_compute_addresses:
     state: list
     name: "{{ osgcc_clusterid }}-infra-lb-address"
+    region: "{{ osgcc_sublocation }}"
   register: infra_lb_addrout
-  until: infra_lb_addrout.rc == 0
-  retries: 20
-  delay: 6
-
 
 - name: Update DNS for GCP Master LB
   dyn_record:
