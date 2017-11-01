@@ -15,4 +15,8 @@ echo "Stop OpenShift"
 sudo ${OC} cluster down
 
 echo "Unloading temporary firewall changes"
-sudo firewall-cmd --reload
+if [ $(systemctl is-active firewalld) == "active" ]; then 
+    sudo firewall-cmd --reload
+else
+    sudo systemctl restart iptables
+fi
