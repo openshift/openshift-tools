@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
-
 ''' Trello card CLI '''
 
 import argparse
 import json
 import os
-import sys
-import json
 import re
+import sys
 
 try:
     from urllib import urlencode
@@ -42,7 +40,9 @@ class Trello(object):
         subparsers = parser.add_subparsers(help='sub-command help')
 
         parser_get = subparsers.add_parser('get',
-                help='Get board information: card list, user list or card details')
+                                           help="""Get board information:
+                                                   card list, user list or
+                                                   card details""")
         parser_get.add_argument(
             'card',
             nargs='?',
@@ -233,9 +233,9 @@ class Trello(object):
                 response = urlopen(request, data=data)
             else:
                 response = urlopen(request)
-        except HTTPError as e:
-            print(e)
-            print(e.read())
+        except HTTPError as err:
+            print err
+            print err.read()
             result = None
         else:
             result = json.loads(response.read().decode('utf-8'))
