@@ -981,7 +981,7 @@ g_template_openshift_master:
     priority: info
 
   - name: ">60% change in project count over 2 hours on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.projects.delta.last()}>50"
+    expression: "{Template Openshift Master:openshift.master.projects.delta.last()}>60"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/delta_trigger.asciidoc"
     priority: info
 
