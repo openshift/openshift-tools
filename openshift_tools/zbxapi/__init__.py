@@ -7,7 +7,7 @@ if __name__ == '__main__':
     username = ''
     password = ''
     zbc = ZabbixConnection(server, username, password)
-    zbx = ZabbixAPI(data)
+    zbx = ZabbixAPI(zbc)
     print zbx.get_content('user', 'get', {})
 
 '''
