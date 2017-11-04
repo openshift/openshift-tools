@@ -95,7 +95,7 @@ g_template_aws:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_ebs_snapshotter.asciidoc"
     priority: average
 
-  - name: "{% raw %}EBS Attach State[{{ '{#' }}OSO_EBS_VOLUME_URI}]: EBS volume stuck attaching or detaching{% endraw %}"
+  - name: "{HOST.NAME} {% raw %}EBS Attach State[{{ '{#' }}OSO_EBS_VOLUME_URI}]: EBS volume stuck attaching or detaching{% endraw %}"
     expression: "{% raw %}{Template AWS:disc.aws.ebs.attach_state[{{ '{#' }}OSO_EBS_VOLUME_URI}].last()}>0{% endraw %}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_ebs_stuck_attaching_detaching.asciidoc"
     priority: high
