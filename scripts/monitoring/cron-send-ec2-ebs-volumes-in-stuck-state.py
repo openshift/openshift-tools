@@ -21,12 +21,16 @@
 #This is not a module, but pylint thinks it is.  This is a command.
 #pylint: disable=invalid-name
 
-from openshift_tools.cloud.aws.ebs_util import EbsUtil
 import argparse
-import yaml
 import os.path
+import re
 from datetime import datetime, timedelta
+
+import yaml
+
+from openshift_tools.cloud.aws.ebs_util import EbsUtil
 from openshift_tools.monitoring.metric_sender import MetricSender
+from openshift_tools.monitoring.ocutil import OCUtil
 
 
 STATE_DATA_FILE = "/tmp/ebs_volume_state_data.yaml"
@@ -67,6 +71,7 @@ class EBSStuckVolumesCheck(object):
             os.environ['AWS_PROFILE'] = self.args.aws_creds_profile
 
         self.eu = EbsUtil(self.args.region, verbose=self.args.verbose)
+        self.ocutil = OCUtil(verbose=self.args.verbose)
         self.mts = MetricSender(verbose=self.args.verbose)
 
     def parse_args(self):
@@ -187,6 +192,24 @@ class EBSStuckVolumesCheck(object):
                 # This volume was transitioning, but isn't any longer
                 del self.vol_state_data[vol_uri]
 
+    def get_cluster_volumes(self):
+        """ Return the cluster's volume list """
+        volume_list = self.ocutil.get_pvs()['items']
+        just_the_aws_path = [x['spec']['awsElasticBlockStore']['volumeID'] for x in volume_list]
+
+        just_the_volume_ids = [re.sub("^aws://.*/", "", x) for x in just_the_aws_path]
+
+        return just_the_volume_ids
+
+    @staticmethod
+    def filter_out_non_cluster_vols(account_vols, cluster_vols):
+        """ We have a list of all volumes in the account, return only
+            those that are part of this cluster """
+
+        cluster_list = [x for x in account_vols if x.id in cluster_vols]
+
+        return cluster_list
+
     def run(self):
         """ Run the main logic of this check """
 
@@ -194,7 +217,13 @@ class EBSStuckVolumesCheck(object):
         self.load_volume_state_data()
 
         # Get the volumes that are currently in a transitioning state
-        trans_vols = self.eu.get_trans_attach_status_vols()
+        full_trans_vols = self.eu.get_trans_attach_status_vols()
+
+        # Get the cluster's list of volumes
+        cluster_vols = self.get_cluster_volumes()
+
+        # Remove volumes that aren't part of this cluster
+        trans_vols = self.filter_out_non_cluster_vols(full_trans_vols, cluster_vols)
 
         # Based on that list, weed out the volumes that used to be transitioning,
         # that are no longer in the transitioning volumes list. This means that
