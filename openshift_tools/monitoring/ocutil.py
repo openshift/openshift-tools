@@ -19,14 +19,14 @@
 #   limitations under the License.
 #
 
-import os
-import shlex
 import atexit
+import os
+import random
+import shlex
 import shutil
 import string
-import random
-import yaml
 import subprocess
+import yaml
 
 # pylint: disable=bare-except
 def cleanup_file(inc_file):
@@ -64,12 +64,12 @@ class OCUtil(object):
 
     def _run_cmd(self, cmd, base_cmd='oc', ):
         """ Actually execute the command """
-        cmd = " ".join([base_cmd, '--config', self.config_file, '-n', self.namespace, cmd])
+        cmd_str = " ".join([base_cmd, '--config', self.config_file, '-n', self.namespace, cmd])
 
         if self.logger:
-            self.logger.debug("ocutil._run_cmd( {} )".format(cmd))
+            self.logger.debug("ocutil._run_cmd( {} )".format(cmd_str))
 
-        cmd = shlex.split(cmd)
+        cmd = shlex.split(cmd_str)
 
         if self.verbose:
             print "Running command: {}".format(str(cmd))
@@ -133,3 +133,6 @@ class OCUtil(object):
         """ Gets the log for the specified container """
         return self._run_cmd("logs {}".format(name))
 
+    def get_pvs(self):
+        """ Returns all PVs in the cluster """
+        return self._run_cmd_yaml("get persistentvolumes")
