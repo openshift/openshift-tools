@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.110
+Version:       0.1.111
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -482,6 +482,11 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Mon Nov 06 2017 Joel Diaz <jdiaz@redhat.com> 0.1.111-1
+- limit ebs volume reporting to only cluster volumes (jdiaz@redhat.com)
+- fix pylint failures (sten@redhat.com)
+- send only internal or external expirations (sten@redhat.com)
+
 * Thu Oct 26 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.110-1
 - fix the python run command issue (zhizhang@zhizhang-laptop-nay.redhat.com)
 
