@@ -290,7 +290,7 @@ g_template_os_linux:
 
   # This has a dependency on the previous trigger
   - name: "{% raw %}[Heal] Filesystem: {{ '{#' }}OSO_FILESYS} has less than 10% free disk space on {HOST.NAME}{% endraw %}"
-    expression: "{% raw %}{Template OS Linux:disc.filesys.full[{{ '{#' }}OSO_FILESYS}].last()}>90{% endraw %}"
+    expression: "{% raw %}({TRIGGER.VALUE}=0 and {Template OS Linux:disc.filesys.full[{{ '{#' }}OSO_FILESYS}].last()}>90) or ({TRIGGER.VALUE}=1 and {Template OS Linux:disc.filesys.full[{{ '{#' }}OSO_FILESYS}].last()}>80){% endraw %}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_filesys_full.asciidoc"
     priority: high
 
