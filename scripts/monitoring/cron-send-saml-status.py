@@ -7,6 +7,7 @@
 
 # pylint: disable=wrong-import-position
 # pylint: disable=broad-except
+# pylint: disable=line-too-long
 
 import argparse
 import time
@@ -94,24 +95,20 @@ def test_saml_pod(args=None, ):
     if dc['status']['availableReplicas'] < 1:
         # Pod not running
         return 0
+    #get the pod status and see if the saml pod is running
+    pods = runOCcmd_yaml("get pod")
+    count_running_saml_pod = 0
 
-    service = runOCcmd_yaml("get service {}".format(args.service))
-    logger.info('Service: %s', args.service)
-    logger.debug(service)
-
-    url = gen_test_url(service)
-    logger.info('Service IP: %s', service['spec']['clusterIP'])
-    logger.info('Service URL: %s', url)
-
-    curl_status = curl(url)
-    logger.info("HTTP response (curl): %s", curl_status)
-
-    if curl_status == 200:
-        # everything is ok
+    for pod in pods['items']:
+        if (not pod['metadata']['name'].find(args.dc) == -1) and (pod['status']['phase'] == 'Running') and (pod['status']['containerStatuses'][0]['ready'] is True):
+            count_running_saml_pod = count_running_saml_pod + 1
+    logger.info('Healthy saml pod count is : %s', count_running_saml_pod)
+    if count_running_saml_pod == dc['status']['replicas']:
+        #the running pod count  match the dc
         return 1
     else:
-        # we have the pod, but bad http response
         return 2
+
 
 def main():
     """ SAML Pod Status """
