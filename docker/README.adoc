@@ -25,8 +25,8 @@ The RHEL-based containers in this directory expect a secrets directory to be set
     │   └── client-key.pem
     ├── repos
     │   ├── oo-ops-rpm.repo
-    │   ├── oso-rhui-rhel-7-extras.repo
-    │   └── oso-rhui-rhel-7-server.repo
+    │   ├── rhui-rhel-7-extras.repo
+    │   └── rhui-rhel-7-server.repo
     └── rpm-gpg
         └── RPM-GPG-KEY-redhat-release
 ----
