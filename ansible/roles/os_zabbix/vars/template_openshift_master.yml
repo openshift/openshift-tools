@@ -690,12 +690,12 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
-  - key: openshift.master.projects.delta
-    description: "Percent change in projects count"
+  - key: openshift.master.project.delta
+    description: "Percent change in project count"
     value_type: float
     zabbix_type: calculated
     interval: 7200
-    params: "abschange(\"openshift.master.projects.count\") / prev(\"openshift.master.projects.count\") * 100"
+    params: "abschange(\"openshift.master.project.count\") / prev(\"openshift.master.project.count\") * 100"
     applications:
     - Openshift Master
 
@@ -976,12 +976,12 @@ g_template_openshift_master:
     priority: high
 
   - name: ">20% change in project count over 2 hours on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.projects.delta.last()}>20"
+    expression: "{Template Openshift Master:openshift.master.project.delta.last()}>20"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/delta_trigger.asciidoc"
     priority: info
 
   - name: ">60% change in project count over 2 hours on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.projects.delta.last()}>60"
+    expression: "{Template Openshift Master:openshift.master.project.delta.last()}>60"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/delta_trigger.asciidoc"
     priority: info
 
