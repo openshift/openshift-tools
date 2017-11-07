@@ -21,6 +21,7 @@
 # pylint: disable=invalid-name,import-error
 
 import os
+import sys
 import argparse
 from openshift_tools.cloud.aws import ebs_snapshotter
 
@@ -57,9 +58,10 @@ class TrimmerCli(object):
                             help='Say what would have been done, but don\'t actually do it.')
         parser.add_argument('--delete-orphans-older-than', required=True, type=int,
                             help='Delete orphaned snapshots if they are older than given days')
+        parser.add_argument('--region', required=True,
+                            help='The region that we want to process snapshots in')
 
         self.args = parser.parse_args()
-
 
     def main(self):
         """ main function """
@@ -72,19 +74,23 @@ class TrimmerCli(object):
         if self.args.aws_creds_profile:
             os.environ['AWS_PROFILE'] = self.args.aws_creds_profile
 
-        regions = ebs_snapshotter.EbsSnapshotter.get_supported_regions()
+        if not ebs_snapshotter.EbsSnapshotter.is_region_valid(self.args.region):
+            print "Invalid region"
+            sys.exit(1)
+        else:
+            print "Region: %s:" % self.args.region
+            ss = ebs_snapshotter.EbsSnapshotter(self.args.region, verbose=True)
 
-        for region in regions:
-            print "Region: %s:" % region
-            ss = ebs_snapshotter.EbsSnapshotter(region.name, verbose=True)
-
-            expired_snapshots, deleted_snapshots, deleted_orphans, snapshot_deletion_errors = \
-                ss.trim_snapshots(hourly_backups=self.args.keep_hourly, \
-                                  daily_backups=self.args.keep_daily, \
-                                  weekly_backups=self.args.keep_weekly, \
-                                  monthly_backups=self.args.keep_monthly, \
-                                  dry_run=self.args.dry_run, \
-                                  delete_orphans_older_than=self.args.delete_orphans_older_than)
+            (expired_snapshots,
+             deleted_snapshots,
+             deleted_orphans,
+             snapshot_deletion_errors) = ss.trim_snapshots(
+                 hourly_backups=self.args.keep_hourly,
+                 daily_backups=self.args.keep_daily,
+                 weekly_backups=self.args.keep_weekly,
+                 monthly_backups=self.args.keep_monthly,
+                 dry_run=self.args.dry_run,
+                 delete_orphans_older_than=self.args.delete_orphans_older_than)
 
             num_deletion_errors = len(snapshot_deletion_errors)
 
@@ -104,7 +110,6 @@ class TrimmerCli(object):
         print "       Total number of orphaned snapshots deleted: {}".format(total_orphans_deleted)
         print "Total number of snapshot deletion errors: %d" % total_deletion_errors
         print
-
 
         print "Sending results to Zabbix:"
         if self.args.dry_run:

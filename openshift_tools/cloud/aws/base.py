@@ -36,6 +36,15 @@ class Base(object):
         supported_regions = [r for r in all_regions if r.name not in EXCLUDED_REGIONS]
         return supported_regions
 
+    @staticmethod
+    def is_region_valid(region_to_check):
+        """ Checks if the given region is valid or not"""
+        for region in Base.get_supported_regions():
+            if region.name == region_to_check:
+                return True
+
+        return False
+
     def print_volume(self, volume, prefix=""):
         """ Prints out the details of the given volume. """
         self.verbose_print("%s:" % volume.id, prefix=prefix)
@@ -51,4 +60,3 @@ class Base(object):
 
         for snap in snapshots:
             self.verbose_print("  %s: start_time %s" % (snap.id, snap.start_time), prefix=prefix)
-
