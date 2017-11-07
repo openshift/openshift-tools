@@ -695,7 +695,7 @@ g_template_openshift_master:
     value_type: float
     zabbix_type: calculated
     interval: 7200
-    params: "abschange(\"openshift.master.project.count\") / prev(\"openshift.master.project.count\") * 100"
+    params: "abschange(\"openshift.project.count\") / prev(\"openshift.project.count\") * 100"
     applications:
     - Openshift Master
 
