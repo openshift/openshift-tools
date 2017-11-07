@@ -21,6 +21,7 @@
 # pylint: disable=invalid-name
 
 import os
+import sys
 import argparse
 
 # Reason: disable pylint import-error because our libs aren't loaded on jenkins.
@@ -57,6 +58,8 @@ class SnapshotterCli(object):
                             help='The amount of time to sleep between snapshot API calls.')
         parser.add_argument('--dry-run', action='store_true', default=False,
                             help='Say what would have been done, but don\'t actually do it.')
+        parser.add_argument('--region', required=True,
+                            help='The region that we want to process snapshots in')
 
         self.args = parser.parse_args()
 
@@ -70,14 +73,14 @@ class SnapshotterCli(object):
         if self.args.aws_creds_profile:
             os.environ['AWS_PROFILE'] = self.args.aws_creds_profile
 
-        regions = ebs_snapshotter.EbsSnapshotter.get_supported_regions()
-
         script_name = os.path.basename(__file__)
 
-
-        for region in regions:
-            print "Region: %s:" % region
-            ss = ebs_snapshotter.EbsSnapshotter(region.name, verbose=True)
+        if not ebs_snapshotter.EbsSnapshotter.is_region_valid(self.args.region):
+            print "Invalid region"
+            sys.exit(1)
+        else:
+            print "Region: %s:" % self.args.region
+            ss = ebs_snapshotter.EbsSnapshotter(self.args.region, verbose=True)
 
             avail_vols, snapshots_created, snapshot_creation_errors = \
                 ss.create_snapshots(self.args.with_schedule, script_name, \
@@ -93,7 +96,6 @@ class SnapshotterCli(object):
                 print "  Snapshot Creation errors (%d):" % num_creation_errors
                 for cur_err in snapshot_creation_errors:
                     print "    %s" % cur_err
-
 
         print
         print "    Total number of snapshottable volumes: %d" % total_snapshottable_vols
