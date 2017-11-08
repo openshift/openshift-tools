@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.49
+Version:        0.0.50
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,9 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Wed Nov 08 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.50-1
+- Only check pv usage on dedicated clusters (bmorriso@redhat.com)
+
 * Wed Nov 08 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.49-1
 - add cgroup memory usage metrics (jdiaz@redhat.com)
 - reorder discovery items (jdiaz@jdiaz-t450.lan)
