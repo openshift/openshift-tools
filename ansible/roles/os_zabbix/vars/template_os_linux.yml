@@ -188,6 +188,34 @@ g_template_os_linux:
     multiplier: 1024
     units: B
 
+  - key: mem.system.slice.max
+    applications:
+    - Memory
+    value_type: int
+    description: "Max memory usage reading from system.slice cgroup"
+    units: B
+
+  - key: mem.system.slice.current
+    applications:
+    - Memory
+    value_type: int
+    description: "Current memory usage reading from system.slice cgroup"
+    units: B
+
+  - key: mem.kubepod.slice.max
+    applications:
+    - Memory
+    value_type: int
+    description: "Max memory usage reading from kubepod.slice cgroup"
+    units: B
+
+  - key: mem.kubepod.slice.current
+    applications:
+    - Memory
+    value_type: int
+    description: "Current memory usage reading from kubepod.slice cgroup"
+    units: B
+
   # security items
   - key: yum.security.updates
     applications:
