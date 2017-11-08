@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.114
+Version:       0.1.115
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -482,6 +482,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Nov 08 2017 Thomas Wiest <twiest@redhat.com> 0.1.115-1
+- Fixed cron-send-docker-metrics and dockerutil to work with overlayfs.
+  (twiest@redhat.com)
+
 * Wed Nov 08 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.114-1
 - adding region option to snap creation and trimming (ihorvath@redhat.com)
 
