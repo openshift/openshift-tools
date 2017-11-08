@@ -10,9 +10,9 @@
 # pylint: disable=invalid-name
 
 
+import re
 from openshift_tools.timeout import timeout
 from openshift_tools.cgrouputil import CgroupUtil
-import re
 
 
 class DockerDiskStats(object):
@@ -35,13 +35,11 @@ class DockerDiskStats(object):
         self.metadata_space_available = None
         self.metadata_space_total = None
         self.metadata_space_percent_available = None
-        self.is_loopback = None
 
     def __repr__(self):
         ''' make it easy to see what's inside of this object
         '''
         return 'DockerDiskStats(\n' + \
-               '  is loopback: %r\n' % self.is_loopback + \
                '  data_space_used: %r\n' % self.data_space_used + \
                '  data_space_available: %r\n' % self.data_space_available + \
                '  data_space_total: %r\n' % self.data_space_total + \
@@ -77,6 +75,19 @@ class DockerUtil(object):
 
         return self.__docker_info
 
+    @property
+    def is_devicemapper(self):
+        ''' Returns whether the docker storage driver is devicemapper or not. '''
+        return self._cached_docker_info['Driver'] == 'devicemapper'
+
+
+    @property
+    def is_loopback(self):
+        ''' Returns whether the docker storage driver is loopback or not. '''
+
+        dlf_value = self._get_driver_status_attr('Data loop file')
+        return dlf_value != None
+
     @staticmethod
     def convert_to_size_in_gb(value):
         ''' Parses out the number and unit type and normalizes the data to GB
@@ -103,12 +114,22 @@ class DockerUtil(object):
         ''' Gets the value for the specified key from the DriverStatus hash since it's
             an array of key/value pairs instead of a normal dict (PITA to work with otherwise)
         '''
-        return [a[1] for a in self._cached_docker_info['DriverStatus'] if a[0] == key][0]
+        results = [a[1] for a in self._cached_docker_info['DriverStatus'] if a[0] == key]
+
+        if not results:
+            return None
+
+        return results[0]
 
     def get_disk_usage(self):
         ''' Gathers the docker storage disk usage stats and puts them in a DTO.
         '''
         dds = DockerDiskStats()
+
+        # Disk space usage metrics are only available in devicemapper and loopback.
+        if not self.is_devicemapper and not self.is_loopback:
+            return dds
+
         dds.data_space_used = DockerUtil.convert_to_size_in_gb( \
                                 self._get_driver_status_attr('Data Space Used'))
 
@@ -127,19 +148,11 @@ class DockerUtil(object):
         dds.metadata_space_total = DockerUtil.convert_to_size_in_gb( \
                                 self._get_driver_status_attr('Metadata Space Total'))
 
-        # Determine if docker is using a loopback device
-        # FIXME: find a better way than allowing this to throw
-        try:
-            self._get_driver_status_attr('Data loop file')
-            dds.is_loopback = True
-        except IndexError:
-            dds.is_loopback = False
 
-        # Work around because loopback lies about it's actual total space
-        if not dds.is_loopback:
+        # Work around because loopback lies about its actual total space
+        if not self.is_loopback:
             dds.data_space_total = dds.data_space_used + dds.data_space_available
             dds.metadata_space_total = dds.metadata_space_used + dds.metadata_space_available
-
 
         dds.data_space_percent_available = (dds.data_space_available / dds.data_space_total) * 100
         dds.metadata_space_percent_available = (dds.metadata_space_available / dds.metadata_space_total) * 100
