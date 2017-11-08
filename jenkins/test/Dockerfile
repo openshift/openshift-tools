@@ -1,4 +1,4 @@
-FROM registry.ops.openshift.com/ops/oso-rhel7-host-monitoring:prod
+FROM registry.reg-aws.openshift.com:443/ops/oso-rhel7-host-monitoring:prod
 
 # Add the openshift bot credentials to the build
 ADD openshift-ops-bot/ /openshift-ops-bot/
