@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.48
+Version:        0.0.49
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,30 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Wed Nov 08 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.49-1
+- add cgroup memory usage metrics (jdiaz@redhat.com)
+- reorder discovery items (jdiaz@jdiaz-t450.lan)
+- Reduce the requested CPU by half, move to 1.5*1024 for memory
+  (peter.portante@redhat.com)
+- gcloud is deprecated google-cloud-sdk is correct (dyocum@redhat.com)
+- no .master. either (sten@redhat.com)
+- rename projects -> project for consistency and so calculation actually
+  happens (sten@redhat.com)
+- changing host monitoring source registry (ihorvath@redhat.com)
+- stop storage alert flapping (jdiaz@redhat.com)
+- include cluster name with alert (jdiaz@redhat.com)
+- fixed typo 50 -> 60 (sten@redhat.com)
+- add project count delta trigger (sten@redhat.com)
+- list_addresses requires 'region' now (dyocum@redhat.com)
+- missed a spot (dyocum@redhat.com)
+- put it back in the non-private func (dyocum@redhat.com)
+- don't need to pass region to the result func (dyocum@redhat.com)
+- old versions of gcloud api didn't need --region=<region> to 'describe' an
+  address, now it does. (dyocum@redhat.com)
+- removed unsupported register.rc bits added region, now required by gcloud
+  (dyocum@redhat.com)
+- changed ebs to gp2 (dyocum@redhat.com)
+
 * Fri Oct 27 2017 Kenny Woodson <kwoodson@redhat.com> 0.0.48-1
 - Making group whitelisting easier. (kwoodson@redhat.com)
 - gcp lb takes a while to come alive - let's wait 2 minutes and keep trying
