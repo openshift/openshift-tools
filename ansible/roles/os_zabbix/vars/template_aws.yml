@@ -30,15 +30,15 @@ g_template_aws:
     lifetime: 14
     description: "Dynamically register AWS bucket info"
 
-  - name: disc.aws.ebs.snapshotter
-    key: disc.aws.ebs.snapshotter
-    lifetime: 1
-    description: "Dynamically register EBS Snapshotter items"
-
   - name: disc.aws.ebs
     key: disc.aws.ebs
     lifetime: 1
     description: "Dynamically register EBS related macros"
+
+  - name: disc.aws.ebs.snapshotter
+    key: disc.aws.ebs.snapshotter
+    lifetime: 1
+    description: "Dynamically register EBS Snapshotter items"
 
   zitemprototypes:
   - discoveryrule_key: disc.aws
