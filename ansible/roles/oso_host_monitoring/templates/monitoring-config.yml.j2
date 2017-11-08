@@ -134,6 +134,10 @@ host_monitoring_cron:
   minute: "*/3"
   job: ops-runner -f -s 60 -n ozc.send.heartbeat.quick /usr/bin/ops-metric-client -k heartbeat.ping -o 1
 
+- name: send cgroup slice metrics
+  minute: "*/15"
+  job: ops-runner -f -s 60 -n cscsm.mem.slice /usr/bin/cron-send-cgroup-slice-metrics
+
 {% if ( osohm_host_type == 'master' ) %}
 - name: run filesystem space checks
   minute: "*/30"
