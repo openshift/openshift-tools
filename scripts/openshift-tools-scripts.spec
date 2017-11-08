@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.113
+Version:       0.1.114
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -482,6 +482,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Nov 08 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.114-1
+- adding region option to snap creation and trimming (ihorvath@redhat.com)
+
 * Wed Nov 08 2017 Joel Diaz <jdiaz@redhat.com> 0.1.113-1
 - add cgroup memory usage metrics (jdiaz@redhat.com)
 
