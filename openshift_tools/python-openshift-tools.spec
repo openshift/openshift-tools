@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.118
+Version:       0.0.119
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -297,6 +297,10 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Wed Nov 08 2017 Thomas Wiest <twiest@redhat.com> 0.0.119-1
+- Fixed cron-send-docker-metrics and dockerutil to work with overlayfs.
+  (twiest@redhat.com)
+
 * Wed Nov 08 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.118-1
 - adding region option to snap creation and trimming (ihorvath@redhat.com)
 
