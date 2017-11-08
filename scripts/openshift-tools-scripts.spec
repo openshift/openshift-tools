@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.111
+Version:       0.1.112
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -480,6 +480,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Nov 08 2017 Zhiming Zhang <zhizhang@redhat.com> 0.1.112-1
+- change the monitor method of saml pod (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+
 * Mon Nov 06 2017 Joel Diaz <jdiaz@redhat.com> 0.1.111-1
 - limit ebs volume reporting to only cluster volumes (jdiaz@redhat.com)
 - fix pylint failures (sten@redhat.com)
