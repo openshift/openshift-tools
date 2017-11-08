@@ -150,7 +150,7 @@ class OpenshiftLoggingStatus(object):
             disk_output = self.oc.run_user_cmd("exec -ti {} -- df".format(es_pod)).split(' ')
             disk_output = [x for x in disk_output if x]
             for item in disk_output:
-                if item != "/elasticsearch/persistent":
+                if "/elasticsearch/persistent" not in item:
                     disk_used = disk_free
                     disk_free = trash_var
                     trash_var = item
