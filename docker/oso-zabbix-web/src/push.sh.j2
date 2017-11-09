@@ -14,5 +14,5 @@ echo "Pushing oso-{{ base_os }}-ops-base..."
 echo "oso-rhel7-zabbix-web isn't pushed to any Docker repository"
 {% elif base_os == "centos7" %}
 echo "Ensure you have successfully authenticated against docker with a 'docker login'"
-sudo docker push openshifttools/oso-centos7-zabbix-web
+sudo docker push docker.io/openshifttools/oso-centos7-zabbix-web
 {% endif %}
