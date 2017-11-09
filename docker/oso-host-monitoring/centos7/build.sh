@@ -42,4 +42,4 @@ container_fingerprint='./container-build-env-fingerprint.output'
 echo
 echo "Building oso-centos7-host-monitoring..."
 sudo time docker build $@ -t oso-centos7-host-monitoring .
-sudo docker tag oso-centos7-host-monitoring openshifttools/oso-centos7-host-monitoring:latest
+sudo docker tag oso-centos7-host-monitoring docker.io/openshifttools/oso-centos7-host-monitoring:latest
