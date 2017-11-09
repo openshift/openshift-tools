@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.115
+Version:       0.1.116
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -482,6 +482,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Nov 09 2017 Joel Diaz <jdiaz@redhat.com> 0.1.116-1
+- add docker and atomic-openshift-node memory reporting (jdiaz@redhat.com)
+
 * Wed Nov 08 2017 Thomas Wiest <twiest@redhat.com> 0.1.115-1
 - Fixed cron-send-docker-metrics and dockerutil to work with overlayfs.
   (twiest@redhat.com)

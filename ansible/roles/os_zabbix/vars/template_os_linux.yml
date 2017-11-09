@@ -188,32 +188,32 @@ g_template_os_linux:
     multiplier: 1024
     units: B
 
-  - key: mem.system.slice.max
-    applications:
-    - Memory
-    value_type: int
-    description: "Max memory usage reading from system.slice cgroup"
-    units: B
-
   - key: mem.system.slice.current
     applications:
     - Memory
     value_type: int
-    description: "Current memory usage reading from system.slice cgroup"
-    units: B
-
-  - key: mem.kubepod.slice.max
-    applications:
-    - Memory
-    value_type: int
-    description: "Max memory usage reading from kubepod.slice cgroup"
+    description: "Current RSS memory usage reading from system.slice cgroup"
     units: B
 
   - key: mem.kubepod.slice.current
     applications:
     - Memory
     value_type: int
-    description: "Current memory usage reading from kubepod.slice cgroup"
+    description: "Current RSS memory usage reading from kubepod.slice cgroup"
+    units: B
+
+  - key: mem.docker.service.current
+    applications:
+    - Memory
+    value_type: int
+    description: "Current RSS memory usage reading from system/docker.service cgroup"
+    units: B
+
+  - key: mem.aos-node.service.current
+    applications:
+    - Memory
+    value_type: int
+    description: "Current RSS memory usage reading from system/atomic-openshift-node.service cgroup"
     units: B
 
   # security items
