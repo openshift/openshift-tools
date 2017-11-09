@@ -61,4 +61,10 @@ RUN echo -e '[local]\nlocalhost       ansible_connection=local\n' > /etc/ansible
 # BE CAREFUL!!! If you change these, you may bloat the image! Use 'docker history' to see the size!
 RUN chmod -R g+rwX /root/
 
+
+# This is a temporary fix, until we find something that works better, PRs are welcome
+# The reason for this change is that some repos get disabled, especially with the latest rhel74 image
+# so this was added so other containers can start with their repos properly enabled
+# this change might have been that there was a bug in yum-config-manager previously, that didn't
+# actually disable every repo and now it does, or maybe something else, further research is required
 RUN yum-config-manager --enable rhel-7-server-rpms rhel-7-server-extras-rpms epel
