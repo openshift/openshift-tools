@@ -18,6 +18,6 @@ if ../../oso-ops-base/{{ base_os }}/push.sh ; then
   echo "No push for rhel7, use the automation on tower"
 {% elif base_os == "centos7" %}
   echo "Ensure you have successfully authenticated against docker with a 'docker login'"
-  sudo docker push openshifttools/oso-centos7-host-monitoring
+  sudo docker push docker.io/openshifttools/oso-centos7-host-monitoring
 {% endif %}
 fi

@@ -17,5 +17,5 @@ if ../../oso-ops-base/centos7/push.sh ; then
   echo
   echo "Pushing oso-centos7-host-monitoring..."
   echo "Ensure you have successfully authenticated against docker with a 'docker login'"
-  sudo docker push openshifttools/oso-centos7-host-monitoring
+  sudo docker push docker.io/openshifttools/oso-centos7-host-monitoring
 fi
