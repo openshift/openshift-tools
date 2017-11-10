@@ -267,7 +267,11 @@ class Trello(object):
 def get_trello_id(ircnick):
     """Return trello ID for a given IRC nick"""
     key = 'IRCNICK_' + ircnick
-    return os.environ[key]
+    try:
+        return os.environ[key]
+    except KeyError:
+        print("%s, you need to map your IRC nick with Trello username" % ircnick)
+        return None
 
 @sopel.module.commands('issue')
 def issue(bot, trigger):
@@ -275,8 +279,11 @@ def issue(bot, trigger):
     trellobot = Trello()
     card = trellobot.trello_create(trigger.group(2))
     bot.say(card['shortUrl'])
-    trellobot.trello_update(trellobot.card_id(card['shortUrl']),
-                            assign=get_trello_id(trigger.nick))
+    if not trellobot.trello_update(trellobot.card_id(card['shortUrl']),
+                                   assign=get_trello_id(trigger.nick)):
+        bot.reply(
+            "you need to map your IRC nick with Trello username." +
+            "See https://github.com/openshift/openshift-ansible-ops/tree/prod/playbooks/adhoc/ircbot")
 
 @sopel.module.commands('comment')
 def comment(bot, trigger):
