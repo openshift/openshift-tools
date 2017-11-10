@@ -1,1 +1,3 @@
 sopel
+git+https://github.com/nithinmurali/pygsheets.git#staging
+pytz
