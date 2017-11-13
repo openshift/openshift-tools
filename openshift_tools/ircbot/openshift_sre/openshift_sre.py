@@ -16,6 +16,7 @@ DEBUG = False  # Debug sends debug messages to the bot owner via PRIVMSG
 GSHEET_URL_REGEX = r'https://docs\.google\.com/spreadsheets/d/(?P<key>[a-zA-Z0-9_-]*)/edit#gid=(?P<gid>[0-9]*)'
 SNOW_TICKET_REGEX = r'.*(?P<ticket>(TASK|REQ|RITM|INC|PRB|CHG)[0-9]{7}).*'
 MONITORED_CHANNELS = []
+ESCALATION_URL = 'https://mojo.redhat.com/docs/DOC-1123528'
 SNOW_URL = 'https://url.corp.redhat.com/OpenShift-SRE-Service-Request-Form'
 SNOW_SEARCH = 'https://redhat.service-now.com/surl.do?n='
 SNOW_QUEUE = 'https://redhat.service-now.com/nav_to.do?uri=%2Fhome_splash.do%3Fsysparm_direct%3Dtrue'
@@ -341,9 +342,8 @@ def monitor_weekend(bot, trigger):
     """Reminds users that channels are un-monitored on weekends. Will not trigger more than once every 10 minutes."""
     if trigger.sender in MONITORED_CHANNELS and dt.utcnow().weekday() > 4:
         leads = get_shift_leads(bot, trigger.sender)
-        bot.reply('This channel is unmonitored on weekends. If you have a sev 1, submit a SNOW ticket to page the '
-                  'on-call SRE ({oncall}). Submit your SNOW ticket at {url}'.format(oncall=leads[ONCALL['name']],
-                                                                                    url=SNOW_URL))
+        bot.reply('This channel is unmonitored on weekends. See {url} for Engineer Escalations'.format(
+            oncall=leads[ONCALL['name']], url=ESCALATION_URL))
 
 
 @module.rule(SNOW_TICKET_REGEX)
