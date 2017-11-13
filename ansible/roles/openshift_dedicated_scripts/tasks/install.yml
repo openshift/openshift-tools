@@ -1,33 +1,6 @@
 ---
-- name: Lookup installed major OpenShift version
-  repoquery:
-    name: atomic-openshift
-    query_type: installed
-  register: openshift_version_out
-  run_once: True
-  ignore_errors: true
-
-- debug: var=openshift_version_out
-
-- set_fact:
-    major_version: "{{ openshift_version_out.results.versions.latest.split('.')[0:2] | join('.') }}"
-
-- name: Lookup correct version of OpenShift Dedicated Admin scripts
-  repoquery:
-    name: openshift-scripts-dedicated
-    show_duplicates: True
-    match_version: "{{ major_version }}"
-  register: scripts_version_out
-  remote_user: root
-
-- debug: var=scripts_version_out
-
-- debug:
-    msg: "Unable to find a {{ major_version }} version of openshift-scripts-dedicated to install"
-  when: not scripts_version_out.results.versions['matched_version_found']
 
 - name: Install the OpenShift Dedicated Admin scripts
   yum:
-    name: "openshift-scripts-dedicated-{{ scripts_version_out.results.versions.matched_version_latest }}"
+    name: openshift-scripts-dedicated
     state: present
-  when: scripts_version_out.results.versions['matched_version_found']
