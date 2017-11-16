@@ -219,6 +219,7 @@ openshift_hosted_registry_registryurl={{ obg_registry_host }}/{{ obg_registry_te
 openshift_hosted_registry_routehost={{ obg_registry_routehost }}
 openshift_hosted_registry_routecertificates={{ obg_registry_routehost_routecertificates }}
 openshift_hosted_registry_storage_s3_encrypt={{ obg_encrypted_storage }}
+openshift_hosted_registry_env_vars={'REGISTRY_OPENSHIFT_REQUESTS_WRITE_MAXWAITINQUEUE': '2h', 'REGISTRY_OPENSHIFT_REQUESTS_WRITE_MAXRUNNING': '256'}
 {%   if obg_kmskeyid is defined and 'omit' not in obg_kmskeyid %}
 openshift_hosted_registry_storage_s3_kmskeyid={{ obg_kmskeyid }}
 {%   endif %}
