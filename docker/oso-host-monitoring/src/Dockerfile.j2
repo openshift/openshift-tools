@@ -89,7 +89,7 @@ RUN yum clean metadata && \
 {# centos users should install this from https://cloud.google.com/sdk/downloads and follow the instructions #}
 {# disabling releases-optional repo as the filelist_db metadata file is over 1GB #}
 {% if base_os == 'rhel7' %}
-    yum-install-check.sh -y gcloud python-uri-templates google-api-python-client python-oauth2client --disablerepo="oso-rhui-rhel-server-releases-optional" && \
+    yum-install-check.sh -y gcloud python-uri-templates google-api-python-client python-oauth2client --disablerepo="rhel-server-releases-optional" && \
 {% endif %}
     yum clean all
 
