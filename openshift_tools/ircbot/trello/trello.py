@@ -101,7 +101,7 @@ class Trello(object):
             help='Remove Trello user from card')
 
         parser_report = subparsers.add_parser('report',
-                                               help="Generate reports")
+                                              help="Generate reports")
         parser_report.set_defaults(action='report')
         parser_report.add_argument(
             '--email', '-e',
@@ -165,11 +165,11 @@ class Trello(object):
         week_number = date.today().isocalendar()[1]
         if email:
             subj = "OpenShift SRE Report for Week #{} (ending {})".format(
-                    week_number, date.today().strftime("%d-%m-%Y"))
+                week_number, date.today().strftime("%d-%m-%Y"))
             _board_url = "https://trello.com/b/{}".format(
-                          os.environ.get("trello_board_id", None))
+                os.environ.get("trello_board_id", None))
             payload = "For more information visit the SRE 24x7 board {}\n\n{}".format(
-                       _board_url, payload)
+                _board_url, payload)
             self.email_report(email, subj, payload)
             print("Report emailed to {}".format(email))
         if move:
@@ -182,15 +182,15 @@ class Trello(object):
         :return: formatted report"""
         data = ""
         resolved_cards = self.get_list_cards(DEFAULT_RESOLVED_LIST)
-        data+="{}: {}\n".format(DEFAULT_LIST,
-            len(self.get_list_cards(DEFAULT_LIST)))
-        data+="{}: {}\n".format(DEFAULT_SNOWFLAKE_LIST,
-            len(self.get_list_cards(DEFAULT_SNOWFLAKE_LIST)))
-        data+="{}: {}\n".format(DEFAULT_RESOLVED_LIST,
-            len(resolved_cards))
-        data+="\n---\nResolved issues:\n---\n"
+        data += "{}: {}\n".format(DEFAULT_LIST,
+                                  len(self.get_list_cards(DEFAULT_LIST)))
+        data += "{}: {}\n".format(DEFAULT_SNOWFLAKE_LIST,
+                                  len(self.get_list_cards(DEFAULT_SNOWFLAKE_LIST)))
+        data += "{}: {}\n".format(DEFAULT_RESOLVED_LIST,
+                                  len(resolved_cards))
+        data += "\n---\nResolved issues:\n---\n"
         for card in resolved_cards:
-            data+= "{} {}\n".format(card['shortUrl'], card['name'])
+            data += "{} {}\n".format(card['shortUrl'], card['name'])
         return data
 
     def move_cards(self, from_list=None, to_list=None):
@@ -218,7 +218,8 @@ class Trello(object):
         newlist = self.make_request('/lists', 'POST', params)
         return newlist['id']
 
-    def email_report(self, email, subj, body):
+    @staticmethod
+    def email_report(email, subj, body):
         """Email report
         :param email: email address
         :param subj: email subject
@@ -229,9 +230,9 @@ class Trello(object):
         msg['From'] = EMAIL_FROM
         msg['To'] = email
         msg['Reply-to'] = EMAIL_REPLYTO
-        s = smtplib.SMTP(host=EMAIL_SERVER, port='25')
-        s.sendmail(email, email, msg.as_string())
-        s.quit()
+        smtpcxn = smtplib.SMTP(host=EMAIL_SERVER, port='25')
+        smtpcxn.sendmail(email, email, msg.as_string())
+        smtpcxn.quit()
 
     def get_list_cards(self, trello_list=DEFAULT_LIST):
         """Return card total for given list
