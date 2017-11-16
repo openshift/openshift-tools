@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.117
+Version:       0.1.118
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -484,6 +484,12 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Nov 16 2017 Ivan Horvath <ihorvath@redhat.com> 0.1.118-1
+- Metrics check changes: update API endpoint and bucket size
+  (bmorriso@redhat.com)
+- mostly for reference, fixed the error that keeps us from reporting df stats
+  (sten@redhat.com)
+
 * Wed Nov 15 2017 Matt Woodson <mwoodson@redhat.com> 0.1.117-1
 - cicd: fixed the hyphen in the regex (mwoodson@redhat.com)
 - cicd: added repo operations and new vars to be passed (mwoodson@redhat.com)
