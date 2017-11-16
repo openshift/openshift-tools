@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.50
+Version:        0.0.51
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,14 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Nov 16 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.51-1
+- Add early log/drop for udp 80 traffic (dbaker@redhat.com)
+- Avoid bug where scripts rpm automatically updates (sedgar@redhat.com)
+- add docker and atomic-openshift-node memory reporting (jdiaz@redhat.com)
+- add cron job to report cgroup slice mem metrics (jdiaz@redhat.com)
+- adding the region to the snapshot related commands in crontab
+  (ihorvath@redhat.com)
+
 * Wed Nov 08 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.50-1
 - Only check pv usage on dedicated clusters (bmorriso@redhat.com)
 
