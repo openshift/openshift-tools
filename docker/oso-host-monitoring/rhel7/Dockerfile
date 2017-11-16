@@ -87,7 +87,7 @@ RUN yum clean metadata && \
         python-lxml \
         rkhunter \
         docker-python && \
-    yum-install-check.sh -y gcloud python-uri-templates google-api-python-client python-oauth2client --disablerepo="oso-rhui-rhel-server-releases-optional" && \
+    yum-install-check.sh -y gcloud python-uri-templates google-api-python-client python-oauth2client --disablerepo="rhel-server-releases-optional" && \
     yum clean all
 
 ADD urllib3-connectionpool-patch /root/
