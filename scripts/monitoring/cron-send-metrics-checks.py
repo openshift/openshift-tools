@@ -181,8 +181,8 @@ class OpenshiftMetricsStatus(object):
                    "Hawkular-tenant": "_system"}
 
         # Build url
-        hawkular_url_start = "https://{}/hawkular/metrics/gauges/data?tags=nodename:".format(route)
-        hawkular_url_end = ",type:node,group_id:/memory/usage&buckets=1&start=-2mn&end=-1mn"
+        hawkular_url_start = "https://{}/hawkular/metrics/gauges/rate/stats?tags=nodename:".format(route)
+        hawkular_url_end = ",type:node,group_id:/memory/usage&buckets=1&start=-5mn&end=-1mn"
 
         # Loop through nodes
         for item in nodes['items']:
