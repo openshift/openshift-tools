@@ -3,9 +3,12 @@
 ''' Interact with Trello API as a CLI or Sopel IRC bot module '''
 
 import argparse
+from datetime import date
+from email.mime.text import MIMEText
 import json
 import os
 import re
+import smtplib
 import sys
 
 # sopel is only for IRC bot installation. Not required for CLI
@@ -24,8 +27,12 @@ except ImportError:
 
 # constants
 DEFAULT_LIST = "Active"
+DEFAULT_SNOWFLAKE_LIST = "Snowflakes"
 DEFAULT_RESOLVED_LIST = "Resolved"
 BASE_URL = "https://api.trello.com/1"
+EMAIL_SERVER = 'smtp.redhat.com'
+EMAIL_FROM = 'trello-srebot1@redhat.com'
+EMAIL_REPLYTO = 'noreply@redhat.com'
 
 class Trello(object):
     """Trello object"""
@@ -37,12 +44,14 @@ class Trello(object):
         self.api_key = os.environ.get("trello_consumer_key", None)
         self.oauth_token = os.environ.get("trello_oauth_token", None)
         self.board_id = os.environ.get("trello_board_id", None)
+        self.board_id_long = os.environ.get("trello_board_id_long", None)
+        self.email_addresses = os.environ.get("trello_report_email_addresses", None)
 
     @staticmethod
     def parse_args():
         """Parse CLI arguments"""
         parser = argparse.ArgumentParser(
-            description='Create, comment, move Trello cards.')
+            description='Create, comment, move Trello cards, also reporting.')
         subparsers = parser.add_subparsers(help='sub-command help')
 
         parser_get = subparsers.add_parser('get',
@@ -91,6 +100,19 @@ class Trello(object):
             metavar='USER',
             help='Remove Trello user from card')
 
+        parser_report = subparsers.add_parser('report',
+                                               help="Generate reports")
+        parser_report.set_defaults(action='report')
+        parser_report.add_argument(
+            '--email', '-e',
+            metavar='ADDRESS[,ADDRESS]',
+            help="""Comma-separated (no spaces) list of email addresses to
+                    send report to. Overrides env var 'trello_report_email_addresses'""")
+        parser_report.add_argument(
+            '--move', '-m',
+            action='store_true',
+            help='Move cards to end-of-week list')
+
         return parser.parse_args()
 
     def create(self, title=None):
@@ -127,6 +149,96 @@ class Trello(object):
                                                  str(card['name']),
                                                  members)
         return results
+
+    def report(self, email=None, move=False):
+        """Generate reports"""
+        payload = self.report_payload()
+        print(payload)
+        _env_email = os.environ.get("trello_report_email_addresses", None)
+        if _env_email:
+            email = _env_email
+        if self.args:
+            if self.args.email:
+                email = self.args.email
+            if self.args.move:
+                move = self.args.move
+        week_number = date.today().isocalendar()[1]
+        if email:
+            subj = "OpenShift SRE Report for Week #{} (ending {})".format(
+                    week_number, date.today().strftime("%d-%m-%Y"))
+            _board_url = "https://trello.com/b/{}".format(
+                          os.environ.get("trello_board_id", None))
+            payload = "For more information visit the SRE 24x7 board {}\n\n{}".format(
+                       _board_url, payload)
+            self.email_report(email, subj, payload)
+            print("Report emailed to {}".format(email))
+        if move:
+            list_name = "Week #{}".format(week_number)
+            self.move_cards(to_list=list_name)
+            print("Cards moved to list '{}'".format(list_name))
+
+    def report_payload(self):
+        """Return report payload
+        :return: formatted report"""
+        data = ""
+        resolved_cards = self.get_list_cards(DEFAULT_RESOLVED_LIST)
+        data+="{}: {}\n".format(DEFAULT_LIST,
+            len(self.get_list_cards(DEFAULT_LIST)))
+        data+="{}: {}\n".format(DEFAULT_SNOWFLAKE_LIST,
+            len(self.get_list_cards(DEFAULT_SNOWFLAKE_LIST)))
+        data+="{}: {}\n".format(DEFAULT_RESOLVED_LIST,
+            len(resolved_cards))
+        data+="\n---\nResolved issues:\n---\n"
+        for card in resolved_cards:
+            data+= "{} {}\n".format(card['shortUrl'], card['name'])
+        return data
+
+    def move_cards(self, from_list=None, to_list=None):
+        """Move cards from one list to another
+        :param from_list: name of list to move card from
+        :param to_list: name of list to move cards to
+        :return: None"""
+        params = {}
+        if not from_list:
+            from_list = DEFAULT_RESOLVED_LIST
+        to_list_id = self.create_list(to_list)
+        path = "/lists/" + self.get_list_id(from_list) + "/moveAllCards"
+        params['idBoard'] = self.board_id_long
+        params['idList'] = to_list_id
+        return self.make_request(path, 'POST', params)
+
+    def create_list(self, name=None):
+        """Create new list
+        :param name: name of list
+        :return: list ID"""
+        params = {}
+        params['name'] = name
+        params['idBoard'] = self.board_id_long
+        params['pos'] = "bottom"
+        newlist = self.make_request('/lists', 'POST', params)
+        return newlist['id']
+
+    def email_report(self, email, subj, body):
+        """Email report
+        :param email: email address
+        :param subj: email subject
+        :param body: email body
+        :return: None"""
+        msg = MIMEText(body)
+        msg['Subject'] = subj
+        msg['From'] = EMAIL_FROM
+        msg['To'] = email
+        msg['Reply-to'] = EMAIL_REPLYTO
+        s = smtplib.SMTP(host=EMAIL_SERVER, port='25')
+        s.sendmail(email, email, msg.as_string())
+        s.quit()
+
+    def get_list_cards(self, trello_list=DEFAULT_LIST):
+        """Return card total for given list
+        :param trello_list: list name
+        :return: cards array"""
+        path = "/lists/%s/cards" % self.get_list_id(trello_list)
+        return self.make_request(path)
 
     def trello_update(self, card_id, **kwargs):
         """Call trello update API
@@ -316,6 +428,8 @@ def main():
         print(trello.get())
     elif trello.args.action is 'update':
         trello.update()
+    elif trello.args.action is 'report':
+        trello.report()
 
 if __name__ == "__main__":
     main()
