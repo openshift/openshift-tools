@@ -415,8 +415,9 @@ def say_all_list(bot, trigger):
     """Provides the list of managed users that receive .all messages"""
     all_list = get_all_list(bot, trigger.sender)
     if len(all_list) > 0:
-        bot.say('.all list users:')
-        bot.say(' '.join(all_list))
+        bot.say('Check your PM')
+        bot.say('.all list users:', trigger.nick)
+        bot.say(' '.join(all_list), trigger.nick)
     else:
         bot.say('There are no users in .all list.')
 
