@@ -174,8 +174,8 @@ class Trello(object):
             print("Report emailed to {}".format(email))
         if move:
             list_name = "Week #{}".format(week_number)
-            self.move_cards(to_list=list_name)
-            print("Cards moved to list '{}'".format(list_name))
+            if self.move_cards(to_list=list_name):
+                print("Cards moved to list '{}'".format(list_name))
 
     def report_payload(self):
         """Return report payload
@@ -193,12 +193,15 @@ class Trello(object):
             data += "{} {}\n".format(card['shortUrl'], card['name'])
         return data
 
-    def move_cards(self, from_list=None, to_list=None):
+    def move_cards(self, to_list, from_list=None):
         """Move cards from one list to another
-        :param from_list: name of list to move card from
-        :param to_list: name of list to move cards to
+        :param to_list (required): name of list to move cards to
+        :param from_list (optional, use default): name of list to move card from
         :return: None"""
         params = {}
+        if not to_list:
+            print "Cannot move: no destination list provided"
+            return False
         if not from_list:
             from_list = DEFAULT_RESOLVED_LIST
         to_list_id = self.create_list(to_list)
