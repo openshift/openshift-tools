@@ -1,5 +1,0 @@
-[core]
-...
-
-[openshift_sre]
-google_service_account_file = /root/.sopel/service_account.json
