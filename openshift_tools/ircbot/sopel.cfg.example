@@ -1,0 +1,16 @@
+[core]
+# Full list of configuration options are available from https://sopel.chat/docs/config.html#the-core-configuration-section
+nick = srebot
+host = irc.freenode.com
+use_ssl = false
+port = 6667
+owner = ownernick
+admins = admin1, admin2
+channels = #mybot
+exclude = url, ipython
+extra = /absolute/path/to/openshift-tools/openshift_tools/trello, /absolute/path/to/openshift-tools/openshift_tools/openshift_sre
+
+[openshift_sre]
+# Information about creating a service account can be found in the README
+# https://github.com/openshift/openshift-tools/tree/prod/openshift_tools/ircbot/openshift_sre#on-call-and-shift-lead-rotation
+google_service_account_file = /root/.sopel/service_account.json

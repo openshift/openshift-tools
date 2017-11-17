@@ -1,8 +1,0 @@
-[core]
-nick = srebot
-host = irc.freenode.com
-use_ssl = false
-port = 6667
-owner = ownernick
-channels = #mybot
-extra = /absolute/path/to/openshift-tools/openshift_tools/trello
