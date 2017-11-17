@@ -2,10 +2,14 @@
 
 ## On-Call and Shift Lead Rotation
 
-**IMPORTANT** https://cloud.google.com/storage/docs/authentication#service_accounts
+**IMPORTANT**
 
     A Google Cloud service account JSON file is required to be able to access
-    Google Sheet documents.
+    Google Sheet documents. Additionally, the "Drive API" and "Sheets API"
+    must be enabled for the project.
+
+* Creating a service account: https://cloud.google.com/storage/docs/authentication#service_accounts
+* Enabling the APIs (see steps 2 & 3): https://pygsheets.readthedocs.io/en/latest/authorizing.html
 
 ***
 
