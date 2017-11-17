@@ -200,7 +200,7 @@ class Trello(object):
         :return: None"""
         params = {}
         if not to_list:
-            print "Cannot move: no destination list provided"
+            print("Cannot move: no destination list provided")
             return False
         if not from_list:
             from_list = DEFAULT_RESOLVED_LIST
