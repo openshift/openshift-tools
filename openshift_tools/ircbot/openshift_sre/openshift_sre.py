@@ -21,6 +21,7 @@ SNOW_TICKET_REGEX = r'\b(?P<ticket>(TASK|REQ|RITM|INC|PRB|CHG)[0-9]{7})\b'
 SFDC_CASE_REGEX = r'\b(?P<case>[0-9]{8})\b'
 KARMA_REGEX = r'\b(?P<nick>[a-zA-Z0-9_\-\[\]{}^`|]+)(?P<direction>\+\+|--)'
 MONITORED_CHANNELS = []
+NONANNOUNCING_CHANNELS = []
 ESCALATION_URL = 'https://mojo.redhat.com/docs/DOC-1123528'
 SNOW_URL = 'https://url.corp.redhat.com/OpenShift-SRE-Service-Request-Form'
 SNOW_SEARCH = 'https://redhat.service-now.com/surl.do?n='
@@ -52,9 +53,18 @@ ONCALL = {
 SHIFTS = [APAC, EMEA, NASA]
 # Specify the time and date for when a new shift period should be used
 SHIFT_CHANGE = {
-    'weekday': 4,
     'hour': 11,
     'tz': timezone('US/Eastern')
+}
+START_ANNOUNCING = {
+    'tz': timezone('Australia/Brisbane'),
+    'weekday': 0,
+    'hour': 8
+}
+STOP_ANNOUNCING = {
+    'tz': timezone('US/Eastern'),
+    'weekday': 4,
+    'hour': 17
 }
 
 
@@ -149,33 +159,33 @@ def announce_shift_preparing(bot, channel):
                                                                                              s2=curr_shift['name'],
                                                                                              s3=next_shift['name']))
     leads = get_shift_leads(bot, channel)
-    bot.say('{curr_shift} preparing to sign off, {next_shift} preparing to take over the environment'.format(
-        curr_shift=curr_shift['name'], next_shift=next_shift['name']), channel)
-    bot.say('{curr_nick}: What happened today? What does {next_nick} need to know about?'.format(
-        curr_nick=leads[curr_shift['name']], next_nick=leads[next_shift['name']]), channel)
-    bot.say('Check SNOW ticket queue here {queue}'.format(queue=SNOW_QUEUE), channel)
+    if channel not in NONANNOUNCING_CHANNELS:
+        bot.say('{curr_shift} preparing to sign off, {next_shift} preparing to take over the environment'.format(
+            curr_shift=curr_shift['name'], next_shift=next_shift['name']), channel)
+        bot.say('{curr_nick}: What happened today? What does {next_nick} need to know about?'.format(
+            curr_nick=leads[curr_shift['name']], next_nick=leads[next_shift['name']]), channel)
+        bot.say('Check SNOW ticket queue here {queue}'.format(queue=SNOW_QUEUE), channel)
 
 
 def announce_shift_complete(bot, channel):
     """Must be called *after* the shift change 'hour'."""
     prev_shift, curr_shift, next_shift = get_shift(bot)
     debug(bot,
-          'announce_shift_complete: shifts - prev:{s1} - curr:{s2} - next:{s3} '
-          '(NOTE: shifts have been rearranged to match previous shift info)'.format(
+          'announce_shift_complete: shifts - prev:{s1} - curr:{s2} - next:{s3} '.format(
               s1=prev_shift['name'], s2=curr_shift['name'], s3=next_shift['name']))
     leads = get_shift_leads(bot, channel)
-    bot.say('Shift change complete', channel)
-    bot.say('Shift Lead: {curr_nick}'.format(curr_nick=leads[curr_shift['name']]), channel)
-    bot.say('On-Call: {oncall_nick}'.format(oncall_nick=leads[ONCALL['name']]), channel)
-    bot.say('Thanks {prev_shift}, enjoy your evening!'.format(prev_shift=prev_shift['name']), channel)
+    if channel not in NONANNOUNCING_CHANNELS:
+        bot.say('Shift change complete', channel)
+        bot.say('Shift Lead: {curr_nick}'.format(curr_nick=leads[curr_shift['name']]), channel)
+        bot.say('On-Call: {oncall_nick}'.format(oncall_nick=leads[ONCALL['name']]), channel)
+        bot.say('Thanks {prev_shift}, enjoy your evening!'.format(prev_shift=prev_shift['name']), channel)
 
 
 def set_topic_to_shift(bot, channel):
     """Sets topic to match the current shift information."""
     prev_shift, curr_shift, next_shift = get_shift(bot)
     debug(bot,
-          'announce_shift_complete: shifts - prev:{s1} - curr:{s2} - next:{s3} '
-          '(NOTE: shifts have been rearranged to match previous shift info)'.format(
+          'announce_shift_complete: shifts - prev:{s1} - curr:{s2} - next:{s3} '.format(
               s1=prev_shift['name'], s2=curr_shift['name'], s3=next_shift['name']))
     leads = get_shift_leads(bot, channel)
     bot.write(
@@ -229,7 +239,7 @@ def get_shift_leads(bot, channel):
             else:
                 if period_dt.date() >= now.date():
                     # New shift period occurs on Friday at 11am EST
-                    if now.weekday() >= SHIFT_CHANGE['weekday'] and now.hour >= SHIFT_CHANGE['hour']:
+                    if period_dt.date() == now.date() and now.hour >= SHIFT_CHANGE['hour']:
                         row = index + 1
                         debug(bot, 'get_shift_leads: After shift change, using new period ({period})'.format(
                             period=period_dt.date()))
@@ -295,6 +305,10 @@ def mark_channel_to_track_oncall(bot, trigger):
             bot.say('Currently tracking SRE on-call rotations from ' + gsheet_url)
         else:
             bot.say('Not currently tracking an SRE on-call rotation.')
+    try:
+        NONANNOUNCING_CHANNELS.remove(trigger.sender)
+    except ValueError:
+        pass
 
 
 @module.commands('untrack')
@@ -307,6 +321,39 @@ def unmark_channel_to_track_oncall(bot, trigger):
     else:
         bot.db.set_channel_value(trigger.sender, 'oncall', None)
         bot.say(trigger.sender + ' is no longer tracking SRE on-call rotations.')
+    try:
+        NONANNOUNCING_CHANNELS.remove(trigger.sender)
+    except ValueError:
+        pass
+
+
+@module.commands('shift-announce')
+def mark_channel_for_announcements(bot, trigger):
+    """Starts shift change announcements in channel if previously stopped."""
+    if trigger.sender in MONITORED_CHANNELS:
+        try:
+            NONANNOUNCING_CHANNELS.remove(trigger.sender)
+        except ValueError:
+            bot.say('I\'m already announcing in this channel.')
+        else:
+            bot.say('I will resume announcements in this channel.')
+    else:
+        bot.say('I\'m not currently tracking this channel. Check out .help track')
+
+
+@module.commands('shift-unannounce')
+def unmark_channel_for_announcements(bot, trigger):
+    """Stops shift change announcements in channel, while still allowing the other benefits of tracking
+    the shift change schedule."""
+    if trigger.sender in MONITORED_CHANNELS:
+        if trigger.sender not in NONANNOUNCING_CHANNELS:
+            NONANNOUNCING_CHANNELS.append(trigger.sender)
+            bot.say('I will no longer announce shift changes in this channel.')
+            bot.say('Topic updates will still occur if I have the proper permissions.')
+        else:
+            bot.say('I\'m alredy not announcing in this channel.')
+    else:
+        bot.say('I\'m not currently tracking this channel. Check out .help track')
 
 
 @module.commands('shift')
@@ -459,16 +506,24 @@ def say_karma(bot, trigger):
 @module.interval(600)
 def track_shift_rotation(bot):
     """Sends appropriate message ~10 minutes before and ~15 minutes after shift changes and sets channel topic
-    (if bot has appropriate channel permissions)."""
+    (if bot has appropriate channel permissions).
+    Does not send announcements over weekends."""
     for channel in MONITORED_CHANNELS:
         now = dt.utcnow()
-        shift_starts = [s['utc_start'] for s in SHIFTS]
-        # Shift prepares to end between (start-1):50 and (start-1):59
-        if now.hour in [start - 1 for start in shift_starts] and 50 <= now.minute <= 59:
-            announce_shift_preparing(bot, channel)
-        # Shift ends between (start):10 and (start):19
-        elif now.hour in shift_starts and 10 <= now.minute <= 19:
-            announce_shift_complete(bot, channel)
+        start_now = dt.now(tz=START_ANNOUNCING['tz'])
+        stop_now = dt.now(tz=STOP_ANNOUNCING['tz'])
+        if start_now.hour >= START_ANNOUNCING['hour'] and start_now.weekday() >= START_ANNOUNCING['weekday'] and \
+                        stop_now.hour <= STOP_ANNOUNCING['hour'] and stop_now.weekday() <= STOP_ANNOUNCING['weekday']:
+            shift_starts = [s['utc_start'] for s in SHIFTS]
+            # Shift prepares to end between (start-1):50 and (start-1):59
+            if now.hour in [start - 1 for start in shift_starts] and 50 <= now.minute <= 59:
+                announce_shift_preparing(bot, channel)
+            # Shift ends between (start):10 and (start):19
+            elif now.hour in shift_starts and 10 <= now.minute <= 19:
+                announce_shift_complete(bot, channel)
+                set_topic_to_shift(bot, channel)
+        else:
+            debug(bot, 'Ignoring messaging due to weekend hours')
 
 
 # Update every minute
