@@ -21,6 +21,11 @@ Provides the following commands:
 * `.untrack`
   * Stops tracking on-call and shift lead rotations for channel
   * Is no longer a [monitored](#channel-monitoring) channel
+* `.shift-announce`
+  * Will resume shift change announcements if previous stopped in the given channel
+* `.shift-unannounce`
+  * Will stop shift change announcements in the given channel
+  * Still allows for benefits like `.shift` and topic changing (assuming proper privs)
 * `.shift`
   * Lists the current on-call and shift leads for this rotation period
 * `.monitored-channels`
@@ -105,6 +110,9 @@ Specifying <nick>++ will increase a nick's karma, and <nick>-- will decrease a n
 ## Google Sheets on-call integration
 
 ```
+.shift-announce
+    I'm not currently tracking this channel. Check out .help track
+
 .track
     Not currently tracking an SRE on-call rotation.
     
@@ -133,7 +141,17 @@ wgordon  <- Matches whatever channel name is being tracked
 .monitored-channels
     <privmsg>
         <channel>
-        
+
+.shift-announce
+    I'm already announcing in this channel.
+
+.shift-unannounce
+    I will no longer announce shift changes in this channel.
+    Topic updates will still occur if I have the proper permissions.
+
+.shift-announce
+    I will resume announcements in this channel.
+
 .untrack
     <channel> is no longer tracking SRE on-call rotations.
     
