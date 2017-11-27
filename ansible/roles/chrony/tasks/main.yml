@@ -9,7 +9,7 @@
 
 - name:
   service:
-    name: ntp
+    name: ntpd
     state: stopped
     enabled: no
 
