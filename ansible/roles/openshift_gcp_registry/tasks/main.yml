@@ -135,16 +135,38 @@
       type: secret
       secret_name: gcs-registry-secret
     edits:
-        spec.template.spec.containers[0].livenessProbe.httpGet.scheme: HTTPS
-        spec.template.spec.containers[0].readinessProbe.httpGet.scheme: HTTPS
-        spec.strategy.rollingParams.intervalSeconds: 1
-        spec.strategy.rollingParams.maxSurge: 50%
-        spec.strategy.rollingParams.maxUnavailable: 50%
-        spec.strategy.rollingParams.timeoutSeconds: 600
-        spec.strategy.rollingParams.updatePeriodSeconds: 1
-        spec.template.spec.containers[0].resources.limits.memory: 2G
-        spec.template.spec.containers[0].resources.requests.memory: 1G
+    - key: spec.template.spec.containers[0].livenessProbe.httpGet.scheme
+      value: HTTPS
+      action: put
+    - key: spec.template.spec.containers[0].readinessProbe.httpGet.scheme
+      value: HTTPS
+      action: put
+    - key: spec.strategy.rollingParams.intervalSeconds
+      value: 1
+      action: put
+    - key: spec.strategy.rollingParams.maxSurge
+      value: 50%
+      action: put
+    - key: spec.strategy.rollingParams.maxUnavailable
+      value: 50%
+      action: put
+    - key: spec.strategy.rollingParams.timeoutSeconds
+      value: 600
+      action: put
+    - key: spec.strategy.rollingParams.updatePeriodSeconds
+      value: 1
+      action: put
+    - key: spec.template.spec.containers[0].resources.limits.memory
+      value: 2G
+      action: put
+    - key: spec.template.spec.containers[0].resources.requests.memory
+      value: 1G
+      action: put
   register: registryout
+
+- debug:
+    var: registryout
+    verbosity: 4
 
 - name: Pause for race conditions
   pause:
