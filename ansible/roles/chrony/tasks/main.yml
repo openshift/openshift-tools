@@ -1,8 +1,17 @@
 ---
-- name: remove ntp package
+- name: ensure chrony and ntp package is installed
   yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+  - chrony
+  - ntp
+
+- name:
+  service:
     name: ntp
-    state: absent
+    state: stopped
+    enabled: no
 
 - name: ensure chrony package is installed
   yum:
