@@ -1,9 +1,10 @@
 ---
 - hosts: localhost
-  # need this for ansible_nodename
-  gather_facts: yes
+  gather_facts: no
   vars_files:
   - /root/default_vars.yml
+  - /host/etc/origin/node/node-config.yaml
+
   vars:
     scanning_cron:
     - name: cron_scan_pods
@@ -48,10 +49,18 @@
       ii_state: touch
       ii_recurse: no
 
+  - name: Make node name accessible
+    set_fact:
+      temp_name: "{{ kubeletArguments['node-labels'] }}"
+
+  - name: print nodename
+    debug:
+      msg: "{{ temp_name[4].split('=')[1] }}"
+
   - name: populate templated config file
     copy:
       content: |
-        node_hostname: {{ ansible_nodename }}
+        node_hostname: {{ temp_name[4].split('=')[1] }}
       dest: /etc/openshift_tools/scanreport_config.yml
 
 #  - name: "Bind mounts for scanning"
