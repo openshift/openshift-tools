@@ -31,7 +31,9 @@ openshift_pkg_version=-{{ obg_install_version }}
 {%- endif -%}
 {# end install version #}
 
+# cluster_id is deprecated in favor of openshift_clusterid
 cluster_id={{ obg_clusterid }}
+openshift_clusterid={{ obg_clusterid }}
 openshift_master_cluster_hostname={{ obg_master_cluster_hostname }}
 openshift_master_cluster_public_hostname={{ obg_master_public_hostname }}
 openshift_master_public_api_url={{ obg_master_public_api_url }}
