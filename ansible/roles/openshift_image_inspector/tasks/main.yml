@@ -1,0 +1,125 @@
+---
+- name: Include private vars
+  include_role:
+    name: ops_roles/include_private_vars
+
+- name: Create temp directory to store the template
+  command: mktemp -d /tmp/openshift-logging-ansible-XXXXXX
+  register: mktemp
+  changed_when: False
+
+- name: Choose a master on which to run
+  set_fact:
+    cluster_master: "{{ groups['oo_hosttype_master'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
+  run_once: true
+
+- set_fact:
+    tempdir: "{{ mktemp.stdout }}"
+
+- name: "create project for {{ oii_namespace }}"
+  oadm_project:
+    name: "{{ oii_namespace }}"
+    display_name: "{{ oii_namespace }}"
+    description: ClamAV Scanning Service
+  retries: 12
+  delay: 5
+
+- name: create imageinspector serviceaccount
+  oc_serviceaccount:
+    name: imageinspector
+    namespace: image-inspector
+
+- name: set service account permissions
+  oadm_policy_user:
+    namespace: image-inspector
+    user: system:serviceaccount:image-inspector:imageinspector
+    resource_kind: "{{ item.r_kind }}" 
+    resource_name: "{{ item.r_name }}"
+    state: present
+  with_items:
+    - r_kind: cluster-role
+      r_name: cluster-reader
+    - r_kind: scc
+      r_name: privileged
+
+  # running as command until oc_secret supports config file image secrets
+- name: "Create image pull secret"
+  command: "oc secrets new dockercfgjson .dockerconfigjson=/var/lib/origin/.docker/config.json -n {{ oii_namespace }}"
+  delegate_to: "{{ cluster_master }}"
+  run_once: true
+  ignore_errors: true
+
+- name: "Create image inspector secrets for {{ oii_namespace }}"
+  oc_secret:
+    namespace: "{{ oii_namespace }}"
+    name: oso-image-inspector-secrets
+    contents:
+    - path: aws_config.yml
+      data: "{{ oii_aws_config_content }}"
+    - path: scanlog_bucket_rw
+      data: "{{ oii_aws_creds_content }}" 
+
+- name: copy image inspector template
+  copy:
+    src: image-inspector.yml
+    dest: "{{ tempdir }}/image-inspector.yml"
+
+- name: "Check to see if template already exists in {{ oii_namespace }}"
+  oc_obj:
+    state: list
+    namespace: "{{ oii_namespace }}"
+    kind: templates
+  register: templatelist
+
+- name: Set image inspector template
+  oc_obj:
+    kind: template
+    name: image-inspector
+    namespace: "{{ oii_namespace }}" 
+    state: present
+    files: "{{ tempdir }}/image-inspector.yml"
+    debug: true
+    force: true
+    delete_after: true
+  when:  templatelist['results']['results'][0]['items'] | length < 1
+
+- name: Get the address of the registry
+  shell: "oc get services -n default | grep docker-registry | awk '{print $2}'"
+  register: registry_ip
+  run_once: true
+
+- name: "Check to see if image-inspector pods exist in {{ oii_namespace }}"
+  oc_obj:
+    state: list
+    namespace: "{{ oii_namespace }}"
+    kind: pods
+  register: podlist
+
+- name: "Create bc,is,ds for apps in {{ oii_namespace }} from template"
+  oc_process:
+    namespace: "{{ oii_namespace }}"
+    template_name: oso-image-inspector
+    content: "{{ lookup('file', 'files/image-inspector.yml') }}"
+    create: True
+    params:
+      PLAT: rhel7
+      NAMESPACE: "{{ registry_ip['stdout'] | quote }}:5000/{{ oii_namespace }}"
+  when: podlist['results']['results'][0]['items'] | length < 1
+  delegate_to: "{{ cluster_master }}"
+  run_once: true
+  ignore_errors: true
+
+- name: Label compute nodes
+  oc_label:
+    selector: "{{ item }}" 
+    kind: node
+    state: add
+    labels:
+      - key: image-inspector-enabled
+        value:  true
+  with_items: "{{ oii_nodes }}"
+
+- name: Delete temp directory
+  file:
+    name: "{{ tempdir }}"
+    state: absent
