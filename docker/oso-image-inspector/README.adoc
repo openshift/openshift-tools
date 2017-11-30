@@ -1,0 +1,27 @@
+= Clam Update Docker Container
+
+This container is used to update our clam signature bucket with the latest official, unoffocial, and custom signature databases.
+
+== Setup
+
+Nothing additional needs to be setup for this container.
+
+== Build
+
+To build this container, simply execute the build script.
+
+.Example:
+[source,bash]
+----
+./[rhel7|centos7]/build.sh
+----
+
+== Run
+
+To run this container, simply execute the run script.
+
+.Example:
+[source,bash]
+----
+./[rhel7|centos7]/run.sh
+----

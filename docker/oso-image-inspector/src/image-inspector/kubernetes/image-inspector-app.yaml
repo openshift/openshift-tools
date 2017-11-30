@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: inspect-fedora-latest
+  labels:
+    name: inspect-fedora-latest
+spec:
+  containers:
+  - name: image-inspector
+    image: docker.io/openshift/image-inspector:latest
+    command:
+    - /usr/bin/image-inspector
+    - --image=docker.io/fedora:latest
+    - --path=/var/tmp/image-content
+    - --serve=0.0.0.0:8080
+    ports:
+    - containerPort: 8080
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - mountPath: /host/var/run/docker.sock
+      name: docker-socket
+  volumes:
+  - hostPath:
+      path: /host/var/run/docker.sock
+    name: docker-socket
