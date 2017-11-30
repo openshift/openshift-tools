@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.119
+Version:       0.1.120
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -488,6 +488,8 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Nov 30 2017 Doug Edgar <dedgar@redhat.com> 0.1.120-1
+- adding clam scanner pod (dedgar@redhat.com)
 * Mon Nov 20 2017 Sten Turpin <sten@redhat.com> 0.1.119-1
 - Revert "Ssl cert fewer alerts" (stenwt@users.noreply.github.com)
 
