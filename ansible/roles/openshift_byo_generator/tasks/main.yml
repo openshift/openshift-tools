@@ -37,7 +37,7 @@
     msg: "Please define {{ item }}"
   when: "{{ item }} is undefined and obg_cloud_provider == 'gcp'"
   with_items:
-  - obg_gce_gcs_keyfile
+  - obg_registry_storage_gcs_keyfile
 
 - name: Set custom Web UI vars
   fail:
