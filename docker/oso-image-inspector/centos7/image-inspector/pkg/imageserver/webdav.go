@@ -65,18 +65,21 @@ func (s *webdavImageServer) GetHandler(meta *iiapi.InspectorMetadata,
 ) (http.Handler, error) {
 	mux := http.NewServeMux()
 	servePath := ImageServeURL
-	if s.opts.Chroot {
-		if err := syscall.Chroot(ImageServeURL); err != nil {
-			return nil, fmt.Errorf("Unable to chroot into %s: %v\n", ImageServeURL, err)
+
+	if len(servePath) > 0 && len(meta.ImageAcquireError) == 0 {
+		if s.opts.Chroot {
+			if err := syscall.Chroot(ImageServeURL); err != nil {
+				return nil, fmt.Errorf("unable to chroot into %s: %v\n", ImageServeURL, err)
+			}
+			if err := syscall.Chdir("/"); err != nil {
+				return nil, fmt.Errorf("unable to change directory into new root: %v\n", err)
+			}
+			servePath = chrootServePath
+		} else {
+			log.Printf("!!!WARNING!!! It is insecure to serve the image content without changing")
+			log.Printf("root (--chroot). Absolute-path symlinks in the image can lead to disclose")
+			log.Printf("information of the hosting system.")
 		}
-		if err := syscall.Chdir("/"); err != nil {
-			return nil, fmt.Errorf("Unable to change directory into new root: %v\n", err)
-		}
-		servePath = chrootServePath
-	} else {
-		log.Printf("!!!WARNING!!! It is insecure to serve the image content without changing")
-		log.Printf("root (--chroot). Absolute-path symlinks in the image can lead to disclose")
-		log.Printf("information of the hosting system.")
 	}
 
 	mux.HandleFunc(s.opts.HealthzURL, func(w http.ResponseWriter, r *http.Request) {

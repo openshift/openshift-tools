@@ -32,7 +32,7 @@ import (
 )
 
 func main() {
-	endpoint := "unix:///host/var/run/docker.sock"
+	endpoint := "unix:///var/run/docker.sock"
 	client, _ := docker.NewClient(endpoint)
 	imgs, _ := client.ListImages(docker.ListImagesOptions{All: false})
 	for _, img := range imgs {

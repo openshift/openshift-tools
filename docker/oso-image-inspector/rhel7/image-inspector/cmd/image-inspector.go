@@ -15,7 +15,8 @@ import (
 func main() {
 	inspectorOptions := iicmd.NewDefaultImageInspectorOptions()
 
-	flag.StringVar(&inspectorOptions.URI, "docker", inspectorOptions.URI, "Daemon socket to connect to")
+	flag.BoolVar(&inspectorOptions.UseDockerSocket, "use-docker-socket", inspectorOptions.UseDockerSocket, "Use docker daemon to handle image pulls (requires docker-socket)")
+	flag.StringVar(&inspectorOptions.DockerSocket, "docker-socket", inspectorOptions.DockerSocket, "Daemon socket to connect to")
 	flag.StringVar(&inspectorOptions.Image, "image", inspectorOptions.Image, "Docker image to inspect (cannot be used with the container option)")
 	flag.StringVar(&inspectorOptions.Container, "container", inspectorOptions.Container, "Docker container to inspect (cannot be used with the image option)")
 	flag.BoolVar(&inspectorOptions.ScanContainerChanges, "container-changes", inspectorOptions.ScanContainerChanges, "Scan only changed files inside running container")
@@ -34,6 +35,7 @@ func main() {
 	flag.StringVar(&inspectorOptions.PostResultTokenFile, "post-results-token-file", inspectorOptions.PostResultTokenFile, "If specified, content of it will be added to the POST result URL (?token=....)")
 	flag.StringVar(&inspectorOptions.AuthTokenFile, "webdav-token-file", inspectorOptions.AuthTokenFile, "If specified, token used to authenticate to Image Inspector will be read from this file")
 	flag.StringVar(&inspectorOptions.PullPolicy, "pull-policy", inspectorOptions.PullPolicy, fmt.Sprintf("Pull policy, default is %s, options are: %v", iiapi.PullIfNotPresent, iiapi.PullPolicyOptions))
+	flag.StringVar(&inspectorOptions.RegistryCertDir, "registry-cert-dir", inspectorOptions.RegistryCertDir, "Certificates for authenticating the image registry.")
 
 	flag.Parse()
 

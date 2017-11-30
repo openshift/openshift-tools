@@ -19,7 +19,7 @@ Use the `scan` command to perform a scan.  Use the `--path` flag to specify the
 path to scan, and use the `--socket` flag to specify the Unix domain socket for
 clamd:
 
-    $ clam-scanner scan --path=/path/to/scan --socket=/host/run/clamav/clamd.scan/clamd.sock
+    $ clam-scanner scan --path=/path/to/scan --socket=/run/clamav/clamd.scan/clamd.sock
     
 Use the `--omit-negative-results` flag to omit results for files with negative
 ("OK") results:
@@ -33,7 +33,7 @@ Build an image using the included Dockerfile:
     $ docker build -t clam-scanner .
     
 Run the new image in a privileged container with the clamd socket mounted to
-`/host/run/clamd.scan/clamd.sock` and the path to be scanned mounted to
+`/run/clamd.scan/clamd.sock` and the path to be scanned mounted to
 `/tmp/scan-data`:
 
     $ docker run -it --rm --privileged \

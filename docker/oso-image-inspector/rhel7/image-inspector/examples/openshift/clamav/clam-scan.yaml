@@ -17,7 +17,7 @@ spec:
     - mountPath: /secrets/docker
       name: dockercfg
       readOnly: true
-    - mountPath: /host/var/run/docker.sock
+    - mountPath: /var/run/docker.sock
       name: docker-socket
   restartPolicy: Never
   volumes:
@@ -27,4 +27,4 @@ spec:
       secretName: default-dockercfg-3dmd8
   - name: docker-socket
     hostPath:
-      path: /host/var/run/docker.sock
+      path: /var/run/docker.sock
