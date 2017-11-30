@@ -1,0 +1,188 @@
+---
+apiVersion: v1 
+kind: Template
+metadata:
+  creationTimestamp: null
+  generation: 1
+  labels:
+    provider: openshift
+    image-inspector-host: "true"
+  name: oso-image-inspector 
+objects:
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      template: oso-image-inspector
+    name: "oso-${PLAT}-ops-base"
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: "oso-${PLAT}-ops-base:latest"
+    postCommit: {}
+    resources: {}
+    source:
+      contextDir: "docker/oso-ops-base/${PLAT}"
+      git:
+        ref: oso-image-inspector
+        uri: https://github.com/rhdedgar/openshift-tools
+      secrets: []
+      type: Git
+    strategy:
+      dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: "false"
+        from:
+          kind: ImageStreamTag
+          name: "${PLAT}:latest"
+      type: Docker
+    triggers:
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      template: oso-image-inspector
+    name: oso-image-inspector
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: "oso-${PLAT}-image-inspector:latest"
+    postCommit: {}
+    resources: {}
+    source:
+      contextDir: "docker/oso-image-inspector/${PLAT}"
+      git:
+        ref: oso-image-inspector
+        uri: https://github.com/rhdedgar/openshift-tools
+      secrets: []
+      type: Git
+    strategy:
+      dockerStrategy:
+        env:
+        - name: OO_PAUSE_ON_BUILD
+          value: "false"
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-ops-base:latest"
+      type: Docker
+    triggers:
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-image-inspector
+    name: "${PLAT}"
+  spec:
+    dockerImageRepository: "library/${PLAT}"
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "registry.access.redhat.com/${PLAT}:latest"
+      importPolicy: {}
+      name: latest
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-image-inspector
+    name: "oso-${PLAT}-ops-base"
+  spec:
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "library/oso-${PLAT}-ops-base:latest"
+      importPolicy: {}
+      name: latest
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-image-inspector
+    name: "oso-${PLAT}-image-inspector"
+  spec:
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "library/oso-${PLAT}-image-inspector:latest"
+      importPolicy: {}
+      name: latest
+- apiVersion: extensions/v1beta1
+  kind: DaemonSet
+  metadata:
+    labels:
+      template: oso-image-inspector
+    name: oso-image-inspector
+  selector:
+    matchLabels:
+      name: oso-image-inspector
+  spec:
+    strategy:
+      resources: {}
+      type: Rolling
+    template:
+      metadata:
+        creationTimestamp: null
+        name: oso-image-inspector
+        labels:
+          name: oso-image-inspector
+      spec:
+        containers:
+        - env:
+          - name: OO_PAUSE_ON_START
+            value: "false"
+          image: "${NAMESPACE}/oso-${PLAT}-image-inspector:latest"
+          imagePullPolicy: Always
+          name: oso-image-inspector 
+          resources: {}
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /host
+            name: oso-image-inspector-host-filesystem
+          - mountPath: /secrets
+            name: oso-image-inspector-secrets
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          image-inspector-enabled: "True"
+        restartPolicy: Always
+        securityContext: {}
+        serviceAccount: imageinspector
+        serviceAccountName: imageinspector
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: oso-image-inspector-host-filesystem
+          hostPath:
+            path: /
+        - name: oso-image-inspector-secrets
+          secret:
+            secretName: oso-image-inspector-secrets
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-image-inspector
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-image-inspector:latest"
+      type: ImageChange
+parameters:
+- description: Platform name
+  name: PLAT
+  value: rhel7
+- description: Project name
+  name: NAMESPACE
+  value: image-inspector

@@ -94,6 +94,9 @@ cp -p devaccess/devaccess_wrap.py %{buildroot}/usr/bin/devaccess_wrap
 cp -p monitoring/cron-send-service-web-check.py %{buildroot}/usr/bin/cron-send-service-web-check
 cp -p monitoring/cron-send-rkhunter-checks.py %{buildroot}/usr/bin/cron-send-rkhunter-checks
 cp -p scan/scanpod-inmem.py %{buildroot}/usr/bin/scanpod-inmem
+cp -p scan/scanpod-inmem-node.py %{buildroot}/usr/bin/scanpod-inmem-node
+cp -p scan/scanlog_listener.py %{buildroot}/usr/local/bin/scanlog_listener
+cp -p scan/upload_scanlogs.py %{buildroot}/usr/local/bin/upload_scanlogs
 cp -p monitoring/cron-send-cgroup-slice-metrics.sh %{buildroot}/usr/bin/cron-send-cgroup-slice-metrics
 
 mkdir -p %{buildroot}/etc/openshift_tools
@@ -212,6 +215,9 @@ OpenShift Tools script to scan running pod
 
 %files scanpod
 /usr/bin/scanpod-inmem
+/usr/bin/scanpod-inmem-node
+/usr/local/bin/scanlog_listener
+/usr/local/bin/upload_scanlogs
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-autoheal subpackage

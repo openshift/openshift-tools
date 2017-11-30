@@ -42,7 +42,7 @@ class PullBucket(object):
                     config_settings['clam_config_files'] = yaml_config['clam_config_files']
 
                 if yaml_config['clam_timestamp_path']:
-                    config_settings['clam_timestamp_path'] = yaml_config['ocav_timestamp_path']
+                    config_settings['clam_timestamp_path'] = yaml_config['clam_timestamp_path']
 
         return config_settings
 
