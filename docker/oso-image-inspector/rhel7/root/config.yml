@@ -17,10 +17,10 @@
 #      hour: "13"
 #      job: "/usr/local/bin/cron-in-memory-scan.sh &>/dev/null"
 
-    - name: upload_scanlogs
-      minute: "15"
-      hour: "14"
-      job: "/usr/local/bin/upload_scanlogs &>/dev/null"
+#    - name: upload_scanlogs
+#      minute: "15"
+#      hour: "14"
+#      job: "/usr/local/bin/upload_scanlogs &>/dev/null"
 
   tasks:
   - name: "Create custom scan report directory for image-inspector"
@@ -53,14 +53,11 @@
     set_fact:
       temp_name: "{{ kubeletArguments['node-labels'] }}"
 
-  - name: print nodename
-    debug:
-      msg: "{{ temp_name[4].split('=')[1] }}"
-
   - name: populate templated config file
     copy:
       content: |
         node_hostname: {{ temp_name[4].split('=')[1] }}
+        cluster_name: {{ temp_name[4].split('=')[1].split('-node')[0] }}
       dest: /etc/openshift_tools/scanreport_config.yml
 
 #  - name: "Bind mounts for scanning"
