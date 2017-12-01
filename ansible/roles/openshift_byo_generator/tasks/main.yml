@@ -91,7 +91,7 @@
     recurse: True
 
 - set_fact:
-  dest_gcsdockerregistry_file: "{{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json"
+    dest_gcsdockerregistry_file: "{{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json"
 
 - name: copy the gcp_user_gcsdockerregistry file to the obg_output_path
   copy:
