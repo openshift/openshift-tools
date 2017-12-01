@@ -98,6 +98,7 @@
     src: "{{ obg_gcp_user_gcsdockerregistry_file | from_yaml }}"
     dest: "{{ dest_gcsdockerregistry_file | to_json }}"
   register: cp_gcsdockerregistry
+  ignore_errors: True
 
 - debug:
     var: cp_gcsdockerregistry
