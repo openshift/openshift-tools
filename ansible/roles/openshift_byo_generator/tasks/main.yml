@@ -97,6 +97,11 @@
   copy:
     src: "{{ obg_gcp_user_gcsdockerregistry_file | from_yaml }}"
     dest: "{{ dest_gcsdockerregistry_file | to_json }}"
+  register: cp_gcsdockerregistry
+
+- debug:
+    var: cp_gcsdockerregistry
+    verbosity: 4
 
 - name: create the byo
   template:
