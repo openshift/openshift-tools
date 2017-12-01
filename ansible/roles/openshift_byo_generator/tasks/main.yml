@@ -105,8 +105,11 @@
 - set_fact: 
     gcsdockerregistry_in_yaml: "{{ gcsdockerregistry_in.stdout | from_yaml }}"
 
-- name: cat out gcp_user_gcsdockerregistry json file
-  shell: echo "{{dockerregistry_in_yaml | to_nice_json }}" > "{{ dest_gcsdockerregistry_file }}"
+- name: copy out gcp_user_gcsdockerregistry json file
+  local_action: 
+    copy:
+      content: "{{dockerregistry_in_yaml | to_nice_json }}" 
+      dest: "{{ dest_gcsdockerregistry_file }}"
   register: gcsdockerregistry_out
   ignore_errors: True
 
