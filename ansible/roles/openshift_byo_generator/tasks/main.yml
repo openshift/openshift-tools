@@ -93,16 +93,26 @@
 - set_fact:
     dest_gcsdockerregistry_file: "{{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json"
 
-- name: copy the gcp_user_gcsdockerregistry file to the obg_output_path
-  copy:
-    src: "{{ obg_gcp_user_gcsdockerregistry_file | from_yaml }}"
-    dest: "{{ dest_gcsdockerregistry_file | to_json }}"
-  register: cp_gcsdockerregistry
+- name: cat in gcp_user_gcsdockerregistry yaml file
+  shell: cat "{{ obg_gcp_user_gcsdockerregistry_file }}"
+  register: gcsdockerregistry_in
   ignore_errors: True
 
 - debug:
-    var: cp_gcsdockerregistry
-    verbosity: 4
+    var: gcsdockerregistry_in
+    verbosity: 2
+
+- set_fact: 
+    gcsdockerregistry_in_yaml: "{{ gcsdockerregistry_in.stdout | from_yaml }}"
+
+- name: cat out gcp_user_gcsdockerregistry json file
+  shell: echo "{{dockerregistry_in_yaml | to_nice_json }}" > "{{ dest_gcsdockerregistry_file }}"
+  register: gcsdockerregistry_out
+  ignore_errors: True
+
+- debug:
+    var: gcsdockerregistry_out
+    verbosity: 2
 
 - name: create the byo
   template:
