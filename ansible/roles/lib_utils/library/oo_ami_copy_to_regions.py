@@ -42,7 +42,10 @@ import boto.ec2
 class AMICopy(object):
     """simple wrapper class for rhsm repos"""
 
-    regions_to_copy = ['ap-southeast-1',
+    regions_to_copy = ['ap-northeast-1',
+                       'ap-northeast-2',
+                       'ap-south-1',
+                       'ap-southeast-1',
                        'ap-southeast-2',
                        'ca-central-1',
                        'eu-central-1',
