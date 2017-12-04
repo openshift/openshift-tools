@@ -96,26 +96,6 @@
 - name: copy and convert gcp_user_gcsdockerregistry 
   shell: "python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < {{ obg_gcp_user_gcsdockerregistry_file}} > {{ dest_gcsdockerregistry_file }}"
 
-#- name: cat in gcp_user_gcsdockerregistry yaml file
-#  shell: cat "{{ obg_gcp_user_gcsdockerregistry_file }}"
-#  register: gcsdockerregistry_in
-#  ignore_errors: True
-#
-#- debug:
-#    var: gcsdockerregistry_in
-#    verbosity: 2
-#
-#- set_fact: 
-#    gcsdockerregistry_in_yaml: "{{ gcsdockerregistry_in.stdout | from_yaml }}"
-#
-#- name: copy out gcp_user_gcsdockerregistry json file
-#  local_action: 
-#    copy:
-#      content: "{{dockerregistry_in_yaml | to_nice_json }}" 
-#      dest: "{{ dest_gcsdockerregistry_file }}"
-#  register: gcsdockerregistry_out
-#  ignore_errors: True
-
 - debug:
     var: gcsdockerregistry_out
     verbosity: 2
