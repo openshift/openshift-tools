@@ -94,10 +94,6 @@ cp -p monitoring/cron-send-dnsmasq-check.py %{buildroot}/usr/bin/cron-send-dnsma
 cp -p devaccess/devaccess_wrap.py %{buildroot}/usr/bin/devaccess_wrap
 cp -p monitoring/cron-send-service-web-check.py %{buildroot}/usr/bin/cron-send-service-web-check
 cp -p monitoring/cron-send-rkhunter-checks.py %{buildroot}/usr/bin/cron-send-rkhunter-checks
-cp -p scan/scanpod-inmem.py %{buildroot}/usr/bin/scanpod-inmem
-cp -p scan/scanpod-inmem-node.py %{buildroot}/usr/bin/scanpod-inmem-node
-cp -p scan/scanlog_listener.py %{buildroot}/usr/local/bin/scanlog_listener
-cp -p scan/upload_scanlogs.py %{buildroot}/usr/local/bin/upload_scanlogs
 cp -p monitoring/cron-send-cgroup-slice-metrics.sh %{buildroot}/usr/bin/cron-send-cgroup-slice-metrics
 
 mkdir -p %{buildroot}/etc/openshift_tools
@@ -133,6 +129,14 @@ mkdir -p %{buildroot}/usr/local/bin
 install -m 755 clam-update/push_clam_signatures.py %{buildroot}/usr/local/bin/push_clam_signatures
 install -m 755 clam-update/pull_clam_signatures.py %{buildroot}/usr/local/bin/pull_clam_signatures
 install -m 755 clam-update/check_clam_update.py %{buildroot}/usr/local/bin/check_clam_update
+
+# openshift-tools-scripts-scanpod install
+mkdir -p %{buildroot}/usr/bin
+mkdir -p %{buildroot}/usr/local/bin
+cp -p scan/scanpod-inmem.py %{buildroot}/usr/bin/scanpod-inmem
+cp -p scan/scanpod-inmem-node.py %{buildroot}/usr/bin/scanpod-inmem-node
+cp -p scan/scanlog_listener.py %{buildroot}/usr/local/bin/scanlog_listener
+cp -p scan/upload_scanlogs.py %{buildroot}/usr/local/bin/upload_scanlogs
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-inventory-clients subpackage
