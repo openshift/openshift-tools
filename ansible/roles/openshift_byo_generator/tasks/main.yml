@@ -94,7 +94,7 @@
     dest_gcsdockerregistry_file: "{{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json"
 
 - name: copy and convert gcp_user_gcsdockerregistry 
-  shell: "python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < {{ obg_gcp_user_gcsdockerregistry_file}} > {{ dest_gcsdockerregistry_file }}"
+  shell: "rm -f {{dest_gcsdockerregistry_file}}; python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < {{ obg_gcp_user_gcsdockerregistry_file}} > {{ dest_gcsdockerregistry_file }}"
 
 - debug:
     var: gcsdockerregistry_out
