@@ -34,3 +34,4 @@
     with_together:
     - "{{ l_openshift_hosted_wfp_items }}"
     - "{{ l_openshift_hosted_wfp_latest_version.results }}"
+    ignore_errors: True
