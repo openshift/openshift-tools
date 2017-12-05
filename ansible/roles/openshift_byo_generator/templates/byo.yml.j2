@@ -216,8 +216,8 @@ openshift_hosted_registry_storage_s3_secretkey={{ obg_registry_storage_s3_secret
 openshift_hosted_registry_storage_s3_region={{ obg_registry_storage_s3_region }}
 openshift_hosted_registry_storage_s3_bucket={{ obg_registry_storage_s3_bucket }}
 
-openshift_hosted_registry_storage_gcs_bucket={{ obg_registry_storage_gcs_bucket }}
-openshift_hosted_registry_storage_gcs_keyfile={{ obg_registry_storage_gcs_keyfile }}
+openshift_hosted_registry_storage_gcs_bucket={{ obg_registry_storage_gcs_bucket | default('') }}
+openshift_hosted_registry_storage_gcs_keyfile={{ obg_registry_storage_gcs_keyfile | default('') }}
 
 openshift_docker_hosted_registry_insecure=False
 
