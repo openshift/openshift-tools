@@ -5,7 +5,7 @@
   register: user_file_stat_multi_inventory
   when: osgcpsa_output_type == "multi_inventory"
 
-- name: Check if user file exists - multi_invntory
+- name: Check if user file exists - multi_inventory
   set_fact:
     user_file_missing: True
   when: osgcpsa_output_type == "multi_inventory" and not user_file_stat_multi_inventory.stat.exists

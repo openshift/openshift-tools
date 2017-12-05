@@ -209,12 +209,18 @@ openshift_hosted_manage_router=false
 {% if obg_install_registry %}
 openshift_hosted_manage_registry=true
 openshift_hosted_registry_storage_kind=object
-openshift_hosted_registry_storage_provider=s3
+openshift_hosted_registry_storage_provider={{ obg_registry_storage_provider }}
+
 openshift_hosted_registry_storage_s3_accesskey={{ obg_registry_storage_s3_accesskey }}
 openshift_hosted_registry_storage_s3_secretkey={{ obg_registry_storage_s3_secretkey }}
 openshift_hosted_registry_storage_s3_region={{ obg_registry_storage_s3_region }}
 openshift_hosted_registry_storage_s3_bucket={{ obg_registry_storage_s3_bucket }}
+
+openshift_hosted_registry_storage_gcs_bucket={{ obg_registry_storage_gcs_bucket }}
+openshift_hosted_registry_storage_gcs_keyfile={{ obg_registry_storage_gcs_keyfile }}
+
 openshift_docker_hosted_registry_insecure=False
+
 openshift_hosted_registry_selector='type=infra'
 openshift_hosted_registry_routetermination=reencrypt
 openshift_hosted_registry_registryurl={{ obg_registry_host }}/{{ obg_registry_template }}

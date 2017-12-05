@@ -1,7 +1,9 @@
 ---
 - debug: var=obg_named_certificates
 - debug: var=obg_custom_cors_origin
-- fail:
+
+- name: Set common vars
+  fail:
     msg: "Please define {{ item }}"
   when: "{{ item }} is undefined"
   with_items:
@@ -22,28 +24,39 @@
   - obg_install_version
   - obg_registry_host
 
-- fail:
+- name: Set AWS vars
+  fail:
     msg: "Please define {{ item }}"
   when: "{{ item }} is undefined and obg_cloud_provider == 'aws'"
   with_items:
   - obg_aws_provider_access_key
   - obg_aws_provider_secret_key
 
-- fail:
+- name: Set GCE vars
+  fail:
+    msg: "Please define {{ item }}"
+  when: "{{ item }} is undefined and obg_cloud_provider == 'gcp'"
+  with_items:
+  - obg_registry_storage_gcs_keyfile
+
+- name: Set custom Web UI vars
+  fail:
     msg: "Please define {{ item }}"
   when: "{{ item }} is undefined and obg_customize_webui == true"
   with_items:
   - obg_ui_scripts
   - obg_ui_stylesheets
 
-- fail:
+- name: Set new infra and compute node vars
+  fail:
     msg: "Please define {{ item }}"
   when: "{{ item }} is undefined and obg_new_nodes == true"
   with_items:
   - obg_new_infra_nodes
   - obg_new_compute_nodes
 
-- fail:
+- name: Set hawkular vars
+  fail:
     msg: "Please define {{ item }}"
   with_items:
   - obg_metrics_hawkular_cert
@@ -51,7 +64,8 @@
   - obg_metrics_hawkular_ca
   when: "{{ item }} is undefined and obg_install_metrics == true"
 
-- fail:
+- name: Set kibana vars
+  fail:
     msg: "Please define {{ item }}"
   with_items:
   - obg_logging_kibana_cert
@@ -76,7 +90,19 @@
     state: directory
     recurse: True
 
+- set_fact:
+    dest_gcsdockerregistry_file: "{{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json"
+
+- name: copy and convert gcp_user_gcsdockerregistry 
+  shell: "rm -f {{dest_gcsdockerregistry_file}}; python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < {{ obg_gcp_user_gcsdockerregistry_file}} > {{ dest_gcsdockerregistry_file }}"
+
+- debug:
+    var: gcsdockerregistry_out
+    verbosity: 2
+
 - name: create the byo
   template:
     src: byo.yml.j2
     dest: "{{ obg_output_path }}/{{ obg_clusterid }}-byo-inventory"
+
+

@@ -4,7 +4,7 @@
     path: /etc/origin/node/ca.crt
   register: ca_cert_stat
 
-- name: fail is ca.crt is not found
+- name: Exit if ca.crt is not found
   fail:
     msg: "/etc/origin/node/ca.crt is not found!"
   when: not ca_cert_stat.stat.exists
