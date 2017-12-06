@@ -37,7 +37,6 @@
     path: "{{ vosar_output_directory }}/{{ item }}"
   with_items:
   - usr
-  - rpms
   - playbooks/adhoc
   - playbooks/aws
   - playbooks/gce
@@ -64,6 +63,7 @@
   - roles/rhel_unsubscribe
   - roles/tito
   - roles/yum_repos
+  #- rpms
 
 - name: Symlink the filter and lookup plugins (no longer shipped with rpm) for byo/config
   file:
