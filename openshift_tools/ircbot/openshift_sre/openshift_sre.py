@@ -27,7 +27,7 @@ ESCALATION_URL = 'https://mojo.redhat.com/docs/DOC-1123528'
 SNOW_URL = 'https://url.corp.redhat.com/OpenShift-SRE-Service-Request-Form'
 SNOW_SEARCH = 'https://redhat.service-now.com/surl.do?n='
 SNOW_QUEUE = 'https://redhat.service-now.com/nav_to.do?uri=%2Fhome_splash.do%3Fsysparm_direct%3Dtrue'
-SFDC_URL = 'https://gss.my.salesforce.com/apex/Case_View?sbstr='
+SFDC_URL = 'https://access.redhat.com/support/cases/#/case/'
 # Schedules taken from https://mojo.redhat.com/docs/DOC-1144371 and localized
 # New, proposed schedule: https://docs.google.com/document/d/13UGqePqjsEzUqupTat8XgJDKALb0WQ3lP66OYfk6cO0/edit
 # TZ Compare:
@@ -443,6 +443,8 @@ def say_all(bot, trigger):
             debug(bot, 'Found user: {}'.format(user))
             all_list.append(user)
     if len(all_list) > 0:
+        bot.reply('Have you considered using the less noisy `.msg` option? '
+                  'It will only notify specific users. Try `.msg-list` to see who would be notified.')
         bot.say(' '.join(all_list) + ': ' + message, max_messages=50)
     else:
         bot.reply('It\'s awfully lonely in here.')
@@ -576,7 +578,7 @@ def track_shift_rotation(bot):
             if (start_now.weekday() > START_ANNOUNCING['weekday'] and stop_now.weekday() < STOP_ANNOUNCING[
                     'weekday']) or \
                     (start_now.hour >= START_ANNOUNCING['hour'] and start_now.weekday() == START_ANNOUNCING[
-                        'weekday']) or \
+                    'weekday']) or \
                     (stop_now.hour <= STOP_ANNOUNCING['hour'] and stop_now.weekday() == STOP_ANNOUNCING['weekday']):
                 _, curr_shift, next_shift = get_shift(bot)
                 curr_now = dt.now(curr_shift['tz'])
@@ -608,7 +610,11 @@ def refer_to_topic(bot, trigger):
 @module.rate(channel=600)
 def monitor_weekend(bot, trigger):
     """Reminds users that channels are un-monitored on weekends. Will not trigger more than once every 10 minutes."""
-    if bot.db.get_channel_value(trigger.sender, 'monitoring') and dt.utcnow().weekday() > 4:
+    start_now = dt.now(tz=START_ANNOUNCING['tz'])
+    stop_now = dt.now(tz=STOP_ANNOUNCING['tz'])
+    if (stop_now.weekday() > STOP_ANNOUNCING['weekday'] and start_now.weekday() < START_ANNOUNCING['weekday']) or \
+            (stop_now.hour >= STOP_ANNOUNCING['hour'] and stop_now.weekday() == STOP_ANNOUNCING['weekday']) or \
+            (start_now.hour <= START_ANNOUNCING['hour'] and start_now.weekday() == START_ANNOUNCING['weekday']):
         bot.reply('This channel is unmonitored on weekends. See {url} for Engineer Escalations.'.format(
             url=ESCALATION_URL))
 
