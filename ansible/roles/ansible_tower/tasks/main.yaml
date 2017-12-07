@@ -14,6 +14,7 @@
   - python-manageiq-client
   - java-1.8.0-openjdk-headless
   - python-dns
+  - python2-cryptography
 
 - name: download Tower setup
   get_url: url=http://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-2.1.1.tar.gz dest=/opt/ force=no
