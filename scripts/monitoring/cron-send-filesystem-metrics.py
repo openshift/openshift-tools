@@ -39,12 +39,21 @@ def parse_args():
                         help="Send 0% full for mounts, useful for clearing existing bad alerts")
     return parser.parse_args()
 
-def filter_out_docker_filesystems(metric_dict, filesystem_filter):
+def filter_out_key_name_chars(metric_dict, filesystem_filter):
     """ Simple filter to elimate unnecessary characters in the key name """
     filtered_dict = {k.replace(filesystem_filter, ''):v
                      for (k, v) in metric_dict.iteritems()
-                     if 'docker' not in k
                     }
+    return filtered_dict
+
+def filter_out_container_root(metric_dict):
+    """ Simple filter to remove the container root FS info """
+    container_root_regex = r'^/dev/mapper/docker-\d+:\d+-\d+-[0-9a-f]+$'
+    filtered_dict = {k: v
+                     for (k, v) in metric_dict.iteritems()
+                     if not re.match(container_root_regex, k)
+                    }
+
     return filtered_dict
 
 def filter_out_customer_pv_filesystems(metric_dict):
@@ -80,7 +89,8 @@ def main():
     # Get the disk space
     filesys_full_metrics = pminfo.get_metrics(filesys_full_metric)
 
-    filtered_filesys_metrics = filter_out_docker_filesystems(filesys_full_metrics, 'filesys.full.')
+    filtered_filesys_metrics = filter_out_key_name_chars(filesys_full_metrics, 'filesys.full.')
+    filtered_filesys_metrics = filter_out_container_root(filtered_filesys_metrics)
 
     if args.filter_pod_pv:
         filtered_filesys_metrics = filter_out_customer_pv_filesystems(filtered_filesys_metrics)
@@ -95,7 +105,8 @@ def main():
     # Get filesytem inode metrics
     filesys_inode_metrics = pminfo.get_metrics(derived_metrics=filesys_inode_derived_metrics)
 
-    filtered_filesys_inode_metrics = filter_out_docker_filesystems(filesys_inode_metrics, 'filesys.inodes.pused.')
+    filtered_filesys_inode_metrics = filter_out_key_name_chars(filesys_inode_metrics, 'filesys.inodes.pused.')
+    filtered_filesys_inode_metrics = filter_out_container_root(filtered_filesys_inode_metrics)
 
     if args.filter_pod_pv:
         filtered_filesys_inode_metrics = filter_out_customer_pv_filesystems(filtered_filesys_inode_metrics)
