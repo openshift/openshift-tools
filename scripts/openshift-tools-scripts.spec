@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.122
+Version:       0.1.123
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -492,6 +492,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Dec 07 2017 Thomas Wiest <twiest@redhat.com> 0.1.123-1
+- Fixed cron-send-filesystem-metrics so that it sends filesystem usage
+  information for overlayfs volumes. (twiest@redhat.com)
+
 * Mon Dec 04 2017 Matt Woodson <mwoodson@redhat.com> 0.1.122-1
 - moving scanpod to its own section (dedgar@redhat.com)
 
