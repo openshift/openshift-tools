@@ -105,6 +105,8 @@ class Ohi(object):
             self.default_output(hosts)
         elif self.args.output == "json":
             self.json_output(hosts)
+        elif self.args.output == "wide":
+            self.wide_output(hosts)
         else:
             raise ArgumentError("Invalid output format")
 
@@ -122,6 +124,27 @@ class Ohi(object):
                 print "%s@%s" % (self.args.user, host)
             else:
                 print host
+
+    def wide_output(self, hosts):
+        '''
+            Prints the external name, internal name, external ip, and internal ip
+        '''
+        for host in sorted(hosts, key=utils.normalize_dnsname):
+            hostname = host
+            temp_host = {
+                'ec2_private_dns_name': '',
+                'oo_public_ip': '',
+                'oo_private_ip': ''
+            }
+            for key in temp_host.keys():
+                if key in self.aws.inventory.get('_meta').get('hostvars').get(host):
+                    temp_host[key] = self.aws.inventory.get('_meta').get('hostvars').get(host).get(key)
+
+            print '%-42s %-42s %-18s %-18s' % (\
+                  host,
+                  temp_host['ec2_private_dns_name'],
+                  temp_host['oo_public_ip'],
+                  temp_host['oo_private_ip'])
 
     def json_output(self, hosts):
         '''
