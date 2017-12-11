@@ -155,7 +155,7 @@ class Ohi(object):
             temp_host = {
                 'name': host
             }
-            for key in ['oo_public_ip', 'oo_clusterid', 'oo_hosttype', 'oo_subhosttype']:
+            for key in ['oo_public_ip', 'oo_clusterid', 'oo_hosttype', 'oo_subhosttype', 'ec2_private_dns_name']:
                 if key in self.aws.inventory.get('_meta').get('hostvars').get(host):
                     temp_host[key] = self.aws.inventory.get('_meta').get('hostvars').get(host).get(key)
 
