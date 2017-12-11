@@ -19,7 +19,7 @@
 #     ops-docker-storage-reinitialize.yml -e cli_name=opstest-node-compute-s3g5s
 
 - name: Reinitialize Docker Storage
-  gather_facts: no
+  gather_facts: yes
   hosts: "oo_name_{{ cli_name }}"
   user: root
   connection: ssh
@@ -48,16 +48,47 @@
       msg: "User aborted"
     when: cli_confirm_run != "yes"
 
+  - name: Install atomic tool
+    package:
+      name: atomic
+      state: latest
+
   - name: Get the docker storage information from the docker-storage-setup sysconfig file
     oo_sysconfig_fact:
       name: docker_storage_setup
       src: /etc/sysconfig/docker-storage-setup
+
+  - name: Determine docker storage driver
+    set_fact:
+      storage_driver: "{{ docker_storage_setup.STORAGE_DRIVER | default('devicemapper', true) | replace('\"', '') }}"
+
+  - name: Determine container root LV mount path
+    set_fact:
+      container_root_lv_mount_path: "{{ docker_storage_setup.CONTAINER_ROOT_LV_MOUNT_PATH | default('/var/lib/docker', true) | replace('\"', '') }}"
 
   - name: make sure docker is stopped and disabled (to avoid resource conflicts)
     service:
       name: docker
       state: stopped
       enabled: False
+
+  - name: "Make {{ container_root_lv_mount_path }}/volumes mutable"
+    command: "chattr -i {{ container_root_lv_mount_path }}/volumes"
+    ignore_errors: True
+
+  # This runs: docker-storage-setup --reset
+  #              - Deactivate and remove the LV mounted at
+  #                CONTAINER_ROOT_LV_MOUNT_PATH.
+  #              - (dm-only) Deactivate and remove the thin pool LV.
+  #              - Remove PV(s) on device(s) DEVS.
+  #              - Remove 1st partition on device(s) DEVS.
+  #            umount ${rootgraphdir}/devicemapper  }
+  #            umount ${rootgraphdir}/overlay       } ignoring errors
+  #            umount ${rootgraphdir}/overlay2      }
+  #            rm --recursive ${rootgraphdir}
+  #            mkdir --parents ${rootgraphdir}
+  - name: Reset docker storage
+    command: atomic storage reset
 
   - name: remove docker_vg if present
     command: "vgremove -y '{{ docker_storage_setup.VG }}'"
@@ -68,8 +99,10 @@
     shell: "dmsetup table | grep ^docker- | cut -d: -f1-2 | xargs -n1 dmsetup remove"
     ignore_errors: true
     register: dmsetup_output
-    when: "'is used by another device' in vgremove_output.stderr"
-   
+    when:
+    - storage_driver == 'devicemapper'
+    - "'is used by another device' in vgremove_output.stderr"
+
   - name: remove docker_vg if present
     command: "vgremove -y '{{ docker_storage_setup.VG }}'"
     ignore_errors: true
@@ -80,51 +113,19 @@
       msg: "Failed to remove the docker VG. You may need to disable the docker and atomic-openshift-node services and reboot the machine. Then re-run this playbook. Once it has been re-initialized, re-enable the atomic-openshift-node service."
     when: vgremove_output|failed
 
-  - name: remove 1st partition from device if present
-    command: "parted '{{ docker_storage_setup.DEVS }}' -s 'rm 1'"
-    ignore_errors: true
+  - name: Wipe the filesystem
+    command: "wipefs --all '{{ docker_storage_setup.DEVS }}'"
 
-  - name: wipe the beginning of the disk (mbr & more!)
-    command: "dd if=/dev/zero of='{{ docker_storage_setup.DEVS }}' bs=4096 count=1024"
+  - name: Run docker-storage-setup to initialize docker storage
+    command: docker-storage-setup
 
-  - name: Make /var/lib/docker mutable
-    command: chattr -iR /var/lib/docker
-    ignore_errors: True
-
-  - name: Remove custom Online docker settings temporarily
-    command: mv /etc/systemd/system/docker.service.d/chattr.conf /root/chattr.conf
-    ignore_errors: True
-
-  - name: wipe out /var/lib/docker (current docker graph driver info)
+  - name: "Recreate {{ container_root_lv_mount_path }}/volumes"
     file:
-      path: /var/lib/docker
-      state: absent
-
-  - name: remove /etc/sysconfig/docker-storage (for any stray references to pools)
-    file:
-      path: /etc/sysconfig/docker-storage
-      state: absent
-
-  - name: start docker-storage-setup to initialize the docker storage
-    service:
-      name: docker-storage-setup
-      state: started
-      enabled: True
+      path: "{{ container_root_lv_mount_path }}/volumes"
+      state: directory
 
   - name: start and enable docker daemon
     service:
       name: docker
       state: started
       enabled: True
-
-  - name: Replace Online docker settings
-    command: mv /root/chattr.conf /etc/systemd/system/docker.service.d/chattr.conf
-    ignore_errors: True
-
-  - name: Reload systemd for unit file to take effect
-    command: systemctl daemon-reload
-
-  - name: restart docker daemon
-    service:
-      name: docker
-      state: restarted
