@@ -140,7 +140,7 @@ class Ohi(object):
                 if key in self.aws.inventory.get('_meta').get('hostvars').get(host):
                     temp_host[key] = self.aws.inventory.get('_meta').get('hostvars').get(host).get(key)
 
-            print '%-42s %-42s %-18s %-18s' % (\
+            print '%-42s %-60s %-18s %-18s' % (\
                   host,
                   temp_host['ec2_private_dns_name'],
                   temp_host['oo_public_ip'],
