@@ -9,6 +9,10 @@ admins = admin1, admin2
 channels = #mybot
 exclude = url, ipython
 extra = /absolute/path/to/openshift-tools/openshift_tools/trello, /absolute/path/to/openshift-tools/openshift_tools/openshift_sre
+auth_method = userserv
+auth_username = <nick>
+auth_password = <pass>
+auth_target = USERSERV
 
 [openshift_sre]
 # Information about creating a service account can be found in the README
