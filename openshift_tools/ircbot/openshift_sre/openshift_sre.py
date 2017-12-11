@@ -1,15 +1,18 @@
 # coding=utf-8
+# pylint: disable=protected-access
+# pylint: disable=import-error
 """
 openshift_sre.py - Various helper modules for OpenShift Online SRE team
 Copyright © 2017, Will Gordon <wgordon@redhat.com>
 Licensed under the MIT license.
 """
+from __future__ import print_function
 from datetime import datetime as dt
 from re import finditer, search
-from sopel import module  # pylint: disable=import-error
-from sopel.config.types import StaticSection, FilenameAttribute  # pylint: disable=import-error
-from pygsheets import authorize, exceptions  # pylint: disable=import-error
-from pytz import timezone, utc  # pylint: disable=import-error
+from sopel import module
+from sopel.config.types import StaticSection, FilenameAttribute
+from pygsheets import authorize, exceptions
+from pytz import timezone
 from googleapiclient import errors
 
 ###########################
@@ -17,52 +20,87 @@ from googleapiclient import errors
 ###########################
 DEBUG = False  # Debug sends debug messages to the bot owner via PRIVMSG
 GSHEET_URL_REGEX = r'https://docs\.google\.com/spreadsheets/d/(?P<key>[a-zA-Z0-9_\-]*)/edit#gid=(?P<gid>[0-9]*)'
-SNOW_TICKET_REGEX = r'\b(?P<ticket>(TASK|REQ|RITM|INC|PRB|CHG)[0-9]{7})\b'
-SFDC_CASE_REGEX = r'\b(?P<case>[0-9]{8})\b'
+SNOW_TICKET_REGEX = r'\b(?<!=)(?P<ticket>(TASK|REQ|RITM|INC|PRB|CHG)[0-9]{7})\b'
+SFDC_CASE_REGEX = r'\b(?<!/)(?<!=)(?P<case>[0-9]{8})\b'
 KARMA_REGEX = r'\b(?P<nick>[a-zA-Z0-9_\-\[\]{}^`|]+)(?P<direction>\+\+|--)'
-MONITORED_CHANNELS = []
-NONANNOUNCING_CHANNELS = []
 ESCALATION_URL = 'https://mojo.redhat.com/docs/DOC-1123528'
 SNOW_URL = 'https://url.corp.redhat.com/OpenShift-SRE-Service-Request-Form'
 SNOW_SEARCH = 'https://redhat.service-now.com/surl.do?n='
 SNOW_QUEUE = 'https://redhat.service-now.com/nav_to.do?uri=%2Fhome_splash.do%3Fsysparm_direct%3Dtrue'
-SFDC_URL = 'https://gss.my.salesforce.com/apex/Case_View?sbstr='
-APAC = {
-    'name': 'APAC',
+SFDC_URL = 'https://access.redhat.com/support/cases/#/case/'
+# Schedules taken from https://mojo.redhat.com/docs/DOC-1144371 and localized
+# New, proposed schedule: https://docs.google.com/document/d/13UGqePqjsEzUqupTat8XgJDKALb0WQ3lP66OYfk6cO0/edit
+# TZ Compare:
+#   https://www.timeanddate.com/worldclock/converter.html?iso=20171121T050000&p1=1440&p2=47&p3=237&p4=204&p5=207
+# DST lookup: https://www.timeanddate.com/time/change/usa/raleigh,
+#             https://www.timeanddate.com/time/change/czech-republic/brno
+APAC_1 = {
+    'name': 'Brisbane',
+    'column': '?',
+    'start_1': 9,
+    'start_2': 9,
+    'start_3': 8,
+    'start_4': 9,
+    'tz': timezone('Australia/Brisbane')
+}
+APAC_2 = {
+    'name': 'Beijing',
     'column': 'O',
-    'utc_start': 22,
-    'utc_end': 6
+    'start_1': 7,
+    'start_2': 7,
+    'start_3': 6,
+    'start_4': 7,
+    'tz': timezone('Asia/Shanghai')
 }
 EMEA = {
     'name': 'EMEA',
     'column': 'M',
-    'utc_start': 6,
-    'utc_end': 14
+    'start_1': 8,
+    'start_2': 8,
+    'start_3': 8,
+    'start_4': 8,
+    'tz': timezone('Europe/Prague')
 }
 NASA = {
     'name': 'NASA',
     'column': 'K',
-    'utc_start': 14,
-    'utc_end': 22
+    'start_1': 10,
+    'start_2': 11,
+    'start_3': 10,
+    'start_4': 11,
+    'tz': timezone('US/Eastern')
 }
 ONCALL = {
     'name': 'ONCALL',
     'column': 'C'
 }
+# DST schedule to follow for start times
+# MUST be ordered
+STARTS = [
+    # start_1 begins at the end of NASA DST
+    [transition for transition in NASA['tz']._utc_transition_times if transition.year == dt.utcnow().year][1],
+    # start_2 beings at the start of NASA DST
+    [transition for transition in NASA['tz']._utc_transition_times if transition.year == dt.utcnow().year][0],
+    # start_3 beings at the start of EMEA DST
+    [transition for transition in EMEA['tz']._utc_transition_times if transition.year == dt.utcnow().year][0],
+    # start_4 begins at the end of EMEA DST
+    [transition for transition in EMEA['tz']._utc_transition_times if transition.year == dt.utcnow().year][1]
+]
 # Ordered list of shifts, i.e., APAC is the first shift of a given day and NASA is the last shift
-SHIFTS = [APAC, EMEA, NASA]
+# SHIFTS = [APAC_1, APAC_2, EMEA, NASA]
+SHIFTS = [APAC_2, EMEA, NASA]
 # Specify the time and date for when a new shift period should be used
 SHIFT_CHANGE = {
     'hour': 11,
-    'tz': timezone('US/Eastern')
+    'tz': NASA['tz']
 }
 START_ANNOUNCING = {
-    'tz': timezone('Australia/Brisbane'),
+    'tz': APAC_1['tz'],
     'weekday': 0,
     'hour': 8
 }
 STOP_ANNOUNCING = {
-    'tz': timezone('US/Eastern'),
+    'tz': NASA['tz'],
     'weekday': 4,
     'hour': 17
 }
@@ -71,7 +109,7 @@ STOP_ANNOUNCING = {
 ##############################
 # Configuration file section #
 ###############################
-class SreSection(StaticSection):  # pylint disable=too-few-public-methods
+class SreSection(StaticSection):
     """Defines the config section for OpenShift SRE"""
     google_service_account_file = FilenameAttribute('google_service_account_file',
                                                     directory=False,
@@ -117,7 +155,8 @@ def read_google_sheet(bot, gsheet_url, channel):
         except ValueError:
             bot.say('The Service Account JSON file doesn\'t appear to exist. See '
                     'https://cloud.google.com/storage/docs/authentication#service_accounts for creating a service '
-                    'account. Then move to ' + bot.config.openshift_sre.google_service_account_file, channel)
+                    'account. Then move to ' + bot.config.openshift_sre.google_service_account_file, channel,
+                    max_messages=50)
             return
         except exceptions.RequestError:
             bot.say('Sorry, I timed-out trying to access the on-call schedule. Please try that again.', channel)
@@ -131,9 +170,9 @@ def read_google_sheet(bot, gsheet_url, channel):
                     'I can\'t seem to access that spreadsheet ({url}). Are you sure that the URL is correct and that '
                     '{service_account_email} has been invited to that doc?'.format(
                         url=gsheet_url,
-                        service_account_email=gsheet_client.oauth.service_account_email), channel)
+                        service_account_email=gsheet_client.oauth.service_account_email), channel, max_messages=50)
             else:
-                bot.say('Unknown error: ' + str(err), channel)
+                bot.say('Unknown error: ' + str(err), channel, max_messages=50)
             return
         else:
             # Find worksheet based on `gid` in URL
@@ -159,7 +198,7 @@ def announce_shift_preparing(bot, channel):
                                                                                              s2=curr_shift['name'],
                                                                                              s3=next_shift['name']))
     leads = get_shift_leads(bot, channel)
-    if channel not in NONANNOUNCING_CHANNELS:
+    if bot.db.get_channel_value(channel, 'announce'):
         bot.say('{curr_shift} preparing to sign off, {next_shift} preparing to take over the environment'.format(
             curr_shift=curr_shift['name'], next_shift=next_shift['name']), channel)
         bot.say('{curr_nick}: What happened today? What does {next_nick} need to know about?'.format(
@@ -174,7 +213,7 @@ def announce_shift_complete(bot, channel):
           'announce_shift_complete: shifts - prev:{s1} - curr:{s2} - next:{s3} '.format(
               s1=prev_shift['name'], s2=curr_shift['name'], s3=next_shift['name']))
     leads = get_shift_leads(bot, channel)
-    if channel not in NONANNOUNCING_CHANNELS:
+    if bot.db.get_channel_value(channel, 'announce'):
         bot.say('Shift change complete', channel)
         bot.say('Shift Lead: {curr_nick}'.format(curr_nick=leads[curr_shift['name']]), channel)
         bot.say('On-Call: {oncall_nick}'.format(oncall_nick=leads[ONCALL['name']]), channel)
@@ -191,43 +230,45 @@ def set_topic_to_shift(bot, channel):
     bot.write(
         ['TOPIC', channel],
         'Current Shift Lead: {lead} - OnCall: {oncall} - '
-        'Shift Change at: {next_shift_change}:00UTC (Brisbane - {brisbane:%H:00}; '
-        'Beijing - {beijing:%H:00}; Brno - {brno:%H:00}; Raleigh - {raleigh:%H:00}'.format(
+        'Shift Change at: Beijing - {beijing:%H:00}; Brno - {brno:%H:00}; Raleigh - {raleigh:%H:00}'.format(
             lead=leads[curr_shift['name']],
             oncall=leads[ONCALL['name']],
-            next_shift_change=next_shift['utc_start'],
-            brisbane=dt.utcnow().replace(hour=next_shift['utc_start'], tzinfo=utc).astimezone(
-                timezone('Australia/Brisbane')),
-            beijing=dt.utcnow().replace(hour=next_shift['utc_start'], tzinfo=utc).astimezone(timezone('Asia/Shanghai')),
-            brno=dt.utcnow().replace(hour=next_shift['utc_start'], tzinfo=utc).astimezone(timezone('Europe/Prague')),
-            raleigh=dt.utcnow().replace(hour=next_shift['utc_start'], tzinfo=utc).astimezone(timezone('US/Eastern'))))
+            beijing=dt.now(next_shift['tz']).replace(hour=next_shift[get_shift_start(bot)]),
+            brno=dt.now(next_shift['tz']).replace(hour=next_shift[get_shift_start(bot)]),
+            raleigh=dt.now(next_shift['tz']).replace(hour=next_shift[get_shift_start(bot)])))
 
 
 def get_shift(bot):
     """Shift changes occur on their specified hour."""
-    now = dt.utcnow()
     for i, shift in enumerate(SHIFTS):
-        if shift['utc_start'] > shift['utc_end']:
-            if shift['utc_start'] <= now.hour <= 23 or 0 <= now.hour < shift['utc_end']:
-                debug(bot, 'get_shift: Shift occurs overnight UCT')
-                prev_shift = SHIFTS[(i - 1) % len(SHIFTS)]
-                curr_shift = SHIFTS[i % len(SHIFTS)]
-                next_shift = SHIFTS[(i + 1) % len(SHIFTS)]
-                break
-        else:
-            if shift['utc_start'] <= now.hour < shift['utc_end']:
-                prev_shift = SHIFTS[(i - 1) % len(SHIFTS)]
-                curr_shift = SHIFTS[i % len(SHIFTS)]
-                next_shift = SHIFTS[(i + 1) % len(SHIFTS)]
-                break
+        now = dt.now(shift['tz'])
+        if shift[get_shift_start(bot)] <= now.hour < (shift[get_shift_start(bot)] + 8):
+            prev_shift = SHIFTS[(i - 1) % len(SHIFTS)]
+            curr_shift = SHIFTS[i % len(SHIFTS)]
+            next_shift = SHIFTS[(i + 1) % len(SHIFTS)]
+            break
     else:
-        raise ValueError('No shift defined for ' + str(now.isoformat()))
+        raise ValueError('No shift defined for ' + str(dt.utcnow().isoformat()))
     return prev_shift, curr_shift, next_shift
+
+
+def get_shift_start(bot):
+    """Determines which schedule start time to used based on DST dates"""
+    now = dt.utcnow()
+    # now = bot  # Used during local testing
+    for i, dst_date in enumerate(STARTS):
+        if dst_date == max(STARTS) and dst_date <= now <= dt(dst_date.year, 12, 31):
+            return 'start_' + str(i + 1)
+        elif dst_date == min(STARTS) and dt(dst_date.year, 1, 1) <= now < dst_date:
+            return 'start_' + str(i)
+        elif dst_date <= now < (STARTS[(i + 1) % len(STARTS)]):
+            return 'start_' + str(i + 1)
+    debug(bot, 'Unable to determine the shift_start for date: {}'.format(now))
 
 
 def get_shift_leads(bot, channel):
     """Finds the row from provided oncall g-sheet, and returns a Dict of IRC nicks."""
-    worksheet = read_google_sheet(bot, bot.db.get_channel_value(channel, 'oncall'), channel)
+    worksheet = read_google_sheet(bot, bot.db.get_channel_value(channel, 'monitoring'), channel)
     now = dt.now(SHIFT_CHANGE['tz'])
     if worksheet:
         row = 0
@@ -251,22 +292,23 @@ def get_shift_leads(bot, channel):
             shift_leads = {
                 NASA['name']: worksheet.cell(str(NASA['column'] + str(row))).value,
                 EMEA['name']: worksheet.cell(str(EMEA['column'] + str(row))).value,
-                APAC['name']: worksheet.cell(str(APAC['column'] + str(row))).value,
+                APAC_2['name']: worksheet.cell(str(APAC_2['column'] + str(row))).value,
                 ONCALL['name']: worksheet.cell(str(ONCALL['column'] + str(row))).value
             }
             debug(bot, 'get_shift_leads: Found leads - {leads}'.format(leads=shift_leads))
             return shift_leads
     bot.say('Unable to find shift leads for ' + str(
-        now.isoformat()) + '. Currently tracking shift from ' + bot.db.get_channel_value(channel, 'oncall'), channel)
+        now.isoformat()) + '. Currently tracking shift from ' + bot.db.get_channel_value(channel, 'monitoring'),
+            channel)
     return {}
 
 
-def get_all_list(bot, channel):
-    """Provides a uniform way of getting the all_list from a channel db"""
-    all_list = bot.db.get_channel_value(channel, 'all_list')
-    if all_list and isinstance(all_list, list):
-        debug(bot, 'List found: ' + str(all_list))
-        return all_list
+def get_msg_list(bot, channel):
+    """Provides a uniform way of getting the msg_list from a channel db"""
+    msg_list = bot.db.get_channel_value(channel, 'msg_list')
+    if msg_list and isinstance(msg_list, list):
+        debug(bot, 'List found: ' + str(msg_list))
+        return msg_list
     else:
         debug(bot, 'No list found')
         return []
@@ -294,48 +336,38 @@ def mark_channel_to_track_oncall(bot, trigger):
     if trigger.group(2):
         worksheet = read_google_sheet(bot, trigger.group(2), trigger.sender)
         if worksheet:
-            MONITORED_CHANNELS.append(trigger.sender)
-            bot.db.set_channel_value(trigger.sender, 'oncall', trigger.group(2))
+            bot.db.set_channel_value(trigger.sender, 'monitoring', trigger.group(2))
+            bot.db.set_channel_value(trigger.sender, 'announce', True)
             bot.say(
                 trigger.sender + ' is now tracking SRE on-call rotation: ' + bot.db.get_channel_value(trigger.sender,
-                                                                                                      'oncall'))
+                                                                                                      'monitoring'))
     else:
-        gsheet_url = bot.db.get_channel_value(trigger.sender, 'oncall')
+        gsheet_url = bot.db.get_channel_value(trigger.sender, 'monitoring')
         if gsheet_url:
             bot.say('Currently tracking SRE on-call rotations from ' + gsheet_url)
         else:
             bot.say('Not currently tracking an SRE on-call rotation.')
-    try:
-        NONANNOUNCING_CHANNELS.remove(trigger.sender)
-    except ValueError:
-        pass
 
 
 @module.commands('untrack')
 def unmark_channel_to_track_oncall(bot, trigger):
     """Stops tracking on-call and shift lead rotations for channel."""
-    try:
-        MONITORED_CHANNELS.remove(trigger.sender)
-    except ValueError:
-        bot.say(trigger.sender + ' is not currently tracking SRE on-call rotations.')
-    else:
-        bot.db.set_channel_value(trigger.sender, 'oncall', None)
+    if bot.db.get_channel_value(trigger.sender, 'monitoring'):
+        bot.db.set_channel_value(trigger.sender, 'monitoring', None)
+        bot.db.set_channel_value(trigger.sender, 'announce', None)
         bot.say(trigger.sender + ' is no longer tracking SRE on-call rotations.')
-    try:
-        NONANNOUNCING_CHANNELS.remove(trigger.sender)
-    except ValueError:
-        pass
+    else:
+        bot.say(trigger.sender + ' is not currently tracking SRE on-call rotations.')
 
 
 @module.commands('shift-announce')
 def mark_channel_for_announcements(bot, trigger):
     """Starts shift change announcements in channel if previously stopped."""
-    if trigger.sender in MONITORED_CHANNELS:
-        try:
-            NONANNOUNCING_CHANNELS.remove(trigger.sender)
-        except ValueError:
+    if bot.db.get_channel_value(trigger.sender, 'monitoring'):
+        if bot.db.get_channel_value(trigger.sender, 'announce'):
             bot.say('I\'m already announcing in this channel.')
         else:
+            bot.db.set_channel_value(trigger.sender, 'announce', True)
             bot.say('I will resume announcements in this channel.')
     else:
         bot.say('I\'m not currently tracking this channel. Check out .help track')
@@ -345,13 +377,13 @@ def mark_channel_for_announcements(bot, trigger):
 def unmark_channel_for_announcements(bot, trigger):
     """Stops shift change announcements in channel, while still allowing the other benefits of tracking
     the shift change schedule."""
-    if trigger.sender in MONITORED_CHANNELS:
-        if trigger.sender not in NONANNOUNCING_CHANNELS:
-            NONANNOUNCING_CHANNELS.append(trigger.sender)
+    if bot.db.get_channel_value(trigger.sender, 'monitoring'):
+        if bot.db.get_channel_value(trigger.sender, 'announce'):
+            bot.db.set_channel_value(trigger.sender, 'announce', None)
             bot.say('I will no longer announce shift changes in this channel.')
             bot.say('Topic updates will still occur if I have the proper permissions.')
         else:
-            bot.say('I\'m alredy not announcing in this channel.')
+            bot.say('I\'m already not announcing in this channel.')
     else:
         bot.say('I\'m not currently tracking this channel. Check out .help track')
 
@@ -359,7 +391,7 @@ def unmark_channel_for_announcements(bot, trigger):
 @module.commands('shift')
 def say_shift_leads(bot, trigger):
     """Lists the current on-call and shift leads for this rotation period."""
-    if trigger.sender in MONITORED_CHANNELS:
+    if bot.db.get_channel_value(trigger.sender, 'monitoring'):
         for shift, lead in get_shift_leads(bot, trigger.sender).items():
             bot.say(str(shift) + ': ' + str(lead))
     else:
@@ -371,10 +403,12 @@ def say_shift_leads(bot, trigger):
 def say_monitored_channels_list(bot, trigger):
     """Sends PRIVMSG of all channels currently monitored for on-call and shift lead rotations.
     Will only respond to bot admins."""
-    if len(MONITORED_CHANNELS) > 0:
-        for channel in MONITORED_CHANNELS:
+    channels = 0
+    for channel in bot.channels:
+        if bot.db.get_channel_value(channel, 'monitoring'):
             bot.say(channel, trigger.nick)
-    else:
+            channels += 1
+    if channels == 0:
         bot.say('No monitored channels.', trigger.nick)
     bot.say('I\'ve sent you a privmsg.')
 
@@ -387,86 +421,115 @@ def say_snow_ticket_url(bot, trigger):
     bot.say(SNOW_URL)
 
 
+@module.rule('^all:(.*)')
 @module.commands('all')
-@module.example('.all Everyone that is a managed user will be pinged on this message',
+@module.example('.all All users in this channel will be pinged on this message',
                 '<nick1> <nick2> <nickN> Everyone that is a managed user will be pinged on this message')
 def say_all(bot, trigger):
+    """Will echo any text, with all channel users included in the message to ensure visibility."""
+    if trigger.startswith('.all') and trigger.group(2):
+        message = trigger.group(2)
+    elif trigger.startswith('all:') and trigger.group(1):
+        message = trigger.group(1)
+    else:
+        bot.say('If you don\'t have anything nice to say, then don\'t say anything at all.')
+        return
+
+    all_list = []
+    for user, user_obj in bot.users.items():
+        if user == bot.nick:
+            continue
+        if trigger.sender in user_obj.channels:
+            debug(bot, 'Found user: {}'.format(user))
+            all_list.append(user)
+    if len(all_list) > 0:
+        bot.reply('Have you considered using the less noisy `.msg` option? '
+                  'It will only notify specific users. Try `.msg-list` to see who would be notified.')
+        bot.say(' '.join(all_list) + ': ' + message, max_messages=50)
+    else:
+        bot.reply('It\'s awfully lonely in here.')
+
+
+@module.commands('msg')
+@module.example('.msg Everyone that is a managed user will be pinged on this message',
+                '<nick1> <nick2> <nickN> Everyone that is a managed user will be pinged on this message')
+def say_msg(bot, trigger):
     """Will echo any text, with managed users included in the message to ensure visibility."""
     if trigger.group(2):
-        all_list = get_all_list(bot, trigger.sender)
-        if len(all_list) > 0:
-            bot.say(' '.join(all_list) + ': ' + trigger.group(2))
+        msg_list = get_msg_list(bot, trigger.sender)
+        if len(msg_list) > 0:
+            bot.say(' '.join(msg_list) + ': ' + trigger.group(2), max_messages=50)
         else:
-            bot.reply('I don\'t have any users to send to. Try having an admin use `.all-add <nick>` to add someone.')
+            bot.reply('I don\'t have any users to send to. Try having an admin use `.msg-add <nick>` to add someone.')
     else:
-        bot.say('If you don\'t anything nice to say, then don\'t say anything at all.')
+        bot.say('If you don\'t have anything nice to say, then don\'t say anything at all.')
 
 
-@module.commands('all-add')
-@module.example('.all-add <nick>')
+@module.commands('msg-add')
+@module.example('.msg-add <nick>')
 @module.require_admin('You must be a bot admin to use this command')
-def add_user_to_all(bot, trigger):
-    """Will add a user as a managed user for receiving .all messages.
+def add_user_to_msg(bot, trigger):
+    """Will add a user as a managed user for receiving .msg messages.
     Will only respond to bot admins."""
     if trigger.group(2):
-        all_list = get_all_list(bot, trigger.sender)
-        all_list.append(trigger.group(2))
-        bot.db.set_channel_value(trigger.sender, 'all_list', all_list)
-        if len(all_list) > 0:
-            bot.say(trigger.group(2) + ' has been added to the .all list.')
+        msg_list = get_msg_list(bot, trigger.sender)
+        msg_list.append(trigger.group(2))
+        bot.db.set_channel_value(trigger.sender, 'msg_list', msg_list)
+        if len(msg_list) > 0:
+            bot.say(trigger.group(2) + ' has been added to the .msg list.')
         else:
-            bot.say('The .all list has been initialized, and ' + trigger.group(2) + ' has been added.')
+            bot.say('The .msg list has been initialized, and ' + trigger.group(2) + ' has been added.')
     else:
-        bot.say('Don\'t forget to give me the nick to add to the .all list.')
+        bot.say('Don\'t forget to give me the nick to add to the .msg list.')
 
 
-@module.commands('all-delete')
-@module.example('.all-delete <nick>')
+@module.commands('msg-delete')
+@module.example('.msg-delete <nick>')
 @module.require_admin('You must be a bot admin to use this command')
-def delete_user_from_all(bot, trigger):
-    """Will delete a user from receiving .all messages.
+def delete_user_from_msg(bot, trigger):
+    """Will delete a user from receiving .msg messages.
     Will only respond to bot admins."""
     if trigger.group(2):
-        all_list = get_all_list(bot, trigger.sender)
-        if len(all_list) > 0 and trigger.group(2) in all_list:
-            all_list.remove(trigger.group(2))
-            bot.db.set_channel_value(trigger.sender, 'all_list', all_list)
-            bot.say(trigger.group(2) + ' has been removed from the .all list.')
+        msg_list = get_msg_list(bot, trigger.sender)
+        if len(msg_list) > 0 and trigger.group(2) in msg_list:
+            msg_list.remove(trigger.group(2))
+            bot.db.set_channel_value(trigger.sender, 'msg_list', msg_list)
+            bot.say(trigger.group(2) + ' has been removed from the .msg list.')
         else:
-            bot.say('That nick (' + trigger.group(2) + ') does not exist in the .all list.')
+            bot.say('That nick (' + trigger.group(2) + ') does not exist in the .msg list.')
     else:
-        bot.say('Don\'t forget to give me the nick to remove from the .all list.')
+        bot.say('Don\'t forget to give me the nick to remove from the .msg list.')
 
 
-@module.commands('all-deleteall')
+@module.commands('msg-deleteall')
 @module.require_admin('You must be a bot admin to use this command')
-def delete_all_users_from_all(bot, trigger):
-    """Deletes all users from receiving .all messages.
+def delete_all_users_from_msg(bot, trigger):
+    """Deletes all users from receiving .msg messages.
     Will only respond to bot admins."""
     if trigger.group(2) == 'confirm':
-        bot.db.set_channel_value(trigger.sender, 'all_list', None)
-        bot.say('I\'ve removed all users from the .all list.')
+        bot.db.set_channel_value(trigger.sender, 'msg_list', None)
+        bot.say('I\'ve removed all users from the .msg list.')
     else:
-        all_list = get_all_list(bot, trigger.sender)
-        if len(all_list) > 0:
-            bot.say('This is a destructive command that will remove ' + str(len(all_list)) +
-                    ' users from the .all list.')
-            bot.reply('If you still want to do this, please run: .all-deleteall confirm')
+        msg_list = get_msg_list(bot, trigger.sender)
+        if len(msg_list) > 0:
+            bot.say('This is a destructive command that will remove ' + str(len(msg_list)) +
+                    ' users from the .msg list.')
+            bot.reply('If you still want to do this, please run: .msg-deleteall confirm')
         else:
-            bot.db.set_channel_value(trigger.sender, 'all_list', None)
+            bot.db.set_channel_value(trigger.sender, 'msg_list', None)
             bot.say('There are no users to delete.')
 
 
-@module.commands('all-list')
-def say_all_list(bot, trigger):
-    """Provides the list of managed users that receive .all messages"""
-    all_list = get_all_list(bot, trigger.sender)
-    if len(all_list) > 0:
+@module.commands('msg-list')
+def say_msg_list(bot, trigger):
+    """Provides the list of managed users that receive .msg messages"""
+    msg_list = get_msg_list(bot, trigger.sender)
+    if len(msg_list) > 0:
         bot.say('Check your PM')
-        bot.say('.all list users:', trigger.nick)
-        bot.say(' '.join(all_list), trigger.nick)
+        bot.say('.msg list users:', trigger.nick)
+        bot.say(' '.join(msg_list), trigger.nick, max_messages=50)
     else:
-        bot.say('There are no users in .all list.')
+        bot.say('There are no users in .msg list.')
 
 
 @module.commands('admins')
@@ -508,42 +571,27 @@ def track_shift_rotation(bot):
     """Sends appropriate message ~10 minutes before and ~15 minutes after shift changes and sets channel topic
     (if bot has appropriate channel permissions).
     Does not send announcements over weekends."""
-    for channel in MONITORED_CHANNELS:
-        now = dt.utcnow()
-        start_now = dt.now(tz=START_ANNOUNCING['tz'])
-        stop_now = dt.now(tz=STOP_ANNOUNCING['tz'])
-        if start_now.hour >= START_ANNOUNCING['hour'] and start_now.weekday() >= START_ANNOUNCING['weekday'] and \
-                        stop_now.hour <= STOP_ANNOUNCING['hour'] and stop_now.weekday() <= STOP_ANNOUNCING['weekday']:
-            shift_starts = [s['utc_start'] for s in SHIFTS]
-            # Shift prepares to end between (start-1):50 and (start-1):59
-            if now.hour in [start - 1 for start in shift_starts] and 50 <= now.minute <= 59:
-                announce_shift_preparing(bot, channel)
-            # Shift ends between (start):10 and (start):19
-            elif now.hour in shift_starts and 10 <= now.minute <= 19:
-                announce_shift_complete(bot, channel)
-                set_topic_to_shift(bot, channel)
-        else:
-            debug(bot, 'Ignoring messaging due to weekend hours')
-
-
-# Update every minute
-@module.interval(60)
-def refresh_monitored_channels(bot):
-    """Ensures the list of monitored channels is constantly up to date, especially following a reboot."""
     for channel in bot.channels:
-        if bot.db.get_channel_value(channel, 'oncall'):
-            if channel not in MONITORED_CHANNELS:
-                MONITORED_CHANNELS.append(channel)
-                debug(bot, 'refresh_monitored_channels: Adding {channel} to MONITORED_CHANNELS'.format(channel=channel))
-        else:
-            try:
-                MONITORED_CHANNELS.remove(channel)
-                debug(bot,
-                      'refresh_monitored_channels: Removing {channel} from MONITORED_CHANNELS'.format(channel=channel))
-            except ValueError:
-                debug(bot,
-                      'refresh_monitored_channels: Unable to find {channel} '
-                      'to remove it from MONITORED_CHANNELS'.format(channel=channel))
+        if bot.db.get_channel_value(channel, 'monitoring'):
+            start_now = dt.now(tz=START_ANNOUNCING['tz'])
+            stop_now = dt.now(tz=STOP_ANNOUNCING['tz'])
+            if (start_now.weekday() > START_ANNOUNCING['weekday'] and stop_now.weekday() < STOP_ANNOUNCING[
+                    'weekday']) or \
+                    (start_now.hour >= START_ANNOUNCING['hour'] and start_now.weekday() == START_ANNOUNCING[
+                    'weekday']) or \
+                    (stop_now.hour <= STOP_ANNOUNCING['hour'] and stop_now.weekday() == STOP_ANNOUNCING['weekday']):
+                _, curr_shift, next_shift = get_shift(bot)
+                curr_now = dt.now(curr_shift['tz'])
+                next_now = dt.now(next_shift['tz'])
+                # Shift prepares to end between (start-1):50 and (start-1):59
+                if next_now.hour == (next_shift[get_shift_start(bot)] - 1) and 50 <= next_now.minute <= 59:
+                    announce_shift_preparing(bot, channel)
+                # Shift ends between (start):10 and (start):19
+                elif curr_now.hour == curr_shift[get_shift_start(bot)] and 10 <= curr_now.minute <= 19:
+                    announce_shift_complete(bot, channel)
+                    set_topic_to_shift(bot, channel)
+            else:
+                debug(bot, 'Ignoring messaging due to weekend hours')
 
 
 ######################
@@ -553,7 +601,7 @@ def refresh_monitored_channels(bot):
 @module.priority('high')
 def refer_to_topic(bot, trigger):
     """If any 'monitored channels' are mentioned in their own channel, refer the user to shift-lead or on-call user."""
-    if trigger.sender in MONITORED_CHANNELS and str(trigger.sender)[1:] in str(trigger):
+    if bot.db.get_channel_value(trigger.sender, 'monitoring') and str(trigger.sender)[1:] in str(trigger):
         bot.say('Please reach out to the shift lead or on-call SRE')
         say_shift_leads(bot, trigger)
 
@@ -562,7 +610,11 @@ def refer_to_topic(bot, trigger):
 @module.rate(channel=600)
 def monitor_weekend(bot, trigger):
     """Reminds users that channels are un-monitored on weekends. Will not trigger more than once every 10 minutes."""
-    if trigger.sender in MONITORED_CHANNELS and dt.utcnow().weekday() > 4:
+    start_now = dt.now(tz=START_ANNOUNCING['tz'])
+    stop_now = dt.now(tz=STOP_ANNOUNCING['tz'])
+    if (stop_now.weekday() > STOP_ANNOUNCING['weekday'] and start_now.weekday() < START_ANNOUNCING['weekday']) or \
+            (stop_now.hour >= STOP_ANNOUNCING['hour'] and stop_now.weekday() == STOP_ANNOUNCING['weekday']) or \
+            (start_now.hour <= START_ANNOUNCING['hour'] and start_now.weekday() == START_ANNOUNCING['weekday']):
         bot.reply('This channel is unmonitored on weekends. See {url} for Engineer Escalations.'.format(
             url=ESCALATION_URL))
 
@@ -585,13 +637,11 @@ def sfdc_case(bot, trigger):
     for support_case in finditer(SFDC_CASE_REGEX, trigger):
         cases.append(support_case.groupdict()['case'])
     if len(cases) > 0:
-        bot.reply('Please make sure that there is a corresponding SNOW ticket for this case.')
-        bot.reply('A SNOW ticket can be opened from ' + SNOW_URL)
         for case in cases:
             bot.say(SFDC_URL + case)
 
 
-@module.rate(user=10)
+@module.priority('high')
 @module.rule(r'(.*)')
 @module.example('<nick>++', '<nick> has X karma')
 @module.example('<nick>--', '<nick> has X karma')
@@ -610,3 +660,49 @@ def apply_karma(bot, trigger):
             curr_karma = 0
         bot.db.set_nick_value(karma['nick'], 'karma', curr_karma + karma_amt)
         bot.say(karma['nick'] + ' now has {karma} karma.'.format(karma=(curr_karma + karma_amt)))
+
+
+if __name__ == '__main__':
+    # Tests DST start schedules
+    # Based on 2017 DST dates, requires changing `now = dt.utcnow()` to `now = bot` in get_shift_start()
+    STARTS = [
+        # start_1 begins at the end of NASA DST
+        [transition for transition in NASA['tz']._utc_transition_times if transition.year == 2017][1],
+        # start_2 beings at the start of NASA DST
+        [transition for transition in NASA['tz']._utc_transition_times if transition.year == 2017][0],
+        # start_3 beings at the start of EMEA DST
+        [transition for transition in EMEA['tz']._utc_transition_times if transition.year == 2017][0],
+        # start_4 begins at the end of EMEA DST
+        [transition for transition in EMEA['tz']._utc_transition_times if transition.year == 2017][1]
+    ]
+
+    assert get_shift_start(dt(2017, 12, 31)) == 'start_1', 'Found {} instead'.format(get_shift_start(dt(2017, 12, 31)))
+    assert get_shift_start(dt(2017, 1, 1)) == 'start_1', 'Found {} instead'.format(get_shift_start(dt(2017, 1, 1)))
+    assert get_shift_start(dt(2017, 2, 1)) == 'start_1', 'Found {} instead'.format(get_shift_start(dt(2017, 2, 1)))
+    assert get_shift_start(dt(2017, 3, 1)) == 'start_1', 'Found {} instead'.format(get_shift_start(dt(2017, 3, 1)))
+    assert get_shift_start(dt(2017, 3, 11)) == 'start_1', 'Found {} instead'.format(get_shift_start(dt(2017, 3, 11)))
+    assert get_shift_start(dt(2017, 3, 12)) == 'start_1', 'Found {} instead'.format(get_shift_start(dt(2017, 3, 12)))
+    assert get_shift_start(dt(2017, 3, 13)) == 'start_2', 'Found {} instead'.format(get_shift_start(dt(2017, 3, 13)))
+    assert get_shift_start(dt(2017, 3, 12, 10, 0)) == 'start_2', 'Found {} instead'.format(
+        get_shift_start(dt(2017, 3, 12, 10, 0)))
+    assert get_shift_start(dt(2017, 4, 12, 10, 0)) == 'start_3', 'Found {} instead'.format(
+        get_shift_start(dt(2017, 4, 12, 10, 0)))
+    assert get_shift_start(dt(2017, 3, 25, 10, 0)) == 'start_2', 'Found {} instead'.format(
+        get_shift_start(dt(2017, 3, 25, 10, 0)))
+    assert get_shift_start(dt(2017, 3, 26, 10, 0)) == 'start_3', 'Found {} instead'.format(
+        get_shift_start(dt(2017, 3, 26, 10, 0)))
+    assert get_shift_start(dt(2017, 10, 1, 10, 0)) == 'start_3', 'Found {} instead'.format(
+        get_shift_start(dt(2017, 10, 1, 10, 0)))
+    assert get_shift_start(dt(2017, 10, 28, 10, 0)) == 'start_3', 'Found {} instead'.format(
+        get_shift_start(dt(2017, 10, 28, 10, 0)))
+    assert get_shift_start(dt(2017, 10, 29, 10, 0)) == 'start_4', 'Found {} instead'.format(
+        get_shift_start(dt(2017, 10, 29, 10, 0)))
+    assert get_shift_start(dt(2017, 10, 30, 10, 0)) == 'start_4', 'Found {} instead'.format(
+        get_shift_start(dt(2017, 10, 29, 10, 0)))
+    assert get_shift_start(dt(2017, 11, 4, 10, 0)) == 'start_4', 'Found {} instead'.format(
+        get_shift_start(dt(2017, 10, 29, 10, 0)))
+    assert get_shift_start(dt(2017, 11, 5, 10, 0)) == 'start_1', 'Found {} instead'.format(
+        get_shift_start(dt(2017, 10, 29, 10, 0)))
+    assert get_shift_start(dt(2017, 11, 29, 10, 0)) == 'start_1', 'Found {} instead'.format(
+        get_shift_start(dt(2017, 10, 29, 10, 0)))
+    print('All tests pass')

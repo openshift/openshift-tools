@@ -72,8 +72,6 @@ Any SNOW tickets detected in a message will reply with an automatic link to the 
 
 Any SalesForce cases detected in a message will reply with an automatic message and link to the SalesForce case
 
-    <nick>: Please make sure that there is a corresponding SNOW ticket for this case.
-    <nick>: A SNOW ticket can be opened from https://url.corp.redhat.com/OpenShift-SRE-Service-Request-Form
     https://gss.my.salesforce.com/apex/Case_View?sbstr=<sfdc_case>
     
 ## Karma
@@ -90,19 +88,24 @@ Specifying <nick>++ will increase a nick's karma, and <nick>-- will decrease a n
 ## .all Announcements
 
 * `.all <message>`
-  * Will announce <message> to all nicks within .all list
-* `.all-add <nick>`
-  * Adds <nick> to .all list
+  * Will announce <message> to all nicks within the channel
+
+## .msg Announcements
+
+* `.msg <message>`
+  * Will announce <message> to all nicks within .msg list
+* `.msg-add <nick>`
+  * Adds <nick> to .msg list
   * Will only respond to bot admins
-* `.all-delete <nick>`
-  * Removes <nick> from .all list
+* `.msg-delete <nick>`
+  * Removes <nick> from .msg list
   * Will only respond to bot admins
-* `.all-deleteall [confirm]`
-  * Removes *all* nicks from .all list
+* `.msg-deleteall [confirm]`
+  * Removes *all* nicks from .msg list
   * If only acts if `confirm` is added in the command
   * Will only respond to bot admins
-* `.all-list`
-  * Lists all nicks in .all list
+* `.msg-list`
+  * Lists all nicks in .msg list
 
     
 # Testing
@@ -125,11 +128,12 @@ Specifying <nick>++ will increase a nick's karma, and <nick>-- will decrease a n
     #wgordon is now tracking SRE on-call rotation: https://docs.google.com/spreadsheets/d/1tm6Sx5sJvsPXHAhxoPdSs2ODCHwBquKJzn-ObgTeVRw/edit#gid=1539275069
 
 wgordon  <- Matches whatever channel name is being tracked
-    Please reach out to the shift lead or on-call SRE
-    ONCALL: ihorvath
-    NASA: sten
-    EMEA: marek
-    APAC: zhiwliu
+    <something similar to>
+        Please reach out to the shift lead or on-call SRE
+        ONCALL: ihorvath
+        NASA: sten
+        EMEA: marek
+        APAC: zhiwliu
 
 .shift
     <something similar to>
@@ -171,38 +175,43 @@ wgordon  <- Matches whatever channel name is being tracked
 ```
 .all test
     I don't have any users to send to. Try having an admin use `.all-add <nick>` to add someone.
-    
-.all-add test-nick
-    The .all list has been initialized, and test-nick has been added.
-    
-.all test
+```
+
+## .msg Announcing
+
+```
+.msg-add test-nick
+    The .msg list has been initialized, and test-nick has been added.
+
+.msg test
     test-nick: test
     
-.all-list
-    .all list users:
-    test-nick
+.msg-list
+    <privmsg>
+        .all list users:
+        test-nick
     
-.all-delete test-nick
-    test-nick has been removed from the .all list.
+.msg-delete test-nick
+    test-nick has been removed from the .msg list.
     
-.all test
-    I don't have any users to send to. Try having an admin use `.all-add <nick>` to add someone.
+.msg test
+    I don't have any users to send to. Try having an admin use `.msg-add <nick>` to add someone.
 
-.all-deleteall
+.msg-deleteall
     There are no users to delete.
     
-.all-add test-nick2
-    test-nick2 has been added to the .all list.
+.msg-add test-nick2
+    test-nick2 has been added to the .msg list.
 
-.all-deleteall
-    This is a destructive command that will remove 1 users from the .all list.
-    <nick>: If you still want to do this, please run: .all-deleteall confirm
+.msg-deleteall
+    This is a destructive command that will remove 1 users from the .msg list.
+    <nick>: If you still want to do this, please run: .amsg-deleteall confirm
     
-.all-deleteall confirm
-    I've removed all users from the .all list.
+.msg-deleteall confirm
+    I've removed all users from the .msg list.
     
-.all-list
-    There are no users in .all list.
+.msg-list
+    There are no users in .msg list.
 ```
 
 ## Karma
@@ -241,7 +250,5 @@ RITM0220268
     https://redhat.service-now.com/surl.do?n=RITM0220268
     
 01974620
-    <nick>: Please make sure that there is a corresponding SNOW ticket for this case.
-    <nick>: A SNOW ticket can be opened from https://url.corp.redhat.com/OpenShift-SRE-Service-Request-Form
     https://gss.my.salesforce.com/apex/Case_View?sbstr=01974620
 ```
