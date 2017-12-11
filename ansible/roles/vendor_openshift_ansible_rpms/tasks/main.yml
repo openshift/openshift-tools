@@ -74,14 +74,22 @@
   - filter_plugins
   - lookup_plugins
 
+# Let's grab the byo dirs that might need symlinks
+- name: Lookup byo openshift-* dirs
+  find:
+    paths: "{{ vosar_output_directory }}/playbooks/byo/"
+    patterns: "openshift-*"
+    file_type: directory
+  register: openshift_byo_dirs
+
 - name: Symlink the filter and lookup plugins (no longer shipped with rpm) byo/<subdirs>
   file:
     state: link
     src: "../../../{{ item[0] }}"
-    dest: "{{ vosar_output_directory }}/playbooks/byo/{{ item[1] }}/{{ item[0] }}"
+    dest: "{{ vosar_output_directory }}/playbooks/byo/{{ item[1].path | basename }}/{{ item[0] }}"
   with_nested:
   - [ 'filter_plugins', 'lookup_plugins' ]
-  - [ 'openshift-cluster', 'openshift-master', 'openshift-node']
+  - "{{ openshift_byo_dirs.files }}"
 
 - name: Symlink the filter and lookup plugins roles/openshift_master_facts
   file:
