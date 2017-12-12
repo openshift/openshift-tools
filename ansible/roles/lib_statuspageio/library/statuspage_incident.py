@@ -517,6 +517,8 @@ class StatusPageIncident(StatusPageIOAPI):
 
         return ids
 
+    # skip false positive on "for incident in self.incidents:"
+    # pylint: disable=not-an-iterable
     def find_incident(self):
         '''attempt to match the incoming incident with existing incidents'''
         params = self.params['params']
