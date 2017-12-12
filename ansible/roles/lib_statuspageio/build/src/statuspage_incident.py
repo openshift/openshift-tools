@@ -187,7 +187,13 @@ class StatusPageIncident(StatusPageIOAPI):
         ids = []
         if aff_comps and aff_comps.has_key('affected_components'):
             for comp in aff_comps['affected_components']:
-                ids.append(comp.keys()[0])
+                # data structure appears to have changed recently (2017-12):
+                # - if comp.code exists, use it as component code
+                # - if not, then use comp.key()[0] for backwards compatability
+                if 'code' in comp.keys():
+                  ids.append(comp.code)
+                else:
+                  ids.append(comp.keys()[0])
 
         return ids
 
