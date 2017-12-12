@@ -9,6 +9,7 @@ Licensed under the MIT license.
 from __future__ import print_function
 from datetime import datetime as dt
 from re import finditer, search
+from collections import OrderedDict
 from sopel import module
 from sopel.config.types import StaticSection, FilenameAttribute
 from pygsheets import authorize, exceptions
@@ -35,7 +36,7 @@ SFDC_URL = 'https://access.redhat.com/support/cases/#/case/'
 # DST lookup: https://www.timeanddate.com/time/change/usa/raleigh,
 #             https://www.timeanddate.com/time/change/czech-republic/brno
 APAC_1 = {
-    'name': 'Brisbane',
+    'name': 'APAC-Brisbane',
     'column': '?',
     'start_1': 9,
     'start_2': 9,
@@ -44,7 +45,7 @@ APAC_1 = {
     'tz': timezone('Australia/Brisbane')
 }
 APAC_2 = {
-    'name': 'Beijing',
+    'name': 'APAC-Beijing',
     'column': 'O',
     'start_1': 7,
     'start_2': 7,
@@ -71,7 +72,7 @@ NASA = {
     'tz': timezone('US/Eastern')
 }
 ONCALL = {
-    'name': 'ONCALL',
+    'name': 'oncall',
     'column': 'C'
 }
 # DST schedule to follow for start times
@@ -289,12 +290,12 @@ def get_shift_leads(bot, channel):
                         debug(bot, 'get_shift_leads: Using period ({period})'.format(period=period_dt.date()))
                     break
         if row > 0:
-            shift_leads = {
-                NASA['name']: worksheet.cell(str(NASA['column'] + str(row))).value,
-                EMEA['name']: worksheet.cell(str(EMEA['column'] + str(row))).value,
-                APAC_2['name']: worksheet.cell(str(APAC_2['column'] + str(row))).value,
-                ONCALL['name']: worksheet.cell(str(ONCALL['column'] + str(row))).value
-            }
+            shift_leads = OrderedDict()
+            #shift_leads[APAC_1['name']] = worksheet.cell(str(APAC_1['column'] + str(row))).value
+            shift_leads[APAC_2['name']] = worksheet.cell(str(APAC_2['column'] + str(row))).value
+            shift_leads[EMEA['name']] = worksheet.cell(str(EMEA['column'] + str(row))).value
+            shift_leads[NASA['name']] = worksheet.cell(str(NASA['column'] + str(row))).value
+            shift_leads[ONCALL['name']] = worksheet.cell(str(ONCALL['column'] + str(row))).value
             debug(bot, 'get_shift_leads: Found leads - {leads}'.format(leads=shift_leads))
             return shift_leads
     bot.say('Unable to find shift leads for ' + str(
