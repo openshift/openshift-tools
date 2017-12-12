@@ -511,9 +511,9 @@ class StatusPageIncident(StatusPageIOAPI):
                 # - if comp.code exists, use it as component code
                 # - if not, then use comp.key()[0] for backwards compatability
                 if 'code' in comp.keys():
-                  ids.append(comp.code)
+                    ids.append(comp.code)
                 else:
-                  ids.append(comp.keys()[0])
+                    ids.append(comp.keys()[0])
 
         return ids
 
