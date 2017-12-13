@@ -13,7 +13,7 @@ from collections import OrderedDict
 from sopel import module
 from sopel.config.types import StaticSection, FilenameAttribute
 from pygsheets import authorize, exceptions
-from pytz import timezone
+from pytz import timezone, utc
 from googleapiclient import errors
 
 ###########################
@@ -225,18 +225,21 @@ def set_topic_to_shift(bot, channel):
     """Sets topic to match the current shift information."""
     prev_shift, curr_shift, next_shift = get_shift(bot)
     debug(bot,
-          'announce_shift_complete: shifts - prev:{s1} - curr:{s2} - next:{s3} '.format(
+          'setting channel topic: shifts - prev:{s1} - curr:{s2} - next:{s3} '.format(
               s1=prev_shift['name'], s2=curr_shift['name'], s3=next_shift['name']))
     leads = get_shift_leads(bot, channel)
+    utc_now = dt.utcnow().replace(hour=next_shift[get_shift_start(bot)], tzinfo=utc)
     bot.write(
         ['TOPIC', channel],
         'Current Shift Lead: {lead} - OnCall: {oncall} - '
-        'Shift Change at: Beijing - {beijing:%H:00}; Brno - {brno:%H:00}; Raleigh - {raleigh:%H:00}'.format(
+        'Shift Change at: Brisbane - {brisbane:%H:00}; Beijing - {beijing:%H:00}; Brno - {brno:%H:00}; Raleigh - '
+        '{raleigh:%H:00}'.format(
             lead=leads[curr_shift['name']],
             oncall=leads[ONCALL['name']],
-            beijing=dt.now(next_shift['tz']).replace(hour=next_shift[get_shift_start(bot)]),
-            brno=dt.now(next_shift['tz']).replace(hour=next_shift[get_shift_start(bot)]),
-            raleigh=dt.now(next_shift['tz']).replace(hour=next_shift[get_shift_start(bot)])))
+            brisbane=utc_now.astimezone(APAC_1['tz']),
+            beijing=utc_now.astimezone(APAC_2['tz']),
+            brno=utc_now.astimezone(EMEA['tz']),
+            raleigh=utc_now.astimezone(NASA['tz'])))
 
 
 def get_shift(bot):
@@ -291,7 +294,7 @@ def get_shift_leads(bot, channel):
                     break
         if row > 0:
             shift_leads = OrderedDict()
-            #shift_leads[APAC_1['name']] = worksheet.cell(str(APAC_1['column'] + str(row))).value
+            # shift_leads[APAC_1['name']] = worksheet.cell(str(APAC_1['column'] + str(row))).value
             shift_leads[APAC_2['name']] = worksheet.cell(str(APAC_2['column'] + str(row))).value
             shift_leads[EMEA['name']] = worksheet.cell(str(EMEA['column'] + str(row))).value
             shift_leads[NASA['name']] = worksheet.cell(str(NASA['column'] + str(row))).value
@@ -385,6 +388,15 @@ def unmark_channel_for_announcements(bot, trigger):
             bot.say('Topic updates will still occur if I have the proper permissions.')
         else:
             bot.say('I\'m already not announcing in this channel.')
+    else:
+        bot.say('I\'m not currently tracking this channel. Check out .help track')
+
+
+@module.commands('shift-update-topic')
+def update_topic(bot, trigger):
+    """Allows for force-updating a tracked channel's topic."""
+    if bot.db.get_channel_value(trigger.sender, 'monitoring'):
+        set_topic_to_shift(bot, trigger.sender)
     else:
         bot.say('I\'m not currently tracking this channel. Check out .help track')
 
@@ -577,9 +589,9 @@ def track_shift_rotation(bot):
             start_now = dt.now(tz=START_ANNOUNCING['tz'])
             stop_now = dt.now(tz=STOP_ANNOUNCING['tz'])
             if (start_now.weekday() > START_ANNOUNCING['weekday'] and stop_now.weekday() < STOP_ANNOUNCING[
-                    'weekday']) or \
+                'weekday']) or \
                     (start_now.hour >= START_ANNOUNCING['hour'] and start_now.weekday() == START_ANNOUNCING[
-                    'weekday']) or \
+                        'weekday']) or \
                     (stop_now.hour <= STOP_ANNOUNCING['hour'] and stop_now.weekday() == STOP_ANNOUNCING['weekday']):
                 _, curr_shift, next_shift = get_shift(bot)
                 curr_now = dt.now(curr_shift['tz'])
