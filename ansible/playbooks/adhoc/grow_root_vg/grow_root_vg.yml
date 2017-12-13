@@ -1,0 +1,132 @@
+---
+# This playbook grows the root VG on a node by:
+#  * expanding /dev/xvda
+#  * using growpart to expand the rootvg partition
+#  * grow /var to 64GB
+#
+#  To run:
+#  1. Source your AWS credentials (make sure it's the corresponding AWS account) into your environment
+#    export AWS_PROFILE=<aws account>
+#    export AWS_DEFAULT_REGION=<aws region>
+#
+# 2. run the playbook:
+#   ansible-playbook -e 'cli_tag_name=<tag-name>' grow_root_vg.yml
+#
+#  Example:
+#   ansible-playbook -e 'cli_tag_name=ops-compute-12345' grow_root_vg.yml
+#
+#  Notes:
+#  * By default this will do a900GB GP2 volume.  The can be overidden with the "-e 'cli_volume_size=something'" variable
+#  * This can be done with NO downtime on the host, but you probably ought to test a reboot 
+#
+
+- name: Grow the rootvg volume group
+  hosts: "oo_name_{{ cli_tag_name }}"
+  user: root
+  connection: ssh
+  gather_facts: no
+
+  vars:
+    cli_volume_size: 90
+    cli_var_size: 64
+
+  pre_tasks:
+  - fail:
+      msg: "This playbook requires {{item}} to be set."
+    when: "{{ item }} is not defined or {{ item }} == ''"
+    with_items:
+    - cli_tag_name
+    - cli_volume_size
+    - cli_var_size
+
+  - name: Attempt to find the Phyisical Volume that rootvg is using
+    shell: "pvs | awk '/rootvg/ {print $1}'" 
+    register: rootvg_pv
+    ignore_errors: yes
+
+  - debug:
+      var: rootvg_pv
+
+  - name: fail if we don't find a single rootvg physical volume
+    fail:
+      msg:  Unable to find single rootvg physical volume. Please investigate manually.
+    when: rootvg_pv.stdout_lines|length != 1
+
+  - name: get list of volumes from AWS
+    delegate_to: localhost
+    ec2_vol:
+      state: list
+      instance: "{{ ec2_id }}"
+      region: "{{ ec2_region }}"
+    register: attached_volumes
+
+  - debug: var=attached_volumes
+
+  - name: set rootvg volume attributes
+    set_fact:
+      rootvg: "{{ attached_volumes.volumes | vol_attrs(rootvg_pv.stdout) }}"
+ 
+  - debug: var=rootvg
+
+  - name: get volume id of current rootvg volume
+    set_fact:
+      rootvg_volume_id: "{{ attached_volumes.volumes | translate_volume_name(rootvg.device) }}"
+
+  - debug: var=rootvg_volume_id
+
+  - fail:
+      msg: "Unable to look up the volume ID of {{ rootvg.device }}"
+    when: rootvg_volume_id is undefined
+
+  - name: find rootvg disk size before change 
+    shell: "awk '/{{ rootvg.bare_device }}/ {if ($2==0) print $3}' /proc/partitions"
+    register: orig_pv_size
+
+  - debug: var=orig_pv_size
+
+  - name: Resize EBS volume 
+    delegate_to: localhost
+    command: "aws ec2 modify-volume --volume-id {{ rootvg_volume_id }} --size {{ cli_volume_size }}"
+    register: resize_volume
+
+  - wait_for: 
+      timeout: 10 
+
+  - debug: var=resize_volume
+
+  - name: Fail when problems extending
+    fail:
+      msg: "Failed to resize volume msg: {{ resize_volume.msg }}"
+    when: resize_volume.msg is defined
+
+  - name: Run partprobe to see if the size changed 
+    command: partprobe "{{ rootvg.device }}"
+
+  - name: find rootvg disk size after change
+    shell: "awk '/{{ rootvg.bare_device }}/ {if ($2==0) print $3}' /proc/partitions"
+    register: new_pv_size
+
+  - debug: var=new_pv_size
+
+  - name: check if rootvg disk size changed
+    fail:
+      msg: Rootvg disk size was not changed
+    when: orig_pv_size.stdout == new_pv_size.stdout
+
+  - name: Need growpart script
+    yum:
+      name: cloud-utils-growpart
+      state: installed 
+
+  - name: Run growpart on last partition 
+    shell: "growpart {{ rootvg.device }} $(grep -c {{ rootvg.bare_device }}[0-9] /proc/partitions) -v"
+    register: growpart_output
+
+  - name: Resize the pv 
+    command: "pvresize {{ rootvg.fullname }}"
+
+  - name: Extend the var lv
+    command: "lvextend -L {{ cli_var_size }}G /dev/rootvg/var "
+
+  - name: Resize /var
+    command: "xfs_growfs /var "
