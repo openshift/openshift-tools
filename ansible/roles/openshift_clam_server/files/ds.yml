@@ -1,0 +1,100 @@
+---
+apiVersion: v1 
+kind: Template
+metadata:
+  creationTimestamp: null
+  generation: 1
+  labels:
+    provider: openshift
+    image-inspector-host: "true"
+    component: image-inspector
+  name: oso-image-inspector 
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-image-inspector
+    name: "oso-${PLAT}-image-inspector"
+  spec:
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "registry.reg-aws.openshift.com:443/openshift-image-inspector/oso-${PLAT}-image-inspector:latest"
+        pullSecret:
+          name: dockercfgjson
+      importPolicy: {}
+      name: latest
+- apiVersion: extensions/v1beta1
+  kind: DaemonSet
+  metadata:
+    labels:
+      template: oso-image-inspector
+      component: image-inspector
+    name: oso-image-inspector
+  selector:
+    matchLabels:
+      name: oso-image-inspector
+  spec:
+    strategy:
+      resources: {}
+      type: Rolling
+    template:
+      metadata:
+        creationTimestamp: null
+        name: oso-image-inspector
+        labels:
+          name: oso-image-inspector
+          component: image-inspector
+      spec:
+        containers:
+        - env:
+          - name: OO_PAUSE_ON_START
+            value: "false"
+          image: "${NAMESPACE}/oso-${PLAT}-image-inspector:latest"
+          imagePullPolicy: Always
+          name: oso-image-inspector 
+          resources: {}
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /host
+            name: oso-image-inspector-host-filesystem
+          - mountPath: /secrets
+            name: oso-image-inspector-secrets
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          image-inspector-enabled: "True"
+        restartPolicy: Always
+        securityContext: {}
+        serviceAccount: imageinspector
+        serviceAccountName: imageinspector
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: oso-image-inspector-host-filesystem
+          hostPath:
+            path: /
+        - name: oso-image-inspector-secrets
+          secret:
+            secretName: oso-image-inspector-secrets
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-image-inspector
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-image-inspector:latest"
+      type: ImageChange
+parameters:
+- description: Platform name
+  name: PLAT
+  value: rhel7
+- description: Project name
+  name: NAMESPACE
+  value: openshift-image-inspector

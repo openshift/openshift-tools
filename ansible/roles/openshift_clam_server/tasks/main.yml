@@ -4,7 +4,7 @@
     name: ops_roles/include_private_vars
 
 - name: Create temp directory to store the template
-  command: mktemp -d /tmp/openshift-image-inspector-ansible-XXXXXX
+  command: mktemp -d /tmp/openshift-clam-server-ansible-XXXXXX
   register: mktemp
   changed_when: False
 
@@ -16,23 +16,23 @@
 - set_fact:
     tempdir: "{{ mktemp.stdout }}"
 
-- name: "create project for {{ oii_namespace }}"
+- name: "create project for {{ ocs_namespace }}"
   oadm_project:
-    name: "{{ oii_namespace }}"
-    display_name: "{{ oii_namespace }}"
-    description: ClamAV Scanning Service
+    name: "{{ ocs_namespace }}"
+    display_name: "{{ ocs_namespace }}"
+    description: ClamAV Server
   retries: 12
   delay: 5
 
 - name: create imageinspector serviceaccount
   oc_serviceaccount:
     name: imageinspector
-    namespace: "{{ oii_namespace }}" 
+    namespace: "{{ ocs_namespace }}" 
 
 - name: set service account permissions
   oadm_policy_user:
-    namespace: "{{ oii_namespace }}"
-    user: "system:serviceaccount:{{ oii_namespace }}:imageinspector"
+    namespace: "{{ ocs_namespace }}"
+    user: "system:serviceaccount:{{ ocs_namespace }}:imageinspector"
     resource_kind: "{{ item.r_kind }}" 
     resource_name: "{{ item.r_name }}"
     state: present
@@ -44,41 +44,41 @@
 
   # running as command until oc_secret supports config file image secrets
 - name: "Create image pull secret"
-  command: "oc secrets new dockercfgjson .dockerconfigjson=/var/lib/origin/.docker/config.json -n {{ oii_namespace }}"
+  command: "oc secrets new dockercfgjson .dockerconfigjson=/var/lib/origin/.docker/config.json -n {{ ocs_namespace }}"
   delegate_to: "{{ cluster_master }}"
   run_once: true
   ignore_errors: true
 
-- name: "Create image inspector secrets for {{ oii_namespace }}"
+- name: "Create clam server secrets for {{ ocs_namespace }}"
   oc_secret:
-    namespace: "{{ oii_namespace }}"
-    name: oso-image-inspector-secrets
+    namespace: "{{ ocs_namespace }}"
+    name: oso-clam-server-secrets
     contents:
-    - path: aws_config.yml
-      data: "{{ oii_aws_config_content }}"
-    - path: scanlog_bucket_rw
-      data: "{{ oii_aws_creds_content }}" 
+    - path: clam_update_config.yaml
+      data: "{{ ocs_aws_config_content }}"
+    - path: clam_bucket_ro
+      data: "{{ ocs_aws_creds_content }}" 
 
-- name: "Check to see if template already exists in {{ oii_namespace }}"
+- name: "Check to see if template already exists in {{ ocs_namespace }}"
   oc_obj:
     state: list
-    namespace: "{{ oii_namespace }}"
+    namespace: "{{ ocs_namespace }}"
     kind: templates
   register: templatelist
 
-- name: copy image inspector template
+- name: copy clam server template
   copy:
-    src: image-inspector.yml
-    dest: "{{ tempdir }}/image-inspector.yml"
+    src: clam-server.yml
+    dest: "{{ tempdir }}/clam-server.yml"
   when:  templatelist['results']['results'][0]['items'] | length < 1
 
-- name: Set image inspector template
+- name: Set clam server template
   oc_obj:
     kind: template
-    name: image-inspector
-    namespace: "{{ oii_namespace }}" 
+    name: clam-server
+    namespace: "{{ ocs_namespace }}" 
     state: present
-    files: "{{ tempdir }}/image-inspector.yml"
+    files: "{{ tempdir }}/clam-server.yml"
     debug: true
     force: true
     delete_after: true
@@ -90,36 +90,26 @@
   run_once: true
   when: registry_ip is not defined
 
-- name: "Check to see if image-inspector pods exist in {{ oii_namespace }}"
+- name: "Check to see if clam server pods exist in {{ ocs_namespace }}"
   oc_obj:
     state: list
-    namespace: "{{ oii_namespace }}"
+    namespace: "{{ ocs_namespace }}"
     kind: pods
   register: podlist
 
-- name: "Create bc,is,ds for apps in {{ oii_namespace }} from template"
+- name: "Create bc,is,ds for apps in {{ ocs_namespace }} from template"
   oc_process:
-    namespace: "{{ oii_namespace }}"
-    template_name: oso-image-inspector
-    content: "{{ lookup('file', 'files/image-inspector.yml') }}"
+    namespace: "{{ ocs_namespace }}"
+    template_name: oso-clam-server
+    content: "{{ lookup('file', 'files/clam-server.yml') }}"
     create: True
     params:
       PLAT: rhel7
-      NAMESPACE: "{{ registry_ip['stdout'] | quote }}:5000/{{ oii_namespace }}"
+      NAMESPACE: "{{ registry_ip['stdout'] | quote }}:5000/{{ ocs_namespace }}"
   when: podlist['results']['results'][0]['items'] | length < 1
   delegate_to: "{{ cluster_master }}"
   run_once: true
   ignore_errors: true
-
-- name: Label compute nodes
-  oc_label:
-    selector: "{{ item }}" 
-    kind: node
-    state: add
-    labels:
-      - key: image-inspector-enabled
-        value:  true
-  with_items: "{{ oii_nodes }}"
 
 - name: Delete temp directory
   file:

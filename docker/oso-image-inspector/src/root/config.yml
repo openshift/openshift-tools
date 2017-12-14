@@ -17,11 +17,6 @@
 #      hour: "13"
 #      job: "/usr/local/bin/cron-in-memory-scan.sh &>/dev/null"
 
-#    - name: upload_scanlogs
-#      minute: "15"
-#      hour: "14"
-#      job: "/usr/local/bin/upload_scanlogs &>/dev/null"
-
   tasks:
   - name: "Create custom scan report directory for image-inspector"
     file:
