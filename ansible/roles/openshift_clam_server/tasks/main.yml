@@ -1,0 +1,117 @@
+---
+- name: Include private vars
+  include_role:
+    name: ops_roles/include_private_vars
+
+- name: Create temp directory to store the template
+  command: mktemp -d /tmp/openshift-clam-server-ansible-XXXXXX
+  register: mktemp
+  changed_when: False
+
+- name: Choose a master on which to run
+  set_fact:
+    cluster_master: "{{ groups['oo_hosttype_master'] | intersect(groups['oo_clusterid_' ~ oo_clusterid]) | first }}"
+  run_once: true
+
+- set_fact:
+    tempdir: "{{ mktemp.stdout }}"
+
+- name: "create project for {{ ocs_namespace }}"
+  oadm_project:
+    name: "{{ ocs_namespace }}"
+    display_name: "{{ ocs_namespace }}"
+    description: ClamAV Server
+  retries: 12
+  delay: 5
+
+- name: create imageinspector serviceaccount
+  oc_serviceaccount:
+    name: imageinspector
+    namespace: "{{ ocs_namespace }}" 
+
+- name: set service account permissions
+  oadm_policy_user:
+    namespace: "{{ ocs_namespace }}"
+    user: "system:serviceaccount:{{ ocs_namespace }}:imageinspector"
+    resource_kind: "{{ item.r_kind }}" 
+    resource_name: "{{ item.r_name }}"
+    state: present
+  with_items:
+    - r_kind: cluster-role
+      r_name: cluster-reader
+    - r_kind: scc
+      r_name: privileged
+
+  # running as command until oc_secret supports config file image secrets
+- name: "Create image pull secret"
+  command: "oc secrets new dockercfgjson .dockerconfigjson=/var/lib/origin/.docker/config.json -n {{ ocs_namespace }}"
+  delegate_to: "{{ cluster_master }}"
+  run_once: true
+  ignore_errors: true
+
+- name: "Create clam server secrets for {{ ocs_namespace }}"
+  oc_secret:
+    namespace: "{{ ocs_namespace }}"
+    name: oso-clam-server-secrets
+    contents:
+    - path: clam_update_config.yaml
+      data: "{{ ocs_aws_config_content }}"
+    - path: clam_bucket_ro
+      data: "{{ ocs_aws_creds_content }}" 
+
+- name: "Check to see if template already exists in {{ ocs_namespace }}"
+  oc_obj:
+    state: list
+    namespace: "{{ ocs_namespace }}"
+    kind: templates
+  register: templatelist
+
+- name: copy clam server template
+  copy:
+    src: clam-server.yml
+    dest: "{{ tempdir }}/clam-server.yml"
+  when:  templatelist['results']['results'][0]['items'] | length < 1
+
+- name: Set clam server template
+  oc_obj:
+    kind: template
+    name: clam-server
+    namespace: "{{ ocs_namespace }}" 
+    state: present
+    files: "{{ tempdir }}/clam-server.yml"
+    debug: true
+    force: true
+    delete_after: true
+  when:  templatelist['results']['results'][0]['items'] | length < 1
+
+- name: Get the address of the registry
+  shell: "oc get services -n default | grep docker-registry | awk '{print $2}'"
+  register: registry_ip
+  run_once: true
+  when: registry_ip is not defined
+
+- name: "Check to see if clam server pods exist in {{ ocs_namespace }}"
+  oc_obj:
+    state: list
+    namespace: "{{ ocs_namespace }}"
+    kind: pods
+  register: podlist
+
+- name: "Create bc,is,ds for apps in {{ ocs_namespace }} from template"
+  oc_process:
+    namespace: "{{ ocs_namespace }}"
+    template_name: oso-clam-server
+    content: "{{ lookup('file', 'files/clam-server.yml') }}"
+    create: True
+    params:
+      PLAT: rhel7
+      NAMESPACE: "{{ registry_ip['stdout'] | quote }}:5000/{{ ocs_namespace }}"
+  when: podlist['results']['results'][0]['items'] | length < 1
+  delegate_to: "{{ cluster_master }}"
+  run_once: true
+  ignore_errors: true
+
+- name: Delete temp directory
+  file:
+    name: "{{ tempdir }}"
+    state: absent

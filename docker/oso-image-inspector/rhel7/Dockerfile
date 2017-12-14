@@ -9,8 +9,6 @@ RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 # Add root folder
 ADD root/ /root/
 
-ADD scripts/ /usr/local/bin/
-
 # Local install of python2-clamd, which is a prerequisite for scanpod-inmem
 # Then install golang and the in-memory scanner
 RUN yum install -y python2-boto3 \
@@ -22,6 +20,8 @@ RUN yum install -y python2-boto3 \
                    openshift-tools-scripts-scanpod \
                    python2-botocore && \
     yum clean all
+
+ADD scripts/ /usr/local/bin/
 
 ADD clam-scanner /go/src/github.com/openshift/clam-scanner
 

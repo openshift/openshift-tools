@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import socket
+import subprocess
 import sys
 
 
@@ -54,21 +55,57 @@ class ClamLogSrv(object):
 
             try:
                 while True:
-                    data = connection.recv(1024)
+                    # pylint: disable=no-member
+                    data = connection.recv(10240)
                     newdata = data.split('\n')[6]
                     rec_js = json.loads(newdata)
 
-                    filemode = ''
+                    if 'results' not in newdata:
+                        break
 
-                    if os.path.isfile(logfile):
-                        filemode = 'a'
                     else:
-                        filemode = 'w'
+                        filemode = ''
+                        container_id = rec_js['containerID']
 
-                    with open(logfile, filemode) as open_file:
-                        open_file.write(json.dumps(rec_js, indent=4, sort_keys=True))
+                        if os.path.isfile(logfile):
+                            filemode = 'a'
+                        else:
+                            filemode = 'w'
 
-                    break
+                        with open(logfile, filemode) as open_file:
+                            container_ns = subprocess.check_output([\
+                            'chroot', \
+                            '/host', \
+                            '/usr/bin/docker', \
+                            'inspect', \
+                            '--format', \
+                            '\'{{index .Config.Labels "io.kubernetes.pod.namespace"}} \
+                            {{index .Config.Labels "io.kubernetes.pod.name"}}\'', \
+                            container_id
+                                                                   ])
+
+                            rec_js['nameSpace'] = container_ns.split()[0]
+                            rec_js['podName'] = container_ns.split()[1]
+                            open_file.write(json.dumps(rec_js, indent=4, sort_keys=True))
+
+                        inspectlog = logfile + 'inspect_output.log'
+
+                        if os.path.isfile(inspectlog):
+                            filemode = 'a'
+                        else:
+                            filemode = 'w'
+
+                        with open(inspectlog, filemode) as open_file:
+                            open_file.write(
+                                subprocess.check_output([\
+                                'chroot', \
+                                '/host', \
+                                '/usr/bin/docker', \
+                                'inspect', \
+                                container_id
+                                                        ])
+                            )
+                        break
 
             finally:
                 connection.close()

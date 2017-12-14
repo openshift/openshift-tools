@@ -185,4 +185,4 @@ parameters:
   value: rhel7
 - description: Project name
   name: NAMESPACE
-  value: image-inspector
+  value: openshift-image-inspector

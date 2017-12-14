@@ -4,7 +4,7 @@
     name: ops_roles/include_private_vars
 
 - name: Create temp directory to store the template
-  command: mktemp -d /tmp/openshift-logging-ansible-XXXXXX
+  command: mktemp -d /tmp/openshift-image-inspector-ansible-XXXXXX
   register: mktemp
   changed_when: False
 
@@ -27,12 +27,12 @@
 - name: create imageinspector serviceaccount
   oc_serviceaccount:
     name: imageinspector
-    namespace: image-inspector
+    namespace: "{{ oii_namespace }}" 
 
 - name: set service account permissions
   oadm_policy_user:
-    namespace: image-inspector
-    user: system:serviceaccount:image-inspector:imageinspector
+    namespace: "{{ oii_namespace }}"
+    user: "system:serviceaccount:{{ oii_namespace }}:imageinspector"
     resource_kind: "{{ item.r_kind }}" 
     resource_name: "{{ item.r_name }}"
     state: present
@@ -59,17 +59,18 @@
     - path: scanlog_bucket_rw
       data: "{{ oii_aws_creds_content }}" 
 
-- name: copy image inspector template
-  copy:
-    src: image-inspector.yml
-    dest: "{{ tempdir }}/image-inspector.yml"
-
 - name: "Check to see if template already exists in {{ oii_namespace }}"
   oc_obj:
     state: list
     namespace: "{{ oii_namespace }}"
     kind: templates
   register: templatelist
+
+- name: copy image inspector template
+  copy:
+    src: image-inspector.yml
+    dest: "{{ tempdir }}/image-inspector.yml"
+  when:  templatelist['results']['results'][0]['items'] | length < 1
 
 - name: Set image inspector template
   oc_obj:
@@ -87,6 +88,7 @@
   shell: "oc get services -n default | grep docker-registry | awk '{print $2}'"
   register: registry_ip
   run_once: true
+  when: registry_ip is not defined
 
 - name: "Check to see if image-inspector pods exist in {{ oii_namespace }}"
   oc_obj:

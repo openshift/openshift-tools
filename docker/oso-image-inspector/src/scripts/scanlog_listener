@@ -1,18 +1,14 @@
 #!/bin/env python
 # vim: expandtab:tabstop=4:shiftwidth=4
 
-""" A small server to listen for image-inspector scan results and upload them to an S3 bucket. """
+""" A small server to listen for image-inspector scan results and log them to a local file. """
 
 import argparse
 import json
 import os
 import socket
+import subprocess
 import sys
-import yaml
-
-# pylint: disable=import-error
-import botocore
-import boto3
 
 
 class ClamLogSrv(object):
@@ -45,83 +41,7 @@ class ClamLogSrv(object):
 
 
     @staticmethod
-    def get_config(config_path):
-        """ Open and read config data from the variables file. """
-
-        config_settings = {}
-
-        if os.path.isfile(config_path):
-            with open(config_path, 'r') as log_config:
-                yaml_config = yaml.load(log_config)
-
-                try:
-                    config_settings['oii_s3_bucket'] = yaml_config['oii_s3_bucket']
-                except KeyError:
-                    pass
-
-                try:
-                    config_settings['oii_creds_file'] = yaml_config['oii_creds_file']
-                except KeyError:
-                    pass
-
-                try:
-                    config_settings['oii_ops_files'] = yaml_config['oii_ops_files']
-                except KeyError:
-                    pass
-
-                try:
-                    config_settings['node_hostname'] = yaml_config['node_hostname']
-                except KeyError:
-                    pass
-
-        return config_settings
-
-
-    # pylint: disable=too-many-locals
-    def upload_files(self):
-        """ Use the provided credentials to upload files to the specified bucket.
-
-        Raises:
-            A ValueError if the specified bucket can not be found.
-        """
-
-        config_file = self.get_config('/secrets/aws_config.yml')
-        hostname_file = self.get_config('/etc/openshift_tools/scanreport_config.yml')
-
-        bucket = config_file['oii_s3_bucket']
-        file_list = config_file['oii_ops_files']
-        aws_creds_file = config_file['oii_creds_file']
-        node_hostname = hostname_file['node_hostname']
-
-        os.environ["AWS_SHARED_CREDENTIALS_FILE"] = aws_creds_file
-
-        s3_session = boto3.resource('s3')
-        exists = True
-
-        try:
-            s3_session.meta.client.head_bucket(Bucket=bucket)
-
-        except botocore.exceptions.ClientError as client_exception:
-            error_code = int(client_exception.response['Error']['Code'])
-
-            if error_code == 404:
-                exists = False
-
-        if exists:
-            s3_client = boto3.resource('s3')
-            s3_bucket = s3_client.Bucket(bucket)
-
-            for report_file in file_list:
-                full_path = (os.path.join('/var/log/clam/', report_file))
-                report_data = open(full_path, 'rb')
-                upload_path = node_hostname + '/' + report_file
-                s3_bucket.put_object(Key=upload_path, Body=report_data)
-
-        else:
-            raise ValueError(bucket + ' does not exist.')
-
-
-    def start_serve(self, hostname, hostport, logfile):
+    def start_serve(hostname, hostport, logfile):
         """ Listen on specified port for incoming clam logs. """
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -135,26 +55,60 @@ class ClamLogSrv(object):
 
             try:
                 while True:
-                    data = connection.recv(1024)
+                    # pylint: disable=no-member
+                    data = connection.recv(10240)
                     newdata = data.split('\n')[6]
                     rec_js = json.loads(newdata)
 
-                    filemode = ''
+                    if 'results' not in newdata:
+                        break
 
-                    if os.path.isfile(logfile):
-                        filemode = 'a'
                     else:
-                        filemode = 'w'
+                        filemode = ''
+                        container_id = rec_js['containerID']
 
-                    with open(logfile, filemode) as open_file:
-                        open_file.write(json.dumps(rec_js, indent=4, sort_keys=True))
+                        if os.path.isfile(logfile):
+                            filemode = 'a'
+                        else:
+                            filemode = 'w'
 
-                    break
+                        with open(logfile, filemode) as open_file:
+                            container_ns = subprocess.check_output([\
+                            'chroot', \
+                            '/host', \
+                            '/usr/bin/docker', \
+                            'inspect', \
+                            '--format', \
+                            '\'{{index .Config.Labels "io.kubernetes.pod.namespace"}} \
+                            {{index .Config.Labels "io.kubernetes.pod.name"}}\'', \
+                            container_id
+                                                                   ])
+
+                            rec_js['nameSpace'] = container_ns.split()[0]
+                            rec_js['podName'] = container_ns.split()[1]
+                            open_file.write(json.dumps(rec_js, indent=4, sort_keys=True))
+
+                        inspectlog = logfile + 'inspect_output.log'
+
+                        if os.path.isfile(inspectlog):
+                            filemode = 'a'
+                        else:
+                            filemode = 'w'
+
+                        with open(inspectlog, filemode) as open_file:
+                            open_file.write(
+                                subprocess.check_output([\
+                                'chroot', \
+                                '/host', \
+                                '/usr/bin/docker', \
+                                'inspect', \
+                                container_id
+                                                        ])
+                            )
+                        break
 
             finally:
                 connection.close()
-                self.upload_files()
-
 
 
     def main(self):

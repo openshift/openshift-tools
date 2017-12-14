@@ -7,46 +7,9 @@ metadata:
   labels:
     provider: openshift
     image-inspector-host: "true"
+    component: image-inspector
   name: oso-image-inspector 
 objects:
-- apiVersion: v1
-  kind: BuildConfig
-  metadata:
-    labels:
-      template: oso-image-inspector
-    name: oso-image-inspector
-  spec:
-    output:
-      to:
-        kind: ImageStreamTag
-        name: "oso-${PLAT}-image-inspector:latest"
-    postCommit: {}
-    resources: {}
-    source:
-      contextDir: "docker/oso-image-inspector/${PLAT}"
-      git:
-        ref: oso-image-inspector
-        uri: https://github.com/rhdedgar/openshift-tools
-      secrets:
-        - secret:
-            name: oso-image-inspector-build-secrets
-            destinationDir: /root
-      type: Git
-    strategy:
-      dockerStrategy:
-        env:
-        - name: OO_PAUSE_ON_BUILD
-          value: "false"
-        from:
-          kind: DockerImage
-          name: "registry.reg-aws.openshift.com:443/ops/oso-${PLAT}-ops-base:prod"
-        pullSecret:
-          name: dockercfgjson
-        noCache: true
-      type: Docker
-    triggers:
-    - imageChange: {}
-      type: ImageChange
 - apiVersion: v1
   kind: ImageStream
   metadata:
@@ -58,7 +21,9 @@ objects:
     - annotations: null
       from:
         kind: DockerImage
-        name: "${NAMESPACE}/oso-${PLAT}-image-inspector:latest"
+        name: "registry.reg-aws.openshift.com:443/openshift-image-inspector/oso-${PLAT}-image-inspector:latest"
+        pullSecret:
+          name: dockercfgjson
       importPolicy: {}
       name: latest
 - apiVersion: extensions/v1beta1
@@ -66,6 +31,7 @@ objects:
   metadata:
     labels:
       template: oso-image-inspector
+      component: image-inspector
     name: oso-image-inspector
   selector:
     matchLabels:
@@ -80,6 +46,7 @@ objects:
         name: oso-image-inspector
         labels:
           name: oso-image-inspector
+          component: image-inspector
       spec:
         containers:
         - env:
@@ -128,9 +95,6 @@ parameters:
 - description: Platform name
   name: PLAT
   value: rhel7
-- description: Registry IP
-  name: REGIP
-  value: registry-ip
 - description: Project name
   name: NAMESPACE
-  value: image-inspector
+  value: openshift-image-inspector
