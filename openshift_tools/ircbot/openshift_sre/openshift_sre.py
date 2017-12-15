@@ -228,7 +228,7 @@ def set_topic_to_shift(bot, channel):
           'setting channel topic: shifts - prev:{s1} - curr:{s2} - next:{s3} '.format(
               s1=prev_shift['name'], s2=curr_shift['name'], s3=next_shift['name']))
     leads = get_shift_leads(bot, channel)
-    utc_now = dt.utcnow().replace(hour=next_shift[get_shift_start(bot)], tzinfo=utc)
+    localized_now = dt.utcnow().replace(hour=next_shift[get_shift_start(bot)], tzinfo=next_shift['tz'])
     bot.write(
         ['TOPIC', channel],
         'Current Shift Lead: {lead} - OnCall: {oncall} - '
@@ -236,10 +236,10 @@ def set_topic_to_shift(bot, channel):
         '{raleigh:%H:00}'.format(
             lead=leads[curr_shift['name']],
             oncall=leads[ONCALL['name']],
-            brisbane=utc_now.astimezone(APAC_1['tz']),
-            beijing=utc_now.astimezone(APAC_2['tz']),
-            brno=utc_now.astimezone(EMEA['tz']),
-            raleigh=utc_now.astimezone(NASA['tz'])))
+            brisbane=localized_now.astimezone(APAC_1['tz']),
+            beijing=localized_now.astimezone(APAC_2['tz']),
+            brno=localized_now.astimezone(EMEA['tz']),
+            raleigh=localized_now.astimezone(NASA['tz'])))
 
 
 def get_shift(bot):
