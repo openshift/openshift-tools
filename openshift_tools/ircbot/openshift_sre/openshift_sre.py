@@ -13,7 +13,7 @@ from collections import OrderedDict
 from sopel import module
 from sopel.config.types import StaticSection, FilenameAttribute
 from pygsheets import authorize, exceptions
-from pytz import timezone, utc
+from pytz import timezone
 from googleapiclient import errors
 
 ###########################
@@ -92,18 +92,18 @@ STARTS = [
 SHIFTS = [APAC_2, EMEA, NASA]
 # Specify the time and date for when a new shift period should be used
 SHIFT_CHANGE = {
-    'hour': 11,
+    'hour': NASA['start_1'],
     'tz': NASA['tz']
 }
 START_ANNOUNCING = {
     'tz': APAC_1['tz'],
     'weekday': 0,
-    'hour': 8
+    'hour': 7
 }
 STOP_ANNOUNCING = {
     'tz': NASA['tz'],
     'weekday': 4,
-    'hour': 17
+    'hour': 19
 }
 
 
@@ -327,6 +327,26 @@ def display_karma(bot, channel, nick):
         bot.say(nick + ' does not have any karma.', channel)
 
 
+def utc_timestamp():
+    """Returns a unix timestamp as seconds from the epoch"""
+    return (dt.utcnow() - dt(1970, 1, 1)).total_seconds()
+
+
+def is_weekend():
+    """Returns true if the current time is considered a weekend datetime"""
+    start_now = dt.now(tz=START_ANNOUNCING['tz'])
+    stop_now = dt.now(tz=STOP_ANNOUNCING['tz'])
+
+    between_start_stop_weekdays = stop_now.weekday() > STOP_ANNOUNCING['weekday'] and \
+                                  start_now.weekday() < START_ANNOUNCING['weekday']
+    after_stop_time_on_stop_weekday = stop_now.hour > STOP_ANNOUNCING['hour'] and \
+                                      stop_now.weekday() == STOP_ANNOUNCING['weekday']
+    before_start_time_on_start_weekday = start_now.hour < START_ANNOUNCING['hour'] and \
+                                         start_now.weekday() == START_ANNOUNCING['weekday']
+
+    return between_start_stop_weekdays or after_stop_time_on_stop_weekday or before_start_time_on_start_weekday
+
+
 ################
 # Bot commands #
 ################
@@ -342,6 +362,8 @@ def mark_channel_to_track_oncall(bot, trigger):
         if worksheet:
             bot.db.set_channel_value(trigger.sender, 'monitoring', trigger.group(2))
             bot.db.set_channel_value(trigger.sender, 'announce', True)
+            bot.db.set_channel_value(trigger.sender, 'weekend_warning', True)
+            bot.db.set_channel_value(trigger.sender, 'weekend_last_triggered', utc_timestamp())
             bot.say(
                 trigger.sender + ' is now tracking SRE on-call rotation: ' + bot.db.get_channel_value(trigger.sender,
                                                                                                       'monitoring'))
@@ -354,17 +376,21 @@ def mark_channel_to_track_oncall(bot, trigger):
 
 
 @module.commands('untrack')
+@module.require_admin('You must be a bot admin to use this command')
 def unmark_channel_to_track_oncall(bot, trigger):
     """Stops tracking on-call and shift lead rotations for channel."""
     if bot.db.get_channel_value(trigger.sender, 'monitoring'):
         bot.db.set_channel_value(trigger.sender, 'monitoring', None)
         bot.db.set_channel_value(trigger.sender, 'announce', None)
+        bot.db.set_channel_value(trigger.sender, 'weekend_warning', None)
+        bot.db.set_channel_value(trigger.sender, 'weekend_last_triggered', None)
         bot.say(trigger.sender + ' is no longer tracking SRE on-call rotations.')
     else:
         bot.say(trigger.sender + ' is not currently tracking SRE on-call rotations.')
 
 
 @module.commands('shift-announce')
+@module.require_admin('You must be a bot admin to use this command')
 def mark_channel_for_announcements(bot, trigger):
     """Starts shift change announcements in channel if previously stopped."""
     if bot.db.get_channel_value(trigger.sender, 'monitoring'):
@@ -378,6 +404,7 @@ def mark_channel_for_announcements(bot, trigger):
 
 
 @module.commands('shift-unannounce')
+@module.require_admin('You must be a bot admin to use this command')
 def unmark_channel_for_announcements(bot, trigger):
     """Stops shift change announcements in channel, while still allowing the other benefits of tracking
     the shift change schedule."""
@@ -388,6 +415,36 @@ def unmark_channel_for_announcements(bot, trigger):
             bot.say('Topic updates will still occur if I have the proper permissions.')
         else:
             bot.say('I\'m already not announcing in this channel.')
+    else:
+        bot.say('I\'m not currently tracking this channel. Check out .help track')
+
+
+@module.commands('disable-weekend-warning')
+@module.require_admin('You must be a bot admin to use this command')
+def disable_weekend_warning(bot, trigger):
+    """Stops the warning regarding being unmonitored on the weekends."""
+    if bot.db.get_channel_value(trigger.sender, 'weekend_warning') is not None:
+        if bot.db.get_channel_value(trigger.sender, 'weekend_warning') is True:
+            bot.db.set_channel_value(trigger.sender, 'weekend_warning', False)
+            bot.db.set_channel_value(trigger.sender, 'weekend_last_triggered', None)
+            bot.say('I will not warn that this channel is unmonitored on the weekends.')
+        else:
+            bot.say('I\'m already not warning that this channel is unmonitored on the weekends.')
+    else:
+        bot.say('I\'m not currently tracking this channel. Check out .help track')
+
+
+@module.commands('enable-weekend-warning')
+@module.require_admin('You must be a bot admin to use this command')
+def enable_weekend_warning(bot, trigger):
+    """Restarts the warning regarding being unmonitored on the weekends."""
+    if bot.db.get_channel_value(trigger.sender, 'weekend_warning') is not None:
+        if bot.db.get_channel_value(trigger.sender, 'weekend_warning') is False:
+            bot.db.set_channel_value(trigger.sender, 'weekend_warning', True)
+            bot.db.set_channel_value(trigger.sender, 'weekend_last_triggered', utc_timestamp())
+            bot.say('I will start warning that this channel is unmonitored on the weekends.')
+        else:
+            bot.say('I\'m already warning that this channel is unmonitored on the weekends.')
     else:
         bot.say('I\'m not currently tracking this channel. Check out .help track')
 
@@ -586,13 +643,7 @@ def track_shift_rotation(bot):
     Does not send announcements over weekends."""
     for channel in bot.channels:
         if bot.db.get_channel_value(channel, 'monitoring'):
-            start_now = dt.now(tz=START_ANNOUNCING['tz'])
-            stop_now = dt.now(tz=STOP_ANNOUNCING['tz'])
-            if (start_now.weekday() > START_ANNOUNCING['weekday'] and stop_now.weekday() < STOP_ANNOUNCING[
-                'weekday']) or \
-                    (start_now.hour >= START_ANNOUNCING['hour'] and start_now.weekday() == START_ANNOUNCING[
-                        'weekday']) or \
-                    (stop_now.hour <= STOP_ANNOUNCING['hour'] and stop_now.weekday() == STOP_ANNOUNCING['weekday']):
+            if not is_weekend():
                 _, curr_shift, next_shift = get_shift(bot)
                 curr_now = dt.now(curr_shift['tz'])
                 next_now = dt.now(next_shift['tz'])
@@ -620,16 +671,14 @@ def refer_to_topic(bot, trigger):
 
 
 @module.rule(r'.*')
-@module.rate(channel=600)
 def monitor_weekend(bot, trigger):
     """Reminds users that channels are un-monitored on weekends. Will not trigger more than once every 10 minutes."""
-    start_now = dt.now(tz=START_ANNOUNCING['tz'])
-    stop_now = dt.now(tz=STOP_ANNOUNCING['tz'])
-    if (stop_now.weekday() > STOP_ANNOUNCING['weekday'] and start_now.weekday() < START_ANNOUNCING['weekday']) or \
-            (stop_now.hour >= STOP_ANNOUNCING['hour'] and stop_now.weekday() == STOP_ANNOUNCING['weekday']) or \
-            (start_now.hour <= START_ANNOUNCING['hour'] and start_now.weekday() == START_ANNOUNCING['weekday']):
-        bot.reply('This channel is unmonitored on weekends. See {url} for Engineer Escalations.'.format(
-            url=ESCALATION_URL))
+    if bot.db.get_channel_value(trigger.sender, 'weekend_warning') is True:
+        if utc_timestamp() - bot.db.get_channel_value(trigger.sender, 'weekend_last_triggered') > 600:
+            bot.db.set_channel_value(trigger.sender, 'weekend_last_triggered', utc_timestamp())
+            if is_weekend():
+                bot.reply('This channel is unmonitored on weekends. See {url} for Engineer Escalations.'.format(
+                    url=ESCALATION_URL))
 
 
 @module.rule(r'(.*)')
