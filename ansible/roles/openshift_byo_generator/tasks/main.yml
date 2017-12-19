@@ -90,17 +90,17 @@
     state: directory
     recurse: True
 
-- set_fact:
-    dest_gcsdockerregistry_file: "{{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json"
-  when: obg_gcp_user_gcsdockerregistry_file is defined
-
-- name: copy and convert gcp_user_gcsdockerregistry 
-  shell: "rm -f {{ dest_gcsdockerregistry_file }}; python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < {{ obg_gcp_user_gcsdockerregistry_file }} > {{ dest_gcsdockerregistry_file }}"
-  when: obg_gcp_user_gcsdockerregistry_file is defined
-
-- debug:
-    var: gcsdockerregistry_out
-    verbosity: 2
+#- set_fact:
+#    dest_gcsdockerregistry_file: "{{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json"
+#  when: obg_gcp_user_gcsdockerregistry_file is defined
+#
+#- name: copy and convert gcp_user_gcsdockerregistry 
+#  shell: "rm -f {{ dest_gcsdockerregistry_file }}; python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < {{ obg_gcp_user_gcsdockerregistry_file }} > {{ dest_gcsdockerregistry_file }}"
+#  when: obg_gcp_user_gcsdockerregistry_file is defined
+#
+#- debug:
+#    var: gcsdockerregistry_out
+#    verbosity: 2
 
 - name: create the byo
   template:
