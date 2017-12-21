@@ -96,6 +96,7 @@
     src: "{{ obg_gcp_user_gcsdockerregistry_file }}"
     dest: "{{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json"
   when: g_inventory_cloud_provider == "gcp"
+  register: gcsdockerregistry_out
 
 - debug:
     var: gcsdockerregistry_out
