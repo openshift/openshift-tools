@@ -92,10 +92,10 @@
     recurse: True
 
 - name: copy gcp_user_gcsdockerregistry to obg_output_path
-  shell: "rm -f {{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json; cp -f {{ obg_gcp_user_gcsdockerregistry_file }} {{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json"
-#  copy:
-#    src: "{{ obg_gcp_user_gcsdockerregistry_file }}"
-#    dest: "{{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json"
+#  shell: "rm -f {{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json; cp -f {{ obg_gcp_user_gcsdockerregistry_file }} {{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json"
+  copy:
+    src: "{{ obg_gcp_user_gcsdockerregistry_file }}"
+    dest: "{{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json"
   when: g_inventory_cloud_provider == "gcp"
   register: gcsdockerregistry_out
 
