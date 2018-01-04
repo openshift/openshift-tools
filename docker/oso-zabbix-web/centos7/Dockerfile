@@ -21,9 +21,10 @@ RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 EXPOSE 8000
 
 ADD zabbix.repo /etc/yum.repos.d/
+ADD pdagent.repo /etc/yum.repos.d/
 
 # Install zabbix from zabbix repo
-RUN yum-install-check.sh -y zabbix-web-mysql mariadb && \
+RUN yum-install-check.sh -y zabbix-web-mysql mariadb pdagent pdagent-integrations && \
     yum -y update && \
     yum clean all
 
@@ -56,6 +57,10 @@ ADD welcome.conf /etc/httpd/conf.d/
 # Start apache
 ADD start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
+
+# Install the PagerDuty plugin
+RUN mkdir -p /usr/share/zabbix/alertscripts
+RUN ln -s /usr/share/pdagent-integrations/bin/pd-zabbix /usr/share/zabbix/alertscripts
 
 # Fix v3 specific environment
 # Make the container work more consistently in and out of openshift
