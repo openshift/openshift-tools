@@ -1,12 +1,4 @@
 ---
-- name: Include private vars
-  include_role:
-    name: ops_roles/include_private_vars
-
-- name: Include ops clam signatures and config
-  include_role:
-    name: private_roles/oso_clam_signatures
-
 - name: "create project for {{ ocav_namespace }}"
   oadm_project:
     name: "{{ ocav_namespace }}"
