@@ -1,8 +1,4 @@
 ---
-- name: Include private vars
-  include_role:
-    name: ops_roles/include_private_vars
-
 - name: Create temp directory to store the template
   command: mktemp -d /tmp/openshift-logging-ansible-XXXXXX
   register: mktemp
