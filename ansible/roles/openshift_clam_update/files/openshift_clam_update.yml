@@ -20,7 +20,7 @@ objects:
     source:
       contextDir: "docker/oso-ops-base/${PLAT}"
       git:
-        ref: prod
+        ref: prod 
         uri: https://github.com/openshift/openshift-tools
       secrets: []
       type: Git
