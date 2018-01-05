@@ -15,6 +15,12 @@
     msg: "{{ vosar_rpm_directory }} doesn't exist, or isn't a directory."
   when: not rpm_dir_stat_output.stat.exists
 
+- name: Get the version of the RPMS
+  shell: "rpm -qp --queryformat '%{VERSION}\n' openshift-ansible*rpm | sort | uniq"
+  args:
+    chdir: "{{ vosar_rpm_directory }}"
+  register: rpm_short_version
+
 - name: Extract the contents of the installer RPMs
   shell: "rpm2cpio {{ item | quote }} | cpio -idmv"
   args:
@@ -22,14 +28,21 @@
   with_fileglob:
   - "{{ vosar_rpm_directory }}/openshift-ansible-*.rpm"
 
-- name: Fix up the extracted contents into a normal ansible layout
-  command: "mv {{ item | quote }} {{ vosar_output_directory }}"
+- name: check for dirs that need to be moved
+  stat:
+    path: "{{ item }}"
   with_items:
   - "{{ vosar_output_directory }}/usr/share/ansible_plugins/filter_plugins/"
   - "{{ vosar_output_directory }}/usr/share/ansible_plugins/lookup_plugins/"
   - "{{ vosar_output_directory }}/usr/share/ansible/openshift-ansible/playbooks/"
   - "{{ vosar_output_directory }}/usr/share/ansible/openshift-ansible/roles/"
   - "{{ vosar_output_directory }}/usr/share/ansible/openshift-ansible/library/"
+  register: rpm_dir_stat_output
+
+- name: Fix up the extracted contents into a normal ansible layout
+  command: "mv {{ item.item | quote }} {{ vosar_output_directory }}"
+  when: item.stat.exists
+  with_items: "{{ rpm_dir_stat_output.results }}"
 
 - name: Make the vendored directory ONLY be the BYO installer
   file:
@@ -73,6 +86,7 @@
   with_items:
   - filter_plugins
   - lookup_plugins
+  when: rpm_short_version.stdout | version_compare('3.8', '<')
 
 # Let's grab the byo dirs that might need symlinks
 - name: Lookup byo openshift-* dirs
@@ -81,6 +95,7 @@
     patterns: "openshift-*"
     file_type: directory
   register: openshift_byo_dirs
+  when: rpm_short_version.stdout | version_compare('3.8', '<')
 
 - name: Symlink the filter and lookup plugins (no longer shipped with rpm) byo/<subdirs>
   file:
@@ -90,6 +105,7 @@
   with_nested:
   - [ 'filter_plugins', 'lookup_plugins' ]
   - "{{ openshift_byo_dirs.files }}"
+  when: rpm_short_version.stdout | version_compare('3.8', '<')
 
 - name: Symlink the filter and lookup plugins roles/openshift_master_facts
   file:
@@ -102,6 +118,7 @@
     linkname: oo_filters.py
   - dirname: lookup_plugins
     linkname: oo_option.py
+  when: rpm_short_version.stdout | version_compare('3.8', '<')
 
 # Each OpenShift release ships with 1-2 supported upgrade paths in a
 # version specific directory like "v3_4". Search for anything that looks like
@@ -112,10 +129,7 @@
     patterns: "v3_*"
     file_type: directory
   register: upgrade_versions
-
-- fail:
-    msg: "No upgrade directories found."
-  when: upgrade_versions.files | length == 0
+  when: rpm_short_version.stdout | version_compare('3.8', '<')
 
 - name: Symlink the filter and lookup plugins (no longer shipped with rpm) for byo/openshift-cluster/upgrades
   file:
@@ -125,7 +139,12 @@
   with_nested:
   - [ 'filter_plugins', 'lookup_plugins' ]
   - "{{ upgrade_versions.files }}"
+  when: rpm_short_version.stdout | version_compare('3.8', '<')
 
+#######################################################################
+# This section creates a lib_vendored_deps role that includes all of
+# the deps from openshift-ansible that can be included in playbook to
+# source dependencies
 # Create the lib_vendored_deps role which includes necessary deps for easy use
 - name: Make the lib_vendored_deps role
   file:
@@ -136,16 +155,13 @@
   - "{{ vosar_output_directory }}/roles/lib_vendored_deps/library"
   - "{{ vosar_output_directory }}/roles/lib_vendored_deps/filter_plugins"
   - "{{ vosar_output_directory }}/roles/lib_vendored_deps/lookup_plugins"
+  - "{{ vosar_output_directory }}/roles/lib_vendored_deps/callback_plugins"
+  - "{{ vosar_output_directory }}/roles/lib_vendored_deps/action_plugins"
 
 - name: Ensure contiv role gets committed to git
   file:
     state: touch
     path: "{{ vosar_output_directory }}/roles/contiv/empty_file"
-
-#######################################################################
-# This section creates a lib_vendored_deps role that includes all of
-# the deps from openshift-ansible that can be included in playbook to
-# source dependencies
 
 ###############################
 # This is the roles/lib_* dirs
@@ -156,6 +172,9 @@
     file_type: directory
   register: lib_dirs
 
+################################
+## This is the roles/lib_*/library dirs
+################################
 - find:
     path: "{{ item }}/library"
     patterns: "*.py"
@@ -177,6 +196,106 @@
     src: "{{ item | replace(vosar_output_directory + '/roles', '../..') }}"
     path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/library/' + (item | basename) }}"
   with_items: "{{ lib_roles_files_path }}"
+
+################################
+## This is the roles/lib_*/filter_plugins dirs
+################################
+- find:
+    path: "{{ item }}/filter_plugins"
+    patterns: "*.py"
+    file_type: file
+  with_items:
+  - "{{ lib_dirs.files | map(attribute='path') | list }}"
+  register: fp_files
+
+- debug:
+    msg: "{{ fp_files.results | map(attribute='files') | list | ops_flatten | map(attribute='path') | list }}"
+
+- name: set the paths into a var
+  set_fact:
+    fp_roles_files_path: "{{ fp_files.results | map(attribute='files') | list | ops_flatten | map(attribute='path') | list }}"
+
+- name: Symlink the files into the appropriate spots
+  file:
+    state: link
+    src: "{{ item | replace(vosar_output_directory + '/roles', '../..') }}"
+    path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/filter_plugins/' + (item | basename) }}"
+  with_items: "{{ fp_roles_files_path }}"
+
+################################
+## This is the roles/lib_*/lookup_plugins dirs
+################################
+- find:
+    path: "{{ item }}/lookup_plugins"
+    patterns: "*.py"
+    file_type: file
+  with_items:
+  - "{{ lib_dirs.files | map(attribute='path') | list }}"
+  register: lp_files
+
+- debug:
+    msg: "{{ lp_files.results | map(attribute='files') | list | ops_flatten | map(attribute='path') | list }}"
+
+- name: set the paths into a var
+  set_fact:
+    lp_roles_files_path: "{{ lp_files.results | map(attribute='files') | list | ops_flatten | map(attribute='path') | list }}"
+
+- name: Symlink the files into the appropriate spots
+  file:
+    state: link
+    src: "{{ item | replace(vosar_output_directory + '/roles', '../..') }}"
+    path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/lookup_plugins/' + (item | basename) }}"
+  with_items: "{{ lp_roles_files_path }}"
+
+################################
+## This is the roles/lib_*/action_plugins dirs
+################################
+- find:
+    path: "{{ item }}/action_plugins"
+    patterns: "*.py"
+    file_type: file
+  with_items:
+  - "{{ lib_dirs.files | map(attribute='path') | list }}"
+  register: ap_files
+
+- debug:
+    msg: "{{ ap_files.results | map(attribute='files') | list | ops_flatten | map(attribute='path') | list }}"
+
+- name: set the paths into a var
+  set_fact:
+    ap_roles_files_path: "{{ lp_files.results | map(attribute='files') | list | ops_flatten | map(attribute='path') | list }}"
+
+- name: Symlink the files into the appropriate spots
+  file:
+    state: link
+    src: "{{ item | replace(vosar_output_directory + '/roles', '../..') }}"
+    path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/action_plugins/' + (item | basename) }}"
+  with_items: "{{ ap_roles_files_path }}"
+
+################################
+## This is the roles/lib_*/callback_plugins dirs
+################################
+- find:
+    path: "{{ item }}/callback_plugins"
+    patterns: "*.py"
+    file_type: file
+  with_items:
+  - "{{ lib_dirs.files | map(attribute='path') | list }}"
+  register: cb_files
+
+- debug:
+    msg: "{{ cb_files.results | map(attribute='files') | list | ops_flatten | map(attribute='path') | list }}"
+
+- name: set the paths into a var
+  set_fact:
+    cb_roles_files_path: "{{ cb_files.results | map(attribute='files') | list | ops_flatten | map(attribute='path') | list }}"
+
+- name: Symlink the files into the appropriate spots
+  file:
+    state: link
+    src: "{{ item | replace(vosar_output_directory + '/roles', '../..') }}"
+    path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/callback_plugins/' + (item | basename) }}"
+  with_items: "{{ cb_roles_files_path }}"
 ###############################
 # END roles/lib_* dirs
 ###############################
@@ -184,11 +303,13 @@
 ###############################
 # library dir
 ###############################
+- debug: var=rpm_short_version.stdout
 - find:
     path: "{{ vosar_output_directory }}/library"
     patterns: "*.py"
     file_type: file
   register: lib_files
+  when: rpm_short_version.stdout | version_compare('3.8', '<')
 
 - name: Symlink the files into the appropriate spots
   file:
@@ -196,6 +317,7 @@
     src: "{{ item | replace(vosar_output_directory, '../../..') }}"
     path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/library/' + (item | basename) }}"
   with_items: "{{ lib_files.files | map(attribute='path') | list }}"
+  when: rpm_short_version.stdout | version_compare('3.8', '<')
 ###############################
 # End library dir
 ###############################
@@ -208,6 +330,7 @@
     patterns: "*.py"
     file_type: file
   register: lib_files
+  when: rpm_short_version.stdout | version_compare('3.8', '<')
 
 - name: Symlink the files into the appropriate spots
   file:
@@ -215,15 +338,18 @@
     src: "{{ item | replace(vosar_output_directory, '../../..') }}"
     path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/filter_plugins/' + (item | basename) }}"
   with_items: "{{ lib_files.files | map(attribute='path') | list }}"
+  when: rpm_short_version.stdout | version_compare('3.8', '<')
 
 ###############################
 # lookup_plugin dir
 ###############################
-- find:
+- name: find lookup plugins
+  find:
     path: "{{ vosar_output_directory }}/lookup_plugins"
     patterns: "*.py"
     file_type: file
   register: lib_files
+  when: rpm_short_version.stdout | version_compare('3.8', '<')
 
 - name: Symlink the files into the appropriate spots
   file:
@@ -231,3 +357,4 @@
     src: "{{ item | replace(vosar_output_directory, '../../..') }}"
     path: "{{ vosar_output_directory + '/roles/lib_vendored_deps/lookup_plugins/' + (item | basename) }}"
   with_items: "{{ lib_files.files | map(attribute='path') | list }}"
+  when: rpm_short_version.stdout | version_compare('3.8', '<')
