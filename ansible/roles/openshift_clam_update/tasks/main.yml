@@ -9,12 +9,12 @@
 - name: create clamup serviceaccount
   oc_serviceaccount:
     name: clamup
-    namespace: clam-update
+    namespace: "{{ ocav_namespace }}"
 
 - name: add clamup to nonroot SCC
   oadm_policy_user:
-    namespace: clam-update
-    user: system:serviceaccount:clam-update:clamup
+    namespace: "{{ ocav_namespace }}" 
+    user: "system:serviceaccount:{{ ocav_namespace }}:clamup"
     resource_kind: scc
     resource_name: nonroot
 
