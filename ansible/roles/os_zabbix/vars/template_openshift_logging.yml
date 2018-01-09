@@ -74,3 +74,9 @@ g_template_logging:
     description: "elasticsearch pv free space"
     applications:
     - EFK
+
+  ztriggerprototypes:
+  - name: "{% raw %}Logging: {{ '{#' }}OSO_METRICS} ES Cluster is not green on {HOST.NAME}{% endraw %}"
+    expression: "{% raw %}{Template OpenShift Logging:openshift.logging.elasticsarch.pod_health[{{ '{#' }}OSO_METRICS}].last()}<2{% endraw %}"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_logging.asciidoc"
+    priority: high

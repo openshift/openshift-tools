@@ -265,7 +265,7 @@ class OpenshiftLoggingStatus(object):
                 })
                 for pod, value in data['pods'].iteritems():
                     self.metric_sender.add_metric({
-                        "openshift.logging.elasticsarch.pod_health[%s]" %(pod): value['elasticsearch_health'],
+                        "openshift.logging.elasticsarch.pod_health.[%s]" %(pod): value['elasticsearch_health'],
                         "openshift.logging.elasticsarch.disk_used[%s]" %(pod): value['disk']['used'],
                         "openshift.logging.elasticsarch.disk_free[%s]" %(pod): value['disk']['free']
                     })
