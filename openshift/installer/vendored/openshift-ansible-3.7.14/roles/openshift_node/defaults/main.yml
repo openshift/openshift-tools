@@ -1,0 +1,118 @@
+---
+openshift_node_debug_level: "{{ debug_level | default(2) }}"
+
+r_openshift_node_firewall_enabled: "{{ os_firewall_enabled | default(True) }}"
+r_openshift_node_use_firewalld: "{{ os_firewall_use_firewalld | default(False) }}"
+
+openshift_deployment_type: "{{ openshift_deployment_type | default('origin') }}"
+openshift_service_type: "{{ 'origin' if openshift_deployment_type == 'origin' else 'atomic-openshift' }}"
+
+openshift_image_tag: ''
+
+default_r_openshift_node_image_prep_packages:
+- "{{ openshift_service_type }}-master"
+- "{{ openshift_service_type }}-node"
+- "{{ openshift_service_type }}-docker-excluder"
+- "{{ openshift_service_type }}-sdn-ovs"
+- ansible
+- openvswitch
+- docker
+- etcd
+- haproxy
+- dnsmasq
+- ntp
+- logrotate
+- httpd-tools
+- bind
+- firewalld
+- libselinux-python
+- conntrack-tools
+- openssl
+- cloud-init
+- iproute
+- python-dbus
+- PyYAML
+- yum-utils
+# gluster
+- glusterfs-fuse
+# nfs
+- nfs-utils
+- flannel
+- bash-completion
+# cockpit
+- cockpit-ws
+- cockpit-system
+- cockpit-bridge
+- cockpit-docker
+# iscsi
+- iscsi-initiator-utils
+# ceph
+- ceph-common
+# systemcontainer
+# - runc
+# - container-selinux
+# - atomic
+#
+r_openshift_node_image_prep_packages: "{{ default_r_openshift_node_image_prep_packages | union(openshift_node_image_prep_packages | default([])) }}"
+
+openshift_node_bootstrap: False
+
+r_openshift_node_os_firewall_deny: []
+default_r_openshift_node_os_firewall_allow:
+- service: Kubernetes kubelet
+  port: 10250/tcp
+- service: http
+  port: 80/tcp
+- service: https
+  port: 443/tcp
+- service: OpenShift OVS sdn
+  port: 4789/udp
+  cond: openshift_use_openshift_sdn | bool
+- service: Calico BGP Port
+  port: 179/tcp
+  cond: "{{ openshift_node_use_calico }}"
+- service: Kubernetes service NodePort TCP
+  port: "{{ openshift_node_port_range | default('') }}/tcp"
+  cond: "{{ openshift_node_port_range is defined }}"
+- service: Kubernetes service NodePort UDP
+  port: "{{ openshift_node_port_range | default('') }}/udp"
+  cond: "{{ openshift_node_port_range is defined }}"
+# Allow multiple port ranges to be added to the role
+r_openshift_node_os_firewall_allow: "{{ default_r_openshift_node_os_firewall_allow | union(openshift_node_open_ports | default([])) }}"
+
+# oreg_url is defined by user input
+oreg_host: "{{ oreg_url.split('/')[0] if (oreg_url is defined and '.' in oreg_url.split('/')[0]) else '' }}"
+oreg_auth_credentials_path: "{{ openshift_node_data_dir }}/.docker"
+oreg_auth_credentials_replace: False
+l_bind_docker_reg_auth: False
+openshift_docker_alternative_creds: "{{ (openshift_docker_use_system_container | default(False)) or (openshift_use_crio_only | default(False)) }}"
+
+# NOTE
+# r_openshift_node_*_default may be defined external to this role.
+# openshift_use_*, if defined, may affect other roles or play behavior.
+openshift_node_use_openshift_sdn_default: "{{ openshift_use_openshift_sdn | default(True) }}"
+openshift_node_use_openshift_sdn: "{{ openshift_node_use_openshift_sdn_default }}"
+
+openshift_node_sdn_network_plugin_name_default: "{{ os_sdn_network_plugin_name | default('redhat/openshift-ovs-subnet') }}"
+openshift_node_sdn_network_plugin_name: "{{ openshift_node_sdn_network_plugin_name_default }}"
+
+openshift_node_use_calico_default: "{{ openshift_use_calico | default(False) }}"
+openshift_node_use_calico: "{{ openshift_node_use_calico_default }}"
+
+openshift_node_use_nuage_default: "{{ openshift_use_nuage | default(False) }}"
+openshift_node_use_nuage: "{{ openshift_node_use_nuage_default }}"
+
+openshift_node_use_contiv_default: "{{ openshift_use_contiv | default(False) }}"
+openshift_node_use_contiv: "{{ openshift_node_use_contiv_default }}"
+
+openshift_node_use_kuryr_default: "{{ openshift_use_kuryr | default(False) }}"
+openshift_node_use_kuryr: "{{ openshift_node_use_kuryr_default }}"
+
+openshift_node_data_dir_default: "{{ openshift_data_dir | default('/var/lib/origin') }}"
+openshift_node_data_dir: "{{ openshift_node_data_dir_default }}"
+
+openshift_node_config_dir_default: "/etc/origin/node"
+openshift_node_config_dir: "{{ openshift_node_config_dir_default }}"
+
+openshift_node_image_config_latest_default: "{{ openshift_image_config_latest | default(False) }}"
+openshift_node_image_config_latest: "{{ openshift_node_image_config_latest_default }}"
