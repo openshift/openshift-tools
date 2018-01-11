@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.124
+Version:       0.1.125
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -492,6 +492,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Jan 11 2018 Justin Pierce <jupierce@redhat.com> 0.1.125-1
+- Add storage migration CD operation (jupierce@redhat.com)
+
 * Wed Jan 10 2018 Zhiming Zhang <zhizhang@redhat.com> 0.1.124-1
 - fix mis-spell in logging check script and add trigger for the logging es
   cluster (zhizhang@zhizhang-laptop-nay.redhat.com)
