@@ -42,7 +42,7 @@ RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oadm '" >> /root/.bashrc
 
 
 RUN yum clean metadata && \
-    yum-install-check.sh -y python-pip pcp pcp-conf pcp-testsuite \
+    yum-install-check.sh -y python2-pip pcp pcp-conf pcp-testsuite \
         python-requests pyOpenSSL \
         python-openshift-tools \
         python-openshift-tools-monitoring-pcp \
@@ -61,10 +61,10 @@ RUN yum clean metadata && \
         openshift-tools-scripts-monitoring-autoheal \
         pcp-manager pcp-webapi python-pcp \
         python-httplib2 \
-        python-pyasn1 python-pyasn1-modules python-rsa \
+        python2-pyasn1 python2-pyasn1-modules python2-rsa \
         openvswitch \
         python-configobj \
-        python-psutil \
+        python2-psutil \
         pylint \
         tito \
         python-devel \
