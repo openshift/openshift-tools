@@ -51,7 +51,7 @@ RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oadm '" >> /root/.bashrc
 RUN yum-install-check.sh -y atomic-openshift-clients && yum clean metadata
 
 RUN yum clean metadata && \
-    yum-install-check.sh -y python-pip pcp pcp-conf pcp-testsuite \
+    yum-install-check.sh -y python2-pip pcp pcp-conf pcp-testsuite \
         python-requests pyOpenSSL \
         python-openshift-tools \
         python-openshift-tools-monitoring-pcp \
@@ -70,10 +70,10 @@ RUN yum clean metadata && \
         openshift-tools-scripts-monitoring-autoheal \
         pcp-manager pcp-webapi python-pcp \
         python-httplib2 \
-        python-pyasn1 python-pyasn1-modules python-rsa \
+        python2-pyasn1 python2-pyasn1-modules python2-rsa \
         openvswitch \
         python-configobj \
-        python-psutil \
+        python2-psutil \
         pylint \
         tito \
         python-devel \
@@ -87,7 +87,7 @@ RUN yum clean metadata && \
         python-lxml \
         rkhunter \
         docker-python && \
-    yum-install-check.sh -y gcloud python-uri-templates google-api-python-client python-oauth2client --disablerepo="rhel-server-releases-optional" && \
+    yum-install-check.sh -y google-cloud-sdk python2-uritemplates python2-google-api-client python2-oauth2client --disablerepo="rhel-server-releases-optional" && \
     yum clean all
 
 ADD urllib3-connectionpool-patch /root/
