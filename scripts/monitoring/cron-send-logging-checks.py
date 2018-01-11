@@ -245,8 +245,8 @@ class OpenshiftLoggingStatus(object):
 
     def report_to_zabbix(self, logging_status):
         ''' Report all of our findings to zabbix '''
-        self.metric_sender.add_dynamic_metric('openshift.logging.elasticsarch.pods',
-                                              '#OSO_ELASTIC',
+        self.metric_sender.add_dynamic_metric('openshift.logging.elasticsearch.pods',
+                                              '#OSO_METRICS',
                                               logging_status['elasticsearch']['pods'].keys())
         for item, data in logging_status.iteritems():
             if item == "fluentd":
@@ -265,9 +265,9 @@ class OpenshiftLoggingStatus(object):
                 })
                 for pod, value in data['pods'].iteritems():
                     self.metric_sender.add_metric({
-                        "openshift.logging.elasticsarch.pod_health[%s]" %(pod): value['elasticsearch_health'],
-                        "openshift.logging.elasticsarch.disk_used[%s]" %(pod): value['disk']['used'],
-                        "openshift.logging.elasticsarch.disk_free[%s]" %(pod): value['disk']['free']
+                        "openshift.logging.elasticsearch.pod_health[%s]" %(pod): value['elasticsearch_health'],
+                        "openshift.logging.elasticsearch.disk_used[%s]" %(pod): value['disk']['used'],
+                        "openshift.logging.elasticsearch.disk_free[%s]" %(pod): value['disk']['free']
                     })
         self.metric_sender.send_metrics()
 
