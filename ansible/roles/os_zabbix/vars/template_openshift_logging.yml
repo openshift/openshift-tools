@@ -47,30 +47,36 @@ g_template_logging:
     priority: high
 
   zdiscoveryrules:
-  - name: openshift.logging.elasticsarch.pods
-    key: openshift.logging.elasticsarch.pods
+  - name: openshift.logging.elasticsearch.pods
+    key: openshift.logging.elasticsearch.pods
     lifetime: 7
     description: "Elasticsearch pods"
  
   zitemprototypes:
-  - discoveryrule_key: openshift.logging.elasticsarch.pods
-    name: "{% raw %}openshift.logging.elasticsarch.pod_health.{{ '{#' }}OSO_METRICS}{% endraw %}"
-    key: "{% raw %}openshift.logging.elasticsarch.pod_health[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+  - discoveryrule_key: openshift.logging.elasticsearch.pods
+    name: "{% raw %}openshift.logging.elasticsearch.pod_health.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.logging.elasticsearch.pod_health[{{ '{#' }}OSO_METRICS}]{% endraw %}"
     value_type: int
     description: "elasticsearch pod health status"
     applications:
     - EFK
-  - discoveryrule_key: openshift.logging.elasticsarch.pods
-    name: "{% raw %}openshift.logging.elasticsarch.disk_used.{{ '{#' }}OSO_METRICS}{% endraw %}"
-    key: "{% raw %}openshift.logging.elasticsarch.disk_used[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+  - discoveryrule_key: openshift.logging.elasticsearch.pods
+    name: "{% raw %}openshift.logging.elasticsearch.disk_used.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.logging.elasticsearch.disk_used[{{ '{#' }}OSO_METRICS}]{% endraw %}"
     value_type: int
     description: "elasticsearch pv disk usage"
     applications:
     - EFK
-  - discoveryrule_key: openshift.logging.elasticsarch.pods
-    name: "{% raw %}openshift.logging.elasticsarch.disk_free.{{ '{#' }}OSO_METRICS}{% endraw %}"
-    key: "{% raw %}openshift.logging.elasticsarch.disk_free[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+  - discoveryrule_key: openshift.logging.elasticsearch.pods
+    name: "{% raw %}openshift.logging.elasticsearch.disk_free.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.logging.elasticsearch.disk_free[{{ '{#' }}OSO_METRICS}]{% endraw %}"
     value_type: int
     description: "elasticsearch pv free space"
     applications:
     - EFK
+
+  ztriggerprototypes:
+  - name: "{% raw %}Logging: {{ '{#' }}OSO_METRICS} ES Cluster is not green on {HOST.NAME}{% endraw %}"
+    expression: "{% raw %}{Template OpenShift Logging:openshift.logging.elasticsearch.pod_health[{{ '{#' }}OSO_METRICS}].last()}<2{% endraw %}"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_logging.asciidoc"
+    priority: high
