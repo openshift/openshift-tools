@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.51
+Version:        0.0.52
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,69 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Jan 11 2018 Justin Pierce <jupierce@redhat.com> 0.0.52-1
+- fix mis-spell in logging check script and add trigger for the logging es
+  cluster (zhizhang@zhizhang-laptop-nay.redhat.com)
+- use variable for namespace (dedgar@redhat.com)
+- updated the vendor openshift ansible role to support 3.8 and also support
+  previous versions (mwoodson@redhat.com)
+- moving var includes to tech profile (dedgar@redhat.com)
+- updating includes (dedgar@redhat.com)
+- need some logic to set the destination file for gcs keyfile ONLY when we're
+  installing on GCS (dyocum@redhat.com)
+- fixes to address pylint, @drewandersonnz and @portante reviews
+  (sten@redhat.com)
+- grow_root_vg, tested on ded-stage-aws and online-stg (sten@redhat.com)
+- Add pylint disable (dbaker@redhat.com)
+- Fix indent (dbaker@redhat.com)
+- renamed filter plugins to have different names. needed for 2.4
+  (mwoodson@redhat.com)
+- Handle presumed data structure change of incidents; permit proper matching of
+  past incidents in order to update or close them (dbaker@redhat.com)
+- fixing some new openshift-3.8 vendoring issues (mwoodson@redhat.com)
+- changed storageclass name gcppd to standard to match upstream openshift-
+  ansible (dyocum@redhat.com)
+- add python2-cryptography rpm for ansible 2.4 (jdiaz@redhat.com)
+- change the app create to the primary master (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+- extrack rpms from openshift ansible -- leave the rpms around for now
+  (mwoodson@redhat.com)
+- add a when to copy and convert gcs keyfile task (dyocum@redhat.com)
+- set a default obg_gcp_user_gcsdockerregistry_file for non-gce clusters
+  (dyocum@redhat.com)
+- rm dest_gcsdockerregistry_file if it exists (dyocum@redhat.com)
+- enable ROUTER_USE_PROXY_PROTOCOL=True (dyocum@redhat.com)
+- remove extra crap (dyocum@redhat.com)
+- typo (dyocum@redhat.com)
+- convert gcs user key from  yaml to json with a python one-liner and make it
+  available in /tmp/$USER (dyocum@redhat.com)
+- try local_action: copy: (dyocum@redhat.com)
+- seems ugly to cat in, echo out to convert yaml to json, but let's try it
+  (dyocum@redhat.com)
+- ignore_errors to see the error. :p (dyocum@redhat.com)
+- debug the copy/convert (dyocum@redhat.com)
+- wrong indentation (dyocum@redhat.com)
+- copying the obg_gcp_user_gcsdockerregistry_file from the o-a-private to tmp
+  dir, converting from yaml to json (dyocum@redhat.com)
+- changed obg_gce_gcs_keyfile to obg_registry_storage_gcs_keyfile
+  (dyocum@redhat.com)
+- fixed a typo (dyocum@redhat.com)
+- added support for gcs bucket for debug purposes, the wait_for_pod registry
+  check should not fail and halt the rest of the cluster component installation
+  (dyocum@redhat.com)
+- added more regions to the copy script (mwoodson@redhat.com)
+- update tbyo generator template (mwoodson@redhat.com)
+- cleaning up (dedgar@redhat.com)
+- fixing node name (dedgar@redhat.com)
+- fixing node name (dedgar@redhat.com)
+- adding clam scanner pod (dedgar@redhat.com)
+- another cleanup of ntp/chrony (mwoodson@redhat.com)
+- fixed ntp for gcp (don't remove ntp, just disable it (mwoodson@redhat.com)
+- updated "edits" section for correctness (dyocum@redhat.com)
+- credentials changed to kubeconfig (dyocum@redhat.com)
+- added docker registry rate limiting to new cluster installs
+  (mwoodson@redhat.com)
+
 * Thu Nov 16 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.51-1
 - Add early log/drop for udp 80 traffic (dbaker@redhat.com)
 - Avoid bug where scripts rpm automatically updates (sedgar@redhat.com)
