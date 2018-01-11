@@ -1,12 +1,4 @@
 ---
-- name: Include private vars
-  include_role:
-    name: ops_roles/include_private_vars
-
-- name: Include ops clam signatures and config
-  include_role:
-    name: private_roles/oso_clam_signatures
-
 - name: "create project for {{ ocav_namespace }}"
   oadm_project:
     name: "{{ ocav_namespace }}"
@@ -17,12 +9,12 @@
 - name: create clamup serviceaccount
   oc_serviceaccount:
     name: clamup
-    namespace: clam-update
+    namespace: "{{ ocav_namespace }}"
 
 - name: add clamup to nonroot SCC
   oadm_policy_user:
-    namespace: clam-update
-    user: system:serviceaccount:clam-update:clamup
+    namespace: "{{ ocav_namespace }}" 
+    user: "system:serviceaccount:{{ ocav_namespace }}:clamup"
     resource_kind: scc
     resource_name: nonroot
 
