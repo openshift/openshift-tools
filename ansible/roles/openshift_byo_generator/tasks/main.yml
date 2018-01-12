@@ -35,7 +35,7 @@
 - name: Set GCE vars
   fail:
     msg: "Please define {{ item }}"
-  when: "{{ item }} is undefined and obg_cloud_provider == 'gcp'"
+  when: "{{ item }} is undefined and obg_cloud_provider == 'gce'"
   with_items:
   - obg_gcp_user_gcsdockerregistry_file
   - obg_registry_storage_gcs_keyfile
@@ -91,21 +91,8 @@
     state: directory
     recurse: True
 
-- name: copy gcp_user_gcsdockerregistry to obg_output_path
-#  shell: "rm -f {{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json; cp -f {{ obg_gcp_user_gcsdockerregistry_file }} {{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json"
-  copy:
-    src: "{{ obg_gcp_user_gcsdockerregistry_file }}"
-    dest: "{{ obg_output_path }}/{{ obg_clusterid }}-gcp_user_gcsdockerregistry.json"
-  when: g_inventory_cloud_provider == "gcp"
-  register: gcsdockerregistry_out
-
-- debug:
-    var: gcsdockerregistry_out
-    verbosity: 2
-
 - name: create the byo
   template:
     src: byo.yml.j2
     dest: "{{ obg_output_path }}/{{ obg_clusterid }}-byo-inventory"
-
 
