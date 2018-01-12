@@ -38,7 +38,6 @@
   when: "{{ item }} is undefined and obg_cloud_provider == 'gce'"
   with_items:
   - obg_gcp_user_gcsdockerregistry_file
-  - obg_registry_storage_gcs_keyfile
 
 - name: Set custom Web UI vars
   fail:
