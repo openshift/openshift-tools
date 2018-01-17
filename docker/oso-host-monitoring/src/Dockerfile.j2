@@ -48,7 +48,7 @@ RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oadm '" >> /root/.bashrc
 RUN yum-install-check.sh -y atomic-openshift-clients && yum clean metadata
 {% endif %}
 
-RUN yum clean metadata && \
+RUN yum --enablerepo=li clean metadata && \
     yum-install-check.sh -y python-pip pcp pcp-conf pcp-testsuite \
         python-requests pyOpenSSL \
         python-openshift-tools \
