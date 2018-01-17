@@ -41,6 +41,19 @@ RUN echo -e "\n\nalias oca='KUBECONFIG=/tmp/admin.kubeconfig oc '" >> /root/.bas
 RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oadm '" >> /root/.bashrc
 
 
+
+# Add google-cloud-sdk repo
+RUN tee -a /etc/yum.repos.d/google-cloud-sdk.repo << EOM
+    [google-cloud-sdk]
+    name=Google Cloud SDK
+    baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64
+    enabled=1
+    gpgcheck=1
+    repo_gpgcheck=1
+    gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+           https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    EOM
+
 RUN yum clean metadata && \
     yum-install-check.sh -y python2-pip pcp pcp-conf pcp-testsuite \
         python-requests pyOpenSSL \
