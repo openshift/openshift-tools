@@ -176,9 +176,8 @@ GCP Python libraries developed for monitoring OpenShift.
 # ----------------------------------------------------------------------------------
 %package monitoring-openshift
 Summary:       OpenShift Tools Openshift Python Libraries Package
-# Requiring on /usr/bin/oadm (atomic-openshift or upstream origin
 # and /usr/bin/oc (atomic-openshift-clients or upstream origin-clients)
-Requires:      python2,python-openshift-tools,/usr/bin/oadm,/usr/bin/oc
+Requires:      python2,python-openshift-tools,/usr/bin/oc
 BuildArch:     noarch
 
 %description monitoring-openshift

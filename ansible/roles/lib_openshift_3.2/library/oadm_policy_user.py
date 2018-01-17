@@ -222,7 +222,7 @@ class OpenShiftCLI(object):
         '''Base command for oc '''
         cmds = []
         if oadm:
-            cmds = ['/usr/bin/oadm']
+            cmds = ['/usr/bin/oc', 'adm']
         else:
             cmds = ['/usr/bin/oc']
 
