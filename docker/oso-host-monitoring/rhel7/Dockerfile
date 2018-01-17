@@ -52,16 +52,14 @@ RUN yum-install-check.sh -y atomic-openshift-clients && yum clean metadata
 
 
 # Add google-cloud-sdk repo
-RUN tee -a /etc/yum.repos.d/google-cloud-sdk.repo << EOM
-    [google-cloud-sdk]
-    name=Google Cloud SDK
-    baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64
-    enabled=1
-    gpgcheck=1
-    repo_gpgcheck=1
-    gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-           https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-EOM
+RUN echo $'[google-cloud-sdk]\n\
+name=Google Cloud SDK\n\
+baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64\n\
+enabled=1\n\
+gpgcheck=1\n\
+repo_gpgcheck=1\n\
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg\n\
+       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg' > /etc/yum.repos.d/google-cloud-sdk.repo
 
 RUN yum clean metadata && \
     yum-install-check.sh -y python2-pip pcp pcp-conf pcp-testsuite \
