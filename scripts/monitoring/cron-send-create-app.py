@@ -169,7 +169,7 @@ def setup(config):
 
     if not project:
         try:
-            runOCcmd("new-project {}".format(config.namespace), base_cmd='oadm')
+            runOCcmd("new-project {}".format(config.namespace), base_cmd='oc adm')
             time.sleep(commandDelay)
         except Exception:
             logger.exception('error creating new project')
