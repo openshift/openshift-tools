@@ -15,7 +15,7 @@
 
 # Attempt to drain nodes for 2 hours before giving up. Continue with upgrade if drain fails after that long
 - name: Drain Node (when specified)
-  command: /usr/bin/oadm drain "{{ node_dns_name }}"  --force --delete-local-data --ignore-daemonsets
+  command: /usr/bin/oc adm drain "{{ node_dns_name }}"  --force --delete-local-data --ignore-daemonsets
   delegate_to: "{{ osns_cluster_master }}"
   register: result_drain
   when: osns_drain is defined
