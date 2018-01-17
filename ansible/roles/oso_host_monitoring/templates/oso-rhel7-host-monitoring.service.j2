@@ -51,7 +51,6 @@ ExecStart=/usr/bin/docker run --name {{ osohm_host_monitoring }}                
            -v /etc/origin/node:/etc/origin/node                                                     \
 {% endif %}
            -v /usr/bin/oc:/usr/bin/oc                                                               \
-           -v /usr/bin/oadm:/usr/bin/oadm                                                           \
            -v /:/host:ro,rslave                                                                     \
            -v /var/cache/yum:/host/var/cache/yum:rw                                                 \
            -v /etc/openshift_tools:/container_setup:ro                                              \
