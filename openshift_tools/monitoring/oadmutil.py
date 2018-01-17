@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: expandtab:tabstop=4:shiftwidth=4
 '''
-  Interface to OpenShift oadm command
+  Interface to OpenShift 'oc adm' command
 '''
 #
 #   Copyright 2015 Red Hat Inc.
@@ -39,11 +39,11 @@ def cleanup_file(inc_file):
         pass
 
 class OadmUtil(object):
-    ''' Wrapper for interfacing with OpenShift 'oadm' utility '''
+    ''' Wrapper for interfacing with OpenShift 'oc adm' utility '''
 
     def __init__(self, namespace='default', config_file='/tmp/admin.kubeconfig', verbose=False):
         '''
-        Take initial values for running 'oadm'
+        Take initial values for running 'oc adm'
         Ensure to set non-default namespace if that is what is desired
         '''
         self.namespace = namespace
@@ -80,7 +80,7 @@ class OadmUtil(object):
     def get_version(self):
         ''' Get version of openshift/kubernetes '''
 
-        version_cmd = "oadm version "
+        version_cmd = "oc version "
         version_output = self._run_cmd(version_cmd)
 
         return version_output

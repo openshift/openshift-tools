@@ -112,7 +112,7 @@ class OpenShiftPrune(object):
             if self.args.debug:
                 print "Granding image pruning perms"
 
-            cmd = ['oadm', 'policy', 'add-cluster-role-to-user',
+            cmd = ['oc', 'adm', 'policy', 'add-cluster-role-to-user',
                    'system:image-pruner', username,
                    '--config', self.args.kube_config]
             try:
@@ -150,11 +150,11 @@ class OpenShiftPrune(object):
         return token
 
     def prune_images(self):
-        ''' call oadm to prune images '''
+        ''' call oc adm to prune images '''
 
         token = self.get_autopruner_token()
 
-        cmd = ['oadm', 'prune', 'images',
+        cmd = ['oc, 'adm', 'prune', 'images',
                '--keep-younger-than', self.args.image_keep_younger_than,
                '--keep-tag-revisions', self.args.image_keep_tag_revisions,
                '--config', self.args.kube_config,
@@ -168,9 +168,9 @@ class OpenShiftPrune(object):
             print "Prune images output:\n" + output
 
     def prune_builds(self):
-        ''' call oadm to prune builds '''
+        ''' call oc adm to prune builds '''
 
-        cmd = ['oadm', 'prune', 'builds',
+        cmd = ['oc', 'adm', 'prune', 'builds',
                '--keep-complete', self.args.build_keep_complete,
                '--keep-younger-than', self.args.build_keep_younger_than,
                '--keep-failed', self.args.build_keep_failed,
@@ -184,9 +184,9 @@ class OpenShiftPrune(object):
             print "Prune build output:\n" + output
 
     def prune_deployments(self):
-        ''' call oadm to prune deployments '''
+        ''' call oc adm to prune deployments '''
 
-        cmd = ['oadm', 'prune', 'deployments',
+        cmd = ['oc', 'adm', 'prune', 'deployments',
                '--keep-complete', self.args.deploy_keep_complete,
                '--keep-younger-than', self.args.deploy_keep_younger_than,
                '--keep-failed', self.args.deploy_keep_failed,
