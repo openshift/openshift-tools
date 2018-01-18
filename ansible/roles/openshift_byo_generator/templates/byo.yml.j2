@@ -167,11 +167,6 @@ openshift_master_admission_plugin_config={{ obg_openshift_admission_config }}
 openshift_master_scheduler_priorities={{ obg_openshift_scheduler_priorities }}
 {% endif %}
 
-{# OpenShift pod placement requirements #}
-{% if obg_openshift_scheduler_predicates %}
-openshift_master_scheduler_predicates={{ obg_openshift_scheduler_predicates }}
-{% endif %}
-
 {# Don't install Cockpit #}
 osm_use_cockpit=false
 
