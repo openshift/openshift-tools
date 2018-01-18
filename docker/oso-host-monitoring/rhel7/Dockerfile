@@ -50,6 +50,17 @@ RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oadm '" >> /root/.bashrc
 # until the yum repo is cleared of the older packages.
 RUN yum-install-check.sh -y atomic-openshift-clients && yum clean metadata
 
+
+# Add google-cloud-sdk repo
+RUN echo $'[google-cloud-sdk]\n\
+name=Google Cloud SDK\n\
+baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64\n\
+enabled=1\n\
+gpgcheck=1\n\
+repo_gpgcheck=1\n\
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg\n\
+       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg' > /etc/yum.repos.d/google-cloud-sdk.repo
+
 RUN yum clean metadata && \
     yum-install-check.sh -y python2-pip pcp pcp-conf pcp-testsuite \
         python-requests pyOpenSSL \
@@ -87,7 +98,7 @@ RUN yum clean metadata && \
         python-lxml \
         rkhunter \
         docker-python && \
-    yum-install-check.sh -y google-cloud-sdk python2-uritemplates python2-google-api-client python2-oauth2client --disablerepo="rhel-server-releases-optional" && \
+    yum-install-check.sh -y google-cloud-sdk python2-uritemplate python2-google-api-client python2-oauth2client --disablerepo="rhel-server-releases-optional" --enablerepo="google-cloud-sdk" && \
     yum clean all
 
 ADD urllib3-connectionpool-patch /root/
