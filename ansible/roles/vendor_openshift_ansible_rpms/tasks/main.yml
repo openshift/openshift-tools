@@ -37,6 +37,7 @@
   - "{{ vosar_output_directory }}/usr/share/ansible/openshift-ansible/playbooks/"
   - "{{ vosar_output_directory }}/usr/share/ansible/openshift-ansible/roles/"
   - "{{ vosar_output_directory }}/usr/share/ansible/openshift-ansible/library/"
+  - "{{ vosar_output_directory }}/usr/share/ansible/openshift-ansible/files/"
   register: rpm_dir_stat_output
 
 - name: Fix up the extracted contents into a normal ansible layout
