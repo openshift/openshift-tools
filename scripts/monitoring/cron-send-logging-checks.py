@@ -89,7 +89,8 @@ class OpenshiftLoggingStatus(object):
 
             es_status['pods'][pod_dc]['elasticsearch_health'] = health_n
             es_status['pods'][pod_dc]['elasticsearch_active_primary_shards'] = cluster_health['active_primary_shards']
-            es_status['pods'][pod_dc]['elasticsearch_pending_task_queue_depth'] = cluster_health['number_of_pending_tasks']
+            es_status['pods'][pod_dc]['elasticsearch_pending_task_queue_depth'] = \
+              cluster_health['number_of_pending_tasks']
             es_status['pods'][pod_dc]['disk'] = self.check_elasticsearch_diskspace(pod_name)
 
 
@@ -273,8 +274,10 @@ class OpenshiftLoggingStatus(object):
                 for pod, value in data['pods'].iteritems():
                     self.metric_sender.add_metric({
                         "openshift.logging.elasticsearch.pod_health[%s]" %(pod): value['elasticsearch_health'],
-                        "openshift.logging.elasticsearch.pod_active_primary_shards[%s]" %(pod): value['elasticsearch_active_primary_shards'],
-                        "openshift.logging.elasticsearch.pod_pending_task_queue_depth[%s]" %(pod): value['elasticsearch_pending_task_queue_depth'],
+                        "openshift.logging.elasticsearch.pod_active_primary_shards[%s]" %(pod): \
+                            value['elasticsearch_active_primary_shards'],
+                        "openshift.logging.elasticsearch.pod_pending_task_queue_depth[%s]" %(pod): \
+                            value['elasticsearch_pending_task_queue_depth'],
                         "openshift.logging.elasticsearch.disk_used[%s]" %(pod): value['disk']['used'],
                         "openshift.logging.elasticsearch.disk_free[%s]" %(pod): value['disk']['free']
                     })
