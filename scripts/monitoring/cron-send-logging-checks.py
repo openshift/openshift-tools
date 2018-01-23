@@ -78,7 +78,18 @@ class OpenshiftLoggingStatus(object):
             pod_name = pod['metadata']['name']
             es_status['pods'][pod_dc] = {}
 
-            es_status['pods'][pod_dc]['elasticsearch_health'] = self.check_elasticsearch_cluster_health(pod_name)
+
+            cluster_health = self.check_elasticsearch_cluster_health(pod_name)
+            if cluster_health['status'] == 'green':
+                health_n = 2
+            elif cluster_health['status'] == 'yellow':
+                health_n = 1
+            else:
+                health_n = 0
+
+            es_status['pods'][pod_dc]['elasticsearch_health'] = health_n
+            es_status['pods'][pod_dc]['elasticsearch_active_primary_shards'] = cluster_health['active_primary_shards']
+            es_status['pods'][pod_dc]['elasticsearch_pending_task_queue_depth'] = cluster_health['number_of_pending_tasks']
             es_status['pods'][pod_dc]['disk'] = self.check_elasticsearch_diskspace(pod_name)
 
 
@@ -129,12 +140,8 @@ class OpenshiftLoggingStatus(object):
             cluster_health = "exec -ti {} -- {}".format(es_pod, curl_cmd)
             health_res = json.loads(self.oc.run_user_cmd(cluster_health))
 
-            if health_res['status'] == 'green':
-                return 2
-            elif health_res['status'] == 'yellow':
-                return 1
-            else:
-                return 0
+            return health_res
+
         except:
             # The check failed so ES is in a bad state
             return 0
@@ -266,6 +273,8 @@ class OpenshiftLoggingStatus(object):
                 for pod, value in data['pods'].iteritems():
                     self.metric_sender.add_metric({
                         "openshift.logging.elasticsearch.pod_health[%s]" %(pod): value['elasticsearch_health'],
+                        "openshift.logging.elasticsearch.pod_active_primary_shards[%s]" %(pod): value['elasticsearch_active_primary_shards'],
+                        "openshift.logging.elasticsearch.pod_pending_task_queue_depth[%s]" %(pod): value['elasticsearch_pending_task_queue_depth'],
                         "openshift.logging.elasticsearch.disk_used[%s]" %(pod): value['disk']['used'],
                         "openshift.logging.elasticsearch.disk_free[%s]" %(pod): value['disk']['free']
                     })
