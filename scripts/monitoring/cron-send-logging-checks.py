@@ -273,10 +273,12 @@ class OpenshiftLoggingStatus(object):
                 for pod, value in data['pods'].iteritems():
                     self.metric_sender.add_metric({
                         "openshift.logging.elasticsearch.pod_health[%s]" %(pod): value['elasticsearch_health'],
-                        "openshift.logging.elasticsearch.pod_active_primary_shards[%s]" %(pod): value['elasticsearch_active_primary_shards'],
-                        "openshift.logging.elasticsearch.pod_pending_task_queue_depth[%s]" %(pod): value['elasticsearch_pending_task_queue_depth'],
-                        "openshift.logging.elasticsearch.disk_used[%s]" %(pod): value['disk']['used'],
-                        "openshift.logging.elasticsearch.disk_free[%s]" %(pod): value['disk']['free']
+                        "openshift.logging.elasticsearch.pod_active_primary_shards[%s]" %(pod): \
+                            value['elasticsearch_active_primary_shards'],
+                        "openshift.logging.elasticsearch.pod_pending_task_queue_depth[%s]" %(pod): \
+                            value['elasticsearch_pending_task_queue_depth'],
+                        "openshift.logging.elasticsearch.disk_free_pct[%s]" %(pod): \
+                            value['disk']['free'] / (value['disk']['free'] + value['disk']['used']) * 100
                     })
         self.metric_sender.send_metrics()
 

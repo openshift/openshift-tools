@@ -61,17 +61,34 @@ g_template_logging:
     applications:
     - EFK
   - discoveryrule_key: openshift.logging.elasticsearch.pods
-    name: "{% raw %}openshift.logging.elasticsearch.disk_used.{{ '{#' }}OSO_METRICS}{% endraw %}"
-    key: "{% raw %}openshift.logging.elasticsearch.disk_used[{{ '{#' }}OSO_METRICS}]{% endraw %}"
-    value_type: int
-    description: "elasticsearch pv disk usage"
-    applications:
-    - EFK
-  - discoveryrule_key: openshift.logging.elasticsearch.pods
-    name: "{% raw %}openshift.logging.elasticsearch.disk_free.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    name: "{% raw %}openshift.logging.elasticsearch.disk_free_pct.{{ '{#' }}OSO_METRICS}{% endraw %}"
     key: "{% raw %}openshift.logging.elasticsearch.disk_free[{{ '{#' }}OSO_METRICS}]{% endraw %}"
     value_type: int
     description: "elasticsearch pv free space"
     applications:
     - EFK
+  - discoveryrule_key: openshift.logging.elasticsearch.pods
+    name: "{% raw %}openshift.logging.elasticsearch.active_primary_shards.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.logging.elasticsearch.active_primary_shards[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+    value_type: int
+    description: "elasticsearch pod active primary shards "
+    applications:
+    - EFK
+  - discoveryrule_key: openshift.logging.elasticsearch.pods
+    name: "{% raw %}openshift.logging.elasticsearch.pending_task_queue_depth.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.logging.elasticsearch.pending_task_queue_depth[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+    value_type: int
+    description: "elasticsearch pod pending task queue depth"
+    applications:
+    - EFK
 
+  ztriggerprototypes:
+  - name: "{% raw %}Logging: {{ '{#' }}OSO_METRICS} ES Cluster disk free is too low {HOST.NAME}{% endraw %}"
+    expression: "{% raw %}{Template OpenShift Logging:openshift.logging.elasticsearch.disk_free_pct[{{ '{#' }}OSO_METRICS}].last()}<70{% endraw %}"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_logging.asciidoc"
+    priority: average
+  - name: "{% raw %}Logging: {{ '{#' }}OSO_METRICS} ES Cluster disk free is too low {HOST.NAME}{% endraw %}"
+    expression: "{% raw %}{Template OpenShift Logging:openshift.logging.elasticsearch.disk_free_pct[{{ '{#' }}OSO_METRICS}].last()}<80{% endraw %}"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_logging.asciidoc"
+    priority: high
+  
