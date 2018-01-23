@@ -423,7 +423,7 @@ def unmark_channel_for_announcements(bot, trigger):
 @module.require_admin('You must be a bot admin to use this command')
 def disable_weekend_warning(bot, trigger):
     """Stops the warning regarding being unmonitored on the weekends."""
-    if bot.db.get_channel_value(trigger.sender, 'weekend_warning') is not None:
+    if bot.db.get_channel_value(trigger.sender, 'monitoring'):
         if bot.db.get_channel_value(trigger.sender, 'weekend_warning') is True:
             bot.db.set_channel_value(trigger.sender, 'weekend_warning', False)
             bot.db.set_channel_value(trigger.sender, 'weekend_last_triggered', None)
@@ -438,7 +438,7 @@ def disable_weekend_warning(bot, trigger):
 @module.require_admin('You must be a bot admin to use this command')
 def enable_weekend_warning(bot, trigger):
     """Restarts the warning regarding being unmonitored on the weekends."""
-    if bot.db.get_channel_value(trigger.sender, 'weekend_warning') is not None:
+    if bot.db.get_channel_value(trigger.sender, 'monitoring'):
         if bot.db.get_channel_value(trigger.sender, 'weekend_warning') is False:
             bot.db.set_channel_value(trigger.sender, 'weekend_warning', True)
             bot.db.set_channel_value(trigger.sender, 'weekend_last_triggered', utc_timestamp())
@@ -513,8 +513,10 @@ def say_all(bot, trigger):
             debug(bot, 'Found user: {}'.format(user))
             all_list.append(user)
     if len(all_list) > 0:
-        bot.reply('Have you considered using the less noisy `.msg` option? '
-                  'It will only notify specific users. Try `.msg-list` to see who would be notified.')
+        if not bot.db.get_nick_value(trigger.nick, 'all_warned'):
+            bot.reply('Have you considered using the less noisy `.msg` option? '
+                      'It will only notify specific users. Try `.msg-list` to see who would be notified.')
+            bot.db.set_nick_value(trigger.nick, 'all_warned', True)
         bot.say(' '.join(all_list) + ': ' + message, max_messages=50)
     else:
         bot.reply('It\'s awfully lonely in here.')
