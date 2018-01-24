@@ -62,7 +62,7 @@ g_template_logging:
     - EFK
   - discoveryrule_key: openshift.logging.elasticsearch.pods
     name: "{% raw %}openshift.logging.elasticsearch.disk_free_pct.{{ '{#' }}OSO_METRICS}{% endraw %}"
-    key: "{% raw %}openshift.logging.elasticsearch.disk_free[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+    key: "{% raw %}openshift.logging.elasticsearch.disk_free_pct[{{ '{#' }}OSO_METRICS}]{% endraw %}"
     value_type: int
     description: "elasticsearch pv free space"
     applications:
