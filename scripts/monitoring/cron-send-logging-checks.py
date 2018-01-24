@@ -279,7 +279,7 @@ class OpenshiftLoggingStatus(object):
                         "openshift.logging.elasticsearch.pod_pending_task_queue_depth[%s]" %(pod): \
                             value['elasticsearch_pending_task_queue_depth'],
                         "openshift.logging.elasticsearch.disk_free_pct[%s]" %(pod): \
-                            value['disk']['free'] / (value['disk']['free'] + value['disk']['used']) * 100
+                            value['disk']['free'] * 100 / (value['disk']['free'] + value['disk']['used'])
                     })
         self.metric_sender.send_metrics()
 
