@@ -35,10 +35,11 @@ if [ $(systemctl is-active firewalld) == "active" ]; then
     sudo firewall-cmd --add-port 53/udp
     sudo firewall-cmd --add-port 8053/udp
 else
-    sudo iptables -A INPUT -s 172.17.0.0/16 -j ACCEPT
-    sudo iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 8443 -s 172.17.0.0/16 -j ACCEPT
-    sudo iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 53 -s 172.17.0.0/16 -j ACCEPT
-    sudo iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 8053 -s 172.17.0.0/16 -j ACCEPT
+    sudo systemctl iptables stop ## This was what I had to do to get the cluster running on RHEL7.4 CSB vOv
+    #sudo iptables -A INPUT -s 172.17.0.0/16 -j ACCEPT
+    #sudo iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 8443 -s 172.17.0.0/16 -j ACCEPT
+    #sudo iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 53 -s 172.17.0.0/16 -j ACCEPT
+    #sudo iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 8053 -s 172.17.0.0/16 -j ACCEPT
 fi
 
 sudo ${OC} cluster up
