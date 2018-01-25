@@ -23,6 +23,7 @@ openshift_master_api_port=443
 openshift_master_console_port=443
 openshift_docker_hosted_registry_insecure=false
 osm_default_node_selector='type=compute'
+openshift_docker_options='--log-driver=json-file --log-opt max-size=50m'
 {# End Static options #}
 
 {# set install version if set #}
