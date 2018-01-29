@@ -1,0 +1,3 @@
+---
+osozd_registry_url: registry.reg-aws.openshift.com:443/ops
+osozd_image_name: oso-rhel7-zagg-web
