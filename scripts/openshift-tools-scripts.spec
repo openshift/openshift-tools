@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.125
+Version:       0.1.126
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -494,6 +494,15 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Mon Jan 29 2018 Sten Turpin <sten@redhat.com> 0.1.126-1
+- work around float op (sten@redhat.com)
+- send disk as %% free instead of used + freE (sten@redhat.com)
+- pylint hating on my long variable names (sten@redhat.com)
+- add monitors for pending tasks and active primary shards. more can be added
+  easily from the cluster_health dict (sten@redhat.com)
+- use 'oc adm' instead of deprecated 'oadm' (sedgar@redhat.com)
+- update to support cloudhealth's external id generator (blentz@redhat.com)
+
 * Thu Jan 11 2018 Justin Pierce <jupierce@redhat.com> 0.1.125-1
 - Add storage migration CD operation (jupierce@redhat.com)
 
