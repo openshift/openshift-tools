@@ -155,7 +155,7 @@ class OpenshiftLoggingStatus(object):
             disk_free = 0
             trash_var = 0
 
-            disk_output = self.oc.run_user_cmd("exec -ti {} -- df".format(es_pod)).split(' ')
+            disk_output = self.oc.run_user_cmd("exec -c elasticsearch -ti {} -- df".format(es_pod)).split(' ')
             disk_output = [x for x in disk_output if x]
             for item in disk_output:
                 if "/elasticsearch/persistent" not in item:
@@ -279,7 +279,7 @@ class OpenshiftLoggingStatus(object):
                         "openshift.logging.elasticsearch.pod_pending_task_queue_depth[%s]" %(pod): \
                             value['elasticsearch_pending_task_queue_depth'],
                         "openshift.logging.elasticsearch.disk_free_pct[%s]" %(pod): \
-                            value['disk']['free'] * 100 / (value['disk']['free'] + value['disk']['used'])
+                            value['disk']['free'] * 100 / (value['disk']['free'] + value['disk']['used'] + 1)
                     })
         self.metric_sender.send_metrics()
 
