@@ -24,8 +24,8 @@ the existing Ansible zabbix modules.
 import json
 from collections import namedtuple
 from ansible.parsing.dataloader import DataLoader
-from ansible.vars import VariableManager
-from ansible.inventory import Inventory
+from ansible.vars.manager import VariableManager
+from ansible.inventory.manager import InventoryManager
 from ansible.playbook.play import Play
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.plugins.callback import CallbackBase
@@ -254,7 +254,7 @@ class SimpleZabbixRaw(object):
         Options = namedtuple('Options', ['connection', 'module_path',
                                          'forks', 'become', 'become_method',
                                          'become_user', 'check'])
-        variable_manager = VariableManager()
+
         loader = DataLoader()
         options = Options(connection='local', module_path=None,
                           forks=1, become=None,
@@ -264,9 +264,8 @@ class SimpleZabbixRaw(object):
 
         results_callback = ResultsCallback()
 
-        inventory = Inventory(loader=loader, variable_manager=variable_manager)
-
-        variable_manager.set_inventory(inventory)
+        inventory = InventoryManager(loader=loader)
+        variable_manager = VariableManager(loader=loader, inventory=inventory)
 
         play_source = dict(name="Ansible Play",
                            hosts=self.pattern,
