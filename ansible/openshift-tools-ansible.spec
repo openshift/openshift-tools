@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.53
+Version:        0.0.54
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,13 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Tue Jan 30 2018 Sten Turpin <sten@redhat.com> 0.0.54-1
+- added option for service catalog (sedgar@redhat.com)
+- correct new ES check key names to match keys being sent from check script
+  (sten@redhat.com)
+- updated openshift.logging.elasticsearch.disk_free_pct from 70 to 30
+  (zhiwliu@redhat.com)
+
 * Mon Jan 29 2018 Sten Turpin <sten@redhat.com> 0.0.53-1
 - moved symlink of lib_openshift from 3.6 to 3.7 (mwoodson@redhat.com)
 - to work around jinja2 defined test for gcs even if the variable is set to
