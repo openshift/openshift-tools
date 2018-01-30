@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.126
+Version:       0.1.127
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -494,6 +494,11 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Tue Jan 30 2018 Sten Turpin <sten@redhat.com> 0.1.127-1
+- added -c elasticsearch to all exec commands (sten@redhat.com)
+- check df with -c so we get info from ocp 3.7+, avoid divide by 0
+  (sten@redhat.com)
+
 * Mon Jan 29 2018 Sten Turpin <sten@redhat.com> 0.1.126-1
 - work around float op (sten@redhat.com)
 - send disk as %% free instead of used + freE (sten@redhat.com)
