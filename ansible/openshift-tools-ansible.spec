@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.54
+Version:        0.0.55
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,9 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Tue Jan 30 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.55-1
+- changing registry for zagg-web (ihorvath@redhat.com)
+
 * Tue Jan 30 2018 Sten Turpin <sten@redhat.com> 0.0.54-1
 - added option for service catalog (sedgar@redhat.com)
 - correct new ES check key names to match keys being sent from check script
