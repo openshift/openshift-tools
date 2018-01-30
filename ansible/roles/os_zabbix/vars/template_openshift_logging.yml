@@ -68,15 +68,15 @@ g_template_logging:
     applications:
     - EFK
   - discoveryrule_key: openshift.logging.elasticsearch.pods
-    name: "{% raw %}openshift.logging.elasticsearch.active_primary_shards.{{ '{#' }}OSO_METRICS}{% endraw %}"
-    key: "{% raw %}openshift.logging.elasticsearch.active_primary_shards[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+    name: "{% raw %}openshift.logging.elasticsearch.pod_active_primary_shards.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.logging.elasticsearch.pod_active_primary_shards[{{ '{#' }}OSO_METRICS}]{% endraw %}"
     value_type: int
     description: "elasticsearch pod active primary shards "
     applications:
     - EFK
   - discoveryrule_key: openshift.logging.elasticsearch.pods
-    name: "{% raw %}openshift.logging.elasticsearch.pending_task_queue_depth.{{ '{#' }}OSO_METRICS}{% endraw %}"
-    key: "{% raw %}openshift.logging.elasticsearch.pending_task_queue_depth[{{ '{#' }}OSO_METRICS}]{% endraw %}"
+    name: "{% raw %}openshift.logging.elasticsearch.pod_pending_task_queue_depth.{{ '{#' }}OSO_METRICS}{% endraw %}"
+    key: "{% raw %}openshift.logging.elasticsearch.pod_pending_task_queue_depth[{{ '{#' }}OSO_METRICS}]{% endraw %}"
     value_type: int
     description: "elasticsearch pod pending task queue depth"
     applications:
