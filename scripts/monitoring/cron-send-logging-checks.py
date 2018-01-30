@@ -96,7 +96,7 @@ class OpenshiftLoggingStatus(object):
 
             # Compare the master across all ES nodes to see if we have split brain
             curl_cmd = "{} 'https://localhost:9200/_cat/master'".format(self.es_curl)
-            es_master = "exec -ti {} -- {}".format(pod_name, curl_cmd)
+            es_master = "exec -c elasticsearch -ti {} -- {}".format(pod_name, curl_cmd)
             master_name = self.oc.run_user_cmd(es_master).split(' ')[1]
 
             if es_status['single_master'] is None:
@@ -116,7 +116,7 @@ class OpenshiftLoggingStatus(object):
 
         # get cluster nodes
         curl_cmd = "{} 'https://localhost:9200/_nodes'".format(self.es_curl)
-        node_cmd = "exec -ti {} -- {}".format(es_master_name, curl_cmd)
+        node_cmd = "exec -c elasticsearch -ti {} -- {}".format(es_master_name, curl_cmd)
         cluster_nodes = json.loads(self.oc.run_user_cmd(node_cmd))['nodes']
         es_status['all_nodes_registered'] = 1
         # The internal ES node name is a random string we do not track anywhere
@@ -138,7 +138,7 @@ class OpenshiftLoggingStatus(object):
         ''' Exec into the elasticsearch pod and check the cluster health '''
         try:
             curl_cmd = "{} 'https://localhost:9200/_cluster/health?pretty=true'".format(self.es_curl)
-            cluster_health = "exec -ti {} -- {}".format(es_pod, curl_cmd)
+            cluster_health = "exec -c elasticsearch -ti {} -- {}".format(es_pod, curl_cmd)
             health_res = json.loads(self.oc.run_user_cmd(cluster_health))
 
             return health_res
