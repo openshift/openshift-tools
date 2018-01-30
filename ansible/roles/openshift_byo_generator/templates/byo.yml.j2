@@ -134,6 +134,10 @@ openshift_master_extension_scripts={{ obg_ui_scripts }}
 openshift_master_extension_stylesheets={{ obg_ui_stylesheets }}
 {% endif %}
 
+{% if obg_service_catalog %}
+openshift_enable_service_catalog={{ obg_service_catalog }}
+{% endif %}
+
 {# Install custom certificate in the router for https connections #}
 {% if obg_use_router_certs %}
 openshift_hosted_router_create_certificate=False
