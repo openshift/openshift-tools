@@ -84,11 +84,11 @@ g_template_logging:
 
   ztriggerprototypes:
   - name: "{% raw %}Logging: {{ '{#' }}OSO_METRICS} ES Cluster disk free is too low {HOST.NAME}{% endraw %}"
-    expression: "{% raw %}{Template OpenShift Logging:openshift.logging.elasticsearch.disk_free_pct[{{ '{#' }}OSO_METRICS}].last()}<70{% endraw %}"
+    expression: "{% raw %}{Template OpenShift Logging:openshift.logging.elasticsearch.disk_free_pct[{{ '{#' }}OSO_METRICS}].last()}<30{% endraw %}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_logging.asciidoc"
     priority: average
   - name: "{% raw %}Logging: {{ '{#' }}OSO_METRICS} ES Cluster disk free is too low {HOST.NAME}{% endraw %}"
-    expression: "{% raw %}{Template OpenShift Logging:openshift.logging.elasticsearch.disk_free_pct[{{ '{#' }}OSO_METRICS}].last()}<80{% endraw %}"
+    expression: "{% raw %}{Template OpenShift Logging:openshift.logging.elasticsearch.disk_free_pct[{{ '{#' }}OSO_METRICS}].last()}<20{% endraw %}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_logging.asciidoc"
     priority: high
   
