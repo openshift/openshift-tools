@@ -30,7 +30,7 @@ objects:
           deploymentconfig: oso-rhel7-zagg-web
       spec:
         containers:
-        - image: registry.ops.openshift.com/ops/oso-rhel7-zagg-web:{{ oo_environment }}
+        - image: {{ osozd_registry_url }}/{{ osozd_image_name }}:{{ oo_environment }}
           imagePullPolicy: Always
           name: oso-rhel7-zagg-web
           ports:
@@ -60,4 +60,3 @@ objects:
     test: false
     triggers:
     - type: ConfigChange
-
