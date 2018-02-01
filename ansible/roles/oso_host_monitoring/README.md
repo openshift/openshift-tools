@@ -166,6 +166,52 @@ None.
     osohm_zagg_web_url: "https://..."
 ```
 
+## Scale Group monitoring
+
+With the introduction to scale groups we will begin to deploy the monitoring container
+through a daemonset.  This allows us greater flexibility by removing the requirements
+of running specific playbooks at start up and allowing Openshift to deploy the configuration
+during the deployment of a daemonset.  This also localizes all of the configuration for
+a scale group node to a configmap and secret objects managed by Openshift.
+
+Let's explore what this architecture looks like.  At the current time there are two containers that
+will run inside of the daemonset.  The first container will be called config.  The second will be the monitoring
+container.
+
+The config container will laydown the necessary configuration
+for the monitoring container.  This configuration is kept inside of Openshift inside of a specified
+namespace.  This namespace currently defaults to openshift-config.  This namespace is determined by the openshift_daemonset_config role
+that lives inside of openshift-ansible.  It can be changed by passing the `openshift_daemonset_config_namespace` variable.
+
+Inside of the `openshift_daemonset_config_namespace` there are a number of important objects.  
+- The daemonset is named ops-node-config.
+- The configmap is named ops-node-config
+- The secret is named ops-node-secret
+
+The daemonset runs on all hosts specified by a specific node-label.  This will be determined by scale group nodes groups.
+
+The configmap holds data regarding the configuration for the nodes.  This currently encompasses:
+- ssh keys
+- setup of the monitoring-config.yml file required by the monitoring container
+
+The secret will house all of the secret data required.  This currently encompasses:
+- docker registry auth
+
+The execution path looks like this:
+osohm_host_monitoring role is called with all of the necessary data required to configure monitoring and the daemonset.
+The openshift_daemonset_config role from openshift-ansible is in charge of placing all of the data in the correct configmap
+and secret.  monitoring-config.yml is generated as well as any of the other necessary data for configuration and is then
+passed to openshift_daemonset_config role.  This role manages the daemonset config, secret, and configmap.
+
+Inside of the daemonset config the following operations occur to initialize the monitoring container:
+1. The daemonset starts and runs a shell script named: `operations_config.sh`
+2. The operations_config.sh will call the configure_host.yml playbook defined in the configmap.
+3. The configure_host.yml will configure:
+- authorized keys
+- docker auth
+- setup host monitoring
+4. host monitoring container starts and reads the monitoring-config.yml
+
 ## License
 
 ASL 2.0

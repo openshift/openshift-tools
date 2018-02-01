@@ -1,7 +1,9 @@
 ---
+osohm_use_zagg: True
 osohm_monitor_capacity: False
 osohm_service_state:  started
 osohm_service_enabled: yes
+osohm_monitoring_pause_on_start: False
 
 osohm_hawk_config:
   active: False
