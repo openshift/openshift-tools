@@ -6,6 +6,7 @@ echo -n "Running oso-{{ base_os }}-bastion... "
 
 # TODO: Remove privileged, net=host and OO_PAUSE_ON_START
 sudo docker run --rm=true -it --name oso-{{ base_os }}-bastion    \
+            --user 1000                                   \
             --privileged                                  \
             --net=host                                    \
             --env OO_PAUSE_ON_START=true                  \

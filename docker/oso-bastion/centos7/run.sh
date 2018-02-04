@@ -14,6 +14,7 @@ echo -n "Running oso-centos7-bastion... "
 
 # TODO: Remove privileged, net=host and OO_PAUSE_ON_START
 sudo docker run --rm=true -it --name oso-centos7-bastion    \
+            --user 1000                                   \
             --privileged                                  \
             --net=host                                    \
             --env OO_PAUSE_ON_START=true                  \
