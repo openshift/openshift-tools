@@ -38,7 +38,6 @@ sudo docker run --rm=true -it --name oso-rhel7-bastion    \
             --user $(id -u)                               \
             --privileged                                  \
             --net=host                                    \
-            --env OO_PAUSE_ON_START=true                  \
             -v /var/lib/docker/volumes/shared:/shared:rw  \
             -v /var/lib/docker/volumes/shared/oso-bastion/configdata:/configdata:ro  \
             -v /var/lib/docker/volumes/shared/oso-bastion/persistent:/persistent:rw  \

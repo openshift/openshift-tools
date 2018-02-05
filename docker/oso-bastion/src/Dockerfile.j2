@@ -29,6 +29,9 @@ RUN yum-install-check.sh -y \
 
 # Copy config files
 ADD sshd_config /etc/ssh/sshd_config
+ADD ssl.conf /etc/httpd/conf.d/ssl.conf
+
+RUN chmod g+r /etc/pki/tls/certs/localhost.crt /etc/pki/tls/private/localhost.key
 
 # Start apache & sshd
 CMD /usr/local/bin/start.sh
