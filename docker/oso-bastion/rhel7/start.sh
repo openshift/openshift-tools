@@ -32,9 +32,11 @@ chmod 700 /persistent/.ssh
 # TODO: Add step where /persistent/.ssh/authorized_keys is populated
 
 
-# Generate ssh host keys
-# TODO: Have these generated to persistent storage
-ssh-keygen -f /persistent/.ssh/ssh_host_rsa_key -N '' -t rsa
+# Generate ssh host keys if they don't exist in the persistent storage
+ssh_host_key_path=/persistent/.ssh/ssh_host_rsa_key
+if [ ! -f "${ssh_host_key_path}" ]; then
+    ssh-keygen -f "${ssh_host_key_path}" -N '' -t rsa
+fi
 
 
 echo
