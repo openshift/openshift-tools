@@ -52,7 +52,7 @@
     osohm_host_name: UPDATENAME
 
 - import_role:
-    name: openshift_daemonset_config
+    name: "aos_{{ g_play_openshift_version }}_roles/openshift_daemonset_config"
   vars:
     openshift_daemonset_config_daemonset_name: "{{ osohm_sub_host_type }}-config"
     openshift_daemonset_config_monitoring_pos: "{{ osohm_monitoring_pause_on_start | string }}"
