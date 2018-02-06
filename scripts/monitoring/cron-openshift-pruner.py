@@ -154,7 +154,7 @@ class OpenShiftPrune(object):
 
         token = self.get_autopruner_token()
 
-        cmd = ['oc, 'adm', 'prune', 'images',
+        cmd = ['oc', 'adm', 'prune', 'images',
                '--keep-younger-than', self.args.image_keep_younger_than,
                '--keep-tag-revisions', self.args.image_keep_tag_revisions,
                '--config', self.args.kube_config,
