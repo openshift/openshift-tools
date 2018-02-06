@@ -138,7 +138,7 @@ class OpenShiftPrune(object):
             if secret['name'].startswith(SERVICE_ACCOUNT + '-token'):
                 secretname = secret['name']
 
-        if secretname == None:
+        if secretname is None:
             raise Exception("No secret with token info found.")
 
         cmd = ['oc', 'get', 'secrets', secretname, '-n', SERVICE_ACCOUNT_GROUP,
