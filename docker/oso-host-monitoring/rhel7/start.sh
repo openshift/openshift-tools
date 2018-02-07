@@ -18,8 +18,8 @@ source /root/.bashrc
 time ansible-playbook /root/config.yml
 
 # Configure rkhunter
-echo '/usr/bin/ops-runner -f -t 60 -n monitoring.root.rkhunter.yml ansible-playbook /root/rkhunter.yml >> /var/log/rkhunter.yml.log &'
-/usr/bin/ops-runner -f -t 60 -n monitoring.root.rkhunter.yml ansible-playbook /root/rkhunter.yml >> /var/log/rkhunter.yml.log &
+echo '/usr/bin/ops-runner -f -t 600 -n monitoring.root.rkhunter.yml ansible-playbook /root/rkhunter.yml >> /var/log/rkhunter.yml.log &'
+/usr/bin/ops-runner -f -t 600 -n monitoring.root.rkhunter.yml ansible-playbook /root/rkhunter.yml >> /var/log/rkhunter.yml.log &
 
 # Send a heartbeat when the container starts up
 /usr/bin/ops-metric-client --send-heartbeat
