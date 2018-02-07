@@ -59,6 +59,18 @@
     openshift_daemonset_config_monitoring: True
     openshift_daemonset_config_image: "{{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}:{{ osohm_environment }}"
     openshift_daemonset_config_monitoring_image: "{{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}:{{ osohm_environment }}"
+    openshift_daemonset_config_configmap_contents_to_files:
+    - name: monitoring_config.yml
+      contents: |
+        {{ lookup('template', '../templates/monitoring-config.yml.j2') }}
+      path: /tmp/monitoring_config.yml
+
+    - path: /tmp/authorized_keys
+      name: authorized_keys
+      contents: |
+        {% for user in osohm_authorized_keys | selectattr('pub_key', 'defined') %}
+        {{ user.pub_key }}
+        {% endfor %}
     openshift_daemonset_config_configmap_literals:
       etcd_metrics.yml: |
         {{ lookup('file', '../files/etcd_metrics.yml') }}
@@ -95,18 +107,14 @@
               group: root
 
           - name: update the hostname
-            command: 'sed -i -e "s#^    name: \"UPDATENAME\"#    name: {{ osohm_host_name }}#" /opt/tmp_shared_config/monitoring_config_pre.yml'
+            command: 'sed -i -e "s#^    name: \"UPDATENAME\"#    name: {% raw %}{{ osohm_host_name }}{% endraw %}#" /opt/tmp_shared_config/monitoring_config_pre.yml'
             register: sedout
 
           - name: verify hostname was updated
-            command: 'grep -Pq "^    name: {{ osohm_host_name }}" /opt/tmp_shared_config/monitoring_config_pre.yml'
+            command: 'grep -Pq "^    name: UPDATENAME" /opt/tmp_shared_config/monitoring_config_pre.yml'
             register: grepout
-
-          - fail:
-              msg: "Unable to set the host name for monitoring container."
-            when:
-            - sedout.rc != 0
-            - grepout.rc != 0
+            failed_when:
+            - grepout.rc == 0
 
           - name: copy fixed monitoring config to shared config emptydir
             copy:
@@ -150,13 +158,6 @@
           - name: Import monitoring config tasks
             import_tasks: /opt/config/monitoring_config_tasks.yml
 
-      monitoring_config.yml: |
-        {{ lookup('template', '../templates/monitoring-config.yml.j2') }}
-
-      authorized_keys: |
-        {% for user in osohm_authorized_keys | selectattr('pub_key', 'defined') %}
-        {{ user.pub_key }}
-        {% endfor %}
 
       operations_config.sh: |
         #!/bin/bash
