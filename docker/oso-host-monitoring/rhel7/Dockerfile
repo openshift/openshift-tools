@@ -97,7 +97,7 @@ RUN yum clean metadata && \
         python2-boto3 \
         python-lxml \
         rkhunter \
-        docker-python && \
+        python-docker && \
     yum-install-check.sh -y google-cloud-sdk python2-uritemplate python2-google-api-client python2-oauth2client --disablerepo="rhel-server-releases-optional" --enablerepo="google-cloud-sdk" && \
     yum clean all
 

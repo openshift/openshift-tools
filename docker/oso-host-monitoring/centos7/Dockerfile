@@ -88,7 +88,7 @@ RUN yum clean metadata && \
         python2-boto3 \
         python-lxml \
         rkhunter \
-        docker-python && \
+        python-docker && \
     yum clean all
 
 ADD urllib3-connectionpool-patch /root/
