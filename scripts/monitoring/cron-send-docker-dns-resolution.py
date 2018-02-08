@@ -12,7 +12,7 @@
 
 import time
 import os
-from docker import AutoVersionClient
+from docker import APIClient as DockerClient
 from docker.errors import APIError
 # Jenkins doesn't have our tools which results in import errors
 # pylint: disable=import-error
@@ -21,7 +21,7 @@ from openshift_tools.monitoring.metric_sender import MetricSender
 ZBX_KEY = "docker.container.dns.resolution"
 
 if __name__ == "__main__":
-    cli = AutoVersionClient(base_url='unix://var/run/docker.sock')
+    cli = DockerClient(version='auto', base_url='unix://var/run/docker.sock', timeout=120)
 
     container_id = os.environ['container_uuid']
 
