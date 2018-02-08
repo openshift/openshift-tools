@@ -38,7 +38,7 @@ ADD check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
 
 
 RUN echo -e "\n\nalias oca='KUBECONFIG=/tmp/admin.kubeconfig oc '" >> /root/.bashrc
-RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oadm '" >> /root/.bashrc
+RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oc adm '" >> /root/.bashrc
 
 
 
