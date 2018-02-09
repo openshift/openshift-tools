@@ -12,7 +12,7 @@
 # pylint: disable=import-error
 
 
-from docker import AutoVersionClient
+from docker import APIClient as DockerClient
 from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.monitoring.dockerutil import DockerUtil
 import os
@@ -50,7 +50,7 @@ class DockerContainerUsageCli(object):
 
         self.parse_config()
 
-        self.cli = AutoVersionClient(base_url='unix://var/run/docker.sock', timeout=120)
+        self.cli = DockerClient(version='auto', base_url='unix://var/run/docker.sock', timeout=120)
         self.docker_util = DockerUtil(self.cli)
         self.metric_sender = MetricSender(verbose=True)
 
