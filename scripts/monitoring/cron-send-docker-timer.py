@@ -10,7 +10,7 @@
 # pylint: disable=invalid-name,import-error
 
 
-from docker import AutoVersionClient
+from docker import APIClient as DockerClient
 from docker.errors import DockerException
 from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.timeout import TimeoutException
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     keys = None
     mts = MetricSender()
     try:
-        cli = AutoVersionClient(base_url='unix://var/run/docker.sock')
+        cli = DockerClient(version='auto', base_url='unix://var/run/docker.sock', timeout=120)
         du = DockerUtil(cli, max_wait=360)
 
         # Wait up to 6 minutes

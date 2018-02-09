@@ -12,7 +12,7 @@
 
 import json
 import psutil
-from docker import AutoVersionClient
+from docker import APIClient as DockerClient
 from docker.errors import DockerException
 from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.timeout import TimeoutException
@@ -41,7 +41,8 @@ if __name__ == "__main__":
     ms = MetricSender()
 
     try:
-        cli = AutoVersionClient(base_url='unix://var/run/docker.sock')
+        cli = DockerClient(version='auto', base_url='unix://var/run/docker.sock', timeout=120)
+
         du = DockerUtil(cli)
         du_dds = du.get_disk_usage()
         docker_memoryusages = getRssVmsofDocker()
