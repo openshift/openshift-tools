@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.127
+Version:       0.1.128
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -492,6 +492,12 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Feb 08 2018 Drew Anderson <dranders@redhat.com> 0.1.128-1
+- Package docker-python is obsoleted by python-docker, trying to install
+  python-docker-2.4.2-1.3.el7.noarch instead (dranders@redhat.com)
+- pylint singleton-comparison (dranders@redhat.com)
+- syntax error went through without checks (dranders@redhat.com)
+
 * Tue Jan 30 2018 Sten Turpin <sten@redhat.com> 0.1.127-1
 - added -c elasticsearch to all exec commands (sten@redhat.com)
 - check df with -c so we get info from ocp 3.7+, avoid divide by 0
