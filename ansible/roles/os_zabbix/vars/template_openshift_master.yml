@@ -1037,6 +1037,13 @@ g_template_openshift_master:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_node_not_ready.asciidoc"
     dependencies:
     - "Openshift Master process not running on {HOST.NAME}"
+    priority: average
+
+  - name: "Large number of hosts not ready according to {HOST.NAME}"
+    expression: "100 * {Template Openshift Master:openshift.master.nodesnotready.count.min(#2)} / {Template Openshift Master:openshift.master.node.count.last()} > 10"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_node_not_ready.asciidoc"
+    dependencies:
+    - "Openshift Master process not running on {HOST.NAME}"
     priority: high
 
   - name: "Hosts not labeled according to {HOST.NAME}"
