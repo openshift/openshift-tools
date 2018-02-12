@@ -36,7 +36,7 @@
     selector: type=infra
     ports: "{{ item.0.listeners | default(ossr_default_listeners) | ossr_create_port_list() }}"
     stats_port: "{{ item.0.stats_port | default(omit) }}"
-    images: "registry.ops.openshift.com/openshift3/ose-${component}:${version}"
+    images: "registry.reg-aws.openshift.com:443/openshift3/ose-${component}:${version}"
     cert_file: "/etc/origin/master/named_certificates/{{ item.1 | basename }}"
     key_file: "/etc/origin/master/named_certificates/{{ item.2 | basename }}"
     cacert_file: "/etc/origin/master/named_certificates/{{ ossr_default_router_cacert | basename }}"

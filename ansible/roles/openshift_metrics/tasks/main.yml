@@ -96,7 +96,7 @@
       HAWKULAR_METRICS_HOSTNAME: "metrics.{{ osamet_clusterid }}.openshift.com"
       CASSANDRA_PV_SIZE: "{{ osamet_pv_size }}"
       CASSANDRA_NODES: "{{ osamet_cassandra_node }}"
-      IMAGE_PREFIX: registry.ops.openshift.com/openshift3/
+      IMAGE_PREFIX: registry.reg-aws.openshift.com:443/openshift3/
       IMAGE_VERSION: "{{ osamet_image_version }}"
     reconcile: False
   register: processout
