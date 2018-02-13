@@ -167,7 +167,6 @@
     openshift_daemonset_config_script: operations_config.sh
     openshift_daemonset_config_secrets:
     - path: docker-config.json
-      data: |
-        {{ lookup('template', '../templates/docker-config.json.j2') }}
+      data: "{{ lookup('template', '../templates/docker-config.json.j2') | to_json }}"
 
     openshift_daemonset_config_node_selector: "{{ osohm_sg_node_selector }}"
