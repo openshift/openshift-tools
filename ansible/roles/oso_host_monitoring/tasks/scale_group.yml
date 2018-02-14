@@ -57,7 +57,8 @@
     openshift_daemonset_config_daemonset_name: "{{ osohm_sub_host_type }}-config"
     openshift_daemonset_config_monitoring_pos: "{{ osohm_monitoring_pause_on_start | string }}"
     openshift_daemonset_config_monitoring: True
-    openshift_daemonset_config_image: "{{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}:{{ osohm_environment }}"
+    #openshift_daemonset_config_image: "openshift/origin-ansible:{{ g_play_openshift_version }}"
+    openshift_daemonset_config_image: "openshift/origin-ansible:latest"
     openshift_daemonset_config_monitoring_image: "{{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}:{{ osohm_environment }}"
     openshift_daemonset_config_configmap_contents_to_files:
     - name: monitoring_config.yml
@@ -76,6 +77,34 @@
         {{ lookup('file', '../files/etcd_metrics.yml') }}
       container_metrics_config.yml: |
         {{ lookup('file', '../files/container_metrics_config.yml') }}
+
+      crio_bind_mounts.yml: |
+          - name: create the openshift_tools directory
+            stat:
+              path: /host/var/lib/containers/atomic/cri-o.0/config.json
+            register: statout
+
+          - when: statout.stat.exists
+            block:
+            - name: import lib_utils for yedit
+              import_role:
+                name: /usr/share/ansible/openshift-ansible/roles/lib_utils
+
+            - name: set bind mounts
+              set_fact:
+                binds: "{{ osohm_bind_mounts }}"
+
+            - name: yedit the json file
+              yedit:
+                src: /host/var/lib/containers/atomic/cri-o.0/config.json
+                content_type: json
+                key: mounts
+                value: "{% raw %}{{ item }}{% endraw %}"
+                update: True
+              with_items: "{% raw %}{{ binds }}{% endraw %}"
+
+            - name: restart cri-o from within the container
+              shell: 'pkill -xf "/bin/runc --systemd-cgroup run cri-o"'
 
       docker_config_tasks.yml: |
           - name: create the openshift_tools directory
@@ -155,9 +184,12 @@
           - name: Import docker auth config tasks
             import_tasks: /opt/config/docker_config_tasks.yml
 
+          # setup bind mounts for crio container
+          - name: setup bind mounts
+            import_tasks: /opt/config/crio_bind_mounts.yml
+
           - name: Import monitoring config tasks
             import_tasks: /opt/config/monitoring_config_tasks.yml
-
 
       operations_config.sh: |
         #!/bin/bash
