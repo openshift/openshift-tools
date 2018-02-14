@@ -5,6 +5,29 @@ osohm_service_state:  started
 osohm_service_enabled: yes
 osohm_monitoring_pause_on_start: False
 
+osohm_bind_mounts:
+- type: bind
+  destination: /usr/bin/oc
+  source: /usr/bin/oc
+  options:
+  - rbind
+  - ro
+  - mode=755
+- type: bind
+  destination: /sbin/ifup
+  source: /sbin/ifup
+  options:
+  - rbind
+  - ro
+  - mode=755
+- type: bind
+  destination: /sbin/ifdown
+  source: /sbin/ifdown
+  options:
+  - rbind
+  - ro
+  - mode=755
+
 osohm_hawk_config:
   active: False
   url: https://localhost:8443
