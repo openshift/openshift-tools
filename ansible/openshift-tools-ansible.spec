@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.55
+Version:        0.0.56
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,21 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Wed Feb 14 2018 Drew Anderson <dranders@redhat.com> 0.0.56-1
+- Adding crio mounts to crio containers to enable monitoring.
+  (kwoodson@redhat.com)
+- Fixing format to json (kwoodson@redhat.com)
+- do the pull before the kill (dranders@redhat.com)
+- specifying port 443 (dyocum@redhat.com)
+- renamed all registry.ops.openshift.com to registry.reg-aws.openshift.com
+  registry.ops.openshift.com has been shutdown and the cname removed
+  (dyocum@redhat.com)
+- Adding enhancements to handle large files in configmaps.
+  (kwoodson@redhat.com)
+- Updating variable to point at correct roles. (kwoodson@redhat.com)
+- Updating host monitoring for scale groups (kwoodson@redhat.com)
+- Adding package to tower package list. (kwoodson@redhat.com)
+
 * Tue Jan 30 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.55-1
 - changing registry for zagg-web (ihorvath@redhat.com)
 

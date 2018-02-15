@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.128
+Version:       0.1.129
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -494,6 +494,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Feb 14 2018 Drew Anderson <dranders@redhat.com> 0.1.129-1
+- 
+
 * Thu Feb 08 2018 Drew Anderson <dranders@redhat.com> 0.1.128-1
 - Package docker-python is obsoleted by python-docker, trying to install
   python-docker-2.4.2-1.3.el7.noarch instead (dranders@redhat.com)
