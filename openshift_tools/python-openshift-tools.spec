@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.122
+Version:       0.0.123
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -296,6 +296,9 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Wed Feb 14 2018 Drew Anderson <dranders@redhat.com> 0.0.123-1
+- 
+
 * Tue Jan 30 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.122-1
 - changing registry for zagg-web (ihorvath@redhat.com)
 
