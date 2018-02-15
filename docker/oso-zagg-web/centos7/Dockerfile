@@ -49,6 +49,7 @@ RUN sed -i -e 's/^g_default_zabbix_server.*/g_default_zabbix_server: oso-centos7
 
 # Disable redis persistence, no use for us, container goes away it's lost anyway
 RUN sed -i -e '/^save/ s/^/#/' /etc/redis.conf
+RUN chmod 0755 /var/lib/redis
 
 # Temporary fixes until we can run as root
 # Make the container work more consistently in and out of openshift
