@@ -38,7 +38,7 @@ ADD check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
 
 
 RUN echo -e "\n\nalias oca='KUBECONFIG=/tmp/admin.kubeconfig oc '" >> /root/.bashrc
-RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oadm '" >> /root/.bashrc
+RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oc adm '" >> /root/.bashrc
 
 
 
@@ -88,7 +88,7 @@ RUN yum clean metadata && \
         python2-boto3 \
         python-lxml \
         rkhunter \
-        docker-python && \
+        python-docker && \
     yum clean all
 
 ADD urllib3-connectionpool-patch /root/

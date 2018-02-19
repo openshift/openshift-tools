@@ -1,0 +1,204 @@
+---
+# This should only be run against a master or this will fail
+
+- fail:
+    msg: "This playbook requires {{item}} to be set."
+  when: item is not defined or item == ''
+  with_items:
+  - "{{ osohm_zagg_web_url }}"
+  - "{{ osohm_host_monitoring }}"
+  - "{{ osohm_docker_registry_url }}"
+  - "{{ osohm_default_zagg_server_user }}"
+  - "{{ osohm_default_zagg_server_password }}"
+  - "{{ osohm_zagg_web_url }}"
+  - "{{ osohm_zagg_verify_ssl }}"
+  - "{{ osohm_pull_username }}"
+  - "{{ osohm_pull_password }}"
+  - "{{ osohm_registry_api }}"
+
+# This is required so that the URL for zagg service can be set properly in the daemonset
+- when: osohm_use_zagg
+  block:
+  - name: fetch the zagg-service IP
+    oc_service:
+      name: zagg-service
+      namespace: default
+      state: list
+    register: svc_out
+
+  - name: set zag-url ip
+    set_fact:
+      osohm_zagg_web_url: "http://{{ svc_out.results.clusterip }}"
+
+  - debug: var=osohm_zagg_web_url
+
+- block: # get a valid docker registry token
+  - name: Log in to openshift using read-only user
+    command: 'oc login --config=/root/.kube/reg-aws --username="{{ osohm_pull_username }}" --password="{{ osohm_pull_password }}" {{ osohm_registry_api }}'
+    register: oc_login_attempt
+    until: oc_login_attempt.stdout.find("Login successful") != -1
+    retries: 5
+    delay: 2
+
+  - name: Get openshift token
+    command: oc --config=/root/.kube/reg-aws whoami -t
+    register: openshift_token_out
+
+  - set_fact:
+      osohm_openshift_token: "user:{{ openshift_token_out.stdout }}"
+
+- name: Set the osohm_host_name to something we will change later
+  set_fact:
+    osohm_host_name: UPDATENAME
+
+- import_role:
+    name: "aos_{{ g_play_openshift_version }}_roles/openshift_daemonset_config"
+  vars:
+    openshift_daemonset_config_daemonset_name: "{{ osohm_sub_host_type }}-config"
+    openshift_daemonset_config_monitoring_pos: "{{ osohm_monitoring_pause_on_start | string }}"
+    openshift_daemonset_config_monitoring: True
+    #openshift_daemonset_config_image: "openshift/origin-ansible:{{ g_play_openshift_version }}"
+    openshift_daemonset_config_image: "openshift/origin-ansible:latest"
+    openshift_daemonset_config_monitoring_image: "{{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}:{{ osohm_environment }}"
+    openshift_daemonset_config_configmap_contents_to_files:
+    - name: monitoring_config.yml
+      contents: |
+        {{ lookup('template', '../templates/monitoring-config.yml.j2') }}
+      path: /tmp/monitoring_config.yml
+
+    - path: /tmp/authorized_keys
+      name: authorized_keys
+      contents: |
+        {% for user in osohm_authorized_keys | selectattr('pub_key', 'defined') %}
+        {{ user.pub_key }}
+        {% endfor %}
+    openshift_daemonset_config_configmap_literals:
+      etcd_metrics.yml: |
+        {{ lookup('file', '../files/etcd_metrics.yml') }}
+      container_metrics_config.yml: |
+        {{ lookup('file', '../files/container_metrics_config.yml') }}
+
+      crio_bind_mounts.yml: |
+          - name: create the openshift_tools directory
+            stat:
+              path: /host/var/lib/containers/atomic/cri-o.0/config.json
+            register: statout
+
+          - when: statout.stat.exists
+            block:
+            - name: import lib_utils for yedit
+              import_role:
+                name: /usr/share/ansible/openshift-ansible/roles/lib_utils
+
+            - name: set bind mounts
+              set_fact:
+                binds: "{{ osohm_bind_mounts }}"
+
+            - name: yedit the json file
+              yedit:
+                src: /host/var/lib/containers/atomic/cri-o.0/config.json
+                content_type: json
+                key: mounts
+                value: "{% raw %}{{ item }}{% endraw %}"
+                update: True
+              with_items: "{% raw %}{{ binds }}{% endraw %}"
+
+            - name: restart cri-o from within the container
+              shell: 'pkill -xf "/bin/runc --systemd-cgroup run cri-o"'
+
+      docker_config_tasks.yml: |
+          - name: create the openshift_tools directory
+            file:
+              state: directory
+              path: /host/root/.docker
+              mode: "0740"
+              owner: root
+              group: root
+
+          - name: copy docker config.json to shared config emptydir
+            copy:
+              remote_src: true
+              src: /opt/secrets/docker-config.json
+              dest: /host/root/.docker/config.json
+              owner: root
+              group: root
+
+      monitoring_config_tasks.yml: |
+          - set_fact:
+              osohm_host_name: "{{ osohm_cluster_id }}-{{ osohm_host_type }}{% raw %}-{{ lookup('env', 'HOSTNAME') }}{% endraw %}"
+
+          - name: copy monitoring config to shared config emptydir
+            copy:
+              remote_src: true
+              src: /opt/config/monitoring_config.yml
+              dest: /opt/tmp_shared_config/monitoring_config_pre.yml
+              owner: root
+              group: root
+
+          - name: update the hostname
+            command: 'sed -i -e "s#^    name: \"UPDATENAME\"#    name: {% raw %}{{ osohm_host_name }}{% endraw %}#" /opt/tmp_shared_config/monitoring_config_pre.yml'
+            register: sedout
+
+          - name: verify hostname was updated
+            command: 'grep -Pq "^    name: UPDATENAME" /opt/tmp_shared_config/monitoring_config_pre.yml'
+            register: grepout
+            failed_when:
+            - grepout.rc == 0
+
+          - name: copy fixed monitoring config to shared config emptydir
+            copy:
+              remote_src: true
+              src: /opt/tmp_shared_config/monitoring_config_pre.yml
+              dest: /opt/tmp_shared_config/monitoring_config.yml
+              mode: "0640"
+              owner: root
+              group: root
+
+      authorized_keys_tasks.yml: |
+          - name: setup authorized keys
+            copy:
+              remote_src: True
+              src: /opt/config/authorized_keys
+              dest: /host/root/.ssh/authorized_keys
+              mode: "0600"
+              owner: root
+              group: root
+
+      configure_host.yml: |
+        ---
+        - hosts: localhost
+          tasks:
+          # base setup
+          - name: create the openshift_tools directory
+            file:
+              state: directory
+              path: /host/etc/openshift_tools
+              mode: "0740"
+              owner: root
+              group: root
+
+          # setup authorized keys
+          - name: Import authorized keys tasks
+            import_tasks: /opt/config/authorized_keys_tasks.yml
+
+          - name: Import docker auth config tasks
+            import_tasks: /opt/config/docker_config_tasks.yml
+
+          # setup bind mounts for crio container
+          - name: setup bind mounts
+            import_tasks: /opt/config/crio_bind_mounts.yml
+
+          - name: Import monitoring config tasks
+            import_tasks: /opt/config/monitoring_config_tasks.yml
+
+      operations_config.sh: |
+        #!/bin/bash
+
+        ansible-playbook /opt/config/configure_host.yml -v
+
+    openshift_daemonset_config_script: operations_config.sh
+    openshift_daemonset_config_secrets:
+    - path: docker-config.json
+      data: "{{ lookup('template', '../templates/docker-config.json.j2') | to_json }}"
+
+    openshift_daemonset_config_node_selector: "{{ osohm_sg_node_selector }}"

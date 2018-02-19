@@ -5,7 +5,7 @@ RESTART_CONTAINER="NULL"
 
 while true
 do
-	sleep 30
+	sleep 600
     # Ensure that pmcd is running
     pgrep -f '/usr/libexec/pcp/bin/pmcd -A' &>/dev/null
 	if [ $? -ne 0 ]; then

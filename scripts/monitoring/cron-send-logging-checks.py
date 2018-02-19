@@ -96,7 +96,7 @@ class OpenshiftLoggingStatus(object):
 
             # Compare the master across all ES nodes to see if we have split brain
             curl_cmd = "{} 'https://localhost:9200/_cat/master'".format(self.es_curl)
-            es_master = "exec -ti {} -- {}".format(pod_name, curl_cmd)
+            es_master = "exec -c elasticsearch -ti {} -- {}".format(pod_name, curl_cmd)
             master_name = self.oc.run_user_cmd(es_master).split(' ')[1]
 
             if es_status['single_master'] is None:
@@ -116,7 +116,7 @@ class OpenshiftLoggingStatus(object):
 
         # get cluster nodes
         curl_cmd = "{} 'https://localhost:9200/_nodes'".format(self.es_curl)
-        node_cmd = "exec -ti {} -- {}".format(es_master_name, curl_cmd)
+        node_cmd = "exec -c elasticsearch -ti {} -- {}".format(es_master_name, curl_cmd)
         cluster_nodes = json.loads(self.oc.run_user_cmd(node_cmd))['nodes']
         es_status['all_nodes_registered'] = 1
         # The internal ES node name is a random string we do not track anywhere
@@ -138,7 +138,7 @@ class OpenshiftLoggingStatus(object):
         ''' Exec into the elasticsearch pod and check the cluster health '''
         try:
             curl_cmd = "{} 'https://localhost:9200/_cluster/health?pretty=true'".format(self.es_curl)
-            cluster_health = "exec -ti {} -- {}".format(es_pod, curl_cmd)
+            cluster_health = "exec -c elasticsearch -ti {} -- {}".format(es_pod, curl_cmd)
             health_res = json.loads(self.oc.run_user_cmd(cluster_health))
 
             return health_res
@@ -155,7 +155,7 @@ class OpenshiftLoggingStatus(object):
             disk_free = 0
             trash_var = 0
 
-            disk_output = self.oc.run_user_cmd("exec -ti {} -- df".format(es_pod)).split(' ')
+            disk_output = self.oc.run_user_cmd("exec -c elasticsearch -ti {} -- df".format(es_pod)).split(' ')
             disk_output = [x for x in disk_output if x]
             for item in disk_output:
                 if "/elasticsearch/persistent" not in item:
@@ -278,8 +278,8 @@ class OpenshiftLoggingStatus(object):
                             value['elasticsearch_active_primary_shards'],
                         "openshift.logging.elasticsearch.pod_pending_task_queue_depth[%s]" %(pod): \
                             value['elasticsearch_pending_task_queue_depth'],
-                        "openshift.logging.elasticsearch.disk_used[%s]" %(pod): value['disk']['used'],
-                        "openshift.logging.elasticsearch.disk_free[%s]" %(pod): value['disk']['free']
+                        "openshift.logging.elasticsearch.disk_free_pct[%s]" %(pod): \
+                            value['disk']['free'] * 100 / (value['disk']['free'] + value['disk']['used'] + 1)
                     })
         self.metric_sender.send_metrics()
 

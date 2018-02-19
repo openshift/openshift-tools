@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.120
+Version:       0.0.123
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -296,6 +296,39 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Wed Feb 14 2018 Drew Anderson <dranders@redhat.com> 0.0.123-1
+- 
+
+* Tue Jan 30 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.122-1
+- changing registry for zagg-web (ihorvath@redhat.com)
+
+* Mon Jan 29 2018 Sten Turpin <sten@redhat.com> 0.0.121-1
+- srebot: Only warn once per nick when using .all/all: that .msg is a less
+  noisy option (wgordon@redhat.com)
+- use 'oc adm' instead of deprecated 'oadm' (sedgar@redhat.com)
+- /usr/bin/oadm does not exist in OCP 3.8 (sedgar@redhat.com)
+- ircbot: allow disabling weekend warnings (wgordon@redhat.com)
+- ircbot: localize shift change times instead of using UTC in topic
+  (wgordon@redhat.com)
+- ircbot: fix bug in calculating shift change times for topic
+  (wgordon@redhat.com)
+- ircbot: update ordering for shift output (wgordon@redhat.com)
+- ircbot: update config to include userserv auth settings (wgordon@redhat.com)
+- ircbot: add separate .msg command and update schedules to respect DST
+  (wgordon@redhat.com)
+- ircbot: do not display shift change info on weekend (wgordon@redhat.com)
+- ircbot: move .all-list reply to privmsg (wgordon@redhat.com)
+- ircbot: update readme for openshift_sre to include the APIs necessary to
+  enable (wgordon@redhat.com)
+- fix python3 syntax in trello (aweiteka@redhat.com)
+- ircbot: remove separate karma plugin, and provide global config example
+  (wgordon@redhat.com)
+- add error handling for missing report list move (aweiteka@redhat.com)
+- ircbot: add .all announcement and karma (wgordon@redhat.com)
+- Fixup pylint (aweiteka@redhat.com)
+- Add reporting to trello script (aweiteka@redhat.com)
+- ircbot: update weekend notice (wgordon@redhat.com)
+
 * Thu Nov 16 2017 Ivan Horvath <ihorvath@redhat.com> 0.0.120-1
 - Add SRE specific ircbot plugin (wgordon@redhat.com)
 - catch undefined nick-trello user mapping (aweiteka@redhat.com)

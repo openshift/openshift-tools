@@ -38,7 +38,7 @@ ADD check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
 
 
 RUN echo -e "\n\nalias oca='KUBECONFIG=/tmp/admin.kubeconfig oc '" >> /root/.bashrc
-RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oadm '" >> /root/.bashrc
+RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oc adm '" >> /root/.bashrc
 
 # /usr/bin/oc workaround
 # python-openshift-tools-monitoring-openshift depends on /usr/bin/oc
@@ -97,7 +97,7 @@ RUN yum clean metadata && \
         python2-boto3 \
         python-lxml \
         rkhunter \
-        docker-python && \
+        python-docker && \
     yum-install-check.sh -y google-cloud-sdk python2-uritemplate python2-google-api-client python2-oauth2client --disablerepo="rhel-server-releases-optional" --enablerepo="google-cloud-sdk" && \
     yum clean all
 

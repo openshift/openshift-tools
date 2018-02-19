@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.52
+Version:        0.0.56
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,61 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Wed Feb 14 2018 Drew Anderson <dranders@redhat.com> 0.0.56-1
+- Adding crio mounts to crio containers to enable monitoring.
+  (kwoodson@redhat.com)
+- Fixing format to json (kwoodson@redhat.com)
+- do the pull before the kill (dranders@redhat.com)
+- specifying port 443 (dyocum@redhat.com)
+- renamed all registry.ops.openshift.com to registry.reg-aws.openshift.com
+  registry.ops.openshift.com has been shutdown and the cname removed
+  (dyocum@redhat.com)
+- Adding enhancements to handle large files in configmaps.
+  (kwoodson@redhat.com)
+- Updating variable to point at correct roles. (kwoodson@redhat.com)
+- Updating host monitoring for scale groups (kwoodson@redhat.com)
+- Adding package to tower package list. (kwoodson@redhat.com)
+
+* Tue Jan 30 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.55-1
+- changing registry for zagg-web (ihorvath@redhat.com)
+
+* Tue Jan 30 2018 Sten Turpin <sten@redhat.com> 0.0.54-1
+- added option for service catalog (sedgar@redhat.com)
+- correct new ES check key names to match keys being sent from check script
+  (sten@redhat.com)
+- updated openshift.logging.elasticsearch.disk_free_pct from 70 to 30
+  (zhiwliu@redhat.com)
+
+* Mon Jan 29 2018 Sten Turpin <sten@redhat.com> 0.0.53-1
+- moved symlink of lib_openshift from 3.6 to 3.7 (mwoodson@redhat.com)
+- to work around jinja2 defined test for gcs even if the variable is set to
+  NULL, simply having the key present means it's defined (dyocum@redhat.com)
+- added the docker options to the byo gen template (mwoodson@redhat.com)
+- tested working on devenv (sten@redhat.com)
+- send disk as %% free instead of used + freE (sten@redhat.com)
+- Vendor files directory of openshift-ansible (jupierce@redhat.com)
+- Revert "Vendor files dir from ansible" (jupierce@redhat.com)
+- Vendor files dir from ansible (jupierce@redhat.com)
+- remove the trigger before we have sop for this (zhizhang@zhizhang-laptop-
+  nay.redhat.com)
+- Remove references to outdated scheduler configs (sedgar@redhat.com)
+- Stop managing fullName for openshift users. The IDP fills this in, and we're
+  not asking for it when we grant tiered access. (twiest@redhat.com)
+- cmds needs to be separated into args (sedgar@redhat.com)
+- /usr/bin/oadm does not exist in OCP 3.8 (sedgar@redhat.com)
+- lftp to nodes, because it's useful (gburges@redhat.com)
+- no copying gcs user keyfile from private_vars to tmp setup_user
+  (dyocum@redhat.com)
+- no need to copy obg_gcp_user_gcsdockerregistry_file to obg_user_dir the full
+  path is being set in o-a-ops generate_byo_inventory.yml (dyocum@redhat.com)
+- try copy, again (dyocum@redhat.com)
+- copy: isn't working, neither is cp (dyocum@redhat.com)
+- debug a bit (dyocum@redhat.com)
+- copy the gcp_user_gcsdockerregistry.yml to /tmp/<user>/ to be used by the
+  byo-inventory (dyocum@redhat.com)
+- don't copy and convert - the problem isn't in the byo, it MIGHT be in how the
+  gcskeyfile is being created in o-a-tools libs. (dyocum@redhat.com)
+
 * Thu Jan 11 2018 Justin Pierce <jupierce@redhat.com> 0.0.52-1
 - fix mis-spell in logging check script and add trigger for the logging es
   cluster (zhizhang@zhizhang-laptop-nay.redhat.com)
