@@ -279,6 +279,9 @@ openshift_hosted_metrics_deploy=false
 {# END Openshift Metrics #}
 {% endif %}
 
+# Openshift Service Catalog
+openshift_enable_service_catalog=false
+
 [masters]
 {% for master in obg_masters %}
 {{ hostvars[master][obg_ip_choice] }}
