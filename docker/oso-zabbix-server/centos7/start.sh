@@ -17,6 +17,9 @@ echo user:x:$(id -u):0:USER:/root:/bin/bash >> /etc/passwd
 # Configure the container on startup
 ansible-playbook /root/config.yml
 
+# Starting pagerduty agent
+/usr/share/pdagent/bin/pdagentd.py
+
 echo
 echo 'Ensure database exist.'
 echo '---------------'
@@ -50,6 +53,8 @@ echo '---------------'
 sleep 120
 /usr/local/bin/zabbix_partition_monitoring.sh &
 echo
+
+
 
 set +e
 while true; do
