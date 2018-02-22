@@ -32,6 +32,7 @@
   stat:
     path: "{{ item }}"
   with_items:
+  - "{{ vosar_output_directory }}/usr/share/ansible_plugins/callback_plugins/"
   - "{{ vosar_output_directory }}/usr/share/ansible_plugins/filter_plugins/"
   - "{{ vosar_output_directory }}/usr/share/ansible_plugins/lookup_plugins/"
   - "{{ vosar_output_directory }}/usr/share/ansible/openshift-ansible/playbooks/"
