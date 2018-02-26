@@ -84,6 +84,7 @@ def main():
             smtp_email=dict(default=None, type='str'),
             passwd=dict(default=None, type='str'),
             path=dict(default=None, type='str'),
+            exec_params=dict(default=None, type='str'),
             username=dict(default=None, type='str'),
             status=dict(default='enabled', type='str'),
             state=dict(default='present', type='str'),
@@ -103,6 +104,7 @@ def main():
     state = module.params['state']
 
     content = zapi.get_content(zbx_class_name, 'get', {'search': {'description': description}})
+
     if state == 'list':
         module.exit_json(changed=False, results=content['result'], state="list")
 
@@ -124,6 +126,7 @@ def main():
                   'smtp_email': module.params['smtp_email'],
                   'passwd': module.params['passwd'],
                   'exec_path': module.params['path'],
+                  'exec_params': module.params['exec_params'],
                   'username': module.params['username'],
                   'status': status,
                  }
@@ -161,7 +164,7 @@ def main():
                      results='Unknown state passed. %s' % state,
                      state="unknown")
 
-# pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled
+# pylint: disable=redefined-builtin, unused-wildcard-import, wildcard-import, locally-disabled, wrong-import-position
 # import module snippets.  This are required
 from ansible.module_utils.basic import *
 
