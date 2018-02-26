@@ -52,20 +52,19 @@
       line: "-I OPENSHIFT-OUTPUT-FILTERING -m comment --comment id_outbound_udp_filtering_1_ -s {{ node_cidr }} -o eth0 -p udp -j oo-udp"
 
     outbound_udp_rules:
-    # Allow all DNS traffic to DNS servers, with no limits.
-    # Limit any remaining permitted UDP traffic to 30 datagrams per second,
-    # and define permitted UDP traffic for un-privileged pods
-    # Finally, drop all other UDP traffic. Log dropped traffic up to once per minute.
-    # Because all dropped traffic is crammed into this single limited log rule,
-    # log entries will only be a sampling of actual dropped traffic.
+    # Allow udp/53 (dns) to the node itself, with no limits.
+    # Block udp/80 blindly as this is usually used only for DDoS.
+    # Any other udp traffic goes into rate limiting per pod.
+    # Allow whitelist of UDP ports.  Log and drop anything else.
+    # 
+    # NOTE: Because all dropped traffic is crammed into a single rate
+    #       limited log rule, entries will be a sampling of actual dropped traffic.
+    #
     - chain: oo-udp
       after: "id_outbound_udp_filtering"
       regex: "id_outbound_udp_rule_1_"
       block: |-
-        {# Note: sdodson says that pod DNS resolution happens via dnsmasq running on the node. That's
-                 why we only have DNS traffic to the node whitelisted prior to rate limiting. #}
         -A oo-udp -d {{ oudp_node_ip }}/32 -o eth0 -p udp -m udp --dport 53 -j RETURN
-        -A oo-udp -o eth0 -p udp -m limit --limit 1/min --limit-burst 10 -j LOG --log-prefix "UDP outlog: DROPPED_80:"
         -A oo-udp -o eth0 -p udp -m udp --dport 80 -j DROP
         -A oo-udp -s {{ node_cidr }} -o eth0 -p udp -j oo-udp-limit
         -A oo-udp -o eth0 -p udp -m udp --dport 53 -j RETURN
@@ -76,6 +75,7 @@
         -A oo-udp -o eth0 -p udp -m udp --dport 1514 -j RETURN
         -A oo-udp -o eth0 -p udp -m udp --dport 4500 -j RETURN
         -A oo-udp -o eth0 -p udp -m udp --dport 25826 -j RETURN
+        -A oo-udp -o eth0 -p udp -m udp --dport 31685 -j RETURN
         -A oo-udp -o eth0 -p udp -m limit --limit 1/min --limit-burst 1 -j LOG --log-prefix "UDP outlog: DROPPED_ALL:"
         -A oo-udp -p udp -j DROP
 
