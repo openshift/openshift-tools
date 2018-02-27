@@ -1,0 +1,27 @@
+---
+- name: create the openshift_tools directory
+  stat:
+    path: /host/var/lib/containers/atomic/cri-o.0/config.json
+  register: statout
+
+- when: statout.stat.exists
+  block:
+  - name: import lib_utils for yedit
+    import_role:
+      name: /usr/share/ansible/openshift-ansible/roles/lib_utils
+
+  - name: set bind mounts
+    set_fact:
+      binds: "{{ osohm_bind_mounts }}"
+
+  - name: yedit the json file
+    yedit:
+      src: /host/var/lib/containers/atomic/cri-o.0/config.json
+      content_type: json
+      key: mounts
+      value: "{% raw %}{{ item }}{% endraw %}"
+      update: True
+    with_items: "{% raw %}{{ binds }}{% endraw %}"
+
+  - name: restart cri-o from within the container
+    shell: 'pkill -xf "/bin/runc --systemd-cgroup run cri-o"'

@@ -1,0 +1,28 @@
+---
+- name: copy certs
+  copy:
+    src: "/opt/secrets/{{ item }}"
+    dest: "/var/lib/yum/{{ item }}"
+  with_items:
+  - client-cert.pem
+  - client-key.pem
+  no_log: true
+
+- name: load yum repsitories
+  include_vars: /opt/config/yum_repositories.yml
+
+- name: Manage yum repositories
+  yum_repository:
+    name: "{{ item.name }}"
+    state: "{{ item.state | default('present') }}"
+    file: "{{ item.file }}"
+    description: "{{ item.description }}"
+    baseurl: "{{ item.baseurl | default(omit) }}"
+    enabled: "{{ item.enabled | default(1) }}"
+    gpgkey: "{{ item.gpgkey | default(omit) }}"
+    gpgcheck: "{{ item.gpgcheck | default(1) }}"
+    sslverify: "{{ item.sslverify | default(1) }}"
+    sslclientkey: "{{ item.sslclientkey | default(omit) }}"
+    sslclientcert: "{{ item.sslclientcert | default(omit) }}"
+  with_items: "{{ yum_repositories }}"
+
