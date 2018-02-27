@@ -1,0 +1,16 @@
+---
+- name: create the /root/.docker directory
+  file:
+    state: directory
+    path: /host/root/.docker
+    mode: "0740"
+    owner: root
+    group: root
+
+- name: copy docker config.json to shared config emptydir
+  copy:
+    remote_src: true
+    src: /opt/secrets/docker-config.json
+    dest: /host/root/.docker/config.json
+    owner: root
+    group: root
