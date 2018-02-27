@@ -101,7 +101,7 @@ class Ohi(object):
             # We weren't able to determine what they wanted to do
             raise ArgumentError("Invalid combination of arguments")
 
-        if self.args.output == None:
+        if self.args.output is None:
             self.default_output(hosts)
         elif self.args.output == "json":
             self.json_output(hosts)
@@ -130,13 +130,12 @@ class Ohi(object):
             Prints the external name, internal name, external ip, and internal ip
         '''
         for host in sorted(hosts, key=utils.normalize_dnsname):
-            hostname = host
             temp_host = {
                 'ec2_private_dns_name': '',
                 'oo_public_ip': '',
                 'oo_private_ip': ''
             }
-            for key in temp_host.keys():
+            for key in temp_host:
                 if key in self.aws.inventory.get('_meta').get('hostvars').get(host):
                     temp_host[key] = self.aws.inventory.get('_meta').get('hostvars').get(host).get(key)
 
@@ -204,7 +203,8 @@ class Ohi(object):
 
         parser.add_argument('-l', '--user', action='store', default=None, help='username')
 
-        parser.add_argument('-o', '--output', action='store', default=None, help='output')
+        parser.add_argument('-o', '--output', action='store', default=None, choices=['json', 'wide'],
+                            help='Format Output; valid options: json, wide')
 
 
         parser.add_argument('--v2', action='store_true', default=False,
