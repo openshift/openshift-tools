@@ -42,6 +42,7 @@ VALID_OPERATIONS = ['build-ci-msg',
                     'install',
                     'legacy-upgrade',
                     'online-deployer',
+                    'osio-test',
                     'perf1',
                     'perf2',
                     'perf3',
@@ -61,6 +62,7 @@ VALID_OPERATIONS = ['build-ci-msg',
                     'upgrade-logging',
                     'upgrade-metrics',
                     'upgrade-nodes',
+                    'upgrade-nodes-aws-scalegroups',
                    ]
 
 # this is a list of extra arguments that are valid and their corresponding regular expression.
