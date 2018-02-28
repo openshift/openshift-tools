@@ -99,9 +99,9 @@
 
     openshift_daemonset_config_configmap_literals:
       etcd_metrics.yml: |
-        {{ lookup('file', '../files/monitoring_config/etcd_metrics.yml') }}
+        {{ lookup('file', '../files/etcd_metrics.yml') }}
       container_metrics_config.yml: |
-        {{ lookup('file', '../files/monitoring_config/container_metrics_config.yml') }}
+        {{ lookup('file', '../files/container_metrics_config.yml') }}
       yum_tasks.yml: |
         {{ lookup('file', '../files/yum/yum_tasks.yml') }}
 
