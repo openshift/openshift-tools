@@ -69,7 +69,7 @@ VALID_OPERATIONS = ['build-ci-msg',
 VALID_EXTRA_ARGUMENTS = {'cicd_docker_version' : '^$|^[a-zA-Z0-9._-]+$',
                          'cicd_openshift_ansible_build' : '^$|^[a-zA-Z0-9./-]+$',
                          'cicd_openshift_version' : '^$|^[a-zA-Z0-9./-]+$',
-                         'cicd_yum_main_url' : '^$|^[a-zA-Z0-9./:_-]+$',
+                         'cicd_yum_repo_urls' : '^$|^[a-zA-Z0-9./,:_-]+$',
                          'cicd_yum_openshift_ansible_url' : '^$|^[a-zA-Z0-9./:_-]+$',
                         }
 
