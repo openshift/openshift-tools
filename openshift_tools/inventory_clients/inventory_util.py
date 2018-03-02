@@ -21,11 +21,11 @@ class ArgumentError(Exception):
         super(ArgumentError, self).__init__()
         self.message = message
 
-class AwsUtil(object):
-    """This class contains the AWS utility functions."""
+class InventoryUtil(object):
+    """This class contains the Inventory utility functions."""
 
     def __init__(self, host_type_aliases=None, use_cache=True):
-        """Initialize the AWS utility class.
+        """Initialize the Inventory utility class.
 
         Keyword arguments:
         host_type_aliases -- a list of aliases to common host-types (e.g. ex-node)
@@ -118,6 +118,7 @@ class AwsUtil(object):
 
     def print_host_types(self):
         """Gets the list of host types and aliases and outputs them in columns."""
+
         host_types = self.get_host_types()
         ht_format_str = "%35s"
         alias_format_str = "%-20s"
@@ -202,10 +203,10 @@ class AwsUtil(object):
             cluster_hosts = set([])
             if len(clusters) > 1:
                 for cluster in clusters:
-                    clu_tag = AwsUtil.gen_clusterid_tag(cluster)
+                    clu_tag = InventoryUtil.gen_clusterid_tag(cluster)
                     cluster_hosts.update(self.inventory.get(clu_tag, []))
             else:
-                cluster_hosts.update(self.inventory.get(AwsUtil.gen_clusterid_tag(clusters[0]), []))
+                cluster_hosts.update(self.inventory.get(InventoryUtil.gen_clusterid_tag(clusters[0]), []))
 
             retval.intersection_update(cluster_hosts)
 
@@ -213,10 +214,10 @@ class AwsUtil(object):
             env_hosts = set([])
             if len(envs) > 1:
                 for env in envs:
-                    env_tag = AwsUtil.gen_env_tag(env)
+                    env_tag = InventoryUtil.gen_env_tag(env)
                     env_hosts.update(self.inventory.get(env_tag, []))
             else:
-                env_hosts.update(self.inventory.get(AwsUtil.gen_env_tag(envs[0]), []))
+                env_hosts.update(self.inventory.get(InventoryUtil.gen_env_tag(envs[0]), []))
 
             retval.intersection_update(env_hosts)
 
@@ -227,7 +228,7 @@ class AwsUtil(object):
             retval.intersection_update(self.inventory.get(self.gen_sub_host_type_tag(sub_host_type), []))
 
         if version != 'all':
-            retval.intersection_update(self.inventory.get(AwsUtil.gen_version_tag(version), []))
+            retval.intersection_update(self.inventory.get(InventoryUtil.gen_version_tag(version), []))
 
         return list(retval)
 
