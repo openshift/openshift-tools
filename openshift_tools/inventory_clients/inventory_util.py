@@ -21,6 +21,7 @@ class ArgumentError(Exception):
         super(ArgumentError, self).__init__()
         self.message = message
 
+# pylint: disable=too-many-public-methods
 class InventoryUtil(object):
     """This class contains the Inventory utility functions."""
 
@@ -50,6 +51,12 @@ class InventoryUtil(object):
         if self._inventory is None:
             self._inventory = multi_inventory.MultiInventory(None).run()
         return self._inventory
+
+    @staticmethod
+    def get_cluster(name):
+        """ return a cluster object """
+
+        return Cluster(name)
 
     def setup_host_type_alias_lookup(self):
         """Sets up the alias to host-type lookup table."""
@@ -247,15 +254,9 @@ class InventoryUtil(object):
     def get_cluster_variable(self, cluster, variable):
         """ return an inventory variable that is common to a cluster"""
 
-        variables = []
-        for host in self.inventory['oo_clusterid_' + cluster]:
-            if variable in self.inventory['_meta']['hostvars'][host]:
-                variables.append(self.inventory['_meta']['hostvars'][host][variable])
+        cluster = InventoryUtil.get_cluster(cluster)
 
-        if len(list(set(variables))) == 1:
-            return variables[0]
-
-        return None
+        return cluster.get_variable(variable)
 
     def get_node_variable(self, host, variable):
         """ return an inventory variable from a host"""
@@ -274,6 +275,16 @@ class Cluster(object):
         self._name = name
         self.inventory = multi_inventory.MultiInventory(None).run()
 
+    def __str__(self):
+        """ str representation of Cluster """
+
+        return self._name
+
+    def __repr__(self):
+        """ repr representation of Cluster """
+
+        return self._name
+
     @property
     def name(self):
         """ cluster name property """
@@ -285,6 +296,12 @@ class Cluster(object):
         """ cluster environment property """
 
         return self.get_variable('oo_environment')
+
+    @property
+    def deployment(self):
+        """ cluster deployment property """
+
+        return self.get_variable('oo_deployment')
 
     @property
     def test_cluster(self):
@@ -309,7 +326,6 @@ class Cluster(object):
                              set(self.inventory["oo_clusterid_" + self._name]))
 
         return len(cluster_nodes)
-
 
     def get_variable(self, variable):
         """ return an inventory variable that is common to a cluster"""
