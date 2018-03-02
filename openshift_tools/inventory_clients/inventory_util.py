@@ -264,3 +264,62 @@ class InventoryUtil(object):
             return self.inventory['_meta']['hostvars'][host][variable]
 
         return None
+
+class Cluster(object):
+    """ This is a class to acces data about an Ops cluster """
+
+    def __init__(self, name):
+        """ Init the cluster class """
+
+        self._name = name
+        self.inventory = multi_inventory.MultiInventory(None).run()
+
+    @property
+    def name(self):
+        """ cluster name property """
+
+        return self._name
+
+    @property
+    def environment(self):
+        """ cluster environment property """
+
+        return self.get_variable('oo_environment')
+
+    @property
+    def test_cluster(self):
+        """ cluster cluster property """
+
+        return bool(self.get_variable('oo_test_cluster'))
+
+    @property
+    def primary_master(self):
+        """ return the first master """
+
+        primary_master = list(set(self.inventory["oo_master_primary"]) &
+                              set(self.inventory["oo_clusterid_" + self._name]))[0]
+
+        return primary_master
+
+    @property
+    def node_count(self):
+        """ return the number of nodes - infra and compute """
+
+        cluster_nodes = list(set(self.inventory["oo_hosttype_node"]) &
+                             set(self.inventory["oo_clusterid_" + self._name]))
+
+        return len(cluster_nodes)
+
+
+    def get_variable(self, variable):
+        """ return an inventory variable that is common to a cluster"""
+
+        variables = []
+        for host in self.inventory['oo_clusterid_' + self.name]:
+            if variable in self.inventory['_meta']['hostvars'][host]:
+                variables.append(self.inventory['_meta']['hostvars'][host][variable])
+
+        if len(list(set(variables))) == 1:
+            return variables[0]
+
+        return None
