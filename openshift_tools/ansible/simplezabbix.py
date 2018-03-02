@@ -253,13 +253,13 @@ class SimpleZabbixRaw(object):
         # pylint: disable=invalid-name
         Options = namedtuple('Options', ['connection', 'module_path',
                                          'forks', 'become', 'become_method',
-                                         'become_user', 'check'])
+                                         'become_user', 'check', 'diff'])
 
         loader = DataLoader()
         options = Options(connection='local', module_path=None,
                           forks=1, become=None,
                           become_method=None, become_user=None,
-                          check=False)
+                          check=False, diff=False)
         passwords = dict(vault_pass='secret')
 
         results_callback = ResultsCallback()
