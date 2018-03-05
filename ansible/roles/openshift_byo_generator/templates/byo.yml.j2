@@ -35,6 +35,7 @@ openshift_pkg_version=-{{ obg_install_version }}
 # cluster_id is deprecated in favor of openshift_clusterid
 cluster_id={{ obg_clusterid }}
 openshift_clusterid={{ obg_clusterid }}
+openshift_aws_clusterid={{ obg_clusterid }} # AWS playbooks in openshift-ansible depend on this.
 openshift_master_cluster_hostname={{ obg_master_cluster_hostname }}
 openshift_master_cluster_public_hostname={{ obg_master_public_hostname }}
 openshift_master_public_api_url={{ obg_master_public_api_url }}
@@ -281,6 +282,12 @@ openshift_hosted_metrics_deploy=false
 
 # Openshift Service Catalog
 openshift_enable_service_catalog=false
+
+{# ELB configuration comes in via obg_infra_aws_elb_dict #}
+{% if obg_scale_infra_elbs %}
+openshift_aws_elb_dict={{ obg_infra_aws_elb_dict }}
+{% endif %}
+{# END ELB configuration #}
 
 [masters]
 {% for master in obg_masters %}
