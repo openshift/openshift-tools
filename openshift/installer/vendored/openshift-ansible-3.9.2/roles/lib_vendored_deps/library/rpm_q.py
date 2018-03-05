@@ -1,0 +1,1 @@
+../../lib_utils/library/rpm_q.py
