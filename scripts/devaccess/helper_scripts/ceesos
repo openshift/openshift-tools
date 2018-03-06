@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -u
+
+# run sosreport with supplied case id
+sosreport --case-id=${1} --log-size=100 --batch --quiet --no-report
+
+# upload the files made by sosreport to the case
+for file in $(ls /var/tmp/*${1}*); do
+  curl -u $CEEUSER:$CEEPASS -X POST -F "file=@${file}" "https://api.access.redhat.com/rs/cases/$1/attachments?private=true" -H 'Accept: text/plain' --form-string "description='Tier1 automation upload: ${file}'" -D -
+  rm ${file}
+done
