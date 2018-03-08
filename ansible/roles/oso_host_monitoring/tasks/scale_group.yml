@@ -105,9 +105,6 @@
       yum_tasks.yml: |
         {{ lookup('file', '../files/yum/yum_tasks.yml') }}
 
-      crio_bind_mounts_tasks.yml: |
-        {{ lookup('template', '../files/crio_bind_mounts/crio_bind_mounts_tasks.yml.j2') }}
-
       rootlog_ssh_wrap_tasks.yml: |
         {{ lookup('file', '../files/rootlog_ssh_wrap/rootlog_ssh_wrap_tasks.yml') }}
       yum_repositories.yml: "{{ {'yum_repositories': osohm_yum_repo_list} | to_yaml }}"
@@ -148,8 +145,8 @@
           - name: Import docker auth config tasks
             import_tasks: /opt/config/docker_config_tasks.yml
 
-          - name: setup bind mounts
-            import_tasks: /opt/config/crio_bind_mounts_tasks.yml
+          #- name: setup bind mounts
+          #import_tasks: /opt/config/crio_bind_mounts_tasks.yml
 
           - name: Import monitoring config tasks
             import_tasks: /opt/config/monitoring_config_tasks.yml
