@@ -35,6 +35,7 @@ openshift_pkg_version=-{{ obg_install_version }}
 # cluster_id is deprecated in favor of openshift_clusterid
 cluster_id={{ obg_clusterid }}
 openshift_clusterid={{ obg_clusterid }}
+openshift_aws_clusterid={{ obg_clusterid }} # AWS playbooks in openshift-ansible depend on this.
 openshift_master_cluster_hostname={{ obg_master_cluster_hostname }}
 openshift_master_cluster_public_hostname={{ obg_master_public_hostname }}
 openshift_master_public_api_url={{ obg_master_public_api_url }}
@@ -141,7 +142,6 @@ openshift_enable_service_catalog={{ obg_service_catalog }}
 {# Install custom certificate in the router for https connections #}
 {% if obg_use_router_certs %}
 openshift_hosted_router_create_certificate=False
-openshift_hosted_router_certificate={"certfile": "{{ obg_openshiftapps_cert }}", "keyfile": "{{ obg_openshiftapps_key }}", "cafile": "{{ obg_openshiftapps_ca }}"}
 {% endif %}
 
 {# OpenShift Node K8s argument overrides, used for items openshift-ansible does not support #}
@@ -241,7 +241,6 @@ openshift_hosted_manage_registry=false
 
 # Openshift Logging
 {% if obg_install_logging %}
-openshift_logging_install_logging=true
 openshift_hosted_logging_deploy=true
 openshift_hosted_logging_elasticsearch_cluster_size=2
 openshift_hosted_logging_deployer_version=v{{ obg_install_version_short }}
@@ -257,14 +256,12 @@ openshift_logging_kibana_cert={{ obg_logging_kibana_cert }}
 openshift_logging_kibana_key={{ obg_logging_kibana_key }}
 openshift_logging_kibana_ca={{ obg_logging_kibana_ca }}
 {% else %}
-openshift_logging_install_logging=false
 openshift_hosted_logging_deploy=false
 {# END Openshift Logging #}
 {% endif %}
 
 # Openshift Metrics
 {% if obg_install_metrics %}
-openshift_metrics_install_metrics=true
 openshift_hosted_metrics_deploy=true
 openshift_hosted_metrics_storage_kind=dynamic
 
@@ -278,35 +275,18 @@ openshift_metrics_hawkular_ca={{ obg_metrics_hawkular_ca }}
 openshift_metrics_hawkular_cert={{ obg_metrics_hawkular_cert }}
 openshift_metrics_hawkular_key={{ obg_metrics_hawkular_key }}
 {% else %}
-openshift_metrics_install_metrics=false
 openshift_hosted_metrics_deploy=false
 {# END Openshift Metrics #}
 {% endif %}
 
-# START Openshift Prometheus
-{% if obg_install_prometheus %}
-openshift_hosted_prometheus_deploy=true
-{% else %}
-openshift_hosted_prometheus_deploy=false
-{# END Openshift Prometheus#}
-{% endif %}
-
-# START Openshift Service Catalog
-{% if obg_install_service_catalog %}
-openshift_enable_service_catalog=true
-{% else %}
+# Openshift Service Catalog
 openshift_enable_service_catalog=false
-{# END Openshift Service Catalog#}
-{% endif %}
 
-# START Openshift Management
-{% if obg_install_management %}
-openshift_management_install_management=true
-{% else %}
-openshift_management_install_management=false
-{# END Openshift Management#}
+{# ELB configuration comes in via obg_infra_aws_elb_dict #}
+{% if obg_scale_infra_elbs %}
+openshift_aws_elb_dict={{ obg_infra_aws_elb_dict }}
 {% endif %}
-
+{# END ELB configuration #}
 
 [masters]
 {% for master in obg_masters %}
