@@ -1,6 +1,7 @@
 ---
 obg_output_path: /tmp
 obg_registry_template: openshift3/ose-${component}:${version}
+obg_install_web_console: false
 obg_install_metrics: false
 obg_install_logging: false
 obg_inventory_sdn: redhat/openshift-ovs-networkpolicy

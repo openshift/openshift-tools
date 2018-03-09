@@ -240,13 +240,17 @@ openshift_hosted_manage_registry=false
 
 
 # Openshift Web Console
-{% if obg_install_web_console%}
+{% if obg_install_web_console %}
 openshift_web_console_install=true
 
 {# web_console options are passed in via the obg_web_console_variables variable #}
 {% for option, value in obg_web_console_variables.iteritems() %}
 {{option}}={{value}}
 {% endfor %}
+{% else %}
+openshift_web_console_install=false
+{# END Openshift Registry #}
+{% endif %}
 
 # Openshift Logging
 {% if obg_install_logging %}
