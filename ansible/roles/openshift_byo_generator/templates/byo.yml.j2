@@ -283,31 +283,6 @@ openshift_hosted_metrics_deploy=false
 {# END Openshift Metrics #}
 {% endif %}
 
-# START Openshift Prometheus
-{% if obg_install_prometheus %}
-openshift_hosted_prometheus_deploy=true
-{% else %}
-openshift_hosted_prometheus_deploy=false
-{# END Openshift Prometheus#}
-{% endif %}
-
-# START Openshift Service Catalog
-{% if obg_install_service_catalog %}
-openshift_enable_service_catalog=true
-{% else %}
-openshift_enable_service_catalog=false
-{# END Openshift Service Catalog#}
-{% endif %}
-
-# START Openshift Management
-{% if obg_install_management %}
-openshift_management_install_management=true
-{% else %}
-openshift_management_install_management=false
-{# END Openshift Management#}
-{% endif %}
-
-
 [masters]
 {% for master in obg_masters %}
 {{ hostvars[master][obg_ip_choice] }}
