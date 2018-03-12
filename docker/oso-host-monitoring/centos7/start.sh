@@ -30,6 +30,8 @@ check-pmcd-status.sh &
 #/usr/share/pcp/lib/pmcd start &
 /root/start-pmcd.bash > /var/log/pmcd.log &
 
+/root/autoheal-check-ovs-socket.sh &
+
 # Run the main service of this container
 echo
 echo 'Starting crond'
