@@ -2,6 +2,16 @@
 
 set -u
 
+if [[ -z "${CEEUSER}" ]]; then
+    echo "Please set CEEUSER environmental variable with a value"
+    exit 1
+fi
+
+if [[ -z "${CEEPASS}" ]]; then
+    echo "Please set CEEPASS environmental variable with a value"
+    exit 1
+fi
+
 # run sosreport with supplied case id
 sosreport --case-id=${1} --log-size=100 --batch --quiet --no-report
 
