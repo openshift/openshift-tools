@@ -1,1 +1,0 @@
-../../lib_utils/lookup_plugins/openshift_master_facts_default_predicates.py
