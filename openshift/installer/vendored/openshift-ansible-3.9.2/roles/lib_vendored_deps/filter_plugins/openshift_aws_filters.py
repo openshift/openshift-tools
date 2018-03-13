@@ -1,1 +1,0 @@
-../../lib_utils/filter_plugins/openshift_aws_filters.py
