@@ -239,6 +239,15 @@ openshift_hosted_manage_registry=false
 {% endif %}
 
 
+# Openshift Registry Console
+# We always install it, this lets us change where it pulls its image from
+{% if obg_install_registry_console %}
+{# registry_console options are passed in via the obg_registry_console_variables variable #}
+{% for option, value in obg_registry_console_variables.iteritems() %}
+{{option}}={{value}}
+{% endfor %}
+{% endif %}
+
 # Openshift Web Console
 {% if obg_install_web_console %}
 openshift_web_console_install=true
