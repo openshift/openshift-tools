@@ -64,6 +64,8 @@ openshift_cloudprovider_aws_access_key={{ obg_aws_provider_access_key }}
 openshift_cloudprovider_aws_secret_key={{ obg_aws_provider_secret_key }}
 {% elif obg_cloud_provider == 'gcp' %}
 osm_controller_args={'pvclaimbinder-sync-period': ['30s']}
+openshift_gcp_project={{ obg_openshift_gcp_project }}
+openshift_gcp_prefix={{ obg_openshift_gcp_prefix }}
 {% endif %}
 {# end cloud provider #}
 
