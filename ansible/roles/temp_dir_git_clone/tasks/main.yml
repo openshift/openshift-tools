@@ -19,6 +19,8 @@
     dest: "{{ tdgc_dest_dir }}/{{ tdgc_repo_name }}"
     branch: "{{ tdgc_branch }}"
     ssh_key: "{{ tdgc_ssh_key | default(omit) }}"
+  retries: 6
+  delay: 5
 
 - set_fact:
     tdgc_retval_repo_dir: "{{ tdgc_dest_dir }}/{{ tdgc_repo_name }}"
