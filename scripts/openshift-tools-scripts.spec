@@ -55,6 +55,7 @@ cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
 cp -p monitoring/cron-send-aws-instance-health.py %{buildroot}/usr/bin/cron-send-aws-instance-health
 cp -p monitoring/cron-send-ec2-ebs-volumes-in-stuck-state.py %{buildroot}/usr/bin/cron-send-ec2-ebs-volumes-in-stuck-state
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
+cp -p monitoring/cron-send-status-banner-check.py %{buildroot}/usr/bin/cron-send-status-banner-check
 cp -p monitoring/cron-send-internal-pods-check.py %{buildroot}/usr/bin/cron-send-internal-pods-check
 cp -p monitoring/cron-send-usage-pv.py %{buildroot}/usr/bin/cron-send-usage-pv
 cp -p monitoring/cron-send-project-operation.py %{buildroot}/usr/bin/cron-send-project-operation
@@ -375,6 +376,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-etcd-status
 /usr/bin/cron-send-os-master-metrics
 /usr/bin/cron-send-create-app
+/usr/bin/cron-send-status-banner-check
 /usr/bin/cron-send-internal-pods-check
 /usr/bin/cron-send-usage-pv
 /usr/bin/cron-send-project-operation
