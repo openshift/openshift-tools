@@ -43,7 +43,7 @@ class OpenshiftStatusBanner(object):
                 groupids.append(component['group_id'])
 
             group_name = self.query_comonents(groupids[0])
-            print ("one banner related with %s" % group_name)
+            logger.info("one banner related with %s" % group_name)
 
             self.metric_sender.add_dynamic_metric(discovery_key_metrics,
                                                   item_prototype_macro_metrics,
