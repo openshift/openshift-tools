@@ -7,6 +7,11 @@ g_template_ops_tools:
     lifetime: 1
     description: "Dynamically register operations runner items"
 
+  - name: openshift.status.unresolved.banner
+    key: openshift.status.unresolved.banner
+    lifetime: 1
+    description: "Dynamically unresolved banner items"
+
   zitemprototypes:
   - discoveryrule_key: disc.ops.runner
     name: "{% raw %}Exit code of ops-runner[{{ '{#' }}OSO_COMMAND}]{% endraw %}"
@@ -24,8 +29,8 @@ g_template_ops_tools:
     - Ops Runner
    
   - discoveryrule_key: openshift.status.unresolved.banner
-    name: "{% raw %}Unresolved banner on cluster[{{ '{#' }}OSO_COMMAND}]{% endraw %}"
-    key: "{% raw %}openshift.status.unresolved.banner[{{ '{#' }}OSO_COMMAND}]{% endraw %}"
+    name: "{% raw %}Unresolved banner on cluster[{{ '{#' }}OSO_BANNER}]{% endraw %}"
+    key: "{% raw %}openshift.status.unresolved.banner[{{ '{#' }}OSO_BANNER}]{% endraw %}"
     value_type: int
     description: "if the cluster has unresolved banner"
     
