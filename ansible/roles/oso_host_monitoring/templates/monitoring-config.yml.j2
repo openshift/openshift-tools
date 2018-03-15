@@ -94,6 +94,7 @@ metric_sender_config:
     - Template Config Loop      # So we can send config loop related metrics
     - Template Zabbix Config    # So we can send Zabbix Config metrics
     - Template Multi-Inventory  # So we can send multi-inventory failures
+
 {% endif %}
 
     hostgroups:
@@ -193,6 +194,12 @@ host_monitoring_cron:
 - name: run docker dns test
   minute: "*/10"
   job: source $HOME/.bashrc; ops-runner -f -s 60 -n csddr.docker.dns.resolution /usr/bin/cron-send-docker-dns-resolution
+
+
+- name: check status for unresovled banner
+  minute: "*/10"
+  job: pageid={{ g_status_banner_pageid }};authid={{ authid=g_status_banner_authid  }} ops-runner -f -s 60 -n cssbc.status.unresolved.banner  /usr/bin/cron-send-status-banner-check
+
 {% endif %}
 
 # This is an active issue, we need it to run on a frequent basis.
