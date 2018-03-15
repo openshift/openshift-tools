@@ -37,6 +37,8 @@
     msg: "Please define {{ item }}"
   when: "{{ item }} is undefined and obg_cloud_provider == 'gce'"
   with_items:
+  - obg_openshift_gcp_project
+  - obg_openshift_gcp_prefix
   - obg_gcp_user_gcsdockerregistry_file
 
 - name: Set custom Web UI vars
