@@ -137,10 +137,6 @@ openshift_master_extension_scripts={{ obg_ui_scripts }}
 openshift_master_extension_stylesheets={{ obg_ui_stylesheets }}
 {% endif %}
 
-{% if obg_service_catalog %}
-openshift_enable_service_catalog={{ obg_service_catalog }}
-{% endif %}
-
 {# Install custom certificate in the router for https connections #}
 {% if obg_use_router_certs %}
 openshift_hosted_router_create_certificate=False
@@ -244,6 +240,8 @@ openshift_hosted_manage_registry=false
 # Openshift Registry Console
 # We always install it, this lets us change where it pulls its image from
 {% if obg_install_registry_console %}
+openshift_cockpit_deployer_prefix={{ obg_registry_host }}/openshift3/
+
 {# registry_console options are passed in via the obg_registry_console_variables variable #}
 {% for option, value in obg_registry_console_variables.iteritems() %}
 {{option}}={{value}}
@@ -253,6 +251,7 @@ openshift_hosted_manage_registry=false
 # Openshift Web Console
 {% if obg_install_web_console %}
 openshift_web_console_install=true
+openshift_web_console_prefix={{ obg_registry_host }}/openshift3/ose-
 
 {# web_console options are passed in via the obg_web_console_variables variable #}
 {% for option, value in obg_web_console_variables.iteritems() %}
@@ -266,6 +265,8 @@ openshift_web_console_install=false
 # Openshift Ansible Service Broker
 {% if obg_install_ansible_service_broker %}
 openshift_ansible_service_broker_install=true
+ansible_service_broker_image_prefix={{ obg_registry_host }}/openshift3/ose-
+
 
 {# ansible_service_broker options are passed in via the obg_ansible_service_broker_variables variable #}
 {% for option, value in obg_ansible_service_broker_variables.iteritems() %}
@@ -279,6 +280,7 @@ openshift_ansible_service_broker_install=false
 # Openshift Openshift Service Catalog
 {% if obg_install_openshift_service_catalog %}
 openshift_enable_service_catalog=true
+openshift_service_catalog_image_prefix={{ obg_registry_host }}/openshift3/ose-
 
 {# openshift_service_catalog options are passed in via the obg_openshift_service_catalog_variables variable #}
 {% for option, value in obg_openshift_service_catalog_variables.iteritems() %}
@@ -292,6 +294,7 @@ openshift_enable_service_catalog=false
 # Openshift Template Service Broker
 {% if obg_install_template_service_broker %}
 openshift_template_service_broker_install=true
+template_service_broker_prefix={{ obg_registry_host }}/openshift3/ose-
 
 {# template_service_broker options are passed in via the obg_template_service_broker_variables variable #}
 {% for option, value in obg_template_service_broker_variables.iteritems() %}
@@ -305,6 +308,7 @@ openshift_template_service_broker_install=false
 # Openshift Prometheus
 {% if obg_install_openshift_prometheus %}
 openshift_hosted_prometheus_deploy=true
+l_openshift_prometheus_node_exporter_image_prefix={{ obg_registry_host }}/openshift3/
 
 {# openshift_prometheus options are passed in via the obg_openshift_prometheus_variables variable #}
 {% for option, value in obg_openshift_prometheus_variables.iteritems() %}
