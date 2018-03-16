@@ -266,7 +266,6 @@ openshift_web_console_install=false
 {% if obg_install_ansible_service_broker %}
 openshift_ansible_service_broker_install=true
 ansible_service_broker_image_prefix={{ obg_registry_host }}/openshift3/ose-
-template_service_broker_selector='type=infra'
 
 
 {# ansible_service_broker options are passed in via the obg_ansible_service_broker_variables variable #}
@@ -296,6 +295,7 @@ openshift_enable_service_catalog=false
 {% if obg_install_template_service_broker %}
 openshift_template_service_broker_install=true
 template_service_broker_prefix={{ obg_registry_host }}/openshift3/ose-
+template_service_broker_selector='type=infra'
 
 {# template_service_broker options are passed in via the obg_template_service_broker_variables variable #}
 {% for option, value in obg_template_service_broker_variables.iteritems() %}
@@ -340,6 +340,7 @@ openshift_logging_install_logging=true
 openshift_hosted_logging_elasticsearch_cluster_size=2
 openshift_hosted_logging_deployer_version=v{{ obg_install_version_short }}
 openshift_logging_image_version=v{{ obg_install_version_short }}
+openshift_logging_image_prefix={{ obg_registry_host }}/openshift3/
 
 {# logging options are passed in via the obg_logging_variables variable #}
 {% for option, value in obg_logging_variables.iteritems() %}
@@ -360,6 +361,7 @@ openshift_hosted_logging_deploy=false
 openshift_hosted_metrics_deploy=true
 openshift_metrics_install_metrics=true
 openshift_hosted_metrics_storage_kind=dynamic
+openshift_metrics_image_prefix={{ obg_registry_host }}/openshift3/
 
 {# metrics options are passed in via the obg_metrics_variables variable #}
 {% for option, value in obg_metrics_variables.iteritems() %}
