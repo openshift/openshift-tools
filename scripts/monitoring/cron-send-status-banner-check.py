@@ -14,6 +14,7 @@ commandDelay = 5
 local_report_details_dir = '/opt/failure_reports/'
 max_details_report_files = 5
 
+
 class OpenshiftStatusBanner(object):
     def __init__(self):
         ''' Initialize OpenShiftMetricsStatus class '''
@@ -69,10 +70,9 @@ class OpenshiftStatusBanner(object):
 
             data = json.loads(result_d)
 
-        except:
-            logger.error("something wrong when trying get the banner info")
-            data = False
-            
+        except Exception as e:
+            logger.exception("something wrong when trying get the banner info")
+            raise e
 
         return data
 
@@ -101,11 +101,12 @@ class OpenshiftStatusBanner(object):
                     group_name = component['name']
 
 
-        except:
-            logger.error("something wrong when trying to get component")
-            data = False
+        except Exception as e :
+            logger.exception("something wrong when trying to get component")
+            raise e
 
         return group_name
+
     def checkbanner(self):
         self.parse_args()
         self.metric_sender = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
@@ -119,6 +120,7 @@ class OpenshiftStatusBanner(object):
             self.report_to_zabbix(data)
         else:
             logger.error('something wrong')
+
 
 if __name__ == '__main__':
     BANNER = OpenshiftStatusBanner()
