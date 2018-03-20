@@ -4,6 +4,9 @@
 
 import os
 import re
+import subprocess
+
+from distutils.version import LooseVersion
 
 # Buildbot does not have multi_inventory installed
 #pylint: disable=no-name-in-module
@@ -273,6 +276,8 @@ class Cluster(object):
         """ Init the cluster class """
 
         self._name = name
+        self._openshift_version = None
+        self._docker_version = None
         self.inventory = multi_inventory.MultiInventory(None).run()
 
     def __str__(self):
@@ -292,6 +297,18 @@ class Cluster(object):
         return self._name
 
     @property
+    def location(self):
+        """ cluster location property """
+
+        return self.get_variable('oo_location')
+
+    @property
+    def region(self):
+        """ cluster region property """
+
+        return self.get_variable('oo_region')
+
+    @property
     def environment(self):
         """ cluster environment property """
 
@@ -302,6 +319,12 @@ class Cluster(object):
         """ cluster deployment property """
 
         return self.get_variable('oo_deployment')
+
+    @property
+    def account(self):
+        """ cluster account property """
+
+        return self.get_variable('oo_account')
 
     @property
     def test_cluster(self):
@@ -327,6 +350,34 @@ class Cluster(object):
 
         return len(cluster_nodes)
 
+    @property
+    def openshift_version(self):
+        """ return a dict of openshift_version """
+
+        if not self._openshift_version:
+            self._openshift_version = {}
+            version = self.get_command_output_from_master("rpm -q --queryformat '%{VERSION}-%{RELEASE}' \
+                                                           atomic-openshift")
+            self._openshift_version['version_release'] = version
+            self._openshift_version['version'] = version.split('-')[0]
+            self._openshift_version['short'] = '.'.join(version.split('.')[0:2])
+            self._openshift_version['release'] = version.split('-')[1]
+            self._openshift_version['version_release_no_git'] = version.split('.git')[0]
+
+            # Let's do the wierdness to set full version begin
+            if LooseVersion(self._openshift_version['short']) < LooseVersion('3.6'):
+                self._openshift_version['full'] = self._openshift_version['short']
+            elif self._openshift_version['short'] == '3.6':
+                self._openshift_version['full'] = self._openshift_version['version']
+            else:
+                if "-0.git" in self._openshift_version['version_release']:
+                    self._openshift_version['full'] = self._openshift_version['version_release_no_git']
+                else:
+                    self._openshift_version['full'] = self._openshift_version['version']
+
+        return self._openshift_version
+
+
     def get_variable(self, variable):
         """ return an inventory variable that is common to a cluster"""
 
@@ -339,3 +390,17 @@ class Cluster(object):
             return variables[0]
 
         return None
+
+    def get_command_output_from_master(self, command, strip=True):
+        """
+            Run a command on the primary master and return the output
+            command: string of the command to run on the primary master
+            e.g: command = "echo 'hello world'"
+        """
+
+        command_output = subprocess.check_output(["/usr/bin/ossh", "root@" + self.primary_master, "-c", command])
+
+        if strip:
+            return command_output.strip()
+
+        return command_output
