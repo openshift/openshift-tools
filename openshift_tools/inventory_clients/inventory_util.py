@@ -21,11 +21,12 @@ class ArgumentError(Exception):
         super(ArgumentError, self).__init__()
         self.message = message
 
-class AwsUtil(object):
-    """This class contains the AWS utility functions."""
+# pylint: disable=too-many-public-methods
+class InventoryUtil(object):
+    """This class contains the Inventory utility functions."""
 
     def __init__(self, host_type_aliases=None, use_cache=True):
-        """Initialize the AWS utility class.
+        """Initialize the Inventory utility class.
 
         Keyword arguments:
         host_type_aliases -- a list of aliases to common host-types (e.g. ex-node)
@@ -50,6 +51,12 @@ class AwsUtil(object):
         if self._inventory is None:
             self._inventory = multi_inventory.MultiInventory(None).run()
         return self._inventory
+
+    @staticmethod
+    def get_cluster(name):
+        """ return a cluster object """
+
+        return Cluster(name)
 
     def setup_host_type_alias_lookup(self):
         """Sets up the alias to host-type lookup table."""
@@ -118,6 +125,7 @@ class AwsUtil(object):
 
     def print_host_types(self):
         """Gets the list of host types and aliases and outputs them in columns."""
+
         host_types = self.get_host_types()
         ht_format_str = "%35s"
         alias_format_str = "%-20s"
@@ -202,10 +210,10 @@ class AwsUtil(object):
             cluster_hosts = set([])
             if len(clusters) > 1:
                 for cluster in clusters:
-                    clu_tag = AwsUtil.gen_clusterid_tag(cluster)
+                    clu_tag = InventoryUtil.gen_clusterid_tag(cluster)
                     cluster_hosts.update(self.inventory.get(clu_tag, []))
             else:
-                cluster_hosts.update(self.inventory.get(AwsUtil.gen_clusterid_tag(clusters[0]), []))
+                cluster_hosts.update(self.inventory.get(InventoryUtil.gen_clusterid_tag(clusters[0]), []))
 
             retval.intersection_update(cluster_hosts)
 
@@ -213,10 +221,10 @@ class AwsUtil(object):
             env_hosts = set([])
             if len(envs) > 1:
                 for env in envs:
-                    env_tag = AwsUtil.gen_env_tag(env)
+                    env_tag = InventoryUtil.gen_env_tag(env)
                     env_hosts.update(self.inventory.get(env_tag, []))
             else:
-                env_hosts.update(self.inventory.get(AwsUtil.gen_env_tag(envs[0]), []))
+                env_hosts.update(self.inventory.get(InventoryUtil.gen_env_tag(envs[0]), []))
 
             retval.intersection_update(env_hosts)
 
@@ -227,7 +235,7 @@ class AwsUtil(object):
             retval.intersection_update(self.inventory.get(self.gen_sub_host_type_tag(sub_host_type), []))
 
         if version != 'all':
-            retval.intersection_update(self.inventory.get(AwsUtil.gen_version_tag(version), []))
+            retval.intersection_update(self.inventory.get(InventoryUtil.gen_version_tag(version), []))
 
         return list(retval)
 
@@ -246,20 +254,88 @@ class AwsUtil(object):
     def get_cluster_variable(self, cluster, variable):
         """ return an inventory variable that is common to a cluster"""
 
-        variables = []
-        for host in self.inventory['oo_clusterid_' + cluster]:
-            if variable in self.inventory['_meta']['hostvars'][host]:
-                variables.append(self.inventory['_meta']['hostvars'][host][variable])
+        cluster = InventoryUtil.get_cluster(cluster)
 
-        if len(list(set(variables))) == 1:
-            return variables[0]
-
-        return None
+        return cluster.get_variable(variable)
 
     def get_node_variable(self, host, variable):
         """ return an inventory variable from a host"""
 
         if host in self.inventory['_meta']['hostvars'] and variable in self.inventory['_meta']['hostvars'][host]:
             return self.inventory['_meta']['hostvars'][host][variable]
+
+        return None
+
+class Cluster(object):
+    """ This is a class to acces data about an Ops cluster """
+
+    def __init__(self, name):
+        """ Init the cluster class """
+
+        self._name = name
+        self.inventory = multi_inventory.MultiInventory(None).run()
+
+    def __str__(self):
+        """ str representation of Cluster """
+
+        return self._name
+
+    def __repr__(self):
+        """ repr representation of Cluster """
+
+        return self._name
+
+    @property
+    def name(self):
+        """ cluster name property """
+
+        return self._name
+
+    @property
+    def environment(self):
+        """ cluster environment property """
+
+        return self.get_variable('oo_environment')
+
+    @property
+    def deployment(self):
+        """ cluster deployment property """
+
+        return self.get_variable('oo_deployment')
+
+    @property
+    def test_cluster(self):
+        """ cluster cluster property """
+
+        return bool(self.get_variable('oo_test_cluster'))
+
+    @property
+    def primary_master(self):
+        """ return the first master """
+
+        primary_master = list(set(self.inventory["oo_master_primary"]) &
+                              set(self.inventory["oo_clusterid_" + self._name]))[0]
+
+        return primary_master
+
+    @property
+    def node_count(self):
+        """ return the number of nodes - infra and compute """
+
+        cluster_nodes = list(set(self.inventory["oo_hosttype_node"]) &
+                             set(self.inventory["oo_clusterid_" + self._name]))
+
+        return len(cluster_nodes)
+
+    def get_variable(self, variable):
+        """ return an inventory variable that is common to a cluster"""
+
+        variables = []
+        for host in self.inventory['oo_clusterid_' + self.name]:
+            if variable in self.inventory['_meta']['hostvars'][host]:
+                variables.append(self.inventory['_meta']['hostvars'][host][variable])
+
+        if len(list(set(variables))) == 1:
+            return variables[0]
 
         return None

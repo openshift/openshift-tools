@@ -18,9 +18,10 @@ import json
 
 # openshift-tools python libs not installed on jenkins instance
 # pylint: disable=import-error
-from openshift_tools.inventory_clients import awsutil
+from openshift_tools.inventory_clients import inventory_util
 from openshift_tools.inventory_clients import utils
-from openshift_tools.inventory_clients.awsutil import ArgumentError
+from openshift_tools.inventory_clients.inventory_util import ArgumentError
+
 
 CONFIG_MAIN_SECTION = 'main'
 CONFIG_HOST_TYPE_ALIAS_SECTION = 'host_type_aliases'
@@ -43,16 +44,16 @@ class Ohi(object):
         self.parse_cli_args()
         self.parse_config_file()
 
-        self.aws = awsutil.AwsUtil(self.host_type_aliases)
+        self.inventory = inventory_util.InventoryUtil(self.host_type_aliases)
 
     def run(self):
         '''
-            Call into awsutil and retrieve the desired hosts and environments
+            Call into inventory_util and retrieve the desired hosts and environments
         '''
 
         if self.args.get_node_var:
             if self.args.node:
-                node_var = self.aws.get_node_variable(self.args.node, self.args.get_node_var)
+                node_var = self.inventory.get_node_variable(self.args.node, self.args.get_node_var)
                 if node_var is None:
                     print "Unable to determine variable.  node: %s   variable: %s" %(self.args.node,
                                                                                      self.args.get_node_var)
@@ -66,7 +67,7 @@ class Ohi(object):
         if self.args.get_cluster_var:
             if self.args.cluster:
                 if len(self.args.cluster) == 1:
-                    cluster_var = self.aws.get_cluster_variable(self.args.cluster[0], self.args.get_cluster_var)
+                    cluster_var = self.inventory.get_cluster_variable(self.args.cluster[0], self.args.get_cluster_var)
                     if cluster_var is None:
                         print "Unable to determine cluster variable: %s" %self.args.get_cluster_var
                         return 1
@@ -77,11 +78,11 @@ class Ohi(object):
             return 1
 
         if self.args.list_host_types:
-            self.aws.print_host_types()
+            self.inventory.print_host_types()
             return 0
 
         if self.args.list_clusters:
-            self.aws.print_cluster_list()
+            self.inventory.print_cluster_list()
             return 0
 
         if self.args.v2:
@@ -91,11 +92,11 @@ class Ohi(object):
         else:
             version = '3'
 
-        hosts = self.aws.get_host_list(clusters=self.args.cluster,
-                                       host_type=self.args.host_type,
-                                       sub_host_type=self.args.sub_host_type,
-                                       envs=self.args.env,
-                                       version=version)
+        hosts = self.inventory.get_host_list(clusters=self.args.cluster,
+                                             host_type=self.args.host_type,
+                                             sub_host_type=self.args.sub_host_type,
+                                             envs=self.args.env,
+                                             version=version)
 
         if hosts is None:
             # We weren't able to determine what they wanted to do
@@ -117,7 +118,7 @@ class Ohi(object):
             Prints the classic output, useful for generating pssh files
         '''
         if self.args.ip:
-            hosts = self.aws.convert_to_ip(hosts)
+            hosts = self.inventory.convert_to_ip(hosts)
 
         for host in sorted(hosts, key=utils.normalize_dnsname):
             if self.args.user:
@@ -136,8 +137,8 @@ class Ohi(object):
                 'oo_private_ip': ''
             }
             for key in temp_host:
-                if key in self.aws.inventory.get('_meta').get('hostvars').get(host):
-                    temp_host[key] = self.aws.inventory.get('_meta').get('hostvars').get(host).get(key)
+                if key in self.inventory.inventory.get('_meta').get('hostvars').get(host):
+                    temp_host[key] = self.inventory.inventory.get('_meta').get('hostvars').get(host).get(key)
 
             print '%-42s %-60s %-18s %-18s' % (\
                   host,
@@ -155,8 +156,8 @@ class Ohi(object):
                 'name': host
             }
             for key in ['oo_public_ip', 'oo_clusterid', 'oo_hosttype', 'oo_subhosttype', 'ec2_private_dns_name']:
-                if key in self.aws.inventory.get('_meta').get('hostvars').get(host):
-                    temp_host[key] = self.aws.inventory.get('_meta').get('hostvars').get(host).get(key)
+                if key in self.inventory.inventory.get('_meta').get('hostvars').get(host):
+                    temp_host[key] = self.inventory.inventory.get('_meta').get('hostvars').get(host).get(key)
 
             out_hosts.append(temp_host)
         print json.dumps(out_hosts)
