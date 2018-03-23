@@ -4,6 +4,9 @@
 
 import os
 import re
+import subprocess
+from distutils.version import LooseVersion
+import ruamel.yaml as yaml
 
 # Buildbot does not have multi_inventory installed
 #pylint: disable=no-name-in-module
@@ -21,11 +24,12 @@ class ArgumentError(Exception):
         super(ArgumentError, self).__init__()
         self.message = message
 
-class AwsUtil(object):
-    """This class contains the AWS utility functions."""
+# pylint: disable=too-many-public-methods
+class InventoryUtil(object):
+    """This class contains the Inventory utility functions."""
 
     def __init__(self, host_type_aliases=None, use_cache=True):
-        """Initialize the AWS utility class.
+        """Initialize the Inventory utility class.
 
         Keyword arguments:
         host_type_aliases -- a list of aliases to common host-types (e.g. ex-node)
@@ -50,6 +54,12 @@ class AwsUtil(object):
         if self._inventory is None:
             self._inventory = multi_inventory.MultiInventory(None).run()
         return self._inventory
+
+    @staticmethod
+    def get_cluster(name):
+        """ return a cluster object """
+
+        return Cluster(name)
 
     def setup_host_type_alias_lookup(self):
         """Sets up the alias to host-type lookup table."""
@@ -118,6 +128,7 @@ class AwsUtil(object):
 
     def print_host_types(self):
         """Gets the list of host types and aliases and outputs them in columns."""
+
         host_types = self.get_host_types()
         ht_format_str = "%35s"
         alias_format_str = "%-20s"
@@ -202,10 +213,10 @@ class AwsUtil(object):
             cluster_hosts = set([])
             if len(clusters) > 1:
                 for cluster in clusters:
-                    clu_tag = AwsUtil.gen_clusterid_tag(cluster)
+                    clu_tag = InventoryUtil.gen_clusterid_tag(cluster)
                     cluster_hosts.update(self.inventory.get(clu_tag, []))
             else:
-                cluster_hosts.update(self.inventory.get(AwsUtil.gen_clusterid_tag(clusters[0]), []))
+                cluster_hosts.update(self.inventory.get(InventoryUtil.gen_clusterid_tag(clusters[0]), []))
 
             retval.intersection_update(cluster_hosts)
 
@@ -213,10 +224,10 @@ class AwsUtil(object):
             env_hosts = set([])
             if len(envs) > 1:
                 for env in envs:
-                    env_tag = AwsUtil.gen_env_tag(env)
+                    env_tag = InventoryUtil.gen_env_tag(env)
                     env_hosts.update(self.inventory.get(env_tag, []))
             else:
-                env_hosts.update(self.inventory.get(AwsUtil.gen_env_tag(envs[0]), []))
+                env_hosts.update(self.inventory.get(InventoryUtil.gen_env_tag(envs[0]), []))
 
             retval.intersection_update(env_hosts)
 
@@ -227,7 +238,7 @@ class AwsUtil(object):
             retval.intersection_update(self.inventory.get(self.gen_sub_host_type_tag(sub_host_type), []))
 
         if version != 'all':
-            retval.intersection_update(self.inventory.get(AwsUtil.gen_version_tag(version), []))
+            retval.intersection_update(self.inventory.get(InventoryUtil.gen_version_tag(version), []))
 
         return list(retval)
 
@@ -243,18 +254,13 @@ class AwsUtil(object):
 
         return ips
 
-    def get_cluster_variable(self, cluster, variable):
+    @staticmethod
+    def get_cluster_variable(cluster, variable):
         """ return an inventory variable that is common to a cluster"""
 
-        variables = []
-        for host in self.inventory['oo_clusterid_' + cluster]:
-            if variable in self.inventory['_meta']['hostvars'][host]:
-                variables.append(self.inventory['_meta']['hostvars'][host][variable])
+        cluster = InventoryUtil.get_cluster(cluster)
 
-        if len(list(set(variables))) == 1:
-            return variables[0]
-
-        return None
+        return cluster.get_variable(variable)
 
     def get_node_variable(self, host, variable):
         """ return an inventory variable from a host"""
@@ -263,3 +269,199 @@ class AwsUtil(object):
             return self.inventory['_meta']['hostvars'][host][variable]
 
         return None
+
+class Cluster(object):
+    """ This is a class to acces data about an Ops cluster """
+
+    def __init__(self, name):
+        """ Init the cluster class """
+
+        self._name = name
+        self._openshift_version = None
+        self._docker_version = None
+        self.inventory = multi_inventory.MultiInventory(None).run()
+        self._master_config = None
+
+    def __str__(self):
+        """ str representation of Cluster """
+
+        return self._name
+
+    def __repr__(self):
+        """ repr representation of Cluster """
+
+        return self._name
+
+    @property
+    def name(self):
+        """ cluster name property """
+
+        return self._name
+
+    @property
+    def location(self):
+        """ cluster location property """
+
+        return self.get_variable('oo_location')
+
+    @property
+    def sublocation(self):
+        """ cluster sublocation property """
+
+        return self.get_variable('oo_sublocation')
+
+    @property
+    def environment(self):
+        """ cluster environment property """
+
+        return self.get_variable('oo_environment')
+
+    @property
+    def deployment(self):
+        """ cluster deployment property """
+
+        return self.get_variable('oo_deployment')
+
+    @property
+    def account(self):
+        """ cluster account property """
+
+        return self.get_variable('oo_account')
+
+    @property
+    def accountid(self):
+        """ cluster account property """
+
+        return self.get_variable('oo_accountid')
+
+    @property
+    def test_cluster(self):
+        """ cluster cluster property """
+
+        return bool(self.get_variable('oo_test_cluster'))
+
+    @property
+    def primary_master(self):
+        """ return the first master """
+
+        primary_master = list(set(self.inventory["oo_master_primary"]) &
+                              set(self.inventory["oo_clusterid_" + self._name]))[0]
+
+        return primary_master
+
+    @property
+    def node_count(self):
+        """ return the number of nodes - infra and compute """
+
+        cluster_nodes = list(set(self.inventory["oo_hosttype_node"]) &
+                             set(self.inventory["oo_clusterid_" + self._name]))
+
+        return len(cluster_nodes)
+
+    @property
+    def scalegroup_node_count(self):
+        """ return the number of scalegroup nodes - infra and compute """
+
+        sg_cluster_nodes = list(set(self.inventory["oo_hosttype_node"]) &
+                                set(self.inventory["oo_scalegroup_True"]) &
+                                set(self.inventory["oo_clusterid_" + self._name]))
+
+        return len(sg_cluster_nodes)
+
+
+    @property
+    def master_config(self):
+        """ This is the master_config.yaml file stored as a dict """
+
+        if not self._master_config:
+            master_config_yaml = self.run_cmd_on_master("/usr/bin/cat /etc/origin/master/master-config.yaml",
+                                                        strip=False)
+            self._master_config = yaml.load(master_config_yaml)
+
+        return self._master_config
+
+    @property
+    def openshift_version(self):
+        """ return a dict of openshift_version """
+
+        if not self._openshift_version:
+            self._openshift_version = {}
+            version = self.run_cmd_on_master("rpm -q --queryformat '%{VERSION}-%{RELEASE}' \
+                                                           atomic-openshift")
+            self._openshift_version['version_release'] = version
+            self._openshift_version['version'] = version.split('-')[0]
+            self._openshift_version['short'] = '.'.join(version.split('.')[0:2])
+            self._openshift_version['release'] = version.split('-')[1]
+            self._openshift_version['version_release_no_git'] = version.split('.git')[0]
+
+            # Let's do the wierdness to set full version begin
+            if LooseVersion(self._openshift_version['short']) < LooseVersion('3.6'):
+                self._openshift_version['full'] = self._openshift_version['short']
+            elif self._openshift_version['short'] == '3.6':
+                self._openshift_version['full'] = self._openshift_version['version']
+            else:
+                if "-0.git" in self._openshift_version['version_release']:
+                    self._openshift_version['full'] = self._openshift_version['version_release_no_git']
+                else:
+                    self._openshift_version['full'] = self._openshift_version['version']
+
+        return self._openshift_version
+
+
+    def get_variable(self, variable):
+        """ return an inventory variable that is common to a cluster"""
+
+        variables = []
+        for host in self.inventory['oo_clusterid_' + self.name]:
+            if variable in self.inventory['_meta']['hostvars'][host]:
+                variables.append(self.inventory['_meta']['hostvars'][host][variable])
+
+        if len(list(set(variables))) == 1:
+            return variables[0]
+
+        return None
+
+    def run_cmd_on_master(self, command, strip=True):
+        """
+            Run a command on the primary master and return the output
+            command: string of the command to run on the primary master
+            e.g: command = "echo 'hello world'"
+        """
+
+        command_output = subprocess.check_output(["/usr/bin/ossh", "root@" + self.primary_master, "-c", command])
+
+        if strip:
+            return command_output.strip()
+
+        return command_output
+
+    def convert_inv_to_os_name(self, hostname):
+        """ convert ops hostname to the openshift hostname
+            example: free-stg-master-03fb6 -> ip-172-31-78-254.us-east-2.compute.internal
+        """
+
+        if hostname not in self.inventory["_meta"]["hostvars"]:
+            return None
+
+        host_vars = self.inventory["_meta"]["hostvars"][hostname]
+
+        if host_vars['oo_location'] == 'gcp':
+            return hostname
+        elif host_vars['oo_location'] == 'aws':
+            return host_vars['ec2_private_dns_name']
+
+    def convert_list_to_os_names(self, hostnames):
+        """ convert a list of ops hostname to the openshift hostname
+            example: ['free-stg-node-infra-a18ed', 'free-stg-node-compute-006ef'] ->
+                     [u'ip-172-31-73-38.us-east-2.compute.internal',
+                      u'ip-172-31-74-247.us-east-2.compute.internal']
+        """
+
+        if hostnames:
+            converted_hosts = []
+
+            for host in hostnames:
+                os_host = self.convert_inv_to_os_name(host)
+                converted_hosts.append(os_host)
+
+            return converted_hosts
