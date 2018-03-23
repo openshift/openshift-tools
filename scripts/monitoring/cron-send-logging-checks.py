@@ -240,14 +240,20 @@ class OpenshiftLoggingStatus(object):
         ctx.verify_mode = ssl.CERT_NONE
 
         # Verify that the url is returning a valid response
-        kibana_status['site_up'] = 1
+        kibana_status['site_up'] = 0
+        kibana_status['response_code'] = 0
+
         try:
-            # We only care if the url opens
-            urllib2.urlopen(kibana_url, context=ctx)
+            # get response code from kibana
+            u = kibana_status['response_code'] = urllib2.urlopen(kibana_url, context=ctx)
+            kibana_status['response_code'] = u.getcode()
 
         except urllib2.HTTPError, e:
-            if e.code >= 500:
-                kibana_status['site_up'] = 0
+            kibana_status['response_code'] = e.code
+
+        # accept 401 because we can't auth: https://bugzilla.redhat.com/show_bug.cgi?id=1466496
+        if 200 <= kibana_status['response_code'] <= 401:
+            kibana_status['site_up'] = 1
 
         return kibana_status
 
@@ -265,6 +271,7 @@ class OpenshiftLoggingStatus(object):
                     'openshift.logging.fluentd.number_expected_pods': data['number_expected_pods']
                 })
             elif item == "kibana":
+                self.metric_sender.add_metric({'openshift.logging.kibana.response_code': data['response_code']})
                 self.metric_sender.add_metric({'openshift.logging.kibana.site_up': data['site_up']})
             elif item == "elasticsearch":
                 self.metric_sender.add_metric({
