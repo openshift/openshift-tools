@@ -380,6 +380,31 @@ class Cluster(object):
 
         return self._master_config
 
+    @staticmethod
+    def set_version(version):
+        """ manipulate the version variable """
+
+        os_version = {}
+        os_version['version_release'] = version
+        os_version['version'] = version.split('-')[0]
+        os_version['short'] = '.'.join(version.split('.')[0:2])
+        os_version['short_underscore'] = os_version['short'].replace(".", "_")
+        os_version['release'] = version.split('-')[1]
+        os_version['version_release_no_git'] = version.split('.git')[0]
+
+        # Let's do the wierdness to set full version begin
+        if LooseVersion(os_version['short']) < LooseVersion('3.6'):
+            os_version['full'] = os_version['short']
+        elif os_version['short'] == '3.6':
+            os_version['full'] = os_version['version']
+        else:
+            if "-0.git" in os_version['version_release']:
+                os_version['full'] = os_version['version_release_no_git']
+            else:
+                os_version['full'] = os_version['version']
+
+        return os_version
+
     @property
     def openshift_version(self):
         """ return a dict of openshift_version """
@@ -388,22 +413,8 @@ class Cluster(object):
             self._openshift_version = {}
             version = self.run_cmd_on_master("rpm -q --queryformat '%{VERSION}-%{RELEASE}' \
                                                            atomic-openshift")
-            self._openshift_version['version_release'] = version
-            self._openshift_version['version'] = version.split('-')[0]
-            self._openshift_version['short'] = '.'.join(version.split('.')[0:2])
-            self._openshift_version['release'] = version.split('-')[1]
-            self._openshift_version['version_release_no_git'] = version.split('.git')[0]
+            self._openshift_version = Cluster.set_version(version)
 
-            # Let's do the wierdness to set full version begin
-            if LooseVersion(self._openshift_version['short']) < LooseVersion('3.6'):
-                self._openshift_version['full'] = self._openshift_version['short']
-            elif self._openshift_version['short'] == '3.6':
-                self._openshift_version['full'] = self._openshift_version['version']
-            else:
-                if "-0.git" in self._openshift_version['version_release']:
-                    self._openshift_version['full'] = self._openshift_version['version_release_no_git']
-                else:
-                    self._openshift_version['full'] = self._openshift_version['version']
 
         return self._openshift_version
 
