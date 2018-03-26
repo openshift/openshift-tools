@@ -23,6 +23,10 @@ g_template_logging:
     applications:
     - EFK
     value_type: int
+  - key: openshift.logging.kibana.response_code
+    applications:
+    - EFK
+    value_type: int
   - key: openshift.logging.elasticsearch.single_master
     applications:
     - EFK
