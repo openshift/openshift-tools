@@ -1,0 +1,1 @@
+../../lib_utils/filter_plugins/openshift_master.py
