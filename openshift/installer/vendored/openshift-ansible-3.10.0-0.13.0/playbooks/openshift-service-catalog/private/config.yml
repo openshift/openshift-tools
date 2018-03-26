@@ -1,0 +1,44 @@
+---
+- name: Service Catalog Install Checkpoint Start
+  hosts: all
+  gather_facts: false
+  tasks:
+  - name: Set Service Catalog install 'In Progress'
+    run_once: true
+    set_stats:
+      data:
+        installer_phase_servicecatalog:
+          status: "In Progress"
+          start: "{{ lookup('pipe', 'date +%Y%m%d%H%M%SZ') }}"
+
+- name: Service Catalog
+  hosts: oo_first_master
+  roles:
+  - openshift_service_catalog
+  - ansible_service_broker
+  - template_service_broker
+  vars:
+    first_master: "{{ groups.oo_first_master[0] }}"
+
+# Label rest of master nodes - will be a no-op if only one master exists
+- name: Ensure all masters are labeled with node selector for Service Catalog
+  hosts: oo_masters_to_config
+  tasks:
+  - name: Label {{ openshift.node.nodename }} for APIServer and controller deployment
+    oc_label:
+      name: "{{ openshift.node.nodename }}"
+      kind: node
+      state: add
+      labels: "{{ openshift_service_catalog_nodeselector | default ({'openshift-infra': 'apiserver'}) | lib_utils_oo_dict_to_list_of_dict }}"
+
+- name: Service Catalog Install Checkpoint End
+  hosts: all
+  gather_facts: false
+  tasks:
+  - name: Set Service Catalog install 'Complete'
+    run_once: true
+    set_stats:
+      data:
+        installer_phase_servicecatalog:
+          status: "Complete"
+          end: "{{ lookup('pipe', 'date +%Y%m%d%H%M%SZ') }}"
