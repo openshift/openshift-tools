@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.57
+Version:        0.0.58
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,34 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Mon Apr 02 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.58-1
+- monitor actual http response code from kibana (sten@redhat.com)
+- docker storage set: allow package to be passed in (mwoodson@redhat.com)
+- tsb needs "{u'type': u'infra'}" format, not 'type=infra' (dyocum@redhat.com)
+- re-ordered a line, ensure that we pull logging and metrics images from the
+  correct registry (dyocum@redhat.com)
+- just moved a line to the right place (dyocum@redhat.com)
+- added template_service_broker_selector='type=infra' (dyocum@redhat.com)
+- hardcode the image prefix for components into the byo template
+  (dyocum@redhat.com)
+- should be obg_location should be gce for o-a compliance (dyocum@redhat.com)
+- Revert "should be gcp, not gce" (dyocum@redhat.com)
+- adding retries to git_clone - sometimes github doesn't answer on the first
+  call (dyocum@redhat.com)
+- should be gcp, not gce (dyocum@redhat.com)
+- added (dyocum@redhat.com)
+- added obg_install_registry_console to defaults (dyocum@redhat.com)
+- adding obg_registry_console_variables to pass in vars to the cockpit-ui role
+  (dyocum@redhat.com)
+- added vars to inventory for: (dyocum@redhat.com)
+- adding web_console var to openshift_byo_generator (dyocum@redhat.com)
+- adding web_console section to byo template (dyocum@redhat.com)
+- Removing crio bind mounts. (kwoodson@redhat.com)
+- router cert byo template - remove openshift_hosted_router_certificate
+  (bmorriso@redhat.com)
+- set default SDN to redhat/openshift-ovs-networkpolicy in byo defaults
+  (dyocum@redhat.com)
+
 * Tue Mar 06 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.57-1
 - Adding ELB config support to generate BYO role (bmorriso@redhat.com)
 - Adding back files which were moved. (kwoodson@redhat.com)
