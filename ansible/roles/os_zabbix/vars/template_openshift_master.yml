@@ -791,6 +791,12 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.webconsole.available
+    description: "check if webconsole for cluster is responding"
+    value_type: int
+    applications:
+    - Openshift Master
+
   zdiscoveryrules:
   - name: disc.pv
     key: disc.pv
@@ -1095,6 +1101,11 @@ g_template_openshift_master:
     dependencies:
     - "Critically large number of connections on openshift master api server on {HOST.NAME}"
     priority: avg
+
+  - name: "Openshift Webconsole not reachable from inside the cluster"
+    expression: "{Template Openshift Master:openshift.webconsole.available.last()}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_web_console.asciidoc"
+    priority: high
 
   zgraphs:
   - name: Openshift Master API Server Latency Pods LIST Quantiles
