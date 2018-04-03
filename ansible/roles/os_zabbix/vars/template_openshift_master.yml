@@ -1038,6 +1038,13 @@ g_template_openshift_master:
     - "Openshift Master process not running on {HOST.NAME}"
     priority: info
 
+  - name: "Hosts not schedulable for more than one week according to {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.nodesnotschedulable.count.min(7d)}>1"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_node_not_schedulable.asciidoc"
+    dependencies:
+    - "Openshift Master process not running on {HOST.NAME}"
+    priority: high
+
   - name: "Hosts not ready according to {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.nodesnotready.count.min(#2)}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_node_not_ready.asciidoc"
