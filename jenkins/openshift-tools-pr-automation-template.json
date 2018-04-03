@@ -73,7 +73,7 @@
             "noCache": true,
             "env": [
                 {
-                  "name": "PULL_REQUEST",
+                  "name": "GITHUB_WEBHOOK_PAYLOAD",
                   "value": "{}"
                 },
                 {
