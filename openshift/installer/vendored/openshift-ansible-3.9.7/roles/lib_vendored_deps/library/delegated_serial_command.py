@@ -1,1 +1,0 @@
-../../lib_utils/library/delegated_serial_command.py
