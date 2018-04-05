@@ -1,3 +1,0 @@
----
-tuned_etc_directory: '/etc/tuned'
-tuned_templates_source: '../templates'
