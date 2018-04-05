@@ -1,1 +1,0 @@
-../../lib_openshift/library/conditional_set_fact.py
