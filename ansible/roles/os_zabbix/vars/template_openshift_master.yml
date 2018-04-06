@@ -1102,7 +1102,7 @@ g_template_openshift_master:
     - "Critically large number of connections on openshift master api server on {HOST.NAME}"
     priority: avg
 
-  - name: "Openshift Webconsole not reachable from inside the cluster"
+  - name: "Openshift Webconsole not reachable from inside the cluster {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.webconsole.available.last()}<1"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_web_console.asciidoc"
     priority: high
