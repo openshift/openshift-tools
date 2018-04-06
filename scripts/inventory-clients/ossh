@@ -11,7 +11,7 @@ import ConfigParser
 
 # openshift-tools python RPMs not installed on jenkins instance
 # pylint: disable=import-error
-from openshift_tools.inventory_clients import awsutil
+from openshift_tools.inventory_clients import inventory_util
 
 CONFIG_MAIN_SECTION = 'main'
 
@@ -33,7 +33,7 @@ class Ossh(object):
         self.args, self.parser = self.parse_cli_args()
         self.parse_config_file()
 
-        self.aws = awsutil.AwsUtil()
+        self.inventory_util = inventory_util.InventoryUtil()
 
         self.get_hosts()
 
@@ -112,7 +112,7 @@ class Ossh(object):
 
     def get_hosts(self):
         '''Query our host inventory and return a dict where the format '''
-        self.host_inventory = self.aws.inventory['_meta']['hostvars']
+        self.host_inventory = self.inventory_util.inventory['_meta']['hostvars']
 
     def find_host_by_attr(self, attribute):
         '''find self.host by an attribute'''

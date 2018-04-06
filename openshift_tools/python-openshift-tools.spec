@@ -207,6 +207,21 @@ Tools developed for ansible OpenShift.
 %{python_sitelib}/openshift_tools/ansible/*.py
 %{python_sitelib}/openshift_tools/ansible/*.py[co]
 
+# ----------------------------------------------------------------------------------
+# python-openshift-tools-utils subpackage
+# ----------------------------------------------------------------------------------
+%package utils
+Summary:       OpenShift Tools Utils Python Package
+Requires:      python2,python-openshift-tools
+BuildArch:     noarch
+
+%description utils
+Tools developed for ansible OpenShift.
+
+%files utils
+%dir %{python_sitelib}/openshift_tools/utils
+%{python_sitelib}/openshift_tools/utils/*.py
+%{python_sitelib}/openshift_tools/utils/*.py[co]
 
 # ----------------------------------------------------------------------------------
 # python-openshift-tools-web subpackage
