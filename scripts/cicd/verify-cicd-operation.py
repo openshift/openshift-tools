@@ -27,6 +27,7 @@ import sys
 import yaml
 
 PROGRAM_TO_RUN = "/home/opsmedic/aos-cd/git/aos-cd-jobs/tower-scripts/bin/cicd-control.sh"
+CICD_CONTROL_PATH = "/home/opsmedic/aos-cd/git/aos-cd-jobs/tower-scripts/bin/cicd-control.py"
 
 VALID_OPERATIONS = ['build-ci-msg',
                     'commit-config-loop',
@@ -106,8 +107,12 @@ class VerifyCICDOperation(object):
         if self.ssh_original_args.extra_args:
             self.verify_extra_arguments()
 
-        self.build_arg_list()
-        VerifyCICDOperation.runner(*self.cicd_control_args)
+        if self.clustername == "free-int":
+            self.build_arg_list(True)
+            VerifyCICDOperation.runner(CICD_CONTROL_PATH, *self.cicd_control_args)
+        else:
+            self.build_arg_list()
+            VerifyCICDOperation.runner(PROGRAM_TO_RUN, *self.cicd_control_args)
 
     def cli_parse_args(self):
         """ parse the args from the cli """
@@ -221,25 +226,45 @@ class VerifyCICDOperation(object):
 
             self.extra_arguments.append(arg)
 
-    def build_arg_list(self):
+    def build_arg_list(self, new=False):
         ''' build a list of args '''
 
-        self.cicd_control_args = ['-c', self.clustername, '-o', self.operation,
-                                  '-d', self.deployment_type]
+        if new:
+            self.cicd_control_args = ['-c', self.clustername, '-o', self.operation]
 
-        for arg in self.extra_arguments:
-            self.cicd_control_args += ['-e', arg]
+            for arg in self.extra_arguments:
+                split_arg = arg.split("=")
+
+                # remove cicd_ from the start of the var
+                if split_arg[0].startswith('cicd_'):
+                    split_arg[0] = split_arg[0][5:]
+
+                # until we rename openshift_version, let's do it here
+                if split_arg[0] == "openshift_version":
+                    split_arg[0] = "target_version"
+
+                # as options, we need dashes, not underscores
+                split_arg[0] = split_arg[0].replace('_', '-')
+
+                self.cicd_control_args += ["--" + split_arg[0], split_arg[1]]
+
+        else:
+            self.cicd_control_args = ['-c', self.clustername, '-o', self.operation,
+                                      '-d', self.deployment_type]
+
+            for arg in self.extra_arguments:
+                self.cicd_control_args += ['-e', arg]
 
     @staticmethod
-    def runner(*args):
+    def runner(program, *args):
         ''' run the script that is intended '''
 
         try:
-            os.execlp(PROGRAM_TO_RUN, PROGRAM_TO_RUN, *args)
+            os.execlp(program, program, *args)
         except:
             pass
         sys.exit(11)
-        # runner (exec) never returns
+        #runner (exec) never returns
 
 if __name__ == "__main__":
     VCO = VerifyCICDOperation()
