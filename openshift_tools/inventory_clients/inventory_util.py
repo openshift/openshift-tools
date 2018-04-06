@@ -385,9 +385,11 @@ class Cluster(object):
         """ manipulate the version variable """
 
         os_version = {}
+        version_split = version.split('.')
+
         os_version['version_release'] = version
         os_version['version'] = version.split('-')[0]
-        os_version['short'] = '.'.join(version.split('.')[0:2])
+        os_version['short'] = '.'.join(version_split[0:2])
         os_version['short_underscore'] = os_version['short'].replace(".", "_")
         os_version['release'] = version.split('-')[1]
         os_version['version_release_no_git'] = version.split('.git')[0]
@@ -415,9 +417,7 @@ class Cluster(object):
                                                            atomic-openshift")
             self._openshift_version = Cluster.set_version(version)
 
-
         return self._openshift_version
-
 
     def get_variable(self, variable):
         """ return an inventory variable that is common to a cluster"""
