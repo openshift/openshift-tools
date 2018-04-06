@@ -1,6 +1,5 @@
 ---
 # This should only be run against a master or this will fail
-
 - fail:
     msg: "This playbook requires {{item}} to be set."
   when: item is not defined or item == ''
@@ -60,109 +59,66 @@
     #openshift_daemonset_config_image: "openshift/origin-ansible:{{ g_play_openshift_version }}"
     openshift_daemonset_config_image: "openshift/origin-ansible:latest"
     openshift_daemonset_config_monitoring_image: "{{ osohm_docker_registry_url }}{{ osohm_host_monitoring }}:{{ osohm_environment }}"
+    openshift_daemonset_config_configmap_files: {}
+
     openshift_daemonset_config_configmap_contents_to_files:
+    # rootlog
+    - name: 10_root_profile_d.sh
+      contents: |
+        {{ lookup('file', '../files/rootlog_ssh_wrap/10_root_profile_d.sh') }}
+      path: /tmp/10_root_profile_d.sh
+    - name: history.sh
+      contents: |
+        {{ lookup('file', '../files/rootlog_ssh_wrap/history.sh') }}
+      path: /tmp/history.sh
+    - name: session_record.sh
+      contents: |
+        {{ lookup('file', '../files/rootlog_ssh_wrap/session_record.sh') }}
+      path: /tmp/session_record.sh
+    # end rootlog
+    # monitoring_config
     - name: monitoring_config.yml
       contents: |
         {{ lookup('template', '../templates/monitoring-config.yml.j2') }}
       path: /tmp/monitoring_config.yml
+    # end monitoring_config
 
-    - path: /tmp/authorized_keys
-      name: authorized_keys
+    # authorized_keys
+    - path: /tmp/authorized_keys.j2
+      name: authorized_keys.j2
       contents: |
-        {% for user in osohm_authorized_keys | selectattr('pub_key', 'defined') %}
-        {{ user.pub_key }}
-        {% endfor %}
+        {{ lookup('file', '../files/authorized_keys/authorized_keys.j2') }}
+    - path: /tmp/authorized_keys_vars.yml
+      name: authorized_keys_vars.yml
+      contents: "{{ {'authorized_keys': osohm_authorized_keys,
+                     'authorized_autokeys': osohm_authorized_autokeys,
+                     'authorized_keys_extra': osohm_authorized_keys_extra,
+                     'authorized_autokeys_hosts': osohm_authorized_keys_autokeys_hosts } | to_yaml }}"
+
+    # end authorized_keys
+
     openshift_daemonset_config_configmap_literals:
       etcd_metrics.yml: |
         {{ lookup('file', '../files/etcd_metrics.yml') }}
       container_metrics_config.yml: |
         {{ lookup('file', '../files/container_metrics_config.yml') }}
+      yum_tasks.yml: |
+        {{ lookup('file', '../files/yum/yum_tasks.yml') }}
 
-      crio_bind_mounts.yml: |
-          - name: create the openshift_tools directory
-            stat:
-              path: /host/var/lib/containers/atomic/cri-o.0/config.json
-            register: statout
-
-          - when: statout.stat.exists
-            block:
-            - name: import lib_utils for yedit
-              import_role:
-                name: /usr/share/ansible/openshift-ansible/roles/lib_utils
-
-            - name: set bind mounts
-              set_fact:
-                binds: "{{ osohm_bind_mounts }}"
-
-            - name: yedit the json file
-              yedit:
-                src: /host/var/lib/containers/atomic/cri-o.0/config.json
-                content_type: json
-                key: mounts
-                value: "{% raw %}{{ item }}{% endraw %}"
-                update: True
-              with_items: "{% raw %}{{ binds }}{% endraw %}"
-
-            - name: restart cri-o from within the container
-              shell: 'pkill -xf "/bin/runc --systemd-cgroup run cri-o"'
-
-      docker_config_tasks.yml: |
-          - name: create the openshift_tools directory
-            file:
-              state: directory
-              path: /host/root/.docker
-              mode: "0740"
-              owner: root
-              group: root
-
-          - name: copy docker config.json to shared config emptydir
-            copy:
-              remote_src: true
-              src: /opt/secrets/docker-config.json
-              dest: /host/root/.docker/config.json
-              owner: root
-              group: root
-
-      monitoring_config_tasks.yml: |
-          - set_fact:
-              osohm_host_name: "{{ osohm_cluster_id }}-{{ osohm_host_type }}{% raw %}-{{ lookup('env', 'HOSTNAME') }}{% endraw %}"
-
-          - name: copy monitoring config to shared config emptydir
-            copy:
-              remote_src: true
-              src: /opt/config/monitoring_config.yml
-              dest: /opt/tmp_shared_config/monitoring_config_pre.yml
-              owner: root
-              group: root
-
-          - name: update the hostname
-            command: 'sed -i -e "s#^    name: \"UPDATENAME\"#    name: {% raw %}{{ osohm_host_name }}{% endraw %}#" /opt/tmp_shared_config/monitoring_config_pre.yml'
-            register: sedout
-
-          - name: verify hostname was updated
-            command: 'grep -Pq "^    name: UPDATENAME" /opt/tmp_shared_config/monitoring_config_pre.yml'
-            register: grepout
-            failed_when:
-            - grepout.rc == 0
-
-          - name: copy fixed monitoring config to shared config emptydir
-            copy:
-              remote_src: true
-              src: /opt/tmp_shared_config/monitoring_config_pre.yml
-              dest: /opt/tmp_shared_config/monitoring_config.yml
-              mode: "0640"
-              owner: root
-              group: root
+      rootlog_ssh_wrap_tasks.yml: |
+        {{ lookup('file', '../files/rootlog_ssh_wrap/rootlog_ssh_wrap_tasks.yml') }}
+      yum_repositories.yml: "{{ {'yum_repositories': osohm_yum_repo_list} | to_yaml }}"
 
       authorized_keys_tasks.yml: |
-          - name: setup authorized keys
-            copy:
-              remote_src: True
-              src: /opt/config/authorized_keys
-              dest: /host/root/.ssh/authorized_keys
-              mode: "0600"
-              owner: root
-              group: root
+        {{ lookup('file', '../files/authorized_keys/authorized_keys_tasks.yml') }}
+
+      docker_config_tasks.yml: |
+        {{ lookup('file', '../files/docker_config/docker_config_tasks.yml') }}
+
+
+      # this requires clusterid to be translated and cannot be moved to files unless that is solved
+      monitoring_config_tasks.yml: |
+        {{ lookup('template', '../files/monitoring_config//monitoring_config_tasks.yml.j2') }}
 
       configure_host.yml: |
         ---
@@ -177,16 +133,20 @@
               owner: root
               group: root
 
-          # setup authorized keys
-          - name: Import authorized keys tasks
+          - name: setup yum repositories
+            import_tasks: /opt/config/yum_tasks.yml
+
+          - name: Setup rootlog-ssh-wrap
+            import_tasks: /opt/config/rootlog_ssh_wrap_tasks.yml
+
+          - name: Setup authorized keys
             import_tasks: /opt/config/authorized_keys_tasks.yml
 
           - name: Import docker auth config tasks
             import_tasks: /opt/config/docker_config_tasks.yml
 
-          # setup bind mounts for crio container
-          - name: setup bind mounts
-            import_tasks: /opt/config/crio_bind_mounts.yml
+          #- name: setup bind mounts
+          #import_tasks: /opt/config/crio_bind_mounts_tasks.yml
 
           - name: Import monitoring config tasks
             import_tasks: /opt/config/monitoring_config_tasks.yml
@@ -199,6 +159,12 @@
     openshift_daemonset_config_script: operations_config.sh
     openshift_daemonset_config_secrets:
     - path: docker-config.json
-      data: "{{ lookup('template', '../templates/docker-config.json.j2') | to_json }}"
+      data: "{{ lookup('template', '../files/docker_config/docker-config.json.j2') | to_json }}"
+    # yum
+    - path: client-cert.pem
+      data: "{{ osohm_yum_cert_content }}"
+    - path: client-key.pem
+      data: "{{ osohm_yum_key_content }}"
+    # end yum
 
     openshift_daemonset_config_node_selector: "{{ osohm_sg_node_selector }}"

@@ -27,7 +27,10 @@ echo '/usr/bin/ops-runner -f -t 600 -n monitoring.root.rkhunter.yml ansible-play
 # fire off the check pmcd status script
 check-pmcd-status.sh &
 # fire off the pmcd script
-/usr/share/pcp/lib/pmcd start &
+#/usr/share/pcp/lib/pmcd start &
+/root/start-pmcd.bash > /var/log/pmcd.log &
+
+/root/autoheal-check-ovs-socket.sh &
 
 # Run the main service of this container
 echo

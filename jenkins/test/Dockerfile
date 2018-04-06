@@ -9,7 +9,7 @@ ADD whitelist/ /whitelist/
 # Set this so that the built image, when started, will sit and wait.
 # This allows the resulting image to be easily reviewed. Normally, the image is thrown
 # away, as only the build process is important.
-# ENV OO_PAUSE_ON_START=true
+RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 RUN mkdir /validator && \
     git clone https://github.com/openshift/openshift-tools /validator/openshift-tools && \

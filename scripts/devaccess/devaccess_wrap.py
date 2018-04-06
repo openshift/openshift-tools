@@ -353,7 +353,7 @@ class WhitelistedCommands(object):
         try:
             cmd_split = cmd.split()
             cmd_split[0] = '/usr/local/bin/' + cmd_split[0]
-            results = subprocess.check_output(['/usr/bin/sudo'] + cmd_split)
+            results = subprocess.check_output(['/usr/bin/sudo', '-E'] + cmd_split)
         except subprocess.CalledProcessError:
             log.exception("Call to process (%s) failed", cmd)
 

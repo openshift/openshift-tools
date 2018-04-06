@@ -1,0 +1,4 @@
+---
+urls_to_check:
+- zab_key: openshift.webconsole.available
+  url: https://openshift.default.svc.cluster.local/console/

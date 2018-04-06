@@ -104,11 +104,9 @@ class OpenshiftMetricsStatus(object):
                 pod_report[pod_pretty_name]['restarts'] = pod['status']['containerStatuses'][0]['restartCount']
 
                 # Get the time the pod was started, otherwise return 0
-                if 'state' in pod['status']['containerStatuses'][0]:
-                    if 'running' in pod['status']['containerStatuses'][0]['state']:
-                        if 'startedAt' in pod['status']['containerStatuses'][0]['state']['running']:
-                            pod_start_time = pod['status']['containerStatuses'][0]['state']['running']['startedAt']
-                else:
+                try:
+                    pod_start_time = pod['status']['containerStatuses'][0]['state']['running']['startedAt']
+                except KeyError:
                     pod_start_time = 0
 
                 # Since we convert to seconds it is an INT but pylint still complains. Only disable here

@@ -51,6 +51,13 @@
       mode: 0644
     when: etcd_metrics_config is defined
 
+  - name: copy ulrchecks config from container_setup
+    copy:
+      src: /container_setup/urlchecks.yml
+      dest: /etc/openshift_tools/urlchecks.yml
+      mode: 0644
+    when: "'/container_setup/urlchecks.yml' | is_file"
+
   - block:
     - name: find kubeconfig exact file name
       find:

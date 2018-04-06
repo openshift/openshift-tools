@@ -13,7 +13,7 @@ import sys
 
 # openshift-tools python RPMs not installed on jenkins instance
 # pylint: disable=import-error
-from openshift_tools.inventory_clients import awsutil
+from openshift_tools.inventory_clients import inventory_util
 
 from signal import signal, SIGPIPE, SIG_DFL
 # Ignore SIG_PIPE and don't throw exceptions on it so that we can pipe output
@@ -85,8 +85,8 @@ class InventoryCli(object):
 
             Returns: dict
         '''
-        aws = awsutil.AwsUtil()
-        return aws.inventory['_meta']['hostvars']
+        inventory = inventory_util.InventoryUtil()
+        return inventory.inventory['_meta']['hostvars']
 
     def list_columns(self):
         ''' return the set of the columns being used by the inventory

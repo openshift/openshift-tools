@@ -1,2 +1,0 @@
----
-openshift_web_console_nodeselector: {"node-role.kubernetes.io/master":"true"}

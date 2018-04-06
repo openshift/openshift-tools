@@ -35,6 +35,7 @@ openshift_pkg_version=-{{ obg_install_version }}
 # cluster_id is deprecated in favor of openshift_clusterid
 cluster_id={{ obg_clusterid }}
 openshift_clusterid={{ obg_clusterid }}
+openshift_aws_clusterid={{ obg_clusterid }} # AWS playbooks in openshift-ansible depend on this.
 openshift_master_cluster_hostname={{ obg_master_cluster_hostname }}
 openshift_master_cluster_public_hostname={{ obg_master_public_hostname }}
 openshift_master_public_api_url={{ obg_master_public_api_url }}
@@ -61,8 +62,10 @@ openshift_cloudprovider_kind={{ obg_cloud_provider }}
 {% if obg_cloud_provider == 'aws' %}
 openshift_cloudprovider_aws_access_key={{ obg_aws_provider_access_key }}
 openshift_cloudprovider_aws_secret_key={{ obg_aws_provider_secret_key }}
-{% elif obg_cloud_provider == 'gcp' %}
+{% elif obg_cloud_provider == 'gce' %}
 osm_controller_args={'pvclaimbinder-sync-period': ['30s']}
+openshift_gcp_project={{ obg_openshift_gcp_project }}
+openshift_gcp_prefix={{ obg_openshift_gcp_prefix }}
 {% endif %}
 {# end cloud provider #}
 
@@ -134,14 +137,9 @@ openshift_master_extension_scripts={{ obg_ui_scripts }}
 openshift_master_extension_stylesheets={{ obg_ui_stylesheets }}
 {% endif %}
 
-{% if obg_service_catalog %}
-openshift_enable_service_catalog={{ obg_service_catalog }}
-{% endif %}
-
 {# Install custom certificate in the router for https connections #}
 {% if obg_use_router_certs %}
 openshift_hosted_router_create_certificate=False
-openshift_hosted_router_certificate={"certfile": "{{ obg_openshiftapps_cert }}", "keyfile": "{{ obg_openshiftapps_key }}", "cafile": "{{ obg_openshiftapps_ca }}"}
 {% endif %}
 
 {# OpenShift Node K8s argument overrides, used for items openshift-ansible does not support #}
@@ -239,13 +237,111 @@ openshift_hosted_manage_registry=false
 {% endif %}
 
 
+# Openshift Registry Console
+# We always install it, this lets us change where it pulls its image from
+{% if obg_install_registry_console %}
+openshift_cockpit_deployer_prefix={{ obg_registry_host }}/openshift3/
+
+{# registry_console options are passed in via the obg_registry_console_variables variable #}
+{% for option, value in obg_registry_console_variables.iteritems() %}
+{{option}}={{value}}
+{% endfor %}
+{% endif %}
+
+# Openshift Web Console
+{% if obg_install_web_console %}
+openshift_web_console_install=true
+openshift_web_console_prefix={{ obg_registry_host }}/openshift3/ose-
+
+{# web_console options are passed in via the obg_web_console_variables variable #}
+{% for option, value in obg_web_console_variables.iteritems() %}
+{{option}}={{value}}
+{% endfor %}
+{% else %}
+openshift_web_console_install=false
+{# END Openshift Registry #}
+{% endif %}
+
+# Openshift Ansible Service Broker
+{% if obg_install_ansible_service_broker %}
+openshift_ansible_service_broker_install=true
+ansible_service_broker_image_prefix={{ obg_registry_host }}/openshift3/ose-
+
+
+{# ansible_service_broker options are passed in via the obg_ansible_service_broker_variables variable #}
+{% for option, value in obg_ansible_service_broker_variables.iteritems() %}
+{{option}}={{value}}
+{% endfor %}
+{% else %}
+openshift_ansible_service_broker_install=false
+{# END Openshift Registry #}
+{% endif %}
+
+# Openshift Openshift Service Catalog
+{% if obg_install_openshift_service_catalog %}
+openshift_enable_service_catalog=true
+openshift_service_catalog_image_prefix={{ obg_registry_host }}/openshift3/ose-
+
+{# openshift_service_catalog options are passed in via the obg_openshift_service_catalog_variables variable #}
+{% for option, value in obg_openshift_service_catalog_variables.iteritems() %}
+{{option}}={{value}}
+{% endfor %}
+{% else %}
+openshift_enable_service_catalog=false
+{# END Openshift Registry #}
+{% endif %}
+
+# Openshift Template Service Broker
+{% if obg_install_template_service_broker %}
+openshift_template_service_broker_install=true
+template_service_broker_prefix={{ obg_registry_host }}/openshift3/ose-
+template_service_broker_selector="{'type': 'infra'}"
+
+{# template_service_broker options are passed in via the obg_template_service_broker_variables variable #}
+{% for option, value in obg_template_service_broker_variables.iteritems() %}
+{{option}}={{value}}
+{% endfor %}
+{% else %}
+openshift_template_service_broker_install=false
+{# END Openshift Registry #}
+{% endif %}
+
+# Openshift Prometheus
+{% if obg_install_openshift_prometheus %}
+openshift_hosted_prometheus_deploy=true
+l_openshift_prometheus_node_exporter_image_prefix={{ obg_registry_host }}/openshift3/
+
+{# openshift_prometheus options are passed in via the obg_openshift_prometheus_variables variable #}
+{% for option, value in obg_openshift_prometheus_variables.iteritems() %}
+{{option}}={{value}}
+{% endfor %}
+{% else %}
+openshift_hosted_prometheus_deploy=false
+{# END Openshift Registry #}
+{% endif %}
+
+# Openshift Management (CloudForms)
+{% if obg_install_openshift_management %}
+openshift_management_install_management=true
+
+{# openshift_management options are passed in via the obg_openshift_management_variables variable #}
+{% for option, value in obg_openshift_management_variables.iteritems() %}
+{{option}}={{value}}
+{% endfor %}
+{% else %}
+openshift_management_install_management=false
+{# END Openshift Registry #}
+{% endif %}
+
 # Openshift Logging
 {% if obg_install_logging %}
 openshift_logging_install_logging=true
 openshift_hosted_logging_deploy=true
+openshift_logging_install_logging=true
 openshift_hosted_logging_elasticsearch_cluster_size=2
 openshift_hosted_logging_deployer_version=v{{ obg_install_version_short }}
 openshift_logging_image_version=v{{ obg_install_version_short }}
+openshift_logging_image_prefix={{ obg_registry_host }}/openshift3/
 
 {# logging options are passed in via the obg_logging_variables variable #}
 {% for option, value in obg_logging_variables.iteritems() %}
@@ -266,7 +362,9 @@ openshift_hosted_logging_deploy=false
 {% if obg_install_metrics %}
 openshift_metrics_install_metrics=true
 openshift_hosted_metrics_deploy=true
+openshift_metrics_install_metrics=true
 openshift_hosted_metrics_storage_kind=dynamic
+openshift_metrics_image_prefix={{ obg_registry_host }}/openshift3/
 
 {# metrics options are passed in via the obg_metrics_variables variable #}
 {% for option, value in obg_metrics_variables.iteritems() %}
@@ -282,6 +380,12 @@ openshift_metrics_install_metrics=false
 openshift_hosted_metrics_deploy=false
 {# END Openshift Metrics #}
 {% endif %}
+
+{# ELB configuration comes in via obg_infra_aws_elb_dict #}
+{% if obg_scale_infra_elbs %}
+openshift_aws_elb_dict={{ obg_infra_aws_elb_dict }}
+{% endif %}
+{# END ELB configuration #}
 
 [masters]
 {% for master in obg_masters %}

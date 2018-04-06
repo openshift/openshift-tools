@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.129
+Version:       0.1.133
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -79,6 +79,7 @@ cp -p monitoring/delete-stuck-projects.sh %{buildroot}/usr/bin/delete-stuck-proj
 cp -p monitoring/cron-send-saml-status.py %{buildroot}/usr/bin/cron-send-saml-status
 cp -p monitoring/cron-certificate-expirations.py %{buildroot}/usr/bin/cron-certificate-expirations
 cp -p monitoring/cron-send-os-router-status.py %{buildroot}/usr/bin/cron-send-os-router-status
+cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
 cp -p monitoring/cron-send-build-counts.py %{buildroot}/usr/bin/cron-send-build-counts
 cp -p monitoring/cron-send-stuck-builds.py %{buildroot}/usr/bin/cron-send-stuck-builds
 cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
@@ -94,6 +95,7 @@ cp -p devaccess/devaccess_wrap.py %{buildroot}/usr/bin/devaccess_wrap
 cp -p monitoring/cron-send-service-web-check.py %{buildroot}/usr/bin/cron-send-service-web-check
 cp -p monitoring/cron-send-rkhunter-checks.py %{buildroot}/usr/bin/cron-send-rkhunter-checks
 cp -p monitoring/cron-send-cgroup-slice-metrics.sh %{buildroot}/usr/bin/cron-send-cgroup-slice-metrics
+cp -p monitoring/cron-send-url-check.py %{buildroot}/usr/bin/cron-send-url-check
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
@@ -391,6 +393,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-metrics-checks
 /usr/bin/cron-send-os-router-status
 /usr/bin/cron-send-logging-checks
+/usr/bin/cron-send-elb-status
 /usr/bin/cron-send-build-counts
 /usr/bin/cron-send-stuck-builds
 /usr/bin/cron-send-elb-status
@@ -402,6 +405,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-rkhunter-checks
 /usr/bin/cron-send-router-reload-time
 /usr/bin/cron-send-cgroup-slice-metrics
+/usr/bin/cron-send-url-check
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -492,6 +496,80 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Fri Apr 06 2018 Matt Woodson <mwoodson@redhat.com> 0.1.133-1
+- inventory utils and python libs for python version of cicd-control
+  (mwoodson@redhat.com)
+- moved awsutil -> inventory_util; added cluster class to it
+  (mwoodson@redhat.com)
+- ohi: add ec2_private_dns_name to JSON output (dcbw@redhat.com)
+- ohi: bump ec2_private_dns_name display to 60 chars wide (dcbw@redhat.com)
+- ohi: add 'wide' output that shows hostname, nodename, public ip, and private
+  ip (dcbw@redhat.com)
+- Revert "send only internal or external expirations"
+  (stenwt@users.noreply.github.com)
+- cicd: fixed the hyphen in the regex (mwoodson@redhat.com)
+- cicd: added repo operations and new vars to be passed (mwoodson@redhat.com)
+- [WIP]adding clam update container (#2845) (dedgar@redhat.com)
+- added node name length override flag (#2805)
+  (stenwt@users.noreply.github.com)
+- removed nested ifs + corresponding pylint disable, cleaned up output
+  (sten@redhat.com)
+- sos yer mom, pylint (sten@redhat.com)
+- moar pylint (sten@redhat.com)
+- use loop instead of attempted list comprehension (sten@redhat.com)
+- testing workaround for >3 items added to the tuple (sten@redhat.com)
+- Add wrapper script to gather cluster logs (pep@redhat.com)
+- Allow ossh to lookup host by ec2_id (eparis@redhat.com)
+- Allow ossh to take ec2 internal dns names (eparis@redhat.com)
+- Hawkular Metrics: revert previous commit (mwringe@redhat.com)
+- Metrics: move back the check by one minute (mwringe@redhat.com)
+- Revert "Add docker & openshift version collection script" (jdiaz@redhat.com)
+- Add a script that sends docker and openshift versions to metric_sender
+  (zgalor@redhat.com)
+- missed extra lines from conflict resolution (sten@redhat.com)
+- Add a script that sends docker and openshift versions to metric_sender
+  (zgalor@redhat.com)
+- removed last exception swallower, unneeded pylint disables (sten@redhat.com)
+- more cleanup (sten@redhat.com)
+- add count of unknown and total states (sten@redhat.com)
+- use jsonpath to avoid parsing yaml, misc cleanup (sten@redhat.com)
+- rename openshift-tools-scripts-monitoring-zagg-client (jdiaz@use-
+  tower2.ops.rhcloud.com)
+- Remove merge markes from 39cd848ea81ec2593d784e55345069d25deec67b
+  (joesmith@redhat.com)
+- Revert "add build count script, cronjob, zitem, ztrigger" (sten@redhat.com)
+- Adding missing files into rpms (mmahut@redhat.com)
+- add build count script, cronjob, zitem, ztrigger (sten@redhat.com)
+- Fix busted merge. Demerits to me (joesmith@redhat.com)
+- Automatic commit of package [openshift-tools-scripts] release [0.0.176-1].
+  (whearn@redhat.com)
+- Add MetricSender to monitoring lib (zgalor@redhat.com)
+- Add a hawkular configuration, client and sender classes to the monitoring lib
+  (kobi.zamir@gmail.com)
+- Automatic commit of package [openshift-tools-scripts] release [0.0.122-1].
+  (whearn@redhat.com)
+- Automatic commit of package [openshift-tools-scripts] release [0.0.119-1].
+  (bshpurke@redhat.com)
+- Illiminated unnecessary for loop (benpack101@gmail.com)
+- Fixed pylint issues (benpack101@gmail.com)
+- Added check for nodes without labels (bshpurke@redhat.com)
+
+* Mon Apr 02 2018 Ivan Horvath <ihorvath@redhat.com> 0.1.132-1
+- adding url checker to rpm spec file (ihorvath@redhat.com)
+- generic url checker script (ihorvath@redhat.com)
+- monitor actual http response code from kibana (sten@redhat.com)
+- cron-send-metrics-checks.py: Make sure pod_start_time is always defined
+  (mbarnes@fedoraproject.org)
+- adding variable checks to the start so it fails early (ihorvath@redhat.com)
+- adding cee sosreport helper script (ihorvath@redhat.com)
+
+* Thu Mar 01 2018 Matt Woodson <mwoodson@redhat.com> 0.1.131-1
+- verify cicd: updated variable name (mwoodson@redhat.com)
+
+* Tue Feb 27 2018 Matt Woodson <mwoodson@redhat.com> 0.1.130-1
+- added scalegroup operation to verify cicd; did some pylint cleanup in ohi
+  (mwoodson@redhat.com)
+
 * Wed Feb 14 2018 Drew Anderson <dranders@redhat.com> 0.1.129-1
 - 
 
@@ -1113,8 +1191,16 @@ OpenShift Tools cicd scripts
 - increase to 15m (dranders@redhat.com)
 - Fix return code getting overwritten (whearn@redhat.com)
 
-* Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.1.0-1
+#mwoodson note:  I changed the date of this commit to make rpm happy.
+#  the commit date was out of order, so I changed it to make it work in order
+#* Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.1.0-1
+* Thu Dec 05 2016 Joel Smith <joesmith@redhat.com> 0.1.0-1
 - Version bump
+
+* Mon Dec 05 2016 Wesley Hearn <whearn@redhat.com> 0.0.176-1
+- Add cron-send-logging-checks to the rpm (whearn@redhat.com)
+- increase to 15m (dranders@redhat.com)
+- Fix return code getting overwritten (whearn@redhat.com)
 
 * Thu Dec 01 2016 Joel Smith <joesmith@redhat.com> 0.0.175-1
 - adding error handling, fixing pylint issues (dedgar@redhat.com)
