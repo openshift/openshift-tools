@@ -50,6 +50,10 @@ cp -p web/*.py %{buildroot}%{python_sitelib}/openshift_tools/web
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/zbxapi
 cp -p zbxapi/*.py %{buildroot}%{python_sitelib}/openshift_tools/zbxapi
 
+# openshift_tools/utils
+mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/utils
+cp -p utils/*.py %{buildroot}%{python_sitelib}/openshift_tools/utils
+
 # openshift_tools/inventory_clients install
 mkdir -p %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients
 cp -pP inventory_clients/* %{buildroot}%{python_sitelib}/openshift_tools/inventory_clients
