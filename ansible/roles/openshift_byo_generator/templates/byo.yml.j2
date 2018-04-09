@@ -295,7 +295,7 @@ openshift_enable_service_catalog=false
 {% if obg_install_template_service_broker %}
 openshift_template_service_broker_install=true
 template_service_broker_prefix={{ obg_registry_host }}/openshift3/ose-
-template_service_broker_selector="{'type': 'infra'}"
+template_service_broker_selector={'type': 'infra'}
 
 {# template_service_broker options are passed in via the obg_template_service_broker_variables variable #}
 {% for option, value in obg_template_service_broker_variables.iteritems() %}
