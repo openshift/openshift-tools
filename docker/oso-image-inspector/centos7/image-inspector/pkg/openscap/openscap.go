@@ -143,7 +143,7 @@ func (s *defaultOSCAPScanner) getInputCVE(dist int) (string, error) {
 	defer out.Close()
 
 	resp, err := http.Get(cveURL.String())
-	if err != nil {
+	if err != nil || resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("Could not download file %s: %v\n", cveURL, err)
 	}
 	defer resp.Body.Close()

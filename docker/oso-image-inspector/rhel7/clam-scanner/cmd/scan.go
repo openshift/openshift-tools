@@ -66,7 +66,7 @@ submitting file descriptors via a Unix domain socket to a clamd process.`,
 func newDefaultClamScanOptions() *ClamScanOptions {
 	return &ClamScanOptions{
 		Path:   ".",
-		Socket: "/host/run/clamd.scan/clamd.sock",
+		Socket: "/host/host/var/run/clamd.scan/clamd.sock",
 	}
 }
 

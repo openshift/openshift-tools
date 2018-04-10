@@ -26,7 +26,7 @@ objects:
       contextDir: "docker/oso-ops-base/${PLAT}"
       git:
         ref: oso-image-inspector
-        uri: https://github.com/rhdedgar/openshift-tools
+        uri: https://github.com/openshift/openshift-tools
       secrets: []
       type: Git
     strategy:
@@ -37,6 +37,7 @@ objects:
         from:
           kind: ImageStreamTag
           name: "${PLAT}:latest"
+        noCache: true
       type: Docker
     triggers:
     - imageChange: {}
@@ -58,7 +59,7 @@ objects:
       contextDir: "docker/oso-image-inspector/${PLAT}"
       git:
         ref: oso-image-inspector
-        uri: https://github.com/rhdedgar/openshift-tools
+        uri: https://github.com/openshift/openshift-tools
       secrets: []
       type: Git
     strategy:
@@ -185,4 +186,4 @@ parameters:
   value: rhel7
 - description: Project name
   name: NAMESPACE
-  value: image-inspector
+  value: openshift-image-inspector

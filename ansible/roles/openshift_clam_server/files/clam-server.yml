@@ -1,0 +1,101 @@
+---
+apiVersion: v1 
+kind: Template
+metadata:
+  creationTimestamp: null
+  generation: 1
+  labels:
+    provider: openshift
+    clam-server-host: "true"
+    component: clam-server
+  name: oso-clam-server 
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-clam-server
+    name: "oso-${PLAT}-clam-server"
+  spec:
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "registry.reg-aws.openshift.com:443/openshift-clam-server/oso-${PLAT}-clam-server:latest"
+        pullSecret:
+          name: dockercfgjson
+      importPolicy:
+        scheduled: true
+      name: latest
+- apiVersion: extensions/v1beta1
+  kind: DaemonSet
+  metadata:
+    labels:
+      template: oso-clam-server
+      component: clam-server
+    name: oso-clam-server
+  selector:
+    matchLabels:
+      name: oso-clam-server
+  spec:
+    strategy:
+      resources: {}
+      type: Rolling
+    template:
+      metadata:
+        creationTimestamp: null
+        name: oso-clam-server
+        labels:
+          name: oso-clam-server
+          component: clam-server
+      spec:
+        containers:
+        - env:
+          - name: OO_PAUSE_ON_START
+            value: "false"
+          image: "${NAMESPACE}/oso-${PLAT}-clam-server:latest"
+          imagePullPolicy: Always
+          name: oso-clam-server 
+          resources: {}
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /host/var/run/clamd.scan
+            name: oso-clam-server-host-filesystem
+          - mountPath: /secrets
+            name: oso-clam-server-secrets
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          clam-server-enabled: "True"
+        restartPolicy: Always
+        securityContext: {}
+        serviceAccount: clamserver
+        serviceAccountName: clamserver
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: oso-clam-server-host-filesystem
+          hostPath:
+            path: /host/var/run/clamd.scan
+        - name: oso-clam-server-secrets
+          secret:
+            secretName: oso-clam-server-secrets
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-clam-server
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-clam-server:latest"
+      type: ImageChange
+parameters:
+- description: Platform name
+  name: PLAT
+  value: rhel7
+- description: Project name
+  name: NAMESPACE
+  value: openshift-clam-server

@@ -1,6 +1,6 @@
 ---
 - name: "create project for {{ ocav_namespace }}"
-  oadm_project:
+  oc_project:
     name: "{{ ocav_namespace }}"
     display_name: "{{ ocav_namespace }}"
     description: ClamAV Signature Updater
@@ -12,11 +12,13 @@
     namespace: "{{ ocav_namespace }}"
 
 - name: add clamup to nonroot SCC
-  oadm_policy_user:
-    namespace: "{{ ocav_namespace }}" 
-    user: "system:serviceaccount:{{ ocav_namespace }}:clamup"
-    resource_kind: scc
-    resource_name: nonroot
+  command: "oc adm policy {{ item.r_kind }} {{ item.r_name }} system:serviceaccount:{{ ocav_namespace }}:clamup"
+  delegate_to: "{{ cluster_master }}"
+  run_once: true
+  ignore_errors: true
+  with_items:
+  - r_kind: add-scc-to-user
+    r_name: nonroot
 
 - name: "Create Clam Update secrets for {{ ocav_namespace }}"
   oc_secret:
