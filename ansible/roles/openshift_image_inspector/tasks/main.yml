@@ -1,6 +1,6 @@
 ---
 - name: Create temp directory to store the template
-  command: mktemp -d /tmp/openshift-logging-ansible-XXXXXX
+  command: mktemp -d /tmp/openshift-image-inspector-ansible-XXXXXX
   register: mktemp
   changed_when: False
 
@@ -13,30 +13,34 @@
     tempdir: "{{ mktemp.stdout }}"
 
 - name: "create project for {{ oii_namespace }}"
-  oadm_project:
+  oc_project:
     name: "{{ oii_namespace }}"
     display_name: "{{ oii_namespace }}"
     description: ClamAV Scanning Service
   retries: 12
   delay: 5
 
+- name: "join with clam-controller project network"
+  command: "oc adm pod-network join-projects --to=openshift-clam-controller {{ oii_namespace }}"
+  delegate_to: "{{ cluster_master }}"
+  run_once: true
+  ignore_errors: true
+
 - name: create imageinspector serviceaccount
   oc_serviceaccount:
     name: imageinspector
-    namespace: image-inspector
+    namespace: "{{ oii_namespace }}" 
 
 - name: set service account permissions
-  oadm_policy_user:
-    namespace: image-inspector
-    user: system:serviceaccount:image-inspector:imageinspector
-    resource_kind: "{{ item.r_kind }}" 
-    resource_name: "{{ item.r_name }}"
-    state: present
+  command: "oc adm policy {{ item.r_kind }} {{ item.r_name }} system:serviceaccount:{{ oii_namespace }}:imageinspector"
+  delegate_to: "{{ cluster_master }}"
+  run_once: true
+  ignore_errors: true
   with_items:
-    - r_kind: cluster-role
-      r_name: cluster-reader
-    - r_kind: scc
-      r_name: privileged
+  - r_kind: add-cluster-role-to-user
+    r_name: cluster-reader
+  - r_kind: add-scc-to-user
+    r_name: privileged
 
   # running as command until oc_secret supports config file image secrets
 - name: "Create image pull secret"
@@ -55,17 +59,18 @@
     - path: scanlog_bucket_rw
       data: "{{ oii_aws_creds_content }}" 
 
-- name: copy image inspector template
-  copy:
-    src: image-inspector.yml
-    dest: "{{ tempdir }}/image-inspector.yml"
-
 - name: "Check to see if template already exists in {{ oii_namespace }}"
   oc_obj:
     state: list
     namespace: "{{ oii_namespace }}"
     kind: templates
   register: templatelist
+
+- name: copy image inspector template
+  copy:
+    src: image-inspector.yml
+    dest: "{{ tempdir }}/image-inspector.yml"
+  when:  templatelist['results']['results'][0]['items'] | length < 1
 
 - name: Set image inspector template
   oc_obj:
@@ -80,9 +85,10 @@
   when:  templatelist['results']['results'][0]['items'] | length < 1
 
 - name: Get the address of the registry
-  shell: "oc get services -n default | grep docker-registry | awk '{print $2}'"
+  shell: "oc get service -n default docker-registry --template={% raw %}'{{.spec.clusterIP}}:{{(index .spec.ports 0).port}}'{% endraw %}"
   register: registry_ip
   run_once: true
+  when: registry_ip is not defined
 
 - name: "Check to see if image-inspector pods exist in {{ oii_namespace }}"
   oc_obj:
@@ -99,7 +105,7 @@
     create: True
     params:
       PLAT: rhel7
-      NAMESPACE: "{{ registry_ip['stdout'] | quote }}:5000/{{ oii_namespace }}"
+      NAMESPACE: "{{ registry_ip['stdout'] }}/{{ oii_namespace }}"
   when: podlist['results']['results'][0]['items'] | length < 1
   delegate_to: "{{ cluster_master }}"
   run_once: true

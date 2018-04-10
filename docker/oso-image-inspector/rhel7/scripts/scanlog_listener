@@ -1,18 +1,15 @@
-#!/bin/env python
+#!/bin/env python3.4
 # vim: expandtab:tabstop=4:shiftwidth=4
 
-""" A small server to listen for image-inspector scan results and upload them to an S3 bucket. """
+""" A small server to listen for image-inspector scan results and log them to a local file. """
 
 import argparse
 import json
 import os
 import socket
+import subprocess
 import sys
 import yaml
-
-# pylint: disable=import-error
-import botocore
-import boto3
 
 
 class ClamLogSrv(object):
@@ -44,85 +41,49 @@ class ClamLogSrv(object):
         return args
 
 
+    def convert_types(self, data):
+        """ Used to convert dicts of bytes received as json.
+
+            Returns:
+                a dict of strings
+                a string converted from bytes
+         """
+
+        if isinstance(data, bytes):
+            return data.decode('ascii')
+        if isinstance(data, dict):
+            return dict(map(self.convert_types, data.items()))
+        if isinstance(data, tuple):
+            return map(self.convert_types, data)
+        return data
+
+
     @staticmethod
-    def get_config(config_path):
-        """ Open and read config data from the variables file. """
-
-        config_settings = {}
-
-        if os.path.isfile(config_path):
-            with open(config_path, 'r') as log_config:
-                yaml_config = yaml.load(log_config)
-
-                try:
-                    config_settings['oii_s3_bucket'] = yaml_config['oii_s3_bucket']
-                except KeyError:
-                    pass
-
-                try:
-                    config_settings['oii_creds_file'] = yaml_config['oii_creds_file']
-                except KeyError:
-                    pass
-
-                try:
-                    config_settings['oii_ops_files'] = yaml_config['oii_ops_files']
-                except KeyError:
-                    pass
-
-                try:
-                    config_settings['node_hostname'] = yaml_config['node_hostname']
-                except KeyError:
-                    pass
-
-        return config_settings
-
-
-    # pylint: disable=too-many-locals
-    def upload_files(self):
-        """ Use the provided credentials to upload files to the specified bucket.
-
-        Raises:
-            A ValueError if the specified bucket can not be found.
-        """
-
-        config_file = self.get_config('/secrets/aws_config.yml')
-        hostname_file = self.get_config('/etc/openshift_tools/scanreport_config.yml')
-
-        bucket = config_file['oii_s3_bucket']
-        file_list = config_file['oii_ops_files']
-        aws_creds_file = config_file['oii_creds_file']
-        node_hostname = hostname_file['node_hostname']
-
-        os.environ["AWS_SHARED_CREDENTIALS_FILE"] = aws_creds_file
-
-        s3_session = boto3.resource('s3')
-        exists = True
+    def send_results(rec_js, ctrl_host, ctrl_port):
+        """ Used to send a string representation of a json dict to clam-controller. """
 
         try:
-            s3_session.meta.client.head_bucket(Bucket=bucket)
+            send_bytes = str(rec_js).encode("ascii")
 
-        except botocore.exceptions.ClientError as client_exception:
-            error_code = int(client_exception.response['Error']['Code'])
+            sendsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-            if error_code == 404:
-                exists = False
+            sendsock.connect((ctrl_host, int(ctrl_port)))
 
-        if exists:
-            s3_client = boto3.resource('s3')
-            s3_bucket = s3_client.Bucket(bucket)
-
-            for report_file in file_list:
-                full_path = (os.path.join('/var/log/clam/', report_file))
-                report_data = open(full_path, 'rb')
-                upload_path = node_hostname + '/' + report_file
-                s3_bucket.put_object(Key=upload_path, Body=report_data)
-
-        else:
-            raise ValueError(bucket + ' does not exist.')
+            sendsock.sendall(send_bytes)
+        except socket.gaierror:
+            print("cannot resolve service: ", ctrl_host)
 
 
+    # pylint: disable=too-many-locals, too-many-statements
     def start_serve(self, hostname, hostport, logfile):
         """ Listen on specified port for incoming clam logs. """
+
+        config_path = '/secrets/aws_config.yml'
+        config_settings = self.get_controller(config_path)
+
+        ctrl_host = config_settings['oii_control_host']
+        ctrl_port = config_settings['oii_contrl_port']
+
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         server_address = (hostname, int(hostport))
@@ -135,11 +96,25 @@ class ClamLogSrv(object):
 
             try:
                 while True:
-                    data = connection.recv(1024)
-                    newdata = data.split('\n')[6]
-                    rec_js = json.loads(newdata)
+                    # pylint: disable=no-member
+                    data = connection.recv(10240)
+                    newdata = data.split(b'\r\n\r\n')[1].strip(b"'")
+
+                    conv_js = self.convert_types(newdata)
+
+                    try:
+                        rec_js = json.loads(conv_js)
+                    except ValueError:
+                        rec_js = conv_js
+
+                    if isinstance(rec_js, dict) and 'results' not in rec_js \
+                    or 'FOUND' not in rec_js['results']['description']:
+                        print(rec_js)
+                        print('No positive scan results, skipping')
+                        break
 
                     filemode = ''
+                    container_id = rec_js['containerID']
 
                     if os.path.isfile(logfile):
                         filemode = 'a'
@@ -147,14 +122,83 @@ class ClamLogSrv(object):
                         filemode = 'w'
 
                     with open(logfile, filemode) as open_file:
-                        open_file.write(json.dumps(rec_js, indent=4, sort_keys=True))
+                        try:
+                            container_ns = self.convert_types(subprocess.check_output([\
+                            'chroot', \
+                            '/host', \
+                            '/usr/bin/docker', \
+                            'inspect', \
+                            '--format', \
+                            '\'{{index .Config.Labels "io.kubernetes.pod.namespace"}} \
+                            {{index .Config.Labels "io.kubernetes.pod.name"}}\'', \
+                            container_id
+                                                                                      ])
+                                                             ).replace('\'', '')
 
-                    break
+                            rec_js['nameSpace'] = self.convert_types(container_ns.split()[0])
+                            rec_js['podName'] = self.convert_types(container_ns.split()[1])
+
+                            self.send_results(rec_js, ctrl_host, ctrl_port)
+
+                            conv_js = self.convert_types(rec_js)
+                            open_file.write(json.dumps(conv_js, indent=4, sort_keys=True))
+
+                            inspectlog = logfile + '_inspect_output.log'
+
+                            if os.path.isfile(inspectlog):
+                                filemode = 'ab'
+                            else:
+                                filemode = 'wb'
+
+                            try:
+                                with open(inspectlog, filemode) as open_file:
+                                    open_file.write(
+                                        subprocess.check_output([\
+                                        'chroot', \
+                                        '/host', \
+                                        '/usr/bin/docker', \
+                                        'inspect', \
+                                        container_id
+                                                                ])
+                                    )
+
+                            except subprocess.CalledProcessError:
+                                print('cannot get full output')
+                                break
+                            break
+                        except subprocess.CalledProcessError:
+                            print('cannot get the namespace')
+                            break
 
             finally:
                 connection.close()
-                self.upload_files()
 
+
+    @staticmethod
+    def get_controller(config_path):
+        """ Get info about the clam-controller that will be used to process positive scan results
+
+            Returns:
+                A dictionary with the address and port of the clam-controller.
+         """
+
+        config_settings = {}
+
+        if os.path.isfile(config_path):
+            with open(config_path, 'r') as log_config:
+                yaml_config = yaml.load(log_config)
+
+                try:
+                    config_settings['oii_control_host'] = yaml_config['oii_control_host']
+                except KeyError:
+                    pass
+
+                try:
+                    config_settings['oii_contrl_port'] = yaml_config['oii_contrl_port']
+                except KeyError:
+                    pass
+
+        return config_settings
 
 
     def main(self):

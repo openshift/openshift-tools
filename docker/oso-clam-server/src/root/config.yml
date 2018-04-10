@@ -1,0 +1,48 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+  - /root/default_vars.yml
+
+  vars:
+    sigpull_cron:
+    - name: cron_pull_signatures
+      minute: "15"
+      hour: "*/12"
+      job: "/usr/local/bin/pull_clam_signatures &>/dev/null"
+
+  tasks:
+  - name: "Ensure the clamd pid and socket directory has been created"
+    file:
+      path: "{{ item.csname }}"
+      state: "{{ item.csstate}}"
+      recurse: "{{ item.csrecurse }}"
+      mode: 0755
+      owner: clamscan
+      group: clamscan
+    with_items:
+    - csname: /host/var/run/clamd.scan 
+      csstate: directory
+      csrecurse: yes
+
+  - name: Remove default clam update cron jobs
+    file:
+      path: "{{ item.cron_name }}"
+      state: "{{ item.cron_state }}"
+    with_items:
+    - cron_name: /etc/cron.d/clamav-update
+      cron_state: absent
+    - cron_name: /etc/cron.d/clamav-unofficial-sigs
+      cron_state: absent
+
+  - name: Setup Cron
+    cron:
+      name: "{{ item.name }}"
+      job: "{{ item.job }}"
+      minute: "{{ item.minute | default('*', True) }}"
+      hour: "{{ item.hour | default('*', True) }}"
+      day: "{{ item.day | default('*', True) }}"
+      month: "{{ item.month | default('*', True) }}"
+      weekday: "{{ item.weekday | default('*', True) }}"
+    with_items:
+    - "{{ sigpull_cron }}"

@@ -1,6 +1,7 @@
 package inspector_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,11 +12,12 @@ import (
 	"github.com/fsouza/go-dockerclient"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	iiapi "github.com/openshift/image-inspector/pkg/api"
 	iicmd "github.com/openshift/image-inspector/pkg/cmd"
 	. "github.com/openshift/image-inspector/pkg/inspector"
 )
 
-var _ = Describe("ImageInspector", func() {
+var _ = Describe("ImageInspector Integration", func() {
 	var (
 		ii           ImageInspector
 		opts         *iicmd.ImageInspectorOptions
@@ -28,7 +30,7 @@ var _ = Describe("ImageInspector", func() {
 	)
 	//note: no expects in this block
 	//we just begin the http server here
-	BeforeSuite(func() {
+	BeforeEach(func() {
 		var err error
 		opts = iicmd.NewDefaultImageInspectorOptions()
 		opts.Serve = serve
@@ -37,7 +39,9 @@ var _ = Describe("ImageInspector", func() {
 		opts.ScanType = "openscap"
 		opts.DstPath, err = ioutil.TempDir("", "")
 		Expect(err).NotTo(HaveOccurred())
+	})
 
+	JustBeforeEach(func() {
 		ii = NewDefaultImageInspector(*opts)
 		//serving blocks, so it needs to be done in a goroutine
 		go func() {
@@ -45,9 +49,11 @@ var _ = Describe("ImageInspector", func() {
 				panic(err)
 			}
 		}()
-		//allow 5 minutes to pull image
-		if err := waitForImage(opts.URI, opts.Image, time.Minute*5); err != nil {
-			panic(err)
+		if opts.UseDockerSocket {
+			//allow 5 minutes to pull image
+			if err := waitForImage(opts.DockerSocket, opts.Image, time.Minute*5); err != nil {
+				panic(err)
+			}
 		}
 		//allow 40s to start serving http
 		if err := waitForServer(opts.Serve, time.Second*40); err != nil {
@@ -99,6 +105,33 @@ var _ = Describe("ImageInspector", func() {
 				})
 			})
 		}
+
+		Context("When using containers/images/lib", func() {
+			var req *http.Request
+			BeforeEach(func() {
+				opts.UseDockerSocket = false
+			})
+
+			It("Should acquire image successfuly", func() {
+				var metadata_raw []byte
+				var err error
+				var result_metadata iiapi.InspectorMetadata
+				if req, err = http.NewRequest("GET", "http://"+serve+METADATA_URL_PATH, nil); err != nil {
+					panic(err)
+				}
+				req.Header.Set("X-Auth-Token", validToken)
+				res, err := client.Do(req)
+				Expect(err).NotTo(HaveOccurred())
+				defer res.Body.Close()
+				if metadata_raw, err = ioutil.ReadAll(res.Body); err != nil {
+					panic(err)
+				}
+				if err = json.Unmarshal(metadata_raw, &result_metadata); err != nil {
+					panic(err)
+				}
+				Expect(result_metadata.ImageAcquireError).To(Equal(""))
+			})
+		})
 	})
 })
 

@@ -1,0 +1,18 @@
+language: go
+
+go:
+  - 1.7
+
+install:
+  - ./.travis.sh build
+
+services:
+  - docker
+
+script:
+  - ./.travis.sh run
+
+notifications:
+  irc: "chat.freenode.net#openshift-dev"
+
+sudo: false

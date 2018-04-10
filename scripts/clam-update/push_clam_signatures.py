@@ -85,7 +85,7 @@ class UpdateBucket(object):
             for clam_file in file_list:
                 full_path = (os.path.join('/var/lib/clamav/', clam_file))
                 if os.path.isfile(full_path) and \
-                int(os.path.getmtime(full_path)) < time_dict[clam_file]:
+                int(os.path.getmtime(full_path)) > time_dict[clam_file]:
                     sig_data = open(full_path, 'rb')
                     s3_bucket.put_object(Key=clam_file, Body=sig_data)
                     with open(timestamp, 'w') as open_file:
