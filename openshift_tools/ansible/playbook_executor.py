@@ -55,7 +55,7 @@ class PlaybookExecutor(object):
             self.write_debug_inventory(playbook.replace('/', '_'), pb_env)
         else:
             if self.cluster_id:
-                cmd += ['-e', 'cli_cluster_id=' + self.cluster_id]
+                cmd += ['-e', 'cli_clusterid=' + self.cluster_id]
 
         for i in extra_vars.iteritems():
             cmd += ['-e', '='.join(i)]
@@ -64,8 +64,8 @@ class PlaybookExecutor(object):
 
         # TODO force for all jobs?
         pb_env['ANSIBLE_FORCE_COLOR'] = 'true'
-        #print('Executing: {}'.format(cmd))
-        #print('ENV: {}'.format(pb_env))
+
+        PlaybookExecutor.print_cmd(cmd, pb_env)
 
         # TODO cwd?
         subprocess.check_call(cmd, env=pb_env)
@@ -134,3 +134,15 @@ class PlaybookExecutor(object):
             logfile.close()
 
         return proc.returncode, stdout, stderr
+
+    @staticmethod
+    def print_cmd(cmd, env):
+        """ print the cmd and env so we can see what's running """
+
+        print()
+        print("Running Command: {}".format(" ".join(cmd)))
+        print("Using Env (only printing certain ENV vars:")
+        for key in env:
+            if key.startswith("OO_INV") or key.startswith('ANSIBLE'):
+                print("{}: {}".format(key, env[key]))
+        print()
