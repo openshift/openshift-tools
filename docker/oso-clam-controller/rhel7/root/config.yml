@@ -1,0 +1,67 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+  - /root/default_vars.yml
+  - /host/etc/openshift_tools/monitoring-config.yml
+
+  vars:
+    scanning_cron:
+    - name: cron_scan_images
+      minute: 1
+      hour: 1
+      day: 1
+      month: 3
+      job: "/usr/local/bin/scan_images &>/dev/null"
+
+  tasks:
+  - name: "Create custom scan report directories for clam-controller"
+    file:
+      path: "{{ item.cc_name }}"
+      state: "{{ item.cc_state}}"
+      recurse: "{{ item.cc_recurse }}"
+      mode: 0755
+    with_items:
+    - cc_name: /var/log/clam
+      cc_state: directory
+      cc_recurse: yes
+    - cc_name: /etc/openshift_tools
+      cc_state: directory
+      cc_recurse: yes
+    - cc_name: /etc/origin/node
+      cc_state: directory
+      cc_recurse: yes
+    - cc_name: /etc/openshift_tools/scanreport_config.yml
+      cc_state: touch
+      cc_recurse: no
+    - cc_name: /etc/origin/node/node-config.yaml
+      cc_state: touch
+      cc_recurse: no
+
+  - name: "Copy clam controller into place"
+    copy:
+      src: "{{ item.cc_src }}"
+      dest: "{{ item.cc_dest}}"
+      mode: 0777
+    with_items:
+    - cc_src: /secrets/clam-controller
+      cc_dest: /usr/local/bin/clam-controller
+
+  - name: populate templated config file
+    copy:
+      content: |
+        node_hostname: {{ metric_sender_config['host']['name'] }}
+        cluster_name: {{ oso_cluster_id }}
+      dest: /etc/openshift_tools/scanreport_config.yml
+
+  - name: Setup Cron
+    cron:
+      name: "{{ item.name }}"
+      job: "{{ item.job }}"
+      minute: "{{ item.minute | default('*', True) }}"
+      hour: "{{ item.hour | default('*', True) }}"
+      day: "{{ item.day | default('*', True) }}"
+      month: "{{ item.month | default('*', True) }}"
+      weekday: "{{ item.weekday | default('*', True) }}"
+    with_items:
+    - "{{ scanning_cron }}"

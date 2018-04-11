@@ -128,4 +128,4 @@ else
     test_packages="${ii_test_packages}"
 fi
 
-go test ${gotest_flags} ${test_packages}
+go test ${gotest_flags} -tags 'containers_image_openpgp exclude_graphdriver_devicemapper exclude_graphdriver_btrfs' ${test_packages}

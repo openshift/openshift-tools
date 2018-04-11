@@ -6,8 +6,9 @@ import (
 )
 
 func TestValidate(t *testing.T) {
-	noURI := NewDefaultImageInspectorOptions()
-	noURI.URI = ""
+	noDockerSocket := NewDefaultImageInspectorOptions()
+	noDockerSocket.UseDockerSocket = true
+	noDockerSocket.DockerSocket = ""
 
 	dockerCfgAndUsername := NewDefaultImageInspectorOptions()
 	dockerCfgAndUsername.Image = "image"
@@ -79,7 +80,7 @@ func TestValidate(t *testing.T) {
 		inspector      *ImageInspectorOptions
 		shouldValidate bool
 	}{
-		"no uri":                              {inspector: noURI, shouldValidate: false},
+		"no docker-socket":                    {inspector: noDockerSocket, shouldValidate: false},
 		"no image":                            {inspector: NewDefaultImageInspectorOptions(), shouldValidate: false},
 		"docker config and username":          {inspector: dockerCfgAndUsername, shouldValidate: false},
 		"username and no password file":       {inspector: usernameNoPasswordFile, shouldValidate: false},

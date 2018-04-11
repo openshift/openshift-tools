@@ -3,6 +3,8 @@
 
 """ Class to take image-inspector scan results and upload them to an S3 bucket. """
 
+from datetime import datetime
+
 import os
 import yaml
 
@@ -45,6 +47,11 @@ class ClamLogUpload(object):
                 except KeyError:
                     pass
 
+                try:
+                    config_settings['cluster_name'] = yaml_config['cluster_name']
+                except KeyError:
+                    pass
+
         return config_settings
 
 
@@ -63,6 +70,7 @@ class ClamLogUpload(object):
         file_list = config_file['oii_ops_files']
         aws_creds_file = config_file['oii_creds_file']
         node_hostname = hostname_file['node_hostname']
+        cluster_name = hostname_file['cluster_name']
 
         os.environ["AWS_SHARED_CREDENTIALS_FILE"] = aws_creds_file
 
@@ -82,11 +90,18 @@ class ClamLogUpload(object):
             s3_client = boto3.resource('s3')
             s3_bucket = s3_client.Bucket(bucket)
 
+            cur_time = datetime.now().strftime('%Y%m%d')
+
             for report_file in file_list:
                 full_path = (os.path.join('/var/log/clam/', report_file))
-                report_data = open(full_path, 'rb')
-                upload_path = node_hostname + '/' + report_file
-                s3_bucket.put_object(Key=upload_path, Body=report_data)
+                if os.path.isfile(full_path):
+                    report_data = open(full_path, 'rb')
+                    upload_path = cluster_name + '/' + cur_time +\
+                                  '/' + node_hostname + '/' + report_file
+                    s3_bucket.put_object(Key=upload_path, Body=report_data)
+
+                    # pylint: disable=no-member
+                    os.replace(full_path, full_path + '.last')
 
         else:
             raise ValueError(bucket + ' does not exist.')

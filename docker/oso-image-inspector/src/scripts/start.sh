@@ -30,8 +30,13 @@ echo
 echo '/usr/local/bin/cron-in-memory-scan.sh'
 echo
 echo '/usr/local/bin/upload_scanlogs'
+echo
+echo '/usr/local/bin/orchestrator'
 
 echo
+echo 'Always listen for new containers. Container scanning queue will inspect one container at a time in FIFO order.'
+echo '----------------'
+/usr/local/bin/orchestrator &
 echo 'Always listen for new scan logs. Scanning is scheduled once per day for all pods on the node.'
 echo '----------------'
 /usr/local/bin/scanlog_listener -s localhost -p 8080 -l /var/log/clam/scan.log &
