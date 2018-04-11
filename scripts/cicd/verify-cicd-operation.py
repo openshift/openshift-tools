@@ -259,6 +259,8 @@ class VerifyCICDOperation(object):
     def runner(program, *args):
         ''' run the script that is intended '''
 
+        os.environ['PYTHONUNBUFFERED'] = "1"
+
         try:
             os.execlp(program, program, *args)
         except:
