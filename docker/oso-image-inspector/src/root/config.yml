@@ -3,7 +3,7 @@
   gather_facts: no
   vars_files:
   - /root/default_vars.yml
-  - /host/etc/origin/node/node-config.yaml
+  - /host/etc/openshift_tools/monitoring-config.yml
 
   vars:
     scanning_cron:
@@ -12,15 +12,10 @@
       hour: 13
       job: "/usr/local/bin/cron-scan-pods.sh &>/dev/null"
 
-#    - name: inmem_scan
-#      minute: "15"
-#      hour: "13"
-#      job: "/usr/local/bin/cron-in-memory-scan.sh &>/dev/null"
-
-    - name: upload_scanlogs
+    - name: inmem_scan
       minute: "15"
-      hour: "14"
-      job: "/usr/local/bin/upload_scanlogs &>/dev/null"
+      hour: "5,13,21"
+      job: "/usr/local/bin/cron-in-memory-scan.sh &>/dev/null"
 
   tasks:
   - name: "Create custom scan report directory for image-inspector"
@@ -36,6 +31,9 @@
     - ii_name: /etc/openshift_tools
       ii_state: directory
       ii_recurse: yes
+    - ii_name: /etc/origin/node
+      ii_state: directory
+      ii_recurse: yes
     - ii_name: /etc/openshift_tools/scanreport_config.yml
       ii_state: touch
       ii_recurse: no
@@ -48,21 +46,27 @@
     - ii_name: /var/run/docker.sock 
       ii_state: touch
       ii_recurse: no
-
-  - name: Make node name accessible
-    set_fact:
-      temp_name: "{{ kubeletArguments['node-labels'] }}"
-
-  - name: print nodename
-    debug:
-      msg: "{{ temp_name[4].split('=')[1] }}"
+    - ii_name: /etc/origin/node/node-config.yaml
+      ii_state: touch
+      ii_recurse: no
 
   - name: populate templated config file
     copy:
       content: |
-        node_hostname: {{ temp_name[4].split('=')[1] }}
+        node_hostname: {{ metric_sender_config['host']['name'] }}
+        cluster_name: {{ oso_cluster_id }}
       dest: /etc/openshift_tools/scanreport_config.yml
 
+  # Running as commands because mount module doesn't mount properly on some clusters
+  - name: "Ensure directories are correctly mounted for in memory scanning"
+    command: "{{ item }}"
+    with_items:
+    - "mount --bind -o ro /host/etc/origin/node/node-config.yaml /etc/origin/node/node-config.yaml"
+    - "mount --bind -o ro /host/var/run/docker.sock /var/run/docker.sock"
+    - "mount --bind -o ro /host/usr/bin/docker-current /usr/bin/docker-current"
+    - "mount --bind -o ro /host/etc/sysconfig/docker /etc/sysconfig/docker"
+
+#  Disabled until mount module issues can be addressed
 #  - name: "Bind mounts for scanning"
 #    mount:
 #      opts: "{{ item.mnt_opts }}"
@@ -79,6 +83,9 @@
 #      mnt_opts: "bind,ro"
 #    - mnt_src: "/host/var/run/docker.sock"
 #      mnt_name: "/var/run/docker.sock"
+#      mnt_opts: "bind,ro"
+#    - mnt_src: "/host/etc/origin/node/node-config.yaml"
+#      mnt_name: "/etc/origin/node/node-config.yaml"
 #      mnt_opts: "bind,ro"
 
   - name: Setup Cron

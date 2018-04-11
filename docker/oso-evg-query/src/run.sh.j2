@@ -1,0 +1,10 @@
+#!/bin/bash -e
+{{ generated_header }}
+
+echo -n "Running oso-{{ base_os }}-evg-query... "
+{% if base_os == 'rhel7' %}
+sudo docker run -ti --net=host --rm=true --name oso-evg-query oso-rhel7-evg-query $@
+{% elif base_os == 'centos7' %}
+sudo docker run -ti --net=host --rm=true --name oso-evg-query oso-centos7-evg-query $@
+{% endif %}
+echo "Done."

@@ -7,6 +7,7 @@ metadata:
   labels:
     provider: openshift
     image-inspector-host: "true"
+    component: image-inspector
   name: oso-image-inspector 
 objects:
 - apiVersion: v1
@@ -20,16 +21,18 @@ objects:
     - annotations: null
       from:
         kind: DockerImage
-        name: "registry.reg-aws.openshift.com:443/image-inspector/oso-${PLAT}-image-inspector:latest"
+        name: "registry.reg-aws.openshift.com:443/openshift-image-inspector/oso-${PLAT}-image-inspector:latest"
         pullSecret:
           name: dockercfgjson
-      importPolicy: {}
+      importPolicy:
+        scheduled: true
       name: latest
 - apiVersion: extensions/v1beta1
   kind: DaemonSet
   metadata:
     labels:
       template: oso-image-inspector
+      component: image-inspector
     name: oso-image-inspector
   selector:
     matchLabels:
@@ -44,6 +47,7 @@ objects:
         name: oso-image-inspector
         labels:
           name: oso-image-inspector
+          component: image-inspector
       spec:
         containers:
         - env:
@@ -94,4 +98,4 @@ parameters:
   value: rhel7
 - description: Project name
   name: NAMESPACE
-  value: image-inspector
+  value: openshift-image-inspector

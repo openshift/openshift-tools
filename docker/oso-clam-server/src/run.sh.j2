@@ -1,0 +1,10 @@
+#!/bin/bash -e
+{{ generated_header }}
+
+echo -n "Running oso-{{ base_os }}-clam-server... "
+{% if base_os == 'rhel7' %}
+sudo docker run -ti --net=host --rm=true --name oso-clam-server oso-rhel7-clam-server $@
+{% elif base_os == 'centos7' %}
+sudo docker run -ti --net=host --rm=true --name oso-clam-server oso-centos7-clam-server $@
+{% endif %}
+echo "Done."

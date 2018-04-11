@@ -51,11 +51,11 @@ EOF
   if [[ "${TRAVIS:-}" != "true" ]]; then
     local go_version
     go_version=($(go version))
-    if [[ "${go_version[2]}" < "go1.5" ]]; then
+    if [[ "${go_version[2]}" < "go1.7" ]]; then
       cat <<EOF
 
 Detected Go version: ${go_version[*]}.
-image-inspector builds require Go version 1.5 or greater.
+image-inspector builds require Go version 1.7 or greater.
 
 EOF
       exit 2
@@ -80,6 +80,10 @@ ii::build::build_binaries() {
     export GOBIN="${II_OUTPUT_BINPATH}/${platform}"
 
     mkdir -p "${II_OUTPUT_BINPATH}/${platform}"
-    go install "cmd/image-inspector.go"
+    CGO_ENABLED=0 \
+    go build -tags 'containers_image_openpgp exclude_graphdriver_devicemapper exclude_graphdriver_btrfs' \
+    -a -installsuffix cgo "cmd/image-inspector.go"
+    echo "coping executable to $II_OUTPUT_BINPATH"
+    mv image-inspector $II_OUTPUT_BINPATH/$platform
   )
 }

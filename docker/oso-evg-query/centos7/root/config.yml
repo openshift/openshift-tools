@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+  - /root/default_vars.yml
+
+  tasks:
+  - name: "Copy query tool to where unprivileged users can use from their path"
+    copy:
+      src: "{{ item.eq_src }}"
+      dest: "{{ item.eq_dest}}"
+      mode: 0777
+    with_items:
+    - eq_src: /secrets/mysql_query
+      eq_dest: /usr/local/bin/mysql_query
