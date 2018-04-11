@@ -140,8 +140,10 @@ class PlaybookExecutor(object):
         """ print the cmd and env so we can see what's running """
 
         print()
-        print("Running Command: {}".format(" ".join(cmd)))
-        print("Using Env (only printing certain ENV vars:")
+        print("ANSIBLE PLAYBOOK COMMAND: {}".format(" ".join(cmd)))
+        print()
+        print("ANSIBLE PLAYBOOK ENV VARS:")
+        print("============================================")
         for key in env:
             if key.startswith("OO_INV") or key.startswith('ANSIBLE'):
                 print("{}: {}".format(key, env[key]))
