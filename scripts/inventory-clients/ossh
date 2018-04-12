@@ -201,7 +201,8 @@ class Ossh(object):
             if self.args.command:
                 ssh_args.append("%s" % self.args.command)
 
-            print "Running: %s\n" % ' '.join(ssh_args)
+            if self.args.verbose:
+                print "Running: %s\n" % ' '.join(ssh_args)
 
             os.execve('/usr/bin/ssh', ssh_args, os.environ)
         # catch any and all exceptions
