@@ -74,8 +74,9 @@ class Ossh(object):
         parser = argparse.ArgumentParser(description='OpenShift Online SSH Tool.')
         parser.add_argument('-d', '--debug', default=False,
                             action="store_true", help="debug mode")
-        parser.add_argument('-v', '--verbose', default=False,
-                            action="store_true", help="Verbose?")
+        parser.add_argument('-v', '--verbose', default=0,
+                            action="count",
+                            help="increase verbosity; use more than once to increase verbosity")
         parser.add_argument('--list', default=False,
                             action="store_true", help="list out hosts")
         parser.add_argument('-c', '--command', action='store',
@@ -181,7 +182,7 @@ class Ossh(object):
             if self.args.A:
                 ssh_args.append('-A')
 
-            if self.args.verbose:
+            if self.args.verbose > 1:
                 ssh_args.append('-vvv')
 
             if self.args.ssh_opts:
@@ -201,7 +202,7 @@ class Ossh(object):
             if self.args.command:
                 ssh_args.append("%s" % self.args.command)
 
-            if self.args.verbose:
+            if self.args.verbose > 0:
                 print "Running: %s\n" % ' '.join(ssh_args)
 
             os.execve('/usr/bin/ssh', ssh_args, os.environ)
