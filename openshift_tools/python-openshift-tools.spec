@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.126
+Version:       0.0.127
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -315,6 +315,11 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Wed Apr 11 2018 Matt Woodson <mwoodson@redhat.com> 0.0.127-1
+- made some unbuffered fixes for the cicd python stuff; added some better
+  printing (mwoodson@redhat.com)
+- made the playbook executor more verbose (mwoodson@redhat.com)
+
 * Fri Apr 06 2018 Matt Woodson <mwoodson@redhat.com> 0.0.126-1
 - added utils to the openshift_tools spec file (mwoodson@redhat.com)
 
