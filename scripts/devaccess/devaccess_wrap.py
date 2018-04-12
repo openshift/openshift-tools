@@ -266,14 +266,12 @@ class OCCmd(object):
                                                                container=self._params['container'])
         # add namespace
         if self._current_type.has_key('namespaces'):
-            if self._params['namespace'] in self._current_type['namespaces']:
+            if self.is_namespace_allowed(self._params['namespace']):
                 if self._params['namespace'] == 'all':
                     normalized_cmd = '{orig} --all-namespaces'.format(orig=normalized_cmd)
                 else:
                     normalized_cmd = "{orig} -n{namespace}".format(orig=normalized_cmd,
                                                                    namespace=self._params['namespace'])
-            else:
-                raise Exception("That namespace is not in the allowed list")
 
         # add output formatting
         if self._params['output_format'] is not None:
@@ -286,6 +284,21 @@ class OCCmd(object):
                                                      follow=self._params['follow'])
 
         return normalized_cmd
+
+    def is_namespace_allowed(self, namespace):
+        ''' checks if list of namespaces associated with command contains
+            "all", at which point any namespace is valid, if list doesn't have
+            "all" then checks against the list
+        '''
+        if 'all' in self._current_type['namespaces']:
+            return  True
+        elif namespace in self._current_type['namespaces']:
+            return True
+        else:
+            raise Exception("That namespace is not in the allowed list")
+
+        # if by some miracle execution reaches this
+        return False
 
 class WhitelistedCommands(object):
     ''' Class to hold functions implementing allowed functionality '''
