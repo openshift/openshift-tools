@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.134
+Version:       0.1.135
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -496,6 +496,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Apr 12 2018 Matt Woodson <mwoodson@redhat.com> 0.1.135-1
+- added verbosity count (mwoodson@redhat.com)
+- ossh: make it verbose to spit out the command (mwoodson@redhat.com)
+
 * Wed Apr 11 2018 Matt Woodson <mwoodson@redhat.com> 0.1.134-1
 - made some unbuffered fixes for the cicd python stuff; added some better
   printing (mwoodson@redhat.com)
