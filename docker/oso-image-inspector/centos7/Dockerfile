@@ -13,15 +13,20 @@ ADD root/ /root/
 # Then install golang and the in-memory scanner
 RUN yum install -y python2-boto3 \
                    systemd-python \
-		   /root/python2-clamd-1.0.2-4.el7.noarch.rpm \
+                   /root/python2-clamd-1.0.2-4.el7.noarch.rpm \
                    golang \
+                   gcc \
                    git \
                    python-requests \
                    openscap-scanner \
                    openshift-tools-scripts-scanpod \
                    python34 \
+                   python34-pip \
                    python34-libs \
+                   python34-devel \
                    python34-PyYAML \
+                   python2-pip \
+                   python2-devel \
                    python2-botocore && \
     yum clean all
 
@@ -36,7 +41,9 @@ ENV GOBIN=/bin \
     GOPATH=/go
 
 # Make mount point for host filesystem and compile scanning utilities
-RUN go get github.com/golang/glog github.com/spf13/cobra github.com/spf13/pflag && \
+RUN pip3 install psutil prometheus_client && \
+    pip install psutil prometheus_client && \
+    go get github.com/golang/glog github.com/spf13/cobra github.com/spf13/pflag && \
     mkdir -p /host /run/clamd.scan /tmp/scan-data /var/lib/image-inspector /go/src/golang.org/x/net && \
     cd /go/src/golang.org/x && \
     git clone https://github.com/golang/net.git --depth 1 && \

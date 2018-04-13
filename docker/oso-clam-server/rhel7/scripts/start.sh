@@ -21,8 +21,12 @@ echo '/usr/sbin/clamd'
 echo
 echo '/usr/local/bin/pull_clam_signatures'
 echo
+echo '/usr/local/bin/check_clam_server'
+echo
 echo 'start clamd in the foreground so we can easily check status with oc logs'
 /usr/sbin/clamd -c /etc/clamd.d/scan.conf --foreground=yes &
+echo 'start prometheus monitoring'
+/usr/local/bin/check_clam_server &
 echo
 echo '---------------'
 echo 'Starting crond'
