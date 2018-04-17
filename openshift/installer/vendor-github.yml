@@ -69,7 +69,6 @@
     - Vagrantfile
     - usr
     - playbooks/adhoc
-    - playbooks/aws
     - playbooks/gce
     - playbooks/libvirt
     - playbooks/openstack
