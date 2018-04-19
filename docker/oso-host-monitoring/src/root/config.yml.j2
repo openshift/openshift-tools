@@ -58,6 +58,13 @@
       mode: 0644
     when: "'/container_setup/urlchecks.yml' | is_file"
 
+  - name: copy podspec config from container_setup
+    copy:
+      src: /container_setup/podspec.yaml
+      dest: /etc/openshift_tools/podspec.yaml
+      mode: 0644
+    when: "'/container_setup/podspec.yaml' | is_file"
+
   - block:
     - name: find kubeconfig exact file name
       find:
