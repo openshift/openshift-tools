@@ -31,7 +31,7 @@ class PlegEventListener(object):
     def catch_creates(scan_q):
         """ Watch the host node journal for creates. """
 
-        j = journal.Reader(path='/host/run/log/journal')
+        j = journal.Reader(path='/host/var/log/journal')
 
         j.log_level(journal.LOG_INFO)
 
