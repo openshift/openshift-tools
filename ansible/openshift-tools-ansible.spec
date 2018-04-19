@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.58
+Version:        0.0.59
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,64 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Apr 19 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.59-1
+- adding cluster capacity to zabbix (ihorvath@redhat.com)
+- changing the webconsole check to not alert on flapping (ihorvath@redhat.com)
+- workflow updates (dedgar@redhat.com)
+- rm double quotes (dyocum@redhat.com)
+- docker_storage_to_overlay2.yml: Use local roles (mbarnes@fedoraproject.org)
+- Add docker_storage_to_overlay2 role (mbarnes@fedoraproject.org)
+- Add docker_storage_driver_role (mbarnes@fedoraproject.org)
+- added sleep values for the snapshotter (mwoodson@redhat.com)
+- forgot the host name from alert, hard to know where it came from without it
+  (ihorvath@redhat.com)
+- fix 1 week notschedulable trigger (sten@redhat.com)
+- work-around for tsb_selector (dyocum@redhat.com)
+- final step for web checks (ihorvath@redhat.com)
+- fixing zabbix templates from stg-to-prod mess (ihorvath@redhat.com)
+- adding the zabbix trigger and item for the webconsole check
+  (ihorvath@redhat.com)
+- reduce trigger severity for immediate node not schedulable to info, send a
+  high alert when node not schedulable is current state and has been for over a
+  week (sten@redhat.com)
+- trigger on <30, 20 %% free, not <70, 80 (sten@redhat.com)
+- Adapt ops-docker-storage-reinitialize.yml for overlay
+  (mbarnes@fedoraproject.org)
+- fixing conflict in stg with ntp (mwoodson@redhat.com)
+- fixed ntp -> ntpd (mwoodson@redhat.com)
+- Reduce the requested CPU by half, move to 1.5*1024 for memory
+  (peter.portante@redhat.com)
+- [WIP]adding clam update container (#2845) (dedgar@redhat.com)
+- Add adhoc playbook docker_storage_to_overlay2.yml (mbarnes@fedoraproject.org)
+- Revert "Merge pull request #2962 from mbarnes/docker_storage_to_overlay2_stg"
+  (mbarnes@fedoraproject.org)
+- Add adhoc playbook docker_storage_to_overlay2.yml (mbarnes@fedoraproject.org)
+- updated the chrony role to install ntp, but disable it as opposed to removing
+  ntp (mwoodson@redhat.com)
+- change name: to gp2 to match openshift-ansible upstream name
+  (dyocum@redhat.com)
+- Increasting the sensitivy of the docker storage check (mmahut@redhat.com)
+- Update main.yml (wesley.s.hearn@gmail.com)
+- that extra line (dyocum@redhat.com)
+- "Revert" (dyocum@redhat.com)
+- v2 (dyocum@redhat.com)
+- Update main.yml (yocum@redhat.com)
+- added logic to update OS when os_update is defined (dyocum@redhat.com)
+- just set os_upgrade - no need to set it to "True" (dyocum@redhat.com)
+- added when: logic to os_update_latest (dyocum@redhat.com)
+- add openshift_disk_provision role (#2741) (blentz@users.noreply.github.com)
+- Revert "Patching comparison operation breaking with iptables lock message is
+  …" (joelsmith@users.noreply.github.com)
+- Patching comparison operation breaking with iptables lock message is present
+  in output (dedgar@redhat.com)
+- resolving conflict (dedgar@redhat.com)
+- update all links to ops-sop (blentz@redhat.com)
+- Remove the reference to k8s flatten hash (peter.portante@redhat.com)
+- Use oc_volume to add the router configmap volume. (bbarcaro@redhat.com)
+- Raising critical memory alert priority to high (bmorriso@redhat.com)
+- change the metrics check to check on the last 2 value (zhizhang@zhizhang-
+  laptop-nay.redhat.com)
+
 * Mon Apr 02 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.58-1
 - monitor actual http response code from kibana (sten@redhat.com)
 - docker storage set: allow package to be passed in (mwoodson@redhat.com)
