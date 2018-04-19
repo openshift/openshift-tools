@@ -84,6 +84,16 @@
   notify:
   - "Restart the host monitoring service"
 
+- name: Copy podspec file to host
+  copy:
+    src: podspec.yaml
+    dest: /etc/openshift_tools/podspec.yaml
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - "Restart the host monitoring service"
+
 - name: "Copy {{ osohm_host_monitoring }} systemd file"
   template:
     src: "{{ osohm_host_monitoring }}.service.j2"
