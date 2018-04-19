@@ -18,6 +18,12 @@ g_template_openshift_cluster:
     - OpenShift Cluster
     value_type: int
 
+  - key: openshift.cluster.capacity
+    description: "Show how many pods specified in podspec would fit on cluster"
+    applications:
+    - Openshift Cluster
+    value_type: float
+
   ztriggers:
   - name: "Config loop failed on {HOST.NAME}"
     expression: "{Template OpenShift Cluster:openshift.cluster.configloop.exitcode.min(#3)}>0"

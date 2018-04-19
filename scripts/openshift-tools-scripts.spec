@@ -96,6 +96,7 @@ cp -p monitoring/cron-send-service-web-check.py %{buildroot}/usr/bin/cron-send-s
 cp -p monitoring/cron-send-rkhunter-checks.py %{buildroot}/usr/bin/cron-send-rkhunter-checks
 cp -p monitoring/cron-send-cgroup-slice-metrics.sh %{buildroot}/usr/bin/cron-send-cgroup-slice-metrics
 cp -p monitoring/cron-send-url-check.py %{buildroot}/usr/bin/cron-send-url-check
+cp -p monitoring/cron-send-cluster-capacity.sh %{buildroot}/usr/bin/cron-send-cluster-capacity
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
@@ -406,6 +407,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-router-reload-time
 /usr/bin/cron-send-cgroup-slice-metrics
 /usr/bin/cron-send-url-check
+/usr/bin/cron-send-cluster-capacity
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
