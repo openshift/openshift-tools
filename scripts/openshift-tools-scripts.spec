@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.137
+Version:       0.1.138
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -498,6 +498,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Apr 19 2018 Ivan Horvath <ihorvath@redhat.com> 0.1.138-1
+- oops, there was already a script with the same name, renaming to oc-cluster-
+  capacity (ihorvath@redhat.com)
+
 * Thu Apr 19 2018 Ivan Horvath <ihorvath@redhat.com> 0.1.137-1
 - adding cluster capacity to zabbix (ihorvath@redhat.com)
 
