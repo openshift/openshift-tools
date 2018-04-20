@@ -31,7 +31,7 @@ from openshift_tools.timeout import timeout, TimeoutException
 
 NAME = "ops-runner"
 OPS_RUNNER_LOG_FILE = "/var/log/%s.log" % NAME
-OPS_RUNNER_LOCK_FILE_PREFIX = "/var/tmp/%s-" % NAME
+OPS_RUNNER_LOCK_FILE_PREFIX = "/run/lock/%s-" % NAME
 
 OPS_RUNNER_DISC_KEY = 'disc.ops.runner'
 OPS_RUNNER_DISC_MACRO = '#OSO_COMMAND'
