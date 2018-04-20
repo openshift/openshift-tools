@@ -211,7 +211,7 @@ class DeleteUser(object):
 
 
     @staticmethod
-    def get_token(aws_account):
+    def get_token(aws_account, class_type, user_name):
         """ Generate temporary SSO access credentials.
 
         Requires the config file containing the IDP hostname.
@@ -237,17 +237,70 @@ class DeleteUser(object):
                     idp_host=ops_idp_host
                     )
 
-                client = boto3.client(
-                    'iam',
-                    aws_access_key_id=creds['AccessKeyId'],
-                    aws_secret_access_key=creds['SecretAccessKey'],
-                    aws_session_token=creds['SessionToken']
-                    )
+                if class_type == 'iam':
+                    client = boto3.client(
+                        'iam',
+                        aws_access_key_id=creds['AccessKeyId'],
+                        aws_secret_access_key=creds['SecretAccessKey'],
+                        aws_session_token=creds['SessionToken']
+                        )
 
-                return client
+                    return client
+
+                elif class_type == 'user':
+                    client = boto3.resource(
+                        'iam',
+                        aws_access_key_id=creds['AccessKeyId'],
+                        aws_secret_access_key=creds['SecretAccessKey'],
+                        aws_session_token=creds['SessionToken']
+                        )
+
+                    user = client.User(user_name)
+                    return user
 
         else:
             raise ValueError(sso_config_path + 'does not exist.')
+
+
+    def get_policies(self, aws_account, user_name, client):
+        """ Get the Access Key IDs of the user, and return them in a list.
+
+        Returns:
+            All access policies found for the IAM user, in a list.
+            List will be empty if the user has no policies.
+         """
+
+        pols_list = []
+
+        try:
+            managed_pols = client.list_attached_user_policies(
+                UserName=user_name)
+
+            man_pol_list = managed_pols['AttachedPolicies']
+
+            if man_pol_list:
+                for epol in man_pol_list:
+                    if epol.get('PolicyArn'):
+                        pols_list.append(epol['PolicyArn'])
+
+        except botocore.exceptions.ClientError as client_exception:
+            if client_exception.response['Error']['Code'] == 'NoSuchEntity':
+                print('IAM user does not have any managed policies for account:', aws_account)
+
+        return pols_list
+
+
+    @staticmethod
+    def detach_policy(user_name, client, policy):
+        """ Detach the specified policy from the provided user. """
+
+        response = client.detach_policy(
+            PolicyArn=policy,
+            UserName=user_name
+        )
+
+        print('Found and deleted policy:', policy)
+        return response
 
 
     def main(self):
@@ -260,13 +313,14 @@ class DeleteUser(object):
             for aws_account in args.profile:
                 matching = [s for s in ops_accounts if aws_account in s]
                 account_number = matching[0].split(':')[1]
-                client = self.get_token(account_number)
+                client = self.get_token(account_number, 'iam', args.user)
                 existing_keys = self.get_keys(args.user, client, aws_account)
 
                 if existing_keys:
                     for key in existing_keys:
                         self.delete_key(aws_account, args.user, key, client)
 
+                self.get_policies(aws_account, args.user, client)
                 self.check_user(aws_account, args.user, client)
 
         elif args.all and args.user:
@@ -274,13 +328,22 @@ class DeleteUser(object):
             for aws_account in ops_accounts:
                 matching = [s for s in ops_accounts if aws_account in s]
                 account_number = matching[0].split(':')[1]
-                client = self.get_token(account_number)
+                client = self.get_token(account_number, 'iam', args.user)
 
                 existing_keys = self.get_keys(args.user, client, aws_account)
 
                 if existing_keys:
                     for key in existing_keys:
                         self.delete_key(aws_account, args.user, key, client)
+
+
+                user_client = self.get_token(account_number, 'user', args.user)
+
+                policy_list = self.get_policies(aws_account, args.user, client)
+
+                if policy_list:
+                    for policy in policy_list:
+                        self.detach_policy(args.user, user_client, policy)
 
                 self.check_user(aws_account, args.user, client)
 
