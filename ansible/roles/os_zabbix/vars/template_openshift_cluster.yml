@@ -21,7 +21,7 @@ g_template_openshift_cluster:
   - key: openshift.cluster.capacity
     description: "Show how many pods specified in podspec would fit on cluster"
     applications:
-    - Openshift Cluster
+    - OpenShift Cluster
     value_type: float
 
   ztriggers:
