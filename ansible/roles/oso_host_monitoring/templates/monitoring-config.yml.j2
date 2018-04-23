@@ -373,7 +373,7 @@ host_monitoring_cron:
 
 - name: Collect cluster capacity value
   minute: "*/15"
-  job: ops-runner -f -s 120 -n csocc.openshift.cluster.capacity /host/bin/cron-send-oc-cluster-capacity
+  job: ops-runner -f -s 120 -n csocc.openshift.cluster.capacity /usr/bin/cron-send-oc-cluster-capacity
 
 {% if osohm_deployment_type == 'dedicated' %}
 - name: send  the pv usage status
