@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.59
+Version:        0.0.60
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,12 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Apr 19 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.60-1
+- oops, there was already a script with the same name, renaming to oc-cluster-
+  capacity (ihorvath@redhat.com)
+- adding the podpsec to the monitoring container and adding it to cron
+  (ihorvath@redhat.com)
+
 * Thu Apr 19 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.59-1
 - adding cluster capacity to zabbix (ihorvath@redhat.com)
 - changing the webconsole check to not alert on flapping (ihorvath@redhat.com)
