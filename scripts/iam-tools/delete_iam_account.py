@@ -36,7 +36,7 @@ import os
 import sys
 import yaml
 
-# pylint: disable=import-error
+# pylint: disable=import-error, no-name-in-module
 import boto3
 import botocore
 
@@ -262,7 +262,8 @@ class DeleteUser(object):
             raise ValueError(sso_config_path + 'does not exist.')
 
 
-    def get_policies(self, aws_account, user_name, client):
+    @staticmethod
+    def get_policies(aws_account, user_name, client):
         """ Get the Access Key IDs of the user, and return them in a list.
 
         Returns:
