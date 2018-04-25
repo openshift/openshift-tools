@@ -1,0 +1,44 @@
+---
+- name: Install clients
+  package: name={{ openshift_service_type }}-clients{{ openshift_pkg_version | default('') }} state=present
+  when: not openshift_is_containerized | bool
+  register: result
+  until: result is succeeded
+
+- block:
+  - name: Pull CLI Image
+    command: >
+      docker pull {{ openshift_cli_image }}
+    register: pull_result
+    changed_when: "'Downloaded newer image' in pull_result.stdout"
+
+  # openshift_container_binary_sync is a custom module in lib_utils
+  - name: Copy client binaries/symlinks out of CLI image for use on the host
+    openshift_container_binary_sync:
+      image: "{{ openshift_cli_image }}"
+      backend: "docker"
+  when:
+  - openshift_is_containerized | bool
+  - not l_use_cli_atomic_image | bool
+
+- block:
+  - name: Pull CLI Image
+    command: >
+      atomic pull --storage ostree {{ system_openshift_cli_image }}
+    register: pull_result
+    changed_when: "'Pulling layer' in pull_result.stdout"
+
+  # openshift_container_binary_sync is a custom module in lib_utils
+  - name: Copy client binaries/symlinks out of CLI image for use on the host
+    openshift_container_binary_sync:
+      image: "{{ openshift_cli_image }}"
+      backend: "atomic"
+  when:
+  - openshift_is_containerized | bool
+  - l_use_cli_atomic_image | bool
+
+- name: Install bash completion for oc tools
+  package: name=bash-completion state=present
+  when: not openshift_is_containerized | bool
+  register: result
+  until: result is succeeded
