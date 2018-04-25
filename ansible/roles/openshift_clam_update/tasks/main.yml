@@ -13,7 +13,6 @@
 
 - name: add clamup to nonroot SCC
   command: "oc adm policy {{ item.r_kind }} {{ item.r_name }} system:serviceaccount:{{ ocav_namespace }}:clamup"
-  delegate_to: "{{ cluster_master }}"
   run_once: true
   ignore_errors: true
   with_items:
