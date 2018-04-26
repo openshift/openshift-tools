@@ -31,26 +31,16 @@ ENV IMAGE pcp-collector
 ENV PATH /usr/share/pcp/lib:/usr/libexec/pcp/bin:$PATH
 
 # script to watch health of pmcd
-ADD check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
+COPY check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
 ##################
 
 
 
-
-RUN echo -e "\n\nalias oca='KUBECONFIG=/tmp/admin.kubeconfig oc '" >> /root/.bashrc
-RUN echo "alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oc adm '" >> /root/.bashrc
-
-
-
 # Add google-cloud-sdk repo
-RUN echo $'[google-cloud-sdk]\n\
-name=Google Cloud SDK\n\
-baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64\n\
-enabled=1\n\
-gpgcheck=1\n\
-repo_gpgcheck=1\n\
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg\n\
-       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg' > /etc/yum.repos.d/google-cloud-sdk.repo
+COPY google-cloud-sdk.repo /etc/yum.repos.d/
+
+# Add copr repo for python-hawkular-client rpm
+RUN cd /etc/yum.repos.d && curl -O https://copr.fedorainfracloud.org/coprs/g/Hawkular/python-hawkular-client/repo/epel-7/group_Hawkular-python-hawkular-client-epel-7.repo
 
 RUN yum clean metadata && \
     yum-install-check.sh -y python2-pip pcp pcp-conf pcp-testsuite \
@@ -88,14 +78,12 @@ RUN yum clean metadata && \
         python2-boto3 \
         python-lxml \
         rkhunter \
+        python-hawkular-client \
         python-docker && \
     yum clean all
 
-ADD urllib3-connectionpool-patch /root/
+COPY urllib3-connectionpool-patch /root/
 RUN yum-install-check.sh -y patch && yum clean all && cd /usr/lib/python2.7/site-packages/ && patch -p1 < /root/urllib3-connectionpool-patch
-
-# Add copr repo for python-hawkular-client rpm
-RUN cd /etc/yum.repos.d && curl -O https://copr.fedorainfracloud.org/coprs/g/Hawkular/python-hawkular-client/repo/epel-7/group_Hawkular-python-hawkular-client-epel-7.repo
 
 # make mount points for security update count check, and make a circular symlink because yum is dumb about its root
 RUN mkdir -p /host \
@@ -119,14 +107,13 @@ RUN mkdir -p /var/local/rkhunter_chroot \
     sed -i 's/\/var\/log\/rkhunter\/rkhunter.log/\/var\/local\/rkhunter_tmp\/rkhunter\/rkhunter.log/' /etc/logrotate.d/rkhunter && \
     sed -r -e 's%^(SCRIPTDIR)=.*%\1=/tmp/rkhunter/scripts%; s%^(LOGFILE)=.*%\1=/tmp/rkhunter/rkhunter.log%' /etc/rkhunter.conf > /var/local/rkhunter_tmp/rkhunter/etc/rkhunter.conf
 
-# Install python-hawkular-client
-RUN yum-install-check.sh -y python-hawkular-client && yum clean all
-
 # Ansible startup configuration playbook
-ADD root /root
+COPY root /root
+
+RUN cat bash_aliases >> /root/.bashrc
 
 # FIXME: These are vendor libs that need to be packaged and installed via RPM.
-ADD vendor/prometheus_client /usr/lib/python2.7/site-packages/prometheus_client/
+COPY vendor/prometheus_client /usr/lib/python2.7/site-packages/prometheus_client/
 
 # Create ops-runner.log file with proper permissions
 RUN touch /var/log/ops-runner.log && chmod 664 /var/log/ops-runner.log
@@ -137,8 +124,8 @@ RUN mkdir -p /root/.aws && \
     chmod g+rw /root/.aws/credentials
 
 # Add container-build-env-fingerprint
-ADD container-build-env-fingerprint.output /etc/oso-container-build-env-fingerprint
+COPY container-build-env-fingerprint.output /etc/oso-container-build-env-fingerprint
 
 # Add the start script and tell the container to run it by default
-ADD start.sh /usr/local/bin/
+COPY start.sh /usr/local/bin/
 CMD /usr/local/bin/start.sh
