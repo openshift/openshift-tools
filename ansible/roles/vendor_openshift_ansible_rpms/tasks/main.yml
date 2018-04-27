@@ -72,8 +72,6 @@
   - roles/oso_monitoring_tools
   - roles/os_update_latest
   - roles/os_zabbix
-  - roles/rhel_subscribe
-  - roles/rhel_unsubscribe
   - roles/tito
   - roles/yum_repos
   #- rpms
