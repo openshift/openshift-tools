@@ -58,7 +58,10 @@ class PlaybookExecutor(object):
                 cmd += ['-e', 'cli_clusterid=' + self.cluster_id]
 
         for i in extra_vars.iteritems():
-            cmd += ['-e', '='.join(i)]
+            if i[0] is None:
+                cmd += ['-e', i[1]]
+            else:
+                cmd += ['-e', '='.join(i)]
 
         cmd.append(playbook_path)
 
