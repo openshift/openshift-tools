@@ -26,7 +26,7 @@ class PlaybookExecutor(object):
             self.osa_inventory_env = None
             self.init_osa_env()
 
-    def __call__(self, playbook, extra_vars=None, time=False, env=None):
+    def __call__(self, playbook, extra_vars=None, time=False, env=None, verbose=False):
         """ Execute the playbook with specified arguments. """
 
         extra_vars = extra_vars or {}
@@ -45,6 +45,9 @@ class PlaybookExecutor(object):
             cmd += ['/usr/bin/time', '-p']
 
         cmd += ['/usr/bin/ansible-playbook']
+
+        if verbose:
+            cmd += ['-vvv']
 
         if self.inventory is not None:
             cmd += ['-i', self.inventory]
