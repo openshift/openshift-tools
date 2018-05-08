@@ -350,13 +350,21 @@ class Cluster(object):
         return primary_master
 
     @property
+    def cluster_nodes(self):
+        """ return the number of nodes - infra and compute """
+
+        cluster_nodes = self.inventory["oo_clusterid_" + self._name]
+
+        return cluster_nodes
+
+    @property
     def node_count(self):
         """ return the number of nodes - infra and compute """
 
-        cluster_nodes = list(set(self.inventory["oo_hosttype_node"]) &
+        cluster_compute_nodes = list(set(self.inventory["oo_hosttype_node"]) &
                              set(self.inventory["oo_clusterid_" + self._name]))
 
-        return len(cluster_nodes)
+        return len(cluster_compute_nodes)
 
     @property
     def scalegroup_node_count(self):
@@ -404,8 +412,6 @@ class Cluster(object):
                 os_version['full'] = os_version['version_release_no_git']
             else:
                 os_version['full'] = os_version['version']
-
-        os_version['vfull'] = 'v' + os_version['full']
 
         return os_version
 
@@ -478,3 +484,17 @@ class Cluster(object):
                 converted_hosts.append(os_host)
 
             return converted_hosts
+
+    def convert_os_to_inv_name(self, hostname):
+        """ convert openshift name  to inventory name:
+            example: 'ip-172-31-69-53.us-east-2.compute.internal' => free-stg-node-infra-70a4e
+        """
+
+        if hostname in self.cluster_nodes:
+            return hostname
+
+        for node in self.cluster_nodes:
+            if hostname == self.inventory["_meta"]["hostvars"][node]["ec2_private_dns_name"]:
+                return node
+
+        return None
