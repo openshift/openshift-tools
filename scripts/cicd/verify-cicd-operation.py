@@ -72,6 +72,7 @@ VALID_EXTRA_ARGUMENTS = {'cicd_docker_version' : '^$|^[a-zA-Z0-9._-]+$',
                          'cicd_openshift_version' : '^$|^[a-zA-Z0-9./-]+$',
                          'cicd_yum_repo_urls' : '^$|^[a-zA-Z0-9./,:_-]+$',
                          'cicd_yum_openshift_ansible_url' : '^$|^[a-zA-Z0-9./:_-]+$',
+                         'cicd_ansible_verbose' : '^$|^[a-zA-Z0-9./,:_-]+$',
                         }
 
 class VerifyCICDOperation(object):
