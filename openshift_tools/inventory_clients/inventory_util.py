@@ -413,6 +413,8 @@ class Cluster(object):
             else:
                 os_version['full'] = os_version['version']
 
+        os_version['vfull'] = 'v' + os_version['full']
+
         return os_version
 
     @property
