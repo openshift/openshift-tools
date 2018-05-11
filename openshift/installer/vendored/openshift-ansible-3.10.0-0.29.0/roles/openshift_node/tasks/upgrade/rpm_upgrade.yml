@@ -1,0 +1,17 @@
+---
+# input variables:
+# - openshift_service_type
+# - component
+# - openshift_pkg_version
+# - openshift_is_atomic
+
+# Pre-pull new node rpm, but don't install
+- name: download new node packages
+  command: "{{ ansible_pkg_mgr }} install -y --downloadonly {{ openshift_node_upgrade_rpm_list | join(' ')}}"
+  register: result
+  until: result is succeeded
+  vars:
+    openshift_node_upgrade_rpm_list:
+      - "{{ openshift_service_type }}-node{{ openshift_pkg_version | default('') }}"
+      - "{{ openshift_service_type }}-clients{{ openshift_pkg_version | default('') }}"
+      - "PyYAML"

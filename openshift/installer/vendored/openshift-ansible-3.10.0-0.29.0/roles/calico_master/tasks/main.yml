@@ -1,0 +1,47 @@
+---
+- include_tasks: certs.yml
+
+- name: Calico Master | oc adm policy add-scc-to-user privileged system:serviceaccount:kube-system:calico-node
+  oc_adm_policy_user:
+    user: system:serviceaccount:kube-system:calico-node
+    resource_kind: scc
+    resource_name: privileged
+    state: present
+
+- name: Calico Master | oc adm policy add-scc-to-user privileged system:serviceaccount:kube-system:calico-kube-controllers
+  oc_adm_policy_user:
+    user: system:serviceaccount:kube-system:calico-kube-controllers
+    resource_kind: scc
+    resource_name: privileged
+    state: present
+
+- name: Set default selector for kube-system
+  command: >
+    {{ openshift_client_binary }}
+    --config={{ openshift.common.config_base }}/master/admin.kubeconfig
+    annotate  ns kube-system openshift.io/node-selector="" --overwrite
+
+- name: Calico Master | Create temp directory
+  command: mktemp -d /tmp/openshift-ansible-XXXXXXX
+  register: mktemp
+  changed_when: False
+
+- name: Calico Master | Write Calico
+  template:
+    dest: "{{ mktemp.stdout }}/calico.yml"
+    src: calico.yml.j2
+
+- name: Calico Master | Launch Calico
+  command: >
+    {{ openshift_client_binary }} create
+    -f {{ mktemp.stdout }}/calico.yml
+    --config={{ openshift.common.config_base }}/master/admin.kubeconfig
+  register: calico_create_output
+  failed_when: "('already exists' not in calico_create_output.stderr) and ('created' not in calico_create_output.stdout) and calico_create_output.rc != 0"
+  changed_when: ('created' in calico_create_output.stdout)
+
+- name: Calico Master | Delete temp directory
+  file:
+    name: "{{ mktemp.stdout }}"
+    state: absent
+  changed_when: False
