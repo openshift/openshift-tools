@@ -1,0 +1,10 @@
+---
+- name: Configure nodes
+  hosts: "{{ l_node_group }}"
+  tasks:
+  - name: Remove any ansible facts created during AMI creation
+    file:
+      path: "/etc/ansible/facts.d/{{ item }}"
+      state: absent
+    with_items:
+    - openshift.fact
