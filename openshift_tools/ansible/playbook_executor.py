@@ -11,7 +11,8 @@ class PlaybookExecutor(object):
     """ Helper class to execute playbooks targeting a cluster. """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, playbooks_dir, cluster_id=None, log_dir=None, inventory=None, openshift_ansible=False, env=None):
+    def __init__(self, playbooks_dir, cluster_id=None, log_dir=None, inventory=None, openshift_ansible=False, env=None,
+                 verbose=False):
         """ init the playbook executor """
 
         self.playbooks_dir = playbooks_dir
@@ -20,13 +21,14 @@ class PlaybookExecutor(object):
         self.log_dir = log_dir
         self.inventory = inventory
         self.env = env
+        self.verbose = verbose
 
         # This sets up the openshift ansible env
         if openshift_ansible:
             self.osa_inventory_env = None
             self.init_osa_env()
 
-    def __call__(self, playbook, extra_vars=None, time=False, env=None):
+    def __call__(self, playbook, extra_vars=None, time=False, env=None, verbose=False):
         """ Execute the playbook with specified arguments. """
 
         extra_vars = extra_vars or {}
@@ -46,6 +48,9 @@ class PlaybookExecutor(object):
 
         cmd += ['/usr/bin/ansible-playbook']
 
+        if self.verbose or verbose:
+            cmd += ['-vvv']
+
         if self.inventory is not None:
             cmd += ['-i', self.inventory]
 
@@ -58,7 +63,10 @@ class PlaybookExecutor(object):
                 cmd += ['-e', 'cli_clusterid=' + self.cluster_id]
 
         for i in extra_vars.iteritems():
-            cmd += ['-e', '='.join(i)]
+            if i[0] is None:
+                cmd += ['-e', i[1]]
+            else:
+                cmd += ['-e', '='.join(i)]
 
         cmd.append(playbook_path)
 
