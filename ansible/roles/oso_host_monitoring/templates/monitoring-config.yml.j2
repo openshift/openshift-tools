@@ -472,24 +472,25 @@ host_monitoring_cron:
 - name: "Snapshot EBS volumes tagged with daily"
   hour: "0"
   minute: "0"
-  job: ops-runner -f -s 120 -n oesev.snapshot.daily ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule daily --sleep-between-snaps 2 --region {{ osohm_region }}
+  job: ops-runner -f -s 120 -n oesev.snapshot.daily ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule daily --sleep-between-snaps 4 --region {{ osohm_region }}
 
 - name: "Snapshot EBS volumes tagged with weekly"
   weekday: "0"
   hour: "0"
   minute: "0"
-  job: ops-runner -f -s 120 -n oesev.snapshot.weekly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule weekly --sleep-between-snaps 2 --region {{ osohm_region }}
+  job: ops-runner -f -s 120 -n oesev.snapshot.weekly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule weekly --sleep-between-snaps 4 --region {{ osohm_region }}
 
 - name: "Snapshot EBS volumes tagged with monthly"
   day: "1"
   hour: "0"
   minute: "0"
-  job: ops-runner -f -s 120 -n oesev.snapshot.monthly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule monthly --sleep-between-snaps 2 --region {{ osohm_region }}
+  job: ops-runner -f -s 120 -n oesev.snapshot.monthly ops-ec2-snapshot-ebs-volumes --aws-creds-profile snapshotter --with-schedule monthly --sleep-between-snaps 4 --region {{ osohm_region }}
 
 # DO NOT CHANGE without first talking to twiest.
 - name: "Trim EBS Snapshot"
   minute: "10"
-  job: ops-runner -f -s 120 -n oetes.trim.snapshots ops-ec2-trim-ebs-snapshots --aws-creds-profile snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1 --delete-orphans-older-than 30 --region {{ osohm_region }}
+  hour: "2/4"
+  job: ops-runner -f -s 120 -n oetes.trim.snapshots ops-ec2-trim-ebs-snapshots --aws-creds-profile snapshotter --keep-hourly 24 --keep-daily 7 --keep-weekly 4 --keep-monthly 1 --delete-orphans-older-than 30 --sleep-between-delete 3 --region {{ osohm_region }}
 
 - name: send AWS Tag checks (config loop)
   hour: "*/6"

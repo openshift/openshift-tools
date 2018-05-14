@@ -23,12 +23,28 @@
 import os
 import sys
 import argparse
+import logging
+from logging.handlers import RotatingFileHandler
 
 # Reason: disable pylint import-error because our libs aren't loaded on jenkins.
 # Status: temporary until we start testing in a container where our stuff is installed.
 # pylint: disable=import-error
 from openshift_tools.monitoring.metric_sender import MetricSender
 from openshift_tools.cloud.aws import ebs_snapshotter
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+logFormatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s')
+logFile = '/var/log/ec2-snapshot-ebs-volumes.log'
+
+logRFH = RotatingFileHandler(logFile, mode='a', maxBytes=2*1024*1024, backupCount=5, delay=0)
+logRFH.setFormatter(logFormatter)
+logRFH.setLevel(logging.INFO)
+logger.addHandler(logRFH)
+logConsole = logging.StreamHandler()
+logConsole.setFormatter(logFormatter)
+logConsole.setLevel(logging.WARNING)
+logger.addHandler(logConsole)
 
 
 EBS_SNAPSHOTTER_DISC_KEY = 'disc.aws.ebs.snapshotter'
@@ -44,6 +60,12 @@ class SnapshotterCli(object):
         """ initialize the class """
         self.args = None
         self.parse_args()
+        if self.args.verbose:
+            logConsole.setLevel(logging.INFO)
+        if self.args.debug:
+            logConsole.setLevel(logging.DEBUG)
+        if self.args.skip_boto_logs:
+            logging.getLogger('boto').setLevel(logging.WARNING)
 
     def parse_args(self):
         """ parse the args from the cli """
@@ -60,11 +82,16 @@ class SnapshotterCli(object):
                             help='Say what would have been done, but don\'t actually do it.')
         parser.add_argument('--region', required=True,
                             help='The region that we want to process snapshots in')
+        parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
+        parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
+        parser.add_argument('--skip-boto-logs', action='store_true', default=False, help='Skip boto logs')
 
         self.args = parser.parse_args()
 
     def main(self):
         """ main function """
+
+        logger.info('Starting snapshot creation')
 
         total_snapshottable_vols = 0
         total_snapshots_created = 0
@@ -76,10 +103,10 @@ class SnapshotterCli(object):
         script_name = os.path.basename(__file__)
 
         if not ebs_snapshotter.EbsSnapshotter.is_region_valid(self.args.region):
-            print "Invalid region"
+            logger.info("Invalid region")
             sys.exit(1)
         else:
-            print "Region: %s:" % self.args.region
+            logger.info("Region: %s:", self.args.region)
             ss = ebs_snapshotter.EbsSnapshotter(self.args.region, verbose=True)
 
             avail_vols, snapshots_created, snapshot_creation_errors = \
@@ -93,20 +120,19 @@ class SnapshotterCli(object):
             total_snapshot_creation_errors += num_creation_errors
 
             if num_creation_errors > 0:
-                print "  Snapshot Creation errors (%d):" % num_creation_errors
+                logger.info("Snapshot Creation errors (%d):", num_creation_errors)
                 for cur_err in snapshot_creation_errors:
-                    print "    %s" % cur_err
+                    logger.info("%s", cur_err)
 
-        print
-        print "    Total number of snapshottable volumes: %d" % total_snapshottable_vols
-        print "        Total number of snapshots created: %d" % total_snapshots_created
-        print "Total number of snapshots creation errors: %d" % total_snapshot_creation_errors
-        print
 
-        print "Sending results to Zabbix:"
+        logger.info("Total number of snapshottable volumes: %d", total_snapshottable_vols)
+        logger.info("Total number of snapshots created: %d", total_snapshots_created)
+        logger.info("Total number of snapshots creation errors: %d", total_snapshot_creation_errors)
+
         if self.args.dry_run:
-            print "  *** DRY RUN, NO ACTION TAKEN ***"
+            logger.info("*** DRY RUN, NO ACTION TAKEN ***")
         else:
+            logger.debug('Sending values to zabbix')
             self.report_to_zabbix(total_snapshottable_vols, total_snapshots_created, total_snapshot_creation_errors)
 
     def report_to_zabbix(self, total_snapshottable_vols, total_snapshots_created, total_snapshot_creation_errors):
