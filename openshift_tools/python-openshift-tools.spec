@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.131
+Version:       0.0.132
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -315,6 +315,9 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Mon May 14 2018 Matt Woodson <mwoodson@redhat.com> 0.0.132-1
+- Adding vfull back in -- accidentally removed? (jupierce@redhat.com)
+
 * Wed May 09 2018 Matt Woodson <mwoodson@redhat.com> 0.0.131-1
 - ansible playbook executor: do verbosity (mwoodson@redhat.com)
 
