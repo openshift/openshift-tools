@@ -6,7 +6,7 @@
 # pylint: disable=too-many-instance-attributes
 
 #Jenkins:
-#ssh use-tower1.ops.rhcloud.com -c clustername -o <operation> -e [approved_arg1] -e [approved_arg2] ...
+#ssh bastion-nasa-1.ops.openshift.com -c clustername -o <operation> -e [approved_arg1] -e [approved_arg2] ...
 
 # Current approved arguments:
 #   "docker-version=<rpmname-version-release>"

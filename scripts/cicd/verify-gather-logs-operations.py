@@ -5,7 +5,7 @@ Validates command to gather logs from a cluster
 
 Developer usage:
 
-   ssh -i log_gathering_key use-tower2.ops.rhcloud.com -- -c <clusterName> -u <kerberosID>
+   ssh -i log_gathering_key bastion-nasa-1.ops.openshift.com -- -c <clusterName> -u <kerberosID>
 
 clusterName is checked against a list of known/valid cluster names.
 

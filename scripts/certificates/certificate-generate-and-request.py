@@ -43,7 +43,10 @@ class OpenshiftCertificateRequester(object):
         self.key = None
         self.req = None
         self.config = None
-        self.valid_hosts = ["use-tower1.ops.rhcloud.com", "use-ctl1.ops.rhcloud.com"]
+        # TODO: remove use-tower1.ops.rhcloud.com from this list once the host has been renamed
+        self.valid_hosts = ["use-tower1.ops.rhcloud.com",
+                            "bastion-nasa-1.ops.openshift.com",
+                            "use-ctl1.ops.rhcloud.com"]
 
     def run(self):
         """  Main function """
