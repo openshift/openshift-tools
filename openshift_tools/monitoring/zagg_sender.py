@@ -9,7 +9,7 @@ Examples:
 
     from openshift_tools.monitoring.zagg_common import ZaggConnection, ZaggHeartbeat
     from openshift_tools.monitoring.zagg_sender import ZaggSender, ZaggHeartbeat
-    HOSTNAME = 'use-tower1.ops.rhcloud.com'
+    HOSTNAME = 'bastion-nasa-1.ops.openshift.com'
 
     ZAGGCONN = ZaggConnection(url='https://172.17.0.151', user='admin', password='pass')
     ZAGGHEARTBEAT = ZaggHeartbeat(templates=['template1', 'template2'], hostgroups=['hostgroup1', 'hostgroup2'])
