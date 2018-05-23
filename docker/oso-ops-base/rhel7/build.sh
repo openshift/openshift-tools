@@ -41,7 +41,7 @@ if ! is_rhel ; then
     echo "Not rhel, enabling entitlement workaround:"
     echo
     echo "Downloading etc-pki-entitlement. ${RED}DO NOT CHECK THIS IN!!!${NORM}"
-    scp -r tower.ops.rhcloud.com:/etc/pki/entitlement etc-pki-entitlement
+    scp -r bastion-nasa-1.ops.openshift.com:/etc/pki/entitlement etc-pki-entitlement
     echo
 
     echo -n "Updating Dockerfile to include etc-pki-entitlement..."
