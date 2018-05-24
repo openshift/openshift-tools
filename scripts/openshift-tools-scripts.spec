@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.139
+Version:       0.1.140
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -498,6 +498,11 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed May 23 2018 Ivan Horvath <ihorvath@redhat.com> 0.1.140-1
+- Changed use-tower[12].ops.rhcloud.com and tower.ops.rhcloud.com DNS entries
+  to the new bastion centric names. (twiest@redhat.com)
+- change of clustercap location (ihorvath@redhat.com)
+
 * Mon May 14 2018 Matt Woodson <mwoodson@redhat.com> 0.1.139-1
 - cicd_no_ops_clone pipeline argument support (jupierce@redhat.com)
 - Add cicd_ansible_verbose to cicd operation args (jupierce@redhat.com)
