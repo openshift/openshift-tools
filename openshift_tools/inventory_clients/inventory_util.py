@@ -384,7 +384,7 @@ class Cluster(object):
         if not self._master_config:
             master_config_yaml = self.run_cmd_on_master("/usr/bin/cat /etc/origin/master/master-config.yaml",
                                                         strip=False)
-            self._master_config = yaml.load(master_config_yaml)
+            self._master_config = yaml.safe_load(master_config_yaml)
 
         return self._master_config
 
@@ -453,6 +453,33 @@ class Cluster(object):
 
         if strip:
             return command_output.strip()
+
+        return command_output
+
+    def oc_get_cmd(self, os_object, namespace=None, selector=None, json=False):
+        """
+            Run an oc command on the primary master and return the output
+
+            os_object: pod, node, ns
+            namespace: project namespace
+            selector: label selector
+            json: return in json
+        """
+
+        cmd = "oc get {}".format(os_object)
+
+        if namespace:
+            cmd += " -n {}".format(namespace)
+
+        if selector:
+            cmd += " -l {}".format(selector)
+
+        if json:
+            cmd += " -o json"
+        else:
+            cmd += " -o yaml"
+
+        command_output = self.run_cmd_on_master(cmd)
 
         return command_output
 
