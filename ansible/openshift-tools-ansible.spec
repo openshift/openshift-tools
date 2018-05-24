@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.60
+Version:        0.0.61
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,17 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Wed May 23 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.61-1
+- ansible tower monitoring has no need for oc binary (ihorvath@redhat.com)
+- we need to not delete certain roles from openshift-ansible when we vendor
+  (mwoodson@redhat.com)
+- changing some things around cluster cap, also doing some housecleaning around
+  dockerfile, maybe abolish some layers this way (ihorvath@redhat.com)
+- Changed frequency of openshift.master.dnsmasq.curl.status
+  (mail@rafaelazevedo.me)
+- wrong path for cron command (ihorvath@redhat.com)
+- cases matter (ihorvath@redhat.com)
+
 * Thu Apr 19 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.60-1
 - oops, there was already a script with the same name, renaming to oc-cluster-
   capacity (ihorvath@redhat.com)
