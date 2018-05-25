@@ -408,8 +408,11 @@ class Cluster(object):
         elif os_version['short'] == '3.6':
             os_version['full'] = os_version['version']
         else:
-            if "-0.git" in os_version['version_release']:
-                os_version['full'] = os_version['version_release_no_git']
+            if os_version['release'].startswith('0'):
+                if "git" in os_version['version_release']:
+                    os_version['full'] = os_version['version_release_no_git']
+                else:
+                    os_version['full'] = os_version['version_release']
             else:
                 os_version['full'] = os_version['version']
 
