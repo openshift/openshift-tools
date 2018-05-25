@@ -456,7 +456,7 @@ class Cluster(object):
 
         return command_output
 
-    def oc_get_cmd(self, os_object, namespace=None, selector=None, json=False):
+    def oc_get(self, os_object, namespace=None, selector=None, json=False):
         """
             Run an oc command on the primary master and return the output
 
