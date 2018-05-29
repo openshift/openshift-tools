@@ -19,6 +19,14 @@
   when: yr_yum_cert_content is defined
   no_log: true
 
+- name: Ensure yum reposdir is default path
+  ini_file:
+    create: no
+    path: /etc/yum.conf
+    section: main
+    option: reposdir
+    state: absent
+
 - name: Manage yum repositories
   yum_repository:
     name: "{{ item.name }}"
