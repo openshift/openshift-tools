@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.140
+Version:       0.1.141
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -498,6 +498,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Tue May 29 2018 Matt Woodson <mwoodson@redhat.com> 0.1.141-1
+- Let free-stg use python pipeline (jupierce@redhat.com)
+
 * Wed May 23 2018 Ivan Horvath <ihorvath@redhat.com> 0.1.140-1
 - Changed use-tower[12].ops.rhcloud.com and tower.ops.rhcloud.com DNS entries
   to the new bastion centric names. (twiest@redhat.com)
