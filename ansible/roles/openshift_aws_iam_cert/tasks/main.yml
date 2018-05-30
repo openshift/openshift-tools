@@ -11,7 +11,7 @@
   - "{{ osaic_dest_file }}"
 
 - name: upload a cert with cert chain
-  iam_cert20:
+  iam_cert:
     name: "{{ osaic_iam_certname }}"
     state: present
     cert: "{{ osaic_cert }}"
