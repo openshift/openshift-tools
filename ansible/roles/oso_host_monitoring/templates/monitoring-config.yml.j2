@@ -355,7 +355,7 @@ host_monitoring_cron:
   job: ops-runner -f -s 30 0n csswc.openshift.master.service.web.check /usr/bin/cron-send-service-web-check --service-count
 
 - name: send openshift-master /healthz status
-  minute: "*/5"
+  minute: "*/1"
   job: ops-runner -f -s 15 -n csosmm.openshift.master.api.healthz /usr/bin/cron-send-os-master-metrics --healthz --api-ping --metrics --node-checks -v &>> /var/log/csosmm-notready.log
 
 - name: Do a full heartbeat for synthetic host
