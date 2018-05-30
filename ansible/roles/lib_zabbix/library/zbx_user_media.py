@@ -114,6 +114,10 @@ def get_active(is_active):
        1 - disabled
     '''
     active = 1
+
+    if isinstance(is_active, str):
+        is_active = is_active == 'enabled'
+
     if is_active:
         active = 0
 
