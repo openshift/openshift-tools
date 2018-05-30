@@ -116,7 +116,7 @@ class RemoteHealer(object):
         ''' Make sure host argument is non-malicious '''
         # Hosts typically have the form of cluster-type-randomid
         # ie. qe-master-a1b2c3 / qe-node-compute-a1b2c3
-        # ... there are exceptions: ansible-tower / puppet / use-ctl
+        # ... there are exceptions: bastion / puppet / use-ctl
         regex = r'^[a-zA-Z0-9]+[a-zA-Z0-9-]*$'
         match = re.search(regex, self._args.host)
         if match is None:
