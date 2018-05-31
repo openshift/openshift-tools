@@ -3,9 +3,12 @@
 """
  This is the base class for our AWS utility classes.
 """
+# pylint: disable=invalid-name,import-error
 
+import logging
 import boto.ec2
 
+logger = logging.getLogger(__name__)
 # Specifically exclude certain regions
 EXCLUDED_REGIONS = ['us-gov-west-1', 'cn-north-1']
 
@@ -18,6 +21,7 @@ class Base(object):
         self.region = region
         self.ec2 = boto.ec2.connect_to_region(region)
         self.verbose = verbose
+        self.drymsg = DRY_RUN_MSG
 
     def verbose_print(self, msg="", prefix="", end="\n"):
         """ Prints msg using prefix and end IF verbose is set on the class. """
@@ -45,6 +49,13 @@ class Base(object):
 
         return False
 
+    def log_volume(self, volume):
+        """ Logs volume related to information via logger """
+        tagz = ''
+        for tag in volume.tags.iteritems():
+            tagz += '{}: {}'.format(tag[0], tag[1])
+        logger.debug('Volume id: %s, tags: %s', volume.id, tagz)
+
     def print_volume(self, volume, prefix=""):
         """ Prints out the details of the given volume. """
         self.verbose_print("%s:" % volume.id, prefix=prefix)
@@ -52,6 +63,12 @@ class Base(object):
 
         for tag in volume.tags.iteritems():
             self.verbose_print("    %s: %s" % (tag[0], tag[1]), prefix=prefix)
+
+    def log_snapshots(self, snapshots, msg):
+        """ Logs snapshot related information via logger """
+        logger.debug('%s (%d)', msg, len(snapshots))
+        for snap in snapshots:
+            logger.debug('%s: start_time %s', snap.id, snap.start_time)
 
     def print_snapshots(self, snapshots, msg=None, prefix=""):
         """ Prints out the details for the given snapshots. """
