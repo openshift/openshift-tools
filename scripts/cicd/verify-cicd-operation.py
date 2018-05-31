@@ -109,7 +109,7 @@ class VerifyCICDOperation(object):
         if self.ssh_original_args.extra_args:
             self.verify_extra_arguments()
 
-        if self.clustername == "free-int" or self.clustername == "free-stg":
+        if self.clustername.startswith(("free", "starter")):
             self.build_arg_list(True)
             VerifyCICDOperation.runner(CICD_CONTROL_PATH, *self.cicd_control_args)
         else:
