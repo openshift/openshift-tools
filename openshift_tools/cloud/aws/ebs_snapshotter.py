@@ -41,8 +41,9 @@
                               monthly_backups=12, \
                               dry_run=dry_run)
 """
+# pylint: disable=invalid-name,import-error
 
-
+import logging
 from datetime import datetime
 from datetime import timedelta
 
@@ -55,6 +56,8 @@ from openshift_tools.cloud.aws.instance_util import InstanceUtil
 
 from boto.exception import EC2ResponseError
 from boto.exception import BotoServerError
+
+logger = logging.getLogger(__name__)
 
 SNAP_TAG_KEY = 'snapshot'
 
@@ -69,21 +72,21 @@ class EbsSnapshotter(Base):
         super(EbsSnapshotter, self).__init__(region, verbose)
 
         self.instance_util = InstanceUtil(region, verbose)
+        self.all_volumes = self.ec2.get_all_volumes()
 
     def set_volume_snapshot_tag(self, volume_ids, schedule, prefix="", dry_run=False):
         """ Sets a tag to the EBS volume for snapshotting purposes """
-        self.verbose_print("Setting tag '%s: %s' on %d volume(s): %s" % \
-                           (SNAP_TAG_KEY, schedule, len(volume_ids), volume_ids),
-                           prefix=prefix)
+        logger.debug("Setting tag '%s: %s' on %d volume(s): %s", \
+                     SNAP_TAG_KEY, schedule, len(volume_ids), volume_ids)
 
         if dry_run:
-            self.print_dry_run_msg(prefix=prefix + "  ")
+            logger.debug(self.drymsg)
         else:
             self.ec2.create_tags(list(volume_ids), {SNAP_TAG_KEY: schedule})
 
     def get_already_tagged_volume_ids(self):
         """ Returns a list of volumes that already have the snapshot tag. """
-        return [v.id for v in self.ec2.get_all_volumes() if v.tags.get(SNAP_TAG_KEY) != None]
+        return [v.id for v in self.all_volumes if v.tags.get(SNAP_TAG_KEY) != None]
 
     def get_volumes_with_schedule(self, schedule):
         """ Returns the volumes that are tagged in AWS with the defined schedule.
@@ -120,16 +123,16 @@ class EbsSnapshotter(Base):
         volumes = self.get_volumes_with_schedule(schedule)
         all_instances = self.instance_util.get_all_instances_as_dict()
 
-        self.verbose_print("Creating %s snapshot for:" % schedule, prefix="  ")
+        logger.debug("Creating %s snapshot for:", schedule)
 
         for volume in volumes:
-            self.print_volume(volume, prefix="    ")
+            self.log_volume(volume)
 
             sleep(sleep_between_snaps)
 
             try:
                 if dry_run:
-                    self.print_dry_run_msg(prefix="    ")
+                    logger.debug(self.drymsg)
                 else:
                     new_snapshot = volume.create_snapshot(description=description)
                     inst_id = volume.attach_data.instance_id
@@ -171,14 +174,9 @@ class EbsSnapshotter(Base):
                 else:
                     errors.append(ex)
 
-            self.verbose_print()
-
-        self.verbose_print("Number of volumes to snapshot: %d: %s" % (len(volumes), volumes), \
-                           prefix="  ")
-        self.verbose_print("Number of snapshots taken: %d: %s" % (len(snapshots), snapshots), \
-                           prefix="  ")
-        self.verbose_print("Number of snapshot creation errors: %d" % len(errors), prefix="  ")
-        self.verbose_print()
+        logger.debug("Number of volumes to snapshot: %d: %s", len(volumes), volumes)
+        logger.debug("Number of snapshots taken: %d: %s", len(snapshots), snapshots)
+        logger.debug("Number of snapshot creation errors: %d", len(errors))
 
         return (volumes, snapshots, errors)
 
@@ -367,13 +365,13 @@ class EbsSnapshotter(Base):
         return volume_snaps, orphan_snaps
 
 
-    def delete_orphan_snapshots(self, orphan_snaps, days, dry_run):
+    def delete_orphan_snapshots(self, orphan_snaps, days, dry_run, sleep_between_delete):
         """
         Delete all orphaned snapshots older than N days
         """
 
         errors = []
-        self.verbose_print("Removing orphaned snapshots older than {} days.\n".format(days), prefix=" " * 2)
+        logger.debug("Removing orphaned snapshots older than %s days.", days)
 
         cutoff_date = datetime.utcnow() - timedelta(days=days)
         orphan_delete_counter = 0
@@ -382,9 +380,10 @@ class EbsSnapshotter(Base):
             if snap_date < cutoff_date:
                 try:
                     if dry_run:
-                        self.print_dry_run_msg(prefix=" " * 10, end=' Would delete {}\n'.format(snapshot.tags['Name']))
+                        logger.debug('**DRY RUN** Would delete %s', snapshot.tags['Name'])
                     else:
                         snapshot.delete()
+                        sleep(sleep_between_delete)
                         orphan_delete_counter += 1
                 except EC2ResponseError as ex:
                     errors.append(ex)
@@ -401,6 +400,7 @@ class EbsSnapshotter(Base):
                        weekly_backups,
                        monthly_backups,
                        delete_orphans_older_than,
+                       sleep_between_delete,
                        dry_run=False):
         """ Finds expired snapshots given the number of hourly, daily, weekly and monthly backups
             to keep, then removes them.
@@ -424,15 +424,11 @@ class EbsSnapshotter(Base):
         if not volumes and not orphan_snapshots:
             return(all_expired_snapshots, deleted_snapshots, orphan_delete_counter, errors)
 
-        self.verbose_print("Removing snapshots for:", prefix=" " * 2)
-
         for volume in volumes:
             vol_snaps = EbsSnapshotter.sort_snapshots(volume_snapshots[volume.id])
 
-            self.print_volume(volume, prefix=" " * 4)
-
-            self.print_snapshots(vol_snaps, msg="All Snapshots (%d):" % len(vol_snaps), prefix=" " * 6)
-            self.verbose_print()
+            self.log_volume(volume)
+            self.log_snapshots(vol_snaps, 'All Snapshots')
 
             expired_snapshots = EbsSnapshotter.get_expired_snapshots(vol_snaps, hourly_backups, \
                                                                      daily_backups, weekly_backups, \
@@ -441,18 +437,15 @@ class EbsSnapshotter(Base):
             # We're going to return all of the expired snaps
             all_expired_snapshots.extend(expired_snapshots)
 
-            self.print_snapshots(expired_snapshots, \
-                                 msg="Expired Snapshots (%d):" % len(expired_snapshots), prefix=" " * 6)
-            self.verbose_print()
-
-            self.verbose_print("Removing snapshots (%d):" % len(expired_snapshots), prefix=" " * 6)
+            self.log_snapshots(expired_snapshots, 'Expired Snapshots')
+            logger.debug("Removing snapshots (%d):", len(expired_snapshots))
 
             # actually remove expired snapshots
             for exp_snap in expired_snapshots:
-                self.verbose_print(exp_snap.id, prefix=" " * 8)
+                logger.debug(exp_snap.id)
                 try:
                     if dry_run:
-                        self.print_dry_run_msg(prefix=" " * 10)
+                        logger.debug(self.drymsg)
                     else:
                         exp_snap.delete()
                         deleted_snapshots.append(exp_snap)
@@ -470,17 +463,16 @@ class EbsSnapshotter(Base):
                         deleted_snapshots.append(exp_snap)
                     else:
                         errors.append(ex)
-                self.verbose_print()
 
         orphan_delete_counter, orphan_delete_errors = self.delete_orphan_snapshots(orphan_snapshots,
                                                                                    delete_orphans_older_than,
-                                                                                   dry_run)
+                                                                                   dry_run,
+                                                                                   sleep_between_delete)
         errors.extend(orphan_delete_errors)
 
-        self.verbose_print("Number of expired snapshots: %d" % len(all_expired_snapshots), prefix=" " * 2)
-        self.verbose_print("Number of snapshots deleted: %d" % len(deleted_snapshots), prefix=" " * 2)
-        self.verbose_print("Number of orphaned snapshots deleted: {}".format(orphan_delete_counter), prefix=" " * 2)
-        self.verbose_print("Number of snapshot deletion errors: %d" % len(errors), prefix=" " * 2)
-        self.verbose_print()
+        logger.debug("Number of expired snapshots: %d", len(all_expired_snapshots))
+        logger.debug("Number of snapshots deleted: %d", len(deleted_snapshots))
+        logger.debug("Number of orphaned snapshots deleted: %d", orphan_delete_counter)
+        logger.debug("Number of snapshot deletion errors: %d", len(errors))
 
         return (all_expired_snapshots, deleted_snapshots, orphan_delete_counter, errors)
