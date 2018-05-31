@@ -18,12 +18,15 @@
         print vol_ids
 """
 
+# pylint: disable=invalid-name,import-error
 
 import re
+import logging
 from collections import namedtuple
 from openshift_tools.cloud.aws.base import Base
 from openshift_tools.cloud.aws.instance_util import InstanceUtil
 
+logger = logging.getLogger(__name__)
 OpenShiftVolumeIdTypes = namedtuple('OpenShiftVolumeIdTypes',
                                     ['master_root',
                                      'node_root',
@@ -47,6 +50,7 @@ class EbsUtil(Base):
         super(EbsUtil, self).__init__(region, verbose)
 
         self.instance_util = InstanceUtil(region, verbose)
+        self.all_volumes = self.ec2.get_all_volumes()
 
     @staticmethod
     def generate_volume_uri(vol):
@@ -106,7 +110,7 @@ class EbsUtil(Base):
 
         # Identify the volumes that were autoprovisioned for PVs
         autoprovisioned_pv_volume_ids = set()
-        for vol in self.ec2.get_all_volumes():
+        for vol in self.all_volumes:
             if vol.id in skip_volume_ids:
                 continue
 
@@ -123,8 +127,7 @@ class EbsUtil(Base):
         if not skip_volume_ids:
             skip_volume_ids = []
 
-        all_vols = self.ec2.get_all_volumes()
-        trans_vols = [vol for vol in all_vols \
+        trans_vols = [vol for vol in self.all_volumes \
                       if vol.id not in skip_volume_ids and \
                          vol.attach_data.status not in STABLE_ATTACH_STATUSES]
 
@@ -142,7 +145,7 @@ class EbsUtil(Base):
 
         # Identify the volumes that were manually provisioned for PVs
         retval = set()
-        for vol in self.ec2.get_all_volumes():
+        for vol in self.all_volumes:
             if vol.id in skip_volume_ids:
                 continue
 
@@ -178,7 +181,7 @@ class EbsUtil(Base):
         skip_volume_ids = skip_volume_ids.union(mpids)
 
         # These are all of the rest of the volumes. aka "unidentified"
-        uids = [v.id for v in self.ec2.get_all_volumes() if v.id not in skip_volume_ids]
+        uids = [v.id for v in self.all_volumes if v.id not in skip_volume_ids]
 
         return OpenShiftVolumeIdTypes(master_root=mids,
                                       node_root=nids,
@@ -190,12 +193,12 @@ class EbsUtil(Base):
 
     def set_volume_purpose_tag(self, volume_ids, purpose, prefix="", dry_run=False):
         """ Adds a tag to the EBS volume describing the purpose of this volume """
-        self.verbose_print("Setting tag '%s: %s' on %d volume(s): %s" % \
-                           (PURPOSE_TAG_KEY, purpose, len(volume_ids), volume_ids),
-                           prefix=prefix)
+        logger.debug("Setting tag '%s: %s' on %d volume(s): %s", \
+                     PURPOSE_TAG_KEY, purpose, len(volume_ids), volume_ids)
 
         if dry_run:
-            self.print_dry_run_msg(prefix=prefix + "  ")
+            logger.debug(self.drymsg)
+            #self.print_dry_run_msg(prefix=prefix + "  ")
         else:
             self.ec2.create_tags(list(volume_ids), {PURPOSE_TAG_KEY: purpose})
 
@@ -203,10 +206,9 @@ class EbsUtil(Base):
         """ Adds a tag to the EBS volume of the name of the host it belongs to """
 
         all_instances = self.instance_util.get_all_instances_as_dict()
-        all_vols = self.ec2.get_all_volumes()
 
         for volume_id in volume_ids:
-            volumes = [vol for vol in all_vols if vol.id == volume_id]
+            volumes = [vol for vol in self.all_volumes if vol.id == volume_id]
 
             if not volumes or len(volumes) != 1:
                 # no need to keep going if we can't fine the volume for the volume id.
@@ -226,12 +228,10 @@ class EbsUtil(Base):
                 # no need to keep going if we weren't able to get a name from the instance.
                 continue
 
-            self.verbose_print("Setting tag '%s: %s' on %d volume(s): %s" % \
-                               (NAME_TAG_KEY, inst_name, 1, volume_id),
-                               prefix=prefix)
+            logger.debug("Setting tag '%s: %s' on %d volume(s): %s", NAME_TAG_KEY, inst_name, 1, volume_id)
 
             if dry_run:
-                self.print_dry_run_msg(prefix=prefix + "  ")
+                logger.debug(self.drymsg)
+                #self.print_dry_run_msg(prefix=prefix + "  ")
             else:
                 self.ec2.create_tags([volume_id], {NAME_TAG_KEY: inst_name})
-
