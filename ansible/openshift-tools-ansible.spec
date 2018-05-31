@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.61
+Version:        0.0.62
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,14 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu May 31 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.62-1
+- changing logging in snapshot related parts (ihorvath@redhat.com)
+- Fixed a bug with active media strings. (kwoodson@redhat.com)
+- change the check from every 5 minutes to every 1 minutes because of the ELB
+  bug (zhizhang@redhat.com)
+- Changed metadata for the bastion host rename. (twiest@redhat.com)
+- yum_repos: Ensure reposdir is default path (mbarnes@fedoraproject.org)
+
 * Wed May 23 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.61-1
 - ansible tower monitoring has no need for oc binary (ihorvath@redhat.com)
 - we need to not delete certain roles from openshift-ansible when we vendor
