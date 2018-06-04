@@ -136,74 +136,74 @@ metric_sender_config:
 host_monitoring_cron:
 - name: send pcp ping every 5 minutes
   minute: "*/5"
-  job: ops-runner -f -s 15 -n cspp.pcp.ping /usr/bin/cron-send-pcp-ping
+  job: flock /host/run/lock/cspp.pcp.ping ops-runner -s 15 -n cspp.pcp.ping /usr/bin/cron-send-pcp-ping
 
 - name: run pcp checks every 5 minutes
   minute: "*/5"
-  job: ops-runner -f -s 15 -n ozpc.send.pcp /usr/bin/ops-metric-pcp-client
+  job: flock /host/run/lock/ozpc.send.pcp ops-runner -s 15 -n ozpc.send.pcp /usr/bin/ops-metric-pcp-client
 
 - name: run pcp sampler every 5 minutes
   minute: "*/5"
-  job: ops-runner -f -s 15 -n cspsp.kernal.all.cpu /usr/bin/cron-send-pcp-sampled-metrics -m kernel.all.cpu.idle -m kernel.all.cpu.nice -m kernel.all.cpu.steal -m kernel.all.cpu.sys -m kernel.all.cpu.user -m kernel.all.cpu.wait.total -m kernel.all.cpu.irq.hard -m kernel.all.cpu.irq.soft
+  job: flock /host/run/lock/cspsp.kernal.all.cpu ops-runner -s 15 -n cspsp.kernal.all.cpu /usr/bin/cron-send-pcp-sampled-metrics -m kernel.all.cpu.idle -m kernel.all.cpu.nice -m kernel.all.cpu.steal -m kernel.all.cpu.sys -m kernel.all.cpu.user -m kernel.all.cpu.wait.total -m kernel.all.cpu.irq.hard -m kernel.all.cpu.irq.soft
 
 - name: Do a full heartbeat
   minute: "10"
   hour: "*"
-  job: ops-runner -f -s 15 -s 3600 -n ozc.send.heartbeat.full /usr/bin/ops-metric-client --send-heartbeat
+  job: flock /host/run/lock/ozc.send.heartbeat.full ops-runner -s 15 -s 3600 -n ozc.send.heartbeat.full /usr/bin/ops-metric-client --send-heartbeat
 
 - name: Do a full heartbeat for synthetic host
   minute: "10"
   hour: "*"
-  job: ops-runner -f -s 15 -s 3600 -n ozc.send.synthetic.heartbeat.full /usr/bin/ops-metric-client --send-heartbeat --synthetic
+  job: flock /host/run/lock/ozc.send.synthetic.heartbeat.full ops-runner -s 15 -s 3600 -n ozc.send.synthetic.heartbeat.full /usr/bin/ops-metric-client --send-heartbeat --synthetic
 
 - name: Do a quick heartbeat
   minute: "*"
-  job: ops-runner -f -s 15 -n ozc.send.heartbeat.quick /usr/bin/ops-metric-client -k heartbeat.ping -o 1
+  job: flock /host/run/lock/ozc.send.heartbeat.quick ops-runner -s 15 -n ozc.send.heartbeat.quick /usr/bin/ops-metric-client -k heartbeat.ping -o 1
 
 - name: Do a quick heartbeat for synthetic host
   minute: "*/5"
-  job: ops-runner -f -s 15 -n ozc.send.synthetic.heartbeat.quick /usr/bin/ops-metric-client -k heartbeat.ping -o 1 --synthetic
+  job: flock /host/run/lock/ozc.send.synthetic.heartbeat.quick ops-runner -s 15 -n ozc.send.synthetic.heartbeat.quick /usr/bin/ops-metric-client -k heartbeat.ping -o 1 --synthetic
 
 - name: run filesystem space checks every 10 minutes
   minute: "*/10"
-  job: ops-runner -f -s 15 -n csfm.filesys.full /usr/bin/cron-send-filesystem-metrics
+  job: flock /host/run/lock/csfm.filesys.full ops-runner -s 15 -n csfm.filesys.full /usr/bin/cron-send-filesystem-metrics
 
 - name: run disk TPS checks every 2 minutes
   minute: "*/2"
-  job: ops-runner -f -s 15 -n csdim.disk.tps /usr/bin/cron-send-disk-metrics
+  job: flock /host/run/lock/csdim.disk.tps ops-runner -s 15 -n csdim.disk.tps /usr/bin/cron-send-disk-metrics
 
 - name: run network checks every 3 minutes
   minute: "*/3"
-  job: ops-runner -f -s 15 -n csnm.network.int /usr/bin/cron-send-network-metrics
+  job: flock /host/run/lock/csnm.network.int ops-runner -s 15 -n csnm.network.int /usr/bin/cron-send-network-metrics
 
 # We might want to break docker checks out at some point.
 - name: run docker storage space checks every 10 minutes
   minute: "*/10"
-  job: ops-runner -f -s 15 -n csdm.docker.storage /usr/bin/cron-send-docker-metrics
+  job: flock /host/run/lock/csdm.docker.storage ops-runner -s 15 -n csdm.docker.storage /usr/bin/cron-send-docker-metrics
 
 - name: run docker info timer
   minute: "*/10"
-  job: ops-runner -f -s 15 -n csdt.docker.timer /usr/bin/cron-send-docker-timer
+  job: flock /host/run/lock/csdt.docker.timer ops-runner -s 15 -n csdt.docker.timer /usr/bin/cron-send-docker-timer
 
 - name: run docker dns test on existing containers
   minute: "*/5"
-  job: ops-runner -f -s 15 -n csdedr.docker.existing.dns.resolution /usr/bin/cron-send-docker-existing-dns-resolution
+  job: flock /host/run/lock/csdedr.docker.existing.dns.resolution ops-runner -s 15 -n csdedr.docker.existing.dns.resolution /usr/bin/cron-send-docker-existing-dns-resolution
 
 - name: run docker conatiner usage collector
   minute: "*"
-  job: ops-runner -f -s 15 -n csdcu.disc.docker.container /usr/bin/cron-send-docker-containers-usage
+  job: flock /host/run/lock/csdcu.disc.docker.container ops-runner -s 15 -n csdcu.disc.docker.container /usr/bin/cron-send-docker-containers-usage
 
 - name: check for pending security updates once per day
   minute: "0"
   hour:   "10"
   # 43200 is 12 hours. Spread the checks out across a half day
-  job: ops-runner -f -s 43200 -n cssuc.security.updates.count /usr/bin/cron-send-security-updates-count
+  job: flock /host/run/lock/cssuc.security.updates.count ops-runner -s 43200 -n cssuc.security.updates.count /usr/bin/cron-send-security-updates-count
 
 - name: report rpm versions daily
   hour: "1"
   minute: "0"
-  job: ops-runner -f -s 120 -n csdov.rpm.versions /usr/bin/cron-send-docker-oc-versions
+  job: flock /host/run/lock/csdov.rpm.versions ops-runner -s 120 -n csdov.rpm.versions /usr/bin/cron-send-docker-oc-versions
 
 - name: iptables FORWARD chain ordering band-aid script
   minute: "*"
-  job: ops-runner -f -s 15 -n iptba.foward.chain.ordering.bandaid /root/forward_chain_bandaid.py
+  job: flock /host/run/lock/iptba.foward.chain.ordering.bandaid ops-runner -s 15 -n iptba.foward.chain.ordering.bandaid /root/forward_chain_bandaid.py
