@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.62
+Version:        0.0.63
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,9 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu May 31 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.63-1
+- guess not every cron syntax is usable (ihorvath@redhat.com)
+
 * Thu May 31 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.62-1
 - changing logging in snapshot related parts (ihorvath@redhat.com)
 - Fixed a bug with active media strings. (kwoodson@redhat.com)
