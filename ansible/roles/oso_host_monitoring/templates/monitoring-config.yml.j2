@@ -462,7 +462,7 @@ host_monitoring_cron:
 - name: "Add snapshot tag to autoprovisioned pv volumes"
   hour: "*"
   minute: "30"
-  job: ops-runner -f -s 120 -n oeasttev.add.snapshot.tag.autopv ops-ec2-add-snapshot-tag-to-ebs-volumes --autoprovisioned-pv-volumes daily --set-purpose-tag --aws-creds-profile snapshotter
+  job: ops-runner -f -s 120 -n oeasttev.add.snapshot.tag.autopv ops-ec2-add-snapshot-tag-to-ebs-volumes --autoprovisioned-pv-volumes daily --set-purpose-tag --aws-creds-profile snapshotter --region {{ osohm_region }}
 
 - name: "Snapshot volumes tagged with hourly"
   hour: "*"
