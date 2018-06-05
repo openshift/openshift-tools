@@ -53,8 +53,6 @@
   with_items:
   - usr
   - playbooks/adhoc
-  - playbooks/aws
-  - playbooks/gce
   - playbooks/libvirt
   - playbooks/openstack
   - roles/ansible
