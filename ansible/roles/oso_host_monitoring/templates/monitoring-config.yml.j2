@@ -225,7 +225,7 @@ host_monitoring_cron:
 {# Openshift node checks #}
 - name: send openshift-node process count
   minute: "*/30"
-  job: ops-runner -f -s 15 -n cspc.openshift.node.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start node' openshift.node.process.count
+  job: ops-runner -f -s 15 -n cspc.openshift.node.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start node|^/usr/bin/hyperkube kubelet' openshift.node.process.count
 
 - name: send ovs status data
   minute: "*/5"
