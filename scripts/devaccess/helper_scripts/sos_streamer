@@ -1,0 +1,7 @@
+#!/bin/bash
+# run sosreport with supplied case id
+sosreport --case-id=${1} --log-size=100 --batch --quiet --no-report
+
+# stream back the sosreport archive made by sosreport to the user
+cat /var/tmp/*${1}*.tar.xz
+rm ${file}
