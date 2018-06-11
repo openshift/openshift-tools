@@ -833,6 +833,14 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - discoveryrule_key: project.limitrange.num
+    name: "{% raw %}openshift.project.limitrange.num{{ '{#' }}OSO_LIMITRANGE}{% endraw %}"
+    key: "{% raw %}openshift.project.limitrange.num[{{ '{#' }}OSO_LIMITRANGE}]{% endraw %}"
+    value_type: int
+    description: "Number of limitrange in current project"
+    applications:
+    - Openshift Master
+
   ztriggerprototypes:
   - name: "{% raw %}Certificate: {{ '{#' }}OSO_CERT_NAME} less than 31 days from expiring on {HOST.NAME}{% endraw %}"
     expression: "{% raw %}{Template Openshift Master:disc.certificate.expiration[{{ '{#' }}OSO_CERT_NAME}].last()}<31{% endraw %}"
