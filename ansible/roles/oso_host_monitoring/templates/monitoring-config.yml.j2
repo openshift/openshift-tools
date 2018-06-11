@@ -350,6 +350,13 @@ host_monitoring_cron:
   job: ops-runner -f -s 120 -n cscc.openshift.master.capacity /usr/bin/cron-send-cluster-capacity
 {% endif %}
 
+{% if osohm_enable_cluster_project_limitrange_check|bool %}
+- name: "Check project limitrange status"
+  hour: "*"
+  minute: "15"
+  job: ops-runner -f -s 120 -n cspls.openshift.project.limitrange.status /usr/bin/cron-send-project-limitrange-status
+{% endif %}
+
 {% if osohm_master_primary | default(False) | bool %}
 - name: send services count
   minute: "*/10"
