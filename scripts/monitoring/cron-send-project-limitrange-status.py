@@ -62,24 +62,6 @@ def parse_args():
 
     return args
 
-def gen_test_url(service):
-    """ Generate Test URL """
-    return "https://%s:%s/logged_out.html" % (
-        service['spec']['clusterIP'],
-        443
-    )
-
-def curl(url):
-    """ Test URL, return http code """
-    try:
-        return urllib2.urlopen(url, timeout=30).getcode()
-    except urllib2.HTTPError as e:
-        return e.fp.getcode()
-    except Exception:
-        logger.exception("unknown error")
-
-    return 0
-
 def get_limitrange_info(args=None, ):
     """ Test SAML Pod Status """
     ocutil.namespace = args.namespace
