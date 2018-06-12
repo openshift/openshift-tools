@@ -87,7 +87,7 @@ def get_limitrange_info(args=None, ):
 
     limitRange = runOCcmd_yaml("get LimitRange ")
     #logger.info('Deployment Config availableReplicas: %s', dc['status']['availableReplicas'])
-    logger.info('limitRange number is: %s',len(limitRange['items']))
+    logger.info('limitRange number is: %s', len(limitRange['items']))
     if len(limitRange['items']) < 1:
         # means no limitRange in this project
         return 0
@@ -108,8 +108,6 @@ def main():
     #this was a dynamic item so we can monitoring many project with the same script
     discovery_key_limitrange = 'project.limitrange.num'
     item_prototype_macro_limitrange = '#OSO_LIMITRANGE'
-    item_prototype_key_count = 'openshift.project.limitrange.num'
-    
     mts = MetricSender(verbose=args.verbose)
     mts.add_dynamic_metric(discovery_key_limitrange, item_prototype_macro_limitrange, args.namespace)
     mts.add_metric({'openshift.project.limitrange.num['+args.namespace+']': result})
@@ -117,4 +115,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
