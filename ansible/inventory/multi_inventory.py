@@ -25,6 +25,10 @@ CONFIG_FILE_NAME = 'multi_inventory.yaml'
 DEFAULT_CACHE_PATH = os.path.expanduser('~/.ansible/tmp/multi_inventory.cache')
 FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)))
 
+# FIXME Move this list of boolean variable names into the
+#       config file, maybe as a "boolean_clone_groups" key?
+BOOLEAN_CLONE_GROUPS = ('oo_config', 'oo_provision', 'oo_scalegroup')
+
 class MultiInventoryAccount(object):
     """Object to represent an account"""
     #pylint: disable=too-many-arguments
@@ -290,10 +294,17 @@ class MultiInventoryAccount(object):
                 if 'synthetic_' in name:
                     continue
 
-                key = '%s_%s' % (to_name, MultiInventoryUtils.get_entry(data, from_name))
-                if not self.inventory.has_key(key):
-                    self.inventory[key] = []
-                self.inventory[key].append(name)
+                val = MultiInventoryUtils.get_entry(data, from_name)
+
+                # Convert boolean variables to 'True' or 'False'.
+                if to_name in BOOLEAN_CLONE_GROUPS:
+                    if isinstance(val, str):
+                        val = str(val.lower() == 'true')
+                    else:  # Mainly for None -> False
+                        val = str(bool(val))
+
+                key = '%s_%s' % (to_name, val)
+                self.inventory.setdefault(key, []).append(name)
 
     def apply_group_selectors(self):
         """Apply the account config for group selectors """
@@ -560,6 +571,12 @@ class MultiInventory(object):
         for account in self.accounts:
             # Build results by merging all dictionaries
             MultiInventoryUtils.merge_destructively(all_results, account.inventory)
+
+        # Ensure all boolean groups are defined.
+        for name in BOOLEAN_CLONE_GROUPS:
+            for bool_val in (True, False):
+                key = '%s_%s' % (name, str(bool_val))
+                all_results.setdefault(key, [])
 
         # only write cache if something was updated
         # in the run_account_provider.
