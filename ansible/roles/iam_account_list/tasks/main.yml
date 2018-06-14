@@ -1,0 +1,10 @@
+---
+- name: Copy the list of IAM accounts
+  copy:
+    content: "{{ g_iam_acc_list }}"
+    dest: "{{ ial_iam_account_file }}"
+    owner: root
+    group: awx
+    mode: 0640
+  tags:
+  - inventory
