@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.63
+Version:        0.0.64
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,19 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Wed Jun 13 2018 Matthew Barnes <mbarnes@redhat.com>
+- multi_inventory.py: Ensure boolean groups exist (mbarnes@redhat.com)
+- monitoring: added the hyperkube as a valid option for node process count
+  (mwoodson@redhat.com)
+- disabled the cron-send-security-updates checks from the host-monitoring
+  container (mwoodson@redhat.com)
+- missed the region for one of the modified scripts (ihorvath@redhat.com)
+- use the default version of iam_cert, since we no longer need a custom library
+  (sedgar@redhat.com)
+- Include playbooks/aws and playbooks/gce in vendored openshift-ansible
+  (bmorriso@redhat.com)
+- Correct typo and set subnet AZ for vpc (bmorriso@redhat.com)
+
 * Thu May 31 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.63-1
 - guess not every cron syntax is usable (ihorvath@redhat.com)
 
