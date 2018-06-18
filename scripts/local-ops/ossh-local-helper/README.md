@@ -25,7 +25,7 @@ export bastion="bastion.ops.example.com"
 
 # -v is optional
 # --target-host is intentionally blank as it will take the very next argument as target-host
-alias ossh="${OSSH_HELPER_BASEDIR}/ossh.py3 -v --bastion-user $myUser --bastion-host $bastion --target-user root --target-host'
+alias ossh="${OSSH_HELPER_BASEDIR}/ossh.py3 -v --bastion-user $myUser --bastion-host $bastion --target-user root --target-host"
 
 # required for OSSH_HELPER_CACHE
 source ${OSSH_HELPER_BASEDIR}/ossh.bashrc
