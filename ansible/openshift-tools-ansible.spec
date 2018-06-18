@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.64
+Version:        0.0.65
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,11 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Mon Jun 18 2018 Matthew Barnes <mbarnes@fedoraproject.org> 0.0.65-1
+- multi_inventory.py: Fix handling of boolean values
+  (mbarnes@fedoraproject.org)
+- adding role for iam account list (dedgar@redhat.com)
+
 * Wed Jun 13 2018 Matthew Barnes <mbarnes@redhat.com>
 - multi_inventory.py: Ensure boolean groups exist (mbarnes@redhat.com)
 - monitoring: added the hyperkube as a valid option for node process count
