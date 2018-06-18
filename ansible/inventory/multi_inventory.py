@@ -298,7 +298,7 @@ class MultiInventoryAccount(object):
 
                 # Convert boolean variables to 'True' or 'False'.
                 if to_name in BOOLEAN_CLONE_GROUPS:
-                    if isinstance(val, str):
+                    if isinstance(val, basestring):
                         val = str(val.lower() == 'true')
                     else:  # Mainly for None -> False
                         val = str(bool(val))
