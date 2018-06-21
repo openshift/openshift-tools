@@ -1,0 +1,27 @@
+---
+- name: Setup the master node group
+  hosts: localhost
+  tasks:
+  - include_role:
+      name: openshift_aws
+      tasks_from: setup_master_group.yml
+    static: true
+
+- name: set the master facts for hostname to elb
+  hosts: masters
+  gather_facts: no
+  remote_user: root
+  tasks:
+  - include_role:
+      name: openshift_aws
+      tasks_from: master_facts.yml
+    static: true
+
+- name: normalize groups
+  include: ../../byo/openshift-cluster/initialize_groups.yml
+
+- name: run the std_include
+  include: ../../common/openshift-cluster/std_include.yml
+
+- name: run the config
+  include: ../../common/openshift-cluster/config.yml
