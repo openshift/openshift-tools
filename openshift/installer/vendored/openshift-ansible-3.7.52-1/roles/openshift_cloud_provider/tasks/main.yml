@@ -1,0 +1,21 @@
+---
+- name: Set cloud provider facts
+  openshift_facts:
+    role: cloudprovider
+    local_facts:
+      kind: "{{ openshift_cloudprovider_kind | default(None) }}"
+
+- name: Create cloudprovider config dir
+  file:
+    path: "{{ openshift.common.config_base }}/cloudprovider"
+    state: directory
+  when: has_cloudprovider | bool
+
+- include: openstack.yml
+  when: cloudprovider_is_openstack | bool
+
+- include: aws.yml
+  when: cloudprovider_is_aws | bool
+
+- include: gce.yml
+  when: cloudprovider_is_gce | bool

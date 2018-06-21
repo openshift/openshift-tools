@@ -1,0 +1,69 @@
+---
+# openshift_master_defaults_in_use is a workaround to detect if we are consuming
+# the plays from the role or outside of the role.
+openshift_master_defaults_in_use: True
+openshift_master_debug_level: "{{ debug_level | default(2) }}"
+
+r_openshift_master_firewall_enabled: "{{ os_firewall_enabled | default(True) }}"
+r_openshift_master_use_firewalld: "{{ os_firewall_use_firewalld | default(False) }}"
+
+openshift_node_ips: []
+r_openshift_master_clean_install: false
+r_openshift_master_etcd3_storage: false
+r_openshift_master_os_firewall_enable: true
+r_openshift_master_os_firewall_deny: []
+default_r_openshift_master_os_firewall_allow:
+- service: api server https
+  port: "{{ openshift.master.api_port }}/tcp"
+- service: api controllers https
+  port: "{{ openshift.master.controllers_port }}/tcp"
+- service: skydns tcp
+  port: "{{ openshift.master.dns_port }}/tcp"
+- service: skydns udp
+  port: "{{ openshift.master.dns_port }}/udp"
+- service: etcd embedded
+  port: 4001/tcp
+  cond: "{{ groups.oo_etcd_to_config | default([]) | length == 0 }}"
+r_openshift_master_os_firewall_allow: "{{ default_r_openshift_master_os_firewall_allow | union(openshift_master_open_ports | default([])) }}"
+
+# oreg_url is defined by user input
+oreg_host: "{{ oreg_url.split('/')[0] if (oreg_url is defined and '.' in oreg_url.split('/')[0]) else '' }}"
+oreg_auth_credentials_path: "{{ r_openshift_master_data_dir }}/.docker"
+oreg_auth_credentials_replace: False
+l_bind_docker_reg_auth: False
+openshift_docker_alternative_creds: "{{ (openshift_docker_use_system_container | default(False)) or (openshift_use_crio_only | default(False)) }}"
+
+containerized_svc_dir: "/usr/lib/systemd/system"
+ha_svc_template_path: "native-cluster"
+
+# NOTE
+# r_openshift_master_*_default may be defined external to this role.
+# openshift_use_*, if defined, may affect other roles or play behavior.
+r_openshift_master_use_openshift_sdn_default: "{{ openshift_use_openshift_sdn | default(True) }}"
+r_openshift_master_use_openshift_sdn: "{{ r_openshift_master_use_openshift_sdn_default }}"
+
+r_openshift_master_use_nuage_default: "{{ openshift_use_nuage | default(False) }}"
+r_openshift_master_use_nuage: "{{ r_openshift_master_use_nuage_default }}"
+
+r_openshift_master_use_contiv_default: "{{ openshift_use_contiv | default(False) }}"
+r_openshift_master_use_contiv: "{{ r_openshift_master_use_contiv_default }}"
+
+r_openshift_master_use_kuryr_default: "{{ openshift_use_kuryr | default(False) }}"
+r_openshift_master_use_kuryr: "{{ r_openshift_master_use_kuryr_default }}"
+
+r_openshift_master_data_dir_default: "{{ openshift_data_dir | default('/var/lib/origin') }}"
+r_openshift_master_data_dir: "{{ r_openshift_master_data_dir_default }}"
+
+r_openshift_master_sdn_network_plugin_name_default: "{{ os_sdn_network_plugin_name | default('redhat/openshift-ovs-subnet') }}"
+r_openshift_master_sdn_network_plugin_name: "{{ r_openshift_master_sdn_network_plugin_name_default }}"
+
+openshift_master_image_config_latest_default: "{{ openshift_image_config_latest | default(False) }}"
+openshift_master_image_config_latest: "{{ openshift_master_image_config_latest_default }}"
+
+openshift_master_config_dir_default: "{{ openshift.common.config_base ~ '/master' if openshift is defined and 'common' in openshift else '/etc/origin/master' }}"
+openshift_master_config_dir: "{{ openshift_master_config_dir_default }}"
+
+openshift_master_bootstrap_enabled: False
+
+openshift_master_csr_sa: node-bootstrapper
+openshift_master_csr_namespace: openshift-infra

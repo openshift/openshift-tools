@@ -1,0 +1,3 @@
+---
+- include: glusterfs_config_facts.yml
+- include: glusterfs_common.yml
