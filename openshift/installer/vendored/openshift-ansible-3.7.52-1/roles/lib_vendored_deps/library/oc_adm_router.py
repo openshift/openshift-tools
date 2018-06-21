@@ -1,0 +1,1 @@
+../../lib_openshift/library/oc_adm_router.py
