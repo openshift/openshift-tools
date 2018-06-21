@@ -25,6 +25,8 @@ echo '/usr/bin/scanpod-inmem'
 echo
 echo '/usr/local/bin/scanlog_listener'
 echo
+echo '/usr/local/bin/check_scanning'
+echo
 echo '/usr/local/bin/cron-scan-pods.sh'
 echo
 echo '/usr/local/bin/cron-in-memory-scan.sh'
@@ -40,6 +42,10 @@ echo '----------------'
 echo 'Always listen for new scan logs. Scanning is scheduled once per day for all pods on the node.'
 echo '----------------'
 /usr/local/bin/scanlog_listener -s localhost -p 8080 -l /var/log/clam/scan.log &
+echo '----------------'
+echo 'Always run prometheus monitoring. Alert if the two previous scripts are not running, or clamd.sock is not found.'
+echo '----------------'
+/usr/local/bin/check_scanning &
 echo 'Starting crond'
 echo '---------------'
 exec /usr/sbin/crond -n -m off

@@ -5,6 +5,7 @@
     image-inspector scan for every newly created customer container. """
 
 import select
+import socket
 import subprocess
 import re
 
@@ -51,6 +52,10 @@ class PlegEventListener(object):
         journal_fd = j.fileno()
         poll_event_mask = j.get_events()
         pollobj.register(journal_fd, poll_event_mask)
+
+        ab_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        ab_sock.bind('\0Orchestrator')
+        ab_sock.listen(1)
 
         while True:
             if pollobj.poll(10000):
