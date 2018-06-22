@@ -6,13 +6,13 @@ openshift_sre.py - Various helper modules for OpenShift Online SRE team
 Copyright © 2017, Will Gordon <wgordon@redhat.com>
 Licensed under the MIT license.
 """
-from __future__ import print_function 
+from __future__ import print_function
 from __future__ import unicode_literals
 from collections import OrderedDict
 import json
 import os
 import pypd
-from re import finditer, search
+from re import finditer
 from sopel import module
 from sopel import formatting
 from sopel.config.types import StaticSection, FilenameAttribute
@@ -72,11 +72,11 @@ def debug(bot, message):
 def announce_shift(bot, channel, rotation):
     """Anounces a shift and sets the topic to reflect that change"""
     debug(bot,
-            'announce_shift_complete: shifts - curr:{s1}'.format(s1=rotation))
+          'announce_shift_complete: shifts - curr:{s1}'.format(s1=rotation))
 
     hashline = formatting.color('###', formatting.colors.RED)
     lead = formatting.color('    Shift Lead: {curr_nick}'.format(curr_nick=rotation['Shift Lead']), formatting.colors.RED)
-    secondary = formatting.color('    Shift Secondary: {curr_nick}'.format(curr_nick=rotation['Shift Secondary']),formatting.colors.RED)
+    secondary = formatting.color('    Shift Secondary: {curr_nick}'.format(curr_nick=rotation['Shift Secondary']), formatting.colors.RED)
     oncall = formatting.color('    On-Call: {oncall_nick}'.format(oncall_nick=rotation['Oncall']), formatting.colors.RED)
 
     if bot.db.get_channel_value(channel, 'announce'):
@@ -84,7 +84,6 @@ def announce_shift(bot, channel, rotation):
         bot.say(lead, channel)
         bot.say(secondary, channel)
         bot.say(oncall, channel)
-       
 
 def set_topic_to_shift(bot, channel,rotation):
     """Sets topic to match the current shift information."""
