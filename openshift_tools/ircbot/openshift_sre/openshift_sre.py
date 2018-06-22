@@ -8,7 +8,6 @@ Licensed under the MIT license.
 """
 from __future__ import print_function
 from __future__ import unicode_literals
-from collections import OrderedDict
 import json
 import os
 import pypd
@@ -85,7 +84,7 @@ def announce_shift(bot, channel, rotation):
         bot.say(secondary, channel)
         bot.say(oncall, channel)
 
-def set_topic_to_shift(bot, channel,rotation):
+def set_topic_to_shift(bot, channel, rotation):
     """Sets topic to match the current shift information."""
     debug(bot,
           'setting channel topic: shifts - curr:{s1}'.format(s1=rotation))
@@ -101,41 +100,43 @@ def get_rotation():
     """This function gets the rotation from the pagerduty api"""
     pypd.api_key = os.environ['PAGER_DUTY_API_KEY']
     oncall = pypd.OnCall.find(escalation_policy_ids=["PA4586M"])
-    escalation_level = {1:'Shift Lead',2:'Shift Secondary',3:'Oncall',4:'Management Escalation'}
+    escalation_level = {1:'Shift Lead', 2:'Shift Secondary', 3:'Oncall', 4:'Management Escalation'}
     rotation = {}
-    for o in oncall:
-        on_call_user = o.get('user')
+    for obj in oncall:
+        on_call_user = obj.get('user')
         user_name = on_call_user.get('summary')
         user = pypd.User.find_one(name=user_name)
         if user.get('description') != None:
-            rotation[escalation_level[o.get('escalation_level')]] = user.get('description')
+            rotation[escalation_level[obj.get('escalation_level')]] = user.get('description')
         else:
-            rotation[escalation_level[o.get('escalation_level')]] = user.get('name')
+            rotation[escalation_level[obj.get('escalation_level')]] = user.get('name')
     return rotation
 
 def announce_escalation(bot, channel):
-    """This function pulls the current rotation from the pagerduty apiand checks it against a local version of the rotation. 
+    """This function pulls  current rotation from  pagerduty api and checks it against a local version of the rotation.
     If it differs it announces the new rotation and sets the topic to reflect that change.
     If it does not find a file with current state it will announce the rotation it got from the pagerduty api"""
     rotation = get_rotation()
     try:
         stored_rotation = read_escalation_file(SHIFT_FILE)
     except:
-        store_escalation(SHIFT_FILE,rotation)
-        announce_shift(bot,channel,rotation)
-        set_topic_to_shift(bot,channel,rotation)
+        store_escalation(SHIFT_FILE, rotation)
+        announce_shift(bot, channel, rotation)
+        set_topic_to_shift(bot, channel, rotation)
     else:
         if stored_rotation != rotation:
-            store_escalation(SHIFT_FILE,rotation)
-            announce_shift(bot,channel,rotation)
-            set_topic_to_shift(bot,channel,rotation)
+            store_escalation(SHIFT_FILE, rotation)
+            announce_shift(bot, channel, rotation)
+            set_topic_to_shift(bot, channel, rotation)
 
-def store_escalation(filename,rotation):
+def store_escalation(filename, rotation):
+    """This function stores escalations in a json format to a file"""
     with open(filename, 'w') as outfile:
-        json.dump(rotation,outfile)
+        json.dump(rotation, outfile)
     outfile.close()
 
 def read_escalation_file(filename):
+    """This function restores escalations from a file"""
     with open(filename) as json_file:
         rotation = json.load(json_file)
     json_file.close()
@@ -229,7 +230,7 @@ def say_shift_leads(bot, trigger):
     """Lists the current on-call and shift leads for this rotation period."""
     if bot.db.get_channel_value(trigger.sender, 'monitoring'):
         rotation = get_rotation()
-        announce_shift(bot,trigger.sender, rotation)
+        announce_shift(bot, trigger.sender, rotation)
     else:
         bot.say(trigger.sender + ' is not currently tracking SRE on-call rotations.')
 
@@ -406,11 +407,11 @@ def say_karma(bot, trigger):
 # Update every 10 minutes
 @module.interval(15)
 def track_shift_rotation(bot):
-    """ Sends a message if there was a change in the rotation withnin the last 10 minutes 
+    """ Sends a message if there was a change in the rotation withnin the last 10 minutes
     (if bot has appropriate channel permissions)."""
     for channel in bot.channels:
-        if bot.db.get_channel_value(channel, 'monitoring'):    
-                    announce_escalation(bot, channel)        
+        if bot.db.get_channel_value(channel, 'monitoring'):
+            announce_escalation(bot, channel)
 
 
 ######################
