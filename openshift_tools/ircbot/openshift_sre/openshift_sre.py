@@ -78,7 +78,7 @@ def announce_shift(bot, channel, rotation):
                             formatting.colors.RED)
     secondary = formatting.color('    Shift Secondary: {curr_nick}'.format(curr_nick=rotation['Shift Secondary']),
                                  formatting.colors.RED)
-    oncall = formatting.color('    On-Call: {oncall_nick}'.format(oncall_nick=rotation['Oncall']), 
+    oncall = formatting.color('    On-Call: {oncall_nick}'.format(oncall_nick=rotation['Oncall']),
                               formatting.colors.RED)
 
     if bot.db.get_channel_value(channel, 'announce'):
