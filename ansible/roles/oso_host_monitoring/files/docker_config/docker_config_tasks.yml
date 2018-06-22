@@ -17,8 +17,8 @@
 
 # Note: The next 3 tasks are trying to work around https://bugzilla.redhat.com/show_bug.cgi?id=1592503
 #  When this bug is closed, these should be removed
-- name: dig (lookup) the docker registry ip
-  command: "dig +short docker-registry.default.svc.cluster.local"
+- name: DNS lookup the docker registry ip
+  shell: "getent hosts docker-registry.default.svc.cluster.local | awk '{print $1}'"
   changed_when: false
   register: registry_ip_cmd
 
@@ -28,7 +28,7 @@
 
 - name: create symlink for docker registry ip
   file:
-    path: "/etc/docker/certs.d/{{ registry_ip_cmd.stdout }}:5000"
+    path: "/host/etc/docker/certs.d/{{ registry_ip_cmd.stdout }}:5000"
     src: "docker-registry.default.svc:5000"
     state: link
     force: True
