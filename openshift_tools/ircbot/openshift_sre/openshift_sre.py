@@ -8,10 +8,10 @@ Licensed under the MIT license.
 """
 from __future__ import print_function
 from __future__ import unicode_literals
+from re import finditer
 import json
 import os
 import pypd
-from re import finditer
 from sopel import module
 from sopel import formatting
 from sopel.config.types import StaticSection, FilenameAttribute
