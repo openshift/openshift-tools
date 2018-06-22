@@ -74,9 +74,12 @@ def announce_shift(bot, channel, rotation):
           'announce_shift_complete: shifts - curr:{s1}'.format(s1=rotation))
 
     hashline = formatting.color('###', formatting.colors.RED)
-    lead = formatting.color('    Shift Lead: {curr_nick}'.format(curr_nick=rotation['Shift Lead']), formatting.colors.RED)
-    secondary = formatting.color('    Shift Secondary: {curr_nick}'.format(curr_nick=rotation['Shift Secondary']), formatting.colors.RED)
-    oncall = formatting.color('    On-Call: {oncall_nick}'.format(oncall_nick=rotation['Oncall']), formatting.colors.RED)
+    lead = formatting.color('    Shift Lead: {curr_nick}'.format(curr_nick=rotation['Shift Lead']),
+                            formatting.colors.RED)
+    secondary = formatting.color('    Shift Secondary: {curr_nick}'.format(curr_nick=rotation['Shift Secondary']),
+                                 formatting.colors.RED)
+    oncall = formatting.color('    On-Call: {oncall_nick}'.format(oncall_nick=rotation['Oncall']), 
+                              formatting.colors.RED)
 
     if bot.db.get_channel_value(channel, 'announce'):
         bot.say(hashline, channel)
