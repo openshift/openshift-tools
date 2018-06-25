@@ -408,7 +408,7 @@ def say_karma(bot, trigger):
 # Bot intervals #
 #################
 # Update every 10 minutes
-@module.interval(15)
+@module.interval(600)
 def track_shift_rotation(bot):
     """ Sends a message if there was a change in the rotation withnin the last 10 minutes
     (if bot has appropriate channel permissions)."""
