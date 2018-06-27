@@ -123,19 +123,19 @@ def announce_escalation(bot, channel, rotation):
     """This function pulls  current rotation from  pagerduty api and checks it against a local version of the rotation.
     If it differs it announces the new rotation and sets the topic to reflect that change.
     If it does not find a file with current state it will announce the rotation it got from the pagerduty api"""
-   
     stored_rotation = None
     try:
         stored_rotation = read_escalation_file(SHIFT_FILE)
+    # pylint disable:bare-except
     except:
+    # pylint enable:bare-except
         print("No 'SHIFT_FILE' file found")
-        pass
     finally:
         if stored_rotation != rotation:
-           print("Annoucing Rotation")
-           store_escalation(SHIFT_FILE, rotation)
-           announce_shift(bot, channel, rotation)
-           set_topic_to_shift(bot, channel, rotation)
+            print("Annoucing Rotation")
+            store_escalation(SHIFT_FILE, rotation)
+            announce_shift(bot, channel, rotation)
+            set_topic_to_shift(bot, channel, rotation)
 
 def store_escalation(filename, rotation):
     """This function stores escalations in a json format to a file"""
@@ -174,7 +174,7 @@ def display_karma(bot, channel, nick):
 ################
 @module.commands('track')
 @module.example('.track')
-def mark_channel_to_track_oncall(bot, trigger):
+def mark_channel_track_oncall(bot, trigger):
     """Begins tracking on-call and shift lead rotations."""
     bot.db.set_channel_value(trigger.sender, 'monitoring', True)
     bot.db.set_channel_value(trigger.sender, 'announce', True)
@@ -184,7 +184,7 @@ def mark_channel_to_track_oncall(bot, trigger):
 
 @module.commands('untrack')
 @module.require_admin('You must be a bot admin to use this command')
-def unmark_channel_to_track_oncall(bot, trigger):
+def unmark_channel_track_oncall(bot, trigger):
     """Stops tracking on-call and shift lead rotations for channel."""
     if bot.db.get_channel_value(trigger.sender, 'monitoring'):
         bot.db.set_channel_value(trigger.sender, 'monitoring', None)
@@ -412,7 +412,7 @@ def say_karma(bot, trigger):
 #################
 # Bot intervals #
 #################
-# Update every 10 minutes
+# Update every 5 minutes
 @module.interval(300)
 def track_shift_rotation(bot):
     """ Sends a message if there was a change in the rotation withnin the last 10 minutes
