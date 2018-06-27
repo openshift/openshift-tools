@@ -88,7 +88,7 @@ def announce_shift(bot, channel, rotation):
         bot.say(lead, channel)
         bot.say(secondary, channel)
         bot.say(oncall, channel)
-    else: 
+    else:
         print("Failed to get channel value")
 
 def set_topic_to_shift(bot, channel, rotation):
@@ -126,9 +126,7 @@ def announce_escalation(bot, channel, rotation):
     stored_rotation = None
     try:
         stored_rotation = read_escalation_file(SHIFT_FILE)
-    # pylint disable:bare-except
     except:
-    # pylint enable:bare-except
         print("No 'SHIFT_FILE' file found")
     finally:
         if stored_rotation != rotation:
@@ -195,7 +193,7 @@ def unmark_channel_track_oncall(bot, trigger):
 
 @module.commands('shift-announce')
 @module.require_admin('You must be a bot admin to use this command')
-def mark_channel_for_announcements(bot, trigger):
+def mark_channel_announcements(bot, trigger):
     """Starts shift change announcements in channel if previously stopped."""
     if bot.db.get_channel_value(trigger.sender, 'monitoring'):
         if bot.db.get_channel_value(trigger.sender, 'announce'):
@@ -209,7 +207,7 @@ def mark_channel_for_announcements(bot, trigger):
 
 @module.commands('shift-unannounce')
 @module.require_admin('You must be a bot admin to use this command')
-def unmark_channel_for_announcements(bot, trigger):
+def unmark_channel_announcements(bot, trigger):
     """Stops shift change announcements in channel, while still allowing the other benefits of tracking
     the shift change schedule."""
     if bot.db.get_channel_value(trigger.sender, 'monitoring'):
