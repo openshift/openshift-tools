@@ -8,6 +8,7 @@ Licensed under the MIT license.
 """
 from __future__ import print_function
 from __future__ import unicode_literals
+import datetime
 from re import finditer
 import json
 import os
@@ -82,10 +83,13 @@ def announce_shift(bot, channel, rotation):
                               formatting.colors.RED)
 
     if bot.db.get_channel_value(channel, 'announce'):
+        print("Annoucing to channel " + str(channel))
         bot.say(hashline, channel)
         bot.say(lead, channel)
         bot.say(secondary, channel)
         bot.say(oncall, channel)
+    else:
+        print("Failed to get channel value")
 
 def set_topic_to_shift(bot, channel, rotation):
     """Sets topic to match the current shift information."""
@@ -115,19 +119,18 @@ def get_rotation():
             rotation[escalation_level[obj.get('escalation_level')]] = user.get('name')
     return rotation
 
-def announce_escalation(bot, channel):
+def announce_escalation(bot, channel, rotation):
     """This function pulls  current rotation from  pagerduty api and checks it against a local version of the rotation.
     If it differs it announces the new rotation and sets the topic to reflect that change.
     If it does not find a file with current state it will announce the rotation it got from the pagerduty api"""
-    rotation = get_rotation()
+    stored_rotation = None
     try:
         stored_rotation = read_escalation_file(SHIFT_FILE)
     except:
-        store_escalation(SHIFT_FILE, rotation)
-        announce_shift(bot, channel, rotation)
-        set_topic_to_shift(bot, channel, rotation)
-    else:
+        print("No 'SHIFT_FILE' file found")
+    finally:
         if stored_rotation != rotation:
+            print("Annoucing Rotation")
             store_escalation(SHIFT_FILE, rotation)
             announce_shift(bot, channel, rotation)
             set_topic_to_shift(bot, channel, rotation)
@@ -169,7 +172,7 @@ def display_karma(bot, channel, nick):
 ################
 @module.commands('track')
 @module.example('.track')
-def mark_channel_to_track_oncall(bot, trigger):
+def mark_channel_track_oncall(bot, trigger):
     """Begins tracking on-call and shift lead rotations."""
     bot.db.set_channel_value(trigger.sender, 'monitoring', True)
     bot.db.set_channel_value(trigger.sender, 'announce', True)
@@ -179,7 +182,7 @@ def mark_channel_to_track_oncall(bot, trigger):
 
 @module.commands('untrack')
 @module.require_admin('You must be a bot admin to use this command')
-def unmark_channel_to_track_oncall(bot, trigger):
+def unmark_channel_track_oncall(bot, trigger):
     """Stops tracking on-call and shift lead rotations for channel."""
     if bot.db.get_channel_value(trigger.sender, 'monitoring'):
         bot.db.set_channel_value(trigger.sender, 'monitoring', None)
@@ -190,7 +193,7 @@ def unmark_channel_to_track_oncall(bot, trigger):
 
 @module.commands('shift-announce')
 @module.require_admin('You must be a bot admin to use this command')
-def mark_channel_for_announcements(bot, trigger):
+def mark_channel_announcements(bot, trigger):
     """Starts shift change announcements in channel if previously stopped."""
     if bot.db.get_channel_value(trigger.sender, 'monitoring'):
         if bot.db.get_channel_value(trigger.sender, 'announce'):
@@ -204,7 +207,7 @@ def mark_channel_for_announcements(bot, trigger):
 
 @module.commands('shift-unannounce')
 @module.require_admin('You must be a bot admin to use this command')
-def unmark_channel_for_announcements(bot, trigger):
+def unmark_channel_announcements(bot, trigger):
     """Stops shift change announcements in channel, while still allowing the other benefits of tracking
     the shift change schedule."""
     if bot.db.get_channel_value(trigger.sender, 'monitoring'):
@@ -407,14 +410,18 @@ def say_karma(bot, trigger):
 #################
 # Bot intervals #
 #################
-# Update every 10 minutes
-@module.interval(600)
+# Update every 5 minutes
+@module.interval(300)
 def track_shift_rotation(bot):
     """ Sends a message if there was a change in the rotation withnin the last 10 minutes
     (if bot has appropriate channel permissions)."""
+
+    print("Checking shift rotation " + str(datetime.datetime.utcnow()))
+    rotation = get_rotation()
+
     for channel in bot.channels:
         if bot.db.get_channel_value(channel, 'monitoring'):
-            announce_escalation(bot, channel)
+            announce_escalation(bot, channel, rotation)
 
 
 ######################
