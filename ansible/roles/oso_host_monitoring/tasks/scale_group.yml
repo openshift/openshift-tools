@@ -104,17 +104,15 @@
         {{ lookup('file', '../files/container_metrics_config.yml') }}
       yum_tasks.yml: |
         {{ lookup('file', '../files/yum/yum_tasks.yml') }}
-
       rootlog_ssh_wrap_tasks.yml: |
         {{ lookup('file', '../files/rootlog_ssh_wrap/rootlog_ssh_wrap_tasks.yml') }}
       yum_repositories.yml: "{{ {'yum_repositories': osohm_yum_repo_list} | to_yaml }}"
-
       authorized_keys_tasks.yml: |
         {{ lookup('file', '../files/authorized_keys/authorized_keys_tasks.yml') }}
-
       docker_config_tasks.yml: |
         {{ lookup('file', '../files/docker_config/docker_config_tasks.yml') }}
-
+      operations_tasks.yml: |
+        {{ lookup('file', '../files/operations/operations_tasks.yml') }}
 
       # this requires clusterid to be translated and cannot be moved to files unless that is solved
       monitoring_config_tasks.yml: |
@@ -150,6 +148,9 @@
 
           - name: Import monitoring config tasks
             import_tasks: /opt/config/monitoring_config_tasks.yml
+
+          - name: setup operations tasks
+            import_tasks: /opt/config/operations_tasks.yml
 
       operations_config.sh: |
         #!/bin/bash
