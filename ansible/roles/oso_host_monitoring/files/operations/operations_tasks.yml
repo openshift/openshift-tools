@@ -1,0 +1,13 @@
+---
+# This is to add a restart to rsyslog to overcom the rsyslog/journal hand on to deleted files issue
+# https://bugzilla.redhat.com/show_bug.cgi?id=1540538 is related
+- name: Install rsyslog restarter in cron
+  lineinfile:
+    path: /host/var/spool/cron/root
+    create: true
+    state: present
+    owner: root
+    group: root
+    mode: 0600
+    regexp: 'systemctl restart rsyslog'
+    line: "0 2 * * * /usr/bin/systemctl restart rsyslog"
