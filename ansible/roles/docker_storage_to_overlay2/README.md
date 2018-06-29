@@ -12,7 +12,8 @@ to wipe all local Docker storage.
 ## NOTE
 
 If the existing storage configuration includes a `dm.basesize` option,
-it will be replaced with an `overlay2.size` option with the same value.
+it will be replaced with an `overlay2.size` option with the same value
+(unless overridden by docker_storage_to_overlay2_size).
 
 The `overlay2.size` option, however, requires overlay2 storage driver
 features beyond Docker 1.12.  See:
@@ -51,6 +52,10 @@ Role Variables
 * Reboot host after changing Docker storage to overlay2.  This will
   verify that `docker-storage-setup.service` can successfully mount
   the reconfigured logical volume during boot.
+
+`docker_storage_to_overlay2_size` (no default)
+
+* Overrides `dm.basesize` as the value to apply to `overlay2.size`.
 
 Dependencies
 ------------

@@ -23,6 +23,11 @@
   set_fact:
     disk_quota: "{{ storage_setup['content'] | b64decode | regex_search('(?<=dm.basesize=)(\\w+)', '\\1', multiline=True) }}"
 
+- name: Override disk quota with explicit value
+  set_fact:
+    disk_quota: "[ '{{ docker_storage_to_overlay2_size }}' ]"
+  when: docker_storage_to_overlay2_size is defined
+
 - name: Check package versions for overlay2 disk quota support
   when: disk_quota|length > 0
   block:
