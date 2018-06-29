@@ -226,7 +226,7 @@ def update_topic(bot, trigger):
     """Allows for force-updating a tracked channel's topic."""
     if bot.db.get_channel_value(trigger.sender, 'monitoring'):
         rotation = get_rotation()
-        announce_shift(bot, trigger.sender, rotation)
+        set_topic_to_shift(bot, trigger.sender, rotation)
     else:
         bot.say('I\'m not currently tracking this channel. Check out .help track')
 
