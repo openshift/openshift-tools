@@ -912,7 +912,7 @@ g_template_openshift_master:
     priority: info
 
   - name: "Mass Eviction on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.cluster.event.evicted.delta()}>25"
+    expression: "{Template Openshift Master:openshift.master.cluster.event.evicted.delta(1)}>25"
     priority: high
 
   # Put triggers that depend on other triggers here (deps must be created first)
