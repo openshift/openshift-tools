@@ -561,3 +561,6 @@ event_watcher_config:
   FailedScheduling:
     - pattern: failed to fit in any node
       zbx_key: openshift.master.cluster.event.failedscheduling
+  Evicted:
+    - pattern: The node was low on resource
+      zbx_key: openshift.master.cluster.event.evicted
