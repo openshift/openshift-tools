@@ -107,6 +107,12 @@ g_template_openshift_master:
     applications:
     - Openshift Cluster
 
+  - key: openshift.master.cluster.event.evicted
+    description: "Count of Evicted events reported"
+    value_type: int
+    applications:
+    - Openshift Master
+
   - name: openshift.master.app.create
     applications:
     - Openshift Master
@@ -904,6 +910,10 @@ g_template_openshift_master:
     expression: "{Template Openshift Master:openshift.stuck_builds.new.last()}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/stuck_build_alerts.asciidoc"
     priority: info
+
+  - name: "Mass Eviction on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.cluster.event.evicted.delta()}>25"
+    priority: high
 
   # Put triggers that depend on other triggers here (deps must be created first)
   - name: "Application creation has failed on {HOST.NAME}"
