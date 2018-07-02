@@ -91,7 +91,7 @@ class ClamLogSrv(object):
     def main(self):
         """ Main function. """
 
-        start_http_server(8000)
+        start_http_server(8002)
         self.check_srv()
 
 

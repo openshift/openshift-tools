@@ -220,7 +220,7 @@ class ClamLogSrv(object):
         args = self.check_arguments()
 
         if args.servername and args.port and args.logfile:
-            start_http_server(8000)
+            start_http_server(8001)
             self.start_serve(args.servername, args.port, args.logfile)
 
         else:

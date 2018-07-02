@@ -27,6 +27,72 @@ objects:
       importPolicy:
         scheduled: true
       name: latest
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: monitor-orchestrator
+    namespace: openshift-image-inspector
+    labels:
+      k8s-app: monitor-orchestrator
+  spec:
+    ports:
+    - name: orchestrator
+      port: 8000
+      protocol: TCP
+      targetPort: 8000
+    selector:
+      k8s-app: monitor-orchestrator
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: monitor-scanlog-listener
+    namespace: openshift-image-inspector
+    labels:
+      k8s-app: monitor-scanlog-listener
+  spec:
+    ports:
+    - name: scanlog-listener
+      port: 8001
+      protocol: TCP
+      targetPort: 8001
+    selector:
+      k8s-app: monitor-scanlog-listener
+- apiVersion: monitoring.coreos.com/v1
+  kind: ServiceMonitor
+  metadata:
+    name: monitor-orchestrator
+    namespace: openshift-image-inspector
+    labels:
+      k8s-app: monitor-orchestrator
+  spec:
+    jobLabel: k8s-app
+    endpoints:
+    - port: 8000
+      interval: 30s
+    selector:
+      matchLabels:
+        k8s-app: monitor-orchestrator
+    namespaceSelector:
+      matchNames:
+      - openshift-image-inspector
+- apiVersion: monitoring.coreos.com/v1
+  kind: ServiceMonitor
+  metadata:
+    name: monitor-scanlog-listener
+    namespace: openshift-image-inspector
+    labels:
+      k8s-app: monitor-scanlog-listener
+  spec:
+    jobLabel: k8s-app
+    endpoints:
+    - port: 8001 
+      interval: 30s
+    selector:
+      matchLabels:
+        k8s-app: monitor-scanlog-listener
+    namespaceSelector:
+      matchNames:
+      - openshift-image-inspector
 - apiVersion: extensions/v1beta1
   kind: DaemonSet
   metadata:

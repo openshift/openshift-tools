@@ -111,6 +111,15 @@
   run_once: true
   ignore_errors: true
 
+- name: "label {{ oii_namespace }} project"
+  oc_label:
+    state: present
+    kind: namespace
+    name: "{{ oii_namespace }}"
+    labels:
+    - key: openshift.io/cluster-monitoring
+      value: "true"
+
 - name: Label compute nodes
   oc_label:
     selector: "{{ item }}" 
