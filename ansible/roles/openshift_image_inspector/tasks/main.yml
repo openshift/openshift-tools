@@ -81,7 +81,7 @@
     files: "{{ tempdir }}/image-inspector.yml"
     debug: true
     force: true
-    delete_after: true
+    delete_after: false
   when:  templatelist['results']['results'][0]['items'] | length < 1
 
 - name: Get the address of the registry
@@ -98,18 +98,26 @@
   register: podlist
 
 - name: "Create bc,is,ds for apps in {{ oii_namespace }} from template"
-  oc_process:
-    namespace: "{{ oii_namespace }}"
-    template_name: oso-image-inspector
-    content: "{{ lookup('file', 'files/image-inspector.yml') }}"
-    create: True
-    params:
-      PLAT: rhel7
-      NAMESPACE: "{{ registry_ip['stdout'] }}/{{ oii_namespace }}"
+  shell: "oc process -l name={{ oii_namespace }} -f {{ tempdir }}/image-inspector.yml -p PLAT=rhel7 -p NAMESPACE={{ registry_ip['stdout'] }}/{{ oii_namespace }} | oc create -n {{ oii_namespace }} -f -"
   when: podlist['results']['results'][0]['items'] | length < 1
   delegate_to: "{{ cluster_master }}"
   run_once: true
   ignore_errors: true
+
+# module is deprecated, not longer works for 3.10+
+#- name: "Create bc,is,ds for apps in {{ oii_namespace }} from template"
+#  oc_process:
+#    namespace: "{{ oii_namespace }}"
+#    template_name: oso-image-inspector
+#    content: "{{ lookup('file', 'files/image-inspector.yml') }}"
+#    create: True
+#    params:
+#      PLAT: rhel7
+#      NAMESPACE: "{{ registry_ip['stdout'] }}/{{ oii_namespace }}"
+#  when: podlist['results']['results'][0]['items'] | length < 1
+#  delegate_to: "{{ cluster_master }}"
+#  run_once: true
+#  ignore_errors: true
 
 - name: "label {{ oii_namespace }} project"
   oc_label:

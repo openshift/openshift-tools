@@ -67,7 +67,7 @@ objects:
   spec:
     jobLabel: k8s-app
     endpoints:
-    - port: 8000
+    - port: "8000"
       interval: 30s
     selector:
       matchLabels:
@@ -85,7 +85,7 @@ objects:
   spec:
     jobLabel: k8s-app
     endpoints:
-    - port: 8001 
+    - port: "8001"
       interval: 30s
     selector:
       matchLabels:
