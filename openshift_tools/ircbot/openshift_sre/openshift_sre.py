@@ -15,7 +15,6 @@ import os
 import pypd
 from sopel import module
 from sopel import formatting
-from sopel.config.types import StaticSection, FilenameAttribute
 
 ###########################
 # Configuration constants #
@@ -30,35 +29,6 @@ SNOW_URL = 'https://url.corp.redhat.com/OpenShift-SRE-Service-Request-Form'
 SNOW_SEARCH = 'https://redhat.service-now.com/surl.do?n='
 SNOW_QUEUE = 'https://redhat.service-now.com/nav_to.do?uri=%2Fhome_splash.do%3Fsysparm_direct%3Dtrue'
 SFDC_URL = 'https://access.redhat.com/support/cases/#/case/'
-
-##############################
-# Configuration file section #
-###############################
-class SreSection(StaticSection):
-    """Defines the config section for OpenShift SRE"""
-    google_service_account_file = FilenameAttribute('google_service_account_file',
-                                                    directory=False,
-                                                    default='service_account.json')
-    """File generated from a Google Cloud project (https://console.developers.google.com).
-
-    In a project, generate a service_account file from
-    APIs & services > Credentials > Create credentials > Service account key.
-    Also, be sure to enable Google Drive API.
-    """
-
-
-def configure(config):
-    """Adds SreSection to config"""
-    config.define_section('openshift_sre', SreSection)
-    config.openshift_sre.configure_setting(
-        'google_service_account_file',
-        'Enter the path to your service_account.json file.'
-    )
-
-
-def setup(bot):
-    """Sets up config with defaults in the case of missing SreSection"""
-    bot.config.define_section('openshift_sre', SreSection)
 
 
 ###############################################################
@@ -126,7 +96,7 @@ def announce_escalation(bot, channel, rotation):
     stored_rotation = None
     try:
         stored_rotation = read_escalation_file(SHIFT_FILE)
-    except:
+    except IOError:
         print("No 'SHIFT_FILE' file found")
     finally:
         if stored_rotation != rotation:
