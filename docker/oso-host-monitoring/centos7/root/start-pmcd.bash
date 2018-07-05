@@ -20,4 +20,5 @@ cd $PCP_VAR_DIR/pmns
 ./Rebuild
 
 cd $PCP_LOG_DIR
-exec /usr/libexec/pcp/bin/pmcd -A -f -l /dev/no-such-file -H $PCP_NODE_HOSTNAME
+exec /usr/libexec/pcp/bin/pmcd -A -f -l /dev/no-such-file -i 127.0.0.1 -H $PCP_NODE_HOSTNAME
+
