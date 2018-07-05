@@ -40,6 +40,8 @@ COPY check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
 # So just install atomic-openshift-clients before python-openshift-tools-monitoring-openshift
 # until the yum repo is cleared of the older packages.
 RUN yum-install-check.sh -y atomic-openshift-clients openshift-hypercc && yum clean metadata
+
+RUN mkdir -p /etc/selinux/ && touch /etc/selinux/config
 {% endif %}
 
 
@@ -81,7 +83,6 @@ RUN yum clean metadata && \
         libyaml-devel \
         oso-simplesamlphp \
         python2-ruamel-yaml \
-        python-pygithub \
         rpm-sign \
         createrepo \
         python2-boto3 \
