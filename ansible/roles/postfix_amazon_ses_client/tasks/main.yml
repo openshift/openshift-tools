@@ -43,7 +43,7 @@
   lineinfile:
     dest: /etc/postfix/sasl_passwd
     regexp: "^.*{{ pfases_amazon_ses_server }}.*"
-    line: "[{{ pfases_amazon_ses_server }}]:25 {{ pfases_amazon_ses_username }}:{{ g_aws_ses_smtp_password }}"
+    line: "[{{ pfases_amazon_ses_server }}]:25 {{ pfases_amazon_ses_username }}:{{ pfases_amazon_ses_password }}"
     create: yes
     state: present
     mode: 0600
