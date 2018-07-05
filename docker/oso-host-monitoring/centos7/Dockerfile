@@ -72,7 +72,6 @@ RUN yum clean metadata && \
         libyaml-devel \
         oso-simplesamlphp \
         python2-ruamel-yaml \
-        python-pygithub \
         rpm-sign \
         createrepo \
         python2-boto3 \
