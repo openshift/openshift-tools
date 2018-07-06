@@ -44,6 +44,8 @@ COPY check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
 # until the yum repo is cleared of the older packages.
 RUN yum-install-check.sh -y atomic-openshift-clients openshift-hypercc && yum clean metadata
 
+RUN mkdir -p /etc/selinux/ && touch /etc/selinux/config && echo "SELINUX=disabled" >> /etc/selinux/config
+
 
 # Add google-cloud-sdk repo
 COPY google-cloud-sdk.repo /etc/yum.repos.d/
