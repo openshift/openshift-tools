@@ -36,5 +36,11 @@ check-pmcd-status.sh &
 echo
 echo 'Starting crond'
 echo '---------------'
+
+#TODO: remove this. selinux is causing problems with crond in some clusters.
+echo "Remove this: setenforce 0"
+setenforce 0
+#ENDTODO
+
 exec /usr/sbin/crond -n -m off
 
