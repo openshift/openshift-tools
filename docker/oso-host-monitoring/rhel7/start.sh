@@ -42,5 +42,4 @@ echo "Remove this: setenforce 0"
 setenforce 0
 #ENDTODO
 
-exec /usr/sbin/crond -n -m off
-
+exec /usr/sbin/crond -n -m off -x sch,proc,load
