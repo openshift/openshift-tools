@@ -6,8 +6,10 @@ docker_storage_to_overlay2_storage_setup_path: "/etc/sysconfig/docker-storage-se
 docker_storage_to_overlay2_service_names:
 - "docker.service"
 
+# Optional services are started in reverse order.
 docker_storage_to_overlay2_optional_service_names:
 - "atomic-openshift-node.service"
+- "atomic-openshift-master-api.service"
 
 docker_storage_to_overlay2_package_requirements:
 
