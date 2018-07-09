@@ -33,13 +33,15 @@ check-pmcd-status.sh &
 /root/autoheal-check-ovs-socket.sh &
 
 # Run the main service of this container
+#
+# SELinux is always active on the underlying host.  Separately, crond fails to
+# start inside the container if SELinux appears to be running separately inside.
+# This might have started when other packages installed policy files which are
+# unused but seen as present.  To rememdy, we use setenforce to make this clearer.
+
 echo
 echo 'Starting crond'
 echo '---------------'
 
-#TODO: remove this. selinux is causing problems with crond in some clusters.
-echo "Remove this: setenforce 0"
 setenforce 0
-#ENDTODO
-
 exec /usr/sbin/crond -n -m off -x sch,proc,load
