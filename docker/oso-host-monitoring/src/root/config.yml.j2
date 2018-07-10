@@ -62,7 +62,7 @@
     - name: find kubeconfig exact file name
       find:
         paths: "/etc/origin/node"
-        patterns: "system*kubeconfig"
+        patterns: "*node*kubeconfig"
         use_regex: False
       register: files
 {% endraw %}
