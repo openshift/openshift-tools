@@ -12,7 +12,7 @@ class PlaybookExecutor(object):
 
     # pylint: disable=too-many-arguments
     def __init__(self, playbooks_dir, cluster_id=None, log_dir=None, inventory=None,
-                 openshift_ansible=False, env=None, verbose=False
+                 openshift_ansible=False, env=None, verbose=False,
                  ansible_playbook_cmd_path='/usr/bin/ansible-playbook'):
         """ init the playbook executor """
 
