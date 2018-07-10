@@ -48,7 +48,7 @@ class PlaybookExecutor(object):
         if time:
             cmd += ['/usr/bin/time', '-p']
 
-        cmd += [ansible_playbook_cmd_path]
+        cmd += [self.ansible_playbook_cmd_path]
 
         if self.verbose or verbose:
             cmd += ['-vvv']
