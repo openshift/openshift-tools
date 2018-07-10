@@ -11,13 +11,15 @@ class PlaybookExecutor(object):
     """ Helper class to execute playbooks targeting a cluster. """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, playbooks_dir, cluster_id=None, log_dir=None, inventory=None, openshift_ansible=False, env=None,
-                 verbose=False):
+    def __init__(self, playbooks_dir, cluster_id=None, log_dir=None, inventory=None,
+                 openshift_ansible=False, env=None, verbose=False
+                 ansible_playbook_cmd_path='/usr/bin/ansible-playbook'):
         """ init the playbook executor """
 
         self.playbooks_dir = playbooks_dir
         self.cluster_id = cluster_id
         self.openshift_ansible = openshift_ansible
+        self.ansible_playbook_cmd_path = ansible_playbook_cmd_path
         self.log_dir = log_dir
         self.inventory = inventory
         self.env = env
@@ -46,7 +48,7 @@ class PlaybookExecutor(object):
         if time:
             cmd += ['/usr/bin/time', '-p']
 
-        cmd += ['/usr/bin/ansible-playbook']
+        cmd += [ansible_playbook_cmd_path]
 
         if self.verbose or verbose:
             cmd += ['-vvv']
