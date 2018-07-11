@@ -121,6 +121,7 @@
       configure_host.yml: |
         ---
         - hosts: localhost
+          gather_facts: false
           tasks:
           # base setup
           - name: create the openshift_tools directory
