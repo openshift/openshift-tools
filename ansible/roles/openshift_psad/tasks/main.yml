@@ -1,0 +1,110 @@
+---
+- name: Create temp directory to store the template
+  command: mktemp -d /tmp/openshift-psad-ansible-XXXXXX
+  register: mktemp
+  changed_when: False
+
+- set_fact:
+    tempdir: "{{ mktemp.stdout }}"
+
+- name: "create project for {{ opsad_namespace }}"
+  oc_project:
+    name: "{{ opsad_namespace }}"
+    display_name: "{{ opsad_namespace }}"
+    description: PSAD Scanning Service
+  retries: 12
+  delay: 5
+
+- name: create psadsa serviceaccount
+  oc_serviceaccount:
+    name: psadsa
+    namespace: "{{ opsad_namespace }}" 
+
+- name: set service account permissions
+  command: "oc adm policy {{ item.r_kind }} {{ item.r_name }} system:serviceaccount:{{ opsad_namespace }}:psadsa"
+  run_once: true
+  ignore_errors: true
+  with_items:
+  - r_kind: add-cluster-role-to-user
+    r_name: cluster-reader
+  - r_kind: add-scc-to-user
+    r_name: privileged
+
+  # running as command until oc_secret supports config file image secrets
+- name: "Create image pull secret"
+  command: "oc secrets new dockercfgjson .dockerconfigjson=/var/lib/origin/.docker/config.json -n {{ opsad_namespace }}"
+  run_once: true
+  ignore_errors: true
+
+- name: "annotate {{ opsad_namespace }} project"
+  command: "oc annotate ns {{ opsad_namespace }} openshift.io/node-selector=psad-enabled=True"
+  run_once: true
+  ignore_errors: true
+
+- name: "Create psad secrets for {{ opsad_namespace }}"
+  oc_secret:
+    namespace: "{{ opsad_namespace }}"
+    name: oso-psad-secrets
+    contents:
+    - path: aws_config.yml
+      data: "{{ opsad_aws_config_content }}"
+    - path: scanlog_bucket_rw
+      data: "{{ opsad_aws_creds_content }}" 
+    - path: metric_sender.yaml
+      data: "{{ opsad_zagg_config }}" 
+
+- name: "Check to see if template already exists in {{ opsad_namespace }}"
+  oc_obj:
+    state: list
+    namespace: "{{ opsad_namespace }}"
+    kind: templates
+  register: templatelist
+
+- name: copy psad template
+  copy:
+    src: psad.yml
+    dest: "{{ tempdir }}/psad.yml"
+
+- name: Set psad template
+  oc_obj:
+    kind: template
+    name: psad
+    namespace: "{{ opsad_namespace }}" 
+    state: present
+    files: "{{ tempdir }}/psad.yml"
+    debug: true
+    force: true
+    delete_after: false
+
+- name: Get the address of the registry
+  shell: "oc get service -n default docker-registry --template={% raw %}'{{.spec.clusterIP}}:{{(index .spec.ports 0).port}}'{% endraw %}"
+  register: registry_ip
+  run_once: true
+  when: registry_ip is not defined
+
+- name: "Check to see if psad pods exist in {{ opsad_namespace }}"
+  oc_obj:
+    state: list
+    namespace: "{{ opsad_namespace }}"
+    kind: pods
+  register: podlist
+
+- name: "Create bc,is,ds for apps in {{ opsad_namespace }} from template"
+  shell: "oc process -l name={{ opsad_namespace }} -f {{ tempdir }}/psad.yml -p PLAT=rhel7 -p NAMESPACE={{ registry_ip['stdout'] }}/{{ opsad_namespace }} | oc create -n {{ opsad_namespace }} -f -"
+  run_once: true
+  ignore_errors: true
+
+- name: Label nodes
+  oc_label:
+    selector: "{{ item }}" 
+    kind: node
+    state: add
+    labels:
+      - key: psad-enabled
+        value:  true
+  with_items: "{{ opsad_nodes }}"
+
+- name: "ensure crio nodes are not among those labeled"
+  command: "oc label nodes --selector=runtime=cri-o psad-enabled=false --overwrite"
+  run_once: true
+  ignore_errors: true

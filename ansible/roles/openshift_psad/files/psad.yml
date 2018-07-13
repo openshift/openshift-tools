@@ -1,0 +1,101 @@
+---
+apiVersion: v1 
+kind: Template
+metadata:
+  creationTimestamp: null
+  generation: 1
+  labels:
+    provider: openshift
+    psad-host: "true"
+    component: psad
+  name: oso-psad 
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-psad
+    name: "oso-${PLAT}-psad"
+  spec:
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "registry.reg-aws.openshift.com:443/openshift-psad/oso-${PLAT}-psad:latest"
+        pullSecret:
+          name: dockercfgjson
+      importPolicy:
+        scheduled: true
+      name: latest
+- apiVersion: extensions/v1beta1
+  kind: DaemonSet
+  metadata:
+    labels:
+      template: oso-psad
+      component: psad
+    name: oso-psad
+  selector:
+    matchLabels:
+      name: oso-psad
+  spec:
+    strategy:
+      resources: {}
+      type: Rolling
+    template:
+      metadata:
+        creationTimestamp: null
+        name: oso-psad
+        labels:
+          name: oso-psad
+          component: psad
+      spec:
+        containers:
+        - env:
+          - name: OO_PAUSE_ON_START
+            value: "false"
+          image: "${NAMESPACE}/oso-${PLAT}-psad:latest"
+          imagePullPolicy: Always
+          name: oso-psad 
+          resources: {}
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /host
+            name: oso-psad-host-filesystem
+          - mountPath: /secrets
+            name: oso-psad-secrets
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          psad-enabled: "True"
+        restartPolicy: Always
+        securityContext: {}
+        serviceAccount: psadsa
+        serviceAccountName: psadsa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: oso-psad-host-filesystem
+          hostPath:
+            path: /
+        - name: oso-psad-secrets
+          secret:
+            secretName: oso-psad-secrets
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-psad
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-psad:latest"
+      type: ImageChange
+parameters:
+- description: Platform name
+  name: PLAT
+  value: rhel7
+- description: Project name
+  name: NAMESPACE
+  value: openshift-psad
