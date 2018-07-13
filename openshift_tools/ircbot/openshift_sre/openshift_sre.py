@@ -80,13 +80,15 @@ def get_rotation():
     escalation_level = {1:'Shift Lead', 2:'Shift Secondary', 3:'Oncall', 4:'Management Escalation'}
     rotation = {}
     for obj in oncall:
-        on_call_user = obj.get('user')
-        user_name = on_call_user.get('summary')
-        user = pypd.User.find_one(name=user_name)
-        if user.get('description') != None:
-            rotation[escalation_level[obj.get('escalation_level')]] = user.get('description')
-        else:
-            rotation[escalation_level[obj.get('escalation_level')]] = user.get('name')
+        esc_level = obj.get('escalation_level')
+        if esc_level <= 4:
+            on_call_user = obj.get('user')
+            user_name = on_call_user.get('summary')
+            user = pypd.User.find_one(name=user_name)
+            if user.get('description') != None:
+                rotation[escalation_level[obj.get('escalation_level')]] = user.get('description')
+            else:
+                rotation[escalation_level[obj.get('escalation_level')]] = user.get('name')
     return rotation
 
 def announce_escalation(bot, channel, rotation):
