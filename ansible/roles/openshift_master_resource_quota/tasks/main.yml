@@ -2,6 +2,12 @@
 # Quota support
 # Can disable quota support by passing in "osmrq_enable_quota: False"
 #
+- name: Lookup OpenShift version for determing quota settings
+  oc_version:
+  register: oc_version
+
+- debug: var=oc_version
+
 - name: label designated projects to exclude from pv quotas
   oc_label:
     state: add
@@ -22,7 +28,7 @@
       path: /tmp/osmrq_persistent_volume_quota
       data:
         kind: ClusterResourceQuota
-        apiVersion: v1
+        apiVersion: "{{ (oc_version.results.oc_short == '3.7') | ternary('v1', 'quota.openshift.io/v1') }}"
         metadata:
           name: persistent-volume
         spec:
