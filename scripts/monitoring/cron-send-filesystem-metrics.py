@@ -58,7 +58,8 @@ def filter_out_container_root(metric_dict):
 
 def filter_out_customer_pv_filesystems(metric_dict):
     """ Remove customer PVs from list """
-    r = re.compile("^/dev/xvd[a-z]{2}$")
+    r = re.compile("^/dev/(?:xvd[a-z]{2}|nvme[2-9].*)$")
+    # filter out xvda{2} (???) and nvme devices past 2
 
     return {
         k:v for (k, v) in metric_dict.iteritems() if not r.match(k)
