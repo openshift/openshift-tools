@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.144
+Version:       0.1.145
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -498,6 +498,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Jul 25 2018 Alex Chvatal <achvatal@redhat.com> 0.1.145-1
+- exclude customer PVs from being monitored by cron-send-filesystem-metrics
+
 * Wed Jun 20 2018 Stefanie Forrester <sedgar@redhat.com> 0.1.144-1
 - add gluster deployer to jenkins (sedgar@redhat.com)
 
