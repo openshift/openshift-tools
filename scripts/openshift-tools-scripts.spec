@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.145
+Version:       0.1.146
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -498,6 +498,16 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Jul 25 2018 Ivan Horvath <ihorvath@redhat.com> 0.1.146-1
+- update the openshift-tools-scripts rpm to include customer PV filter
+  (achvatal@redhat.com)
+- exclude nvme volumes that were being incorrectly included
+  (achvatal@redhat.com)
+- update the filesystem metrics check to filter out customer PVs
+  (achvatal@redhat.com)
+- catching edge case where rec_js['results']['description'] key does not exist
+  (dedgar@redhat.com)
+
 * Wed Jul 25 2018 Alex Chvatal <achvatal@redhat.com> 0.1.145-1
 - exclude customer PVs from being monitored by cron-send-filesystem-metrics
 
