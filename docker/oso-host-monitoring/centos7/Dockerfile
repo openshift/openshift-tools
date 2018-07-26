@@ -63,7 +63,6 @@ RUN yum clean metadata && \
         pcp-manager pcp-webapi python-pcp \
         python-httplib2 \
         python2-pyasn1 python2-pyasn1-modules python2-rsa \
-        openvswitch \
         python-configobj \
         python2-psutil \
         pylint \

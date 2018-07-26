@@ -20,24 +20,6 @@ g_template_openshift_node:
     applications:
     - Openshift Node
 
-  - key: openshift.node.ovs.pids.count
-    description: Shows number of ovs process ids running
-    value_type: int
-    applications:
-    - Openshift Node
-
-  - key: openshift.node.ovs.ports.count
-    description: Shows number of OVS ports defined
-    value_type: int
-    applications:
-    - Openshift Node
-
-  - key: openshift.node.ovs.stray.rules
-    description: Number of OVS stray rules found/removed
-    value_type: int
-    applications:
-    - Openshift Node
-
   - key: openshift.haproxy.close-wait
     description: Number of haproxy processes found in CLOSE-WAIT state
     value_type: int
@@ -121,17 +103,3 @@ g_template_openshift_node:
     url: "https://github.com/openshift/ops-sop/blob/node/v3/alerts/openshift_node.asciidoc"
     priority: high
 
-  - name: "[Heal] OVS may not be running on {HOST.NAME}"
-    expression: "({Template Openshift Node:openshift.node.ovs.pids.count.last(#1)}<>4 and {Template Openshift Node:openshift.node.ovs.pids.count.last(#2)}<>4) and ({Template Openshift Node:openshift.node.ovs.pids.count.last(#1)}<>2 and {Template Openshift Node:openshift.node.ovs.pids.count.last(#2)}<>2)"
-    url: "https://github.com/openshift/ops-sop/blob/node/v3/alerts/openshift_node.asciidoc"
-    priority: high
-
-  - name: "Number of OVS ports is 0 on {HOST.NAME}"
-    expression: "{Template Openshift Node:openshift.node.ovs.ports.count.last()}=0"
-    url: "https://github.com/openshift/ops-sop/blob/node/v3/alerts/openshift_node.asciidoc"
-    priority: high
-
-  - name: "{HOST.NAME} is missing from AWS ELB"
-    expression: "{Template Openshift Node:openshift.node.ovs.ports.count.last()}=1"
-    url: "https://github.com/openshift/ops-sop/blob/node/v3/alerts/check_elb_status.asciidoc"
-    priority: average

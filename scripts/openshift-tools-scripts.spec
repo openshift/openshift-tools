@@ -31,7 +31,6 @@ cp -p monitoring/cron-send-filesystem-metrics.py %{buildroot}/usr/bin/cron-send-
 cp -p monitoring/cron-send-pcp-sampled-metrics.py %{buildroot}/usr/bin/cron-send-pcp-sampled-metrics
 cp -p monitoring/ops-runner.py %{buildroot}/usr/bin/ops-runner
 cp -p monitoring/cron-event-watcher.py %{buildroot}/usr/bin/cron-event-watcher
-cp -p monitoring/cron-send-ovs-status.py %{buildroot}/usr/bin/cron-send-ovs-status
 cp -p monitoring/cron-send-pcp-ping.sh %{buildroot}/usr/bin/cron-send-pcp-ping
 cp -p monitoring/cron-send-etcd-status.py %{buildroot}/usr/bin/cron-send-etcd-status
 cp -p monitoring/cron-send-disk-metrics.py %{buildroot}/usr/bin/cron-send-disk-metrics
@@ -51,7 +50,6 @@ cp -p monitoring/cron-send-docker-oc-versions.py %{buildroot}/usr/bin/cron-send-
 cp -p monitoring/ops-zbx-event-processor.py %{buildroot}/usr/bin/ops-zbx-event-processor
 cp -p monitoring/cron-send-os-skydns-checks.py %{buildroot}/usr/bin/cron-send-os-skydns-checks
 cp -p monitoring/cron-send-os-dnsmasq-checks.py %{buildroot}/usr/bin/cron-send-os-dnsmasq-checks
-cp -p monitoring/cron-fix-ovs-rules.py %{buildroot}/usr/bin/cron-fix-ovs-rules
 cp -p monitoring/cron-send-aws-instance-health.py %{buildroot}/usr/bin/cron-send-aws-instance-health
 cp -p monitoring/cron-send-ec2-ebs-volumes-in-stuck-state.py %{buildroot}/usr/bin/cron-send-ec2-ebs-volumes-in-stuck-state
 cp -p monitoring/cron-send-create-app.py %{buildroot}/usr/bin/cron-send-create-app
@@ -231,14 +229,13 @@ OpenShift Tools script to scan running pod
 # ----------------------------------------------------------------------------------
 %package monitoring-autoheal
 Summary:       OpenShift Tools Monitoring Autoheal Scripts
-Requires:      python2,python-openshift-tools-monitoring-zagg,openvswitch
+Requires:      python2,python-openshift-tools-monitoring-zagg
 BuildArch:     noarch
 
 %description monitoring-autoheal
 OpenShift Tools Monitoring Autoheal Scripts
 
 %files monitoring-autoheal
-/usr/bin/cron-fix-ovs-rules
 /usr/bin/cron-haproxy-close-wait
 /usr/bin/delete-stuck-projects
 
@@ -364,7 +361,7 @@ OpenShift Tools GCP Monitoring Scripts
 # ----------------------------------------------------------------------------------
 %package monitoring-openshift
 Summary:       OpenShift Tools Openshift Product Scripts
-Requires:      python2,python-openshift-tools,python-openshift-tools-monitoring-openshift,python-openshift-tools-monitoring-zagg,openvswitch,python-dns
+Requires:      python2,python-openshift-tools,python-openshift-tools-monitoring-openshift,python-openshift-tools-monitoring-zagg,python-dns
 BuildRequires: python2-devel
 BuildArch:     noarch
 
@@ -374,7 +371,6 @@ OpenShift Tools Openshift Product Scripts
 %files monitoring-openshift
 %defattr(755,root,root)
 /usr/bin/cron-event-watcher
-/usr/bin/cron-send-ovs-status
 /usr/bin/cron-send-etcd-status
 /usr/bin/cron-send-os-master-metrics
 /usr/bin/cron-send-create-app
