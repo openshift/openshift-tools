@@ -41,7 +41,6 @@ COPY check-pmcd-status.sh /usr/local/bin/check-pmcd-status.sh
 # until the yum repo is cleared of the older packages.
 RUN yum-install-check.sh -y atomic-openshift-clients openshift-hypercc && yum clean metadata
 
-RUN mkdir -p /etc/selinux/ && touch /etc/selinux/config && echo "SELINUX=disabled" >> /etc/selinux/config
 {% endif %}
 
 
@@ -74,7 +73,6 @@ RUN yum clean metadata && \
         pcp-manager pcp-webapi python-pcp \
         python-httplib2 \
         python2-pyasn1 python2-pyasn1-modules python2-rsa \
-        openvswitch \
         python-configobj \
         python2-psutil \
         pylint \
