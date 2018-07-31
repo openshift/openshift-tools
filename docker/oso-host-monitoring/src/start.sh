@@ -41,5 +41,4 @@ echo
 echo 'Starting crond'
 echo '---------------'
 
-setenforce 0
 exec /usr/sbin/crond -n -m off -x sch,proc,load

@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.66
+Version:        0.0.67
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,9 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Jul 26 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.67-1
+- fixing some problems in host monitoring (ihorvath@redhat.com)
+
 * Wed Jul 25 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.66-1
 - fixed quota resource role to be idempotent for 3.9; ensured 3.7 works as well
   (mwoodson@redhat.com)
