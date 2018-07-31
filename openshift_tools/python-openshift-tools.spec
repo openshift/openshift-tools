@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.137
+Version:       0.0.138
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -315,6 +315,20 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Wed Jul 25 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.138-1
+- updated SREbot since there was a change on the pagerduty escalation policy
+  (#3659) (rafael-azevedo@users.noreply.github.com)
+- Another typo (jupierce@redhat.com)
+- Comma (jupierce@redhat.com)
+- Allowing override of ansible-playbook path (jupierce@redhat.com)
+- Remove references of Google Sheets usage (#3613) (will@thegordons.me)
+- corrected function call when running update_topic (#3604) (rafael-
+  azevedo@users.noreply.github.com)
+- Srebot update (#3596) (rafael-azevedo@users.noreply.github.com)
+- updated SREBOT to run every 10 minutes instead of every 15 seconds (#3593)
+  (rafael-azevedo@users.noreply.github.com)
+- Srebot update (#3587) (rafael-azevedo@users.noreply.github.com)
+
 * Thu May 31 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.137-1
 - changing logging in snapshot related parts (ihorvath@redhat.com)
 

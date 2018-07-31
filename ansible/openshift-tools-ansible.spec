@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.65
+Version:        0.0.67
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,38 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Jul 26 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.67-1
+- fixing some problems in host monitoring (ihorvath@redhat.com)
+
+* Wed Jul 25 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.66-1
+- fixed quota resource role to be idempotent for 3.9; ensured 3.7 works as well
+  (mwoodson@redhat.com)
+- added gather_facts to no on scalegroup pod (mwoodson@redhat.com)
+- fixed generate byo to include node group var on each node type
+  (mwoodson@redhat.com)
+- docker_storage_to_overlay2: Stop and restart API service
+  (mbarnes@fedoraproject.org)
+- fixed an ses var naming bug (mwoodson@redhat.com)
+- fix the same trigger name error for logging (zhizhang@redhat.com)
+- syntax error (achvatal@redhat.com)
+- 1 minute not 1 hour for the eviction trigger (achvatal@redhat.com)
+- actually track and notify based on the eviction data collected
+  (achvatal@redhat.com)
+- docker_storage_to_overlay2: Allow setting overlay2.size explicitly
+  (mbarnes@fedoraproject.org)
+- track evictions from the event stream (achvatal@redhat.com)
+- added a rsyslog restarter to scale group config pods to overcome rsyslog bug
+  (mwoodson@redhat.com)
+- ops-docker-loopback-to-direct-lvm.yml: Load docker_storage_setup defaults
+  (mbarnes@fedoraproject.org)
+- ops-docker-loopback-to-direct-lvm.yml: Update the template file name
+  (mbarnes@fedoraproject.org)
+- docker registry try, take 2 (mwoodson@redhat.com)
+- added docker registry symlinker in the daemoneset config loop pod thingy
+  (mwoodson@redhat.com)
+- catching edge case where rec_js['results']['description'] key does not exist
+  (dedgar@redhat.com)
+
 * Mon Jun 18 2018 Matthew Barnes <mbarnes@fedoraproject.org> 0.0.65-1
 - multi_inventory.py: Fix handling of boolean values
   (mbarnes@fedoraproject.org)
