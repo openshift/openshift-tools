@@ -60,10 +60,24 @@ class FilterModule(object):
 
         return None
 
+    # Taken and modified from https://github.com/openshift/openshift-ansible/blob/release-3.9/roles/lib_utils/filter_plugins/openshift_aws_filters.py#L55-L66
+
+    @staticmethod
+    def build_kube_instance_tags(clusterid):
+        ''' This function will return a dictionary of the AWS kubernetes instance tags.
+            The main desire to have this inside of a filter_plugin is that we
+            need to build the following key.
+            {"kubernetes.io/cluster/{{ openshift_aws_clusterid }}": "{{ openshift_aws_clusterid}}"}
+        '''
+        tags = {'kubernetes.io/cluster/{}'.format(clusterid): clusterid}
+
+        return tags
+
     def filters(self):
         ''' returns a mapping of filters to methods '''
         return {
             "get_volume_size_by_linux_device": self.get_volume_size_by_linux_device,
             "get_volume_id_by_linux_device": self.get_volume_id_by_linux_device,
             "vol_attrs": self.vol_attrs,
+            "build_kube_instance_tags": self.build_kube_instance_tags
         }
