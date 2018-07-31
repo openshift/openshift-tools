@@ -494,6 +494,7 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+
 * Thu Jul 26 2018 Ivan Horvath <ihorvath@redhat.com> 0.1.147-1
 - fixing some problems in host monitoring (ihorvath@redhat.com)
 
