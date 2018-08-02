@@ -1,0 +1,1 @@
+../../lib_utils/library/oo_azure_rm_publish_image.py

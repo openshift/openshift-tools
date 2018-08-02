@@ -1,0 +1,1 @@
+../../lib_utils/library/get_current_openshift_version.py
