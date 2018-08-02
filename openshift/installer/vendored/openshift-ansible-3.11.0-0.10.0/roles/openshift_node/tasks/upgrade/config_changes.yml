@@ -1,0 +1,36 @@
+---
+- name: Ensure the node static pod directory exists
+  file:
+    path: "{{ openshift.common.config_base }}/node/pods"
+    state: directory
+    mode: 0755
+
+- name: Ensure docker-registry directory exists
+  file:
+    state: directory
+    path: "/etc/docker/certs.d/docker-registry.default.svc:5000"
+
+- name: Update the docker-registry CA symlink
+  file:
+    src: "{{ openshift_node_config_dir }}/client-ca.crt"
+    dest: "/etc/docker/certs.d/docker-registry.default.svc:5000/node-client-ca.crt"
+    state: link
+    force: yes
+    follow: no
+
+- name: Reset selinux context
+  command: restorecon -RF {{ openshift_node_data_dir }}/openshift.local.volumes
+  when:
+  - ansible_selinux is defined
+  - ansible_selinux.status == 'enabled'
+
+- name: Update systemd units
+  import_tasks: ../systemd_units.yml
+
+# NOTE: This is needed to make sure we are using the correct set
+#       of systemd unit files. The RPMs lay down defaults but
+#       the install/upgrade may override them in /etc/systemd/system/.
+# NOTE: We don't use the systemd module as some versions of the module
+#       require a service to be part of the call.
+- name: Reload systemd units
+  command: systemctl daemon-reload
