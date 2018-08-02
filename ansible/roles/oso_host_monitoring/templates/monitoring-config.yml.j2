@@ -285,13 +285,14 @@ host_monitoring_cron:
 {% if osohm_master_ha|bool %}
 - name: send openshift-master process count
   minute: "*/30"
-  job: ops-runner -f -s 15 -n cspc.openshift.master.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start master controllers' openshift.master.process.count
+  job: ops-runner -f -s 15 -n cspc.openshift.master.process.count /usr/bin/cron-send-process-count '^(/usr/bin/)*openshift start master controllers' openshift.master.process.count
+
 {% endif %}
 
 {% if not osohm_master_ha|bool %}
 - name: send openshift-master process count
   minute: "*/30"
-  job: ops-runner -f -s 15 -n cspc.openshift.master.process.count /usr/bin/cron-send-process-count '^/usr/bin/openshift start master' openshift.master.process.count
+  job: ops-runner -f -s 15 -n cspc.openshift.master.process.count /usr/bin/cron-send-process-count '^(/usr/bin/)*openshift start master' openshift.master.process.count
 {% endif %}
 
 - name: send openshift-master local (test https://127.0.0.1) status
