@@ -69,7 +69,9 @@ metric_sender_config:
 {% if osohm_host_type == 'node' and osohm_monitor_dnsmasq|bool %}
     - Template dnsmasq          # So we can monitor dnsmasq
 {% endif %}
+{% if osohm_host_type != 'ansible-tower-node' %}
     - Template Docker           # So we can send docker related metrics
+{% endif %}
 {% if osohm_host_type == 'master' or osohm_host_type == 'node' %}
     - Template Openshift Node   # So we can send node related metrics
 {% endif %}
