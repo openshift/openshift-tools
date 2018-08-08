@@ -45,7 +45,7 @@
       msg: "cli_volume_size should be at least cli_var_size + {{ os_size_min }}" 
     when: "{{ cli_volume_size|int - cli_var_size|int }} < os_size_min|int "
 
-  - name: Need growpart script
+  - name: Ensure that cloud-utils-growpart is installed
     yum:
       name: cloud-utils-growpart
       state: installed 
@@ -76,8 +76,17 @@
   - name: set rootvg volume attributes
     set_fact:
       rootvg: "{{ rootvg_pv.stdout | vol_attrs }}"
- 
+
   - debug: var=rootvg
+
+  - name: debug attached_volumes.volumes
+    debug:
+      var: attached_volumes
+
+  - name: Fail if there are no attached volumes
+    fail:
+      msg: Unable to find any attached volumes. Please ensure that AWS_PROFILE and AWS_DEFAULT_REGION env vars are set.
+    when: attached_volumes.volumes | length < 1
 
   - name: get volume id of current rootvg volume
     set_fact:
@@ -87,7 +96,7 @@
 
   - fail:
       msg: "Unable to look up the volume ID of {{ rootvg.device }}"
-    when: rootvg_volume_id is undefined
+    when: rootvg_volume_id == ""
 
   - name: get volume size of current rootvg volume
     set_fact:
