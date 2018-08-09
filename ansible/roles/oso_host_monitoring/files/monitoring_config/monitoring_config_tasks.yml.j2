@@ -1,6 +1,6 @@
 ---
 - set_fact:
-    osohm_host_name: "{{ osohm_cluster_id }}-{{ osohm_host_type }}{% raw %}-{{ lookup('env', 'HOSTNAME') }}{% endraw %}"
+    osohm_host_name: "{{ osohm_cluster_id }}-{{ osohm_sub_host_type }}{% raw %}-{{ lookup('env', 'HOSTNAME') }}{% endraw %}"
 
 - name: copy monitoring config to shared config emptydir
   copy:
