@@ -40,12 +40,21 @@
         mode: 0660
 
     - name: copy inventory.sh into place
-      copy:
-        src: inventory.sh
+      template:
+        src: templates/inventory.sh.j2
         dest: /usr/local/bin/inventory.sh
         owner: root
         group: libra_ops
         mode: 0750
+
+    - name: copy ssh key for rsync crontab in place
+      copy:
+        src: "{{ oo_rsync_private_key }}"
+        dest: "/root/.ssh/bastion_key"
+        owner: root
+        group: root
+        mode: 600
+      when: oo_rsync_private_key is defined
 
     # This cron uses the above location to call its job
     - name: Cron to keep cache fresh
@@ -59,26 +68,6 @@
         name: 'multi_inventory at reboot'
         job: '/usr/bin/ops-runner -n cmirc.multi_inventory.refresh -t 120 /usr/local/bin/inventory.sh &> /dev/null'
         special_time: reboot
-
-    - name: copy ssh key for rsync crontab in place
-      copy:
-        src: "{{ oo_rsync_private_key }}"
-        dest: "/root/.ssh/bastion_key"
-        owner: root
-        group: root
-        mode: 600
-      when: oo_rsync_private_key is defined
-
-    - name: Cron to rsync cache to bastion hosts without secrets
-      cron:
-        name: "multi_inventory rsync to {{ item }}"
-        minute: "{{ oo_rsync_cache_minutes }}"
-        job: "/bin/rsync {{ oo_inventory_cache_location }} {{ item }}:{{ oo_inventory_cache_location }}"
-      with_items: "{{ oo_rsync_cache_targets }}"
-      when:
-        - oo_rsync_private_key is defined
-        - oo_rsync_cache_targets is defined
-        - oo_rsync_cache_minutes is defined
 
   when: oo_cron_refresh_cache is defined and oo_cron_refresh_cache
 
