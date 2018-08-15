@@ -20,7 +20,6 @@ from sopel import formatting
 # Configuration constants #
 ###########################
 DEBUG = False  # Debug sends debug messages to the bot owner via PRIVMSG
-SHIFT_FILE = 'SHIFT_STATE.json'
 SNOW_TICKET_REGEX = r'\b(?<!=)(?P<ticket>(TASK|REQ|RITM|INC|PRB|CHG)[0-9]{7})\b'
 SFDC_CASE_REGEX = r'\b(?<!/)(?<!=)(?P<case>[0-9]{8})\b'
 KARMA_REGEX = r'\b(?P<nick>[a-zA-Z0-9_\-\[\]{}^`|]+)(?P<direction>\+\+|--)'
@@ -95,6 +94,7 @@ def announce_escalation(bot, channel, rotation):
     """This function pulls  current rotation from  pagerduty api and checks it against a local version of the rotation.
     If it differs it announces the new rotation and sets the topic to reflect that change.
     If it does not find a file with current state it will announce the rotation it got from the pagerduty api"""
+    SHIFT_FILE=str(channel) + ".json"
     stored_rotation = None
     try:
         stored_rotation = read_escalation_file(SHIFT_FILE)
