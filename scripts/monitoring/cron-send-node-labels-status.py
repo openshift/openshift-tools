@@ -141,7 +141,7 @@ def check_label_on_host(host_labels):
 
             if value and (host_labels[key] != value):
                 # has key, requires value, but value not the same
-                logger.info('This node '+ hostname + ' needs label: [' + key + ']')
+                logger.info('This node '+ hostname + ' needs label: [' + key + '] which does not match required:' + value)
                 result = False
         else:
             # as long as one key is missed ,we think this node is wrong
