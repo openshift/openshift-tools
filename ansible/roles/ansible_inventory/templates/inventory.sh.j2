@@ -1,0 +1,30 @@
+#!/usr/bin/bash
+
+host=$(hostname -s)
+data=$(/usr/share/ansible/inventory/multi_inventory.py --refresh-cache 2>&1 1>/dev/null)
+
+rsync_err_count=0
+
+if [ -n "$data"  ]; then
+  # Log stderr from multi_inventory account refresh
+  echo "$(date "+%F %T") $data" >> /var/log/multi_inventory.log
+
+  err_count=$(echo "$data" | wc -l)
+else
+  err_count=0
+
+  # rsync cache to targets (might be nothing here depending on host, expect only on bastion-nasa-1/2)
+  for target in {{ oo_rsync_cache_targets | join(' ') }};
+  do
+      /bin/rsync {{ oo_inventory_cache_location }} $target:{{ oo_inventory_cache_location }}
+      RESULT=$?
+      if [ "$RESULT" != "0" ];
+      then
+          rsync_err_count=$((rsync_err_count+1))
+      fi
+  done
+fi
+
+# Send metrics
+ops-metric-client -s $host -k multi_inventory.account.refresh -o $err_count
+#ops-metric-client -s $host -k multi_inventory.account.refresh.rsync -o $rsync_err_count
