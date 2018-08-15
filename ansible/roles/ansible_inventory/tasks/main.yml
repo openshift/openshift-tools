@@ -40,12 +40,21 @@
         mode: 0660
 
     - name: copy inventory.sh into place
-      copy:
-        src: inventory.sh
+      template:
+        src: templates/inventory.sh.j2
         dest: /usr/local/bin/inventory.sh
         owner: root
         group: libra_ops
         mode: 0750
+
+    - name: copy ssh key for rsync crontab in place
+      copy:
+        src: "{{ oo_rsync_private_key }}"
+        dest: "/root/.ssh/bastion_key"
+        owner: root
+        group: root
+        mode: 600
+      when: oo_rsync_private_key is defined
 
     # This cron uses the above location to call its job
     - name: Cron to keep cache fresh
