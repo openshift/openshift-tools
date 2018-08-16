@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.148
+Version:       0.1.149
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -498,6 +498,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Aug 16 2018 Zhiming Zhang <zhizhang@redhat.com> 0.1.149-1
+- add out put for fix command of label (zhizhang@zhizhangdeMacBook-Pro.local)
+
 * Wed Aug 15 2018 Zhiming Zhang <zhizhang@redhat.com> 0.1.148-1
 - add docker grpc check (haowang@redhat.com)
 - fix debug info (zhizhang@ovpn-12-41.pek2.redhat.com)
