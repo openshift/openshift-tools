@@ -47,13 +47,13 @@
         group: libra_ops
         mode: 0750
 
-    - name: copy ssh key for rsync crontab in place
+    - name: copy ssh key for rsync in place
       copy:
         src: "{{ oo_rsync_private_key }}"
-        dest: "/root/.ssh/bastion_key"
+        dest: "/root/.ssh/rsync_inventory_cache_key"
         owner: root
         group: root
-        mode: 600
+        mode: 0600
       when: oo_rsync_private_key is defined
 
     # This cron uses the above location to call its job
