@@ -50,7 +50,7 @@ def get_type(hostname):
     host_type = 'compute'
     if 'master' in hostname:
         host_type = 'master'
-    elif 'infa' in hostname:
+    elif 'infra' in hostname:
         host_type = 'infra'
     else:
         host_type = 'compute'
