@@ -498,6 +498,7 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+
 * Thu Aug 16 2018 Zhiming Zhang <zhizhang@redhat.com> 0.1.150-1
 - fix typo (zhizhang@ovpn-12-53.pek2.redhat.com)
 
