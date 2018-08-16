@@ -60,13 +60,15 @@ def get_type(hostname):
 def check_label_on_host(host_labels):
     """according to the host type to check if the host missed any labels"""
     result = True
-    hostname = host_labels['hostname']
-    host_type = host_labels['type']
-    # if the node miss the hostname and type label
-    if hostname and host_type:
+    #its turn out that some node don't even have hostname or type label
+    if host_labels['hostname'] and host_labels['type']:
         pass
     else:
         return False
+
+    hostname = host_labels['hostname']
+    host_type = host_labels['type']
+    # if the node miss the hostname and type label
 
     # the next step is make sure all the node have all the label that in the directory
     need_labels = {}
@@ -142,10 +144,13 @@ def check_label_on_host(host_labels):
             if value and (host_labels[key] != value):
                 # has key, requires value, but value not the same
                 logger.info('This node '+ hostname + ' needs label: [' + key + '] which does not match required:' + value)
+                logger.info('#Command to fix this on master : oc label node/'+host_labels["kubernetes.io/hostname"]+' '+key+':'+value)
                 result = False
         else:
             # as long as one key is missed ,we think this node is wrong
             logger.info('This node '+ hostname + ' needs label: [' + key + ']')
+            logger.info('#Fix: ossh root@'+ hostname +' -c "grep '+key+' /etc/origin/node/node-config.yaml"')
+            logger.info('#And(master): oc label node/'+host_labels["kubernetes.io/hostname"]+' '+key+':THE_VALUE_YOU_GET_FROM_ABOVE')
             result = False
 
     for key, value in ban_labels.iteritems():
@@ -154,6 +159,7 @@ def check_label_on_host(host_labels):
         if host_labels.has_key(key):
             # as long as one key is missed ,we think this node is wrong
             logger.info('This node '+ hostname + ' has banned label: [' + key + ']')
+            logger.info('#Command to fix this on master : oc label node/'+host_labels["kubernetes.io/hostname"]+' '+key+'-')
             result = False
         else:
             pass
