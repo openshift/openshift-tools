@@ -47,14 +47,20 @@
         group: libra_ops
         mode: 0750
 
-    - name: copy ssh key for rsync crontab in place
+    - name: copy ssh key for rsync in place
       copy:
         src: "{{ oo_rsync_private_key }}"
-        dest: "/root/.ssh/bastion_key"
+        dest: "/root/.ssh/rsync_inventory_cache_key"
         owner: root
         group: root
-        mode: 600
+        mode: 0600
       when: oo_rsync_private_key is defined
+
+    # would liked to use known_hosts but it requires knowing the host keys up front. cleaner to scan for it one time
+    - name: put rsync target hosts into known_hosts
+      command: "grep {{ item }} /root/.ssh/known_hosts > /dev/null || ssh-keyscan -t ecdsa-sha2-nistp256 {{ item }},`host {{ item }} | awk '{print $4}'` 2> /dev/null >> /root/.ssh/known_hosts"
+      with_items: "{{ oo_rsync_cache_targets }}"
+      when: oo_rsync_cache_targets is defined
 
     # This cron uses the above location to call its job
     - name: Cron to keep cache fresh

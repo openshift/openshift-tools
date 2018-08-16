@@ -3,3 +3,5 @@ oo_inventory_group: root
 oo_inventory_owner: root
 oo_inventory_cache_max_age: 1800
 oo_rsync_cache_minutes: '*/3'
+oo_rsync_cache_target_user: opsinventory
+oo_rsync_cache_target_dir: /var/inventory_cache/
