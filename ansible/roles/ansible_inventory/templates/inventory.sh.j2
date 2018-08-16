@@ -16,7 +16,9 @@ else
   # rsync cache to targets (might be nothing here depending on host, expect only on bastion-nasa-1/2)
   for target in {{ oo_rsync_cache_targets | join(' ') }};
   do
-      /bin/rsync {{ oo_inventory_cache_location }} $target:{{ oo_inventory_cache_location }}
+      # key location is hard coded in ansible.
+      # target directory hard coded for simplicity, not in /dev/shm so it's persistent
+      /bin/rsync -e "ssh -i /root/.ssh/bastion_key" {{ oo_inventory_cache_location }} $target:/etc/ansible/
       RESULT=$?
       if [ "$RESULT" != "0" ];
       then
