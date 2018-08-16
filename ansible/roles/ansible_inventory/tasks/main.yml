@@ -56,6 +56,16 @@
         mode: 0600
       when: oo_rsync_private_key is defined
 
+    - name: put rsync target hosts into known_hosts
+      known_hosts:
+        state: present
+        hash_host: no
+        name: "{{ item }}"
+        path: "/root/.ssh/known_hosts"
+        key: "{{ lookup('file', oo_rsync_public_key) }}"
+      with_items: "{{ oo_rsync_cache_targets }}"
+      when: oo_rsync_public_key is defined
+
     # This cron uses the above location to call its job
     - name: Cron to keep cache fresh
       cron:
