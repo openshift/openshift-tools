@@ -1,8 +1,12 @@
 ---
-osmrq_enable_quotas: True
+osmrq_enable_pv_quotas: True
+osmrq_enable_service_lb_quotas: True
 osmrq_cluster_pv_quota: 100Gi
-osmrq_exclude_quota_label: storage_pv_quota
-osmrq_projects_to_exclude:
+osmrq_cluster_service_lb_quota: 2
+osmrq_exclude_pv_quota_label: storage_pv_quota
+osmrq_exclude_service_lb_quota_label: service_lb_quota
+osmrq_pv_projects_to_exclude:
 - default
 - openshift-infra
 - logging
+osmrq_service_lb_projects_to_exclude: []
