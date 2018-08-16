@@ -16,7 +16,8 @@ else
   # rsync cache to targets (might be nothing here depending on host, expect only on bastion-nasa-1/2)
   for target in {{ oo_rsync_cache_targets | join(' ') }};
   do
-      /bin/rsync {{ oo_inventory_cache_location }} $target:{{ oo_inventory_cache_location }}
+      # target dir is not in /dev/shm so it's persistent (survive reboot on target host)
+      /bin/rsync -e "ssh -i /root/.ssh/rsync_inventory_cache_key" {{ oo_inventory_cache_location }} {{ oo_rsync_cache_target_user }}@$target:{{ oo_rsync_cache_target_dir }}
       RESULT=$?
       if [ "$RESULT" != "0" ];
       then
