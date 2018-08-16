@@ -15,6 +15,10 @@ oo_inventory_group
 oo_inventory_user
 oo_inventory_accounts
 oo_inventory_cache_max_age
+oo_rsync_cache_targets
+oo_rsync_cache_target_user
+oo_rsync_cache_target_dir
+oo_rsync_private_key
 
 Dependencies
 ------------
