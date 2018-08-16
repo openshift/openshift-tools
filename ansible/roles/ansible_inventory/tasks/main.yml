@@ -47,7 +47,7 @@
         group: libra_ops
         mode: 0750
 
-    - name: copy ssh key for rsync crontab in place
+    - name: copy ssh key for rsync in place
       copy:
         src: "{{ oo_rsync_private_key }}"
         dest: "/root/.ssh/bastion_key"
