@@ -1,0 +1,13 @@
+---
+# because you can't do with_items on a block, having a separate file for this
+# otherwise ansible either always or never reports a change (based on changed_when)
+- name: "check known_hosts for {{ item }}"
+  shell: "grep {{ item }} /root/.ssh/known_hosts > /dev/null"
+  ignore_errors: yes
+  changed_when: false
+  register: known_hosts_out
+- name: "add {{ item }} to known_hosts"
+  shell: "ssh-keyscan -t ecdsa-sha2-nistp256 {{ item }},`host {{ item }} | awk '{print $4}'` 2> /dev/null >> /root/.ssh/known_hosts"
+  when: known_hosts_out.rc != 0
+
+
