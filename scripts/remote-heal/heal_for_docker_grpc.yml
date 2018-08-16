@@ -1,0 +1,28 @@
+---
+#playbook will try heal for the docker.grpc alert
+
+- name: heal for docker grpc issue
+  hosts: "oo_name_{{ cli_tag_name }}"
+  user: root
+  connection: ssh
+  gather_facts: no
+
+  tasks:
+  - name: "Check for required variables"
+    fail:
+      msg: "This playbook requires {{item}} to be set."
+    when: "{{ item }} is not defined or {{ item }} == ''"
+    with_items:
+    - cli_tag_name
+
+   # double check the docker met grpc error
+  - name: check for grpc connection unavailable
+    command: /usr/bin/docker exec oso-rhel7-host-monitoring date
+    ignore_errors: yes
+    register: docker_output
+  - debug: var=docker_output
+  - name: restart docker if grpc connection unavailable
+    systemd:
+      name: docker
+      state: restarted
+    when: docker_output.stdout is search("grpc.*the connection is unavailable") or docker_output.stderr is search("grpc.*the connection is unavailable")
