@@ -14,11 +14,23 @@
     kind: namespace
     name: "{{ item }}"
     labels:
-    - key: "{{ osmrq_exclude_quota_label }}"
+    - key: "{{ osmrq_exclude_pv_quota_label }}"
       value: "False"
-  with_items: "{{ osmrq_projects_to_exclude }}"
+  with_items: "{{ osmrq_pv_projects_to_exclude }}"
   run_once: True
-  when: osmrq_enable_quotas
+  when: osmrq_enable_pv_quotas
+
+- name: label designated projects to exclude from service loadbalancer quotas
+  oc_label:
+    state: add
+    kind: namespace
+    name: "{{ item }}"
+    labels:
+    - key: "{{ osmrq_exclude_service_lb_quota_label }}"
+      value: "False"
+  with_items: "{{ osmrq_service_lb_projects_to_exclude }}"
+  run_once: True
+  when: osmrq_enable_service_lb_quotas
 
 - name: Ensure Quotas are set for storage
   oc_obj:
@@ -36,12 +48,38 @@
             annotations: null
             labels:
               matchExpressions:
-              - key: "{{ osmrq_exclude_quota_label }}"
+              - key: "{{ osmrq_exclude_pv_quota_label }}"
                 operator: DoesNotExist
           quota:
             hard:
               requests.storage: "{{ osmrq_cluster_pv_quota }}"
   run_once: true
-  when: osmrq_enable_quotas
+  when: osmrq_enable_pv_quotas
+  notify:
+  - restart openshift master services
+
+- name: Ensure Quotas are set for service loadbalancers
+  oc_obj:
+    kind: ClusterResourceQuota
+    name: service-loadbalancers
+    content:
+      path: /tmp/osmrq_service_loadbalancer_quota
+      data:
+        kind: ClusterResourceQuota
+        apiVersion: "{{ (oc_version.results.oc_short == '3.7') | ternary('v1', 'quota.openshift.io/v1') }}"
+        metadata:
+          name: service-loadbalancers
+        spec:
+          selector:
+            annotations: null
+            labels:
+              matchExpressions:
+              - key: "{{ osmrq_exclude_service_lb_quota_label }}"
+                operator: DoesNotExist
+          quota:
+            hard:
+              services.loadbalancers: "{{ osmrq_cluster_service_lb_quota }}"
+  run_once: true
+  when: osmrq_enable_service_lb_quotas
   notify:
   - restart openshift master services
