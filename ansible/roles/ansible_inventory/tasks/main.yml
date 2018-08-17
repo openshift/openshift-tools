@@ -49,7 +49,7 @@
 
     - name: copy ssh key for rsync in place
       copy:
-        src: "{{ oo_rsync_private_key }}"
+        content: "{{ oo_rsync_private_key }}"
         dest: "/root/.ssh/rsync_inventory_cache_key"
         owner: root
         group: root
