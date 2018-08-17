@@ -15,10 +15,10 @@ oo_inventory_group
 oo_inventory_user
 oo_inventory_accounts
 oo_inventory_cache_max_age
-oo_rsync_cache_targets
-oo_rsync_cache_target_user
-oo_rsync_cache_target_dir
-oo_rsync_private_key
+oo_rsync_cache_targets - array of hosts to rsync inventory cache to
+oo_rsync_cache_target_user - user on target hosts used for rsync
+oo_rsync_cache_target_dir - directory on target hosts to write inventory cache file
+oo_rsync_private_key - contents of the private key needed for rsync over ssh
 
 Dependencies
 ------------
