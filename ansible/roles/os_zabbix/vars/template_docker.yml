@@ -39,6 +39,12 @@ g_template_docker:
     - Docker Container
     value_type: int
 
+  - key: docker.container.grpc
+    description: "status of docker grpc"
+    applications:
+    - Docker Container
+    value_type: int
+
   - key: docker.storage.is_loopback
     applications:
     - Docker Storage
