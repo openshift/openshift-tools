@@ -1,0 +1,22 @@
+---
+
+ansible_service_broker_node_selector: "{{ openshift_hosted_infra_selector | default('region=infra') | map_from_pairs }}"
+
+ansible_service_broker_remove: false
+ansible_service_broker_install: true
+ansible_service_broker_log_level: info
+ansible_service_broker_output_request: false
+ansible_service_broker_recovery: true
+ansible_service_broker_bootstrap_on_startup: true
+ansible_service_broker_dev_broker: false
+ansible_service_broker_refresh_interval: 600s
+# Recommended you do not enable this for now
+ansible_service_broker_launch_apb_on_bind: false
+ansible_service_broker_keep_namespace_on_error: true
+ansible_service_broker_keep_namespace: false
+
+# Image Pull Policy for the APB sandbox set to Always so no stale images are used.
+ansible_service_broker_image_pull_policy: Always
+ansible_service_broker_sandbox_role: edit
+ansible_service_broker_auto_escalate: false
+ansible_service_broker_local_registry_whitelist: []

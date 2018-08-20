@@ -1,0 +1,10 @@
+---
+- name: Get available RPM version
+  repoquery:
+    name: "{{ openshift_service_type }}{% if openshift_version is defined %}-{{ openshift_version }}*{% elif openshift_release is defined %}-{{ openshift_release }}*{% endif %}"
+    ignore_excluders: true
+  register: rpm_results
+
+- fail:
+    msg: "Package '{{ rpm_results.results.package_name }}' not found"
+  when: not rpm_results.results.package_found
