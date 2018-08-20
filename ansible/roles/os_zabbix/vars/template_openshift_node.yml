@@ -109,3 +109,7 @@ g_template_openshift_node:
     url: "https://github.com/openshift/ops-sop/blob/node/v3/alerts/openshift_node.asciidoc"
     priority: high
 
+  - name: "One or many nodes missed some labels on {HOST.NAME}"
+    expression: "{Template Openshift Node:openshift.nodes.label.status.last()}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_node_labels.asciidoc"
+    priority: high
