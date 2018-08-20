@@ -1,0 +1,8 @@
+---
+- name: Create Hosted Resources - openshift_default_storage_class
+  hosts: oo_first_master
+  roles:
+  - role: openshift_default_storage_class
+    when:
+    - openshift_cloudprovider_kind is defined
+    - openshift_cloudprovider_kind in ['aws','gce','openstack','vsphere']
