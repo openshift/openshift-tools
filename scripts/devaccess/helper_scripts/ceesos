@@ -31,7 +31,7 @@ fi
 # All futher operations happen in the sosreport directory 
 cd "${_tmp_dir}"
 
-if [[ -z "${CEEUSER}" ]] || [[ -z "${CEEPASS}" ]]; then
+if [[ -z "${CEEUSER:-}" ]] || [[ -z "${CEEPASS:-}" ]]; then
     # If ENV variables are not passed, then stream the SOSREPORT back to the user
     stream_sos
 else
