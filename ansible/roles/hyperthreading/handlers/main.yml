@@ -1,0 +1,17 @@
+---
+- name: reload and start disable-hyperthreading
+  systemd:
+    name: disable-hyperthreading
+    state: started
+    daemon_reload: yes
+
+- name: enable CPUs that were disabled
+  shell: >
+    if [ -f /sys/devices/system/cpu/smt/control ]; then
+      echo on > /sys/devices/system/cpu/smt/control
+    else
+      for CPU in `ls /sys/devices/system/cpu/cpu[0-9]* -d`; do
+        echo 1 > $CPU/online; 
+      done 
+    fi
+
