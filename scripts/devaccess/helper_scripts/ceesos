@@ -1,22 +1,45 @@
 #!/bin/bash
-
 set -u
 
-if [[ -z "${CEEUSER}" ]]; then
-    echo "Please set CEEUSER environmental variable with a value"
-    exit 1
+function stream_sos () {
+    # Assumes that your in ${_tmp_dir}
+    tar cf - . | cat
+}
+
+_case_id="$1"
+if [ -z "$_case_id" ]; then
+    _case_id="$(date -u +'%Y%m%dT%H%M%SZ' 2>/dev/null)"
+fi
+_tmp_dir="$(mktemp -d -p /var/tmp ohdiag-collection-"${_case_id}"-XXXX)"
+_log_file="${_tmp_dir}/sosreport-${_case_id}.log"
+
+trap "{ [ -n "${_tmp_dir}" ] && [ -e "${_tmp_dir}" ] && rm -rf "${_tmp_dir}">/dev/null 2>&1; }" EXIT
+
+if [ -n "${_tmp_dir}" ] && [ -e "${_tmp_dir}" ]; then
+    {
+        echo "sosreport generation executing for case_id=${_case_id} on $(date)..."
+        sosreport --case-id="${_case_id}" --log-size=100 --batch --quiet --no-report --tmp-dir="${_tmp_dir}"
+        result=$?
+        if [ $result -eq 0 ]; then
+            echo "sosreport was successful"
+        else
+            echo "sosreport failed with exit status ${result}"
+        fi
+    } >>"${_log_file}" 2>&1
 fi
 
-if [[ -z "${CEEPASS}" ]]; then
-    echo "Please set CEEPASS environmental variable with a value"
-    exit 1
+# All futher operations happen in the sosreport directory 
+cd "${_tmp_dir}"
+
+if [[ -z "${CEEUSER}" ]] || [[ -z "${CEEPASS}" ]]; then
+    # If ENV variables are not passed, then stream the SOSREPORT back to the user
+    stream_sos
+else
+    if [[ -n "${CEEUSER}" ]] && [[ -n "${CEEPASS}" ]]; then
+        # upload the files made by sosreport to the case
+	tar cf tier1_${_case_id}.tar.xz .
+        curl -u ${CEEUSER}:${CEEPASS} -X POST -F "file=@tier1_${_case_id}.tar.xz" "https://api.access.redhat.com/rs/cases/${_case_id}/attachments?private=true" -H 'Accept: text/plain' --form-string "description='Tier1 automation upload'" -D -
+    else
+        stream_sos
+    fi
 fi
-
-# run sosreport with supplied case id
-sosreport --case-id=${1} --log-size=100 --batch --quiet --no-report
-
-# upload the files made by sosreport to the case
-for file in $(ls /var/tmp/*${1}*); do
-  curl -u $CEEUSER:$CEEPASS -X POST -F "file=@${file}" "https://api.access.redhat.com/rs/cases/$1/attachments?private=true" -H 'Accept: text/plain' --form-string "description='Tier1 automation upload: ${file}'" -D -
-  rm ${file}
-done
