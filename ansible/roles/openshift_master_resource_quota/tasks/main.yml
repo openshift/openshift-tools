@@ -18,7 +18,9 @@
       value: "False"
   with_items: "{{ osmrq_pv_projects_to_exclude }}"
   run_once: True
-  when: osmrq_enable_pv_quotas
+  when: 
+  - osmrq_enable_pv_quotas
+  - inventory_hostname == ansible_play_hosts[0]
 
 - name: label designated projects to exclude from service loadbalancer quotas
   oc_label:
@@ -30,12 +32,15 @@
       value: "False"
   with_items: "{{ osmrq_service_lb_projects_to_exclude }}"
   run_once: True
-  when: osmrq_enable_service_lb_quotas
+  when:
+  - osmrq_enable_service_lb_quotas
+  - inventory_hostname == ansible_play_hosts[0]
 
 - name: Ensure Quotas are set for storage
   oc_obj:
     kind: ClusterResourceQuota
     name: persistent-volume
+    state: "{{ osmrq_enable_pv_quotas | bool | ternary('present', 'absent') }}"
     content:
       path: /tmp/osmrq_persistent_volume_quota
       data:
@@ -54,14 +59,14 @@
             hard:
               requests.storage: "{{ osmrq_cluster_pv_quota }}"
   run_once: true
-  when: osmrq_enable_pv_quotas
-  notify:
-  - restart openshift master services
+  when: inventory_hostname == ansible_play_hosts[0]
 
 - name: Ensure Quotas are set for service loadbalancers
+  run_once: true
   oc_obj:
     kind: ClusterResourceQuota
     name: service-loadbalancers
+    state: "{{ osmrq_enable_service_lb_quotas | bool | ternary('present', 'absent') }}"
     content:
       path: /tmp/osmrq_service_loadbalancer_quota
       data:
@@ -79,7 +84,4 @@
           quota:
             hard:
               services.loadbalancers: "{{ osmrq_cluster_service_lb_quota }}"
-  run_once: true
-  when: osmrq_enable_service_lb_quotas
-  notify:
-  - restart openshift master services
+  when: inventory_hostname == ansible_play_hosts[0]
