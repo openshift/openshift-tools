@@ -1,0 +1,48 @@
+---
+- name: disable hyper-threading
+  when: not hyperthreading_enabled
+  block:
+  - name: install disable-hyperthreading.sh
+    copy:
+      src: files/disable-hyperthreading.sh
+      dest: /usr/local/bin/disable-hyperthreading.sh
+      owner: root
+      group: root
+      mode: 0755
+    notify:
+      - reload and start disable-hyperthreading
+
+  - name: install disable-hyperthreading.service
+    copy:
+      src: files/disable-hyperthreading.service
+      dest: /etc/systemd/system/disable-hyperthreading.service
+      owner: root
+      group: root
+      mode: 0644
+    notify:
+      - reload and start disable-hyperthreading
+
+  - name: enable disable-hyperthreading.service
+    systemd:
+      name: disable-hyperthreading
+      enabled: yes
+    notify:
+      - reload and start disable-hyperthreading
+
+- name: enable hyper-threading
+  when: hyperthreading_enabled
+  block:
+    - name: check service exists
+      stat:
+        path: /etc/systemd/system/disable-hyperthreading.service
+      register: service_out
+
+    - name: disable disable-hyperthreading.service
+      systemd:
+        name: disable-hyperthreading
+        enabled: no
+        state: stopped
+      when:
+        - service_out.stat.exists
+      notify:
+        - enable CPUs that were disabled
