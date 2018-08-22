@@ -1,0 +1,15 @@
+[Unit]
+Description=Disable Hyper-Threading at Runtime
+Documentation=https://access.redhat.com/security/vulnerabilities/L1TF https://access.redhat.com/solutions/352663
+Requires=atomic-openshift-node.service
+Before=atomic-openshift-node.service
+
+[Service]
+User=root
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/usr/local/bin/disable-hyperthreading.sh
+
+[Install]
+WantedBy=multi-user.target
+
