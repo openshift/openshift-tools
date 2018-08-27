@@ -24,11 +24,11 @@ fi
 # /sys/devices/system/cpu/cpu0/topology/thread_siblings_list:0
 # /sys/devices/system/cpu/cpu1/topology/thread_siblings_list:1
 
-SIBLING_COUNT=`grep -H . /sys/devices/system/cpu/cpu*/topology/thread_siblings_list | sort -n -t ':' -k 2 -u | grep "," | wc -l`
-if [ "$SIBLING_COUNT" == 0 ]; then
+THREAD_SIBLINGS=`grep '[^0-9]' /sys/devices/system/cpu/cpu*/topology/thread_siblings_list || true`
+if [ "$THREAD_SIBLINGS" == "" ]; then
     exit 0
 else  
-    echo "Found this many cpu's with siblings: $SIBLING_COUNT"
-    echo "Expected no siblings!"
-    exit $SIBLING_COUNT
+    echo "Expected to find no thread siblings:"
+    echo "$THREAD_SIBLINGS"
+    exit 1
 fi
