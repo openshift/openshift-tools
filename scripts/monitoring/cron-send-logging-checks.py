@@ -245,12 +245,15 @@ class OpenshiftLoggingStatus(object):
 
         try:
             # get response code from kibana
-            u = kibana_status['response_code'] = urllib2.urlopen(kibana_url, context=ctx)
+            u = kibana_status['response_code'] = urllib2.urlopen(kibana_url, context=ctx, timeout=10)
             kibana_status['response_code'] = u.getcode()
 
         except urllib2.HTTPError, e:
             kibana_status['response_code'] = e.code
-
+        except urllib2.URLError,e:
+            kibana_status['response_code'] = '100'
+        else:
+            kibana_status['response_code'] = '100'
         # accept 401 because we can't auth: https://bugzilla.redhat.com/show_bug.cgi?id=1466496
         if 200 <= kibana_status['response_code'] <= 401:
             kibana_status['site_up'] = 1
