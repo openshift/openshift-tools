@@ -33,6 +33,14 @@ from openshift_tools.monitoring.metric_sender import MetricSender
 # pylint: enable=import-error
 # pylint think check_fluentd is too complex
 #pylint: disable=too-many-branches
+
+class RedirctHandler(urllib2.HTTPRedirectHandler):
+  """docstring for RedirctHandler"""
+  def http_error_301(self, req, fp, code, msg, headers):
+    pass
+  def http_error_302(self, req, fp, code, msg, headers):
+    pass
+
 class OpenshiftLoggingStatus(object):
     '''
         This is a check for the entire EFK stack shipped with OCP
@@ -53,6 +61,7 @@ class OpenshiftLoggingStatus(object):
         parser = argparse.ArgumentParser(description='OpenShift Cluster Logging Checker')
         parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose output')
         parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
+        parser.add_argument('--inner', action='store_true', default=None, help='if this cluster have inner access')
 
         self.args = parser.parse_args()
 
@@ -260,6 +269,46 @@ class OpenshiftLoggingStatus(object):
 
         return kibana_status
 
+    def check_kibana_inner(self):
+        ''' Check to see if kibana is up and working '''
+        kibana_status = {}
+
+        # Get logging url
+        service = self.oc.get_service('logging-kibana')['spec']['clusterIP']
+        kibana_url = "https://{}/".format(service)
+        print("inner cluster , use ip:"+kibana_url)
+        # Disable SSL to work around self signed clusters
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
+        # Verify that the url is returning a valid response
+        kibana_status['site_up'] = 0
+        kibana_status['response_code'] = 0
+
+        req = urllib2.Request(kibana_url)
+        debug_handler = urllib2.HTTPHandler(debuglevel = 1)
+        opener = urllib2.build_opener(urllib2.HTTPSHandler(context=ctx), debug_handler, RedirctHandler)
+        try:
+            # get response code from kibana
+            u = kibana_status['response_code'] = opener.open(kibana_url, timeout=10)
+            kibana_status['response_code'] = u.getcode()
+        except urllib2.HTTPError, e:
+            kibana_status['response_code'] = e.code
+        except urllib2.URLError,e:
+            kibana_status['response_code'] = '100'
+            if hasattr(e, 'code'):
+              error_info = e.code
+            elif hasattr(e, 'reason'):
+              error_info = e.reason
+        else:
+            kibana_status['response_code'] = '100'
+        # accept 401 because we can't auth: https://bugzilla.redhat.com/show_bug.cgi?id=1466496
+        if 200 <= kibana_status['response_code'] <= 401:
+            kibana_status['site_up'] = 1
+
+        return kibana_status
+
     def report_to_zabbix(self, logging_status):
         ''' Report all of our findings to zabbix '''
         self.metric_sender.add_dynamic_metric('openshift.logging.elasticsearch.pods',
@@ -303,7 +352,10 @@ class OpenshiftLoggingStatus(object):
         logging_status = {}
         logging_status['elasticsearch'] = self.check_elasticsearch()
         logging_status['fluentd'] = self.check_fluentd()
-        logging_status['kibana'] = self.check_kibana()
+        if self.args.inner:
+            logging_status['kibana'] = self.check_kibana_inner()
+        else:
+            logging_status['kibana'] = self.check_kibana()
 
         self.report_to_zabbix(logging_status)
 

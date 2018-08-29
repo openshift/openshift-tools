@@ -437,10 +437,17 @@ host_monitoring_cron:
   minute: "*/30"
   job: "ops-runner -f -s 30 -n cosp.openshift.metrics.check cron-send-metrics-checks"
 
+{% if osohm_kibana_inner|default(False) |bool %}
+- name: "Report logging health"
+  hour: "*"
+  minute: "30"
+  job: "ops-runner -f -s 30 -n cosp.openshift.logging.check cron-send-logging-checks --inner"
+{% else %}
 - name: "Report logging health"
   hour: "*"
   minute: "30"
   job: "ops-runner -f -s 30 -n cosp.openshift.logging.check cron-send-logging-checks"
+{% endif %}
 
 #- name: "Report time to reload haproxy config"
 #  hour: "*"
