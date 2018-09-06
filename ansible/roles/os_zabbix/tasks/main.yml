@@ -307,6 +307,16 @@
   tags:
   - clam_update
 
+- name: Include Template PSAD
+  include: ../../lib_zabbix/tasks/create_template.yml
+  vars:
+    template: "{{ g_template_psad }}"
+    server: "{{ ozb_server }}"
+    user: "{{ ozb_user }}"
+    password: "{{ ozb_password }}"
+  tags:
+  - psad
+
 - name: Include Template MultiInventory
   include: ../../lib_zabbix/tasks/create_template.yml
   vars:

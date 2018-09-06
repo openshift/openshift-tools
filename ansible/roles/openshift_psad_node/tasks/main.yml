@@ -1,0 +1,40 @@
+---
+- set_fact:
+    output_psad_rules:
+    - chain: OUTPUT
+      line: '-A OUTPUT -m comment --comment id_output_psad_logging_1_ -o eth0 -p tcp -m tcp --dport 22 -m state --state NEW -m hashlimit --hashlimit-above 40/sec --hashlimit-burst 60 --hashlimit-mode srcip --hashlimit-name psad3 -j LOG --log-prefix "PSAD:"'
+      after: "Prevent non-root users from reaching API server"
+      regex: "id_output_psad_logging_1_"
+
+- name: List iptables rules filtering chain
+  command: '/usr/sbin/iptables -w -nL OUTPUT'
+  changed_when: False
+  register: outputchain
+  ignore_errors: True
+
+- name: Modify in-memory filtering chain
+  command: "/usr/sbin/iptables -w {{ item.line }}"
+  when: not item.regex in outputchain.stdout
+  with_items: "{{ output_psad_rules }}"
+
+- name: Modify /etc/sysconfig/iptables filtering
+  lineinfile:
+    dest: /etc/sysconfig/iptables
+    insertafter: "{{ item.after }}"
+    line: "{{ item.line }}"
+    regexp: "{{ item.regex }}"
+  with_items: "{{ output_psad_rules }}"
+
+- name: Setup iptables PSAD log rotate
+  copy:
+    content: |
+      /var/log/psad.log {
+          copytruncate
+          missingok
+          compress
+          weekly
+      }
+    dest: /etc/logrotate.d/iptables_psad
+    mode: "0640"
+    owner: root
+    group: root
