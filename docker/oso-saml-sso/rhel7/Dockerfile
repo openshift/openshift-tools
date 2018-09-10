@@ -23,6 +23,7 @@ ADD prep_simplesaml.sh start.sh /usr/local/bin/
 
 # Install SimpleSAML and modules from RPMs, then run our setup/hardening script for SimpleSAML
 RUN yum-install-check.sh -y \
+        hostname net-tools telnet \
         httpd \
         inotify-tools \
         mod_ssl \
@@ -35,6 +36,7 @@ RUN yum-install-check.sh -y \
         php-pecl-yaml \
         && \
     yum -y update && yum clean all && \
+    rm -rf /var/cache/yum && \
     prep_simplesaml.sh && \
     ln -sf /usr/share/simplesamlphp/modules/authorizeyaml/bin/get_saml_token.php /usr/local/bin/get_saml_token
 
@@ -57,6 +59,6 @@ ADD root/ /root/
 RUN mkdir -p /run/httpd && \
     chmod -R g+rwX /etc/httpd /etc/passwd /etc/group /run /var/log /usr/share/simplesamlphp/config && \
     chgrp -R root /run/ /var/log /var/lib/php/session && \
-    chmod a+rw /root/aws_saml_cert.yml && \
     ansible-playbook /root/build.yaml && \
-    rm -rf /root/.ansible
+    chmod -R a+rw /root/aws_saml_cert.yml && \
+    chmod -R a+rwx /root/.ansible
