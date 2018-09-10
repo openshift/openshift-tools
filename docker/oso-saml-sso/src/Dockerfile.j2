@@ -53,5 +53,6 @@ ADD root/ /root/
 RUN mkdir -p /run/httpd && \
     chmod -R g+rwX /etc/httpd /etc/passwd /etc/group /run /var/log /usr/share/simplesamlphp/config && \
     chgrp -R root /run/ /var/log /var/lib/php/session && \
+    chmod a+rw /root/aws_saml_cert.yml && \
     ansible-playbook /root/build.yaml && \
     rm -rf /root/.ansible
