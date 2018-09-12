@@ -8,6 +8,7 @@ Custom filters for use in openshift-ansible
 import pdb
 from string import digits
 import json
+import re
 
 class FilterModule(object):
     ''' Custom ansible filters '''
@@ -26,35 +27,47 @@ class FilterModule(object):
         '''
             Return a json of permutations for volume name we'll need
         '''
+
+        # NVMe devices have format like /dev/nvme0n1 and we need /dev/nvme
+        m = re.search("\d", target_volume)
+        if m:
+            device = target_volume[:m.start()]
+        else:
+            device = target_volume
+
         vol = {
             "partition": target_volume.replace("/dev/", ""),
-            "device": target_volume.strip(digits),
-            "bare_device": target_volume.strip(digits).replace("/dev/", ""),
+            "device": device,
+            "bare_device": device.replace("/dev/", ""),
             "fullname": target_volume
         }
         return json.dumps(vol)
 
     @staticmethod
-    def get_volume_size_by_linux_device(volumes, target_volume):
+    def get_volume_size_by_linux_device(volumes, target_volume, is_nvme=False):
         '''
-            This filter matches a device string /dev/sdX to /dev/xvdX
+            This filter matches a device string /dev/sdX to /dev/xvdX if is_nvme is true
             It will then return the AWS volume size
         '''
         for vol in volumes:
-            translated_name = vol["attachment_set"]["device"].replace("sd", "xvd")
+            translated_name = vol["attachment_set"]["device"]
+            if is_nvme:
+                translated_name = translated_name.replace("sd", "xvd")
             if translated_name.startswith(target_volume):
                 return vol["size"]
 
         return None
 
     @staticmethod
-    def get_volume_id_by_linux_device(volumes, target_volume):
+    def get_volume_id_by_linux_device(volumes, target_volume, is_nvme=False):
         '''
-            This filter matches a device string /dev/sdX to /dev/xvdX
+            This filter matches a device string /dev/sdX to /dev/xvdX if is_nvme is true
             It will then return the AWS volume ID
         '''
         for vol in volumes:
-            translated_name = vol["attachment_set"]["device"].replace("sd", "xvd")
+            translated_name = vol["attachment_set"]["device"]
+            if is_nvme:
+                translated_name = translated_name.replace("sd", "xvd")
             if translated_name.startswith(target_volume):
                 return vol["id"]
 
