@@ -75,6 +75,7 @@
     debug: true
     force: true
     delete_after: false
+  ignore_errors: true
 
 - name: Get the address of the registry
   shell: "oc get service -n default docker-registry --template={% raw %}'{{.spec.clusterIP}}:{{(index .spec.ports 0).port}}'{% endraw %}"
