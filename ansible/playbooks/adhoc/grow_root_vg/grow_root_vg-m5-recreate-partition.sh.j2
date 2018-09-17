@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Script to recreate var partition in one operation.
+# Ansible parted module supports recreate with delete + create.
+# But it is two separate operations.  It needs to be one.
+
+# Script below does the following:
+# p - print
+# d 2 - delete partition
+# p 2 N N - create partition
+# t 2 8e - tag as Linux LVM
+# p - print
+# w - write
+
+cat << EOF | fdisk {{ vol_instance.fullname }}
+p
+d
+2
+n
+p
+2
+{{ parted_info.partitions[1].begin | int }}
+
+t
+2
+8e
+p
+w
+EOF
+
