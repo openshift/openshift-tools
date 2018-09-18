@@ -163,3 +163,6 @@
 
   - name: Resize /var
     command: "xfs_growfs /var "
+
+  - name: Trigger filesystem metrics
+    shell: "docker exec -ti oso-rhel7-host-monitoring /usr/bin/cron-send-filesystem-metrics -v"
