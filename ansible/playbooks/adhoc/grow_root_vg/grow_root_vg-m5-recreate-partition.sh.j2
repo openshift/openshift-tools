@@ -19,8 +19,8 @@ d
 n
 p
 2
-{{ parted_info.partitions[1].begin | int }}
-
+{{ parted_info.partitions[1].begin|int }}
+{{ (parted_info.disk.size|int - cli_reserved_sector_count|int) }}
 t
 2
 8e
