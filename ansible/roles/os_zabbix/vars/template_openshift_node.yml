@@ -101,9 +101,10 @@ g_template_openshift_node:
 
   - name: "Openshift Node process not running on {HOST.NAME}"
     expression: "{Template Openshift Node:openshift.node.process.count.max(#3)}<1"
-    url: "https://github.com/openshift/ops-sop/blob/node/v3/alerts/openshift_node.asciidoc"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_node_process_not_running.asciidoc"
     priority: high
 
+  # FIXME Broken URL / no SOP
   - name: "Too many Openshift Node processes running on {HOST.NAME}"
     expression: "{Template Openshift Node:openshift.node.process.count.min(#3)}>1"
     url: "https://github.com/openshift/ops-sop/blob/node/v3/alerts/openshift_node.asciidoc"
