@@ -1,0 +1,101 @@
+---
+# This playbook grows the root VG on a node by:
+#  * expanding /dev/nvme0n1
+#  * using fdisk to expand the rootvg partition
+#  * grow /var to 64GB
+#
+#  To run:
+#  1. Source your AWS credentials (make sure it's the corresponding AWS account) into your environment
+#    export AWS_PROFILE=<aws account>
+#
+# 2. run the playbook:
+#   ansible-playbook -e 'cli_tag_name=<tag-name>' grow_root_vg-m5.yml
+#
+#  Example:
+#   ansible-playbook -e 'cli_tag_name=ops-compute-12345' grow_root_vg-m5.yml
+#
+#  Notes:
+#  * By default this will do a 90GB GP2 volume.  The volume size can be overidden with the "-e 'cli_volume_size=something'" variable
+#  * This can be done with NO downtime on the host, but you probably ought to test a reboot. 
+#  * cli_reserved_sector_count exists because for NVMe EBS volumes Host Protected Area (HPA) is enabled, but we cannot determine the number of sectors reserved with hdparm -N
+#
+
+- name: Grow the rootvg volume group
+  hosts: "oo_name_{{ cli_tag_name }}"
+  user: root
+  connection: ssh
+  gather_facts: no
+
+  vars:
+    os_size_min: 20
+
+  tasks:
+  - name: "Check for required variables" 
+    fail:
+      msg: "This playbook requires {{item}} to be set."
+    when: "{{ item }} is not defined or {{ item }} == ''"
+    with_items:
+    - cli_tag_name
+
+  - name: Install nvme-cli
+    yum:
+      name: nvme-cli
+      state: installed
+
+  - name: Attempt to find the physical device that rootvg is using (NVMe)
+    shell: >
+      for DEV_NVME in `nvme list | grep "^/dev" | awk '{print $1}'`;
+      do
+        if [ "$(lsblk $DEV_NVME | grep rootvg)" != "" ]; then
+          echo $DEV_NVME
+          break
+        fi
+      done
+    changed_when: false
+    register: rootvg_instance
+    ignore_errors: yes
+
+  - name: fail if we don't find a single rootvg physical volume
+    fail:
+      msg:  Unable to find single rootvg physical volume. Please investigate manually.
+    when: rootvg_instance.stdout_lines|length != 1
+
+  - name: set vol_instance volume attributes
+    set_fact:
+      vol_instance: "{{ rootvg_instance.stdout | vol_attrs }}"
+
+  - debug: var=vol_instance
+
+  - name: Get partition info
+    parted: 
+      device: "{{ vol_instance.fullname }}"
+      number: 2
+      state: info
+      unit: s
+    register: parted_info
+
+  - name: set params for partition script
+    set_fact:
+      partition_name: "{{ vol_instance.fullname }}"
+      partition_begin: "{{ parted_info.partitions[1].begin|int }}"
+      partition_end: 54525951
+      partition_number: "{{ partition_number }}"
+
+  - name: Create script to recreate partition
+    template:
+      src: grow_root_vg-m5-recreate-partition.sh.j2
+      dest: /root/grow_root_vg-m5-recreate-partition.sh
+      mode: 0700
+
+  - name: Recreate partition
+    shell: /root/grow_root_vg-m5-recreate-partition.sh
+    ignore_errors: yes
+
+  - name: Run partprobe
+    command: partprobe
+
+  - name: Remove recreate script
+    file:
+      path: /root/grow_root_vg-m5-recreate-partition.sh
+      state: absent
+
