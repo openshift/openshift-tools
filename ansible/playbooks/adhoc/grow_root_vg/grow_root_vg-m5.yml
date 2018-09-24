@@ -29,8 +29,9 @@
   vars:
     cli_volume_size: 90
     cli_var_size: 64
-    cli_reserved_sector_count: 5000
+    cli_reserved_sector_count: 0
     os_size_min: 20
+    cli_var_partition_number: 2
 
   tasks:
   - name: "Check for required variables" 
@@ -145,11 +146,12 @@
       description: "Snapshot of {{ cli_tag_name }} {{ vol_instance.device }} before resize"
       wait: no ## don't wait for the snapshot to complete pushing to S3, it still exists and waiting can take hours
     when: cli_volume_size|int > rootvg_volume_size|int
+    register: ebs_snapshot_out
 
   - name: Get partition info
     parted: 
       device: "{{ vol_instance.fullname }}"
-      number: 2
+      number: "{{ cli_var_partition_number }}"
       state: info
       unit: s
     register: parted_info
@@ -179,6 +181,14 @@
   - name: Run partprobe to see if the size changed
     command: partprobe
 
+  - name: Get partition info (updated)
+    parted: 
+      device: "{{ vol_instance.fullname }}"
+      number: "{{ cli_var_partition_number }}"
+      state: info
+      unit: s
+    register: parted_info
+
   - name: Get available sectors (minus reserved sector count)
     shell: "echo $(( $(fdisk -l {{ vol_instance.fullname }} | grep sectors$ | cut -d' ' -f7) - 1 - {{ cli_reserved_sector_count|int }} ))"
     changed_when: false
@@ -192,6 +202,23 @@
   - name: Resize partition
     when: sectors_available.stdout|int > sectors_used.stdout|int
     block:
+      - name: set params for partition script
+        set_fact:
+          partition_name: "{{ vol_instance.fullname }}"
+          partition_begin: "{{ parted_info.partitions[1].begin|int }}"
+          partition_end: "{{ (parted_info.disk.size|int - cli_reserved_sector_count|int - 1) }}"
+          partition_number: "{{ cli_var_partition_number }}"
+
+      - name: Take snapshot (if didn't already)
+        delegate_to: localhost
+        ec2_snapshot:
+          region: "{{ ec2_region }}"
+          volume_id: "{{ rootvg_volume_id }}"
+          description: "Snapshot of {{ cli_tag_name }} {{ vol_instance.device }} before resize"
+          wait: no ## don't wait for the snapshot to complete pushing to S3, it still exists and waiting can take hours
+        when: ebs_snapshot_out is not defined
+        register: ebs_snapshot_out
+
       - name: Create script to recreate partition
         template:
           src: grow_root_vg-m5-recreate-partition.sh.j2
@@ -204,11 +231,6 @@
 
       - name: Run partprobe
         command: partprobe
-
-  - name: Remove recreate script
-    file:
-      path: /root/grow_root_vg-m5-recreate-partition.sh
-      state: absent
 
   - name: Resize the pv 
     shell: "pvresize $(pvs|grep rootvg|awk '{print $1}')"
@@ -225,7 +247,21 @@
     changed_when: false
     register: new_var_size
 
-  - name: Fail if didn't resize
+  - name: Fail when var is not bigger than or equal to target size
     fail:
       msg: "New /var size ({{ new_var_size.stdout }}G) isn't expected size ({{ cli_var_size }}G)"
-    when: new_var_size.stdout|int != cli_var_size|int
+    when: new_var_size.stdout|int < cli_var_size|int
+
+  - name: Remove recreate script when successful
+    file:
+      path: /root/grow_root_vg-m5-recreate-partition.sh
+      state: absent
+
+  - name: Trigger filesystem metrics (master or infra)
+    shell: "docker exec -ti oso-rhel7-host-monitoring /usr/bin/cron-send-filesystem-metrics -v"
+    when: "('oo_hosttype_master' in group_names or 'oo_subhosttype_infra' in group_names)"
+
+  - name: Trigger filesystem metrics (compute)
+    shell: "docker exec -ti oso-rhel7-host-monitoring /usr/bin/cron-send-filesystem-metrics --filter-pod-pv -v"
+    when: "'oo_subhosttype_compute' in group_names"
+

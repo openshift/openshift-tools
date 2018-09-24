@@ -12,17 +12,17 @@
 # p - print
 # w - write
 
-cat << EOF | fdisk {{ vol_instance.fullname }}
+cat << EOF | fdisk {{ partition_name }}
 p
 d
-2
+{{ partition_number|int }}
 n
 p
-2
-{{ parted_info.partitions[1].begin|int }}
-{{ (parted_info.disk.size|int - cli_reserved_sector_count|int) }}
+{{ partition_number|int }}
+{{ partition_begin|int }}
+{{ partition_end|int }}
 t
-2
+{{ partition_number|int }}
 8e
 p
 w
