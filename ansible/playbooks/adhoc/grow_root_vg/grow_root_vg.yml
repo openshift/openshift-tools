@@ -163,3 +163,11 @@
 
   - name: Resize /var
     command: "xfs_growfs /var "
+
+  - name: Trigger filesystem metrics (master or infra)
+    shell: "docker exec -ti oso-rhel7-host-monitoring /usr/bin/cron-send-filesystem-metrics -v"
+    when: "('oo_hosttype_master' in group_names or 'oo_subhosttype_infra' in group_names)"
+
+  - name: Trigger filesystem metrics (compute)
+    shell: "docker exec -ti oso-rhel7-host-monitoring /usr/bin/cron-send-filesystem-metrics --filter-pod-pv -v"
+    when: "'oo_subhosttype_compute' in group_names"
