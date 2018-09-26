@@ -225,6 +225,8 @@ objects:
         - env:
           - name: OO_PAUSE_ON_START
             value: "false"
+          - name: OO_DISABLE_HSTS
+            value: "false"
           image: "oso-sso-saml/oso-${PLAT}-memcached-sso:latest"
           imagePullPolicy: Always
           name: oso-memcached-sso

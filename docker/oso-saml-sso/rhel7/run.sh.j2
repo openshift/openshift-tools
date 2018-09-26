@@ -1,0 +1,10 @@
+#!/bin/bash -e
+{{ generated_header }}
+
+echo -n "Running oso-{{ base_os }}-saml-sso... "
+{% if base_os == 'rhel7' %}
+sudo docker run -ti --net=host --rm=true --name saml-sso oso-rhel7-saml-sso $@
+{% elif base_os == 'centos7' %}
+sudo docker run -ti --net=host --rm=true --name saml-sso oso-centos7-saml-sso $@
+{% endif %}
+echo "Done."

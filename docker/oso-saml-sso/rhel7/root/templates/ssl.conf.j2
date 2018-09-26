@@ -54,6 +54,11 @@ SSLCryptoDevice builtin
 ## SSL Virtual Host Context
 ##
 
+<VirtualHost *:80>
+    ServerName login.ops.openshift.com/
+    Redirect / https://login.ops.openshift.com/
+</VirtualHost>
+
 <VirtualHost _default_:8443>
 
 # General setup for the virtual host, inherited from global configuration
