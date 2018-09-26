@@ -251,6 +251,10 @@ CustomLog logs/ssl_request_log \
         Header set X-XSS-Protection "1; mode=block"
         # anti clickjacking header
         Header set X-Frame-Options "DENY"
+        # If you haven't visited in a full year and you go to http://, you won't get
+        # auto-redirected to https:// automatically. Otherwise, this header should
+        # tell your browser never to visit the http:// version of this site.
+        Header set Strict-Transport-Security "max-age=31536000"
         # all resources come from this app directly
         Header set Content-Security-Policy "default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';"
         Header set X-Content-Security-Policy "default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';"
