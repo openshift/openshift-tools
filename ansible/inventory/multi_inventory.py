@@ -276,6 +276,9 @@ class MultiInventoryAccount(object):
 
                     continue
 
+                if to_name == "oo_sublocation" and 'synthetic' in data and data['synthetic']:
+                    continue  # skip modifying sublocation for synthetic hosts
+
                 MultiInventoryUtils.add_entry(data, to_name, MultiInventoryUtils.get_entry(data, from_name))
 
     def apply_extra_groups(self):
@@ -611,6 +614,7 @@ class MultiInventoryUtils(object):
     def write_to_cache(cache_path, data):
         """Writes data in JSON format to cache_path"""
 
+        cache_path = os.path.expanduser(cache_path)
         # if it does not exist, try and create it.
         if not os.path.isfile(cache_path):
             path = os.path.dirname(cache_path)
