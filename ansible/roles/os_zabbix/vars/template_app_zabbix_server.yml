@@ -558,13 +558,13 @@ g_template_app_zabbix_server:
      priority: info
      url: https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_zabbix_version.asciidoc
 
-   - name: Not enough future Zabbix DB partitions for table history on {HOST.NAME}
+   - name: Not enough future Zabbix DB partitions for table history on {HOST.NAME} - AVG
      description: Not enough future Zabbix DB partitions for table history
      expression: "{Template App Zabbix Server:zabbix.db.partition.count.history.last()}<10"
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
      priority: avg
 
-   - name: Not enough future Zabbix DB partitions for table history on {HOST.NAME}
+   - name: Not enough future Zabbix DB partitions for table history on {HOST.NAME} - HIGH
      description: Not enough future Zabbix DB partitions for table history
      expression: "{Template App Zabbix Server:zabbix.db.partition.count.history.last()}<7"
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
@@ -576,13 +576,13 @@ g_template_app_zabbix_server:
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
      priority: avg
 
-   - name: Not enough future Zabbix DB partitions for table history_log on {HOST.NAME}
+   - name: Not enough future Zabbix DB partitions for table history_log on {HOST.NAME} - AVG
      description: Not enough future Zabbix DB partitions for table history_log
      expression: "{Template App Zabbix Server:zabbix.db.partition.count.history_log.last()}<10"
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
      priority: avg
 
-   - name: Not enough future Zabbix DB partitions for table history_log on {HOST.NAME}
+   - name: Not enough future Zabbix DB partitions for table history_log on {HOST.NAME} - HIGH
      description: Not enough future Zabbix DB partitions for table history_log
      expression: "{Template App Zabbix Server:zabbix.db.partition.count.history_log.last()}<7"
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
@@ -594,13 +594,13 @@ g_template_app_zabbix_server:
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
      priority: avg
 
-   - name: Not enough future Zabbix DB partitions for table history_str on {HOST.NAME}
+   - name: AVG Not enough future Zabbix DB partitions for table history_str on {HOST.NAME} - AVG
      description: Not enough future Zabbix DB partitions for table history_str
      expression: "{Template App Zabbix Server:zabbix.db.partition.count.history_str.last()}<10"
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
      priority: avg
 
-   - name: Not enough future Zabbix DB partitions for table history_str on {HOST.NAME}
+   - name: HIGH Not enough future Zabbix DB partitions for table history_str on {HOST.NAME} Priority - HIGH
      description: Not enough future Zabbix DB partitions for table history_str
      expression: "{Template App Zabbix Server:zabbix.db.partition.count.history_str.last()}<7"
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
@@ -612,13 +612,13 @@ g_template_app_zabbix_server:
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
      priority: avg
 
-   - name: Not enough future Zabbix DB partitions for table history_text on {HOST.NAME}
+   - name: Not enough future Zabbix DB partitions for table history_text on {HOST.NAME} - AVG
      description: Not enough future Zabbix DB partitions for table history_text
      expression: "{Template App Zabbix Server:zabbix.db.partition.count.history_text.last()}<10"
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
      priority: avg
 
-   - name: Not enough future Zabbix DB partitions for table history_text on {HOST.NAME}
+   - name: Not enough future Zabbix DB partitions for table history_text on {HOST.NAME} - HIGH
      description: Not enough future Zabbix DB partitions for table history_text
      expression: "{Template App Zabbix Server:zabbix.db.partition.count.history_text.last()}<7"
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
@@ -630,13 +630,13 @@ g_template_app_zabbix_server:
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
      priority: avg
 
-   - name: Not enough future Zabbix DB partitions for table history_uint on {HOST.NAME}
+   - name: Not enough future Zabbix DB partitions for table history_uint on {HOST.NAME} - AVG
      description: Not enough future Zabbix DB partitions for table history_uint
      expression: "{Template App Zabbix Server:zabbix.db.partition.count.history_uint.last()}<10"
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
      priority: avg
 
-   - name: Not enough future Zabbix DB partitions for table history_uint on {HOST.NAME}
+   - name: Not enough future Zabbix DB partitions for table history_uint on {HOST.NAME} - HIGH
      description: Not enough future Zabbix DB partitions for table history_uint
      expression: "{Template App Zabbix Server:zabbix.db.partition.count.history_uint.last()}<7"
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
@@ -648,13 +648,13 @@ g_template_app_zabbix_server:
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
      priority: avg
 
-   - name: Not enough future Zabbix DB partitions for table trends on {HOST.NAME}
+   - name: Not enough future Zabbix DB partitions for table trends on {HOST.NAME} - AVG
      description: Not enough future Zabbix DB partitions for table trends
      expression: "{Template App Zabbix Server:zabbix.db.partition.count.trends.last()}<10"
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
      priority: avg
 
-   - name: Not enough future Zabbix DB partitions for table trends on {HOST.NAME}
+   - name: Not enough future Zabbix DB partitions for table trends on {HOST.NAME} - HIGH
      description: Not enough future Zabbix DB partitions for table trends
      expression: "{Template App Zabbix Server:zabbix.db.partition.count.trends.last()}<7"
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
@@ -666,13 +666,13 @@ g_template_app_zabbix_server:
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
      priority: avg
 
-   - name: Not enough future Zabbix DB partitions for table trends_uint on {HOST.NAME}
+   - name: Not enough future Zabbix DB partitions for table trends_uint on {HOST.NAME} - AVG
      description: Not enough future Zabbix DB partitions for table trends_uint
      expression: "{Template App Zabbix Server:zabbix.db.partition.count.trends_uint.last()}<10"
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
      priority: avg
 
-   - name: Not enough future Zabbix DB partitions for table trends_uint on {HOST.NAME}
+   - name: Not enough future Zabbix DB partitions for table trends_uint on {HOST.NAME} - HIGH
      description: Not enough future Zabbix DB partitions for table trends_uint
      expression: "{Template App Zabbix Server:zabbix.db.partition.count.trends_uint.last()}<7"
      url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_partitioning_monitoring.asciidoc"
