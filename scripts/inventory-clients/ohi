@@ -52,30 +52,27 @@ class Ohi(object):
         '''
 
         if self.args.get_node_var:
-            if self.args.node:
-                node_var = self.inventory.get_node_variable(self.args.node, self.args.get_node_var)
-                if node_var is None:
-                    print "Unable to determine variable.  node: %s   variable: %s" %(self.args.node,
-                                                                                     self.args.get_node_var)
-                    return 1
-                print node_var
-                return 0
+            if not self.args.node:
+                print "Please specify a node (--node) when using --get-node-var"
+                return 1
+            node_var = self.inventory.get_node_variable(self.args.node, self.args.get_node_var)
+            if node_var is None:
+                print "Unable to determine variable.  node: %s   variable: %s" %(self.args.node,
+                return 1
+            print node_var
+            return 0
 
-            print "Please specify a node (--node) when using --get-node-var"
-            return 1
 
         if self.args.get_cluster_var:
-            if self.args.cluster:
-                if len(self.args.cluster) == 1:
-                    cluster_var = self.inventory.get_cluster_variable(self.args.cluster[0], self.args.get_cluster_var)
-                    if cluster_var is None:
-                        print "Unable to determine cluster variable: %s" %self.args.get_cluster_var
-                        return 1
-                    print cluster_var
-                    return 0
-
-            print "Please specify a single cluster when using --get-cluster-var"
-            return 1
+            if len(self.args.cluster) != 1:
+                print "Please specify a single cluster when using --get-cluster-var"
+                return 1
+            cluster_var = self.inventory.get_cluster_variable(self.args.cluster[0], self.args.get_cluster_var)
+            if cluster_var is None:
+                print "Unable to determine cluster variable: %s" %self.args.get_cluster_var
+                return 1
+            print cluster_var
+            return 0
 
         if self.args.list_host_types:
             self.inventory.print_host_types()
