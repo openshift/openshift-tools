@@ -44,11 +44,11 @@ g_template_logging:
   - name: "FluentD/Node pod number mismatch on {HOST.NAME}"
     expression: "{Template OpenShift Logging:openshift.logging.fluentd.number_pods.last()}<>{Template OpenShift Logging:openshift.logging.fluentd.number_expected_pods.last()}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/fluentd.asciidoc"
-    priority: high
+    priority: warning
   - name: "FluentD/Node mismatch on {HOST.NAME}"
     expression: "{Template OpenShift Logging:openshift.logging.fluentd.node_mismatch.last()}<>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/fluentd.asciidoc"
-    priority: high
+    priority: warning
 
   zdiscoveryrules:
   - name: openshift.logging.elasticsearch.pods
