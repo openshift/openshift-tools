@@ -51,31 +51,38 @@ class Ohi(object):
             Call into inventory_util and retrieve the desired hosts and environments
         '''
 
-        if self.args.get_node_var:
-            if self.args.node:
-                node_var = self.inventory.get_node_variable(self.args.node, self.args.get_node_var)
-                if node_var is None:
-                    print "Unable to determine variable.  node: %s   variable: %s" %(self.args.node,
-                                                                                     self.args.get_node_var)
-                    return 1
-                print node_var
-                return 0
+        # TODO: Make this configurable?
+        delimiter = '|'
 
-            print "Please specify a node (--node) when using --get-node-var"
-            return 1
+        if self.args.get_node_var:
+            if not self.args.node:
+                print "Please specify a node (--node) when using --get-node-var"
+                return 1
+            node_vars = []
+            for var_name in self.args.get_node_var:
+                var_result = self.inventory.get_node_variable(self.args.node, var_name)
+                if var_result is None:
+                    print "Unable to determine variable.  node: %s   variable: %s" %(self.args.node, var_name)
+                    return 1
+                node_vars.append(var_result)
+            print delimiter.join(node_vars)
+            return 0
+
 
         if self.args.get_cluster_var:
-            if self.args.cluster:
-                if len(self.args.cluster) == 1:
-                    cluster_var = self.inventory.get_cluster_variable(self.args.cluster[0], self.args.get_cluster_var)
-                    if cluster_var is None:
-                        print "Unable to determine cluster variable: %s" %self.args.get_cluster_var
-                        return 1
-                    print cluster_var
-                    return 0
-
-            print "Please specify a single cluster when using --get-cluster-var"
-            return 1
+            if len(self.args.cluster) != 1:
+                print "Please specify a single cluster when using --get-cluster-var"
+                return 1
+            cluster_vars = []
+            cluster = self.args.cluster[0]
+            for var_name in self.args.get_cluster_var:
+                var_result = self.inventory.get_cluster_variable(cluster, var_name)
+                if var_result is None:
+                    print "Unable to determine cluster variable: %s" % var_name
+                    return 1
+                cluster_vars.append(var_result)
+            print delimiter.join(cluster_vars)
+            return 0
 
         if self.args.list_host_types:
             self.inventory.print_host_types()
@@ -185,10 +192,10 @@ class Ohi(object):
         parser.add_argument('--list-host-types', default=False, action='store_true', help='List all of the host types')
         parser.add_argument('--list-clusters', default=False, action='store_true', help='List all of the clusters')
 
-        parser.add_argument('--get-cluster-var', default=False, action='store',
+        parser.add_argument('--get-cluster-var', default=[], action='append',
                             help='Return a var that is the same across a clusters')
 
-        parser.add_argument('--get-node-var', default=False, action='store',
+        parser.add_argument('--get-node-var', default=[], action='append',
                             help='Return a var from a specific node')
 
         parser.add_argument('-n', '--node', action='store', default=None, help='node to use')
