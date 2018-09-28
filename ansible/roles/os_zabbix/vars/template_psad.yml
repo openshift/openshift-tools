@@ -8,7 +8,7 @@ g_template_psad:
     value_type: int
 
   ztriggers:
-  - name: "PSAD detected port scanning activity"
-    expression: "{Template PSAD:psad.found.scanner(#1)}>0"
+  - name: "{HOST.NAME} PSAD detected port scanning activity"
+    expression: "{Template PSAD:psad.found.scanner.min(#1)}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_psad.asciidoc"
     priority: warning
