@@ -78,6 +78,10 @@
   tags:
   - clam_update
 
+- include_vars: template_psad.yml
+  tags:
+  - psad
+
 - include_vars: template_multi_inventory.yml
   tags:
   - multi_inventory
