@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.150
+Version:       0.1.151
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -498,6 +498,21 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Fri Sep 28 2018 Matthew Barnes <mbarnes@fedoraproject.org> 0.1.151-1
+- ohi: Allow multiple --get-node-var or --get-cluster-var
+  (mbarnes@fedoraproject.org)
+- ohi: Minor refactoring of run() (mbarnes@fedoraproject.org)
+- Support lowercase m as MB for oc get clusterresourcequota persistent-volume
+  (tfahlman@redhat.com)
+- fix the timeout error in script (zhizhang@ovpn-12-86.pek2.redhat.com)
+- just a quick fix for unbound variable errors (ihorvath@redhat.com)
+- fix typo (zhizhang@ovpn-12-53.pek2.redhat.com)
+- add out put for fix command of label (zhizhang@zhizhangdeMacBook-Pro.local)
+- add docker grpc check (haowang@redhat.com)
+- creating a replacement pr for #3553 (erich@redhat.com)
+- pylint fixes (dedgar@redhat.com)
+- updating to delete managed policies (dedgar@redhat.com)
+
 
 * Thu Aug 16 2018 Zhiming Zhang <zhizhang@redhat.com> 0.1.150-1
 - fix typo (zhizhang@ovpn-12-53.pek2.redhat.com)
