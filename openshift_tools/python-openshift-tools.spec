@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.138
+Version:       0.0.139
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -315,6 +315,10 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Mon Oct 01 2018 Kenny Woodson <kwoodson@redhat.com> 0.0.139-1
+- updated to fix issues with multiple channels (#3693) (rafael-
+  azevedo@users.noreply.github.com)
+
 * Wed Jul 25 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.138-1
 - updated SREbot since there was a change on the pagerduty escalation policy
   (#3659) (rafael-azevedo@users.noreply.github.com)

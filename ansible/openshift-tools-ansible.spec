@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.67
+Version:        0.0.68
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,58 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Mon Oct 01 2018 Kenny Woodson <kwoodson@redhat.com> 0.0.68-1
+- make fluentd/node mismatch triggers a warning (achvatal@redhat.com)
+- include the psad vars and correct the trigger (achvatal@redhat.com)
+- Do not update sublocation for synthetic_hosts. (kwoodson@redhat.com)
+- os_zabbix: fixed up the zabbix server db checks (mwoodson@redhat.com)
+- Updated triggering filesystem metrics in grow_root_vg playbooks
+  (nmalik@redhat.com)
+- Updates to grow var script for m5: (nmalik@redhat.com)
+- Fix URL for "Openshift Node process not running on {HOST.NAME}"
+  (mbarnes@fedoraproject.org)
+- Updated grow_root_vg-m5.yml to reserve 5000 sectors (nmalik@redhat.com)
+- Added adhoc script to grow rootvg (var) for m5 nodes. (nmalik@redhat.com)
+- adding ignore_errors statement (dedgar@redhat.com)
+- adding files and role for psad container (dedgar@redhat.com)
+- Updated disable HT verification (nmalik@redhat.com)
+- Add role to optionally disable hyper-threading at runtime.
+  (nmalik@redhat.com)
+- Make quotas removable. Actually make quotas role run_once. Don't restart
+  master services (bmorriso@redhat.com)
+- de-prio node label alert, it's storming (gburges@redhat.com)
+- Add alert rule for docker grpc (haowang@redhat.com)
+- Add monitor item for docker grpc issue (haowang@redhat.com)
+- add trigger for node label check (zhizhang@ovpn-12-38.pek2.redhat.com)
+- Changed oo_rsync_private_key to be the key, not a path to the key
+  (nmalik@redhat.com)
+- Refactored how ansible_inventory manages known_hosts (nmalik@redhat.com)
+- extend the resource quota role to support service LBs (bmorriso@redhat.com)
+- Switched to using command with ssh-keyscan to populate known_hosts for rsync
+  (nmalik@redhat.com)
+- update ansible_inventory to setup known_hosts for rsync targets
+  (nmalik@redhat.com)
+- Fix mode for rsync key used to copy inventory cache (nmalik@redhat.com)
+- ansible_inventory ssh key name changed to be more specific
+  (nmalik@redhat.com)
+- ansible_inventory rsync to non-root user and target dir is variable
+  (nmalik@redhat.com)
+- Fixing rsync for ansible_inventory (nmalik@redhat.com)
+- add item for zabbix of node.label (zhizhang@zhizhangdeMacBook-Pro.local)
+- Merging rsync into inventory.sh (ansible_inventory role) (nmalik@redhat.com)
+- Updated ansible_inventory to support rsync of cache to multiple target hosts
+  (nmalik@redhat.com)
+- add docker grpc check (haowang@redhat.com)
+- add checks for label of all the host on a cluster
+  (zhizhang@ovpn-12-41.pek2.redhat.com)
+- Add k8s node labels to BYO generator template (bmorriso@redhat.com)
+- name in zabbix should match inventory (ihorvath@redhat.com)
+- added more robust error checking and debug messages (sedgar@redhat.com)
+- removing docker template from ansible-tower nodes (ihorvath@redhat.com)
+- changing regex to work on 3.10 also (ihorvath@redhat.com)
+- Add support for arbitrary values, not just cluster id (bmorriso@redhat.com)
+- Add filter_plugin to generate kubernetes AWS tag (bmorriso@redhat.com)
+
 * Thu Jul 26 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.67-1
 - fixing some problems in host monitoring (ihorvath@redhat.com)
 
