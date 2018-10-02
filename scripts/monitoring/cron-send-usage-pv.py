@@ -112,6 +112,7 @@ def convert_to_bytes(data):
     """convert to bytes"""
     storage_units = {
         ''  : 1,
+        'm' : 1*0.001,
         'Ki': 2**10,
         'Mi': 2**20,
         'Gi': 2**30,
