@@ -160,8 +160,6 @@
 
     openshift_daemonset_config_script: operations_config.sh
     openshift_daemonset_config_secrets:
-    - path: docker-config.json
-      data: "{{ lookup('template', '../files/docker_config/docker-config.json.j2') | to_json }}"
     # yum
     - path: client-cert.pem
       data: "{{ osohm_yum_cert_content }}"
