@@ -33,6 +33,18 @@ from openshift_tools.monitoring.metric_sender import MetricSender
 # pylint: enable=import-error
 # pylint think check_fluentd is too complex
 #pylint: disable=too-many-branches
+#pylint: disable=too-many-arguments
+#pylint: disable=no-init
+
+class RedirectHandler(urllib2.HTTPRedirectHandler):
+    """docstring for RedirctHandler"""
+    def http_error_301(self, req, fp, code, msg, headers):
+        '''pass 301 error dirrectly'''
+        pass
+    def http_error_302(self, req, fp, code, msg, headers):
+        '''pass 302 error dirrectly'''
+        pass
+
 class OpenshiftLoggingStatus(object):
     '''
         This is a check for the entire EFK stack shipped with OCP
@@ -53,6 +65,8 @@ class OpenshiftLoggingStatus(object):
         parser = argparse.ArgumentParser(description='OpenShift Cluster Logging Checker')
         parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose output')
         parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
+        parser.add_argument('--use-service-ip', action='store_true', default=False,\
+                help='use this if kibana can be access by service ip')
 
         self.args = parser.parse_args()
 
@@ -60,6 +74,9 @@ class OpenshiftLoggingStatus(object):
         ''' Get all pods and filter them in one pass '''
         pods = self.oc.get_pods()
         for pod in pods['items']:
+            if pod['status']['phase'] == 'Failed':
+                continue
+
             if 'component' in pod['metadata']['labels']:
                 # Get ES pods
                 if pod['metadata']['labels']['component'] == 'es':
@@ -226,13 +243,24 @@ class OpenshiftLoggingStatus(object):
 
         return fluentd_status
 
+    def get_kibana_url(self):
+        ''' Get the kibana url to access '''
+        kibana_url = ""
+        if self.args.use_service_ip:
+            service = self.oc.get_service('logging-kibana')['spec']['clusterIP']
+            kibana_url = "https://{}/".format(service)
+        else:
+            route = self.oc.get_route('logging-kibana')['status']['ingress'][0]['host']
+            kibana_url = "https://{}/".format(route)
+
+        return kibana_url
+
     def check_kibana(self):
         ''' Check to see if kibana is up and working '''
         kibana_status = {}
 
         # Get logging url
-        route = self.oc.get_route('logging-kibana')['status']['ingress'][0]['host']
-        kibana_url = "https://{}/".format(route)
+        kibana_url = self.get_kibana_url()
 
         # Disable SSL to work around self signed clusters
         ctx = ssl.create_default_context()
@@ -243,14 +271,16 @@ class OpenshiftLoggingStatus(object):
         kibana_status['site_up'] = 0
         kibana_status['response_code'] = 0
 
+        debug_handler = urllib2.HTTPHandler(debuglevel=1)
+        opener = urllib2.build_opener(urllib2.HTTPSHandler(context=ctx), debug_handler, RedirectHandler)
         try:
             # get response code from kibana
-            u = kibana_status['response_code'] = urllib2.urlopen(kibana_url, context=ctx, timeout=10)
+            u = kibana_status['response_code'] = opener.open(kibana_url, timeout=10)
             kibana_status['response_code'] = u.getcode()
 
         except urllib2.HTTPError, e:
             kibana_status['response_code'] = e.code
-        except urllib2.URLError,e:
+        except urllib2.URLError, e:
             kibana_status['response_code'] = '100'
         else:
             kibana_status['response_code'] = '100'
