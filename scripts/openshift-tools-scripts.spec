@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.151
+Version:       0.1.153
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -498,6 +498,13 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Oct 11 2018 Drew Anderson <dranders@redhat.com> 0.1.153-1
+- 
+
+* Wed Oct 10 2018 Zhiming Zhang <zhizhang@redhat.com> 0.1.152-1
+- enable service ip check for kibana (haowang@redhat.com)
+- Fix m to convert millibytes to bytes (tfahlman@redhat.com)
+
 * Fri Sep 28 2018 Matthew Barnes <mbarnes@fedoraproject.org> 0.1.151-1
 - ohi: Allow multiple --get-node-var or --get-cluster-var
   (mbarnes@fedoraproject.org)

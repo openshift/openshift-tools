@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.68
+Version:        0.0.70
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,13 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Thu Oct 11 2018 Drew Anderson <dranders@redhat.com> 0.0.70-1
+- 
+
+* Wed Oct 10 2018 Ivan Horvath <ihorvath@redhat.com> 0.0.69-1
+- added lib_openshift_ansible_utils to roles (mwoodson@redhat.com)
+- Copy .docker/config.json in kubelet location (jupierce@redhat.com)
+
 * Mon Oct 01 2018 Kenny Woodson <kwoodson@redhat.com> 0.0.68-1
 - make fluentd/node mismatch triggers a warning (achvatal@redhat.com)
 - include the psad vars and correct the trigger (achvatal@redhat.com)
