@@ -1,0 +1,9 @@
+---
+- name: ensure htpassword 
+  template:
+   src: htpasswd.j2
+   dest: /etc/origin/master/htpasswd
+   backup: yes
+   mode: 0644
+   owner: root
+   group: root
