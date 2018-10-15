@@ -49,13 +49,17 @@ g_template_logging:
     expression: "{Template OpenShift Logging:openshift.logging.fluentd.node_mismatch.last()}<>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/fluentd.asciidoc"
     priority: warning
+  - name: "kibana not working on {HOST.NAME}"
+    expression: "{Template OpenShift Logging:openshift.logging.kibana.site_up.last()}<>1"
+    url: "https://github.com/wanghaoran1988/ops-sop/blob/master/v3/alerts/check_logging.asciidoc#kibana"
+    priority: avg
 
   zdiscoveryrules:
   - name: openshift.logging.elasticsearch.pods
     key: openshift.logging.elasticsearch.pods
     lifetime: 7
     description: "Elasticsearch pods"
- 
+
   zitemprototypes:
   - discoveryrule_key: openshift.logging.elasticsearch.pods
     name: "{% raw %}openshift.logging.elasticsearch.pod_health.{{ '{#' }}OSO_METRICS}{% endraw %}"
