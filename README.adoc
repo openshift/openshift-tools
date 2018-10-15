@@ -27,6 +27,7 @@ RPMs from this repo can be found on our https://copr.fedoraproject.org/coprs/g/O
 
 ----
 openshift-tools
+├── audit                 Scripts and files related to OpenShift Advanced Audit Logging
 ├── docker                Docker image definitions used by OpenShift Operations
 ├── docs                  Documentation specific to this repository
 ├── jenkins               Build bot checks for our PRs
