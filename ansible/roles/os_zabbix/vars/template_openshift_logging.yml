@@ -52,7 +52,7 @@ g_template_logging:
   - name: "kibana not working on {HOST.NAME}"
     expression: "{Template OpenShift Logging:openshift.logging.kibana.site_up.last()}<>1"
     url: "https://github.com/wanghaoran1988/ops-sop/blob/master/v3/alerts/check_logging.asciidoc#kibana"
-    priority: avg
+    priority: high
 
   zdiscoveryrules:
   - name: openshift.logging.elasticsearch.pods
