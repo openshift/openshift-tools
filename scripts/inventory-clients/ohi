@@ -64,7 +64,7 @@ class Ohi(object):
                 if var_result is None:
                     print "Unable to determine variable.  node: %s   variable: %s" %(self.args.node, var_name)
                     return 1
-                node_vars.append(var_result)
+                node_vars.append(str(var_result))
             print delimiter.join(node_vars)
             return 0
 
@@ -80,7 +80,7 @@ class Ohi(object):
                 if var_result is None:
                     print "Unable to determine cluster variable: %s" % var_name
                     return 1
-                cluster_vars.append(var_result)
+                cluster_vars.append(str(var_result))
             print delimiter.join(cluster_vars)
             return 0
 
