@@ -1,0 +1,27 @@
+---
+- name: create the firstboot dir to store the scripts
+  file:
+    path: "{{ osfbs_dir }}"
+    state: directory
+    mode: 0700
+
+- name: Copy scripts into firstboot dir
+  copy:
+    src: "{{ item }}"
+    dest: "{{ osfbs_dir }}"
+    owner: root
+    group: root
+    mode: '0700'
+  with_items:
+  - infra-elasticsearch-sysctl.sh
+  - rhsm-unregister.sh
+
+- name: Copy templates into the firstboot dir
+  template:
+    src: "{{ item }}"
+    dest: "{{ osfbs_dir }}/{{ item[:-3] }}"
+    owner: root
+    group: root
+    mode: '0700'
+  with_items:
+  - rhsm-register.sh.j2
