@@ -1,0 +1,11 @@
+#!/bin/bash
+
+for i in {1..15};
+do
+  /usr/sbin/subscription-manager register --activationkey {{ osfbs_rhsm_activation_key }} --org {{ osfbs_rhsm_org }} && break || sleep 5
+done
+
+for i in {1..15};
+do
+  /usr/sbin/subscription-manager repos --disable='*' --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms && break || sleep 5
+done
