@@ -1,0 +1,57 @@
+# master: api & console
+- name: Update DNS for master elb
+  dyn_record:
+    customer_name: "{{ oa_dyn_customer_name }}"
+    user_name: "{{ oa_dyn_user_name }}"
+    user_password: "{{ oa_dyn_password }}"
+    state: present
+    record_type: CNAME
+    zone: "{{ item.zone }}"
+    record_value: "{{ l_openshift_aws_elb_facts[openshift_clusterid + '-master-external']['dns_name'] }}"
+    record_fqdn: "{{ item.fqdn }}"
+    record_ttl: 120
+  with_items:
+  - zone: openshift.com
+    fqdn: "api.{{ openshift_clusterid }}.openshift.com"
+  - zone: openshift.com
+    fqdn: "console.{{ openshift_clusterid }}.openshift.com"
+
+# master internal: api & console
+- name: Update DNS for master internal ELB
+  dyn_record:
+    customer_name: "{{ oa_dyn_customer_name }}"
+    user_name: "{{ oa_dyn_user_name }}"
+    user_password: "{{ oa_dyn_password }}"
+    state: present
+    record_type: CNAME
+    zone: "{{ item.zone }}"
+    record_value: "{{ l_openshift_aws_elb_facts[openshift_clusterid + '-master-internal']['dns_name'] }}"
+    record_fqdn: "{{ item.fqdn }}"
+    record_ttl: 120
+  with_items:
+  - zone: openshift.com
+    fqdn: "internal.api.{{ openshift_clusterid }}.openshift.com"
+
+# infra: metrics, logs, registry, admin-console, route
+- name: Update DNS for infra ELB
+  dyn_record:
+    customer_name: "{{ oa_dyn_customer_name }}"
+    user_name: "{{ oa_dyn_user_name }}"
+    user_password: "{{ oa_dyn_password }}"
+    state: present
+    record_type: CNAME
+    zone: "{{ item.zone }}"
+    record_value: "{{ l_openshift_aws_elb_facts[openshift_clusterid + '-infra']['dns_name'] }}"
+    record_fqdn: "{{ item.fqdn }}"
+    record_ttl: 120
+  with_items:
+  - zone: openshift.com
+    fqdn: "metrics.{{ openshift_clusterid }}.openshift.com"
+  - zone: openshift.com
+    fqdn: "logs.{{ openshift_clusterid }}.openshift.com"
+  - zone: openshift.com
+    fqdn: "registry.{{ openshift_clusterid }}.openshift.com"
+  - zone: openshift.com
+    fqdn: "admin-console.{{ openshift_clusterid }}.openshift.com"
+  - zone: openshiftapps.com
+    fqdn: "*.{{ openshift_master_default_subdomain }}"
