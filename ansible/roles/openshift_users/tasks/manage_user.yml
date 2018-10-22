@@ -18,6 +18,7 @@
       path: /tmp/user
       data:
         kind: User
+        apiVersion: "user.openshift.io/v1"
         metadata:
           name: "{{ item.username }}"
           labels:
@@ -54,6 +55,7 @@
       path: /tmp/identity
       data:
         kind: Identity
+        apiVersion: "user.openshift.io/v1"
         metadata:
           name: "{{ osu_provider }}:{{ item.idp_username }}"
         providerName: "{{ osu_provider }}"
