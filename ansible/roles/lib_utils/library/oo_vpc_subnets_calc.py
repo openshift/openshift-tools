@@ -8,8 +8,8 @@ import math
 ''' vpc_subnets_calc module
 
     The purpose of this module is to cat the contents of a file into an Ansible fact for use later.
-    
-    
+
+
 Test Playbook:
 ---
 - hosts: localhost
@@ -22,20 +22,30 @@ Test Playbook:
       cidr_block: "172.16.0.0/24"
       region: "us-east-1"
       number_of_subnets: 3
-    register: out
+    register: calculated_subnets
+
   - debug:
       msg: "{{ item }}"
     with_items:
-    - "{{ out.results }}"    
-    
+    - "{{ calculated_subnets.results }}"
+
+  - name: set the vpc network space
+    set_fact:
+      openshift_aws_vpc:
+        name: "{{ openshift_clusterid }}"
+        cidr: 172.35.0.0/16
+        subnets: "{{ calculated_subnets.results }}"
+
 '''
 
-def calc_subnets(module, cidr_block, num_of_subnets, num_avail_zones_in_region):
+
+def calc_subnets(module, cidr_block, num_of_subnets, num_avail_zones_in_region, region_name, availability_zones):
     max_hosts_per_subnet = 2048
     min_hosts_per_subnet = 14
     ip = netaddr.IPNetwork(cidr_block)
     num_of_hosts_per_subnet = 0
-    results = []
+    results = {}
+    az_subnets = []
 
     if ip.size < min_hosts_per_subnet:
         if module is None:
@@ -63,14 +73,15 @@ def calc_subnets(module, cidr_block, num_of_subnets, num_avail_zones_in_region):
     else:
         subnets = subnets[:1]
 
-    for item in subnets:
-        results.append(str(item)) 
+    for idx, subnet in enumerate(subnets):
+        az_subnets.append({"cidr": str(subnet), "az": availability_zones[idx]})
+
+    results = {region_name: az_subnets}
 
     return results
 
 
 def main():
-    
     module = AnsibleModule(
         argument_spec=dict(
             cidr_block=dict(required=True, type='str'),
@@ -97,8 +108,15 @@ def main():
 
     boto_client = boto3.client('ec2')
     response = boto_client.describe_availability_zones()
+    availability_zones = []
+
+    for zone in response['AvailabilityZones']:
+        if zone['State'] == 'available':
+            availability_zones.append(zone['ZoneName'])
+
     num_avail_zones_in_region = len(response['AvailabilityZones'])
-    results = calc_subnets(module, cidr_block, number_of_subnets, num_avail_zones_in_region)
+    results = calc_subnets(module, cidr_block, number_of_subnets, num_avail_zones_in_region, region_name,
+                           availability_zones)
     module.exit_json(changed=False, ansible_facts={}, results=results)
 
 
