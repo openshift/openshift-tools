@@ -6,7 +6,7 @@
 # THIS IS A DESTRUCTIVE OPERATION!!!
 # *** WARNING ***
 #
-#  NOTE: this playbook assume docker was already installed and working.
+#  NOTE: This playbook assumes docker was already installed and working.
 #
 #  To run:
 #
@@ -30,7 +30,7 @@
     private: no
 
   - name: cli_confirm_run
-    prompt: "This is a DESTRUCTIVE operation, are you sure?"
+    prompt: "This is a DESTRUCTIVE operation, are you sure? (no/yes)"
     default: "no"
     private: no
 
@@ -60,7 +60,7 @@
 
   - name: Determine docker storage driver
     set_fact:
-      storage_driver: "{{ docker_storage_setup.STORAGE_DRIVER | default('devicemapper', true) | replace('\"', '') }}"
+      storage_driver: "{{ docker_storage_setup.STORAGE_DRIVER | default('overlay2', true) | replace('\"', '') }}"
 
   - name: Determine container root LV mount path
     set_fact:
@@ -90,7 +90,7 @@
   - name: Reset docker storage
     command: atomic storage reset
 
-  - name: remove docker_vg if present
+  - name: Remove docker_vg if present
     command: "vgremove -y '{{ docker_storage_setup.VG }}'"
     ignore_errors: true
     register: vgremove_output
@@ -103,7 +103,7 @@
     - storage_driver == 'devicemapper'
     - "'is used by another device' in vgremove_output.stderr"
 
-  - name: remove docker_vg if present
+  - name: Remove docker_vg if present
     command: "vgremove -y '{{ docker_storage_setup.VG }}'"
     ignore_errors: true
     register: vgremove_output
@@ -113,8 +113,14 @@
       msg: "Failed to remove the docker VG. You may need to disable the docker and atomic-openshift-node services and reboot the machine. Then re-run this playbook. Once it has been re-initialized, re-enable the atomic-openshift-node service."
     when: vgremove_output|failed
 
+  # Sometimes DEVS is an absolute path (e.g. /dev/xvdb),
+  # sometimes DEVS is just the device name (e.g. nvme1n1).
+  - name: Extract the device path
+    set_fact:
+      device_path: "{{ docker_storage_setup.DEVS | dirname | default('/dev', true) }}/{{ docker_storage_setup.DEVS | basename }}"
+
   - name: Wipe the filesystem
-    command: "wipefs --all '{{ docker_storage_setup.DEVS }}'"
+    command: "wipefs --all '{{ device_path }}'"
 
   - name: Run docker-storage-setup to initialize docker storage
     command: docker-storage-setup
@@ -124,7 +130,7 @@
       path: "{{ container_root_lv_mount_path }}/volumes"
       state: directory
 
-  - name: start and enable docker daemon
+  - name: Start and enable docker daemon
     service:
       name: docker
       state: started
