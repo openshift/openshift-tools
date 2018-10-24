@@ -6,7 +6,7 @@
 # THIS IS A DESTRUCTIVE OPERATION!!!
 # *** WARNING ***
 #
-#  NOTE: this playbook assume docker was already installed and working.
+#  NOTE: This playbook assumes docker was already installed and working.
 #
 #  To run:
 #
@@ -30,7 +30,7 @@
     private: no
 
   - name: cli_confirm_run
-    prompt: "This is a DESTRUCTIVE operation, are you sure?"
+    prompt: "This is a DESTRUCTIVE operation, are you sure? (no/yes)"
     default: "no"
     private: no
 
@@ -90,7 +90,7 @@
   - name: Reset docker storage
     command: atomic storage reset
 
-  - name: remove docker_vg if present
+  - name: Remove docker_vg if present
     command: "vgremove -y '{{ docker_storage_setup.VG }}'"
     ignore_errors: true
     register: vgremove_output
@@ -103,7 +103,7 @@
     - storage_driver == 'devicemapper'
     - "'is used by another device' in vgremove_output.stderr"
 
-  - name: remove docker_vg if present
+  - name: Remove docker_vg if present
     command: "vgremove -y '{{ docker_storage_setup.VG }}'"
     ignore_errors: true
     register: vgremove_output
@@ -124,7 +124,7 @@
       path: "{{ container_root_lv_mount_path }}/volumes"
       state: directory
 
-  - name: start and enable docker daemon
+  - name: Start and enable docker daemon
     service:
       name: docker
       state: started
