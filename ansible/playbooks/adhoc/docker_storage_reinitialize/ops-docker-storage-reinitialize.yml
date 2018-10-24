@@ -113,8 +113,14 @@
       msg: "Failed to remove the docker VG. You may need to disable the docker and atomic-openshift-node services and reboot the machine. Then re-run this playbook. Once it has been re-initialized, re-enable the atomic-openshift-node service."
     when: vgremove_output|failed
 
+  # Sometimes DEVS is an absolute path (e.g. /dev/xvdb),
+  # sometimes DEVS is just the device name (e.g. nvme1n1).
+  - name: Extract the device path
+    set_fact:
+      device_path: "{{ docker_storage_setup.DEVS | dirname | default('/dev', true) }}/{{ docker_storage_setup.DEVS | basename }}"
+
   - name: Wipe the filesystem
-    command: "wipefs --all '{{ docker_storage_setup.DEVS }}'"
+    command: "wipefs --all '{{ device_path }}'"
 
   - name: Run docker-storage-setup to initialize docker storage
     command: docker-storage-setup
