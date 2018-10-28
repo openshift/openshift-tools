@@ -1,0 +1,36 @@
+#!/usr/bin/ansible-playbook
+---
+- name: Setting up vars
+  hosts: localhost
+  gather_facts: no
+
+  tasks:
+  - name: load yedit
+    import_role:
+      name: tools_roles/lib_yaml_editor
+
+  - name: find the masters and add them to the inventory
+    include_role:
+      name: tools_roles/oa_add_aws_hosts_to_inventory
+
+- name: Configuring auth on masters
+  hosts: masters
+  user: root
+  serial: 1
+  vars:
+    cli_enable_saml_auth: false
+
+  tasks:
+  - name: Setting up master-config.yml
+    yedit:
+      src: '/etc/origin/master/master-config.yaml'
+      key: 'oauthConfig.identityProviders'
+      value: "{{ oa_openshift_cluster_identityproviders }}"
+
+  - name: master api restart
+    command: /usr/local/bin/master-restart api api
+    run_once: true
+
+  - name: master controllers restart
+    command: /usr/local/bin/master-restart controllers controllers
+    run_once: true
