@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.154
+Version:       0.1.155
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -500,6 +500,12 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Oct 24 2018 Drew Anderson <dranders@redhat.com> 0.1.155-1
+- Add eip check script to openshift-tools rpm (haowang@redhat.com)
+- Add monitor scripts for AWS Elastic IP (haowang@redhat.com)
+- ohi: Fix TypeError in --get-cluster-var and --get-node-var
+  (mbarnes@fedoraproject.org)
+
 * Thu Oct 11 2018 Ivan Horvath <ihorvath@redhat.com> 0.1.154-1
 - Remove extra m case (tfahlman@redhat.com)
 
