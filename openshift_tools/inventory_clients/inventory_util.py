@@ -55,11 +55,10 @@ class InventoryUtil(object):
             self._inventory = multi_inventory.MultiInventory(None).run()
         return self._inventory
 
-    @staticmethod
-    def get_cluster(name):
+    def get_cluster(self, name):
         """ return a cluster object """
 
-        return Cluster(name)
+        return Cluster(name, self.inventory)
 
     def setup_host_type_alias_lookup(self):
         """Sets up the alias to host-type lookup table."""
@@ -254,11 +253,10 @@ class InventoryUtil(object):
 
         return ips
 
-    @staticmethod
-    def get_cluster_variable(cluster, variable):
+    def get_cluster_variable(self, cluster, variable):
         """ return an inventory variable that is common to a cluster"""
 
-        cluster = InventoryUtil.get_cluster(cluster)
+        cluster = self.get_cluster(cluster)
 
         return cluster.get_variable(variable)
 
@@ -273,13 +271,16 @@ class InventoryUtil(object):
 class Cluster(object):
     """ This is a class to acces data about an Ops cluster """
 
-    def __init__(self, name):
+    def __init__(self, name, inventory=None):
         """ Init the cluster class """
+
+        if inventory is None:
+            inventory = multi_inventory.MultiInventory(None).run()
 
         self._name = name
         self._openshift_version = None
         self._docker_version = None
-        self.inventory = multi_inventory.MultiInventory(None).run()
+        self.inventory = inventory
         self._master_config = None
 
     def __str__(self):
