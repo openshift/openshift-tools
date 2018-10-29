@@ -502,6 +502,10 @@ host_monitoring_cron:
   minute: "8"
   job: "ops-runner -f -s 30 -n oect.ec2.tags /usr/bin/ops-ec2-check-tags --aws-creds-profile ops_monitoring --clusterid {{ osohm_cluster_id }}"
 
+- name: send AWS EIP checks
+  minute: "*/10"
+  job: "ops-runner -f -s 30 -n aws.ec2.eip.status /usr/bin/cron-send-aws-eip-check --aws-creds-profile ops_monitoring"
+
 {# end if cloud aws #}
 {% endif %}
 {% if osohm_cloud == 'gcp' %}
