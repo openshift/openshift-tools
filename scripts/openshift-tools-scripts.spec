@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.155
+Version:       0.1.156
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -500,6 +500,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Tue Oct 30 2018 Matthew Barnes <mbarnes@fedoraproject.org> 0.1.156-1
+- Performance improvement for inventory_util.py (PR 3818)
+
 * Wed Oct 24 2018 Drew Anderson <dranders@redhat.com> 0.1.155-1
 - Add eip check script to openshift-tools rpm (haowang@redhat.com)
 - Add monitor scripts for AWS Elastic IP (haowang@redhat.com)
