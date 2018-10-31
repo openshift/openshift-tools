@@ -117,10 +117,10 @@ def convert_to_bytes(data):
         'Mi': 2**20,
         'Gi': 2**30,
         'Ti': 2**40,
-        "k" : 10**3,
-        "M" : 10**6,
-        "G" : 10**9,
-        "T" : 10**12,
+        "k" : 2**10,
+        "M" : 2**20,
+        "G" : 2**30,
+        "T" : 2**40,
     }
 
     (number, unit) = re.search("([0-9]+)([A-Za-z]*)", data.strip()).groups()
