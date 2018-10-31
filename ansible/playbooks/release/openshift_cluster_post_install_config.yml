@@ -34,3 +34,12 @@
   - name: master controllers restart
     command: /usr/local/bin/master-restart controllers controllers
     run_once: true
+
+- name: Configuring master settings
+  hosts: masters[0]
+  user: root
+
+  tasks:
+  - name: setup default ns selector on default ans openshift-infra
+    include_role:
+      name: tools_roles/openshift_default_ns_settings
