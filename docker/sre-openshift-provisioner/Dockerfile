@@ -26,6 +26,10 @@ RUN git clone ${SRE_TOOLS_URL} ${SRE_TOOLS_CLONE_LOCATION} && \
     cd ${SRE_TOOLS_CLONE_LOCATION} && \
         git checkout ${SRE_TOOLS_BRANCH}
 
+
+COPY ansible.cfg /etc/ansible/ansible.cfg
+RUN chmod 644 /etc/ansible/ansible.cfg
+
 COPY provision_cluster.sh /usr/local/bin/provision_cluster.sh
 RUN chmod 755 /usr/local/bin/provision_cluster.sh
 
