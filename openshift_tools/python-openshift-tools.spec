@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.140
+Version:       0.0.141
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -315,6 +315,10 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Tue Oct 30 2018 Matthew Barnes <mbarnes@fedoraproject.org> 0.0.141-1
+- inventory_util.py: Make get_cluster() and get_cluster_variable() non-static
+  (mbarnes@fedoraproject.org)
+
 * Thu Oct 11 2018 Drew Anderson <dranders@redhat.com> 0.0.140-1
 - 
 
