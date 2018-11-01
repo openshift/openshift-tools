@@ -1,0 +1,141 @@
+---
+# This should only be run against a master or this will fail
+- fail:
+    msg: "This playbook requires {{item}} to be set."
+  when: item is not defined or item == ''
+  with_items:
+  - "{{ dsp_zagg_web_url }}"
+  - "{{ dsp_host_monitoring }}"
+  - "{{ dsp_docker_registry_url }}"
+  - "{{ dsp_default_zagg_server_user }}"
+  - "{{ dsp_default_zagg_server_password }}"
+  - "{{ dsp_zagg_web_url }}"
+  - "{{ dsp_zagg_verify_ssl }}"
+  - "{{ dsp_pull_username }}"
+  - "{{ dsp_pull_password }}"
+  - "{{ dsp_registry_api }}"
+
+# This is required so that the URL for zagg service can be set properly in the daemonset
+- when: dsp_use_zagg
+  block:
+  - name: fetch the zagg-service IP
+    oc_service:
+      name: zagg-service
+      namespace: default
+      state: list
+    register: svc_out
+
+  - name: set zag-url ip
+    set_fact:
+      dsp_zagg_web_url: "http://{{ svc_out.results.clusterip }}"
+
+  - debug: var=dsp_zagg_web_url
+
+- block: # get a valid docker registry token
+  - name: Log in to openshift using read-only user
+    command: 'oc login --config=/root/.kube/reg-aws --username="{{ dsp_pull_username }}" --password="{{ dsp_pull_password }}" {{ dsp_registry_api }}'
+    register: oc_login_attempt
+    until: oc_login_attempt.stdout.find("Login successful") != -1
+    retries: 5
+    delay: 2
+
+  - name: Get openshift token
+    command: oc --config=/root/.kube/reg-aws whoami -t
+    register: openshift_token_out
+
+  - set_fact:
+      dsp_openshift_token: "user:{{ openshift_token_out.stdout }}"
+
+- name: Set the dsp_host_name to something we will change later
+  set_fact:
+    dsp_host_name: UPDATENAME
+
+- import_role:
+    name: "tools_roles/openshift_daemonset_config"
+  vars:
+    openshift_daemonset_config_daemonset_name: "{{ dsp_sub_host_type }}-config"
+    openshift_daemonset_config_monitoring_pos: "{{ dsp_monitoring_pause_on_start | string }}"
+    openshift_daemonset_config_monitoring: True
+    #openshift_daemonset_config_image: "openshift/origin-ansible:{{ g_play_openshift_version }}"
+    openshift_daemonset_config_image: "openshift/origin-ansible:latest"
+    openshift_daemonset_config_monitoring_image: "{{ dsp_docker_registry_url }}{{ dsp_host_monitoring }}:{{ dsp_environment }}"
+    openshift_daemonset_config_configmap_files: {}
+
+    openshift_daemonset_config_configmap_contents_to_files:
+    # monitoring_config
+    - name: monitoring_config.yml
+      contents: |
+        {{ lookup('template', '../templates/monitoring-config.yml.j2') }}
+      path: /tmp/monitoring_config.yml
+    # end monitoring_config
+
+    # authorized_keys
+    - path: /tmp/authorized_keys.j2
+      name: authorized_keys.j2
+      contents: |
+        {{ lookup('file', '../files/authorized_keys/authorized_keys.j2') }}
+    - path: /tmp/authorized_keys_vars.yml
+      name: authorized_keys_vars.yml
+      contents: "{{ {'authorized_keys': dsp_authorized_keys,
+                     'authorized_autokeys': dsp_authorized_autokeys,
+                     'authorized_keys_extra': dsp_authorized_keys_extra,
+                     'authorized_autokeys_hosts': dsp_authorized_keys_autokeys_hosts } | to_yaml }}"
+
+    # end authorized_keys
+
+    openshift_daemonset_config_configmap_literals:
+      etcd_metrics.yml: |
+        {{ lookup('file', '../files/etcd_metrics.yml') }}
+      container_metrics_config.yml: |
+        {{ lookup('file', '../files/container_metrics_config.yml') }}
+      authorized_keys_tasks.yml: |
+        {{ lookup('file', '../files/authorized_keys/authorized_keys_tasks.yml') }}
+      docker_config_tasks.yml: |
+        {{ lookup('file', '../files/docker_config/docker_config_tasks.yml') }}
+      operations_tasks.yml: |
+        {{ lookup('file', '../files/operations/operations_tasks.yml') }}
+
+      # this requires clusterid to be translated and cannot be moved to files unless that is solved
+      monitoring_config_tasks.yml: |
+        {{ lookup('template', '../files/monitoring_config//monitoring_config_tasks.yml.j2') }}
+
+      configure_host.yml: |
+        ---
+        - hosts: localhost
+          gather_facts: false
+          tasks:
+          # base setup
+          - name: create the openshift_tools directory
+            file:
+              state: directory
+              path: /host/etc/openshift_tools
+              mode: "0740"
+              owner: root
+              group: root
+
+          - name: Setup authorized keys
+            import_tasks: /opt/config/authorized_keys_tasks.yml
+
+          - name: Import docker auth config tasks
+            import_tasks: /opt/config/docker_config_tasks.yml
+
+          #- name: setup bind mounts
+          #import_tasks: /opt/config/crio_bind_mounts_tasks.yml
+
+          - name: Import monitoring config tasks
+            import_tasks: /opt/config/monitoring_config_tasks.yml
+
+          - name: setup operations tasks
+            import_tasks: /opt/config/operations_tasks.yml
+
+      operations_config.sh: |
+        #!/bin/bash
+
+        ansible-playbook /opt/config/configure_host.yml -v
+
+    openshift_daemonset_config_script: operations_config.sh
+    openshift_daemonset_config_secrets:
+    - path: docker-config.json
+      data: "{{ lookup('template', '../files/docker_config/docker-config.json.j2') | to_json }}"
+
+    openshift_daemonset_config_node_selector: "{{ dsp_sg_node_selector }}"

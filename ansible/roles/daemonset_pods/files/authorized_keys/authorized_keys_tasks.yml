@@ -1,0 +1,17 @@
+---
+- name: Check to see if rootlog-ssh-wrap is installed
+  stat: path=/host/usr/bin/rootlog-ssh-wrap
+  register: rootlog_stat
+
+- name: load variables for authorized_keys
+  include_vars: /opt/config/authorized_keys_vars.yml
+
+- name: lay down the ssh keys
+  template:
+    src: /opt/config/authorized_keys.j2
+    dest: /host/root/.ssh/authorized_keys
+    owner: root
+    group: root
+    validate: awk '/^[^# ]/ { i++ } END { if (i < 4) { print "Config error? Only "i" keys found" > "/dev/stderr"; exit 1 } }' %s
+    mode:  '0440'
+
