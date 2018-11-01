@@ -1,0 +1,39 @@
+---
+dsp_use_zagg: True
+# dsp_monitor_capacity: False
+# dsp_service_state:  started
+# dsp_service_enabled: yes
+dsp_monitoring_pause_on_start: False
+# 
+# dsp_bind_mounts:
+# - type: bind
+#   destination: /usr/bin/oc
+#   source: /usr/bin/oc
+#   options:
+#   - rbind
+#   - ro
+#   - mode=755
+# - type: bind
+#   destination: /sbin/ifup
+#   source: /sbin/ifup
+#   options:
+#   - rbind
+#   - ro
+#   - mode=755
+# - type: bind
+#   destination: /sbin/ifdown
+#   source: /sbin/ifdown
+#   options:
+#   - rbind
+#   - ro
+#   - mode=755
+# 
+dsp_hawk_config:
+  active: False
+  url: https://localhost:8443
+  user: admin
+  pass: password
+  ssl_verify: False
+  verbose: False
+  debug: False
+

@@ -1,0 +1,113 @@
+---
+etcd_metrics_config:
+  etcd_info:
+    files:
+      ssl_client_cert: '/etc/origin/master/master.etcd-client.crt'
+      ssl_client_key: '/etc/origin/master/master.etcd-client.key'
+      openshift_master_config: '/etc/origin/master/master-config.yaml'
+    metrics:
+      - type: 'json'
+        prefix: 'openshift.etcd.'
+        path: '/v2/stats/store'
+        values:
+          - zab_key: 'create.success'
+            src: 'createSuccess'
+          - zab_key: 'create.fail'
+            src: 'createFail'
+          - zab_key: 'delete.success'
+            src: 'deleteSuccess'
+          - zab_key: 'delete.fail'
+            src: 'deleteFail'
+          - zab_key: 'get.success'
+            src: 'getsSuccess'
+          - zab_key: 'get.fail'
+            src: 'getsFail'
+          - zab_key: 'set.success'
+            src: 'setsSuccess'
+          - zab_key: 'set.fail'
+            src: 'setsFail'
+          - zab_key: 'update.success'
+            src: 'updateSuccess'
+          - zab_key: 'update.fail'
+            src: 'updateFail'
+          - zab_key: 'watchers'
+            src: 'watchers'
+      - type: 'text'
+        prefix: 'openshift.'
+        path: '/metrics'
+        values:
+          'etcd_server_file_descriptors_used_total' :
+          'etcd_server_pending_proposal_total' :
+          'etcd_server_proposal_failed_total' :
+          'etcd_storage_delete_total' :
+          'etcd_storage_keys_total' :
+          'etcd_storage_put_total' :
+          'etcd_storage_range_total' :
+          'etcd_storage_txn_total' :
+          'etcd_store_expires_total' :
+          'etcd_store_reads_total' : 'action'
+          'etcd_store_watch_requests_total' :
+          'etcd_store_watchers' :
+          'etcd_store_writes_total' : 'action'
+          'etcd_wal_last_index_saved' :
+
+
+# etcd 2.2.1 available metrics
+# TYPE etcd_rafthttp_message_sent_failed_total counter
+# TYPE etcd_rafthttp_message_sent_latency_microseconds summary
+# TYPE etcd_server_file_descriptors_used_total gauge
+# TYPE etcd_server_pending_proposal_total gauge
+# TYPE etcd_server_proposal_durations_milliseconds summary
+# TYPE etcd_server_proposal_failed_total counter
+# TYPE etcd_snapshot_save_marshalling_durations_microseconds summary
+# TYPE etcd_snapshot_save_total_durations_microseconds summary
+# TYPE etcd_storage_db_compaction_pause_duration_milliseconds histogram
+# TYPE etcd_storage_db_compaction_total_duration_milliseconds histogram
+# TYPE etcd_storage_delete_total counter
+# TYPE etcd_storage_index_compaction_pause_duration_milliseconds histogram
+# TYPE etcd_storage_keys_total gauge
+# TYPE etcd_storage_put_total counter
+# TYPE etcd_storage_range_total counter
+# TYPE etcd_storage_txn_total counter
+# TYPE etcd_store_expires_total counter
+# TYPE etcd_store_reads_total counter
+# TYPE etcd_store_watch_requests_total counter
+# TYPE etcd_store_watchers gauge
+# TYPE etcd_store_writes_total counter
+# TYPE etcd_wal_fsync_durations_microseconds summary
+# TYPE etcd_wal_last_index_saved gauge
+# TYPE go_gc_duration_seconds summary
+# TYPE go_goroutines gauge
+# TYPE go_memstats_alloc_bytes gauge
+# TYPE go_memstats_alloc_bytes_total counter
+# TYPE go_memstats_buck_hash_sys_bytes gauge
+# TYPE go_memstats_frees_total counter
+# TYPE go_memstats_gc_sys_bytes gauge
+# TYPE go_memstats_heap_alloc_bytes gauge
+# TYPE go_memstats_heap_idle_bytes gauge
+# TYPE go_memstats_heap_inuse_bytes gauge
+# TYPE go_memstats_heap_objects gauge
+# TYPE go_memstats_heap_released_bytes_total counter
+# TYPE go_memstats_heap_sys_bytes gauge
+# TYPE go_memstats_last_gc_time_seconds gauge
+# TYPE go_memstats_lookups_total counter
+# TYPE go_memstats_mallocs_total counter
+# TYPE go_memstats_mcache_inuse_bytes gauge
+# TYPE go_memstats_mcache_sys_bytes gauge
+# TYPE go_memstats_mspan_inuse_bytes gauge
+# TYPE go_memstats_mspan_sys_bytes gauge
+# TYPE go_memstats_next_gc_bytes gauge
+# TYPE go_memstats_other_sys_bytes gauge
+# TYPE go_memstats_stack_inuse_bytes gauge
+# TYPE go_memstats_stack_sys_bytes gauge
+# TYPE go_memstats_sys_bytes gauge
+# TYPE http_request_duration_microseconds summary
+# TYPE http_request_size_bytes summary
+# TYPE http_requests_total counter
+# TYPE http_response_size_bytes summary
+# TYPE process_cpu_seconds_total counter
+# TYPE process_max_fds gauge
+# TYPE process_open_fds gauge
+# TYPE process_resident_memory_bytes gauge
+# TYPE process_start_time_seconds gauge
+# TYPE process_virtual_memory_bytes gauge
