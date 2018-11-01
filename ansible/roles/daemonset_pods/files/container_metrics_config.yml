@@ -1,0 +1,73 @@
+---
+container_metrics_config:
+  use_cgroups: True
+  usage_checks:
+  # Host monitoring
+  - name_match_regex: 'oso-.*-host-monitoring'
+
+
+# twiest: This one isn't required and it's causing issues for some reason.
+# TODO: figure out why this is causing issues.
+#  # Fluentd
+  - name_match_regex: '^k8s_(fluentd-elasticsearch)\.[\w\d]+_(logging-fluentd-\d+-[a-zA-Z\d-]+)_(logging)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # Curator
+  - name_match_regex: '^k8s_(curator)\.[\w\d]+_(logging-curator-\d+-[a-zA-Z\d-]+)_(logging)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # Kibana auth proxy
+  - name_match_regex: '^k8s_(kibana-proxy)\.[\w\d]+_(logging-kibana-\d+-[a-zA-Z\d-]+)_(logging)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # Kibana
+  - name_match_regex: '^k8s_(kibana)\.[\w\d]+_(logging-kibana-\d+-[a-zA-Z\d-]+)_(logging)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # Elastic Search
+  - name_match_regex: '^k8s_(elasticsearch)\.[\w\d]+_(logging-es-[a-zA-Z\d-]+)_(logging)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # The PV Provisioner
+  - name_match_regex: '^k8s_(volume-provisioner)\.[\w\d]+_(online-volume-provisioner-\d+-[a-zA-Z\d-]+)_(openshift-infra)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # Heapster
+  - name_match_regex: '^k8s_(heapster)\.[\w\d]+_(heapster-[a-zA-Z\d-]+)_(openshift-infra)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # Hawkular Metrics
+  - name_match_regex: '^k8s_(hawkular-metrics)\.[\w\d]+_(hawkular-metrics-[a-zA-Z\d-]+)_(openshift-infra)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # Cassandra
+  - name_match_regex: '^k8s_(hawkular-cassandra-\d+)\.[\w\d]+_(hawkular-cassandra-\d+-[a-zA-Z\d-]+)_(openshift-infra)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # OpenShift Router
+  - name_match_regex: '^k8s_(router)\.[\w\d]+_(router-\d+-[a-zA-Z\d-]+)_(default)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # OpenShift Registry
+  - name_match_regex: '^k8s_(registry)\.[\w\d]+_(docker-registry-\d+-[a-zA-Z\d-]+)_(default)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # Zabbix Web
+  - name_match_regex: '^k8s_(oso-rhel7-zabbix-web)\.[\w\d]+_(oso-rhel7-zabbix-web-\d+-[a-zA-Z\d-]+)_(new-monitoring)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # Zabbix Server
+  - name_match_regex: '^k8s_(oso-rhel7-zabbix-server)\.[\w\d]+_(oso-rhel7-zabbix-server-\d+-[a-zA-Z\d-]+)_(new-monitoring)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # Zagg
+  - name_match_regex: '^k8s_(oso-rhel7-zagg-web)\.[\w\d]+_(oso-rhel7-zagg-web-\d+-[a-zA-Z\d-]+)_(new-monitoring)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # OPS Registry
+  - name_match_regex: '^k8s_(ose-docker-registry)\.[\w\d]+_(ose-docker-registry-\d+-[a-zA-Z\d-]+)_(ops-registry)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
+
+  # OPS Registry HTTPD frontend
+  - name_match_regex: '^k8s_(httpd-24-rhel7)\.[\w\d]+_(httpd-24-rhel7-\d+-[a-zA-Z\d-]+)_(ops-registry)_.*$'
+    name_format_regex: 'k8s::\3::\2::\1'
