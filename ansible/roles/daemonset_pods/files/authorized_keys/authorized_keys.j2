@@ -1,0 +1,13 @@
+{% raw %}{% for user in authorized_keys | selectattr('pub_key', 'defined') %}
+{%     if rootlog_stat.stat.exists %}
+command="/usr/bin/rootlog-ssh-wrap {{ user.username }}" {{ user.pub_key }}
+{%     else %}
+{{ user.pub_key }}
+{%     endif %}
+{% endfor %}
+{% for autokey in authorized_autokeys %}
+from="{{ authorized_autokeys_hosts | join(',') }}" {{ autokey | replace('\n', '') }}
+{% endfor %}
+{% for key in authorized_keys_extra %}
+{{ key }}
+{% endfor %}{% endraw %}
