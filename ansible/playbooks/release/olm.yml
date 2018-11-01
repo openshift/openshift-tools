@@ -1,0 +1,19 @@
+#!/usr/bin/ansible-playbook
+---
+- name: Setting up vars
+  hosts: localhost
+  gather_facts: no
+
+  tasks:
+  - name: find the masters and add them to the inventory
+    include_role:
+      name: tools_roles/oa_add_aws_hosts_to_inventory
+
+- import_playbook: /usr/share/ansible/openshift-ansible/playbooks/init/main.yml
+  vars:
+    l_init_fact_hosts: "masters"
+    l_openshift_version_set_hosts: "masters:!oo_first_master"
+    l_openshift_version_check_hosts: "all:!all"
+    skip_sanity_checks: true
+
+- import_playbook: /usr/share/ansible/openshift-ansible/playbooks/olm/private/config.yml
