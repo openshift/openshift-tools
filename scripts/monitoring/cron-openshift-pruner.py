@@ -27,6 +27,15 @@ import base64
 import json
 import os
 import subprocess
+import time
+import logging
+from openshift_tools.monitoring.metric_sender import MetricSender
+
+logging.basicConfig(
+    format='%(asctime)s - %(relativeCreated)6d - %(levelname)-8s - %(message)s',
+)
+logger = logging.getLogger()
+logger.setLevel(logging.WARN)
 
 SERVICE_ACCOUNT_GROUP = "openshift-infra"
 SERVICE_ACCOUNT = "autopruner"
@@ -40,6 +49,10 @@ class OpenShiftPrune(object):
     def __init__(self):
         self.args = None
         self.parse_args()
+        if self.args.debug:
+            logger.setLevel(logging.DEBUG)
+        if self.args.verbose:
+            logger.setLevel(logging.INFO)
 
     def parse_args(self):
         '''Parse the arguments for this script'''
@@ -47,6 +60,8 @@ class OpenShiftPrune(object):
         parser = argparse.ArgumentParser(description="OpenShift object pruner")
         parser.add_argument('-d', '--debug', default=False,
                             action="store_true", help="debug mode")
+        parser.add_argument('-v', '--verbose', action='count', default=0,
+                            help='verbosity level, specify multiple')
         parser.add_argument('--image-keep-younger-than', default='24h',
                             help='Ignore images younger than set time')
         parser.add_argument('--image-keep-tag-revisions', default='5',
@@ -202,25 +217,34 @@ class OpenShiftPrune(object):
     def main(self):
         ''' Prune images/builds/deployments '''
 
+        ms = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
         rc = 0
+        logger.info("Start prune deployments")
         try:
             self.prune_deployments()
         except subprocess.CalledProcessError as e:
             print "Error pruning deployments"
             rc = e.returncode
 
+        logger.info("Start prune builds")
         try:
             self.prune_builds()
         except subprocess.CalledProcessError as e:
             print "Error pruning builds"
             rc = e.returncode
 
+        logger.info("Start prune images")
         try:
             self.prune_images()
         except subprocess.CalledProcessError as e:
             print "Error pruning images"
             rc = e.returncode
 
+        ms.add_metric({'openshift.master.prune.status': rc})
+        logger.info("Send data to MetricSender")
+        ms_time = time.time()
+        ms.send_metrics()
+        logger.info("Data sent to Zagg in %s seconds", str(time.time() - ms_time))
         if rc != 0:
             raise Exception("Error during pruning")
 
