@@ -9,4 +9,5 @@ osmrq_pv_projects_to_exclude:
 - default
 - openshift-infra
 - logging
+- openshift-logging
 osmrq_service_lb_projects_to_exclude: []
