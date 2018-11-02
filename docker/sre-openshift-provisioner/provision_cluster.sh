@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # do the prereqs
 /usr/bin/ansible-playbook -i /tmp/inventory.yml /usr/share/ansible/openshift-ansible/playbooks/aws/openshift-cluster/prerequisites.yml
