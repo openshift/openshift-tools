@@ -8,6 +8,34 @@
 
 - debug: var=oc_version
 
+- name: check that the pv namespaces exist
+  oc_obj:
+    name: "{{ item }}"
+    state: list
+    kind: namespace
+  with_items: "{{ osmrq_pv_projects_to_exclude }}"
+  register: l_pv_oc_obj_ns
+
+- name: check that the lv namespaces exist
+  oc_obj:
+    name: "{{ item }}"
+    state: list
+    kind: namespace
+  with_items: "{{ osmrq_service_lb_projects_to_exclude }}"
+  register: l_lb_oc_obj_ns
+  when: osmrq_service_lb_projects_to_exclude
+
+- name: find the valid projects for pv
+  set_fact:
+    l_valid_pv_projects: "{{ l_pv_oc_obj_ns.results | osmrq_get_existing_namespaces }}"
+
+- name: find the valid projects for lv
+  set_fact:
+    l_valid_lb_projects: "{{ l_lb_oc_obj_ns.results | osmrq_get_existing_namespaces }}"
+  when: osmrq_service_lb_projects_to_exclude
+
+- debug: var=l_valid_pv_projects
+
 - name: label designated projects to exclude from pv quotas
   oc_label:
     state: add
@@ -16,9 +44,9 @@
     labels:
     - key: "{{ osmrq_exclude_pv_quota_label }}"
       value: "False"
-  with_items: "{{ osmrq_pv_projects_to_exclude }}"
+  with_items: "{{ l_valid_pv_projects }}"
   run_once: True
-  when: 
+  when:
   - osmrq_enable_pv_quotas
   - inventory_hostname == ansible_play_hosts[0]
 
@@ -30,10 +58,11 @@
     labels:
     - key: "{{ osmrq_exclude_service_lb_quota_label }}"
       value: "False"
-  with_items: "{{ osmrq_service_lb_projects_to_exclude }}"
+  with_items: "{{ l_lb_oc_obj_ns }}"
   run_once: True
   when:
   - osmrq_enable_service_lb_quotas
+  - osmrq_service_lb_projects_to_exclude
   - inventory_hostname == ansible_play_hosts[0]
 
 - name: Ensure Quotas are set for storage
