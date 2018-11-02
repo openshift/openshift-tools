@@ -9,3 +9,5 @@
   with_items:
   - default
   - openshift-infra
+  retries: 10
+  delay: 6
