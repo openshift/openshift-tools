@@ -40,6 +40,10 @@
   user: root
 
   tasks:
+  - name: pause and wait for masters
+    pause:
+      seconds: 60
+
   - name: setup default ns selector on default ans openshift-infra
     include_role:
       name: tools_roles/openshift_default_ns_settings
