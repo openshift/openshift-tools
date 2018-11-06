@@ -1,0 +1,26 @@
+#!/bin/bash
+{{ generated_header }}
+
+
+# Make sure the script exits on first error
+set -e
+
+RED="$(echo -e '\033[1;31m')"
+NORM="$(echo -e '\033[0m')"
+
+function handle_err() {
+  echo -e "\n${RED}ERROR: build script failed.${NORM}\n"
+}
+
+trap handle_err ERR
+
+
+sudo echo -e "\nTesting sudo works...\n"
+
+cd $(dirname $0)
+{% if base_os == "rhel7" %}
+sudo time docker build -t oso-report-dashboard .
+{% elif base_os == "centos7" %}
+sudo time docker build -t oso-report-dashboard .
+sudo docker tag oso-report-dashboard openshifttools/oso-centos7-report-dashboard:latest
+{% endif %}
