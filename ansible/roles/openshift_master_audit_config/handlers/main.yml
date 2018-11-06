@@ -8,7 +8,7 @@
   notify:
   - master api less than 3.10
   - master api 3.10 and greater
-  listen: 'restart master services'
+  listen: 'restart openshift master services'
 
 - name: master controllers
   repoquery:
@@ -19,7 +19,7 @@
   notify:
   - master controllers less than 3.10
   - master controllers 3.10 and greater
-  listen: 'restart master services'
+  listen: 'restart openshift master services'
 
 - name: master api less than 3.10
   systemd:
