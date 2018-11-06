@@ -15,6 +15,8 @@
   with_items:
   - infra-elasticsearch-sysctl.sh
   - rhsm-unregister.sh
+  - insights-register.sh
+  - disable-hyperthreading.sh
 
 - name: Copy templates into the firstboot dir
   template:
