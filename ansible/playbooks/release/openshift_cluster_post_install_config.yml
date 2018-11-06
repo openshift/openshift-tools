@@ -29,11 +29,9 @@
 
   - name: master api restart
     command: /usr/local/bin/master-restart api api
-    run_once: true
 
   - name: master controllers restart
     command: /usr/local/bin/master-restart controllers controllers
-    run_once: true
 
 - name: Configuring master settings
   hosts: masters[0]
@@ -42,7 +40,7 @@
   tasks:
   - name: pause and wait for masters
     pause:
-      seconds: 60
+      seconds: 90
 
   - name: setup default ns selector on default ans openshift-infra
     include_role:
