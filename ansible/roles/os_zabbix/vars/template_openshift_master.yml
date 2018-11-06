@@ -803,6 +803,12 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.prune.status
+    value_type: int
+    description: "openshift prune cronjob status"
+    applications:
+    - Openshift Master
+
   zdiscoveryrules:
   - name: disc.pv
     key: disc.pv
@@ -1116,6 +1122,11 @@ g_template_openshift_master:
     expression: "{Template Openshift Master:openshift.webconsole.available.max(#3)}<1"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_web_console.asciidoc"
     priority: high
+
+  - name: "Openshift prune job failed"
+    expression: "{Template Openshift Master:openshift.master.prune.status.last()}<>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_prune.asciidoc"
+    priority: avg
 
   zgraphs:
   - name: Openshift Master API Server Latency Pods LIST Quantiles
