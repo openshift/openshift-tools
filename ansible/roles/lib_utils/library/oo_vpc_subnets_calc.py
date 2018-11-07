@@ -39,7 +39,7 @@ Test Playbook:
 '''
 
 
-def calc_subnets(module, cidr_block, num_of_subnets, num_avail_zones_in_region, region_name, availability_zones):
+def calc_subnets(module, cidr_block, num_of_subnets, num_avail_zones_in_region, region_name, availability_zones, multi_az):
     max_hosts_per_subnet = 2048
     min_hosts_per_subnet = 14
     ip = netaddr.IPNetwork(cidr_block)
@@ -49,10 +49,10 @@ def calc_subnets(module, cidr_block, num_of_subnets, num_avail_zones_in_region, 
 
     if ip.size < min_hosts_per_subnet:
         if module is None:
-            module.fail_json(msg='CIDR block is too small.')
-        else:
             print("CIDR block is too small.")
             return results
+        else:
+            module.fail_json(msg='CIDR block is too small.')
 
     if ip.size >= (max_hosts_per_subnet * 3) and num_avail_zones_in_region >= num_of_subnets:
         num_of_hosts_per_subnet = max_hosts_per_subnet
@@ -68,10 +68,18 @@ def calc_subnets(module, cidr_block, num_of_subnets, num_avail_zones_in_region, 
     bits = 32 - int(round(math.log(num_of_hosts_per_subnet, 2)))
     subnets = list(ip.subnet(bits))
 
-    if num_avail_zones_in_region >= num_of_subnets:
-        subnets = subnets[:3]
+    if multi_az:
+        if num_avail_zones_in_region >= num_of_subnets:
+            subnets = subnets[:3]
+        else:
+            if module is None:
+                print("Not enough AZs found to support multi-AZ deployment")
+                return results
+            else:
+                module.fail_json(msg='Not enough AZs found to support multi-AZ deployment')
     else:
         subnets = subnets[:1]
+
 
     for idx, subnet in enumerate(subnets):
         az_subnets.append({"cidr": str(subnet), "az": availability_zones[idx]})
@@ -79,7 +87,6 @@ def calc_subnets(module, cidr_block, num_of_subnets, num_avail_zones_in_region, 
     results = {region_name: az_subnets}
 
     return results
-
 
 def main():
     module = AnsibleModule(
@@ -89,6 +96,7 @@ def main():
             aws_access_key_id=dict(default=None, type='str'),
             aws_secret_access_key=dict(default=None, type='str'),
             number_of_subnets=dict(default=3, choices=[1, 3], type='int'),
+            multi_az=dict(default=False, required=False, type='bool'),
         ),
         supports_check_mode=True
     )
@@ -98,6 +106,7 @@ def main():
     aws_access_key_id = module.params.get('aws_access_key_id')
     aws_secret_access_key = module.params.get('aws_secret_access_key')
     number_of_subnets = module.params.get('number_of_subnets')
+    multi_az = module.params.get('multi_az')
 
     if aws_access_key_id and aws_secret_access_key:
         boto3.setup_default_session(aws_access_key_id=aws_access_key_id,
@@ -116,7 +125,7 @@ def main():
 
     num_avail_zones_in_region = len(response['AvailabilityZones'])
     results = calc_subnets(module, cidr_block, number_of_subnets, num_avail_zones_in_region, region_name,
-                           availability_zones)
+                           availability_zones, multi_az)
     module.exit_json(changed=False, ansible_facts={}, results=results)
 
 
