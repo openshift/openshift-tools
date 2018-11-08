@@ -1,9 +1,8 @@
 ---
 - name: master api
-  repoquery:
-    name: atomic-openshift
-    query_type: installed
-  register: handler_openshift_version
+  stat:
+    path: /usr/local/bin/master-restart
+  register: l_master_restart
   changed_when: true
   notify:
   - master api less than 3.10
@@ -11,10 +10,9 @@
   listen: 'restart openshift master services'
 
 - name: master controllers
-  repoquery:
-    name: atomic-openshift
-    query_type: installed
-  register: handler_openshift_version
+  stat:
+    path: /usr/local/bin/master-restart
+  register: l_master_restart
   changed_when: true
   notify:
   - master controllers less than 3.10
@@ -25,19 +23,18 @@
   systemd:
     name: 'atomic-openshift-master-api'
     state: restarted
-  when: handler_openshift_version.results.versions.latest | version_compare('3.10', '<')
+  when: not l_master_restart.stat.exists
 
 - name: master api 3.10 and greater
   command: /usr/local/bin/master-restart api api
-  when: handler_openshift_version.results.versions.latest | version_compare('3.10', '>=')
+  when: l_master_restart.stat.exists
 
 - name: master controllers less than 3.10
   systemd:
     name: 'atomic-openshift-master-controllers'
     state: restarted
-  when: handler_openshift_version.results.versions.latest | version_compare('3.10', '<')
+  when: not l_master_restart.stat.exists
 
 - name: master controllers 3.10 and greater
   command: /usr/local/bin/master-restart controllers controllers
-  when: handler_openshift_version.results.versions.latest | version_compare('3.10', '>=')
-
+  when: l_master_restart.stat.exists
