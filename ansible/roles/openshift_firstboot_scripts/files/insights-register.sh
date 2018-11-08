@@ -11,4 +11,4 @@ done
 
 INTERNAL_HOSTNAME=$(curl 169.254.169.254/latest/meta-data/local-hostname)
 
-/usr/bin/redhat-access-insights --register --display-name=$CLUSTERNAME-$NODETYPE-$INTERNAL_HOSTNAME --group=$CLUSTERNAME
+nohup /usr/bin/redhat-access-insights --register --display-name=$CLUSTERNAME-$NODETYPE-$INTERNAL_HOSTNAME --group=$CLUSTERNAME &
