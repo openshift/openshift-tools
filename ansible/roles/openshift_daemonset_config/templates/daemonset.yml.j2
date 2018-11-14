@@ -66,6 +66,9 @@ spec:
         # Directory which contains the host volume.
         - mountPath: /host
           name: host
+        # Mount DBUS to have access to systemd commands
+        - mountPath: /run/dbus
+          name: dbus
         # Our node configuration
         - mountPath: /opt/config
           name: config
@@ -154,3 +157,7 @@ spec:
           path: /run/docker.sock
           type: ""
         name: docker-sock
+      - hostPath:
+          path: /run/dbus
+          type: ""
+        name: dbus

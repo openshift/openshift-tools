@@ -12,7 +12,7 @@ openshift_daemonset_config_configmap_contents_to_files: []
 openshift_daemonset_config_configmap_files: {}
 openshift_daemonset_config_configmap_literals: {}
 openshift_daemonset_config_monitoring: False
-openshift_daemonset_config_interval: 300
+openshift_daemonset_config_interval: 900
 openshift_daemonset_config_script: config.sh
 openshift_daemonset_config_secret_name: "{{ openshift_daemonset_config_daemonset_name }}-secret"
 openshift_daemonset_config_secrets: {}
