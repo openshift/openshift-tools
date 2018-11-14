@@ -6,16 +6,16 @@
   copy:
     remote_src: true
     src: /opt/config/monitoring_config.yml
-    dest: /opt/tmp_shared_config/monitoring_config_pre.yml
+    dest: /tmp/monitoring_config_pre.yml
     owner: root
     group: root
 
 - name: update the hostname
-  command: 'sed -i -e "s#^    name: \"UPDATENAME\"#    name: {% raw %}{{ dsp_host_name }}{% endraw %}#" /opt/tmp_shared_config/monitoring_config_pre.yml'
+  command: 'sed -i -e "s#^    name: \"UPDATENAME\"#    name: {% raw %}{{ dsp_host_name }}{% endraw %}#" /tmp/monitoring_config_pre.yml'
   register: sedout
 
 - name: verify hostname was updated
-  command: 'grep -Pq "^    name: UPDATENAME" /opt/tmp_shared_config/monitoring_config_pre.yml'
+  command: 'grep -Pq "^    name: UPDATENAME" /tmp/monitoring_config_pre.yml'
   register: grepout
   failed_when:
   - grepout.rc == 0
@@ -23,7 +23,7 @@
 - name: copy fixed monitoring config to shared config emptydir
   copy:
     remote_src: true
-    src: /opt/tmp_shared_config/monitoring_config_pre.yml
+    src: /tmp/monitoring_config_pre.yml
     dest: /opt/tmp_shared_config/monitoring_config.yml
     mode: "0640"
     owner: root
