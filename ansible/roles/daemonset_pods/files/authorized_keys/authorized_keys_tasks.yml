@@ -14,4 +14,3 @@
     group: root
     validate: awk '/^[^# ]/ { i++ } END { if (i < 4) { print "Config error? Only "i" keys found" > "/dev/stderr"; exit 1 } }' %s
     mode:  '0440'
-
