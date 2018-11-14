@@ -81,6 +81,15 @@
                      'authorized_keys_extra': dsp_authorized_keys_extra,
                      'authorized_autokeys_hosts': dsp_authorized_keys_autokeys_hosts } | to_yaml }}"
 
+    # dnsmasq
+    - path: /tmp/dns_proxy.conf.j2
+      name: dns_proxy.conf.j2
+      contents: |
+        {{ lookup('file', '../files/dnsmasq/dns_proxy.conf.j2') }}
+    - path: /tmp/dnsmasq_vars.yml
+      name: dnsmasq_vars.yml
+      contents: "{{ {'dns_proxy_map': dsp_dns_proxy_map } | to_yaml }}"
+
     # end authorized_keys
 
     openshift_daemonset_config_configmap_literals:
@@ -94,6 +103,8 @@
         {{ lookup('file', '../files/docker_config/docker_config_tasks.yml') }}
       operations_tasks.yml: |
         {{ lookup('file', '../files/operations/operations_tasks.yml') }}
+      dnsmasq_tasks.yml: |
+        {{ lookup('file', '../files/dnsmasq/dnsmasq_tasks.yml') }}
 
       # this requires clusterid to be translated and cannot be moved to files unless that is solved
       monitoring_config_tasks.yml: |
@@ -127,6 +138,9 @@
 
           - name: setup operations tasks
             import_tasks: /opt/config/operations_tasks.yml
+
+          - name: setup dnsmasq tasks
+            import_tasks: /opt/config/dnsmasq_tasks.yml
 
       operations_config.sh: |
         #!/bin/bash
