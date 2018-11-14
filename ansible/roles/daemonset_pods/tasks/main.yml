@@ -62,12 +62,6 @@
     openshift_daemonset_config_configmap_files: {}
 
     openshift_daemonset_config_configmap_contents_to_files:
-    # monitoring_config
-    - name: monitoring_config.yml
-      contents: |
-        {{ lookup('template', '../templates/monitoring-config.yml.j2') }}
-      path: /tmp/monitoring_config.yml
-    # end monitoring_config
 
     # authorized_keys
     - path: /tmp/authorized_keys.j2
@@ -151,5 +145,7 @@
     openshift_daemonset_config_secrets:
     - path: docker-config.json
       data: "{{ lookup('template', '../files/docker_config/docker-config.json.j2') | to_json }}"
+    - path: monitoring_config.yml
+      data: "{{ lookup('template', '../templates/monitoring-config.yml.j2') }}"
 
     openshift_daemonset_config_node_selector: "{{ dsp_sg_node_selector }}"
