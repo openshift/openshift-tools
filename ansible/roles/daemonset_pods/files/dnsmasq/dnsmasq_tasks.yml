@@ -1,0 +1,19 @@
+- name: load variables for dnsmasq
+  include_vars: /opt/config/dnsmasq_vars.yml
+
+- name: Install the dnsmasq proxy config
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+  - src: /opt/config/dns_proxy.conf.j2
+    dest: /host/etc/dnsmasq.d/dns_proxy.conf
+  when: dns_proxy_map != False
+  register: dnsmasq_proxy_out
+
+- name: restart dnsmasq through systemd via dbus
+  command: gdbus call --system --dest org.freedesktop.systemd1 --object-path /org/freedesktop/systemd1/unit/dnsmasq_2eservice --method org.freedesktop.systemd1.Unit.Restart replace
+  when: dnsmasq_proxy_out.changed
