@@ -5,7 +5,7 @@
 - name: copy monitoring config to shared config emptydir
   copy:
     remote_src: true
-    src: /opt/config/monitoring_config.yml
+    src: /opt/secrets/monitoring_config.yml
     dest: /tmp/monitoring_config_pre.yml
     owner: root
     group: root
