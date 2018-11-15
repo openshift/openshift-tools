@@ -269,9 +269,6 @@ host_monitoring_cron:
 {% if osohm_master_primary | default(False) | bool %}
 {# Openshift Master checks #}
 
-- name: check all the nodes label
-  minute: "*/5"
-  job: ops-runner -f -t 180 -s 60 -n csnls.openshift.nodes.label.status.check /usr/bin/cron-send-node-labels-status
 
 {% if osohm_enable_app_create|bool %}
 - name: run create app
