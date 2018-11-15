@@ -2,8 +2,13 @@
 container_metrics_config:
   use_cgroups: True
   usage_checks:
-  # Host monitoring
-  - name_match_regex: 'oso-.*-host-monitoring'
+  # Host monitoring container
+  - name_match_regex: '^k8s_(monitoring_compute-config).*$'
+    name_format_regex: 'k8s::\1'
+
+  # Host config container
+  - name_match_regex: '^k8s_(config_compute-config).*$'
+    name_format_regex: 'k8s::\1'
 
 
 # twiest: This one isn't required and it's causing issues for some reason.
