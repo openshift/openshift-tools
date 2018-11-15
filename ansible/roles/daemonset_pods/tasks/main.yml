@@ -90,7 +90,9 @@
       etcd_metrics.yml: |
         {{ lookup('file', '../files/etcd_metrics.yml') }}
       container_metrics_config.yml: |
-        {{ lookup('file', '../files/container_metrics_config.yml') }}
+        {{ lookup('file', '../files/container_metrics/container_metrics_config.yml') }}
+      container_metrics_config_tasks.yml: |
+        {{ lookup('file', '../files/container_metrics/container_metrics_config_tasks.yml') }}
       authorized_keys_tasks.yml: |
         {{ lookup('file', '../files/authorized_keys/authorized_keys_tasks.yml') }}
       docker_config_tasks.yml: |
@@ -132,6 +134,9 @@
 
           - name: setup operations tasks
             import_tasks: /opt/config/operations_tasks.yml
+
+          - name: setup container metrics tasks
+            import_tasks: /opt/config/container_metrics_config_tasks.yml
 
           - name: setup dnsmasq tasks
             import_tasks: /opt/config/dnsmasq_tasks.yml
