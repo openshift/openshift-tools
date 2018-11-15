@@ -1,0 +1,8 @@
+---
+- name: copy container_metrics_config.yml to shared config emptydir
+  copy:
+    remote_src: true
+    src: /opt/config/container_metrics_config.yml
+    dest: /opt/tmp_shared_config/container_metrics_config.yml
+    owner: root
+    group: root

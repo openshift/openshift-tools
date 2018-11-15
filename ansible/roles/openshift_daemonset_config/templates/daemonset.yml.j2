@@ -89,6 +89,17 @@ spec:
         env:
         - name: OO_PAUSE_ON_START
           value: "{{ openshift_daemonset_config_monitoring_pos }}"
+        command:
+        - /bin/bash
+        - -c
+        - |
+          #!/bin/sh
+          while [ ! -f /container_setup/container_metrics_config.yml ]
+          do
+            echo "Waiting for /container_setup/container_metrics_config.yml to exist.."
+            sleep 5
+          done
+          /usr/local/bin/start.sh
         securityContext:
           # Must be root to read content
           runAsUser: 0
