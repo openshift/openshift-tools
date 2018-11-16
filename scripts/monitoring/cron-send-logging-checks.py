@@ -26,6 +26,7 @@ import argparse
 import ssl
 import urllib2
 import json
+import subprocess
 
 # pylint: disable=import-error
 from openshift_tools.monitoring.ocutil import OCUtil
@@ -323,11 +324,23 @@ class OpenshiftLoggingStatus(object):
                     })
         self.metric_sender.send_metrics()
 
+    def get_logging_namespace(self):
+        ''' Determine which logging namespace is in use '''
+        # Assume the correct namespace is 'openshift-logging' and fall back to 'logging'
+        # if that assumption ends up being wrong.
+        oc_client = OCUtil(namespace='openshift-logging', config_file='/tmp/admin.kubeconfig', verbose=self.args.verbose)
+        try:
+            oc_client.get_dc('logging-kibana')
+            # If the previous call didn't throw an exception, logging is deployed in this namespace.
+            return 'openshift-logging'
+        except subprocess.CalledProcessError:
+            return 'logging'
+
     def run(self):
         ''' Main function that runs the check '''
         self.parse_args()
         self.metric_sender = MetricSender(verbose=self.args.verbose, debug=self.args.debug)
-        self.oc = OCUtil(namespace='logging', config_file='/tmp/admin.kubeconfig', verbose=self.args.verbose)
+        self.oc = OCUtil(namespace=self.get_logging_namespace(), config_file='/tmp/admin.kubeconfig', verbose=self.args.verbose)
         self.get_pods()
 
         logging_status = {}
