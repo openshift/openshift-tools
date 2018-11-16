@@ -75,9 +75,9 @@ def main():
     # Get openshift node version (attempt upstream)
     success, err = add_specific_rpm_version("{}-node".format(openshift_package_name), rpm_db_path, keys, mts,
                                             "openshift.node.")
+    openshift_package_name = "atomic-openshift"
     if not success:
         # Get openshift version (attempt downstream)
-        openshift_package_name = "atomic-openshift"
         success, err2 = add_specific_rpm_version("{}-node".format(openshift_package_name), rpm_db_path, keys, mts,
                                                  "openshift.node.")
         if not success:
@@ -85,7 +85,6 @@ def main():
             print "Failed to get openshift rpm version:\n" + err.output + + err2.output
     # Get openshift master version (attempt for versions <3.11) - only if node rpm found
     if success:
-        openshift_package_name = "atomic-openshift"
         success, err = add_specific_rpm_version("{}-master".format(openshift_package_name), rpm_db_path, keys, mts,
                                                 "openshift.master.")
         # Get openshift master version (attempt for versions >=3.11)
