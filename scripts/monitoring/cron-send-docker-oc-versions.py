@@ -69,28 +69,24 @@ def main():
         failures += 1
         print "Failed to get docker rpm version. " + err.output
 
-
-    openshift_package_name = "origin"
-
-    # Get openshift node version (attempt upstream)
+    openshift_package_name = "atomic-openshift"
+    # Get openshift-node version
     success, err = add_specific_rpm_version("{}-node".format(openshift_package_name), rpm_db_path, keys, mts,
-                                            "openshift.node.")
+                                             "openshift.node.")
     if not success:
-        # Get openshift version (attempt downstream)
-        openshift_package_name = "atomic-openshift"
-        success, err2 = add_specific_rpm_version("{}-node".format(openshift_package_name), rpm_db_path, keys, mts,
-                                                 "openshift.node.")
-        if not success:
-            failures += 1
-            print "Failed to get openshift rpm version:\n" + err.output + + err2.output
-
-    # Get openshift master version (upstream or downstream) - only if node rpm found
+        failures += 1
+        print "Failed to get openshift rpm version:\n" + err.output
+    # Get openshift master version (attempt for versions <3.11) - only if node rpm found
     if success:
         success, err = add_specific_rpm_version("{}-master".format(openshift_package_name), rpm_db_path, keys, mts,
                                                 "openshift.master.")
+        # Get openshift master version (attempt for versions >=3.11)
         if not success:
-            # Print notification but don't count this as failure
-            print "Note: " + err.output
+            success, err2= add_specific_rpm_version("{}".format(openshift_package_name),
+                                                    rpm_db_path, keys, mts, "openshift.master.")
+            if not success:
+                # Print notification but don't count this as failure
+                print "Failed to get openshift master rpm version:\n" + err.output + + err2.output
 
     print "Sending these metrics:"
     print json.dumps(keys, indent=4)
