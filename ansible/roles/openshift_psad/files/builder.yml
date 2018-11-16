@@ -25,7 +25,7 @@ objects:
     source:
       contextDir: "docker/oso-ops-base/${PLAT}"
       git:
-        ref: rpm_psad
+        ref: psad_311
         uri: https://github.com/rhdedgar/openshift-tools
       secrets: []
       type: Git
@@ -58,7 +58,7 @@ objects:
     source:
       contextDir: "docker/oso-psad/${PLAT}"
       git:
-        ref: rpm_psad
+        ref: psad_311
         uri: https://github.com/rhdedgar/openshift-tools
       secrets: []
       type: Git
