@@ -33,7 +33,7 @@ g_template_dnsmasq:
     priority: high
 
   - name: "dnsmasq query failed on {HOST.NAME}"
-    expression: "{Template dnsmasq:dnsmasq.query.max(#3)}<1"
+    expression: "{Template dnsmasq:dnsmasq.query.max(#6)}<1"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_dnsmasq.asciidoc"
     dependencies:
     - "dnsmasq process not running on {HOST.NAME}"
