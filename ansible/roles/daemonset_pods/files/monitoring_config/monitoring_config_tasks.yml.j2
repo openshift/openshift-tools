@@ -1,6 +1,10 @@
 ---
+- name: Include variable to determine the sub host type
+  include_vars:
+    file: /host/root/openshift_bootstrap/openshift_settings.yaml
+
 - set_fact:
-    dsp_host_name: "{{ dsp_cluster_id }}-{{ dsp_sub_host_type }}{% raw %}-{{ lookup('env', 'HOSTNAME') }}{% endraw %}"
+    dsp_host_name: "{{ dsp_cluster_id }}-{% raw %}{{ openshift_node_config_name.split('-') | last }}-{{ lookup('env', 'HOSTNAME') }}{% endraw %}"
 
 - name: copy monitoring config to shared config emptydir
   copy:
