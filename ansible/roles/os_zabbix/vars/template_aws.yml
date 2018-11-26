@@ -23,6 +23,21 @@ g_template_aws:
     - EC2 Elastic IP
     value_type: int
 
+  - key: aws.ec2.instance.instance_status
+    applications:
+    - EC2 Instance
+    value_type: int
+
+  - key: aws.ec2.instance.system_status
+    applications:
+    - EC2 Instance
+    value_type: int
+
+  - key: aws.ec2.instance.events
+    applications:
+    - EC2 Instance
+    value_type: int
+
   ztriggers:
   - name: "EBS Snapshot deletion failed on {HOST.NAME}"
     expression: "{Template AWS:aws.ebs.snapshotter.deletion_errors.min(#3)}>0"
