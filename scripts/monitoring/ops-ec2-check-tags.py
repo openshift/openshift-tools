@@ -85,6 +85,16 @@ class AWSTagsMonitorCLI(object):
         # This will print out a list of instances
         #  and the tags associated with them
         for v in instances.itervalues():
+            # Skip scale group nodes because they don't have names, 
+            # and their tags are managed by the scale group
+            if v.tags.get('scalegroup') == 'True':
+                continue
+
+            # Pre-3.11 masters will have 'Name' tags, but newer ones won't.
+            if 'Name' not in v.tags:
+                # If the Name tag is missing, add one. 
+                v.tags['Name'] = "{}-{}-{}".format(v.tags['clusterid'], v.tags['host-type'], v.private_dns_name)
+
             print v.id + ":"
             for name, value in v.tags.iteritems():
                 print "  %s: %s" %(name, value)
