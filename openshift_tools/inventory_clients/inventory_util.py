@@ -428,7 +428,7 @@ class Cluster(object):
         if not self._openshift_version:
             self._openshift_version = {}
             version = self.run_cmd_on_master("rpm -q --queryformat '%{VERSION}-%{RELEASE}' \
-                                                           atomic-openshift")
+                                                           atomic-openshift-clients")
             self._openshift_version = Cluster.set_version(version)
 
         return self._openshift_version
