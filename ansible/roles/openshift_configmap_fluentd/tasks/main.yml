@@ -1,0 +1,15 @@
+---
+- name: createthe tmp file
+  copy:
+   src: private_vars/global/{{ ipv_location }}/{{ ipv_account }}/{{ ipv_environment }}/{{ ipv_clusterid }}/fluentd.conf
+   dest: /tmp/tmp-fluentd.conf
+
+
+- name: create a configmap
+  oc_configmap:
+    state: present
+    name: configmaptest-zhimingfromprivate
+    namespace: openshift-logging
+    from_file:
+      config: "/tmp/tmp-fluentd.conf"
+
