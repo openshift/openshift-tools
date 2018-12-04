@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.157
+Version:       0.1.158
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -500,6 +500,14 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Fri Nov 30 2018 Blair Morrison <bmorriso@redhat.com> 0.1.158-1
+- Update check-tags for 3.11 (bmorriso@redhat.com)
+- Remove upstream check for origin node (bmorriso@redhat.com)
+- No need to set openshift_package_name twice (bmorriso@redhat.com)
+- For 3.11 clusters, master rpm is atomic-openshift, not atomic-openshift-
+  master (bmorriso@redhat.com)
+- figure out which logging name space is in use (bmorriso@redhat.com)
+
 * Mon Nov 05 2018 Drew Anderson <dranders@redhat.com> 0.1.157-1
 - Add metrics for pruner (haowang@redhat.com)
 
