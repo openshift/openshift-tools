@@ -50,13 +50,18 @@ def announce_shift(bot, channel, rotation):
                                  formatting.colors.RED)
     oncall = formatting.color('    On-Call: {oncall_nick}'.format(oncall_nick=rotation['Oncall']),
                               formatting.colors.RED)
+    oncallWeeday = formatting.color('    No oncall scheduled on weekdays, contact shift lead',
+                              formatting.colors.RED)
 
     if bot.db.get_channel_value(channel, 'announce'):
         print("Annoucing to channel " + str(channel))
         bot.say(hashline, channel)
         bot.say(lead, channel)
         bot.say(secondary, channel)
-        bot.say(oncall, channel)
+        if rotation['Oncall']:
+            bot.say(oncall, channel)
+        else: 
+            bot.say(oncallWeeday, channel)
     else:
         print("Failed to get channel value")
 
@@ -76,18 +81,27 @@ def get_rotation():
     """This function gets the rotation from the pagerduty api"""
     pypd.api_key = os.environ['PAGER_DUTY_API_KEY']
     oncall = pypd.OnCall.find(escalation_policy_ids=["PA4586M"])
-    escalation_level = {1:'Shift Lead', 2:'Shift Secondary', 3:'Oncall', 4:'Management Escalation'}
-    rotation = {}
+    escalation_level = { 1:'Shift Lead', 2:'Shift Secondary', 5: 'Oncall' }
+
+    #print(json.dumps(escalation_level,indent=4,sort_keys=True))
+    #print(oncall)
+    
+    # Set a rotation with default value of None , gets overwritten in the for loop if there an Oncall
+    rotation ={
+        'Oncall': None
+    }
+
     for obj in oncall:
         esc_level = obj.get('escalation_level')
-        if esc_level <= 4:
+        if esc_level in escalation_level.keys():
             on_call_user = obj.get('user')
             user_name = on_call_user.get('summary')
             user = pypd.User.find_one(name=user_name)
-            if user.get('description') != None:
+
+            rotation[escalation_level[obj.get('escalation_level')]] = user.get('name')
+            if user.get('description'):
                 rotation[escalation_level[obj.get('escalation_level')]] = user.get('description')
-            else:
-                rotation[escalation_level[obj.get('escalation_level')]] = user.get('name')
+            
     return rotation
 
 def announce_escalation(bot, channel, rotation):
@@ -384,6 +398,8 @@ def say_karma(bot, trigger):
 #################
 # Update every 5 minutes
 @module.interval(300)
+# Testing Intervals 
+#@module.interval(15)
 def track_shift_rotation(bot):
     """ Sends a message if there was a change in the rotation withnin the last 10 minutes
     (if bot has appropriate channel permissions)."""
