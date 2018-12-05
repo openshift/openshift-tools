@@ -86,7 +86,7 @@ def main():
                                                     rpm_db_path, keys, mts, "openshift.master.")
             if not success:
                 # Print notification but don't count this as failure
-                print "Failed to get openshift master rpm version:\n" + err.output + + err2.output
+                print "Failed to get openshift master rpm version:\n" + err.output + err2.output
 
     print "Sending these metrics:"
     print json.dumps(keys, indent=4)
