@@ -3,9 +3,9 @@
   gather_facts: no
   vars_files:
   - /root/default_vars.yml
-  - /host/etc/openshift_tools/monitoring-config.yml
 
   vars:
+    node_name: "{{ lookup('file', '/host/etc/hostname') }}"
     scanning_cron:
     - name: cron_scan_pods
       minute: "17"
@@ -39,7 +39,7 @@
       - item_reg: '^FW_MSG_READ_CMD_ARGS'
         item_line: 'FW_MSG_READ_CMD_ARGS -f -k;'
       - item_reg: '^HOSTNAME'
-        item_line: 'HOSTNAME                    {{ metric_sender_config["host"]["name"] }};'
+        item_line: 'HOSTNAME                    {{ node_name }};'
       - item_reg: '^ETC_HOSTS_DENY_FILE'
         item_line: 'ETC_HOSTS_DENY_FILE         /host/etc/hosts.deny;'
       - item_reg: '^ETC_SYSLOG_CONF'
@@ -105,10 +105,10 @@
       line: '{{ item.item_line }}'
     with_items:
       - item_reg: '^    name: ops-aws-synthetic'
-        item_line: '    name: {{ metric_sender_config["host"]["name"] }}'
+        item_line: '    name: {{ node_name }}'
         item_path: /etc/openshift_tools/metric_sender.yaml
       - item_reg: 'opsad_host_name'
-        item_line: 'opsad_host_name: {{ metric_sender_config["host"]["name"] }}'
+        item_line: 'opsad_host_name: {{ node_name }}'
         item_path: /etc/openshift_tools/scanreport_config.yml 
 
   - name: "Setup Cron"
