@@ -9,7 +9,7 @@
   oc_configmap:
     state: present
     name: logging-fluentd
-    namespace: openshift-logging
+    namespace: {{ logging_namespace | default('logging') }}
     from_file:
       config: "/tmp/tmp-fluentd.conf"
 
