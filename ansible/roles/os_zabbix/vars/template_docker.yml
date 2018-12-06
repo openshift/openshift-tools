@@ -112,6 +112,11 @@ g_template_docker:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_existing_docker_dns.asciidoc"
     priority: average
 
+  - name: "docker.container.existing.dns.resolution.timeout on {HOST.NAME}"
+    expression: "{Template Docker:docker.container.existing.dns.resolution.timeout.min(#3)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_existing_docker_dns.asciidoc"
+    priority: average
+
   - name: "Docker storage is using LOOPBACK on {HOST.NAME}"
     expression: "{Template Docker:docker.storage.is_loopback.last()}<>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_docker_loopback.asciidoc"
