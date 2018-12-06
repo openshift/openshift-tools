@@ -1,0 +1,10 @@
+#!/bin/bash -e
+{{ generated_header }}
+
+echo -n "Running oso-{{ base_os }}-report-dashboard... "
+{% if base_os == 'rhel7' %}
+sudo docker run -ti --net=host --rm=true --name oso-report-dashboard oso-rhel7-report-dashboard $@
+{% elif base_os == 'centos7' %}
+sudo docker run -ti --net=host --rm=true --name oso-report-dashboard oso-centos7-report-dashboard $@
+{% endif %}
+echo "Done."
