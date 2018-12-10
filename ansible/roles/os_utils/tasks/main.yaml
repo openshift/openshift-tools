@@ -26,3 +26,5 @@
   - pv
   - lftp
   - insights-client
+  - python-netaddr
+  - nvme-cli

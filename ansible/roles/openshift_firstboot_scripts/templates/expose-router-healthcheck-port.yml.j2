@@ -1,0 +1,11 @@
+#!/usr/bin/ansible-playbook
+---
+- hosts: localhost
+  connection: local
+  gather_facts: yes
+  user: root
+  tasks:
+  - include_role:
+      name: tools_roles/ops_os_firewall
+    vars:
+      oof_firewall_allow: "{{ osfbs_firewall_allow }}"
