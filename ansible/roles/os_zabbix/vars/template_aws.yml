@@ -48,7 +48,7 @@ g_template_aws:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_aws_eip.asciidoc"
     priority: average
   - name: "EC2 instance health check failed on {HOST.NAME}"
-    expression: "{Template AWS :aws.ec2.instance.instance_status.last()}<>0"
+    expression: "{Template AWS:aws.ec2.instance.instance_status.last()}<>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_aws_instance.asciidoc"
     priority: average
   - name: "EC2 instance system health check failed on {HOST.NAME}"
