@@ -21,6 +21,7 @@
   - insights-register.sh
   - disable-hyperthreading.sh
   - enable-tcp-logs-and-udp-limits.yml
+  - setup-etcd-volume.sh
 
 - name: Copy templates into the firstboot dir
   template:
