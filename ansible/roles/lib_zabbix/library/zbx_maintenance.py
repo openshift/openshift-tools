@@ -152,7 +152,7 @@ EXAMPLES = '''
 '''
 import json
 import requests
-import httplib
+import http.client
 import copy
 
 class ZabbixAPIError(Exception):
@@ -238,11 +238,11 @@ class ZabbixAPI(object):
         self.verbose = zabbix_connection.verbose
         self.ssl_verify = zabbix_connection.ssl_verify
         if self.verbose:
-            httplib.HTTPSConnection.debuglevel = 1
-            httplib.HTTPConnection.debuglevel = 1
+            http.client.HTTPSConnection.debuglevel = 1
+            http.client.HTTPConnection.debuglevel = 1
         self.auth = None
 
-        for cname, _ in self.classes.items():
+        for cname, _ in list(self.classes.items()):
             setattr(self, cname.lower(), getattr(self, cname)(self))
 
         # pylint: disable=no-member
@@ -250,9 +250,9 @@ class ZabbixAPI(object):
         resp, content = self.user.login(user=self.username, password=self.password)
 
         if resp.status_code == 200:
-            if content.has_key('result'):
+            if 'result' in content:
                 self.auth = content['result']
-            elif content.has_key('error'):
+            elif 'error' in content:
                 raise ZabbixAPIError("Unable to authenticate with zabbix server. {0} ".format(content['error']))
         else:
             raise ZabbixAPIError("Error in call to zabbix. Http status: {0}.".format(resp.status_code))
@@ -289,9 +289,9 @@ class ZabbixAPI(object):
         body = json.dumps(body)
 
         if self.verbose:
-            print "BODY:", body
-            print "METHOD:", method
-            print "HEADERS:", headers
+            print("BODY:", body)
+            print("METHOD:", method)
+            print("HEADERS:", headers)
 
         request = requests.Request("POST", self.server, data=body, headers=headers)
         session = requests.Session()
@@ -302,7 +302,7 @@ class ZabbixAPI(object):
             raise ZabbixAPIError('Error calling zabbix.  Zabbix returned %s' % response.status_code)
 
         if self.verbose:
-            print "RESPONSE:", response.text
+            print("RESPONSE:", response.text)
 
         try:
             content = response.json()
@@ -384,7 +384,7 @@ class ZabbixAPI(object):
         return zbx_class.__dict__[method](zbx_class_inst, params)[1]
 
 # Attach all ZabbixAPI.classes to ZabbixAPI class through metaprogramming
-for _class_name, _method_names in ZabbixAPI.classes.items():
+for _class_name, _method_names in list(ZabbixAPI.classes.items()):
     setattr(ZabbixAPI, _class_name, ZabbixAPI.meta(_class_name, _method_names))
 
 # pylint: disable=line-too-long
@@ -451,7 +451,7 @@ class Zbx(object):
     @staticmethod
     def exists(content, key='result'):
         ''' Check if key exists in content or the size of content[key] > 0 '''
-        if not content.has_key(key):
+        if key not in content:
             return False
 
         if not content[key]:
@@ -462,7 +462,7 @@ class Zbx(object):
     @staticmethod
     def clean_params(params):
         ''' Check if any key is set to None and remove it'''
-        _ = [params.pop(key, None) for key in params.keys() if params[key] is None]
+        _ = [params.pop(key, None) for key in list(params.keys()) if params[key] is None]
 
         return params
 
@@ -677,7 +677,7 @@ class ZbxMaintenance(Zbx):
             if not ZbxMaintenance.exists(content):
                 content = zbx.create()
                 rval['changed'] = True
-                if content.has_key('error'):
+                if 'error' in content:
                     rval['failed'] = True
                     rval['error'] = content['error']
                 else:
@@ -691,9 +691,9 @@ class ZbxMaintenance(Zbx):
             differences = {}
             zab_results = content['result'][0]
             params = zbx.params()
-            for key, value in params.items():
+            for key, value in list(params.items()):
                 if key == 'groupids':
-                    if zab_results.has_key('groups'):
+                    if 'groups' in zab_results:
                         zab_group_ids = [group['groupid'] for group in zab_results['groups']]
                         if set(zab_group_ids) != set(value):
                             differences[key] = value
@@ -701,7 +701,7 @@ class ZbxMaintenance(Zbx):
                         differences[key] = value
 
                 elif key == 'hostids':
-                    if zab_results.has_key('hosts'):
+                    if 'hosts' in zab_results:
                         zab_host_ids = [host['hostid'] for host in zab_results['hosts']]
                         if set(zab_host_ids) != set(value):
                             differences[key] = value
@@ -710,7 +710,7 @@ class ZbxMaintenance(Zbx):
 
                 elif key == 'timeperiods':
                     # timeperiods is an array of times; We are going to only check the first timeperiod
-                    for t_key, t_value in value[0].items():
+                    for t_key, t_value in list(value[0].items()):
                         # zabbix does not allow seconds in maintenance.  It rounds to minutes.
                         # compare start_date correctly
                         if t_key == 'start_date':
@@ -746,7 +746,7 @@ class ZbxMaintenance(Zbx):
             differences['active_till'] = params.get('active_till', [])
 
             content = zbx.update(differences)
-            if content.has_key('error'):
+            if 'error' in content:
                 return content
 
             rval['changed'] = True

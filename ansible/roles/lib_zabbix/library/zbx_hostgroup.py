@@ -32,7 +32,7 @@ from openshift_tools.zbxapi import ZabbixAPI, ZabbixConnection
 def exists(content, key='result'):
     ''' Check if key exists in content or the size of content[key] > 0
     '''
-    if not content.has_key(key):
+    if key not in content:
         return False
 
     if not content[key]:
@@ -98,7 +98,7 @@ def main():
         # let's compare properties
         differences = {}
         zab_results = content['result'][0]
-        for key, value in params.items():
+        for key, value in list(params.items()):
             if zab_results[key] != value and zab_results[key] != str(value):
                 differences[key] = value
 

@@ -37,7 +37,7 @@ from openshift_tools.zbxapi import ZabbixAPI, ZabbixConnection
 def exists(content, key='result'):
     ''' Check if key exists in content or the size of content[key] > 0
     '''
-    if not content.has_key(key):
+    if key not in content:
         return False
 
     if not content[key]:
@@ -53,8 +53,8 @@ def get_rights(zapi, rights):
 
     perms = []
     for right in rights:
-        hstgrp = right.keys()[0]
-        perm = right.values()[0]
+        hstgrp = list(right.keys())[0]
+        perm = list(right.values())[0]
         content = zapi.get_content('hostgroup', 'get', {'search': {'name': hstgrp}})
         if content['result']:
             permission = 0
@@ -177,7 +177,7 @@ def main():
                  }
 
         # Remove any None valued params
-        _ = [params.pop(key, None) for key in params.keys() if params[key] == None]
+        _ = [params.pop(key, None) for key in list(params.keys()) if params[key] == None]
 
         #******#
         # CREATE
@@ -186,7 +186,7 @@ def main():
             # if we didn't find it, create it
             content = zapi.get_content(zbx_class_name, 'create', params)
 
-            if content.has_key('error'):
+            if 'error' in content:
                 module.exit_json(failed=True, changed=True, results=content['error'], state="present")
 
             module.exit_json(changed=True, results=content['result'], state='present')
@@ -197,11 +197,11 @@ def main():
         ########
         differences = {}
         zab_results = content['result'][0]
-        for key, value in params.items():
+        for key, value in list(params.items()):
             if key == 'rights':
                 differences['rights'] = value
 
-            elif key == 'userids' and zab_results.has_key('users'):
+            elif key == 'userids' and 'users' in zab_results:
                 if zab_results['users'] != value:
                     differences['userids'] = value
 

@@ -46,7 +46,7 @@ sudo ${OC} cluster up
 ${OC} login localhost:8443 -u developer -p developer --insecure-skip-tls-verify
 ${OC} new-project monitoring
 
-${OC} secrets new monitoring-secrets ./monitoring-secrets/*
+${OC} create secret generic monitoring-secrets --from-file=monitoring-secrets/opsmedic.yml --from-file=monitoring-secrets/zabbix-server-vars.yml --from-file=monitoring-secrets/zagg-server-vars.yml
 
 # Create SSL certs if necessary
 if [ ! -e "rootCA.pem" ] || [ ! -e "rootCA.key" ]; then
@@ -133,7 +133,8 @@ PYTHONPATH=${OPENSHIFT_TOOLS_REPO}:${PYTHONPATH} ansible-playbook ../../ansible/
 PYTHONPATH=${OPENSHIFT_TOOLS_REPO}:${PYTHONPATH} ansible-playbook ../../ansible/playbooks/adhoc/zabbix_setup/oo-config-zaio.yml -e g_server="https://oso-cent7-zabbix-web/zabbix/api_jsonrpc.php"
 
 echo "Deploying zagg pod"
-${OC} deploy --latest oso-cent7-zagg-web --follow
+${OC} rollout latest oso-cent7-zagg-web
+${OC} rollout status dc/oso-cent7-zagg-web
 
 GREP_RESULT=$(grep "oso-cent7-zagg-web" /etc/hosts || :)
 if [ "${GREP_RESULT}" == "" ]; then

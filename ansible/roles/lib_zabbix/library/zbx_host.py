@@ -30,7 +30,7 @@ from openshift_tools.zbxapi import ZabbixAPI, ZabbixConnection
 def exists(content, key='result'):
     ''' Check if key exists in content or the size of content[key] > 0
     '''
-    if not content.has_key(key):
+    if key not in content:
         return False
 
     if not content[key]:
@@ -46,7 +46,7 @@ def get_group_ids(zapi, hostgroup_names):
     group_ids = []
     for hgr in hostgroup_names:
         content = zapi.get_content('hostgroup', 'get', {'search': {'name': hgr}})
-        if content.has_key('result'):
+        if 'result' in content:
             group_ids.append({'groupid': content['result'][0]['groupid']})
 
     return group_ids
@@ -59,7 +59,7 @@ def get_template_ids(zapi, template_names):
     # Fetch templates by name
     for template_name in template_names:
         content = zapi.get_content('template', 'get', {'search': {'host': template_name}})
-        if content.has_key('result'):
+        if 'result' in content:
             template_ids.append({'templateid': content['result'][0]['templateid']})
     return template_ids
 
@@ -70,7 +70,7 @@ def interfaces_equal(zbx_interfaces, user_interfaces):
 
     for u_int in user_interfaces:
         for z_int in zbx_interfaces:
-            for u_key, u_val in u_int.items():
+            for u_key, u_val in list(u_int.items()):
                 if str(z_int[u_key]) != str(u_val):
                     return False
 
@@ -148,9 +148,9 @@ def main():
         # let's compare properties
         differences = {}
         zab_results = content['result'][0]
-        for key, value in params.items():
+        for key, value in list(params.items()):
 
-            if key == 'templates' and zab_results.has_key('parentTemplates'):
+            if key == 'templates' and 'parentTemplates' in zab_results:
                 if zab_results['parentTemplates'] != value:
                     differences[key] = value
 

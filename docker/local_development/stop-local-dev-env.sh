@@ -11,6 +11,9 @@ fi
 echo "Stop host monitoring"
 sudo docker stop oso-centos7-host-monitoring
 sudo docker rm oso-centos7-host-monitoring
+echo "Delete projects"
+${OC} delete project monitoring
+${OC} delete project myproject
 echo "Stop OpenShift"
 sudo ${OC} cluster down
 

@@ -37,8 +37,11 @@ if __name__ == '__main__':
 
 import json
 import requests
-import httplib
+import http.client
 import copy
+# we don't care if our dev environment has self-signed certs
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class ZabbixAPIError(Exception):
     '''
@@ -121,11 +124,11 @@ class ZabbixAPI(object):
         self.verbose = zabbix_connection.verbose
         self.ssl_verify = zabbix_connection.ssl_verify
         if self.verbose:
-            httplib.HTTPSConnection.debuglevel = 1
-            httplib.HTTPConnection.debuglevel = 1
+            http.client.HTTPSConnection.debuglevel = 1
+            http.client.HTTPConnection.debuglevel = 1
         self.auth = None
 
-        for cname, _ in self.classes.items():
+        for cname, _ in list(self.classes.items()):
             setattr(self, cname.lower(), getattr(self, cname)(self))
 
         # pylint: disable=no-member
@@ -133,9 +136,9 @@ class ZabbixAPI(object):
         resp, content = self.user.login(user=self.username, password=self.password)
 
         if resp.status_code == 200:
-            if content.has_key('result'):
+            if 'result' in content:
                 self.auth = content['result']
-            elif content.has_key('error'):
+            elif 'error' in content:
                 raise ZabbixAPIError("Unable to authenticate with zabbix server. {0} ".format(content['error']))
         else:
             raise ZabbixAPIError("Error in call to zabbix. Http status: {0}.".format(resp.status_code))
@@ -172,9 +175,9 @@ class ZabbixAPI(object):
         body = json.dumps(body)
 
         if self.verbose:
-            print "BODY:", body
-            print "METHOD:", method
-            print "HEADERS:", headers
+            print("BODY:", body)
+            print("METHOD:", method)
+            print("HEADERS:", headers)
 
         request = requests.Request("POST", self.server, data=body, headers=headers)
         session = requests.Session()
@@ -185,7 +188,7 @@ class ZabbixAPI(object):
             raise ZabbixAPIError('Error calling zabbix.  Zabbix returned %s' % response.status_code)
 
         if self.verbose:
-            print "RESPONSE:", response.text
+            print("RESPONSE:", response.text)
 
         try:
             content = response.json()
@@ -268,6 +271,6 @@ class ZabbixAPI(object):
 
 
 # Attach all ZabbixAPI.classes to ZabbixAPI class through metaprogramming
-for _class_name, _method_names in ZabbixAPI.classes.items():
+for _class_name, _method_names in list(ZabbixAPI.classes.items()):
     setattr(ZabbixAPI, _class_name, ZabbixAPI.meta(_class_name, _method_names))
 

@@ -33,7 +33,7 @@ from openshift_tools.zbxapi import ZabbixAPI, ZabbixConnection
 def exists(content, key='result'):
     ''' Check if key exists in content or the size of content[key] > 0
     '''
-    if not content.has_key(key):
+    if key not in content:
         return False
 
     if not content[key]:
@@ -132,7 +132,7 @@ def main():
                  }
 
         # Remove any None valued params
-        _ = [params.pop(key, None) for key in params.keys() if params[key] is None]
+        _ = [params.pop(key, None) for key in list(params.keys()) if params[key] is None]
 
         #******#
         # CREATE
@@ -141,7 +141,7 @@ def main():
             # if we didn't find it, create it
             content = zapi.get_content(zbx_class_name, 'create', params)
 
-            if content.has_key('error'):
+            if 'error' in content:
                 module.fail_json(msg=content['error'])
 
             module.exit_json(changed=True, results=content['result'], state='present')
@@ -151,7 +151,7 @@ def main():
         ########
         differences = {}
         zab_results = content['result'][0]
-        for key, value in params.items():
+        for key, value in list(params.items()):
 
             if zab_results[key] != value and zab_results[key] != str(value):
                 differences[key] = value
@@ -163,7 +163,7 @@ def main():
         differences[idname] = zab_results[idname]
         content = zapi.get_content(zbx_class_name, 'update', differences)
 
-        if content.has_key('error'):
+        if 'error' in content:
             module.fail_json(msg=content['error'])
 
         module.exit_json(changed=True, results=content['result'], state="present")

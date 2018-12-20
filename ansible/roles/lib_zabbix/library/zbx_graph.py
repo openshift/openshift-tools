@@ -81,7 +81,7 @@ unused_colors = []
 def exists(content, key='result'):
     ''' Check if key exists in content or the size of content[key] > 0
     '''
-    if not content.has_key(key):
+    if key not in content:
         return False
 
     if not content[key]:
@@ -143,7 +143,7 @@ def get_template_id(zapi, template_name):
                                'get',
                                {'filter': {'host': template_name},})
 
-    if content.has_key('result'):
+    if 'result' in content:
         return content['result'][0]['templateid']
 
     return None
@@ -157,7 +157,7 @@ def get_color(color_in):
     # pylint: disable=invalid-name,global-variable-not-assigned
     global unused_colors
 
-    if COLORS.has_key(color_in):
+    if color_in in COLORS:
         if color_in in unused_colors:
             # Only remove if it's in the list
             unused_colors.remove(color_in)
@@ -173,7 +173,7 @@ def get_unused_color():
     global unused_colors
 
     if not unused_colors:
-        unused_colors = COLORS.keys() # Re-populate the list
+        unused_colors = list(COLORS.keys()) # Re-populate the list
 
     return unused_colors[0]
 
@@ -188,7 +188,7 @@ def get_line_style(style):
                   'gradient': 5,
                  }
 
-    if line_style.has_key(style):
+    if style in line_style:
         return line_style[style]
 
     return 0
@@ -230,10 +230,10 @@ def populate_graph_item(zapi, item, host=None):
     func = get_calc_function(item.get('calc_func', 'avg'))
     g_type = get_graph_item_type(item.get('graph_item_type', 'simple'))
 
-    if not item.has_key('color'):
+    if 'color' not in item:
         item['color'] = get_unused_color()
 
-    if content.has_key('result'):
+    if 'result' in content:
         if not content['result']:
             raise ZabbixQueryEmptyResultsError("Item not found for %s" % params)
 
@@ -253,7 +253,7 @@ def get_graph_items(zapi, gitems):
 
     r_items = []
     for item in gitems:
-        if item.has_key('hosts'):
+        if 'hosts' in item:
             for host in item['hosts']:
                 tmp = populate_graph_item(zapi, item, host)
                 if tmp:
@@ -276,7 +276,7 @@ def compare_gitems(zabbix_items, user_items):
     for u_item in user_items:
         for z_item in zabbix_items:
             if u_item['itemid'] == z_item['itemid']:
-                if not all([str(value) == z_item[key] for key, value in u_item.items()]):
+                if not all([str(value) == z_item[key] for key, value in list(u_item.items())]):
                     return False
 
     return True
@@ -359,7 +359,7 @@ def main():
             params['ymin_type'] = get_ymin_type(module.params['ymin_type'])
 
         # Remove any None valued params
-        _ = [params.pop(key, None) for key in params.keys() if params[key] is None]
+        _ = [params.pop(key, None) for key in list(params.keys()) if params[key] is None]
 
         #******#
         # CREATE
@@ -367,7 +367,7 @@ def main():
         if not exists(content):
             content = zapi.get_content(zbx_class_name, 'create', params)
 
-            if content.has_key('error'):
+            if 'error' in content:
                 module.exit_json(failed=True, changed=True, results=content['error'], state="present")
 
             module.exit_json(changed=True, results=content['result'], state='present')
@@ -378,7 +378,7 @@ def main():
         ########
         differences = {}
         zab_results = content['result'][0]
-        for key, value in params.items():
+        for key, value in list(params.items()):
 
             if key == 'gitems':
                 if not compare_gitems(zab_results[key], value):
@@ -394,7 +394,7 @@ def main():
         differences['graphid'] = zab_results['graphid']
         content = zapi.get_content(zbx_class_name, 'update', differences)
 
-        if content.has_key('error'):
+        if 'error' in content:
             module.exit_json(failed=True, changed=False, results=content['error'], state="present")
 
         module.exit_json(changed=True, results=content['result'], state="present")

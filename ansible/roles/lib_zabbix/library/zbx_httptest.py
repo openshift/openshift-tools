@@ -33,7 +33,7 @@ from openshift_tools.zbxapi import ZabbixAPI, ZabbixConnection
 def exists(content, key='result'):
     ''' Check if key exists in content or the size of content[key] > 0
     '''
-    if not content.has_key(key):
+    if key not in content:
         return False
 
     if not content[key]:
@@ -69,7 +69,7 @@ def get_app_id(zapi, application):
                                'get',
                                {'search': {'name': application},
                                 'selectApplications': ['applicationid', 'name']})
-    if content.has_key('result'):
+    if 'result' in content:
         return content['result'][0]['applicationid']
 
     return None
@@ -83,7 +83,7 @@ def get_template_id(zapi, template_name):
                                'get',
                                {'search': {'host': template_name},
                                 'selectApplications': ['applicationid', 'name']})
-    if content.has_key('result'):
+    if 'result' in content:
         return content['result'][0]['templateid']
 
     return None
@@ -125,7 +125,7 @@ def steps_equal(zab_steps, user_steps):
         user = find_step(idx, user_steps)
         zab = find_step(idx, zab_steps)
 
-        for key, value in user.items():
+        for key, value in list(user.items()):
             if str(value) != str(zab[key]):
                 return False
 
@@ -134,7 +134,7 @@ def steps_equal(zab_steps, user_steps):
 def process_steps(steps):
     '''Preprocess the step parameters'''
     for idx, step in enumerate(steps):
-        if not step.has_key('no'):
+        if 'no' not in step:
             step['no'] = idx + 1
 
     return steps
@@ -238,7 +238,7 @@ def main():
 
 
         # Remove any None valued params
-        _ = [params.pop(key, None) for key in params.keys() if params[key] is None]
+        _ = [params.pop(key, None) for key in list(params.keys()) if params[key] is None]
 
         #******#
         # CREATE
@@ -246,7 +246,7 @@ def main():
         if not exists(content):
             content = zapi.get_content(zbx_class_name, 'create', params)
 
-            if content.has_key('error'):
+            if 'error' in content:
                 module.exit_json(failed=True, changed=True, results=content['error'], state="present")
 
             module.exit_json(changed=True, results=content['result'], state='present')
@@ -257,7 +257,7 @@ def main():
         ########
         differences = {}
         zab_results = content['result'][0]
-        for key, value in params.items():
+        for key, value in list(params.items()):
 
             if key == 'steps':
                 if not steps_equal(zab_results[key], value):
@@ -273,7 +273,7 @@ def main():
         differences['httptestid'] = zab_results['httptestid']
         content = zapi.get_content(zbx_class_name, 'update', differences)
 
-        if content.has_key('error'):
+        if 'error' in content:
             module.exit_json(failed=True, changed=False, results=content['error'], state="present")
 
         module.exit_json(changed=True, results=content['result'], state="present")

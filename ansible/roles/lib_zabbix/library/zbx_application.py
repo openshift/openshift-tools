@@ -33,7 +33,7 @@ from openshift_tools.zbxapi import ZabbixAPI, ZabbixConnection
 def exists(content, key='result'):
     ''' Check if key exists in content or the size of content[key] > 0
     '''
-    if not content.has_key(key):
+    if key not in content:
         return False
 
     if not content[key]:
@@ -50,7 +50,7 @@ def get_template_ids(zapi, template_name):
     content = zapi.get_content('template',
                                'get',
                                {'search': {'host': template_name}})
-    if content.has_key('result'):
+    if 'result' in content:
         template_ids.append(content['result'][0]['templateid'])
     return template_ids
 
@@ -111,8 +111,8 @@ def main():
         # let's compare properties
         differences = {}
         zab_results = content['result'][0]
-        for key, value in params.items():
-            if key == 'templates' and zab_results.has_key('parentTemplates'):
+        for key, value in list(params.items()):
+            if key == 'templates' and 'parentTemplates' in zab_results:
                 if zab_results['parentTemplates'] != value:
                     differences[key] = value
             elif zab_results[key] != str(value) and zab_results[key] != value:
@@ -125,7 +125,7 @@ def main():
         differences[idname] = zab_results[idname]
         content = zapi.get_content(zbx_class_name, 'update', differences)
 
-        if content.has_key('error'):
+        if 'error' in content:
             module.exit_json(failed=True, changed=False, results=content['error'], state="present")
 
         module.exit_json(changed=True, results=content['result'], state="present")

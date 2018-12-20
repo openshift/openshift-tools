@@ -44,7 +44,7 @@ OPERATION_REMOTE_COMMAND = '1'
 def exists(content, key='result'):
     ''' Check if key exists in content or the size of content[key] > 0
     '''
-    if not content.has_key(key):
+    if key not in content:
         return False
 
     if not content[key]:
@@ -70,7 +70,7 @@ def conditions_equal(zab_conditions, user_conditions):
 def filter_differences(zabbix_filters, user_filters):
     '''Determine the differences from user and zabbix for operations'''
     rval = {}
-    for key, val in user_filters.items():
+    for key, val in list(user_filters.items()):
 
         if key == 'conditions':
             if not conditions_equal(zabbix_filters[key], val):
@@ -99,7 +99,7 @@ def opmessage_diff(zab_val, user_val):
     ''' Report whether there are differences between opmessage on
         zabbix and opmessage supplied by user '''
 
-    for op_msg_key, op_msg_val in user_val.items():
+    for op_msg_key, op_msg_val in list(user_val.items()):
         if zab_val[op_msg_key] != str(op_msg_val):
             return True
 
@@ -131,7 +131,7 @@ def opcommand_diff(zab_op_cmd, usr_op_cmd):
     ''' Check whether user-provided opcommand matches what's already
         stored in Zabbix '''
 
-    for usr_op_cmd_key, usr_op_cmd_val in usr_op_cmd.items():
+    for usr_op_cmd_key, usr_op_cmd_val in list(usr_op_cmd.items()):
         if zab_op_cmd[usr_op_cmd_key] != str(usr_op_cmd_val):
             return True
     return False
@@ -140,7 +140,7 @@ def host_in_zabbix(zab_hosts, usr_host):
     ''' Check whether a particular user host is already in the
         Zabbix list of hosts '''
 
-    for usr_hst_key, usr_hst_val in usr_host.items():
+    for usr_hst_key, usr_hst_val in list(usr_host.items()):
         for zab_host in zab_hosts:
             if usr_hst_key in zab_host and \
                zab_host[usr_hst_key] == str(usr_hst_val):
@@ -175,7 +175,7 @@ def operation_differences(zabbix_ops, user_ops):
 
     rval = {}
     for zab, user in zip(zabbix_ops, user_ops):
-        for oper in user.keys():
+        for oper in list(user.keys()):
             if oper == 'opconditions' and opconditions_diff(zab[oper], \
                                                                 user[oper]):
                 rval[oper] = user[oper]
@@ -472,7 +472,7 @@ def get_action_operations(ansible_module, zapi, inc_operations):
         # is 'event acknowledged'.  In the future
         # if there are any added we will need to pass this
         # option to a function and return the correct conditiontype
-        if operation.has_key('opconditions'):
+        if 'opconditions' in operation:
             for condition in operation['opconditions']:
                 if condition['conditiontype'] == 'event acknowledged':
                     condition['conditiontype'] = 14
@@ -628,7 +628,7 @@ def main():
                  }
 
         # Remove any None valued params
-        _ = [params.pop(key, None) for key in params.keys() if params[key] is None]
+        _ = [params.pop(key, None) for key in list(params.keys()) if params[key] is None]
 
         #******#
         # CREATE
@@ -636,7 +636,7 @@ def main():
         if not exists(content):
             content = zapi.get_content(zbx_class_name, 'create', params)
 
-            if content.has_key('error'):
+            if 'error' in content:
                 module.exit_json(failed=True, changed=True, results=content['error'], state="present")
 
             module.exit_json(changed=True, results=content['result'], state='present')
@@ -648,7 +648,7 @@ def main():
         _ = params.pop('hostid', None)
         differences = {}
         zab_results = content['result'][0]
-        for key, value in params.items():
+        for key, value in list(params.items()):
 
             if key == 'operations':
                 ops = operation_differences(zab_results[key], value)
@@ -673,7 +673,7 @@ def main():
         differences['filter'] = params['filter']
         content = zapi.get_content(zbx_class_name, 'update', differences)
 
-        if content.has_key('error'):
+        if 'error' in content:
             module.exit_json(failed=True, changed=False, results=content['error'], state="present")
 
         module.exit_json(changed=True, results=content['result'], state="present")

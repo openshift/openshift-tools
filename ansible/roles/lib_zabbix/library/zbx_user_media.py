@@ -33,7 +33,7 @@ from openshift_tools.zbxapi import ZabbixAPI, ZabbixConnection
 def exists(content, key='result'):
     ''' Check if key exists in content or the size of content[key] > 0
     '''
-    if not content.has_key(key):
+    if key not in content:
         return False
 
     if not content[key]:
@@ -55,7 +55,7 @@ def get_mtype(zapi, mtype):
         pass
 
     content = zapi.get_content('mediatype', 'get', {'filter': {'description': mtype}})
-    if content.has_key('result') and content['result']:
+    if 'result' in content and content['result']:
         return content['result'][0]['mediatypeid']
 
     return None
@@ -104,7 +104,7 @@ def find_media(medias, user_media):
     ''' Find the user media in the list of medias
     '''
     for media in medias:
-        if all([media[key] == str(user_media[key]) for key in user_media.keys()]):
+        if all([media[key] == str(user_media[key]) for key in list(user_media.keys())]):
             return media
     return None
 
@@ -138,7 +138,7 @@ def preprocess_medias(zapi, medias):
     ''' Insert the correct information when processing medias '''
     for media in medias:
         # Fetch the mediatypeid from the media desc (name)
-        if media.has_key('mediatype'):
+        if 'mediatype' in media:
             media['mediatypeid'] = get_mediatype(zapi, mediatype=None, mediatype_desc=media.pop('mediatype'))
 
         media['active'] = get_active(media.get('active'))
@@ -188,7 +188,7 @@ def main():
     # User media is fetched through the usermedia.get
     zbx_user_query = get_zbx_user_query_data(zapi, module.params['login'])
     content = zapi.get_content('usermedia', 'get',
-                               {'userids': [uid for user, uid in zbx_user_query.items()]})
+                               {'userids': [uid for user, uid in list(zbx_user_query.items())]})
     #####
     # Get
     #####
@@ -207,7 +207,7 @@ def main():
 
         content = zapi.get_content(zbx_class_name, 'deletemedia', [res[idname] for res in content['result']])
 
-        if content.has_key('error'):
+        if 'error' in content:
             module.exit_json(changed=False, results=content['error'], state="absent")
 
         module.exit_json(changed=True, results=content['result'], state="absent")
@@ -243,7 +243,7 @@ def main():
             # if we didn't find it, create it
             content = zapi.get_content(zbx_class_name, 'addmedia', params)
 
-            if content.has_key('error'):
+            if 'error' in content:
                 module.exit_json(failed=True, changed=False, results=content['error'], state="present")
 
             module.exit_json(changed=True, results=content['result'], state='present')
@@ -270,7 +270,7 @@ def main():
         # We have differences and need to update
         content = zapi.get_content(zbx_class_name, 'updatemedia', diff)
 
-        if content.has_key('error'):
+        if 'error' in content:
             module.exit_json(failed=True, changed=False, results=content['error'], state="present")
 
         module.exit_json(changed=True, results=content['result'], state="present")
