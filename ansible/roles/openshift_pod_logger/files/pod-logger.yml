@@ -1,0 +1,111 @@
+---
+apiVersion: v1 
+kind: Template
+metadata:
+  creationTimestamp: null
+  generation: 1
+  labels:
+    provider: openshift
+    pod-logger-host: "true"
+    component: pod-logger
+  name: oso-pod-logger 
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-pod-logger
+    name: "oso-${PLAT}-pod-logger"
+  spec:
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "registry.reg-aws.openshift.com:443/openshift-pod-logger/oso-${PLAT}-pod-logger:latest"
+        pullSecret:
+          name: dockercfgjson
+      importPolicy:
+        scheduled: true
+      name: latest
+- apiVersion: extensions/v1beta1
+  kind: DaemonSet
+  metadata:
+    labels:
+      template: oso-pod-logger
+      component: pod-logger
+    name: oso-pod-logger
+  selector:
+    matchLabels:
+      name: oso-pod-logger
+  spec:
+    strategy:
+      resources: {}
+      type: Rolling
+    template:
+      metadata:
+        creationTimestamp: null
+        name: oso-pod-logger
+        labels:
+          name: oso-pod-logger
+          component: pod-logger
+      spec:
+        containers:
+        - env:
+          - name: OO_PAUSE_ON_START
+            value: "false"
+          - name: LOG_WRITER_URL
+            value: "http://oso-log-writer.openshift-pod-logger.svc:8080/api/log"
+          image: "${NAMESPACE}/oso-${PLAT}-pod-logger:latest"
+          imagePullPolicy: Always
+          name: oso-pod-logger 
+          resources: {}
+          securityContext: {}
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /secrets
+            name: oso-pod-logger-secrets
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          pod-logger-enabled: "True"
+        restartPolicy: Always
+        securityContext: {}
+        serviceAccount: apipodlogger 
+        serviceAccountName: apipodlogger
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: oso-pod-logger-secrets
+          secret:
+            secretName: oso-pod-logger-secrets
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-pod-logger
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-pod-logger:latest"
+      type: ImageChange
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: oso-pod-logger
+    namespace: oso-pod-logger
+    labels:
+      k8s-app: oso-pod-logger
+  spec:
+    ports:
+    - name: loglistener
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      name: oso-pod-logger
+parameters:
+- description: Platform name
+  name: PLAT
+  value: rhel7
+- description: Project name
+  name: NAMESPACE
+  value: openshift-pod-logger
