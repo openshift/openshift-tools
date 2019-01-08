@@ -30,6 +30,7 @@ RUN yum-install-check.sh -y \
         php-google-apiclient \
         php-pecl-memcache \
         php-pecl-yaml \
+        python2-boto3 python-beautifulsoup4 \
         && \
     yum -y update && yum clean all && \
     rm -rf /var/cache/yum && \
@@ -56,5 +57,6 @@ RUN mkdir -p /run/httpd && \
     chmod -R g+rwX /etc/httpd /etc/passwd /etc/group /run /var/log /usr/share/simplesamlphp/config && \
     chgrp -R root /run/ /var/log /var/lib/php/session && \
     ansible-playbook /root/build.yaml && \
-    chmod -R a+rw /root/aws_saml_cert.yml && \
-    chmod -R a+rwx /root/.ansible
+    chmod -R a+rw /root/aws_saml_cert.yml /root/get_and_verify_saml_token.py && \
+    chmod -R a+rwx /root/.ansible && \
+    ln -sf /root/get_and_verify_saml_token.py /usr/local/bin/get_and_verify_saml_token
