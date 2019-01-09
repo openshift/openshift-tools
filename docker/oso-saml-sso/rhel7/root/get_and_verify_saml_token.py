@@ -202,19 +202,19 @@ else:
 
 
 
-# default -- print the original SAML token in html
+# If all our testing succeeded, we pass through the original HTML output
+# to be processed by the calling script.
 
 print html_saml
 
 
 
 
-## debug - also print the key
-
-## print "<!-- SAML Assertion included above contains this API key: "
-## print 'AWS_ACCESS_KEY_ID="{}"'.format( response['Credentials']['AccessKeyId'] )
-## print 'AWS_SECRET_ACCESS_KEY="{}"'.format( response['Credentials']['SecretAccessKey'] )
-## print 'AWS_SESSION_TOKEN="{}"'.format( response['Credentials']['SessionToken'] )
-## print "-->"
+# debug / optional - also print the contents of the API key we generated
+# print "<!-- SAML Assertion included above was used to create this API key: "
+# print 'AWS_ACCESS_KEY_ID="{}"'.format( response['Credentials']['AccessKeyId'] )
+# print 'AWS_SECRET_ACCESS_KEY="{}"'.format( response['Credentials']['SecretAccessKey'] )
+# print 'AWS_SESSION_TOKEN="{}"'.format( response['Credentials']['SessionToken'] )
+# print "-->"
 
 
