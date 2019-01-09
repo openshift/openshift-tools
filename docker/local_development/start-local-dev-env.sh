@@ -11,13 +11,10 @@ ANSIBLE_VERSION="v2.4.3.0-1"
 echo "Using Ansible ${ANSIBLE_VERSION}."
 
 if [ ! -d "$LOCAL_DEV_ENV_ANSIBLE_DIR" ]; then
-  git clone https://github.com/ansible/ansible.git "$LOCAL_DEV_ENV_ANSIBLE_DIR"
+  git clone -b "$ANSIBLE_VERSION" https://github.com/ansible/ansible.git "$LOCAL_DEV_ENV_ANSIBLE_DIR"
 fi
 
-pushd "$LOCAL_DEV_ENV_ANSIBLE_DIR" > /dev/null
-git checkout "$ANSIBLE_VERSION"
-source hacking/env-setup
-popd > /dev/null
+source "${LOCAL_DEV_ENV_ANSIBLE_DIR}/hacking/env-setup"
 
 # TODO:
 # - add check for local web server on port 80/443
