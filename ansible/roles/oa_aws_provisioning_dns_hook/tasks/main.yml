@@ -32,8 +32,8 @@
   - zone: openshift.com
     fqdn: "internal.api.{{ openshift_clusterid }}.openshift.com"
 
-# infra: metrics, logs, registry, admin-console, route
-- name: Update DNS for infra ELB
+# Default infra: metrics, logs, registry, admin-console, route
+- name: Update DNS for default infra ELB
   dyn_record:
     customer_name: "{{ oa_dyn_customer_name }}"
     user_name: "{{ oa_dyn_user_name }}"
@@ -41,7 +41,7 @@
     state: present
     record_type: CNAME
     zone: "{{ item.zone }}"
-    record_value: "{{ l_openshift_aws_elb_facts[openshift_clusterid + '-infra']['dns_name'] }}"
+    record_value: "{{ l_openshift_aws_elb_facts[openshift_clusterid + '-infra-router']['dns_name'] }}"
     record_fqdn: "{{ item.fqdn }}"
     record_ttl: 120
   with_items:
@@ -55,3 +55,20 @@
     fqdn: "admin-console.{{ openshift_clusterid }}.openshift.com"
   - zone: openshiftapps.com
     fqdn: "*.{{ openshift_master_default_subdomain }}"
+
+# Second infra
+- name: Update DNS for second infra elb if it exists
+  when: oa_routers[1] is defined
+  dyn_record:
+    customer_name: "{{ oa_dyn_customer_name }}"
+    user_name: "{{ oa_dyn_user_name }}"
+    user_password: "{{ oa_dyn_password }}"
+    state: present
+    record_type: CNAME
+    zone: "{{ item.zone }}"
+    record_value: "{{ l_openshift_aws_elb_facts[openshift_clusterid + '-infra-router2']['dns_name'] }}"
+    record_fqdn: "{{ item.fqdn }}"
+    record_ttl: 120
+  with_items:
+  - zone: openshiftapps.com
+    fqdn: "*.{{ oa_routers[1]['shard'] }}.{{ openshift_clusterid }}.openshiftapps.com"
