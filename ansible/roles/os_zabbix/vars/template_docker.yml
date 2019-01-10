@@ -39,6 +39,11 @@ g_template_docker:
     - Docker Container
     value_type: int
 
+  - key: docker.container.existing.dns.resolution.timeout
+    applications:
+    - Docker Container
+    value_type: int
+
   - key: docker.container.grpc
     description: "status of docker grpc"
     applications:
@@ -109,6 +114,11 @@ g_template_docker:
 
   - name: "docker.container.existing.dns.resolution.failed on {HOST.NAME}"
     expression: "{Template Docker:docker.container.existing.dns.resolution.failed.min(#3)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_existing_docker_dns.asciidoc"
+    priority: average
+
+  - name: "docker.container.existing.dns.resolution.timeout on {HOST.NAME}"
+    expression: "{Template Docker:docker.container.existing.dns.resolution.timeout.min(#3)}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_existing_docker_dns.asciidoc"
     priority: average
 
