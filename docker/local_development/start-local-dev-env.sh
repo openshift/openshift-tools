@@ -4,6 +4,17 @@ RED="$(echo -e '\033[1;31m')"
 GREEN="$(echo -e '\033[1;32m')"
 NORM="$(echo -e '\033[0m')"
 
+# use the correct version of ansible
+# olde = openshift local dev environment
+LOCAL_DEV_ENV_ANSIBLE_DIR='/tmp/olde-ansible/'
+ANSIBLE_VERSION="v2.4.3.0-1"
+echo "Using Ansible ${ANSIBLE_VERSION}."
+
+if [ ! -d "$LOCAL_DEV_ENV_ANSIBLE_DIR" ]; then
+  git clone -b "$ANSIBLE_VERSION" https://github.com/ansible/ansible.git "$LOCAL_DEV_ENV_ANSIBLE_DIR"
+fi
+
+source "${LOCAL_DEV_ENV_ANSIBLE_DIR}/hacking/env-setup"
 
 # TODO:
 # - add check for local web server on port 80/443
@@ -133,7 +144,8 @@ PYTHONPATH=${OPENSHIFT_TOOLS_REPO}:${PYTHONPATH} ansible-playbook ../../ansible/
 PYTHONPATH=${OPENSHIFT_TOOLS_REPO}:${PYTHONPATH} ansible-playbook ../../ansible/playbooks/adhoc/zabbix_setup/oo-config-zaio.yml -e g_server="https://oso-cent7-zabbix-web/zabbix/api_jsonrpc.php"
 
 echo "Deploying zagg pod"
-${OC} deploy --latest oso-cent7-zagg-web --follow
+${OC} rollout latest oso-cent7-zagg-web
+${OC} rollout status dc/oso-cent7-zagg-web
 
 GREP_RESULT=$(grep "oso-cent7-zagg-web" /etc/hosts || :)
 if [ "${GREP_RESULT}" == "" ]; then
