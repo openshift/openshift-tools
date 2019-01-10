@@ -17,16 +17,19 @@ from docker.errors import APIError
 from openshift_tools.monitoring.metric_sender import MetricSender
 
 ZBX_KEY = "docker.container.existing.dns.resolution.failed"
+ZBX_SLOW_KEY = "docker.container.existing.dns.resolution.timeout"
 CMD_NOT_FOUND = -1
+CMD_TIMED_OUT = 124
 
 if __name__ == "__main__":
     cli = DockerClient(version='auto', base_url='unix://var/run/docker.sock', timeout=120)
     bad_dns_count = 0
+    slow_dns_count = 0
 
     for ctr in cli.containers():
         print "Container: {} {}".format(ctr['Id'], ctr['Image'])
         try:
-            exec_id = cli.exec_create(container=ctr['Id'], cmd="getent hosts redhat.com")
+            exec_id = cli.exec_create(container=ctr['Id'], cmd="timeout 0.2s getent hosts redhat.com")
             results = cli.exec_start(exec_id=exec_id)
             exit_code = cli.exec_inspect(exec_id)['ExitCode']
         except APIError:
@@ -40,8 +43,14 @@ if __name__ == "__main__":
         print results
         print "Exit Code: " + str(exit_code)
 
-        if exit_code != 0:
+        # track exit codes for zabbix reporting
+        if exit_code == CMD_TIMED_OUT:
+            slow_dns_count += 1
+        elif exit_code != 0:
             bad_dns_count += 1
+
+        # output useful info
+        if exit_code != 0:
             ctr_data = cli.inspect_container(ctr['Id'])
             print "Additional info: Namespace: {} Name: {} IP: {}".format(
                 ctr['Labels'].get('io.kubernetes.pod.namespace', 'null'),
@@ -53,8 +62,10 @@ if __name__ == "__main__":
 
     ms = MetricSender()
     ms.add_metric({ZBX_KEY: bad_dns_count})
+    ms.add_metric({ZBX_SLOW_KEY : slow_dns_count})
 
     print "Sending these metrics:"
     print ZBX_KEY + ": " + str(bad_dns_count)
+    print ZBX_SLOW_KEY + ": " + str(slow_dns_count)
     ms.send_metrics()
     print "\nDone.\n"
