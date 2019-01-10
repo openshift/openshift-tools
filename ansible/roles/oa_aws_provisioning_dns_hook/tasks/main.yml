@@ -54,7 +54,7 @@
   - zone: openshift.com
     fqdn: "admin-console.{{ openshift_clusterid }}.openshift.com"
   - zone: openshiftapps.com
-    fqdn: "*.{{ oa_routers[0]['shard'] }}.{{ openshift_clusterid }}.{{ openshift_master_default_subdomain }}"
+    fqdn: "*.{{ openshift_master_default_subdomain }}"
 
 # Second infra
 - name: Update DNS for second infra elb if it exists
@@ -71,4 +71,4 @@
     record_ttl: 120
   with_items:
   - zone: openshiftapps.com
-    fqdn: "*.{{ oa_routers[1]['shard'] }}.{{ openshift_clusterid }}.{{ openshift_master_default_subdomain }}"
+    fqdn: "*.{{ oa_routers[1]['shard'] }}.{{ openshift_clusterid }}.openshiftapps.com"
