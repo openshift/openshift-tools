@@ -19,7 +19,7 @@ namespace_id() {
 # see https://github.com/coreos/bugs/issues/2399.
 devname() {
     check_udev_aws
-    RAWVOL=$(nvme id-ctrl --raw-binary "$1" | cut -c3073-3104 | tr -s ' ' | sed 's/ $//g')
+    RAWVOL=$(/usr/sbin/nvme id-ctrl --raw-binary "$1" | cut -c3073-3104 | tr -s ' ' | sed 's/ $//g')
     VOL="${RAWVOL#/dev/}"
     if [[ -n "$VOL" ]]; then
         echo "${VOL}"
@@ -31,8 +31,8 @@ devname() {
 # Ensure this is run with proper environment populated by udev,
 # and acting on an AWS EBS device.
 check_udev_aws() {
-    if [ "${ID_MODEL}" != "Amazon Elastic Block Store" ]; then
-        echo 'Stopping due to non-matching ID_MODEL env variable'
+    if [[ "${ID_SERIAL}" != "Amazon Elastic Block Store"* ]]; then
+        echo 'Stopping due to non-matching ID_SERIAL env variable'
         exit 1
     fi
 }
