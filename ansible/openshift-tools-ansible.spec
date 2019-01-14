@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.70
+Version:        0.0.71
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,11 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Mon Jan 14 2019 Alex Chvatal <achvatal@redhat.com>
+- actually define the dns resolution timeout key (achvatal@redhat.com)
+- trigger an average alert if there's a dns timeout within 3 minutes
+  (achvatal@redhat.com)
+
 * Thu Oct 11 2018 Drew Anderson <dranders@redhat.com> 0.0.70-1
 - 
 
