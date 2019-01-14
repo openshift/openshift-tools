@@ -11,6 +11,17 @@ See https://github.com/openshift/openshift-tools/blob/prod/docker/README.adoc#se
 
 Nothing additional needs to be setup for this container.
 
+== Generating Containers
+
+Work is done within the src/ directory, and then ./generate_containers.sh
+creates separate target files for the supported OS.
+
+Note - an edit made to ../roles/generate_containers/tasks/main.yml in Sept
+2017 causes the generate task to fail.  Until a fix is developed, revert
+that file prior to commit f9c65620 in order to build.
+
+ 
+
 == Build
 
 To build this container, simply execute the build script.
