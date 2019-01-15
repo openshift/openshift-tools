@@ -47,6 +47,13 @@ def calc_subnets(module, cidr_block, num_of_subnets, num_avail_zones_in_region, 
     results = {}
     az_subnets = []
 
+    if len(availability_zones) == 0:
+        if module is None:
+            print("No availability zones available for provided instance types.")
+            return results
+        else:
+            module.fail_json(msg='No availability zones available for provided instance types.')
+
     if ip.size < min_hosts_per_subnet:
         if module is None:
             print("CIDR block is too small.")
@@ -88,6 +95,34 @@ def calc_subnets(module, cidr_block, num_of_subnets, num_avail_zones_in_region, 
 
     return results
 
+def is_reserved_instance_offered_in_az(boto_client, availability_zone, instance_type):
+
+    response = boto_client.describe_reserved_instances_offerings(AvailabilityZone=availability_zone,
+                                                                 Filters=[
+                                                                     {
+                                                                         'Name': 'availability-zone',
+                                                                         'Values': [
+                                                                             availability_zone,
+                                                                         ]
+                                                                     },
+                                                                     {
+                                                                         'Name': 'instance-type',
+                                                                         'Values': [
+                                                                             instance_type,
+                                                                         ]
+                                                                     },
+                                                                 ],
+                                                                 InstanceType=instance_type,
+                                                                 IncludeMarketplace=False)
+
+    return len(response['ReservedInstancesOfferings']) > 0
+
+
+def instance_types_available_in_az(boto_client, availability_zone, master_node_instance_type, infra_node_instance_type, compute_node_instance_type):
+    return (is_reserved_instance_offered_in_az(boto_client, availability_zone, master_node_instance_type) and
+            is_reserved_instance_offered_in_az(boto_client, availability_zone, infra_node_instance_type) and
+            is_reserved_instance_offered_in_az(boto_client, availability_zone, compute_node_instance_type))
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -97,6 +132,9 @@ def main():
             aws_secret_access_key=dict(default=None, type='str'),
             number_of_subnets=dict(default=3, choices=[1, 3], type='int'),
             multi_az=dict(default=False, required=False, type='bool'),
+            master_node_instance_type=dict(default=None, required=True, type='str'),
+            infra_node_instance_type=dict(default=None, required=True, type='str'),
+            compute_node_instance_type=dict(default=None, required=True, type='str'),
         ),
         supports_check_mode=True
     )
@@ -107,6 +145,9 @@ def main():
     aws_secret_access_key = module.params.get('aws_secret_access_key')
     number_of_subnets = module.params.get('number_of_subnets')
     multi_az = module.params.get('multi_az')
+    master_node_instance_type = module.params.get('master_node_instance_type')
+    infra_node_instance_type =  module.params.get('infra_node_instance_type')
+    compute_node_instance_type = module.params.get('compute_node_instance_type')
 
     if aws_access_key_id and aws_secret_access_key:
         boto3.setup_default_session(aws_access_key_id=aws_access_key_id,
@@ -121,11 +162,11 @@ def main():
 
     for zone in response['AvailabilityZones']:
         if zone['State'] == 'available':
-            availability_zones.append(zone['ZoneName'])
+            if instance_types_available_in_az(boto_client, zone['ZoneName'], master_node_instance_type, infra_node_instance_type, compute_node_instance_type):
+                availability_zones.append(zone['ZoneName'])
 
     num_avail_zones_in_region = len(response['AvailabilityZones'])
-    results = calc_subnets(module, cidr_block, number_of_subnets, num_avail_zones_in_region, region_name,
-                           availability_zones, multi_az)
+    results = calc_subnets(module, cidr_block, number_of_subnets, num_avail_zones_in_region, region_name, availability_zones, multi_az)
     module.exit_json(changed=False, ansible_facts={}, results=results)
 
 
