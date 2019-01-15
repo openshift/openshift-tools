@@ -1,0 +1,21 @@
+---
+- name: Install nvme-cli package
+  package:
+    name: nvme-cli
+    state: present
+
+- name: Copy cloud_aws_ebs_nvme_id utility
+  copy:
+    src: cloud_aws_ebs_nvme_id
+    dest: /usr/lib/udev/
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy 90-cloud-storage.rules
+  copy:
+    src: 90-cloud-storage.rules
+    dest: /usr/lib/udev/rules.d/
+    owner: root
+    group: root
+    mode: '0644'
