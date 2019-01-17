@@ -6,7 +6,9 @@ from __future__ import print_function
 import datetime
 import os
 import subprocess
+import shutil
 
+# pylint: disable=too-many-instance-attributes
 class PlaybookExecutor(object):
     """ Helper class to execute playbooks targeting a cluster. """
 
@@ -30,7 +32,7 @@ class PlaybookExecutor(object):
             self.osa_inventory_env = None
             self.init_osa_env()
 
-    def __call__(self, playbook, extra_vars=None, time=False, env=None, verbose=False):
+    def __call__(self, playbook, extra_vars=None, time=False, env=None, verbose=False, tags=None):
         """ Execute the playbook with specified arguments. """
 
         extra_vars = extra_vars or {}
@@ -69,6 +71,9 @@ class PlaybookExecutor(object):
                 cmd += ['-e', i[1]]
             else:
                 cmd += ['-e', '='.join(i)]
+
+        if tags:
+            cmd += ['-t', ','.join(tags)]
 
         cmd.append(playbook_path)
 
@@ -111,13 +116,19 @@ class PlaybookExecutor(object):
         """  Write the inventory out to a location for further debugging """
 
         if os.path.isdir(self.log_dir):
-            inv_cmd = [self.inventory, '-y']
+
             now = datetime.datetime.now()
             now_str = now.strftime('%Y-%m-%d:%H:%M')
+            inventory_log_file = os.path.join(self.log_dir, 'cicd_inventory.' + self.cluster_id +
+                                              '.' + playbook + '.' + now_str)
+            # Test if inventory is executable
+            if os.path.isfile(self.inventory):
+                if os.access(self.inventory, os.X_OK):
+                    inv_cmd = [self.inventory, '-y']
+                    _ = PlaybookExecutor.run_cmd(inv_cmd, inventory_log_file, env=env)
+                else:
+                    shutil.copyfile(self.inventory, inventory_log_file)
 
-            log_file = os.path.join(self.log_dir, 'cicd_inventory.' + self.cluster_id + '.' + playbook + '.' + now_str)
-
-            _ = PlaybookExecutor.run_cmd(inv_cmd, log_file, env=env)
 
     @staticmethod
     def run_cmd(cmd, logfile_path=None, stdin=None, env=None):
