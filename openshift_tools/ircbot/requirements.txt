@@ -1,2 +1,2 @@
-git+https://github.com/sopel-irc/sopel.git#master
+sopel
 pypd
