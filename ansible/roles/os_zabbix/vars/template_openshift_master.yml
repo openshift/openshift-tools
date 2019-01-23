@@ -809,6 +809,18 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: service.pod.bootstrap-autoapprover.count
+    value_type: int
+    description: "openshift autoapprover pods running count"
+    applications:
+    - Openshift Master
+
+  - key: service.pod.metrics-server.count
+    value_type: int
+    description: "openshift metrics server pods running count"
+    applications:
+    - Openshift Master
+
   zdiscoveryrules:
   - name: disc.pv
     key: disc.pv

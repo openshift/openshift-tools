@@ -439,6 +439,16 @@ host_monitoring_cron:
   minute: "30"
   job: "ops-runner -f -s 30 -n cosp.openshift.logging.check cron-send-logging-checks"
 
+- name: "Report autoapprover pod running counts"
+  hour: "*"
+  minute: "10"
+  job: "ops-runner -f -s 10 -n cosp.openshift.autoapprover.check cron-send-pod-check -p bootstrap-autoapprover -n openshift-infra"
+
+- name: "Report metrics-server pod running counts"
+  hour: "*"
+  minute: "10"
+  job: "ops-runner -f -s 10 -n cosp.openshift.metricsserver.check cron-send-pod-check -p cron-send-pod-check -p metrics-server -n openshift-metrics-server"
+
 #- name: "Report time to reload haproxy config"
 #  hour: "*"
 #  minute: "*/10"
