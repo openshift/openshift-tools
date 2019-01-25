@@ -1,0 +1,13 @@
+---
+- name: "test this byoc role stuff out"
+  become: no
+  hosts: localhost
+  gather_facts: no
+  vars:
+    osaib_state: present
+    # opstest
+    osaib_account_id: '639866565627'
+    osaib_role_name_custadmin: customer-admin
+    osaib_role_name_ro: read-only
+  tasks:
+    - include: tasks/main.yml

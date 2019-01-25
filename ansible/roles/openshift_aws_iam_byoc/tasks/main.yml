@@ -1,0 +1,51 @@
+---
+- fail:
+    msg: "{{ item }} needs to be defined."
+  when: item is undefined or item|length == 0
+  with_items:
+  - "{{ osaib_state }}"
+  - "{{ osaib_account_id }}"
+
+- set_fact:
+    osaib_role_custadmin:
+      role_name: customer-admin
+      policy_name: CustomerAdministratorAccess
+      policy_json: "{{ lookup('file', 'files/CustomerAdministratorAccess_policy.json') }}"
+      managed_policy: []
+    osaib_role_ro:
+      role_name: read-only
+      policy_name: BillingReadOnlyAccess
+      policy_json: "{{ lookup('file', 'files/BillingReadOnlyAccess_policy.json') }}"
+      managed_policy:
+        - AWSAccountUsageReportAccess
+        - AmazonEC2ReadOnlyAccess
+        - AmazonS3ReadOnlyAccess
+        - IAMReadOnlyAccess
+
+- name: "Create IAM Roles"
+  iam_role:
+    state: "{{ osaib_state }}"
+    name: "{{ item.role_name }}"
+    managed_policy: "{{ item.managed_policy }}"
+    assume_role_policy_document:
+      Version: '2012-10-17'
+      Statement:
+        - Effect: Allow
+          Action: sts:AssumeRole
+          Principal:
+            AWS: "arn:aws:iam::{{ osaib_account_id }}:root"
+  with_items:
+    - "{{ osaib_role_custadmin }}"
+    - "{{ osaib_role_ro }}"
+
+- name: "Attach in-line policy"
+  iam_policy:
+    state: "{{ osaib_state }}"
+    iam_type: role
+    iam_name: "{{ item.role_name }}"
+    policy_name: "{{ item.policy_name }}"
+    policy_json: "{{ item.policy_json }}"
+  with_items:
+    - "{{ osaib_role_custadmin }}"
+    - "{{ osaib_role_ro }}"
+
