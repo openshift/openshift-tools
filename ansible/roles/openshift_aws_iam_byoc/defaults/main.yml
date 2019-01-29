@@ -1,0 +1,4 @@
+---
+osaib_state: present
+osaib_role_name_custadmin: customer-admin
+osaib_role_name_ro: read-only

@@ -1,0 +1,59 @@
+---
+- fail:
+    msg: "{{ item }} needs to be defined."
+  when: item is undefined or item|length == 0
+  with_items:
+  - "{{ osaib_state }}"
+  - "{{ osaib_account_id }}"
+
+- set_fact:
+    osaib_policy_ro:
+      name: BillingReadOnlyAccess
+      description: Read-only billing access policy.
+      json: "{{ lookup('file', 'files/BillingReadOnlyAccess_policy.json') }}"
+    osaib_policy_custadmin:
+      name: CustomerAdministratorAccess
+      description: Customer Admin policy for managing VPN, VPC Peering, and Direct Connect.
+      json: "{{ lookup('file', 'files/CustomerAdministratorAccess_policy.json') }}"
+    osaib_role_ro:
+      role_name: read-only
+      managed_policy:
+        - AWSAccountUsageReportAccess
+        - AmazonEC2ReadOnlyAccess
+        - AmazonS3ReadOnlyAccess
+        - IAMReadOnlyAccess
+        - BillingReadOnlyAccess
+    osaib_role_custadmin:
+      role_name: customer-admin
+      managed_policy: 
+        - AWSAccountUsageReportAccess
+        - AmazonEC2ReadOnlyAccess
+        - AmazonS3ReadOnlyAccess
+        - IAMReadOnlyAccess
+        - BillingReadOnlyAccess
+        - CustomerAdministratorAccess
+
+- name: "Create IAM Policies"
+  iam_managed_policy:
+    state: "{{ osaib_state }}"
+    policy_name: "{{ item.name }}"
+    policy: "{{ item.json }}"
+    policy_description: "{{ item.description }}"
+  with_items:
+    - "{{ osaib_policy_ro }}"
+    - "{{ osaib_policy_custadmin }}"
+- name: "Create IAM Roles"
+  iam_role:
+    state: "{{ osaib_state }}"
+    name: "{{ item.role_name }}"
+    managed_policy: "{{ item.managed_policy }}"
+    assume_role_policy_document:
+      Version: '2012-10-17'
+      Statement:
+        - Effect: Allow
+          Action: sts:AssumeRole
+          Principal:
+            AWS: "arn:aws:iam::{{ osaib_account_id }}:root"
+  with_items:
+    - "{{ osaib_role_custadmin }}"
+    - "{{ osaib_role_ro }}"
