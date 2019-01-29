@@ -1,0 +1,34 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AttachVpnGateway",
+                "ec2:DescribeVpnConnections",
+                "ec2:AcceptVpcPeeringConnection",
+                "ec2:DeleteVpcPeeringConnection",
+                "ec2:DescribeVpcPeeringConnections",
+                "ec2:CreateVpnConnectionRoute",
+                "ec2:RejectVpcPeeringConnection",
+                "ec2:DetachVpnGateway",
+                "ec2:DeleteVpnConnectionRoute",
+                "ec2:DeleteVpnGateway",
+                "ec2:DescribeVpcs",
+                "ec2:CreateVpnGateway",
+                "ec2:ModifyVpcPeeringConnectionOptions",
+                "ec2:DeleteVpnConnection",
+                "ec2:CreateVpcPeeringConnection",
+                "ec2:DescribeVpnGateways",
+                "ec2:CreateVpnConnection",
+                "ec2:DescribeRouteTables",
+                "ec2:CreateTags",
+                "ec2:CreateRoute",
+                "support:*",
+                "directconnect:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+
