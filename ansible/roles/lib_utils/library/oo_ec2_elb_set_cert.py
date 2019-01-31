@@ -70,10 +70,6 @@ class AwsElb(object):
         external_elb_name = self.module.params.get('external_elb_name')
         SSLCertificateId = self.module.params.get('aws_iam_openshift_cert_arn')
 
-        current_cert_id = self.get_ssl_cert_arn(external_elb_name)
-        if current_cert_id == SSLCertificateId:
-            self.module.exit_json(failed=True, changed=False, msg="SSLCertificateId %s already assigned to load balancer %s" % SSLCertificateId % external_elb_name)
-
         if aws_access_key_id and aws_secret_access_key:
             boto3.setup_default_session(aws_access_key_id=aws_access_key_id,
                                         aws_secret_access_key=aws_secret_access_key,
@@ -86,7 +82,13 @@ class AwsElb(object):
         if not external_elb_name or not SSLCertificateId:
             self.module.fail_json(failed=True,
                                   msg='external_elb_name or aws_iam_openshift_cert_arn not provided')
+
+        # if cert is already applied exit without errors
+        current_cert_id = self.get_ssl_cert_arn(external_elb_name)
+        if current_cert_id == SSLCertificateId:
+            self.module.exit_json(failed=True, changed=False, msg="SSLCertificateId %s already assigned to load balancer %s" % SSLCertificateId % external_elb_name)
         
+        # set the new cert to the elb 
         respone = self.set_elb_ssl_cert(external_elb_name,SSLCertificateId)
         if respone['ResponseMetadata']['HTTPStatusCode'] != 200:
             self.module.fail_json(failed=True, msg='failed to set elb')
