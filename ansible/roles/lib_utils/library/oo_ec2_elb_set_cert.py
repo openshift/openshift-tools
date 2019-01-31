@@ -70,6 +70,10 @@ class AwsElb(object):
         external_elb_name = self.module.params.get('external_elb_name')
         SSLCertificateId = self.module.params.get('aws_iam_openshift_cert_arn')
 
+        current_cert_id = self.get_ssl_cert_arn(external_elb_name)
+        if current_cert_id == SSLCertificateId:
+            self.module.exit_json(failed=True, changed=False, msg="SSLCertificateId %s already assigned to load balancer %s" % SSLCertificateId % external_elb_name)
+
         if aws_access_key_id and aws_secret_access_key:
             boto3.setup_default_session(aws_access_key_id=aws_access_key_id,
                                         aws_secret_access_key=aws_secret_access_key,
