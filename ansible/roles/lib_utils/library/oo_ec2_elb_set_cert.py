@@ -50,7 +50,7 @@ class AwsElb(object):
                 code = e.response['Error']['Code']
                 msg = e.response['Error']['Code']
                 self.module.fail_json(failed=True, 
-                                      msg='AWS API error (%s) occured in ec2_elb_set_cert ansilbe module\n %s\n' % code % msg)
+                                      msg='AWS API error (%s) occured in ec2_elb_set_cert ansilbe module\n %s\n' %(code, msg))
 
         return response
 
@@ -86,7 +86,7 @@ class AwsElb(object):
         # if cert is already applied exit without errors
         current_cert_id = self.get_ssl_cert_arn(external_elb_name)
         if current_cert_id == SSLCertificateId:
-            self.module.exit_json(failed=True, changed=False, msg="SSLCertificateId %s already assigned to load balancer %s" % SSLCertificateId % external_elb_name)
+            self.module.exit_json(failed=True, changed=False, msg="SSLCertificateId %s already assigned to load balancer %s" % (SSLCertificateId, external_elb_name))
         
         # set the new cert to the elb 
         respone = self.set_elb_ssl_cert(external_elb_name,SSLCertificateId)
