@@ -1140,6 +1140,15 @@ g_template_openshift_master:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_prune.asciidoc"
     priority: avg
 
+  - name: "Openshift autoapprover is not running"
+    expression: "{Template Openshift Master:service.pod.bootstrap-autoapprover.count.last()}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_running_pods.asciidoc#openshift-autoapprover-pod-is-not-running-well"
+    priority: warn
+
+  - name: "Openshift metrics server is not running"
+    expression: "{Template Openshift Master:service.pod.metrics-server.count.last()}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_running_pods.asciidoc#22-openshift-metrics-server-pod-is--not-running-well"
+    priority: warn
   zgraphs:
   - name: Openshift Master API Server Latency Pods LIST Quantiles
     width: 900
