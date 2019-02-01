@@ -21,6 +21,11 @@ devname() {
     check_udev_aws
     RAWVOL=$(/usr/sbin/nvme id-ctrl --raw-binary "$1" | cut -c3073-3104 | tr -s ' ' | sed 's/ $//g')
     VOL="${RAWVOL#/dev/}"
+
+    # Rename "sd*" volume names to "xvd*" for
+    # consistency with infra (R4) instances.
+    VOL=${VOL/#sd/xvd}
+
     if [[ -n "$VOL" ]]; then
         echo "${VOL}"
     else
