@@ -1,0 +1,111 @@
+---
+- name: Create temp directory to store the template
+  command: mktemp -d /tmp/openshift-rkhunter-ansible-XXXXXX
+  register: mktemp
+  changed_when: False
+
+- set_fact:
+    tempdir: "{{ mktemp.stdout }}"
+
+- name: "create project for {{ orkhunter_namespace }}"
+  oc_project:
+    name: "{{ orkhunter_namespace }}"
+    display_name: "{{ orkhunter_namespace }}"
+    description: rkhunter Scanning Service
+  retries: 12
+  delay: 5
+
+- name: create rkhuntersa serviceaccount
+  oc_serviceaccount:
+    name: rkhuntersa
+    namespace: "{{ orkhunter_namespace }}" 
+
+- name: set service account permissions
+  command: "oc adm policy {{ item.r_kind }} {{ item.r_name }} system:serviceaccount:{{ orkhunter_namespace }}:rkhuntersa"
+  run_once: true
+  ignore_errors: true
+  with_items:
+  - r_kind: add-cluster-role-to-user
+    r_name: cluster-reader
+  - r_kind: add-scc-to-user
+    r_name: privileged
+
+  # running as command until oc_secret supports config file image secrets
+- name: "Create image pull secret"
+  command: "oc secrets new dockercfgjson .dockerconfigjson=/var/lib/origin/.docker/config.json -n {{ orkhunter_namespace }}"
+  run_once: true
+  ignore_errors: true
+
+- name: "annotate {{ orkhunter_namespace }} project"
+  command: "oc annotate ns {{ orkhunter_namespace }} openshift.io/node-selector=rkhunter-enabled=True"
+  run_once: true
+  ignore_errors: true
+
+- name: "Create rkhunter secrets for {{ orkhunter_namespace }}"
+  oc_secret:
+    namespace: "{{ orkhunter_namespace }}"
+    name: oso-rkhunter-secrets
+    contents:
+    - path: aws_config.yml
+      data: "{{ orkhunter_aws_config_content }}"
+    - path: scanlog_bucket_rw
+      data: "{{ orkhunter_aws_creds_content }}" 
+    - path: metric_sender.yaml
+      data: "{{ orkhunter_zagg_config }}" 
+
+- name: "Check to see if template already exists in {{ orkhunter_namespace }}"
+  oc_obj:
+    state: list
+    namespace: "{{ orkhunter_namespace }}"
+    kind: templates
+  register: templatelist
+
+- name: copy rkhunter template
+  copy:
+    src: rkhunter.yml
+    dest: "{{ tempdir }}/rkhunter.yml"
+
+- name: Set rkhunter template
+  oc_obj:
+    kind: template
+    name: rkhunter
+    namespace: "{{ orkhunter_namespace }}" 
+    state: present
+    files: "{{ tempdir }}/rkhunter.yml"
+    debug: true
+    force: true
+    delete_after: false
+  ignore_errors: true
+
+- name: Get the address of the registry
+  shell: "oc get service -n default docker-registry --template={% raw %}'{{.spec.clusterIP}}:{{(index .spec.ports 0).port}}'{% endraw %}"
+  register: registry_ip
+  run_once: true
+  when: registry_ip is not defined
+
+- name: "Check to see if rkhunter pods exist in {{ orkhunter_namespace }}"
+  oc_obj:
+    state: list
+    namespace: "{{ orkhunter_namespace }}"
+    kind: pods
+  register: podlist
+
+- name: "Create bc,is,ds for apps in {{ orkhunter_namespace }} from template"
+  shell: "oc process -l name={{ orkhunter_namespace }} -f {{ tempdir }}/rkhunter.yml -p PLAT=rhel7 -p NAMESPACE={{ registry_ip['stdout'] }}/{{ orkhunter_namespace }} | oc create -n {{ orkhunter_namespace }} -f -"
+  run_once: true
+  ignore_errors: true
+
+- name: Label nodes
+  oc_label:
+    selector: "{{ item }}" 
+    kind: node
+    state: add
+    labels:
+      - key: rkhunter-enabled
+        value:  true
+  with_items: "{{ orkhunter_nodes }}"
+
+- name: "ensure crio nodes are not among those labeled"
+  command: "oc label nodes --selector=runtime=cri-o rkhunter-enabled=false --overwrite"
+  run_once: true
+  ignore_errors: true
