@@ -1,0 +1,110 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    node_name: "{{ lookup('file', '/host/etc/hostname') }}"
+    rkhunter_cron:
+    - name: check_rkhunter
+      minute: "30"
+      hour: 21
+      job: "/usr/local/bin/cron-send-rkhunter-checks"
+
+    - name: rkhunter_scan
+      minute: "0"
+      hour: "21"
+      job: "chroot /var/local/rkhunter_chroot /tmp/rkhunter/bin/rkhunter --sk --check --configfile /tmp/rkhunter/etc/rkhunter.conf --dbdir /tmp/rkhunter/db --tmpdir /tmp/rkhunter >/dev/null 2>&1"
+
+  pre_tasks:
+
+  - name: Setup Cron
+    cron:
+      name: "{{ item.name }}"
+      job: "{{ item.job }}"
+      minute: "{{ item.minute | default('*', True) }}"
+      hour: "{{ item.hour | default('*', True) }}"
+      day: "{{ item.day | default('*', True) }}"
+      month: "{{ item.month | default('*', True) }}"
+      weekday: "{{ item.weekday | default('*', True) }}"
+    with_items:
+    - "{{ rkhunter_cron }}"
+
+  - name: "create rkhunter variables file"
+    copy:
+      src: "/secrets/metric_sender.yaml"
+      dest: "/etc/openshift_tools/metric_sender.yaml"
+
+  - name: "Create bind mountpoints for rkhunter scans"
+    file:
+      path: "{{ item }}"
+      state: directory
+      recurse: yes
+    with_items:
+    - /etc/openshift_tools
+    - /var/local/rkhunter_chroot
+    - /var/local/rkhunter_tmp
+    - /var/local/rkhunter_tmp/rkhunter
+    - /var/local/rkhunter_tmp/rkhunter/bin
+    - /var/local/rkhunter_tmp/rkhunter/db
+    - /var/local/rkhunter_tmp/rkhunter/etc
+    - /var/local/rkhunter_tmp/rkhunter/scripts
+
+  - name: "Bind rkhunter scan directories"
+    mount:
+      opts: "{{ item.mnt_opts }}"
+      fstype: auto
+      state: mounted
+      name: "{{ item.mnt_name }}"
+      src: "{{ item.mnt_src }}"
+    with_items:
+    - mnt_src: "/usr/bin"
+      mnt_name: "/var/local/rkhunter_tmp/rkhunter/bin"
+      mnt_opts: "bind,ro"
+    - mnt_src:  "/var/lib/rkhunter/db"
+      mnt_name: "/var/local/rkhunter_tmp/rkhunter/db"
+      mnt_opts: "bind"
+    - mnt_src: "/usr/share/rkhunter/scripts/"
+      mnt_name: "/var/local/rkhunter_tmp/rkhunter/scripts/"
+      mnt_opts: "bind,ro"
+
+  # Running as commands because mount module doesn't seem to recognize rbind
+  - name: "Bind more rkhunter scan directories"
+    command: "{{ item }}"
+    with_items:
+    - "mount --rbind -o ro /host /var/local/rkhunter_chroot"
+    - "mount --rbind /var/local/rkhunter_tmp /var/local/rkhunter_chroot/tmp"
+
+  - name: "Set initial values for rkhunter to use"
+    command: "chroot /var/local/rkhunter_chroot /tmp/rkhunter/bin/rkhunter --configfile /tmp/rkhunter/etc/rkhunter.conf --dbdir /tmp/rkhunter/db --tmpdir /tmp/rkhunter --propupd --pkgmgr RPM --nomow -q"
+
+  - name: "Run a no-log scan to get copies of passwd and group"
+    command: "chroot /var/local/rkhunter_chroot /tmp/rkhunter/bin/rkhunter -q --sk --check --configfile /tmp/rkhunter/etc/rkhunter.conf --dbdir /tmp/rkhunter/db --tmpdir /tmp/rkhunter --nolog"
+    ignore_errors: yes
+
+  - name: "Modify monitoring config file settings"
+    lineinfile:
+      path: /etc/openshift_tools/metric_sender.yaml 
+      regexp: '{{ item.item_reg }}'
+      line: '{{ item.item_line }}'
+    with_items:
+      - item_reg: '^    name: oo_placeholder_host'
+        item_line: '    name: {{ node_name }}'
+
+  - name: "create rkhunter variables file"
+    copy:
+      dest: "/etc/openshift_tools/rkhunter_config.yaml"
+      content: |-
+        ---
+        logfile: /var/local/rkhunter_tmp/rkhunter/rkhunter.log
+
+  - name: "Set additional rkhunter ignore rules"
+    blockinfile:
+      dest: "/var/local/rkhunter_tmp/rkhunter/etc/rkhunter.conf"
+      insertafter: "ALLOWHIDDENDIR"
+      marker: "# {mark} Ansible-managed rkhunter ignore rules"
+      block: |-
+        ALLOWHIDDENDIR=/dev/shm/.ansible
+        ALLOWDEVDIR=/dev/shm/.ansible/*
+        ALLOWDEVDIR=/dev/shm/.ansible/tmp/*
+        ALLOWDEVDIR=/dev/shm/.ansible/tmp/account/*
+        ALLOWDEVFILE=/dev/shm/.ansible/tmp/*
+        ALLOWDEVFILE=/dev/shm/.ansible/tmp/account/*

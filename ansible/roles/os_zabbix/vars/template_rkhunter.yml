@@ -1,0 +1,30 @@
+---
+g_template_rkhunter:
+  name: Template rkhunter
+  zitems:
+  - key: rkhunter.found.infection
+    applications:
+    - rkhunter
+    value_type: int
+  - key: rkhunter.found.warning
+    applications:
+    - rkhunter
+    value_type: int
+  - key: rkhunter.not.reporting
+    applications:
+    - rkhunter
+    value_type: int
+
+  ztriggers:
+  - name: "{HOST.NAME} rkhunter detected an infection"
+    expression: "{Template Rkhunter:rkhunter.found.infection.min(#1)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_rkhunter.asciidoc"
+    priority: warning
+  - name: "{HOST.NAME} rkhunter detected a warning"
+    expression: "{Template Rkhunter:rkhunter.found.warning.min(#1)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_rkhunter.asciidoc"
+    priority: warning
+  - name: "{HOST.NAME} rkhunter not reporting in over a week"
+    expression: "{Template Rkhunter:rkhunter.not.reporting.min(#3)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_rkhunter.asciidoc"
+    priority: warning
