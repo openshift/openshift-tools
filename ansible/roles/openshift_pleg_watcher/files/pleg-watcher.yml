@@ -1,0 +1,107 @@
+---
+apiVersion: v1 
+kind: Template
+metadata:
+  creationTimestamp: null
+  generation: 1
+  labels:
+    provider: openshift
+    pleg-watcher-host: "true"
+    component: pleg-watcher
+  name: oso-pleg-watcher 
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      template: oso-pleg-watcher
+    name: "oso-${PLAT}-pleg-watcher"
+  spec:
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "registry.reg-aws.openshift.com:443/openshift-pleg-watcher/oso-${PLAT}-pleg-watcher:latest"
+        pullSecret:
+          name: dockercfgjson
+      importPolicy:
+        scheduled: true
+      name: latest
+- apiVersion: extensions/v1beta1
+  kind: DaemonSet
+  metadata:
+    labels:
+      template: oso-pleg-watcher
+      component: pleg-watcher
+    name: oso-pleg-watcher
+  selector:
+    matchLabels:
+      name: oso-pleg-watcher
+  spec:
+    strategy:
+      resources: {}
+      type: Rolling
+    template:
+      metadata:
+        creationTimestamp: null
+        name: oso-pleg-watcher
+        labels:
+          name: oso-pleg-watcher
+          component: pleg-watcher
+      spec:
+        containers:
+        - env:
+          - name: OO_PAUSE_ON_START
+            value: "false"
+          - name: CRIO_LOG_URL 
+            value: "http://oso-pod-logger.openshift-pod-logger.svc:8080/api/crio/log"
+          - name: DOCKER_LOG_URL 
+            value: "http://oso-pod-logger.openshift-pod-logger.svc:8080/api/docker/log"
+          - name: JOURNAL_PATH
+            value: "/var/log/journal"
+          image: "${NAMESPACE}/oso-${PLAT}-pleg-watcher:latest"
+          imagePullPolicy: Always
+          name: oso-pleg-watcher 
+          resources: {}
+          securityContext:
+            privileged: true
+            runAsUser: 0 
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /var/log/journal
+            name: oso-pleg-watcher-host-journal
+          - mountPath: /host
+            name: oso-pleg-watcher-host
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          pleg-watcher-enabled: "True"
+        restartPolicy: Always
+        securityContext: {}
+        serviceAccount: plegwatcher
+        serviceAccountName: plegwatcher
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: oso-pleg-watcher-host-journal
+          hostPath:
+            path: /var/log/journal
+        - name: oso-pleg-watcher-host
+          hostPath:
+            path: /
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - oso-pleg-watcher
+        from:
+          kind: ImageStreamTag
+          name: "oso-${PLAT}-pleg-watcher:latest"
+      type: ImageChange
+parameters:
+- description: Platform name
+  name: PLAT
+  value: rhel7
+- description: Project name
+  name: NAMESPACE
+  value: openshift-pleg-watcher

@@ -1,0 +1,10 @@
+#!/bin/bash -e
+{{ generated_header }}
+
+echo -n "Running oso-{{ base_os }}-pleg-watcher... "
+{% if base_os == 'rhel7' %}
+sudo docker run -ti --net=host --rm=true --name oso-pleg-watcher oso-rhel7-pleg-watcher $@
+{% elif base_os == 'centos7' %}
+sudo docker run -ti --net=host --rm=true --name oso-pleg-watcher oso-centos7-pleg-watcher $@
+{% endif %}
+echo "Done."

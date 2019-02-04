@@ -1,0 +1,119 @@
+---
+- name: Create temp directory to store the template
+  command: mktemp -d /tmp/openshift-pod-logger-ansible-XXXXXX
+  register: mktemp
+  changed_when: False
+
+- set_fact:
+    tempdir: "{{ mktemp.stdout }}"
+
+- name: "create project for {{ opl_namespace }}"
+  oc_project:
+    name: "{{ opl_namespace }}"
+    display_name: "{{ opl_namespace }}"
+    description: Pod Logger API Server
+    node_selector: "pod-logger-enabled=True"
+  retries: 12
+  delay: 5
+
+- name: "annotate {{ opl_namespace }} project"
+  command: "oc annotate ns {{ opl_namespace }} openshift.io/node-selector=pod-logger-enabled=True"
+  run_once: true
+  ignore_errors: true
+
+- name: create "{{ opl_sa }}" serviceaccount
+  oc_serviceaccount:
+    name: "{{ opl_sa }}"
+    namespace: "{{ opl_namespace }}" 
+
+- name: set service account permissions
+  command: "oc adm policy {{ item.r_kind }} {{ item.r_name }} system:serviceaccount:{{ opl_namespace }}:{{ opl_sa }}"
+  run_once: true
+  ignore_errors: true
+  with_items:
+  - r_kind: add-cluster-role-to-user
+    r_name: cluster-reader
+
+- name: Get API URL
+  command: "oc whoami --show-server"
+  run_once: true
+  register: api_url_out
+
+- name: Get SA token
+  command: "oc serviceaccounts get-token -n {{ opl_namespace }} {{ opl_sa }}"
+  run_once: true
+  register: api_token_out
+
+- set_fact:
+    api_dict:
+      api_token: "{{ api_token_out.stdout }}"
+      api_url: "{{ api_url_out.stdout }}"
+
+- name: copy pod logger secret
+  copy:
+    content: "{{ api_dict | to_nice_json(indent=2) }}"
+    dest: "{{ tempdir }}/api_config.json"
+
+- name: "work around busted oc_secret"
+  command: "oc create secret generic oso-pod-logger-secrets --from-file={{ tempdir }}/api_config.json -n {{ opl_namespace }}"
+  ignore_errors: true
+
+  # running as command until oc_secret supports config file image secrets
+- name: "Create image pull secret"
+  command: "oc secrets new dockercfgjson .dockerconfigjson=/var/lib/origin/.docker/config.json -n {{ opl_namespace }}"
+  run_once: true
+  ignore_errors: true
+
+- name: Get the address of the registry
+  shell: "oc get service -n default docker-registry --template={% raw %}'{{.spec.clusterIP}}:{{(index .spec.ports 0).port}}'{% endraw %}"
+  register: registry_ip
+  run_once: true
+  when: registry_ip is not defined
+
+- name: copy pod logger template
+  copy:
+    src: pod-logger.yml
+    dest: "{{ tempdir }}/pod-logger.yml"
+
+- name: Set pod logger template
+  oc_obj:
+    kind: template
+    name: pod-logger
+    namespace: "{{ opl_namespace }}" 
+    state: present
+    files: "{{ tempdir }}/pod-logger.yml"
+    debug: true
+    force: true
+    delete_after: true
+
+- name: "Create bc,is,ds for apps in {{ opl_namespace }} from template"
+  oc_process:
+    namespace: "{{ opl_namespace }}"
+    template_name: oso-pod-logger
+    content: "{{ lookup('file', 'files/pod-logger.yml') }}"
+    create: True
+    params:
+      PLAT: rhel7
+      NAMESPACE: "{{ registry_ip['stdout'] }}/{{ opl_namespace }}"
+  run_once: true
+  ignore_errors: true
+
+- name: Label nodes
+  oc_label:
+    selector: "{{ item }}" 
+    kind: node
+    state: add
+    labels:
+      - key: pod-logger-enabled
+        value:  true
+  with_items: "{{ opl_nodes }}"
+
+- name: "join with pleg-watcher project network"
+  command: "oc adm pod-network join-projects --to=openshift-pleg-watcher {{ opl_namespace }}"
+  run_once: true
+  ignore_errors: true
+
+- name: Delete temp directory
+  file:
+    name: "{{ tempdir }}"
+    state: absent
