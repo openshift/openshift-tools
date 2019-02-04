@@ -1,0 +1,45 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+  - /root/default_vars.yml
+
+  tasks:
+  - name: "Create mount points for CREs"
+    file:
+      path: "{{ item.ii_name }}"
+      state: "{{ item.ii_state}}"
+      recurse: "{{ item.ii_recurse }}"
+      mode: 0755
+    with_items:
+    - ii_name: /etc/sysconfig/docker 
+      ii_state: touch
+      ii_recurse: no
+    - ii_name: /usr/bin/docker-current 
+      ii_state: touch
+      ii_recurse: no
+    - ii_name: /var/run/docker.sock 
+      ii_state: touch
+      ii_recurse: no
+    - ii_name: /var/run/crio
+      ii_state: directory
+      ii_recurse: yes
+    - ii_name: /var/run/crio/crio.sock 
+      ii_state: touch
+      ii_recurse: no
+    - ii_name: /etc/sysconfig/crio-storage
+      ii_state: touch
+      ii_recurse: no
+    - ii_name: /etc/sysconfig/crio-network
+      ii_state: touch
+      ii_recurse: no
+    ignore_errors: true
+
+  - name: "Ensure directories are correctly mounted"
+    command: "{{ item }}"
+    with_items:
+    - "mount --bind -o ro /host/var/run/docker.sock /var/run/docker.sock"
+    - "mount --bind -o ro /host/var/run/crio/crio.sock /var/run/crio/crio.sock"
+    - "mount --bind -o ro /host/usr/bin/docker-current /usr/bin/docker-current"
+    - "mount --bind -o ro /host/etc/sysconfig/docker /etc/sysconfig/docker"
+    ignore_errors: true

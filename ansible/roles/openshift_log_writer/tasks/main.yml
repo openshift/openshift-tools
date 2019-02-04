@@ -1,0 +1,62 @@
+---
+- name: Create temp directory to store the template
+  command: mktemp -d /tmp/openshift-log-writer-ansible-XXXXXX
+  register: mktemp
+  changed_when: False
+
+- set_fact:
+    tempdir: "{{ mktemp.stdout }}"
+
+- name: "create project for {{ olw_namespace }}"
+  oc_project:
+    name: "{{ olw_namespace }}"
+    display_name: "{{ olw_namespace }}"
+    description: Log Writer API Server
+    node_selector: "pod-logger-enabled=True"
+  retries: 12
+  delay: 5
+
+  # running as command until oc_secret supports config file image secrets
+- name: "Create image pull secret"
+  command: "oc secrets new dockercfgjson .dockerconfigjson=/var/lib/origin/.docker/config.json -n {{ olw_namespace }}"
+  run_once: true
+  ignore_errors: true
+
+- name: Get the address of the registry
+  shell: "oc get service -n default docker-registry --template={% raw %}'{{.spec.clusterIP}}:{{(index .spec.ports 0).port}}'{% endraw %}"
+  register: registry_ip
+  run_once: true
+
+- name: copy pod writer template
+  copy:
+    src: log-writer.yml
+    dest: "{{ tempdir }}/log-writer.yml"
+
+- name: Set pod writer template
+  oc_obj:
+    kind: template
+    name: log-writer
+    namespace: "{{ olw_namespace }}" 
+    state: present
+    files: "{{ tempdir }}/log-writer.yml"
+    debug: true
+    force: true
+    delete_after: true
+  ignore_errors: true
+
+- name: "Create bc,is,dc for apps in {{ olw_namespace }} from template"
+  oc_process:
+    namespace: "{{ olw_namespace }}"
+    template_name: oso-log-writer
+    content: "{{ lookup('file', 'files/log-writer.yml') }}"
+    create: True
+    params:
+      PLAT: rhel7
+      NAMESPACE: "{{ olw_namespace }}"
+  run_once: true
+  ignore_errors: true
+
+- name: Delete temp directory
+  file:
+    name: "{{ tempdir }}"
+    state: absent

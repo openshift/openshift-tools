@@ -1,0 +1,114 @@
+---
+- name: Create temp directory to store the template
+  command: mktemp -d /tmp/openshift-pleg-watcher-ansible-XXXXXX
+  register: mktemp
+  changed_when: False
+
+- set_fact:
+    tempdir: "{{ mktemp.stdout }}"
+
+- name: "create project for {{ opleg_namespace }}"
+  oc_project:
+    name: "{{ opleg_namespace }}"
+    display_name: "{{ opleg_namespace }}"
+    description: PLEG watcher
+    node_selector: "pleg-watcher-enabled=True"
+  retries: 12
+  delay: 5
+
+- name: "annotate {{ opleg_namespace }} project"
+  command: "oc annotate ns {{ opleg_namespace }} openshift.io/node-selector=pleg-watcher-enabled=True"
+  run_once: true
+  ignore_errors: true
+
+- name: create "{{ opleg_sa }}" serviceaccount
+  oc_serviceaccount:
+    name: "{{ opleg_sa }}"
+    namespace: "{{ opleg_namespace }}" 
+
+- name: set service account permissions
+  command: "oc adm policy {{ item.r_kind }} {{ item.r_name }} system:serviceaccount:{{ opleg_namespace }}:{{ opleg_sa }}"
+  run_once: true
+  ignore_errors: true
+  with_items:
+  - r_kind: add-cluster-role-to-user
+    r_name: cluster-reader
+  - r_kind: add-scc-to-user
+    r_name: privileged
+
+- name: "join with pleg-watcher project network"
+  command: "oc adm pod-network join-projects --to=openshift-pod-logger {{ opleg_namespace }}"
+  run_once: true
+  ignore_errors: true
+
+  # running as command until oc_secret supports config file image secrets
+- name: "Create image pull secret"
+  command: "oc secrets new dockercfgjson .dockerconfigjson=/var/lib/origin/.docker/config.json -n {{ opleg_namespace }}"
+  run_once: true
+  ignore_errors: true
+
+- name: Get the address of the registry
+  shell: "oc get service -n default docker-registry --template={% raw %}'{{.spec.clusterIP}}:{{(index .spec.ports 0).port}}'{% endraw %}"
+  register: registry_ip
+  run_once: true
+  when: registry_ip is not defined
+
+- name: "Check to see if template already exists in {{ opleg_namespace }}"
+  oc_obj:
+    state: list
+    namespace: "{{ opleg_namespace }}"
+    kind: templates
+  register: templatelist
+
+- name: copy pleg watcher template
+  copy:
+    src: pleg-watcher.yml
+    dest: "{{ tempdir }}/pleg-watcher.yml"
+  when:  templatelist['results']['results'][0]['items'] | length < 1
+
+- name: Set pleg watcher template
+  oc_obj:
+    kind: template
+    name: pleg-watcher
+    namespace: "{{ opleg_namespace }}" 
+    state: present
+    files: "{{ tempdir }}/pleg-watcher.yml"
+    debug: true
+    force: true
+    delete_after: true
+  when:  templatelist['results']['results'][0]['items'] | length < 1
+
+- name: "Check to see if pleg watcher pods exist in {{ opleg_namespace }}"
+  oc_obj:
+    state: list
+    namespace: "{{ opleg_namespace }}"
+    kind: pods
+  register: podlist
+
+- name: "Create bc,is,ds for apps in {{ opleg_namespace }} from template"
+  oc_process:
+    namespace: "{{ opleg_namespace }}"
+    template_name: oso-pleg-watcher
+    content: "{{ lookup('file', 'files/pleg-watcher.yml') }}"
+    create: True
+    params:
+      PLAT: rhel7
+      NAMESPACE: "{{ registry_ip['stdout'] }}/{{ opleg_namespace }}"
+  when: podlist['results']['results'][0]['items'] | length < 1
+  run_once: true
+  ignore_errors: true
+
+- name: Label nodes
+  oc_label:
+    selector: "{{ item }}" 
+    kind: node
+    state: add
+    labels:
+      - key: pleg-watcher-enabled
+        value:  true
+  with_items: "{{ opleg_nodes }}"
+
+- name: Delete temp directory
+  file:
+    name: "{{ tempdir }}"
+    state: absent
