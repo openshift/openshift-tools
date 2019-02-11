@@ -84,6 +84,27 @@
       name: dnsmasq_vars.yml
       contents: "{{ {'dns_proxy_map': dsp_dns_proxy_map } | to_yaml }}"
 
+    # devaccess authorized_keys
+    - path: /tmp/devaccess_authorized_keys.j2
+      name: devaccess_authorized_keys.j2
+      contents: |
+        {{ lookup('file', '../files/tiered_access/authorized_keys.j2') }}
+
+    - path: /tmp/tiered_access_vars.yml
+      name: tiered_access_vars.yml
+      contents: "{{ {'tar_users': dsp_tar_users,
+                     'tar_username': 'devaccess',
+                     'tar_roles': dsp_tar_roles,
+                     'tar_uid': dsp_tar_uid,
+                     'tar_gid': dsp_tar_gid,
+                     'tar_user_roles': dsp_tar_user_roles } | to_yaml }}"
+
+    # devaccess_users
+    - path: /tmp/devaccess_users.j2
+      name: devaccess_users.j2
+      contents: |
+        {{ lookup('file', '../files/tiered_access/devaccess_users.j2') }}
+
     # end authorized_keys
 
     openshift_daemonset_config_configmap_literals:
@@ -101,6 +122,8 @@
         {{ lookup('file', '../files/operations/operations_tasks.yml') }}
       dnsmasq_tasks.yml: |
         {{ lookup('file', '../files/dnsmasq/dnsmasq_tasks.yml') }}
+      tiered_access_tasks.yml: |
+        {{ lookup('file', '../files/tiered_access/tiered_access_tasks.yml') }}
 
       # this requires clusterid to be translated and cannot be moved to files unless that is solved
       monitoring_config_tasks.yml: |
@@ -116,7 +139,7 @@
             file:
               state: directory
               path: /host/etc/openshift_tools
-              mode: "0740"
+              mode: "0775"
               owner: root
               group: root
 
@@ -140,6 +163,10 @@
 
           - name: setup dnsmasq tasks
             import_tasks: /opt/config/dnsmasq_tasks.yml
+
+          - name: setup tiered_access tasks
+            import_tasks: /opt/config/tiered_access_tasks.yml
+            when: "{{ dsp_tar_enabled }}"
 
       operations_config.sh: |
         #!/bin/bash

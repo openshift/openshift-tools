@@ -1,0 +1,16 @@
+roles:
+
+users:
+{% raw %}
+{% for user in tar_users %}
+- username: {{ user.username }}
+{% if user.has_key('roles') %}
+  roles:
+{%   for role in user.roles %}
+  - {{ role }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endraw %}
+
+user_roles:
