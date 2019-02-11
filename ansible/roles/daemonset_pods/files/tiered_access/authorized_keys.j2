@@ -1,0 +1,3 @@
+{% raw %}{% for user in tar_users %}
+command="/usr/bin/devaccess_wrap READ_SSH {{ user.username }}" {{ user.pub_key }}
+{% endfor %}{% endraw %}
