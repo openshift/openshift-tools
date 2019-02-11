@@ -1,0 +1,61 @@
+---
+- name: import lib_utils for yedit
+  import_role:
+    name: /usr/share/ansible/openshift-ansible/roles/lib_utils
+
+- name: Load tiered_access variables
+  include_vars: /opt/config/tiered_access_vars.yml
+
+- name: Check if the devaccess user is present on the host system
+  stat:
+    path: "/host/home/{{ tar_username }}"
+  register: tar_user_homedir
+
+- when: tar_user_homedir.stat.exists == True
+  block:
+  - name: Setup authorized keys for developer user
+    template:
+      src: /opt/config/devaccess_authorized_keys.j2
+      dest: "/host/home/{{ tar_username }}/.ssh/authorized_keys"
+      owner: "{{ tar_uid }}"
+      group: "{{ tar_gid }}"
+      mode: "0400"
+
+  # The config pod doesn't know about the devaccess user or the
+  # libra_ops group, so we need to set permissions on those using
+  # their uids and gids.
+  - name: configure user access
+    template:
+      src: /opt/config/devaccess_users.j2
+      dest: "/host/etc/openshift_tools/devaccess_users.yaml"
+      owner: "{{ tar_uid }}"
+      group: "1000"
+      mode: "0440"
+
+  - name: and then yedit the configure user access
+    yedit:
+      src: "/host/etc/openshift_tools/devaccess_users.yaml"
+      key: roles
+      value: "{{ tar_roles }}"
+
+  - name: add user_roles to the config file
+    yedit:
+      src: "/host/etc/openshift_tools/devaccess_users.yaml"
+      key: user_roles
+      value: "{{ tar_user_roles }}"
+
+  - name: find regular node kubeconfig
+    find:
+      path:
+      - /host/etc/origin/node
+      patterns: "*node*kubeconfig"
+    register: node_kube
+
+  - name: use node kubeconfig if not a master
+    copy:
+      remote_src: True
+      src: "{{ node_kube['files'] | map(attribute='path') | list | sort(reverse=True) | first }}"
+      dest: "/host/home/{{ tar_username }}/devaccess.kubeconfig"
+      owner: "{{ tar_uid }}"
+      group: "{{ tar_gid }}"
+      mode: "0600"
