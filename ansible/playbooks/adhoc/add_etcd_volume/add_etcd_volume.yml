@@ -148,6 +148,33 @@
     #       forwards version 3 API calls to the etcd container along with the
     #       necessary certificate options.
 
+    # The member list JSON output has the following structure:
+    #
+    # {
+    #   "header": {
+    #     "cluster_id": INTEGER
+    #     "member_id": INTEGER
+    #     "raft_term": INTEGER
+    #   },
+    #   "members": [
+    #     {
+    #       "ID": INTEGER,
+    #       "name": "ip-NNN-NNN-NNN-NNN.REGION.compute.internal",
+    #       "peerURLs": [
+    #         "https://NNN.NNN.NNN.NNN:2380"
+    #       ],
+    #       "clientURLs": [
+    #         "https://NNN.NNN.NNN.NNN:2379"
+    #       ]
+    #     },
+    #     ...
+    #   ]
+    # }
+    #
+    # Note: The etcd CLI expects cluster and member IDs in hexadecimal, so
+    #       they need to be converted from integer with the format filter
+    #       like so: "{{ '%x' | format(<ID>) | quote }}"
+    #
     - name: Collect etcd membership data
       shell: ". /etc/profile.d/etcdctl.sh && etcdctl3 member list --write-out=json"
       register: result
@@ -232,6 +259,19 @@
       shell: ". /etc/profile.d/etcdctl.sh && etcdctl3 member remove {{ '%x' | format(etcd_self.ID) | quote }}"
       delegate_to: "{{ etcd_delegate_to }}"
 
+    # This command prints something like the following to stdout:
+    #
+    #   Member <member_id> added to cluster <cluster_id>
+    #
+    #   ETCD_NAME="<member.name>"
+    #   ETCD_INITIAL_CLUSTER="<member.name>=<member.peerURLs>, ..."
+    #   ETCD_INITIAL_CLUSTER_STATE="existing"
+    #
+    # <member.name> looks like "ip-NNN-NNN-NNN-NNN.REGION.compute.internal"
+    # <member.peerURLs> looks like "https://NNN.NNN.NNN.NNN:2380"
+    #
+    # The ETCD lines must be patched into the added member's config file.
+    #
     - name: Add stopped member to etcd cluster
       shell: ". /etc/profile.d/etcdctl.sh && etcdctl3 member add {{ etcd_self.name | quote }} --peer-urls={{ etcd_self.peerURLs | join(',') | quote }}"
       register: etcd_member_add
