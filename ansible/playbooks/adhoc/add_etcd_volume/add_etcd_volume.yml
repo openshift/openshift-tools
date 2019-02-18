@@ -1,0 +1,392 @@
+#!/usr/bin/ansible-playbook
+#
+# Provision and attach a volume for etcd storage to each master node,
+# format them, and migrate etcd data.
+#
+# Usage: ./add_etcd_volume.yml -e cli_clusterid=<clusterid>
+#
+
+- hosts: localhost
+  gather_facts: no
+  user: root
+
+  vars:
+    oo_location:    "{{ hostvars['synthetic_' + cli_clusterid].oo_location }}"
+    oo_account:     "{{ hostvars['synthetic_' + cli_clusterid].oo_account }}"
+    oo_accountid:   "{{ hostvars['synthetic_' + cli_clusterid].oo_accountid }}"
+    oo_environment: "{{ hostvars['synthetic_' + cli_clusterid].oo_environment }}"
+    oo_sublocation: "{{ hostvars['synthetic_' + cli_clusterid].oo_sublocation }}"
+
+  tasks:
+  - name: Check for required variables
+    fail:
+      msg: "Please define {{ item }}"
+    when: item is not defined or item == ''
+    with_items:
+    - cli_clusterid
+
+  - name: Verify the active AWS key against the account ID
+    include_role:
+      name: tools_roles/verify_aws_accountid
+    vars:
+      vawsid_accountid: "{{ oo_accountid }}"
+
+- hosts: "oo_clusterid_{{ cli_clusterid }}:&oo_hosttype_master"
+  gather_facts: yes
+  serial: 1
+  user: root
+
+  vars:
+    etcd_volume_path: "/dev/xvdc"
+    etcd_volume_mount_point: "/var/lib/etcd"
+    openshift_node_pods_dir: "/etc/origin/node/pods"
+
+  tasks:
+  - name: List existing mounts
+    command: mount
+    register: result
+    changed_when: False
+    warn: no
+
+  - name: Detect a mounted etcd volume
+    set_fact:
+      etcd_volume_mounted: "{{ etcd_volume_mount_point in result.stdout.split() }}"
+
+  # Skip everything if an etcd volume is already mounted.
+  # XXX Can't use "meta: end_play" because it needs to be per-host.
+  - when: not etcd_volume_mounted
+    block:
+
+    - name: Install udev rules for NVMe volumes
+      include_role:
+        name: tools_roles/cloud_storage_udev_rules
+
+    - name: Trigger udev rules for NVMe volumes
+      command: udevadm trigger --subsystem-match=block
+
+    - name: Check for symbolic link to device
+      stat:
+        path: "{{ etcd_volume_path }}"
+        follow: true
+      register: result
+
+    - name: Register etcd volume presence
+      set_fact:
+        etcd_volume_present: "{{ result.stat.exists and result.stat.isblk }}"
+
+    - debug:
+        var: etcd_volume_present
+
+    - name: Provision an etcd volume
+      when: not etcd_volume_present
+      delegate_to: localhost
+      ec2_vol:
+        state: present
+        instance: "{{ ec2_id }}"
+        region: "{{ ec2_region }}"
+        device_name: /dev/sdc
+        volume_size: 50
+        volume_type: io1
+        iops: 2000
+
+    - name: Examine symbolic link
+      stat:
+        path: "{{ etcd_volume_path }}"
+      register: symlink
+
+    - fail:
+        msg: "Missing or invalid symlink at {{ etcd_volume_path }}"
+      when: not (symlink.stat.exists and symlink.stat.islnk)
+
+    - name: Examine target of symbolic link
+      stat:
+        path: "{{ symlink.stat.lnk_source }}"
+      register: device
+
+    - fail:
+        msg: "Target of {{ etcd_volume_path }} is not a block device"
+      when: not (device.stat.exists and device.stat.isblk)
+
+    - name: Check if block device is formatted
+      command: "file --special-files {{ device.stat.path }}"
+      register: command_result
+
+    - set_fact:
+        block_device_type: "{{ command_result.stdout | replace(device.stat.path + ': ', '') }}"
+
+    - debug: var=block_device_type
+
+    # XXX No Ansible module for this?
+    - name: Create a physical volume
+      command: "pvcreate {{ etcd_volume_path }}"
+      when: block_device_type == 'data'
+
+    # XXX This step may fail with Ansible 2.6
+    #     See: https://github.com/ansible/ansible/issues/40771
+    - name: Create a volume group
+      lvg:
+        vg: etcd
+        state: present
+        pvs: "{{ etcd_volume_path }}"
+
+    # 100%FREE makes Ansible try to shrink the volume to 0
+    # if the LV already exists; whereas 100%VG is idempotent.
+    - name: Create a logical volume
+      lvol:
+        lv: etcd
+        vg: etcd
+        state: present
+        size: 100%VG
+
+    - name: Create XFS filesystem
+      filesystem:
+        dev: /dev/etcd/etcd
+        fstype: xfs
+
+    # NOTE: The "shell" module is considered dangerous, but we use it below
+    #       to source the file defining the "etcdctl3" shell function, which
+    #       forwards version 3 API calls to the etcd container along with the
+    #       necessary certificate options.
+
+    # The member list JSON output has the following structure:
+    #
+    # {
+    #   "header": {
+    #     "cluster_id": INTEGER
+    #     "member_id": INTEGER
+    #     "raft_term": INTEGER
+    #   },
+    #   "members": [
+    #     {
+    #       "ID": INTEGER,
+    #       "name": "ip-NNN-NNN-NNN-NNN.REGION.compute.internal",
+    #       "peerURLs": [
+    #         "https://NNN.NNN.NNN.NNN:2380"
+    #       ],
+    #       "clientURLs": [
+    #         "https://NNN.NNN.NNN.NNN:2379"
+    #       ]
+    #     },
+    #     ...
+    #   ]
+    # }
+    #
+    # Note: The etcd CLI expects cluster and member IDs in hexadecimal, so
+    #       they need to be converted from integer with the format filter
+    #       like so: "{{ '%x' | format(<ID>) | quote }}"
+    #
+    - name: Collect etcd membership data
+      shell: ". /etc/profile.d/etcdctl.sh && etcdctl3 member list --write-out=json"
+      register: result
+
+    - set_fact:
+        etcd_member_data: "{{ result.stdout | from_json }}"
+
+    - set_fact:
+        etcd_client_urls: "{{ etcd_member_data.members | map(attribute='clientURLs') | map('first') | list | join(',') }}"
+
+    - name: Check health of all etcd members
+      shell: ". /etc/profile.d/etcdctl.sh && etcdctl3 endpoint health --endpoints={{ etcd_client_urls | quote }}"
+
+    # XXX RHEL7's python-jinja2 package is too old to have the 'eq'
+    #     test, or we could just use the 'selectattr' filter here.
+    - set_fact:
+        etcd_self: |
+          {%- set result = [] %}
+          {%- for member in etcd_member_data.members %}
+          {%-   if member.ID == etcd_member_data.header.member_id %}
+          {%-     set _ = result.append(member) %}
+          {%-   endif %}
+          {%- endfor %}
+          {{- result.pop() -}}
+
+    # XXX RHEL7's python-jinja2 package is too old to have the 'ne'
+    #     test, or we could just use the 'rejectattr' filter here.
+    - set_fact:
+        etcd_peers: |
+          {%- set result = [] %}
+          {%- for member in etcd_member_data.members %}
+          {%-   if member.ID != etcd_member_data.header.member_id %}
+          {%-     set _ = result.append(member) %}
+          {%-   endif %}
+          {%- endfor %}
+          {{- result -}}
+
+    - set_fact:
+        etcd_delegate_to: "{{ cli_clusterid }}-master-{{ etcd_peers[0].name }}"
+
+    - assert:
+        that: etcd_delegate_to in ansible_play_hosts
+
+    - name: Get container names for current master pods
+      command: "docker ps --format=\\{\\{.Names\\}\\}"
+      register: docker_ps
+
+    - name: Verify master static pods are running
+      assert:
+        that:
+        - "'k8s_POD_master-api-' in docker_ps.stdout"
+        - "'k8s_POD_master-controllers-' in docker_ps.stdout"
+        - "'k8s_POD_master-etcd-' in docker_ps.stdout"
+
+    - name: Create temporary directory for pod files
+      tempfile:
+        path: "{{ openshift_node_pods_dir | dirname }}"
+        state: directory
+        suffix: ".pods"
+      register: tempdir
+
+    - name: Stop master static pods
+      command: "mv {{ openshift_node_pods_dir }}/{{ item }} {{ tempdir.path }}/{{ item }}"
+      creates: "{{ tempdir.path }}/{{ item }}"
+      removes: "{{ openshift_node_pods_dir }}/{{ item }}"
+      with_items:
+      - apiserver.yaml
+      - controller.yaml
+      - etcd.yaml
+
+    - name: Wait for containers to stop
+      command: "docker ps --format=\\{\\{.Names\\}\\}"
+      register: docker_ps
+      until:
+      - "'k8s_POD_master-api-'         not in docker_ps.stdout"
+      - "'k8s_POD_master-controllers-' not in docker_ps.stdout"
+      - "'k8s_POD_master-etcd-'        not in docker_ps.stdout"
+      delay: 5
+      retries: 30
+
+    - name: Remove stopped member from etcd cluster
+      shell: ". /etc/profile.d/etcdctl.sh && etcdctl3 member remove {{ '%x' | format(etcd_self.ID) | quote }}"
+      delegate_to: "{{ etcd_delegate_to }}"
+
+    # This command prints something like the following to stdout:
+    #
+    #   Member <member_id> added to cluster <cluster_id>
+    #
+    #   ETCD_NAME="<member.name>"
+    #   ETCD_INITIAL_CLUSTER="<member.name>=<member.peerURLs>, ..."
+    #   ETCD_INITIAL_CLUSTER_STATE="existing"
+    #
+    # <member.name> looks like "ip-NNN-NNN-NNN-NNN.REGION.compute.internal"
+    # <member.peerURLs> looks like "https://NNN.NNN.NNN.NNN:2380"
+    #
+    # The ETCD lines must be patched into the added member's config file.
+    #
+    - name: Add stopped member to etcd cluster
+      shell: ". /etc/profile.d/etcdctl.sh && etcdctl3 member add {{ etcd_self.name | quote }} --peer-urls={{ etcd_self.peerURLs | join(',') | quote }}"
+      register: etcd_member_add
+      delegate_to: "{{ etcd_delegate_to }}"
+
+    - set_fact:
+        etcd_conf_updates: |
+          {%- set result = {} %}
+          {%- for line in etcd_member_add.stdout_lines %}
+          {%-   if line.startswith('ETCD_') %}
+          {%-     set regexp = '^' + line[:line.find('=') + 1] %}
+          {%-     set _ = result.update({regexp: line}) %}
+          {%-   endif %}
+          {%- endfor %}
+          {{- result -}}
+
+    - name: Update etcd configuration
+      lineinfile:
+        path: /etc/etcd/etcd.conf
+        state: present
+        regexp: "{{ item.key }}"
+        line: "{{ item.value }}"
+      with_dict: "{{ etcd_conf_updates }}"
+
+    - name: Rename old etcd data directory
+      command: "mv {{ etcd_volume_mount_point }} {{ etcd_volume_mount_point }}.backup-{{ '%Y%m%d%H%M' | strftime }}"
+
+    - name: Mount new etcd volume
+      mount:
+        path: "{{ etcd_volume_mount_point }}"
+        src: "/dev/mapper/etcd-etcd"
+        fstype: xfs
+        state: mounted
+
+    - name: Set mount point ownership
+      file:
+        path: "{{ etcd_volume_mount_point }}"
+        state: directory
+        owner: etcd
+        group: etcd
+        recurse: yes
+
+    - name: Restore mount point to default SELinux security contexts
+      command: "restorecon -R {{ etcd_volume_mount_point }}"
+
+    - name: Start static etcd pod
+      command: "mv {{ tempdir.path }}/etcd.yaml {{ openshift_node_pods_dir }}/etcd.yaml"
+      creates: "{{ openshift_node_pods_dir }}/etcd.yaml"
+      removes: "{{ tempdir.path }}/etcd.yaml"
+
+    - name: Wait for etcd container to start
+      command: "docker ps --format=\\{\\{.Names\\}\\}"
+      register: docker_ps
+      until: "'k8s_POD_master-etcd-' in docker_ps.stdout"
+      delay: 5
+      retries: 30
+
+    # XXX I don't have a sense of how long this will take on a production
+    #     cluster; the delay/retries parameters may need further tuning.
+    - name: Wait for all etcd members to report healthy
+      shell: ". /etc/profile.d/etcdctl.sh && etcdctl3 endpoint health --endpoints={{ etcd_client_urls | quote }}"
+      register: result
+      until: result is succeeded
+      delay: 10
+      retries: 60
+
+    - name: Start static master pods
+      command: "mv {{ tempdir.path }}/{{ item }} {{ openshift_node_pods_dir }}/{{ item }}"
+      creates: "{{ openshift_node_pods_dir }}/{{ item }}"
+      removes: "{{ tempdir.path }}/{{ item }}"
+      with_items:
+      - apiserver.yaml
+      - controller.yaml
+
+    - name: Remove temporary directory for pod files
+      file:
+        path: "{{ tempdir.path }}"
+        state: absent
+
+    - name: Wait for containers to start
+      command: "docker ps --format=\\{\\{.Names\\}\\}"
+      register: docker_ps
+      until:
+      - "'k8s_POD_master-api-'         in docker_ps.stdout"
+      - "'k8s_POD_master-controllers-' in docker_ps.stdout"
+      delay: 5
+      retries: 30
+
+- hosts: localhost
+  gather_facts: no
+
+  vars:
+    master_hosts: "{{ groups['oo_clusterid_' ~ cli_clusterid] |
+                      intersect(groups['oo_hosttype_master']) }}"
+
+  tasks:
+  - set_fact:
+      skipped_hosts: |
+        {%- set result = [] %}
+        {%- for host in master_hosts %}
+        {%-   if hostvars[host].etcd_volume_mounted %}
+        {%-     set _ = result.append(host) %}
+        {%-   endif %}
+        {%- endfor %}
+        {{- result -}}
+
+  - pause:
+      prompt: |
+        === NOTICE ===
+
+        The following hosts were skipped because a volume was already
+        mounted at /var/lib/etcd:
+
+        {{ skipped_hosts | to_nice_yaml }}
+        This could indicate a snowflake configuration.
+
+        Press Enter to continue.
+    when: skipped_hosts | length > 0
