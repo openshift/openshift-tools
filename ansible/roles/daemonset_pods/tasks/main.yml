@@ -23,6 +23,9 @@
       name: zagg-service
       namespace: default
       state: list
+    until: svc_out | success
+    retries: 10
+    delay: 2
     register: svc_out
 
   - name: set zag-url ip
