@@ -24,6 +24,9 @@
       namespace: default
       state: list
     register: svc_out
+    until: svc_out | success
+    retries: 10
+    delay: 2
 
   - name: set zag-url ip
     set_fact:
