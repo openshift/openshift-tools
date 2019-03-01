@@ -64,7 +64,7 @@
     - name: Trigger udev rules for NVMe volumes
       command: udevadm trigger --subsystem-match=block
 
-    - name: Check for symbolic link to device
+    - name: Check for etcd volume device
       stat:
         path: "{{ etcd_volume_path }}"
         follow: true
@@ -89,30 +89,42 @@
         volume_type: io1
         iops: 2000
 
-    - name: Examine symbolic link
+    - name: Examine etcd volume path
       stat:
         path: "{{ etcd_volume_path }}"
-      register: symlink
+      register: maybe_block_device
 
     - fail:
-        msg: "Missing or invalid symlink at {{ etcd_volume_path }}"
-      when: not (symlink.stat.exists and symlink.stat.islnk)
+        msg: "{{ etcd_volume_path }} does not exist"
+      when: not maybe_block_device.stat.exists
 
-    - name: Examine target of symbolic link
+    # On M4 instances, the 'etcd_volume_path' should be a block device.
+    - set_fact:
+        block_device_path: "{{ maybe_block_device.stat.path }}"
+      when: not maybe_block_device.stat.islnk
+
+    # On M5 instances, the 'etcd_volume_path' should be a symlink to a
+    # block device (targeting some /dev/nvme*).  We need to explicitly
+    # follow the symlink or "file --special-files" below will not work.
+    - set_fact:
+        block_device_path: "{{ maybe_block_device.stat.lnk_source }}"
+      when: maybe_block_device.stat.islnk
+
+    - name: Examine block device path
       stat:
-        path: "{{ symlink.stat.lnk_source }}"
-      register: device
+        path: "{{ block_device_path }}"
+      register: actual_block_device
 
     - fail:
-        msg: "Target of {{ etcd_volume_path }} is not a block device"
-      when: not (device.stat.exists and device.stat.isblk)
+        msg: "{{ block_device_path }} is not a block device"
+      when: not (actual_block_device.stat.exists and actual_block_device.stat.isblk)
 
     - name: Check if block device is formatted
-      command: "file --special-files {{ device.stat.path }}"
+      command: "file --special-files {{ block_device_path }}"
       register: command_result
 
     - set_fact:
-        block_device_type: "{{ command_result.stdout | replace(device.stat.path + ': ', '') }}"
+        block_device_type: "{{ command_result.stdout | replace(block_device_path + ': ', '') }}"
 
     - debug: var=block_device_type
 
