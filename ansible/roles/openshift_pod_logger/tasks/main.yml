@@ -85,6 +85,7 @@
     debug: true
     force: true
     delete_after: true
+  ignore_errors: true
 
 - name: "Create bc,is,ds for apps in {{ opl_namespace }} from template"
   oc_process:
