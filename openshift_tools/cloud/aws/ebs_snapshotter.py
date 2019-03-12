@@ -303,7 +303,7 @@ class EbsSnapshotter(Base):
             check_this_snap = True
             while check_this_snap and time_period_number < target_backup_times.__len__():
                 snap_date = datetime.strptime(snap.start_time,
-                                              '%Y-%m-%dT%H:%M:%S.000Z')
+                                              '%Y-%m-%dT%H:%M:%S.%fZ')
                 if snap_date < target_backup_times[time_period_number]:
                     # the snap date is before the cutoff date.
                     # Figure out if it's the first snap in this
@@ -376,7 +376,7 @@ class EbsSnapshotter(Base):
         cutoff_date = datetime.utcnow() - timedelta(days=days)
         orphan_delete_counter = 0
         for snapshot in orphan_snaps:
-            snap_date = datetime.strptime(snapshot.start_time, '%Y-%m-%dT%H:%M:%S.000Z')
+            snap_date = datetime.strptime(snapshot.start_time, '%Y-%m-%dT%H:%M:%S.%fZ')
             if snap_date < cutoff_date:
                 try:
                     if dry_run:
