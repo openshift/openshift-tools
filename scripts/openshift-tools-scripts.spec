@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.161
+Version:       0.1.162
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -504,6 +504,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Mar 13 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.162-1
+- add ssh-check into rpm (zhizhang@redhat.com)
+- add ssl check by the http header (zhizhang@redhat.com)
+
 * Tue Jan 22 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.161-1
 - add the pod check scripts to the monitor rpm (haowang@redhat.com)
 
