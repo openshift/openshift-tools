@@ -99,6 +99,7 @@ cp -p monitoring/cron-send-url-check.py %{buildroot}/usr/bin/cron-send-url-check
 cp -p monitoring/cron-send-oc-cluster-capacity.sh %{buildroot}/usr/bin/cron-send-oc-cluster-capacity
 cp -p monitoring/cron-send-aws-eip-check.py %{buildroot}/usr/bin/cron-send-aws-eip-check
 cp -p monitoring/cron-send-pod-check.py %{buildroot}/usr/bin/cron-send-pod-check
+cp -p monitoring/cron-send-ssl-check.py %{buildroot}/usr/bin/cron-send-ssl-check
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
@@ -412,6 +413,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-docker-grpc
 /usr/bin/cron-send-aws-eip-check
 /usr/bin/cron-send-pod-check
+/usr/bin/cron-send-ssl-check
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -535,7 +537,7 @@ OpenShift Tools cicd scripts
 - Remove extra m case (tfahlman@redhat.com)
 
 * Thu Oct 11 2018 Drew Anderson <dranders@redhat.com> 0.1.153-1
-- 
+-
 
 * Wed Oct 10 2018 Zhiming Zhang <zhizhang@redhat.com> 0.1.152-1
 - enable service ip check for kibana (haowang@redhat.com)
