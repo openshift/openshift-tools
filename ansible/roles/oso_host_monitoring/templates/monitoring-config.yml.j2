@@ -377,6 +377,12 @@ host_monitoring_cron:
   minute: "*/15"
   job: ops-runner -f -s 120 -n csocc.openshift.cluster.capacity /usr/bin/cron-send-oc-cluster-capacity
 
+- name: check ssl exprired status by http header
+  hour: "10"
+  minute: "8"
+  job: ops-runner -f -s 15 -n cssc.openshift.public.ssl.expired.info /usr/bin/cron-send-ssl-check -l {% for domain in g_oso_monitoring_ssl_public_domains %} {{ domain}}.{{ osohm_cluster_id }}.openshift.com {% endfor %} {% for router in oa_routers %} srecheck.{{ router.shard }}.{{ osohm_cluster_id }}.openshiftapps.com {% endfor %} -key openshift.master.public.ssl.expiry
+
+
 {% if osohm_deployment_type == 'dedicated' %}
 - name: send  the pv usage status
   minute: "*/5"
