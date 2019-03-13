@@ -832,6 +832,12 @@ g_template_openshift_master:
     lifetime: 7
     description: "Dynamically register individual certificate expiration days"
 
+  - key: openshift.master.public.ssl.expiry
+    value_type: int
+    description: "openshift master public ssl expiry info about how many days left"
+    applications:
+    - Openshift Master
+
   zitemprototypes:
   - discoveryrule_key: disc.pv
     name: "{% raw %}disc.pv.count.{{ '{#' }}OSO_PV}{% endraw %}"
