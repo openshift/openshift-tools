@@ -697,7 +697,7 @@ g_template_openshift_master:
     - Openshift Master
 
   - key: openshift.master.project.delta
-    description: "Percent change in project count" 
+    description: "Percent change in project count"
     value_type: float
     zabbix_type: calculated
     interval: 7200
@@ -821,6 +821,12 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.public.ssl.expiry
+    value_type: int
+    description: "openshift master public ssl expiry info about how many days left"
+    applications:
+    - Openshift Master
+
   zdiscoveryrules:
   - name: disc.pv
     key: disc.pv
@@ -832,11 +838,6 @@ g_template_openshift_master:
     lifetime: 7
     description: "Dynamically register individual certificate expiration days"
 
-  - key: openshift.master.public.ssl.expiry
-    value_type: int
-    description: "openshift master public ssl expiry info about how many days left"
-    applications:
-    - Openshift Master
 
   zitemprototypes:
   - discoveryrule_key: disc.pv
