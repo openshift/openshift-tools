@@ -477,10 +477,10 @@ host_monitoring_cron:
   minute: "*/2"
   job: "ops-runner -f -s 15 -n cseeviss.ebs.stuck.state cron-send-ec2-ebs-volumes-in-stuck-state --region {{ osohm_region }} --stuck-after 120 --aws-creds-profile snapshotter --verbose"
 
-- name: "Add snapshot tag to autoprovisioned pv volumes"
+- name: "Add snapshot tags to master root volumes and autoprovisioned persistent volumes"
   hour: "*"
   minute: "30"
-  job: ops-runner -f -s 120 -n oeasttev.add.snapshot.tag.autopv ops-ec2-add-snapshot-tag-to-ebs-volumes --autoprovisioned-pv-volumes daily --set-purpose-tag --aws-creds-profile snapshotter --region {{ osohm_region }}
+  job: ops-runner -f -s 120 -n oeasttev.add.snapshot.tag.autopv ops-ec2-add-snapshot-tag-to-ebs-volumes --master-root-volumes hourly --autoprovisioned-pv-volumes daily --set-purpose-tag --aws-creds-profile snapshotter --region {{ osohm_region }}
 
 - name: "Snapshot volumes tagged with hourly"
   hour: "*"
