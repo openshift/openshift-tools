@@ -14,6 +14,12 @@ g_template_openshift_master:
     applications:
     - Openshift Cluster
 
+  - key: openshift.master.atomic-openshift.version
+    description: Show atomic-openshift rpm version
+    value_type: string
+    applications:
+    - Openshift Cluster
+
   - key: openshift.master.cluster.compute_nodes.scheduled.cpu
     description: "Scheduled CPU (millicores) for compute nodes"
     value_type: int
