@@ -58,7 +58,7 @@ g_template_openshift_cluster:
   - name: "{% raw %}Router: {{ '{#' }}OS_ROUTER} is failing health checks{% endraw %}"
     expression: "{% raw %}{Template OpenShift Cluster:disc.openshift.cluster.router.health[{{ '{#' }}OS_ROUTER}].max(#3)}<1{% endraw %}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_router.asciidoc"
-    priority: high
+    priority: average
 
   - name: "{% raw %}Router: {{ '{#' }}ROUTER_DC} has unexpected number of running PODs{% endraw %}"
     expression: "{% raw %}{Template OpenShift Cluster:disc.openshift.cluster.router.expected_pod_count[{{ '{#' }}ROUTER_DC}].max(#3)}<1{% endraw %}"
