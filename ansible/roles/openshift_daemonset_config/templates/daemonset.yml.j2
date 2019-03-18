@@ -33,8 +33,7 @@ spec:
       hostIPC: true
       priorityClassName: system-node-critical
       tolerations:
-      - effect: NoExecute
-        operator: Exists
+      - operator: Exists
       containers:
       - name: config
         image: "{{ openshift_daemonset_config_image }}"
