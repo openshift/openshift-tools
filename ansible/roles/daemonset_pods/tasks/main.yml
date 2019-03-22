@@ -60,7 +60,8 @@
     openshift_daemonset_config_monitoring_pos: "{{ dsp_monitoring_pause_on_start | string }}"
     openshift_daemonset_config_monitoring: True
     #openshift_daemonset_config_image: "openshift/origin-ansible:{{ g_play_openshift_version }}"
-    openshift_daemonset_config_image: "openshift/origin-ansible:latest"
+    #openshift_daemonset_config_image: "openshift/origin-ansible:latest"
+    openshift_daemonset_config_image: "openshift/origin-ansible@sha256:7bb42d8c121052da724f40683a0533c8876c757878146ff6b91b7240afab6ff4"
     openshift_daemonset_config_monitoring_image: "{{ dsp_docker_registry_url }}{{ dsp_host_monitoring }}:{{ dsp_environment }}"
     openshift_daemonset_config_configmap_files: {}
 
