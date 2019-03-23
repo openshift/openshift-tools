@@ -1,0 +1,87 @@
+---
+- name: "Set a compute node as unschedulable from a master"
+  hosts: localhost
+  user: root
+
+  pre_tasks:
+  - fail:
+      msg: "This playbook requires {{item}} to be set."
+    when: item is not defined or item == ''
+    with_items:
+    - cli_master
+    - cli_node
+
+  tasks:
+    - name: "debug"
+      debug:
+        msg: "{{ item }}"
+      with_items:
+      -  "{{ cli_master }}"
+      -  "{{ cli_node }}"
+
+      # "oo_masterid_{{ cli_master }}:&oo_master_primary"
+      # Test connectivity
+    - name: "Start docker reinitialization playbook from a bastion"
+      delegate_to: "{{ item }}"
+      shell: "uptime"
+      -  "{{ cli_master }}"
+      -  "{{ cli_node }}"
+
+      # Begin master operations
+    - name: "Try to oc get node from the primary master"
+      delegate_to: "{{ cli_master }}"
+      shell: "oc get node {{ cli_node }}"
+
+    - name: "Try to unschedule the node from the primary master"
+      delegate_to: "{{ cli_master }}"
+      shell: "oc adm manage-node {{ cli_node }} --unschedulable=true"
+
+    - name: "Try to drain the node from the primary master"
+      delegate_to: "{{ cli_master }}"
+      shell: "oc adm drain {{ cli_node }} --force --ignore-daemonsets --delete-local-data"
+
+    - name: "Pause for only 1 minute to allow node to drain."
+      pause:
+        minutes: 1
+
+
+    # Begin node operations
+    - name: "Disable docker before rebooting"
+      delegate_to: "{{ cli_node }}"
+      shell: "systemctl disable docker var-lib-docker.mount"
+
+    - name: "Reboot node to disable docker"
+      reboot:
+
+    # Begin bastion operations
+    - name: "Start docker reinitialization playbook from a bastion"
+      shell: "ansible-playbook ops-docker-storage-reinitialize.yml -e cli_name={{ cli_node }}"
+
+
+    # Continue node operations
+    - name: "Try to apply docker update first, then the rest of the pending updates, reenable docker"
+      shell: "{{ item }}"
+      with_items:
+      - "yum -y update --advisory=RHSA-2019:0304"
+      - "yum -y update --security"
+      - "systemctl enable docker var-lib-docker.mount"
+
+    - name: "Reboot node to reenable docker"
+      reboot:
+
+
+    # Finish master operations
+    - name: "Try to schedule the node from the primary master"
+      delegate_to: "{{ cli_master }}"
+      shell: "oc adm manage-node {{ cli_node }} --schedulable=true"
+
+#      register: user_out
+#
+#    - name: "Get namespace"
+#      when: user_out != ""
+#      set_fact:
+#        name_space: "{{ user_out['stdout'] }}"
+#
+#    - name: "debug"
+#      debug:
+#        msg: "{{ name_space }}"
