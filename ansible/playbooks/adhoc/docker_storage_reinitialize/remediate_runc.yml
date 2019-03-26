@@ -1,5 +1,6 @@
+#!/usr/bin/ansible-playbook
 ---
-- name: "Set a compute node as unschedulable from a master"
+- name: "Playbook to un-schedule and drain drain compute nodes before remediating runc on them"
   hosts: localhost
   user: root
 
@@ -8,27 +9,18 @@
       msg: "This playbook requires {{item}} to be set."
     when: item is not defined or item == ''
     with_items:
-    - cli_cluster
-    - cli_type
     - cli_master
     - cli_node
+    - cli_ssh_name
 
   tasks:
-    - name: "Set hostname for the node that can be resolved through DNS"
-      set_fact:
-        node_ssh_name: "{{ cli_cluster }}-{{ cli_type }}-{{ cli_node }}"
-      tags:
-      - "reinit"
-
     - name: "debug"
       debug:
         msg: "{{ item }}"
       with_items:
-      -  "{{ cli_cluster }}"
-      -  "{{ cli_type }}"
       -  "{{ cli_master }}"
       -  "{{ cli_node }}"
-      -  "{{ node_ssh_name }}"
+      -  "{{ cli_ssh_name }}"
 
 
       # Test connectivity
@@ -37,11 +29,11 @@
       shell: "uptime"
       with_items:
       -  "{{ cli_master }}"
-      -  "{{ node_ssh_name }}"
+      -  "{{ cli_ssh_name }}"
 
 
       # Begin master operations
-    - name: "Try to oc get node from the primary master"
+    - name: "Test oc get node from the primary master"
       shell: "oc get node {{ cli_node }}"
       delegate_to: "root@{{ cli_master }}"
 
@@ -52,40 +44,41 @@
     - name: "Try to drain the node from the primary master"
       shell: "oc adm drain {{ cli_node }} --force --ignore-daemonsets --delete-local-data"
       delegate_to: "root@{{ cli_master }}"
-
-    - name: "Pause for only 1 minute to allow node to drain."
-      pause:
-        minutes: 1
+      ignore_errors: true
 
 
     # Begin node operations
     - name: "Disable docker before rebooting"
       shell: "systemctl disable docker var-lib-docker.mount"
-      delegate_to: "root@{{ node_ssh_name }}"
+      delegate_to: "root@{{ cli_ssh_name }}"
 
     - name: "Reboot node to disable docker"
       shell: "sleep 2 && shutdown -r now"
       async: 5
       poll: 0
-      delegate_to: "root@{{ node_ssh_name }}"
+      delegate_to: "root@{{ cli_ssh_name }}"
 
-    - name: "Pause for only 1 minute to allow node to finish rebooting."
+    - name: "Pause for 1 minute to allow the node to finish rebooting."
       pause:
         minutes: 1
 
-    - name: "Wait for system to come back up"
+    - name: "Wait for the node to come back up"
       shell: "uptime"
       retry: 5
-      delay: 30
-      delegate_to: "root@{{ node_ssh_name }}"
+      delay: 60
+      delegate_to: "root@{{ cli_ssh_name }}"
+      ignore_errors: true
+
+    - name: "Make sure docker is stopped and unmounted"
+      shell: "systemctl stop docker var-lib-docker.mount"
+      delegate_to: "root@{{ cli_ssh_name }}"
 
 
     # Begin bastion operations
     - name: "Start docker reinitialization playbook from a bastion"
-      shell: "ansible-playbook ops-docker-storage-reinitialize.yml -e cli_name={{ node_ssh_name }} -e cli_confirm_run=yes"
+      shell: "ansible-playbook ops-docker-storage-reinitialize.yml -e cli_name={{ cli_ssh_name }} -e cli_confirm_run=yes"
       delegate_to: localhost
-      tags:
-      - "reinit"
+
 
     # Continue node operations
     - name: "Try to apply docker update first, then the rest of the pending updates, reenable docker"
@@ -94,25 +87,30 @@
       - "yum -y update --advisory=RHSA-2019:0304"
       - "yum -y update --security"
       - "systemctl enable docker var-lib-docker.mount"
-      delegate_to: "root@{{ node_ssh_name }}"
+      delegate_to: "root@{{ cli_ssh_name }}"
       ignore_errors: true
 
     - name: "Reboot node to re enable docker"
-      host: "root@{{ node_ssh_name }}"
       shell: "sleep 2 && shutdown -r now"
       async: 5
       poll: 0
-      delegate_to: "root@{{ node_ssh_name }}"
+      delegate_to: "root@{{ cli_ssh_name }}"
 
-    - name: "Pause for only 1 minute to allow node to finish rebooting."
+    - name: "Pause for 1 minute to allow the node to finish rebooting."
       pause:
         minutes: 1
 
-    - name: "Wait for system to come back up"
+    - name: "Wait for the node to come back up again"
       shell: "uptime"
       retry: 5
       delay: 40
-      delegate_to: "root@{{ node_ssh_name }}"
+      delegate_to: "root@{{ cli_ssh_name }}"
+      ignore_errors: true
+
+    - name: "Check if host is still vulnerable"
+      shell: "bash /root/runc_check.sh"
+      delegate_to: "root@{{ cli_ssh_name }}"
+      ignore_errors: true
 
 
     # Finish master operations
@@ -120,6 +118,6 @@
       shell: "oc adm manage-node {{ cli_node }} --schedulable=true"
       delegate_to: "root@{{ cli_master }}"
 
-    - name: "Try to oc get node from the primary master"
+    - name: "Check if node is back in Ready state from the primary master"
       shell: "oc get node {{ cli_node }}"
       delegate_to: "root@{{ cli_master }}"
