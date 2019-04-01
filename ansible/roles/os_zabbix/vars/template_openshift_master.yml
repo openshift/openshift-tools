@@ -833,6 +833,12 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.internal.ssl.expiry
+    value_type: int
+    description: "openshift master internal ssl expiry info about how many days left"
+    applications:
+    - Openshift Master
+
   zdiscoveryrules:
   - name: disc.pv
     key: disc.pv
@@ -1165,6 +1171,11 @@ g_template_openshift_master:
 
   - name: "Public Certificate: less than 15 days from expiring on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.public.ssl.expiry.last()}<15"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/certificate_expiring.asciidoc"
+    priority: avg
+
+  - name: "Internal Certificate: less than 15 days from expiring on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.internal.ssl.expiry.last()}<15"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/certificate_expiring.asciidoc"
     priority: avg
 
