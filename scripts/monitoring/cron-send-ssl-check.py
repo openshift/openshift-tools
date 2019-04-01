@@ -67,7 +67,12 @@ def send_metrics(day_left, zabbixkey, verbose):
 
 def get_ssl_certificate_expiry_days(domain_name):
     """get the domain expired date"""
-    cert = ssl.get_server_certificate((domain_name, 443))
+    ssl_port = 443
+    #docker-registry.default.svc.cluster.local:5000
+    if ":" in domain_name:
+        ssl_port = domain_name.split(":")[1]
+        domain_name = domain_name.split(":")[0]
+    cert = ssl.get_server_certificate((domain_name, ssl_port))
     x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
 
     notafter = x509.get_notAfter()
