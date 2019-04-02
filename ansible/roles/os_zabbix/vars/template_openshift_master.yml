@@ -1169,15 +1169,15 @@ g_template_openshift_master:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_running_pods.asciidoc#22-openshift-metrics-server-pod-is--not-running-well"
     priority: warn
 
-  - name: "Public Certificate: less than 15 days from expiring on {HOST.NAME}"
+  - name: "Public Certificate checked by https: less than 15 days from expiring on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.public.ssl.expiry.last()}<15"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/certificate_expiring.asciidoc"
-    priority: avg
+    priority: high
 
-  - name: "Internal Certificate: less than 15 days from expiring on {HOST.NAME}"
+  - name: "Internal Certificate checked by https: less than 15 days from expiring on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.internal.ssl.expiry.last()}<15"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/certificate_expiring.asciidoc"
-    priority: avg
+    priority: high
 
 
   zgraphs:
