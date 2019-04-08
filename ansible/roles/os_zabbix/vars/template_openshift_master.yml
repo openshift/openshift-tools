@@ -838,7 +838,7 @@ g_template_openshift_master:
     description: "openshift master internal ssl expiry info about how many days left"
     applications:
     - Openshift Master
-    
+
   - key: openshift.master.service.dedicated.admin.count
     value_type: int
     description: "openshift primary master dedicated-admin service running status"
@@ -1185,6 +1185,10 @@ g_template_openshift_master:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/certificate_expiring.asciidoc"
     priority: high
 
+  - name: "Openshift-dedicated-role service is not running on  {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.service.dedicated.admin.count.last()}<2"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/dedicated-admin.asciidoc"
+    priority: avg
 
   zgraphs:
   - name: Openshift Master API Server Latency Pods LIST Quantiles
