@@ -839,6 +839,12 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.service.dedicated.admin.count
+    value_type: int
+    description: "openshift primary master dedicated-admin service running status"
+    applications:
+    - Openshift Master
+
   zdiscoveryrules:
   - name: disc.pv
     key: disc.pv
