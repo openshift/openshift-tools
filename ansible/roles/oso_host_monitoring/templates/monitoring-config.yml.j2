@@ -387,6 +387,10 @@ host_monitoring_cron:
   minute: "9"
   job: ops-runner -f -s 15 -n cssc.openshift.internal.ssl.expired.inter.info /usr/bin/cron-send-ssl-check -l {% for domain in g_oso_monitoring_ssl_inter_domains %} {{ domain}} {% endfor %}  -key openshift.master.internal.ssl.expiry
 
+- name: check dedicated-admin service status
+  minute: "*/5"
+  job: ops-runner -f -s 60 -n cspcs.openshfit.master.dedicated.admin.status /usr/bin/cron-send-process-count apply-dedicated-roles openshift.master.service.dedicated.admin.count
+
 {% if osohm_deployment_type == 'dedicated' %}
 - name: send  the pv usage status
   minute: "*/5"
