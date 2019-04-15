@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.163
+Version:       0.1.164
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -504,6 +504,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Mon Apr 15 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.164-1
+- fix the bug of ssl check (zhizhang@redhat.com)
+
 * Sun Mar 31 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.163-1
 - add method to allow ssl check on no 443 (zhizhang@redhat.com)
 
