@@ -72,7 +72,10 @@ def get_ssl_certificate_expiry_days(domain_name):
     if ":" in domain_name:
         ssl_port = domain_name.split(":")[1]
         domain_name = domain_name.split(":")[0]
-    cert = ssl.get_server_certificate((domain_name, ssl_port))
+    conn = ssl.create_connection((domain_name, ssl_port))
+    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+    sock = context.wrap_socket(conn, server_hostname=domain_name)
+    cert = ssl.DER_cert_to_PEM_cert(sock.getpeercert(True))
     x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
 
     notafter = x509.get_notAfter()
@@ -80,8 +83,9 @@ def get_ssl_certificate_expiry_days(domain_name):
     now = datetime.datetime.now()
     notafter_t = datetime.datetime.strptime(notafter, '%Y%m%d')
     delta = notafter_t - now
+    logger.info("public url [" + domain_name + "] certificate subject: " + str(x509.get_subject()))
     logger.info("public url [" + domain_name + "] will expire in: " + str(delta.days) + " days")
-    return delta.days
+    return (delta.days if delta.days >= 0 else 0)
 
 def main():
     """ check ssl expired info """
@@ -98,6 +102,7 @@ def main():
     urls = args.list
     expire_day_small = 10000
     zabbixkey = args.key
+    exception = None
     try:
         for url in urls:
             expire_day_left = get_ssl_certificate_expiry_days(url)
@@ -107,11 +112,14 @@ def main():
     except Exception as e:
         logger.exception("error during check the ssl expired info")
         exception = e
+        expire_day_small = 0
     try:
         send_metrics(expire_day_small, zabbixkey, args.verbose)
     except Exception as e:
         logger.exception("error sending zabbix data")
         exception = e
+    if exception:
+        raise exception
 
 if __name__ == "__main__":
     main()
