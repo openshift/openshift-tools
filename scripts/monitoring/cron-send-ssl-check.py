@@ -74,6 +74,9 @@ def get_ssl_certificate_expiry_days(domain_name):
         domain_name = domain_name.split(":")[0]
     conn = ssl.create_connection((domain_name, ssl_port))
     context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+    context.verify_mode = ssl.CERT_REQUIRED
+    context.check_hostname = True
+    context.load_default_certs()
     sock = context.wrap_socket(conn, server_hostname=domain_name)
     cert = ssl.DER_cert_to_PEM_cert(sock.getpeercert(True))
     x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
