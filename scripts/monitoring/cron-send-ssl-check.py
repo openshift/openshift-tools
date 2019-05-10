@@ -51,6 +51,8 @@ def parse_args():
     parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
     parser.add_argument('-key', default="openshift.master.public.ssl.left", help='zabbix key')
     parser.add_argument('-l', '--list', nargs='+', help='domain that need to check', required=True)
+    parser.add_argument('--add_ca_file', nargs='+', help='add CA certificate for validation', default=[], )
+    parser.add_argument('--add_ca_path', nargs='+', help='add CA certificates from path for validation', default=[], )
     return parser.parse_args()
 
 def send_metrics(day_left, zabbixkey, verbose):
@@ -65,7 +67,7 @@ def send_metrics(day_left, zabbixkey, verbose):
 
 
 
-def get_ssl_certificate_expiry_days(domain_name):
+def get_ssl_certificate_expiry_days(domain_name, args=None, ):
     """get the domain expired date"""
     ssl_port = 443
     #docker-registry.default.svc.cluster.local:5000
@@ -77,6 +79,15 @@ def get_ssl_certificate_expiry_days(domain_name):
     context.verify_mode = ssl.CERT_REQUIRED
     context.check_hostname = True
     context.load_default_certs()
+
+    for ca_file in args.add_ca_file:
+        context.load_verify_locations(cafile=ca_file)
+        logger.info("add_ca_file: " + ca_file)
+
+    for ca_path in args.add_ca_path:
+        context.load_verify_locations(capath=ca_path)
+        logger.info("add_ca_path: " + ca_path)
+
     sock = context.wrap_socket(conn, server_hostname=domain_name)
     cert = ssl.DER_cert_to_PEM_cert(sock.getpeercert(True))
     x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
@@ -108,7 +119,7 @@ def main():
     exception = None
     try:
         for url in urls:
-            expire_day_left = get_ssl_certificate_expiry_days(url)
+            expire_day_left = get_ssl_certificate_expiry_days(url, args=args, )
             if expire_day_small > expire_day_left:
                 expire_day_small = expire_day_left
         #return the smallest day on this cluster
