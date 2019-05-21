@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.165
+Version:       0.1.166
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -504,6 +504,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Tue May 21 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.166-1
+- add skip_check_hostname option for internal certificates
+  (dranders@redhat.com)
+
 * Tue May 14 2019 Drew Anderson <dranders@redhat.com> 0.1.165-1
 - add_ca_file and add_ca_path (dranders@redhat.com)
 - bug fix for the hostname verify for ssl check (zhizhang@redhat.com)
