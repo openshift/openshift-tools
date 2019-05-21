@@ -53,6 +53,8 @@ def parse_args():
     parser.add_argument('-l', '--list', nargs='+', help='domain that need to check', required=True)
     parser.add_argument('--add_ca_file', nargs='+', help='add CA certificate for validation', default=[], )
     parser.add_argument('--add_ca_path', nargs='+', help='add CA certificates from path for validation', default=[], )
+    parser.add_argument('--skip_check_hostname', action='store_true', default=False,
+                        help='skip hostname validation, matching the certificate subject')
     return parser.parse_args()
 
 def send_metrics(day_left, zabbixkey, verbose):
@@ -77,7 +79,7 @@ def get_ssl_certificate_expiry_days(domain_name, args=None, ):
     conn = ssl.create_connection((domain_name, ssl_port))
     context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
     context.verify_mode = ssl.CERT_REQUIRED
-    context.check_hostname = True
+    context.check_hostname = not args.skip_check_hostname
     context.load_default_certs()
 
     for ca_file in args.add_ca_file:
@@ -97,8 +99,8 @@ def get_ssl_certificate_expiry_days(domain_name, args=None, ):
     now = datetime.datetime.now()
     notafter_t = datetime.datetime.strptime(notafter, '%Y%m%d')
     delta = notafter_t - now
-    logger.info("public url [" + domain_name + "] certificate subject: " + str(x509.get_subject()))
-    logger.info("public url [" + domain_name + "] will expire in: " + str(delta.days) + " days")
+    logger.info("[" + domain_name + "] certificate subject: " + str(x509.get_subject()))
+    logger.info("[" + domain_name + "] will expire in: " + str(delta.days) + " days")
     return (delta.days if delta.days >= 0 else 0)
 
 def main():
