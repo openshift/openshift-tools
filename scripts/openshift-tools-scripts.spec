@@ -100,6 +100,7 @@ cp -p monitoring/cron-send-oc-cluster-capacity.sh %{buildroot}/usr/bin/cron-send
 cp -p monitoring/cron-send-aws-eip-check.py %{buildroot}/usr/bin/cron-send-aws-eip-check
 cp -p monitoring/cron-send-pod-check.py %{buildroot}/usr/bin/cron-send-pod-check
 cp -p monitoring/cron-send-ssl-check.py %{buildroot}/usr/bin/cron-send-ssl-check
+cp -p monitoring/cron-send-node-pods-status.py %{buildroot}/usr/bin/cron-send-node-pods-status
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
