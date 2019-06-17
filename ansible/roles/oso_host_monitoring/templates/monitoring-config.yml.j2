@@ -280,6 +280,10 @@ host_monitoring_cron:
   minute: "*/5"
   job: "ops-runner -f -t 180 -s 60 -n csps.openshift.master.project.terminating.status /usr/bin/cron-send-project-stats"
 
+- name: run node pods status check
+  minute: "*/15"
+  job: "ops-runner -f -t 180 -s 60 -n csps.openshift.master.project.terminating.status /usr/bin/cron-send-node-pods-status -s openshift-infra openshift-logging logging openshift-config openshift-console openshift-metrics-server openshift-monitoring openshift-operator-lifecycle-manager openshift-sdn openshift-web-console openshift-operator-lifecycle-manager openshift-ansible-service-broker openshift-template-service-broker"
+
 - name: run create app with build process
   minute: "*/30"
   job: "ops-runner -f -t 1300 -s 120 -n csca.openshift.master.app.build.create /usr/bin/cron-send-create-app -v --basename build --loopcount 180 --source https://github.com/openshift/nodejs-ex &>> /var/log/build_app.log"
