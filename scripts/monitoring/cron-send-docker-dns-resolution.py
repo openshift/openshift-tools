@@ -19,14 +19,15 @@ from docker.errors import APIError
 from openshift_tools.monitoring.metric_sender import MetricSender
 
 ZBX_KEY = "docker.container.dns.resolution"
+ZBX_KEY_TIMEOUT = "docker.container.dns.resolution.timeout"
 
 if __name__ == "__main__":
     cli = DockerClient(version='auto', base_url='unix://var/run/docker.sock', timeout=120)
 
     container_id = os.environ['container_uuid']
+    image = cli.inspect_container(container_id)['Image']
 
-    container = cli.create_container(image=cli.inspect_container(container_id)['Image'],
-                                     command='getent hosts redhat.com')
+    container = cli.create_container(image, command='getent hosts redhat.com')
 
     cli.start(container=container.get('Id'))
     exit_code = cli.wait(container)
@@ -39,10 +40,24 @@ if __name__ == "__main__":
             print "Error while cleaning up container."
             time.sleep(5)
 
+    container = cli.create_container(image, command='timeout 0.2s getent hosts redhat.com')
+
+    cli.start(container=container.get('Id'))
+    timeout_exit_code = cli.wait(container)
+
+    for i in range(0, 3):
+        try:
+            cli.remove_container(container.get('Id'))
+            break
+        except APIError:
+            print "Error while cleaning up container."
+            time.sleep(5)
     ms = MetricSender()
     ms.add_metric({ZBX_KEY: exit_code})
+    ms.add_metric({ZBX_KEY_TIMEOUT: timeout_exit_code})
 
     print "Sending these metrics:"
     print ZBX_KEY + ": " + str(exit_code)
+    print ZBX_KEY_TIMEOUT + ": " + str(timeout_exit_code)
     ms.send_metrics()
     print "\nDone.\n"

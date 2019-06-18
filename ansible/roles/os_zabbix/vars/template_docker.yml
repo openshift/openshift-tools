@@ -34,6 +34,11 @@ g_template_docker:
     - Docker Container
     value_type: int
 
+  - key: docker.container.dns.resolution.timeout
+    applications:
+    - Docker Container
+    value_type: int
+
   - key: docker.container.existing.dns.resolution.failed
     applications:
     - Docker Container
@@ -105,7 +110,11 @@ g_template_docker:
     expression: "{Template Docker:docker.container.dns.resolution.min(#3)}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_docker_dns.asciidoc"
     priority: average
-    status: disabled
+
+  - name: "docker.container.dns.resolution.timeout failed on {HOST.NAME}"
+    expression: "{Template Docker:docker.container.dns.resolution.min(#3)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_docker_dns.asciidoc"
+    priority: average
 
   - name: "docker.container.grpc failed on {HOST.NAME}"
     expression: "{Template Docker:docker.container.grpc.last()}>0"
@@ -116,11 +125,13 @@ g_template_docker:
     expression: "{Template Docker:docker.container.existing.dns.resolution.failed.min(#3)}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_existing_docker_dns.asciidoc"
     priority: average
+    status: disabled
 
   - name: "docker.container.existing.dns.resolution.timeout on {HOST.NAME}"
     expression: "{Template Docker:docker.container.existing.dns.resolution.timeout.min(#3)}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_existing_docker_dns.asciidoc"
     priority: average
+    status: disabled
 
   - name: "Docker storage is using LOOPBACK on {HOST.NAME}"
     expression: "{Template Docker:docker.storage.is_loopback.last()}<>0"
