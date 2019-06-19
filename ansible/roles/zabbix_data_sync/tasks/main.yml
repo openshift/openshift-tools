@@ -11,17 +11,20 @@
   ignore_errors: True
   delegate_to: localhost
 
-- debug: var=zabbix_cluster_hostgroup.results[0].hosts|length
+- when: zabbix_cluster_hostgroup.results | length > 0
+  block:
 
-- set_fact:
-   zabbix_host_inventory: "{{ zabbix_cluster_hostgroup.results[0].hosts }}"
+  - debug: var=zabbix_cluster_hostgroup.results[0].hosts|length
 
-- name: "copy file on /etc/openshift_tools"
-  template:
-    src: zabbix_data_sync.py.j2
-    dest: /etc/openshift_tools/zabbix_data_sync.py
-    owner: root
-    group: root
-    mode: 0644
-  notify:
-  - "Restart the host monitoring service"
+  - set_fact:
+     zabbix_host_inventory: "{{ zabbix_cluster_hostgroup.results[0].hosts }}"
+
+  - name: "copy file on /etc/openshift_tools"
+    template:
+      src: zabbix_data_sync.py.j2
+      dest: /etc/openshift_tools/zabbix_data_sync.py
+      owner: root
+      group: root
+      mode: 0644
+    notify:
+    - "Restart the host monitoring service"
