@@ -1,0 +1,5 @@
+---
+- name: "Restart the host monitoring service"
+  service:
+    name: oso-rhel7-host-monitoring.service
+    state: restarted

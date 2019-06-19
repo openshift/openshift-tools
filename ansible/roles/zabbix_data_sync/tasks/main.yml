@@ -1,0 +1,27 @@
+- name: Get a list of hosts from zabbix in the zabbix hostgroup
+  zbx_hostgroup:
+    zbx_server: "{{ zabbix_url }}"
+    zbx_user: "{{ zabbix_user }}"
+    zbx_password: "{{ zabbix_pass }}"
+    name: "{{ oo_clusterid }}"
+    state: list
+    show_hosts: true
+  register: zabbix_cluster_hostgroup
+  run_once: True
+  ignore_errors: True
+  delegate_to: localhost
+
+- debug: var=zabbix_cluster_hostgroup.results[0].hosts|length
+
+- set_fact:
+   zabbix_host_inventory: "{{ zabbix_cluster_hostgroup.results[0].hosts }}"
+
+- name: "copy file on /etc/openshift_tools"
+  template:
+    src: zabbix_data_sync.py.j2
+    dest: /etc/openshift_tools/zabbix_data_sync.py
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - "Restart the host monitoring service"
