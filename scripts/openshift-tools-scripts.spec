@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.167
+Version:       0.1.168
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -509,6 +509,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Jun 19 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.168-1
+- Add file to rpm (haowang@redhat.com)
+
 * Wed Jun 19 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.167-1
 - add zabbix monitor status check script (zhizhang@redhat.com)
 - Add dns resolution timeout monitor item (haowang@redhat.com)

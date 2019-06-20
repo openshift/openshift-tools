@@ -386,6 +386,10 @@ host_monitoring_cron:
   minute: "8"
   job: ops-runner -f -s 15 -n cssc.openshift.public.ssl.expired.info /usr/bin/cron-send-ssl-check -l {% for domain in g_oso_monitoring_ssl_public_domains %} {{ domain}}.{{ osohm_cluster_id }}.openshift.com {% endfor %} {% for router in oa_routers %} srecheck.{{ router.shard }}.{{ osohm_cluster_id }}.openshiftapps.com {% endfor %} -key openshift.master.public.ssl.expiry
 
+- name: check if zabbix monitored all the node
+  hour: "*/6"
+  job: ops-runner -f -s 15 -n cszic.openshift.zabbix.inventory.info /usr/bin/cron-send-zabbix-inventory-check --clusterid {{ osohm_cluster_id }}
+
 - name: check ssl exprired status by http header internal
   hour: "11"
   minute: "9"
