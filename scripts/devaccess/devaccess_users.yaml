@@ -58,6 +58,13 @@ roles:
           runner: oc_get_generic
           namespaces:
             - all
+        - names:
+            - is
+            - imagestream
+            - imagestreams
+          runner: oc_get_generic
+          namespaces:
+            - openshift
 
     - base: oc version
       types:
