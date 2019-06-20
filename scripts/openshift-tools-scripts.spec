@@ -101,6 +101,7 @@ cp -p monitoring/cron-send-aws-eip-check.py %{buildroot}/usr/bin/cron-send-aws-e
 cp -p monitoring/cron-send-pod-check.py %{buildroot}/usr/bin/cron-send-pod-check
 cp -p monitoring/cron-send-ssl-check.py %{buildroot}/usr/bin/cron-send-ssl-check
 cp -p monitoring/cron-send-node-pods-status.py %{buildroot}/usr/bin/cron-send-node-pods-status
+cp -p monitoring/cron-send-zabbix-inventory-check.py %{buildroot}/usr/bin/cron-send-zabbix-inventory-check
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
@@ -415,6 +416,8 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-aws-eip-check
 /usr/bin/cron-send-pod-check
 /usr/bin/cron-send-ssl-check
+/usr/bin/cron-send-zabbix-inventory-check
+
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage

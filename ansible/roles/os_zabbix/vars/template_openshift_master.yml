@@ -845,6 +845,12 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.zabbix.inventory.status
+    value_type: int
+    description: "zabbix monitor status check see if zabbix monitor all the node"
+    applications:
+    - Openshift Master
+
   zdiscoveryrules:
   - name: disc.pv
     key: disc.pv
