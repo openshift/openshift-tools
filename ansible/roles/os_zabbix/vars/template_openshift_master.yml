@@ -1186,6 +1186,11 @@ g_template_openshift_master:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/certificate_expiring.asciidoc"
     priority: high
 
+  - name: "Zabbix inventory check failed on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.zabbix.inventory.status.last()}<>1"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/zabbix_inventroy_status.asciidoc"
+    priority: avg
+
   - name: "Internal Certificate checked by https: less than 15 days from expiring on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.internal.ssl.expiry.last()}<15"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/certificate_expiring.asciidoc"
