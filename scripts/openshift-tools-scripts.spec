@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.168
+Version:       0.1.169
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -511,6 +511,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Jun 27 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.169-1
+- monitoring: add the monitoring script for console pods (bmeng@redhat.com)
+- devaccess: Allow limited "oc get imagestreams" (mbarnes@fedoraproject.org)
+
 * Wed Jun 19 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.168-1
 - Add file to rpm (haowang@redhat.com)
 
