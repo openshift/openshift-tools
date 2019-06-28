@@ -1,6 +1,0 @@
----
-- include: provision_vpc.yml
-
-- include: provision_ssh_keypair.yml
-
-- include: provision_sec_group.yml

@@ -1,6 +1,0 @@
----
-- name: Deploy grafana server
-  hosts: masters
-  tasks:
-  - include_role:
-      name: openshift_grafana

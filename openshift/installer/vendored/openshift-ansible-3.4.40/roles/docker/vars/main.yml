@@ -1,3 +1,0 @@
----
-udevw_udevd_dir: /etc/systemd/system/systemd-udevd.service.d
-docker_systemd_dir: /etc/systemd/system/docker.service.d
