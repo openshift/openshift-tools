@@ -851,6 +851,18 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.webconsole.pod.availability
+    value_type: int
+    description: "check if the webconsole has expected running replicas"
+    applications:
+    - Openshift Master
+
+  - key: openshift.adminconsole.pod.availability
+    value_type: int
+    description: "check if the adminconsole has expected running replicas"
+    applications:
+    - Openshift Master
+
   zdiscoveryrules:
   - name: disc.pv
     key: disc.pv
@@ -1200,6 +1212,16 @@ g_template_openshift_master:
     expression: "{Template Openshift Master:openshift.master.service.dedicated.admin.count.last()}<2"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/dedicated-admin.asciidoc"
     priority: high
+
+  - name: "The running webconsole replica does not match expected on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.webconsole.pod.availability.last()}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_web_console.asciidoc"
+    priority: avg
+
+  - name: "The running adminconsole replica does not match expected on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.adminconsole.pod.availability.last()}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_web_console.asciidoc"
+    priority: avg
 
   zgraphs:
   - name: Openshift Master API Server Latency Pods LIST Quantiles
