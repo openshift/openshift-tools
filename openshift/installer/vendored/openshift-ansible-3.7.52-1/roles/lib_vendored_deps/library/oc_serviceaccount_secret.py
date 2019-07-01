@@ -1,1 +1,0 @@
-../../lib_openshift/library/oc_serviceaccount_secret.py

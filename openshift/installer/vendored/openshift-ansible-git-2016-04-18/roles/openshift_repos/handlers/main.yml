@@ -1,3 +1,0 @@
----
-- name: refresh cache
-  command: "{{ ansible_pkg_mgr }} clean all"
