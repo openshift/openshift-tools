@@ -1,1 +1,0 @@
-../../lib_openshift/library/oc_objectvalidator.py

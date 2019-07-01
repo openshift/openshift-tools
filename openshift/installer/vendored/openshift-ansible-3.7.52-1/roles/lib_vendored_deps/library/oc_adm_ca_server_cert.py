@@ -1,1 +1,0 @@
-../../lib_openshift/library/oc_adm_ca_server_cert.py
