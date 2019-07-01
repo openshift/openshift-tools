@@ -1,1 +1,0 @@
-../../lib_utils/callback_plugins/openshift_quick_installer.py
