@@ -1174,12 +1174,12 @@ g_template_openshift_master:
   - name: "Openshift autoapprover is not running"
     expression: "{Template Openshift Master:service.pod.bootstrap-autoapprover.count.last()}<1"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_running_pods.asciidoc#openshift-autoapprover-pod-is-not-running-well"
-    priority: warn
+    priority: high
 
   - name: "Openshift metrics server is not running"
     expression: "{Template Openshift Master:service.pod.metrics-server.count.last()}<1"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_running_pods.asciidoc#22-openshift-metrics-server-pod-is--not-running-well"
-    priority: warn
+    priority: high
 
   - name: "Public Certificate checked by https: less than 15 days from expiring on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.public.ssl.expiry.last()}<15"
