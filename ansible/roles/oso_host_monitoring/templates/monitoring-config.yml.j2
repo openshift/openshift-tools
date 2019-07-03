@@ -381,6 +381,10 @@ host_monitoring_cron:
   minute: "*/15"
   job: ops-runner -f -s 120 -n csocc.openshift.cluster.capacity /usr/bin/cron-send-oc-cluster-capacity
 
+- name: check console pods running replica number
+  minute: "*/20"
+  job: ops-runner -f -s 30 -n cscc.openshift.console.pod.replica /usr/bin/cron-send-console-check
+
 - name: check ssl exprired status by http header
   hour: "10"
   minute: "8"
