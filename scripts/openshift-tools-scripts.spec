@@ -421,7 +421,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-zabbix-inventory-check
 /usr/bin/cron-send-node-pods-status
 /usr/bin/cron-send-console-check
-
+/usr/bin/cron-send-dedicated-admin.sh
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
