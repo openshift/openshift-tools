@@ -401,7 +401,7 @@ host_monitoring_cron:
 
 - name: check dedicated-admin service status
   minute: "*/5"
-  job: ops-runner -f -s 60 -n cspcs.openshfit.master.dedicated.admin.status /usr/bin/cron-send-process-count apply-dedicated-roles openshift.master.service.dedicated.admin.count
+  job: ops-runner -f -s 60 -n cspcs.openshift.master.dedicated.admin.status /usr/bin/cron-send-dedicated-admin.sh
 
 {% if osohm_deployment_type == 'dedicated' %}
 - name: send  the pv usage status
