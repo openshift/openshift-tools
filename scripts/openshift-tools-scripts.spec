@@ -103,6 +103,7 @@ cp -p monitoring/cron-send-ssl-check.py %{buildroot}/usr/bin/cron-send-ssl-check
 cp -p monitoring/cron-send-node-pods-status.py %{buildroot}/usr/bin/cron-send-node-pods-status
 cp -p monitoring/cron-send-zabbix-inventory-check.py %{buildroot}/usr/bin/cron-send-zabbix-inventory-check
 cp -p monitoring/cron-send-console-check.py %{buildroot}/usr/bin/cron-send-console-check
+cp -p monitoring/cron-send-dedicated-admin.sh %{buildroot}/usr/bin/cron-send-dedicated-admin.sh
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
