@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Web Services
 Name:          openshift-tools-web
-Version:       0.0.25
+Version:       0.0.26
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -60,6 +60,9 @@ Custom SimpleSAMLphp modules for oso SSO application
 /usr/share/simplesamlphp/modules/*
 
 %changelog
+* Wed Jul 17 2019 Stefanie Forrester <sedgar@redhat.com> 0.0.26-1
+- Added zabbix check for dedicated-admin-operator
+
 * Mon Jan 14 2019 Alex Chvatal <achvatal@redhat.com>
 - adding dns latency monitoring
 
