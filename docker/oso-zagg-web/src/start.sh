@@ -42,6 +42,12 @@ echo -n "Starting heartbeat processing loop... "
 /usr/local/bin/ops-run-in-loop 30 /usr/bin/flock -n /var/tmp/ops-zagg-heartbeat-processor.lock -c '/usr/bin/timeout -s9 600s /usr/bin/ops-zagg-heartbeat-processor' &
 echo "Done."
 
+# Remove leftover Ansible temporary directories every hour
+# Limit to directories older than the last iteration to not remove directories in use
+echo -n "Starting Ansible tmpdir cleanup loop... "
+/usr/local/bin/ops-run-in-loop 1h find ~/.ansible/tmp/ -type d -mmin +60 -delete &
+echo "Done."
+
 
 # Start the services
 echo 'Starting httpd'
