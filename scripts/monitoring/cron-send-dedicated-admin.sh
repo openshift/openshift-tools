@@ -8,18 +8,18 @@ set -o errtrace
 set -o nounset
 
 # Check the `ready` field of the dedicated-admin-operator pod.
-ready="$(oc get pods -n openshift-dedicated-admin -l k8s-app=dedicated-admin-operator \
+ready="$(oc --kubeconfig=/tmp/admin.kubeconfig get pods -n openshift-dedicated-admin -l k8s-app=dedicated-admin-operator \
   --template='{{ range .items }}{{ (index .status.containerStatuses 0).ready }}{{"\n"}}{{ end }}')"
 
 if $ready; then
   echo "Detected pod in 'ready' state."
-  oc get pods -n openshift-dedicated-admin -l k8s-app=dedicated-admin-operator 
+  oc --kubeconfig=/tmp/admin.kubeconfig get pods -n openshift-dedicated-admin -l k8s-app=dedicated-admin-operator 
   echo "Sending zabbix metric:"
   echo "ops-metric-client -k openshift.master.service.dedicated.admin.count -o 1"
   ops-metric-client -k openshift.master.service.dedicated.admin.count -o 1
 else
   echo "Detected pod is NOT in 'ready' state."
-  oc get pods -n openshift-dedicated-admin -l k8s-app=dedicated-admin-operator 
+  oc --kubeconfig=/tmp/admin.kubeconfig get pods -n openshift-dedicated-admin -l k8s-app=dedicated-admin-operator 
   echo "Sending zabbix metric:"
   echo "ops-metric-client -k openshift.master.service.dedicated.admin.count -o 0"
   ops-metric-client -k openshift.master.service.dedicated.admin.count -o 0
