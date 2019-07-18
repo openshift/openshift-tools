@@ -21,5 +21,3 @@ openshift_daemonset_config_privileged: True
 openshift_daemonset_config_resources:
   cpu: 10m
   memory: 10Mi
-openshift_daemonset_config_resource_limits:
-  cpu: 2
