@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.171
+Version:       0.1.172
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -512,6 +512,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Jul 17 2019 Stefanie Forrester <sedgar@redhat.com> 0.1.172-1
+- add dedicated-admin script to sub-package (sedgar@redhat.com)
+
 * Wed Jul 17 2019 Stefanie Forrester <sedgar@redhat.com> 0.1.171-1
 - Added zabbix check for dedicated-admin-operator (sedgar@redhat.com)
 
