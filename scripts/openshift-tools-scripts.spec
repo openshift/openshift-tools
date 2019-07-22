@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.170
+Version:       0.1.173
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -103,6 +103,7 @@ cp -p monitoring/cron-send-ssl-check.py %{buildroot}/usr/bin/cron-send-ssl-check
 cp -p monitoring/cron-send-node-pods-status.py %{buildroot}/usr/bin/cron-send-node-pods-status
 cp -p monitoring/cron-send-zabbix-inventory-check.py %{buildroot}/usr/bin/cron-send-zabbix-inventory-check
 cp -p monitoring/cron-send-console-check.py %{buildroot}/usr/bin/cron-send-console-check
+cp -p monitoring/cron-send-dedicated-admin.sh %{buildroot}/usr/bin/cron-send-dedicated-admin.sh
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
@@ -420,7 +421,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-zabbix-inventory-check
 /usr/bin/cron-send-node-pods-status
 /usr/bin/cron-send-console-check
-
+/usr/bin/cron-send-dedicated-admin.sh
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -511,6 +512,15 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Jul 18 2019 Stefanie Forrester <sedgar@redhat.com> 0.1.173-1
+- Specify kubeconfig (sedgar@redhat.com)
+
+* Wed Jul 17 2019 Stefanie Forrester <sedgar@redhat.com> 0.1.172-1
+- add dedicated-admin script to sub-package (sedgar@redhat.com)
+
+* Wed Jul 17 2019 Stefanie Forrester <sedgar@redhat.com> 0.1.171-1
+- Added zabbix check for dedicated-admin-operator (sedgar@redhat.com)
+
 * Thu Jun 27 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.170-1
 - fix: rename the script to match the spec (bmeng@redhat.com)
 

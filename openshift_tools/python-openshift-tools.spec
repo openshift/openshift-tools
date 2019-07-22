@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Python Package
 Name:          python-openshift-tools
-Version:       0.0.144
+Version:       0.0.145
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -315,6 +315,10 @@ Adds GCP specific python modules
 %{python_sitelib}/openshift_tools/cloud/gcp/*.py[co]
 
 %changelog
+* Wed Jul 17 2019 Matthew Barnes <mbarnes@fedoraproject.org> 0.0.145-1
+- simplezabbix: Delete Ansible's tmpdir on TaskQueueManager exception
+  (mbarnes@fedoraproject.org)
+
 * Tue Mar 12 2019 Blair Morrison <bmorriso@redhat.com> 0.0.144-1
 - Fix format string in ebs_snapshotter library (bmorriso@redhat.com)
 
