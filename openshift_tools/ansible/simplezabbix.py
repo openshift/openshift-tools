@@ -22,6 +22,7 @@ the existing Ansible zabbix modules.
 """
 
 import json
+import shutil
 from collections import namedtuple
 from ansible.parsing.dataloader import DataLoader
 from ansible.vars.manager import VariableManager
@@ -29,6 +30,7 @@ from ansible.inventory.manager import InventoryManager
 from ansible.playbook.play import Play
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.plugins.callback import CallbackBase
+import ansible.constants as C
 
 
 class ResultsCallback(CallbackBase):
@@ -291,6 +293,9 @@ class SimpleZabbixRaw(object):
         finally:
             if tqm is not None:
                 tqm.cleanup()
+
+            # Remove ansible tmpdir
+            shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
 
         if return_code != 0:
             raise ResultsException("Ansible module run failed, no results given.")

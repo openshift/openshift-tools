@@ -154,7 +154,7 @@ spec:
             cpu: 10m
             memory: 10Mi
           limits:
-            cpu: {{ openshift_daemonset_config_resource_limits }}
+            cpu: {{ openshift_daemonset_config_resource_limits.cpu }}
 {% endif %}
       volumes:
       - name: tmp-shared-dir
