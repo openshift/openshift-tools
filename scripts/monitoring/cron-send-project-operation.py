@@ -106,30 +106,41 @@ def main():
     # project does not exists.
     delete_project_code = 0
 
-    if project_exists == 0:
-        logger.info("project does not exists, going to create it")
-        create_project(args)
-        create_project_code = check_project(args)
-        if create_project_code == 0:
-            # 0 means project creation failed, no project was created
-            logger.info('project creation failed')
-        else:
-            # project creation succeed, then delete the project
+    # delete the project first if it's already there
+    if project_exists == 1:
+        # the project already exists, try to delete it first.
+        delete_project(args)
+        delete_project_code = check_project(args)
+        if delete_project_code == 1:
+            # 1 means project deletion failed, the project still exists
+            # give the deletion second chance. 10 more seconds to check the
+            # teminating status project
             delete_project(args)
             delete_project_code = check_project(args)
             if delete_project_code == 1:
-                # 1 means project deletion failed, the project still exists
-                # give the deletion second chance. 10 more seconds to check the
-                # teminating status project
-                delete_project_code = check_project(args)
-                if delete_project_code == 1:
-                    logger.info('project deletion failed in 20s')
-            else:
-                delete_project_code = 0
-    else:
-        # the project already exists, so I think the project creation failed
-        create_project_code = 0
+                logger.info('project deletion failed in 20s')
 
+    # start the test
+    logger.info("project does not exists, going to create it")
+    create_project(args)
+    create_project_code = check_project(args)
+    if create_project_code == 0:
+        # 0 means project creation failed, no project was created
+        logger.info('project creation failed')
+    else:
+        # project creation succeed, then delete the project
+        delete_project(args)
+        delete_project_code = check_project(args)
+        if delete_project_code == 1:
+            # 1 means project deletion failed, the project still exists
+            # give the deletion second chance. 10 more seconds to check the
+            # teminating status project
+            delete_project(args)
+            delete_project_code = check_project(args)
+            if delete_project_code == 1:
+                logger.info('project deletion failed in 20s')
+        else:
+            delete_project_code = 0
     #logger.info("{} {}".format(create_project_code, delete_project_code))
     if create_project_code == 1 and delete_project_code == 0:
         logger.info('creation and deletion succeed, no data was sent to zagg')
