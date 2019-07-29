@@ -46,12 +46,15 @@ class ZabbixInfo(object):
         #print hosts
         for host in hosts['items']:
             hostnameincluster = ""
-            if host['metadata']['labels']['type'] == 'master':
-                hostnameincluster = host['metadata']['labels']['hostname']
-            elif host['metadata']['labels']['type'] == 'infra':
-                hostnameincluster = clusterid + "-infra-" + host['metadata']['labels']['kubernetes.io/hostname']
-            else:
-                hostnameincluster = clusterid + "-compute-" + host['metadata']['labels']['kubernetes.io/hostname']
+            labels = host['metadata']['labels']
+            # Older master nodes may still have a "hostname" metadata label.
+            # Otherwise construct the hostname from the provided cluster ID
+            # and the "type" and "kubernetes.io/hostname" metadata labels.
+            if 'hostname' in labels:
+                hostnameincluster = labels['hostname']
+            elif 'kubernetes.io/hostname' in labels:
+                components = (clusterid, labels['type'], labels['kubernetes.io/hostname'])
+                hostnameincluster = '-'.join(components)
 
             if hostnameincluster in zabbix_data_sync_inventory_hosts_names:
                 logging.getLogger().info("found host in zabbix :" + str(hostnameincluster))
