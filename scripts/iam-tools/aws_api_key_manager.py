@@ -231,6 +231,26 @@ class ManageKeys(object):
 
 
     @staticmethod
+    def check_v4_ignore(aws_account):
+        """ Checks aws_account against an ignore list.
+
+        Requires config file containing ARN's to be ignored.
+
+        Returns:
+            False if ignored ARN is matched. 
+            Breaks caller loop.
+        """
+
+        v4_arn_ignore_list = '/etc/openshift_tools/v4_arn_ignore.yaml'
+
+        if os.path.isfile(v4_arn_ignore_list):
+            with open(v4_arn_ignore_list, 'r') as ignore_list:
+                ignore = (yaml.safe_load(ignore_list))
+                for arn in ignore:
+                    if int(aws_account) == int(arn):
+                        return True
+
+    @staticmethod
     def get_token(aws_account):
         """ Generate temporary SSO access credentials.
 
@@ -413,20 +433,25 @@ class ManageKeys(object):
         for aws_account in ops_accounts:
             account_name = aws_account.split(':')[0]
             account_number = aws_account.split(':')[1]
-            client = self.get_token(account_number)
 
-            if client:
-                self.check_user(aws_account, args.user, client)
-                current_accounts = self.get_all_profiles()
-                existing_keys = self.get_keys(args.user, client)
+            if not self.check_v4_ignore(account_number):
+                client = self.get_token(account_number)
 
-                if existing_keys:
-                    for key in existing_keys:
-                        self.delete_key(aws_account, args.user, key, client)
+                if client:
+                    self.check_user(aws_account, args.user, client)
+                    current_accounts = self.get_all_profiles()
+                    existing_keys = self.get_keys(args.user, client)
 
-                if aws_account not in current_accounts:
-                    key_object = self.create_key(aws_account, args.user, client)
-                    self.write_credentials(account_name, key_object)
+                    if existing_keys:
+                        for key in existing_keys:
+                            self.delete_key(aws_account, args.user, key, client)
+
+                    if aws_account not in current_accounts:
+                        key_object = self.create_key(aws_account, args.user, client)
+                        self.write_credentials(account_name, key_object)
+
+            else:
+                print("Ignoring v4 resource: %s:%s" % (account_name, account_number))
 
         self.manage_timestamp(True)
 
@@ -446,21 +471,25 @@ class ManageKeys(object):
                     account_name = match.group('account_name')
                     account_number = match.group('account_number')
 
-                    client = self.get_token(account_number)
+                    if self.check_v4_ignore(account_number):
+                        print("Ignoring v4 resource: %s:%s" % (account_name, account_number))
+                        break
+                    else:
+                        client = self.get_token(account_number)
 
-                    if client:
-                        self.check_user(aws_account, args.user, client)
-                        existing_keys = self.get_keys(args.user, client)
+                        if client:
+                            self.check_user(aws_account, args.user, client)
+                            existing_keys = self.get_keys(args.user, client)
 
-                        if existing_keys:
-                            for key in existing_keys:
-                                self.delete_key(aws_account, args.user, key, client)
+                            if existing_keys:
+                                for key in existing_keys:
+                                    self.delete_key(aws_account, args.user, key, client)
+                                    key_object = self.create_key(aws_account, args.user, client)
+                                    self.write_credentials(account_name, key_object)
+
+                            else:
                                 key_object = self.create_key(aws_account, args.user, client)
                                 self.write_credentials(account_name, key_object)
-
-                        else:
-                            key_object = self.create_key(aws_account, args.user, client)
-                            self.write_credentials(account_name, key_object)
 
             if not match_list:
                 print('Account %s does not match any current ops accounts.' % aws_account)
