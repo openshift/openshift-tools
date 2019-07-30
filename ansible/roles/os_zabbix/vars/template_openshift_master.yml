@@ -1209,7 +1209,7 @@ g_template_openshift_master:
     priority: high
 
   - name: "Openshift-dedicated-role service is not running on  {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.service.dedicated.admin.count.last()}<2"
+    expression: "{Template Openshift Master:openshift.master.service.dedicated.admin.count.sum(#2)}<2"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/dedicated-admin.asciidoc"
     priority: high
 
