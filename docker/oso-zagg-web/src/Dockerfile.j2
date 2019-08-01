@@ -16,12 +16,12 @@ RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 RUN yum clean metadata && \
     yum-install-check.sh -y iproute iputils \
-        python-passlib \
+        python2-passlib \
         python-openshift-tools-monitoring-zagg \
         openshift-tools-web-zagg \
         python-openshift-tools-zbxapi \
         openshift-tools-scripts-monitoring-zagg-server \
-        redis python-redis \
+        redis python2-redis \
         tree httpd mod_ssl mod_wsgi \
         telnet bind-utils net-tools iproute && \
     yum clean all
