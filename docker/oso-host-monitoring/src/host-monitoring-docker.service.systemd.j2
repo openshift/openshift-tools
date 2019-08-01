@@ -38,7 +38,7 @@ ExecStart=/usr/bin/docker run --name oso-{{ base_os }}-host-monitoring  \
            -v /etc/origin/master/master.etcd-client.key:/etc/origin/master/master.etcd-client.key \
            -v /etc/origin/master/master-config.yaml:/etc/origin/master/master-config.yaml \
 {% if base_os == "rhel7" %}
-           docker-registry.ops.rhcloud.com/ops/host-monitoring
+           registry.reg-aws.openshift.com:443/ops/host-monitoring
 {% elif base_os == "centos7" %}
            openshift-tools/oso-centos7-host-monitoring
 {% endif %}

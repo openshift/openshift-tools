@@ -1,3 +1,0 @@
-alias oca='KUBECONFIG=/tmp/admin.kubeconfig oc '
-alias oadma='KUBECONFIG=/tmp/admin.kubeconfig oc adm '
-alias l='ls -alF'

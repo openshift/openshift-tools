@@ -1,6 +1,0 @@
-[pdagent]
-name=PDAgent
-baseurl=https://packages.pagerduty.com/pdagent/rpm
-enabled=1
-gpgcheck=1
-gpgkey=https://packages.pagerduty.com/GPG-KEY-RPM-pagerduty
