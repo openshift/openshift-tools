@@ -11,7 +11,7 @@ fi
 echo
 echo "Pushing oso-{{ base_os }}-ops-base..."
 {% if base_os == "rhel7" %}
-sudo docker push docker-registry.ops.rhcloud.com/ops/oso-{{ base_os }}-ops-base
+sudo docker push registry.reg-aws.openshift.com:443/ops/oso-{{ base_os }}-ops-base
 {% elif base_os == "centos7" %}
 echo "Ensure you have successfully authenticated against docker with a 'docker login'"
 sudo docker push docker.io/openshifttools/oso-centos7-ops-base

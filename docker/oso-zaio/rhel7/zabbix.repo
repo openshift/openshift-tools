@@ -1,6 +1,0 @@
-[zabbix]
-name=Zabbix repo
-baseurl=https://repo.zabbix.com/zabbix/3.0/rhel/7/x86_64/
-gpgkey=https://repo.zabbix.com/RPM-GPG-KEY-ZABBIX
-gpgcheck=1
-enabled=1
