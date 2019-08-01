@@ -1,5 +1,0 @@
----
-# This is an example of what the secrets vars file should look like
-g_default_zagg_server: overridden-zagg-server
-g_default_zagg_user: overridden-zagg-user
-g_default_zagg_pass: overridden-zagg-pass

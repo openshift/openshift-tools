@@ -1,6 +1,0 @@
-DO NOT EDIT THESE FILES!!!
-
-This is a place to put 3rd party vendor libs that are needed in the docker file.  These files are not written by the Openshift team.  These files are needed for operations.
-
-These files will eventually be packaged into RPM's and deployed through RPM's.  As of now, these are not packaged.
-
