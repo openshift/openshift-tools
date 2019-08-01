@@ -9,10 +9,10 @@ fi
 {% endif %}
 
 echo
+echo "Pushing oso-{{ base_os }}-ops-base..."
 {% if base_os == "rhel7" %}
-echo "oso-rhel7-zagg-web isn't pushed to any Docker repository"
+sudo docker push registry.reg-aws.openshift.com:443/ops/oso-rhel7-zagg-web
 {% elif base_os == "centos7" %}
-echo "Pushing oso-centos7-ops-base..."
 echo "Ensure you have successfully authenticated against docker with a 'docker login'"
 sudo docker push docker.io/openshifttools/oso-centos7-zagg-web
 {% endif %}

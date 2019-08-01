@@ -47,6 +47,9 @@ RUN yum clean metadata && \
     yum-install-check.sh -y wget iputils cronie ansible-2.4.2.0 vim-enhanced procps-ng less ack tar psmisc python2-scandir lsof && \
     yum clean all
 
+# Stay on Ansible 2.4 when updating packages
+RUN echo "exclude=ansible" >> /etc/yum.conf
+
 # Setup locales.  It comes broken (probably a size issue) by default in the docker image.
 RUN yum -y reinstall glibc-common &&  \
     yum clean all  && \
