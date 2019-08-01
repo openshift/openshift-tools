@@ -9,7 +9,7 @@ for arg in "$@"; do
         -*)
             ;;
         *)
-            if ! rpm -q --whatprovides "$arg" &>/dev/null; then
+            if ! yum list installed "$arg" &>/dev/null; then
                 msg="${msg}${msg:+$'\n'}Error: Package not installed: $arg"
             fi
             ;;
