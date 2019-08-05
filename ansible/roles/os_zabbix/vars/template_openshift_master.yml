@@ -863,6 +863,19 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.ds.configpod.status
+    value_type: int
+    description: "check if project openshift-config has expected running daemsonset pod "
+    applications:
+    - Openshift Master
+
+  - key: openshift.master.ds.logging.fluentd.status
+    value_type: int
+    description: "check if project logging has expected running daemsonset pod"
+    applications:
+    - Openshift Master
+
+
   zdiscoveryrules:
   - name: disc.pv
     key: disc.pv
