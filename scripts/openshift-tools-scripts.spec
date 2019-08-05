@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.174
+Version:       0.1.175
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -514,6 +514,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Mon Aug 05 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.175-1
+- add daemonset check script into rpm (zhizhang@redhat.com)
+- add daemonset check for v3 (zhizhang@redhat.com)
+
 * Mon Jul 29 2019 Matthew Barnes <mbarnes@fedoraproject.org> 0.1.174-1
 - cron-send-zabbix-inventory-check.py: Fix hostnames for masters
   (mbarnes@fedoraproject.org)
