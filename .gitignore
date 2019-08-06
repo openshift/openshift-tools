@@ -16,5 +16,3 @@
 gce.ini
 multi_ec2.yaml
 .vagrant
-docker/*/rhel7/
-docker/*/centos7/
