@@ -1,5 +1,4 @@
 #!/bin/bash -e
-{{ generated_header }}
 
 echo -n "Running zabbix server..."
 sudo docker run -ti \
@@ -7,5 +6,5 @@ sudo docker run -ti \
        -p 10050:10050 \
        -p 10051:10051 \
        -v /var/lib/docker/volumes/shared:/shared:rw \
-     oso-{{ base_os }}-zabbix-server $@
+     oso-rhel7-zabbix-server $@
 echo "Done."
