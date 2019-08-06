@@ -1,14 +1,9 @@
-{{ generated_header }}
 # Example docker run command
-# docker run -ti --net=host --name web --rm=true oso-{{ base_os }}-zabbix-web
+# docker run -ti --net=host --name web --rm=true oso-rhel7-zabbix-web
 # /root/start.sh will then start the httpd.
 # Default login:password to Zabbix is Admin:zabbix
 
-{% if base_os == "rhel7" %}
 FROM oso-rhel7-ops-base:latest
-{% elif base_os == "centos7" %}
-FROM openshifttools/oso-centos7-ops-base:latest
-{% endif %}
 
 # Pause indefinitely if asked to do so.
 ARG OO_PAUSE_ON_BUILD
