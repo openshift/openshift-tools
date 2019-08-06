@@ -1,5 +1,4 @@
 #!/bin/bash
-{{ generated_header }}
 
 # Make sure the script exits on first error
 set -e
@@ -17,9 +16,4 @@ trap handle_err ERR
 sudo echo -e "\nTesting sudo works...\n"
 
 cd $(dirname $0)
-{% if base_os == "rhel7" %}
 sudo time docker build -t oso-rhel7-zabbix-web .
-{% elif base_os == "centos7" %}
-sudo time docker build -t oso-centos7-zabbix-web .
-sudo docker tag oso-centos7-zabbix-web docker.io/openshifttools/oso-centos7-zabbix-web:latest
-{% endif %}
