@@ -17,7 +17,7 @@ To build this container, simply execute the build script.
 .Example:
 [source,bash]
 ----
-./[rhel7|centos7]/build.sh
+./rhel7/build.sh
 ----
 
 == Run
@@ -27,5 +27,5 @@ To run this container, simply execute the run script.
 .Example:
 [source,bash]
 ----
-./[rhel7|centos7]/run.sh
+./rhel7/run.sh
 ----

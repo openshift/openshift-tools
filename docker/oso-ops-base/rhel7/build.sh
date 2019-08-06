@@ -1,5 +1,4 @@
 #!/bin/bash
-{{ generated_header }}
 
 # Make sure the script exits on first error
 set -e
@@ -19,7 +18,6 @@ sudo echo -e "\nTesting sudo works...\n"
 # We MUST be in the same directory as this script for the build to work properly
 cd $(dirname $0)
 
-{% if base_os == "rhel7" %}
 function is_rhel()
 {
   grep -qi 'Red Hat Enterprise Linux' /etc/redhat-release
@@ -42,20 +40,13 @@ if ! is_rhel ; then
     sed -i 's#FROM.*#&\nADD etc-pki-entitlement /etc-pki-entitlement#' Dockerfile
     echo "Done."
 fi
-{% endif %}
 
 # Build ourselves
 echo
-echo "Building oso-{{ base_os }}-ops-base..."
-{% if base_os == "rhel7" %}
+echo "Building oso-rhel7-ops-base..."
 sudo time docker build $@ -t oso-rhel7-ops-base .
 sudo docker tag oso-rhel7-ops-base registry.reg-aws.openshift.com:443/ops/oso-rhel7-ops-base
-{% elif base_os == "centos7" %}
-sudo time docker build $@ -t oso-centos7-ops-base .
-sudo docker tag oso-centos7-ops-base docker.io/openshifttools/oso-centos7-ops-base:latest
-{% endif %}
 
-{% if base_os == "rhel7" %}
 if ! is_rhel ; then
   echo
   echo "Not rhel, disabling entitlement workaround:"
@@ -68,4 +59,3 @@ if ! is_rhel ; then
   echo "Done."
   echo
 fi
-{% endif %}
