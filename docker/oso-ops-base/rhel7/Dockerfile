@@ -1,9 +1,4 @@
-{{ generated_header }}
-{% if base_os == "rhel7" %}
 FROM rhel7:7.6
-{% elif base_os == "centos7" %}
-FROM centos:centos7
-{% endif %}
 
 # Pause indefinitely if asked to do so.
 ARG OO_PAUSE_ON_BUILD
@@ -11,18 +6,11 @@ RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 ADD usr_local_bin/* /usr/local/bin/
 
-{% if base_os == "rhel7" %}
 # setup yum repos
 RUN /usr/local/bin/setup-yum.sh
 RUN yum repolist --disablerepo=* && \
     yum-config-manager --disable \* > /dev/null && \
     yum-config-manager --enable rhel-7-server-rpms rhel-7-server-extras-rpms
-{% elif base_os == "centos7" %}
-# centos openshift repo
-RUN yum-install-check.sh -y centos-release-openshift-origin && yum clean all
-
-ADD copr-openshift-tools.repo /etc/yum.repos.d/
-{% endif %}
 
 # creature comforts (make it feel like a normal linux environment)
 ENV LANG en_US.UTF-8
@@ -68,11 +56,9 @@ RUN echo -e '[local]\nlocalhost       ansible_connection=local\n' > /etc/ansible
 RUN chmod -R g+rwX /root/
 
 
-{% if base_os == "rhel7" %}
 # This is a temporary fix, until we find something that works better, PRs are welcome
 # The reason for this change is that some repos get disabled, especially with the latest rhel74 image
 # so this was added so other containers can start with their repos properly enabled
 # this change might have been that there was a bug in yum-config-manager previously, that didn't
 # actually disable every repo and now it does, or maybe something else, further research is required
 RUN yum-config-manager --enable rhel-7-server-rpms rhel-7-server-extras-rpms epel
-{% endif %}
