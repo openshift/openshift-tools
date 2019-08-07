@@ -73,10 +73,10 @@ def get_terminating_pods(status):
     ''' check if there is any terminating status pod on the cluster '''
     logger.info('Check the terminating pods')
 
-    non_running_pod_list = StringIO.StringIO(runOCcmd("get pod --all-namespaces --field-selector=status.phase!=Running"))
+    pod_list = StringIO.StringIO(runOCcmd("get pod --all-namespaces"))
     # Get a list of terminating pods with name and namespace value
     terminating_pods = {}
-    for line in non_running_pod_list:
+    for line in pod_list:
         fields = line.strip().split()
         if fields[3] == status:
             terminating_pods[fields[1]] = fields[0]
@@ -97,13 +97,17 @@ def check_terminating_pod(pods):
     if pods:
         for pod, ns in pods.iteritems():
             yaml_result = runOCcmd_yaml("get pod {} -n {}".format(pod, ns))
+            try:
+                pod_finalizer = yaml_result['metadata']['finalizers']
+            except KeyError as e:
+                pod_finalizer = None
             status_condition = yaml_result['status']['conditions']
             for item in status_condition:
                 if item['type'] == "Ready":
                     time_terminated = item['lastTransitionTime']
-
             status_life = time_now - time_terminated
-            if status_life > datetime.timedelta(minutes=5):
+            # if the pod has finalizer set, we should consider the terminating status is intentional
+            if not pod_finalizer and status_life > datetime.timedelta(minutes=5):
                 logger.debug("The pod %s has been in terminating status for %s", pod, status_life)
                 long_time_terminate_pod.append(pod.rstrip())
 
