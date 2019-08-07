@@ -13,6 +13,7 @@ EXPOSE 10050 10051
 
 ADD zabbix.repo /etc/yum.repos.d/
 ADD pdagent.repo /etc/yum.repos.d/
+ADD ops-rpm.repo /etc/yum.repos.d/
 
 # Install zabbix (and supporting tools) from zabbix repo
 
