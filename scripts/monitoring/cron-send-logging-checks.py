@@ -344,11 +344,20 @@ class OpenshiftLoggingStatus(object):
         self.get_pods()
 
         logging_status = {}
-        logging_status['elasticsearch'] = self.check_elasticsearch()
-        logging_status['fluentd'] = self.check_fluentd()
-        logging_status['kibana'] = self.check_kibana()
+        script_failed = 0 # everything fine
+        try:
+            logging_status['elasticsearch'] = self.check_elasticsearch()
+            logging_status['fluentd'] = self.check_fluentd()
+            logging_status['kibana'] = self.check_kibana()
+            self.report_to_zabbix(logging_status)
+        except:
+            script_failed = 1 # something wrong
 
-        self.report_to_zabbix(logging_status)
+        mts = MetricSender(verbose=self.args.verbose)
+        mts.add_metric({'openshift.master.logging.elasticsearch.script.status': script_failed})
+        mts.send_metrics()
+
+
 
 if __name__ == '__main__':
     OSLS = OpenshiftLoggingStatus()

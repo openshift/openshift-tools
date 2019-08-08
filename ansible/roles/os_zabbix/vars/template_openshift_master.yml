@@ -875,6 +875,12 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.logging.elasticsearch.script.status
+    value_type: int
+    description: "check if the monitoring script of logging works or not "
+    applications:
+    - Openshift Master
+
 
   zdiscoveryrules:
   - name: disc.pv
@@ -1235,6 +1241,12 @@ g_template_openshift_master:
     expression: "{Template Openshift Master:openshift.adminconsole.pod.availability.last()}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_web_console.asciidoc"
     priority: avg
+
+  - name: "logging status check script error on  {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.logging.elasticsearch.script.status.last()}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_logging.asciidoc"
+    priority: high
+
 
   zgraphs:
   - name: Openshift Master API Server Latency Pods LIST Quantiles
