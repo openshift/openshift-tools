@@ -287,6 +287,10 @@ host_monitoring_cron:
 - name: run create app with build process
   minute: "*/30"
   job: "ops-runner -f -t 1300 -s 120 -n csca.openshift.master.app.build.create /usr/bin/cron-send-create-app -v --basename build --loopcount 180 --source https://github.com/openshift/nodejs-ex &>> /var/log/build_app.log"
+
+- name: check volumes snapshot tags
+  hour: "*/3"
+  job: "ops-runner -f -t 1300 -s 120 -n csca.openshift.master.volume.snapshot.tags /usr/bin/cron-send-snapshots-tags-check  --aws-creds-profile snapshotter --region {{ osohm_region }} &>> /var/log/snaptshots_tags.log"
 {% endif %}
 {% endif %}
 
