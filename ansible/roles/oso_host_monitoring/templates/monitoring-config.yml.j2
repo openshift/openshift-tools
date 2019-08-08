@@ -287,6 +287,10 @@ host_monitoring_cron:
 - name: run create app with build process
   minute: "*/30"
   job: "ops-runner -f -t 1300 -s 120 -n csca.openshift.master.app.build.create /usr/bin/cron-send-create-app -v --basename build --loopcount 180 --source https://github.com/openshift/nodejs-ex &>> /var/log/build_app.log"
+
+- name: check volumes snapshot tags
+  hour: "*/3"
+  job: "ops-runner -f -t 1300 -s 120 -n csca.openshift.master.volume.snapshot.tags /usr/bin/cron-send-snapshots-tags-check  --aws-creds-profile snapshotter --region {{ osohm_region }} &>> /var/log/snaptshots_tags.log"
 {% endif %}
 {% endif %}
 
@@ -387,6 +391,7 @@ host_monitoring_cron:
 
 - name: check ssl exprired status by http header
   hour: "10"
+
   minute: "8"
   job: ops-runner -f -s 15 -n cssc.openshift.public.ssl.expired.info /usr/bin/cron-send-ssl-check -l {% for domain in g_oso_monitoring_ssl_public_domains %} {{ domain}}.{{ osohm_cluster_id }}.openshift.com {% endfor %} {% for router in oa_routers %} srecheck.{{ router.shard }}.{{ osohm_cluster_id }}.openshiftapps.com {% endfor %} -key openshift.master.public.ssl.expiry
 
