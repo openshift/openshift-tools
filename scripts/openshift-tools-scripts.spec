@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.176
+Version:       0.1.177
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -518,6 +518,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Aug 08 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.177-1
+- fix script name issue (haowang@redhat.com)
+
 * Thu Aug 08 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.176-1
 - Add snapshot tag check script to rpm and cronjob (haowang@redhat.com)
 - add checks for logging check script (zhizhang@redhat.com)
