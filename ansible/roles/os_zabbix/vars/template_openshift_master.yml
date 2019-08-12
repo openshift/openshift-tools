@@ -881,6 +881,11 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.pv.snapshots.tags.status
+    value_type: int
+    description: "check if the volumes used by persistent volume have the snapshots tags"
+    applications:
+    - Openshift Master
 
   zdiscoveryrules:
   - name: disc.pv
@@ -1246,6 +1251,11 @@ g_template_openshift_master:
     expression: "{Template Openshift Master:openshift.master.logging.elasticsearch.script.status.last()}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_logging.asciidoc"
     priority: high
+
+  - name: "volumes snapshots tags check failed on  {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.pv.snapshots.tags.status.last()}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_volume_snapshot_tags.asciidoc"
+    priority: avg
 
 
   zgraphs:
