@@ -389,9 +389,12 @@ host_monitoring_cron:
   minute: "*/20"
   job: ops-runner -f -s 30 -n cscc.openshift.console.pod.replica /usr/bin/cron-send-console-check
 
+- name: check terminating pods in the cluster
+  minute: "*/30"
+  job: ops-runner -f -s 30 -n cstpc.openshift.terminating.pod.status /usr/bin/cron-send-terminating-pod-check
+
 - name: check ssl exprired status by http header
   hour: "10"
-
   minute: "8"
   job: ops-runner -f -s 15 -n cssc.openshift.public.ssl.expired.info /usr/bin/cron-send-ssl-check -l {% for domain in g_oso_monitoring_ssl_public_domains %} {{ domain}}.{{ osohm_cluster_id }}.openshift.com {% endfor %} {% for router in oa_routers %} srecheck.{{ router.shard }}.{{ osohm_cluster_id }}.openshiftapps.com {% endfor %} -key openshift.master.public.ssl.expiry
 
