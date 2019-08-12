@@ -887,6 +887,12 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.terminating.pod.status
+    value_type: int
+    description: "check if the cluster has long time terminating pods"
+    applications:
+    - Openshift Master
+
   zdiscoveryrules:
   - name: disc.pv
     key: disc.pv
@@ -1255,6 +1261,11 @@ g_template_openshift_master:
   - name: "volumes snapshots tags check failed on  {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.pv.snapshots.tags.status.last()}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_volume_snapshot_tags.asciidoc"
+    priority: avg
+
+  - name: "Pods get stuck in terminating status more than 5 minutes on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.terminating.pod.status.last()}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_terminating_pod.asciidoc"
     priority: avg
 
 
