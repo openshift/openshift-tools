@@ -90,6 +90,7 @@ spec:
 {% if openshift_daemonset_config_monitoring %}
       - name: monitoring
         image: "{{ openshift_daemonset_config_monitoring_image }}"
+        imagePullPolicy: Always
         env:
         - name: OO_PAUSE_ON_START
           value: "{{ openshift_daemonset_config_monitoring_pos }}"
