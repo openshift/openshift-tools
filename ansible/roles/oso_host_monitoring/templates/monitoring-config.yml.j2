@@ -401,7 +401,8 @@ host_monitoring_cron:
 - name: check if zabbix monitored all the node
   hour: "*/6"
   job: ops-runner -f -s 15 -n cszic.openshift.zabbix.inventory.info /usr/bin/cron-send-zabbix-inventory-check --clusterid {{ osohm_cluster_id }}
-
+  
+{% if osohm_cluster_id != 'reg-aws' %}
 - name: check if project openshift-config has expected running daemsonset pod
   hour: "*/6"
   job: ops-runner -f -s 15 -n csds.openshift.master.daemonset.configpod.info /usr/bin/cron-send-daemonset-status --namespace openshift-config --ds compute-config -key openshift.master.ds.configpod.status
@@ -409,7 +410,7 @@ host_monitoring_cron:
 - name: check if project logging has expected running daemsonset pod
   hour: "*/6"
   job: ops-runner -f -s 15 -n csds.openshift.master.daemonset.fluentd.info /usr/bin/cron-send-daemonset-status --namespace {{ openshift_logging_namespace }} --ds logging-fluentd -ma -key openshift.master.ds.logging.fluentd.status
-
+{% endif %}
 
 - name: check ssl exprired status by http header internal
   hour: "11"
