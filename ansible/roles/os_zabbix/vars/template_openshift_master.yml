@@ -916,7 +916,6 @@ g_template_openshift_master:
     value_type: int
     applications:
     - OpenShift Master
-
     
   - key: openshift.node.count.expected.infra
     description: "Show expected count of infra nodes in cluster"
