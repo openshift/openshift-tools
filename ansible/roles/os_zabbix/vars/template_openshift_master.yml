@@ -1268,6 +1268,16 @@ g_template_openshift_master:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_terminating_pod.asciidoc"
     priority: avg
 
+  - name: "Config pod number does not match the node number on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.ds.configpod.status.last()}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/ds_check.asciidoc"
+    priority: high
+
+  - name: "Fluentd pod number does not match the node number on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.ds.logging.fluentd.status.last()}<1"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/ds_check.asciidoc"
+    priority: high
+
 
   zgraphs:
   - name: Openshift Master API Server Latency Pods LIST Quantiles
