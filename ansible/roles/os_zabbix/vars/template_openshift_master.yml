@@ -897,37 +897,37 @@ g_template_openshift_master:
     description: "Show count of master nodes in cluster"
     value_type: int
     applications:
-    - OpenShift Master
+    - Openshift Master
     
   - key: openshift.node.count.actual.infra
     description: "Show count of infra nodes in cluster"
     value_type: int    
     applications:
-    - OpenShift Master
+    - Openshift Master
     
   - key: openshift.node.count.actual.compute
     description: "Show count of compute nodes in cluster"
     value_type: int
     applications:
-    - OpenShift Master
+    - Openshift Master
     
   - key: openshift.node.count.expected.master
     description: "Show expected count of master nodes in cluster"
     value_type: int
     applications:
-    - OpenShift Master
+    - Openshift Master
     
   - key: openshift.node.count.expected.infra
     description: "Show expected count of infra nodes in cluster"
     value_type: int
     applications:
-    - OpenShift Master
+    - Openshift Master
     
   - key: openshift.node.count.expected.compute
     description: "Show expected count of compute nodes in cluster"
     value_type: int
     applications:
-    - OpenShift Master
+    - Openshift Master
 
   zdiscoveryrules:
   - name: disc.pv
