@@ -109,6 +109,11 @@ metric_sender_config:
       templates:
       - Template Heartbeat         # So we can send hearbeats
       - Template OpenShift Cluster # So we can hold clusterwide items
+      
+  cluster_node_count:
+    master: "{{ osohm_master_count }}"
+    infra: "{{ osohm_infra_count }}"
+    compute: "{{ osohm_compute_count }}"
 
 # Generic Linux Checks
 host_monitoring_cron:
