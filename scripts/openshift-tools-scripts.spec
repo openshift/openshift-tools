@@ -429,6 +429,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-daemonset-status
 /usr/bin/cron-send-terminating-pod-check
 /usr/bin/cron-send-snapshots-tags-check
+/usr/bin/cron-send-node-counts
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
