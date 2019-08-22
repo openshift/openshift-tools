@@ -90,7 +90,7 @@ def actual_counts():
 def expected_counts():
     """ get expected node counts """
 
-    with open('/tmp/test-monitoring.yml') as stream:
+    with open('/etc/openshift_tools/monitoring-config.yml') as stream:
         config_data = yaml.load(stream)
 
     return config_data['cluster_node_count']
