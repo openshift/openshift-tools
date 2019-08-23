@@ -410,10 +410,12 @@ host_monitoring_cron:
 {% if osohm_cluster_id != 'reg-aws' %}
 - name: check if project openshift-config has expected running daemsonset pod
   hour: "*/6"
+  minute: "3"
   job: ops-runner -f -s 15 -n csds.openshift.master.daemonset.configpod.info /usr/bin/cron-send-daemonset-status --namespace openshift-config --ds compute-config -key openshift.master.ds.configpod.status
 
 - name: check if project logging has expected running daemsonset pod
   hour: "*/6"
+  minute: "7"
   job: ops-runner -f -s 15 -n csds.openshift.master.daemonset.fluentd.info /usr/bin/cron-send-daemonset-status --namespace {{ openshift_logging_namespace }} --ds logging-fluentd -ma -key openshift.master.ds.logging.fluentd.status
 {% endif %}
 
