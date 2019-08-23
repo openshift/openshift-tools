@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.177
+Version:       0.1.178
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -107,6 +107,7 @@ cp -p monitoring/cron-send-dedicated-admin.sh %{buildroot}/usr/bin/cron-send-ded
 cp -p monitoring/cron-send-daemonset-status.py %{buildroot}/usr/bin/cron-send-daemonset-status
 cp -p monitoring/cron-send-terminating-pod-check.py %{buildroot}/usr/bin/cron-send-terminating-pod-check
 cp -p monitoring/cron-send-snapshots-tags-check.py %{buildroot}/usr/bin/cron-send-snapshots-tags-check
+cp -p monitoring/cron-send-node-counts.py %{buildroot}/usr/bin/cron-send-node-counts
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
@@ -428,6 +429,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-daemonset-status
 /usr/bin/cron-send-terminating-pod-check
 /usr/bin/cron-send-snapshots-tags-check
+/usr/bin/cron-send-node-counts
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -518,6 +520,12 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Fri Aug 23 2019 Unknown name 0.1.178-1
+- Update directory (nbauer@redhat.com)
+- Update openshift-tools-scripts.spec (nbauer@redhat.com)
+- Update openshift-tools-scripts.spec (nbauer@redhat.com)
+- Add script for monitoring node counts (nbauer@redhat.com)
+
 * Thu Aug 08 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.177-1
 - fix script name issue (haowang@redhat.com)
 
