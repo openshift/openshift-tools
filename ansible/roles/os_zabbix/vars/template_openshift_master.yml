@@ -1041,6 +1041,21 @@ g_template_openshift_master:
   - name: "Mass Eviction on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.cluster.event.evicted.delta(1)}>25"
     priority: high
+    
+  - name: "Master node count differs from expected count on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.node.count.actual.master()}<>{Template Openshift Master:openshift.node.count.expected.master()}"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_node_counts.asciidoc"
+    priority: high
+    
+  - name: "Infra node count differs from expected count on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.node.count.actual.infra()}<>{Template Openshift Master:openshift.node.count.expected.infra()}"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_node_counts.asciidoc"
+    priority: high
+    
+  - name: "Compute node count differs from expected count on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.node.count.actual.compute()}<>{Template Openshift Master:openshift.node.count.expected.compute()}"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_node_counts.asciidoc"
+    priority: high
 
   # Put triggers that depend on other triggers here (deps must be created first)
   - name: "Application creation has failed on {HOST.NAME}"
