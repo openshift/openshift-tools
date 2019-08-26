@@ -406,6 +406,11 @@ host_monitoring_cron:
 - name: check if zabbix monitored all the node
   hour: "*/6"
   job: ops-runner -f -s 15 -n cszic.openshift.zabbix.inventory.info /usr/bin/cron-send-zabbix-inventory-check --clusterid {{ osohm_cluster_id }}
+
+- name: check current and expected node counts
+  hour: "*/4"
+  minute: "6"
+  job: ops-runner -f -s 15 -n csnc.openshift.node.count /usr/bin/cron-send-node-counts
   
 {% if osohm_cluster_id != 'reg-aws' %}
 - name: check if project openshift-config has expected running daemsonset pod
