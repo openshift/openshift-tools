@@ -1043,17 +1043,17 @@ g_template_openshift_master:
     priority: high
     
   - name: "Master node count differs from expected count on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.node.count.actual.master()}<>{Template Openshift Master:openshift.node.count.expected.master()}"
+    expression: "{Template Openshift Master:openshift.node.count.actual.master.last()}<>{Template Openshift Master:openshift.node.count.expected.master.last()}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_node_counts.asciidoc"
     priority: high
     
   - name: "Infra node count differs from expected count on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.node.count.actual.infra()}<>{Template Openshift Master:openshift.node.count.expected.infra()}"
+    expression: "{Template Openshift Master:openshift.node.count.actual.infra.last()}<>{Template Openshift Master:openshift.node.count.expected.infra.last()}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_node_counts.asciidoc"
     priority: high
     
   - name: "Compute node count differs from expected count on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.node.count.actual.compute()}<>{Template Openshift Master:openshift.node.count.expected.compute()}"
+    expression: "{Template Openshift Master:openshift.node.count.actual.compute.last()}<>{Template Openshift Master:openshift.node.count.expected.compute.last()}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_node_counts.asciidoc"
     priority: high
 
