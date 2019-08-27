@@ -11,8 +11,8 @@ RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 # PCP
 ##################
-# install pcp-collector and it's dependencies, clean the cache.
-RUN yum-install-check.sh -y pcp pcp-conf pcp-collector xz && yum clean all
+# install pcp and its dependencies, clean the cache.
+RUN yum-install-check.sh -y pcp pcp-conf xz && yum clean all
 # Run in the container as root - avoids PCP_USER mismatches
 RUN sed -i -e 's/PCP_USER=.*$/PCP_USER=root/' -e 's/PCP_GROUP=.*$/PCP_GROUP=root/' /etc/pcp.conf
 
