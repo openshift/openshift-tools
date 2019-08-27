@@ -1,26 +1,42 @@
 #!/bin/bash
 # This script checks if dedicated-admin-operator is running, and send status to Zabbix.
+# It also works with the legacy dedicated-admin script, so clusters that haven't been migrated
+# to the operator yet will still have monitoring.
 
 # The following error handlers are below:
 # Exit on error, trace the error, exit when unbound variables are used.
 set -o errexit
 set -o errtrace
 set -o nounset
+trap 'echo "ERROR at line ${LINENO}"' ERR
 
-# Check the `ready` field of the dedicated-admin-operator pod.
-ready="$(oc --kubeconfig=/tmp/admin.kubeconfig get pods -n openshift-dedicated-admin -l k8s-app=dedicated-admin-operator \
-  --template='{{ range .items }}{{ (index .status.containerStatuses 0).ready }}{{"\n"}}{{ end }}')"
-
-if $ready; then
-  echo "Detected pod in 'ready' state."
-  oc --kubeconfig=/tmp/admin.kubeconfig get pods -n openshift-dedicated-admin -l k8s-app=dedicated-admin-operator 
-  echo "Sending zabbix metric:"
+function zabbix_ok {
+  echo "Sending 'OK' to zabbix:"
   echo "ops-metric-client -k openshift.master.service.dedicated.admin.count -o 1"
   ops-metric-client -k openshift.master.service.dedicated.admin.count -o 1
-else
-  echo "Detected pod is NOT in 'ready' state."
-  oc --kubeconfig=/tmp/admin.kubeconfig get pods -n openshift-dedicated-admin -l k8s-app=dedicated-admin-operator 
-  echo "Sending zabbix metric:"
+}
+
+function zabbix_not_ok {
+  echo "Dedicated admin is not running on this host. Sending 'not OK' to zabbix:"
   echo "ops-metric-client -k openshift.master.service.dedicated.admin.count -o 0"
   ops-metric-client -k openshift.master.service.dedicated.admin.count -o 0
+}
+
+# Check the `ready` field of the dedicated-admin-operator pod.
+echo "Checking for dedicated-admin-operator pod..."
+pod_ready="$(oc --kubeconfig=/tmp/admin.kubeconfig get pods -n openshift-dedicated-admin -o=custom-columns=STATUS:.status.containerStatuses[*].ready --no-headers=true)"
+
+if [ $pod_ready == "true" ]; then
+  echo "Found dedicated-admin-operator pod in 'ready' state."
+  zabbix_ok
+else
+  echo "Dedicated-admin-operator not found."
+  echo "Checking for legacy dedicated-admin script..."
+  echo -n "Number of processes running: "
+  if pgrep -c -a -f /usr/bin/apply-dedicated-roles.py ; then
+    echo "Found dedicated-admin process running."
+    zabbix_ok
+  else
+    zabbix_not_ok
+  fi
 fi
