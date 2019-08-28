@@ -99,4 +99,8 @@ g_template_logging:
     expression: "{% raw %}({TRIGGER.VALUE}=0 and {Template OpenShift Logging:openshift.logging.elasticsearch.disk_free_pct[{{ '{#' }}OSO_METRICS}].last()}<8) or ({TRIGGER.VALUE}=1 and {Template OpenShift Logging:openshift.logging.elasticsearch.disk_free_pct[{{ '{#' }}OSO_METRICS}].last()}<13){% endraw %}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_logging.asciidoc"
     priority: high
-  
+
+  - name: "{% raw %}Logging: {{ '{#' }}OSO_METRICS} ES Cluster health is critical in RED state on {HOST.NAME}{% endraw %}"
+    expression: "{% raw %}{Template OpenShift Logging:openshift.logging.elasticsearch.pod_health[{#OSO_METRICS}].max(#3)}<1{% endraw %}"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_logging.asciidoc"
+    priority: avg
