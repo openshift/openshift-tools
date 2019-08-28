@@ -22,6 +22,15 @@ function zabbix_not_ok {
   ops-metric-client -k openshift.master.service.dedicated.admin.count -o 0
 }
 
+# Check the cluster tier to see if dedicated-admin should be running.
+# Also, since OSD is comprised of `dedicated`, `rhmi` and potentially other tiers,
+# use a blacklist here instead of a whitelist.
+if [ $CLUSTERTIER == "pro" ] || [ $CLUSTERTIER == "osio" ] || [ $CLUSTERTIER == "ipaas" ]; then
+  echo "Exiting because g_cluster_tier $CLUSTERTIER is excluded from dedicated-admin monitoring."
+  zabbix_ok
+  exit
+fi
+
 # Check the `ready` field of the dedicated-admin-operator pod.
 echo "Checking for dedicated-admin-operator pod..."
 pod_ready="$(oc --kubeconfig=/tmp/admin.kubeconfig get pods -n openshift-dedicated-admin -o=custom-columns=STATUS:.status.containerStatuses[*].ready --no-headers=true)"
