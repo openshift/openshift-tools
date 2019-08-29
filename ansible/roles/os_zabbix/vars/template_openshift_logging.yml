@@ -103,4 +103,4 @@ g_template_logging:
   - name: "{% raw %}Logging: {{ '{#' }}OSO_METRICS} ES Cluster health is critical in RED state on {HOST.NAME}{% endraw %}"
     expression: "{% raw %}{Template OpenShift Logging:openshift.logging.elasticsearch.pod_health[{{ '{#' }}OSO_METRICS}].max(#3)}<1{% endraw %}"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_logging.asciidoc"
-    priority: avg
+    priority: high
