@@ -71,7 +71,7 @@
     - name: get service IP for the service
       command: >
         /usr/bin/oc --config={{ '{{' }} files.files.0['path'] }}
-        get svc zagg-service
+        get svc zagg-service -n default
         --template='{{ '{%' }} raw %}{{ '{{' }}.spec.clusterIP}}{{ '{%' }} endraw %}'
       register: svcipout
 {% raw %}
