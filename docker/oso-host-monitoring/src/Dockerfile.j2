@@ -12,7 +12,8 @@ RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 # PCP
 ##################
 # install pcp and its dependencies, clean the cache.
-RUN yum-install-check.sh -y pcp pcp-conf xz && yum clean all
+RUN yum -y remove pcp-libs-devel pcp && yum clean all
+RUN yum -y install pcp pcp-conf xz && yum clean all
 # Run in the container as root - avoids PCP_USER mismatches
 RUN sed -i -e 's/PCP_USER=.*$/PCP_USER=root/' -e 's/PCP_GROUP=.*$/PCP_GROUP=root/' /etc/pcp.conf
 
@@ -52,10 +53,8 @@ COPY google-cloud-sdk.repo /etc/yum.repos.d/
 RUN cd /etc/yum.repos.d && curl -O https://copr.fedorainfracloud.org/coprs/g/Hawkular/python-hawkular-client/repo/epel-7/group_Hawkular-python-hawkular-client-epel-7.repo
 {% endif %}
 
-RUN yum clean metadata && \
-    yum-install-check.sh -y python2-pip pcp pcp-conf pcp-testsuite \
-        python-requests pyOpenSSL \
-        python-openshift-tools \
+RUN yum -y install python2-pip python2-requests \
+        pyOpenSSL python-openshift-tools \
         python-openshift-tools-monitoring-pcp \
         python-openshift-tools-monitoring-docker \
         python-openshift-tools-monitoring-zagg \
@@ -70,7 +69,6 @@ RUN yum clean metadata && \
         openshift-tools-scripts-monitoring-gcp \
         openshift-tools-scripts-monitoring-openshift \
         openshift-tools-scripts-monitoring-autoheal \
-        pcp-manager pcp-webapi python-pcp \
         python-httplib2 \
         python2-pyasn1 python2-pyasn1-modules python2-rsa \
         python-configobj \
@@ -87,14 +85,16 @@ RUN yum clean metadata && \
         python-lxml \
         rkhunter \
         python-hawkular-client \
-        python-docker && \
+        python-docker && yum clean all
+
 {# This is installed for gsutil and calculating the size of the gcs #}
 {# centos users should install this from https://cloud.google.com/sdk/downloads and follow the instructions #}
 {# disabling releases-optional repo as the filelist_db metadata file is over 1GB #}
 {% if base_os == 'rhel7' %}
-    yum-install-check.sh -y google-cloud-sdk python2-uritemplate python2-google-api-client python2-oauth2client --disablerepo="rhel-server-releases-optional" --enablerepo="google-cloud-sdk" && \
+RUN yum-install-check.sh -y google-cloud-sdk python2-uritemplate python2-google-api-client python2-oauth2client --disablerepo="rhel-server-releases-optional" --enablerepo="google-cloud-sdk" && yum clean all
 {% endif %}
-    yum clean all
+
+RUN yum install -y pcp-manager pcp-webapi python-pcp
 
 COPY urllib3-connectionpool-patch /root/
 RUN yum-install-check.sh -y patch && yum clean all && cd /usr/lib/python2.7/site-packages/ && patch -p1 < /root/urllib3-connectionpool-patch
