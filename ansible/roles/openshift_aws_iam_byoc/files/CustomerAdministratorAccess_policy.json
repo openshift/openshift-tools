@@ -28,7 +28,16 @@
                 "directconnect:*"
             ],
             "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ram:*",
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "ram:RequestedResourceType": "route53resolver:ResolverRule"
+                }
+            }
         }
     ]
 }
-
