@@ -418,7 +418,7 @@ host_monitoring_cron:
 - name: "Report on certificate expiration dates"
   hour: "1"
   minute: "1"
-  job: ops-runner -f -s 30 -n ccexp.openshift.master.certificates /usr/bin/cron-certificate-expirations --cert-list=/etc/origin/master,/etc/origin/node,/etc/etcd
+  job: ops-runner -f -s 30 -n ccexp.openshift.master.certificates /usr/bin/cron-certificate-expirations --cert-list=/etc/origin/master,/etc/origin/node/client-ca.crt,/etc/etcd
 
 - name: "Report counts of builds"
   minute: "*/10"
