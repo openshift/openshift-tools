@@ -1297,12 +1297,12 @@ g_template_openshift_master:
   - name: "The running webconsole replica does not match expected on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.webconsole.pod.availability.last()}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_web_console.asciidoc"
-    priority: avg
+    priority: high
 
   - name: "The running adminconsole replica does not match expected on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.adminconsole.pod.availability.last()}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_web_console.asciidoc"
-    priority: avg
+    priority: high
 
   - name: "logging status check script error on  {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.logging.elasticsearch.script.status.last()}>0"
@@ -1317,7 +1317,7 @@ g_template_openshift_master:
   - name: "Pods get stuck in terminating status more than 5 minutes on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.terminating.pod.status.last()}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_terminating_pod.asciidoc"
-    priority: avg
+    priority: high
 
   - name: "Config pod number does not match the node number on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.ds.configpod.status.last()}<1"
