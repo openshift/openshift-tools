@@ -10,7 +10,7 @@
 
 - name: create symlink for docker registry ip
   file:
-    path: "/host/etc/docker/certs.d/{{ registry_ip_cmd.stdout }}:5000"
+    path: "/etc/docker/certs.d/{{ registry_ip_cmd.stdout }}:5000"
     src: "docker-registry.default.svc:5000"
     state: link
     force: True
