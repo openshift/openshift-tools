@@ -1,0 +1,17 @@
+---
+- name: DNS lookup the docker registry ip
+  shell: "getent hosts docker-registry.default.svc.cluster.local | awk '{print $1}'"
+  changed_when: false
+  register: registry_ip_cmd
+
+- name: debug docker registry ip
+  debug:
+    msg: "{{ registry_ip_cmd }}"
+
+- name: create symlink for docker registry ip
+  file:
+    path: "/etc/docker/certs.d/{{ registry_ip_cmd.stdout }}:5000"
+    src: "docker-registry.default.svc:5000"
+    state: link
+    force: True
+  when: registry_ip_cmd.stdout != ''
