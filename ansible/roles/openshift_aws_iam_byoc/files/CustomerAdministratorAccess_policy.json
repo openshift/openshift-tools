@@ -17,7 +17,12 @@
                 "ec2:DeleteVpnConnection",
                 "ec2:DeleteVpnConnectionRoute",
                 "ec2:DeleteVpnGateway",
+                "ec2:DescribeAvailabilityZones",
                 "ec2:DescribeRouteTables",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeTransitGatewayAttachments",
+                "ec2:DescribeTransitGatewayVpcAttachments",
+                "ec2:DescribeTransitGateways",
                 "ec2:DescribeVPCEndpoint",
                 "ec2:DescribeVpcPeeringConnections",
                 "ec2:DescribeVpcs",
@@ -26,7 +31,32 @@
                 "ec2:DetachVpnGateway",
                 "ec2:ModifyVpcPeeringConnectionOptions",
                 "ec2:RejectVpcPeeringConnection",
+                "guardduty:GetDetector",
+                "guardduty:GetFindings",
+                "guardduty:GetFindingsStatistics",
+                "guardduty:GetIPSet",
+                "guardduty:GetInvitationsCount",
+                "guardduty:GetMasterAccount",
+                "guardduty:GetMembers",
+                "guardduty:GetThreatIntelSet",
+                "guardduty:ListDetectors",
+                "guardduty:ListFindings",
+                "guardduty:ListIPSets",
+                "guardduty:ListInvitations",
+                "guardduty:ListMembers",
+                "guardduty:ListThreatIntelSets",
+                "ram:AcceptResourceShareInvitation",
+                "ram:DeleteResourceShare",
+                "ram:GetResourcePolicies",
+                "ram:GetResourceShareAssociations",
+                "ram:GetResourceShareInvitations",
+                "ram:GetResourceShares",
+                "ram:ListPendingInvitationResources",
+                "ram:ListPrincipals",
+                "ram:ListResources",
+                "ram:RejectResourceShareInvitation",
                 "route53resolver:AssociateResolverRule",
+                "route53resolver:DeleteResolverRule",
                 "route53resolver:DisassociateResolverRule",
                 "route53resolver:GetResolverRule",
                 "route53resolver:GetResolverRuleAssociation",
@@ -46,6 +76,16 @@
                     "ram:RequestedResourceType": "route53resolver:ResolverRule"
                 }
             }
+        },
+        {
+            "Effect": "Allow",
+            "Action": "ec2:CreateTransitGatewayVpcAttachment",
+            "Resource": [
+                "arn:aws:ec2:*:*:subnet/*",
+                "arn:aws:ec2:*:*:transit-gateway/*",
+                "arn:aws:ec2:*:*:vpc/*",
+                "arn:aws:ec2:*:*:transit-gateway-attachment/*"
+            ]
         }
     ]
 }
