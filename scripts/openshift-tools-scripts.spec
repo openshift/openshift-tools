@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.183
+Version:       0.1.185
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -520,6 +520,12 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Sep 26 2019 Drew Anderson <dranders@redhat.com> 0.1.185-1
+- 
+
+* Thu Sep 26 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.184-1
+- add the monitoring script for es jks cert (bmeng@redhat.com)
+
 * Thu Aug 29 2019 Stefanie Forrester <sedgar@redhat.com> 0.1.183-1
 - Fix dedicated-admin monitoring for non-OSD tiers (sedgar@redhat.com)
 
