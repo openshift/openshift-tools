@@ -14,3 +14,11 @@
   delay: 5
   until: ('failed' not in l_default_ns) or (not l_default_ns.failed)
 
+- name: Label default namespace
+  oc_label:
+    name: default
+    kind: namespace
+    state: add
+    labels: 
+      - key: name
+        value: default
