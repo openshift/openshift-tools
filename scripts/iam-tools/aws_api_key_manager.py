@@ -286,6 +286,10 @@ class ManageKeys(object):
                         )
                     return client
 
+                except botocore.exceptions.ClientError as client_exception:
+                    print(client_exception)
+                    print('Skipping account %s' % aws_account)
+
                 except ValueError as client_exception:
                     if 'Error retrieving SAML token' in client_exception.message and \
                     'Metadata not found' in client_exception.message:
