@@ -13,7 +13,7 @@
     register: openshift_generated_configs_dir_stat
   - name: Backup generated certificate and config directories
     command: >
-      tar -czvf /etc/origin/master-node-cert-config-backup-{{ ansible_date_time.epoch }}.tgz
+      tar -czvf /etc/origin/master-node-cert-config-backup-{{ ansible_date_time.epoch }}.tgz --exclude='audit.log'
       {{ openshift.common.config_base }}/generated-configs
       {{ openshift.common.config_base }}/master
     when: openshift_generated_configs_dir_stat.stat.exists
