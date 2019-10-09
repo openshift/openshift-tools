@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.185
+Version:       0.1.187
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -520,6 +520,13 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Oct 09 2019 Drew Anderson <dranders@redhat.com> 0.1.187-1
+- 
+
+* Mon Oct 07 2019 Matthew Barnes <mbarnes@fedoraproject.org> 0.1.186-1
+- aws_api_key_manager.py: Catch botocore.exceptions.ClientError
+  (mbarnes@fedoraproject.org)
+
 * Thu Sep 26 2019 Drew Anderson <dranders@redhat.com> 0.1.185-1
 - 
 
