@@ -4,6 +4,7 @@ enabled = 1
 gpgcheck = 1
 gpgkey = https://mirror.ops.rhcloud.com/libra/keys/RPM-GPG-KEY-openshift-ops-2014
         https://mirror.ops.rhcloud.com/libra/keys/RPM-GPG-KEY-openshift-ops-2017
+        https://mirror.ops.rhcloud.com/libra/keys/RPM-GPG-KEY-openshift-ops-2019
 name = Ops RPM Repo - Prod
 sslclientcert = /var/lib/yum/client-cert.pem
 sslclientkey = /var/lib/yum/client-key.pem
