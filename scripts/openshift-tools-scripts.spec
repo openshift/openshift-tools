@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.187
+Version:       0.1.188
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -522,6 +522,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Thu Oct 10 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.188-1
+- [prod] add cron-send-secret-cert-check to rpm (bmeng@redhat.com)
+
 * Wed Oct 09 2019 Drew Anderson <dranders@redhat.com> 0.1.187-1
 - 
 
