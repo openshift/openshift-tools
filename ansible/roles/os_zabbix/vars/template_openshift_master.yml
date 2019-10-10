@@ -929,6 +929,12 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.logging.es.admin.jks.expiry
+    description: "Check the expiry status for logging es admin.jks certs"
+    value_type: int
+    applications:
+    - Openshift Master
+
   zdiscoveryrules:
   - name: disc.pv
     key: disc.pv
@@ -1329,6 +1335,10 @@ g_template_openshift_master:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/ds_check.asciidoc"
     priority: high
 
+  - name: "Logging es admin.jks cert is going to be expired on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.logging.es.admin.jks.expiry.last()}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_secret_cert_expiry.asciidoc"
+    priority: avg
 
   zgraphs:
   - name: Openshift Master API Server Latency Pods LIST Quantiles
