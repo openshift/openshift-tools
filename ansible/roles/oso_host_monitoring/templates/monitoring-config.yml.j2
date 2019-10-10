@@ -424,6 +424,11 @@ host_monitoring_cron:
   hour: "*/6"
   minute: "7"
   job: ops-runner -f -s 15 -n csds.openshift.master.daemonset.fluentd.info /usr/bin/cron-send-daemonset-status --namespace {{ openshift_logging_namespace }} --ds logging-fluentd -ma -key openshift.master.ds.logging.fluentd.status
+
+- name: check if the cert in logging es admin.jks is going to be expired
+  hour: "12"
+  minute: "10"
+  job: ops-runner -f -s 15 -n csscc.openshift.master.secret.cert.status /usr/bin/cron-send-secret-cert-check --namespace {{ openshift_logging_namespace }} --secret logging-elasticsearch --data admin-cert --zabbixkey openshift.logging.es.admin.jks.expiry
 {% endif %}
 
 - name: check ssl exprired status by http header internal
