@@ -108,6 +108,7 @@ cp -p monitoring/cron-send-daemonset-status.py %{buildroot}/usr/bin/cron-send-da
 cp -p monitoring/cron-send-terminating-pod-check.py %{buildroot}/usr/bin/cron-send-terminating-pod-check
 cp -p monitoring/cron-send-snapshots-tags-check.py %{buildroot}/usr/bin/cron-send-snapshots-tags-check
 cp -p monitoring/cron-send-node-counts.py %{buildroot}/usr/bin/cron-send-node-counts
+cp -p monitoring/cron-send-secret-cert-check.py %{buildroot}/usr/bin/cron-send-secret-cert-check
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
@@ -430,6 +431,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-terminating-pod-check
 /usr/bin/cron-send-snapshots-tags-check
 /usr/bin/cron-send-node-counts
+/usr/bin/cron-send-secret-cert-check
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
