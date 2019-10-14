@@ -18,13 +18,15 @@ Role Variables
 
 
   Var Examples:
-
+  
+```yaml
   g_dnsmasq_original_nameserver: 4.2.2.2
   g_dnsmasq_dns_proxy_map:
   - google.com: 8.8.8.8
   - google.com: 8.8.4.4
   - 10.in-addr.arpa: 10.0.0.1
   - 10.in-addr.arpa: 10.0.0.2
+```
 
 Dependencies
 ------------
@@ -32,9 +34,12 @@ Dependencies
 
 Example Playbook
 ----------------
+
+```yaml
 - role: 'ops_roles/dnsmasq_proxy'
   dnsmp_original_nameserver: "{{ g_dnsmasq_original_nameserver }}"
   dnsmp_proxy_map: "{{ g_dnsmasq_dns_proxy_map }}"
+```
 
 License
 -------
