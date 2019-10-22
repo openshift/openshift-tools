@@ -76,7 +76,7 @@ def parse_args():
                         help="how many 5 second loops before giving up on app creation")
     return parser.parse_args()
 
-def send_metrics(build_ran, create_app, http_code, run_time):
+def send_metrics(build_ran, create_app, route_http_code, service_http_code, run_time):
     """ send data to MetricSender"""
     logger.debug("send_metrics()")
 
@@ -86,11 +86,13 @@ def send_metrics(build_ran, create_app, http_code, run_time):
 
     if build_ran == 1:
         ms.add_metric({'openshift.master.app.build.create': create_app})
-        ms.add_metric({'openshift.master.app.build.create.code': http_code})
+        ms.add_metric({'openshift.master.app.build.create.route_http_code': route_http_code})
+        ms.add_metric({'openshift.master.app.build.create.service_http_code': service_http_code})
         ms.add_metric({'openshift.master.app.build.create.time': run_time})
     else:
         ms.add_metric({'openshift.master.app.create': create_app})
-        ms.add_metric({'openshift.master.app.create.code': http_code})
+        ms.add_metric({'openshift.master.app.create.route_http_code': route_http_code})
+        ms.add_metric({'openshift.master.app.create.service_http_code': service_http_code})
         ms.add_metric({'openshift.master.app.create.time': run_time})
 
     ms.send_metrics()
@@ -191,16 +193,30 @@ def setup(config):
 
 
 def testCurl(config):
-    """ run curl and return http_code, have retries """
+    """ run curl and return service_http_code and route_http_code, have retries """
     logger.info('testCurl()')
     logger.debug(config)
 
-    http_code = 0
+    route_http_code = 0
+    service_http_code = 0
 
     # attempt retries
     for curlCount in range(testCurlCountMax):
         # introduce small delay to give time for route to establish
         time.sleep(commandDelay)
+
+        service = ocutil.get_service(config.podname)
+
+        if service:
+            logger.debug("service")
+            logger.debug(service)
+
+            service_http_code = curl(
+                service['spec']['clusterIP'],
+                service['spec']['ports'][0]['port']
+             )
+
+            logger.debug("service http code %s", service_http_code)
 
         route = ocutil.get_route(config.podname)
 
@@ -208,18 +224,18 @@ def testCurl(config):
             logger.debug("route")
             logger.debug(route)
 
-            http_code = curl(
+            route_http_code = curl(
                 route['spec']['host'],
                 80
             )
 
-            logger.debug("http code %s", http_code)
+            logger.debug("route http code %s", route_http_code)
 
-        if http_code == 200:
-            logger.debug("curl completed in %d tries", curlCount)
+        if route_http_code == 200 and service_http_code == 200:
+            logger.debug("route and service curl completed in %d tries", curlCount)
             break
 
-    return http_code
+    return route_http_code, service_http_code
 
 
 def test(config):
@@ -230,7 +246,8 @@ def test(config):
     build_ran = 0
     pod = None
     noPodCount = 0
-    http_code = 0
+    route_http_code = 0
+    servoce_http_code = 0
 
     for _ in range(int(config.loopcount)):
         time.sleep(commandDelay)
@@ -273,13 +290,14 @@ def test(config):
             and pod['status'].has_key('podIP') \
             and not pod['metadata']['name'].endswith("build"):
 
-            http_code = testCurl(config)
+            route_http_code, service_http_code = testCurl(config)
 
             return {
                 'build_ran': build_ran,
                 'create_app': 0, # app create succeeded
-                'http_code': http_code,
-                'failed': (http_code != 200), # must be 200 to succeed
+                'route_http_code': route_http_code,
+                'service_http_code': service_http_code,
+                'failed': (route_http_code != 200 or service_http_code != 200), # must be 200 to succeed
                 'pod': pod,
             }
 
@@ -291,7 +309,8 @@ def test(config):
     return {
         'build_ran': build_ran,
         'create_app': 1, # app create failed
-        'http_code': http_code,
+        'service_http_code': service_http_code,
+        'route_http_code': route_http_code,
         'failed': True,
         'pod': pod,
     }
@@ -355,7 +374,8 @@ def main():
             test_response = {
                 'build_ran': 0,
                 'create_app': 1, # app create failed
-                'http_code': 0,
+                'route_http_code': 0,
+                'service_http_code': 0,
                 'failed': True,
                 'pod': None,
             }
@@ -369,7 +389,8 @@ def main():
             send_metrics(
                 test_response['build_ran'],
                 test_response['create_app'],
-                test_response['http_code'],
+                test_response['route_http_code'],
+                test_response['service_http_code'],
                 run_time
             )
         except Exception as e:
@@ -403,7 +424,8 @@ def main():
                 exception = e
         else:
             logger.info('Deploy State: Success')
-            logger.info('Service HTTP response code: %s', test_response['http_code'])
+            logger.info('Service HTTP response code: %s', test_response['service_http_code'])
+            logger.info('Route HTTP response code: %s', test_response['route_http_code'])
 
     ############# teardown #############
     teardown(args)
