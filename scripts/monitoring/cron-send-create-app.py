@@ -167,9 +167,12 @@ def setup(config):
     except Exception:
         pass # don't want exception if project not found
 
+    # Create a new project using 'oc' instead of 'oc adm'.
+    # This will test the project-request template as part of project creation.
+    # Skip writing to kubeconfig, since we don't need to keep a record of every project created.
     if not project:
         try:
-            runOCcmd("new-project {}".format(config.namespace), base_cmd='oc adm')
+            runOCcmd("new-project {} --skip-config-write=true".format(config.namespace), base_cmd='oc')
             time.sleep(commandDelay)
         except Exception:
             logger.exception('error creating new project')
@@ -179,6 +182,13 @@ def setup(config):
         config.podname,
         config.namespace,
     ))
+
+    # Expose the service to test route creation.
+    runOCcmd("expose svc {} -n {}".format(
+        config.podname,
+        config.namespace,
+    ))
+
 
 def testCurl(config):
     """ run curl and return http_code, have retries """
@@ -192,15 +202,15 @@ def testCurl(config):
         # introduce small delay to give time for route to establish
         time.sleep(commandDelay)
 
-        service = ocutil.get_service(config.podname)
+        route = ocutil.get_route(config.podname)
 
-        if service:
-            logger.debug("service")
-            logger.debug(service)
+        if route:
+            logger.debug("route")
+            logger.debug(route)
 
             http_code = curl(
-                service['spec']['clusterIP'],
-                service['spec']['ports'][0]['port']
+                route['spec']['host'],
+                80
             )
 
             logger.debug("http code %s", http_code)
