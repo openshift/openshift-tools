@@ -76,7 +76,7 @@ def parse_args():
                         help="how many 5 second loops before giving up on app creation")
     return parser.parse_args()
 
-def send_metrics(build_ran, create_app, route_http_code, service_http_code, run_time):
+def send_metrics(build_ran, create_app, route_http_failed, service_http_failed, run_time):
     """ send data to MetricSender"""
     logger.debug("send_metrics()")
 
@@ -86,13 +86,13 @@ def send_metrics(build_ran, create_app, route_http_code, service_http_code, run_
 
     if build_ran == 1:
         ms.add_metric({'openshift.master.app.build.create': create_app})
-        ms.add_metric({'openshift.master.app.build.create.route_http_code': route_http_code})
-        ms.add_metric({'openshift.master.app.build.create.service_http_code': service_http_code})
+        ms.add_metric({'openshift.master.app.create.route_http_failed': route_http_failed})
+        ms.add_metric({'openshift.master.app.create.service_http_failed': service_http_failed})
         ms.add_metric({'openshift.master.app.build.create.time': run_time})
     else:
         ms.add_metric({'openshift.master.app.create': create_app})
-        ms.add_metric({'openshift.master.app.create.route_http_code': route_http_code})
-        ms.add_metric({'openshift.master.app.create.service_http_code': service_http_code})
+        ms.add_metric({'openshift.master.app.create.route_http_failed': route_http_failed})
+        ms.add_metric({'openshift.master.app.create.service_http_failed': service_http_failed})
         ms.add_metric({'openshift.master.app.create.time': run_time})
 
     ms.send_metrics()
@@ -120,7 +120,7 @@ def curl(ip_addr, port, timeout=30):
     except urllib2.HTTPError, e:
         return e.fp.getcode()
     except Exception as e:
-        logger.exception("Unknown error")
+        logger.exception("Curl failed to connect to host")
 
     return 0
 
@@ -247,7 +247,10 @@ def test(config):
     pod = None
     noPodCount = 0
     route_http_code = 0
-    servoce_http_code = 0
+    service_http_code = 0
+    # assume these have failed, until we see a success.
+    route_http_failed = 1
+    service_http_failed = 1
 
     for _ in range(int(config.loopcount)):
         time.sleep(commandDelay)
@@ -292,12 +295,23 @@ def test(config):
 
             route_http_code, service_http_code = testCurl(config)
 
+            # For the purpose of Zabbix alerting, it's easiest to do a
+            # pass/fail numeric value here. This helps when totaling
+            # the number of failures per hour.
+            if route_http_code == 200:
+              route_http_failed = 0
+            if service_http_code == 200:
+              service_http_failed = 0
+
             return {
                 'build_ran': build_ran,
                 'create_app': 0, # app create succeeded
                 'route_http_code': route_http_code,
                 'service_http_code': service_http_code,
-                'failed': (route_http_code != 200 or service_http_code != 200), # must be 200 to succeed
+                'route_http_failed': route_http_failed,
+                'service_http_failed': service_http_failed,
+                # route/service curl failures are reported independently of app-create now
+                'failed': False,
                 'pod': pod,
             }
 
@@ -309,8 +323,10 @@ def test(config):
     return {
         'build_ran': build_ran,
         'create_app': 1, # app create failed
-        'service_http_code': service_http_code,
         'route_http_code': route_http_code,
+        'service_http_code': service_http_code,
+        'route_http_failed': route_http_failed,
+        'service_http_failed': service_http_failed,
         'failed': True,
         'pod': pod,
     }
@@ -374,8 +390,10 @@ def main():
             test_response = {
                 'build_ran': 0,
                 'create_app': 1, # app create failed
-                'route_http_code': 0,
-                'service_http_code': 0,
+                'service_http_code': service_http_code,
+                'route_http_code': route_http_code,
+                'route_http_failed': route_http_failed,
+                'service_http_failed': service_http_failed,
                 'failed': True,
                 'pod': None,
             }
@@ -389,8 +407,8 @@ def main():
             send_metrics(
                 test_response['build_ran'],
                 test_response['create_app'],
-                test_response['route_http_code'],
-                test_response['service_http_code'],
+                test_response['service_http_failed'],
+                test_response['route_http_failed'],
                 run_time
             )
         except Exception as e:
@@ -402,7 +420,6 @@ def main():
             try:
                 ocutil.verbose = True
                 logger.setLevel(logging.DEBUG)
-                logger.critical('Deploy State: Fail')
 
                 if test_response['pod']:
                     logger.info('Fetching Pod:')
@@ -419,6 +436,18 @@ def main():
                 )
                 writeTmpFile(events, filename=args.podname+".events")
                 logger.info(events)
+                # During a failure, this summary at the end of the script run makes it easy to tell what went wrong.
+                logger.critical('Deploy State: Fail')
+                if test_response['service_http_failed']:
+                  logger.critical('Service HTTP response code: %s', test_response['service_http_code'])
+                else:
+                  logger.info('Service HTTP response code: %s', test_response['service_http_code'])
+
+                if test_response['route_http_failed']:
+                  logger.critical('Route HTTP response code: %s', test_response['route_http_code'])
+                else:
+                  logger.info('Route HTTP response code: %s', test_response['route_http_code'])
+
             except Exception as e:
                 logger.exception("problem fetching additional error data")
                 exception = e
