@@ -70,8 +70,6 @@ def parse_args():
     parser.add_argument('--source', default="openshift/hello-openshift:v1.0.6",
                         help='source application to use')
     parser.add_argument('--basename', default="test", help='base name, added to via openshift')
-    parser.add_argument('--namespace', default="ops-health-monitoring",
-                        help='namespace (be careful of using existing namespaces)')
     parser.add_argument('--loopcount', default="36",
                         help="how many 5 second loops before giving up on app creation")
     return parser.parse_args()
@@ -338,8 +336,7 @@ def teardown(config):
 
     time.sleep(commandDelay)
 
-    runOCcmd("delete all -l app={} -n {}".format(
-        config.podname,
+    runOCcmd("delete project {}".format(
         config.namespace,
     ))
 
@@ -357,18 +354,22 @@ def main():
     if args.verbose:
         logger.setLevel(logging.DEBUG)
 
-    ocutil.namespace = args.namespace
-
-    ############# generate unique podname #############
+    ############# generate unique podname and namespace #############
     args.uid = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(2))
-    args.timestamp = datetime.datetime.utcnow().strftime("%m%d%H%Mz")
+    args.timestamp = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     args.podname = '-'.join([args.basename, args.timestamp, args.uid]).lower()
+    args.namespace = '-'.join(["sre-app-check", args.timestamp, args.uid]).lower()
 
+    # This number is based on a few different facts:
+    # 1. The FQDN for a route must be no longer than 63 characters.
+    # 2. Namespaces must be no longer than 63 characters.
+    # 3. Pod names must be no longer than 58 characters.
     if len(args.podname) > 24:
         raise ValueError("len(args.podname) cannot exceed 24, currently {}: {}".format(
             len(args.podname), args.podname
         ))
 
+    ocutil.namespace = args.namespace
     ############# setup() #############
     try:
         setup(args)
