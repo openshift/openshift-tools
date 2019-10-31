@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.188
+Version:       0.1.190
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -522,6 +522,15 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Tue Oct 29 2019 Stefanie Forrester <sedgar@redhat.com> 0.1.190-1
+- 
+
+* Tue Oct 29 2019 Stefanie Forrester <sedgar@redhat.com> 0.1.189-1
+- Create a unique namespace for each run (sedgar@redhat.com)
+- Add data points and alerts for app curl failures (sedgar@redhat.com)
+- Check both route and service http status code (sedgar@redhat.com)
+- Minor changes to create-app check (sedgar@redhat.com)
+
 * Thu Oct 10 2019 Zhiming Zhang <zhizhang@redhat.com> 0.1.188-1
 - [prod] add cron-send-secret-cert-check to rpm (bmeng@redhat.com)
 
