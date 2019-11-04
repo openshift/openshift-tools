@@ -76,22 +76,21 @@ def parse_args():
 
 def send_metrics(build_ran, create_app, route_http_failed, service_http_failed, run_time):
     """ send data to MetricSender"""
-    logger.debug("send_metrics()")
-
     ms_time = time.time()
     ms = MetricSender()
-    logger.info("Send data to MetricSender")
+
+    ms.add_metric({'openshift.master.app.create.route_http_failed': route_http_failed})
+    ms.add_metric({'openshift.master.app.create.service_http_failed': service_http_failed})
 
     if build_ran == 1:
         ms.add_metric({'openshift.master.app.build.create': create_app})
-        ms.add_metric({'openshift.master.app.create.route_http_failed': route_http_failed})
-        ms.add_metric({'openshift.master.app.create.service_http_failed': service_http_failed})
         ms.add_metric({'openshift.master.app.build.create.time': run_time})
     else:
         ms.add_metric({'openshift.master.app.create': create_app})
-        ms.add_metric({'openshift.master.app.create.route_http_failed': route_http_failed})
-        ms.add_metric({'openshift.master.app.create.service_http_failed': service_http_failed})
         ms.add_metric({'openshift.master.app.create.time': run_time})
+
+    logger.debug("Metrics being sent to zabbix:")
+    logger.debug(ms.print_unique_metrics())
 
     ms.send_metrics()
     logger.info("Data sent to Zagg in %s seconds", str(time.time() - ms_time))
@@ -297,9 +296,10 @@ def test(config):
             # pass/fail numeric value here. This helps when totaling
             # the number of failures per hour.
             if route_http_code == 200:
-              route_http_failed = 0
+                route_http_failed = 0
+
             if service_http_code == 200:
-              service_http_failed = 0
+                service_http_failed = 0
 
             return {
                 'build_ran': build_ran,
@@ -312,6 +312,9 @@ def test(config):
                 'failed': False,
                 'pod': pod,
             }
+
+        else:
+            logger.info("Not running HTTP status checks because pod isn't running")
 
     if build_ran:
         logger.critical("build timed out, please check build log for last messages")
@@ -402,14 +405,23 @@ def main():
         # finish time tracking
         run_time = str(time.time() - start_time)
         logger.info('Test finished. Time to complete test only: %s', run_time)
+        if test_response['service_http_failed']:
+          logger.critical('Service HTTP response code: %s', test_response['service_http_code'])
+        else:
+          logger.info('Service HTTP response code: %s', test_response['service_http_code'])
+
+        if test_response['route_http_failed']:
+          logger.critical('Route HTTP response code: %s', test_response['route_http_code'])
+        else:
+          logger.info('Route HTTP response code: %s', test_response['route_http_code'])
 
         ############# send data to zabbix #############
         try:
             send_metrics(
                 test_response['build_ran'],
                 test_response['create_app'],
-                test_response['service_http_failed'],
                 test_response['route_http_failed'],
+                test_response['service_http_failed'],
                 run_time
             )
         except Exception as e:
@@ -439,23 +451,12 @@ def main():
                 logger.info(events)
                 # During a failure, this summary at the end of the script run makes it easy to tell what went wrong.
                 logger.critical('Deploy State: Fail')
-                if test_response['service_http_failed']:
-                  logger.critical('Service HTTP response code: %s', test_response['service_http_code'])
-                else:
-                  logger.info('Service HTTP response code: %s', test_response['service_http_code'])
-
-                if test_response['route_http_failed']:
-                  logger.critical('Route HTTP response code: %s', test_response['route_http_code'])
-                else:
-                  logger.info('Route HTTP response code: %s', test_response['route_http_code'])
 
             except Exception as e:
                 logger.exception("problem fetching additional error data")
                 exception = e
         else:
             logger.info('Deploy State: Success')
-            logger.info('Service HTTP response code: %s', test_response['service_http_code'])
-            logger.info('Route HTTP response code: %s', test_response['route_http_code'])
 
     ############# teardown #############
     teardown(args)
