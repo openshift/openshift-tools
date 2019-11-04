@@ -1112,20 +1112,23 @@ g_template_openshift_master:
     description: The application create loop has failed 4 or more times in the last hour
     priority: high
 
+  # The app-create check runs every 10 minutes + an additional 2 times per hour.
+  # Over the course of an hour, it has run 8 times and provided 8 values for route_http_failed.
+  # This trigger will alert if 2 or more of the last 5 runs have failed.
   - name: "Route has returned non-200 HTTP code multiple times in the last hour on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.app.create.route_http_failed.sum(1h)}>3"
+    expression: "{Template Openshift Master:openshift.master.app.create.route_http_failed.sum(#5)}>=2"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_create_app.asciidoc"
     dependencies:
     - "Openshift Master process not running on {HOST.NAME}"
-    description: The app-create check has encountered 4 or more route curl failures in the last hour
+    description: The app-create route curl check failed 2 out of the last 5 times.
     priority: high
 
   - name: "Service IP has returned non-200 HTTP code multiple times in the last hour on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.app.create.service_http_failed.sum(1h)}>3"
+    expression: "{Template Openshift Master:openshift.master.app.create.service_http_failed.sum(#5)}>=2"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_create_app.asciidoc"
     dependencies:
     - "Openshift Master process not running on {HOST.NAME}"
-    description: The app-create check has encountered 4 or more service IP curl failures in the last hour
+    description: The app-create service curl check failed 2 out of the last 5 times.
     priority: high
 
   - name: "Application with build creation has failed multiple times in the last 2 hour on {HOST.NAME}"
