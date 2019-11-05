@@ -34,8 +34,6 @@ import argparse
 from openshift_tools.monitoring.metric_sender import MetricSender
 import urllib2
 import yaml
-#import boto.ec2.elb
-#import boto.utils
 import boto3
 
 # number instances behind elb
@@ -133,17 +131,14 @@ def elb_health_check(client, elbs_discovered):
                 print("A potential error occurred. HTTP Response: %s" % elb_response_http)
 
             elb_instance_health(elb_instance_state, elb_instance_name, elb_name)
-#DEBUG            print("ELB: %s Instance: %s State: %s" % (elb_name, elb_instance_name, elb_instance_state))
 
 def main():
     ''' Gather and examine details about this node within ELBs '''
 
     args = parse_args()
 
-#    aws_access, aws_secret = get_aws_creds('~/.aws/credentials')
-    #instance_region = get_instance_region()
-    aws_access, aws_secret = get_aws_creds('./credentials')
-    instance_region = "eu-west-2"
+    aws_access, aws_secret = get_aws_creds('~/.aws/credentials')
+    instance_region = get_instance_region()
 
     # Create boto client to access ELB resources
     client = boto3.client(
