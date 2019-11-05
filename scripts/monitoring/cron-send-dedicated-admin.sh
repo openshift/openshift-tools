@@ -26,7 +26,7 @@ function zabbix_not_ok {
 # Also, since OSD is comprised of `dedicated`, `rhmi` and potentially other tiers,
 # use a blacklist here instead of a whitelist.
 if [ $CLUSTERTIER == "pro" ] || [ $CLUSTERTIER == "osio" ] || [ $CLUSTERTIER == "ipaas" ]; then
-  echo "Exiting because g_cluster_tier $CLUSTERTIER is excluded from dedicated-admin monitoring."
+  echo "Exiting because oo_cluster_tier $CLUSTERTIER is excluded from dedicated-admin monitoring."
   zabbix_ok
   exit
 fi
