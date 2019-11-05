@@ -70,27 +70,28 @@ def parse_args():
     parser.add_argument('--source', default="openshift/hello-openshift:v1.0.6",
                         help='source application to use')
     parser.add_argument('--basename', default="test", help='base name, added to via openshift')
+    parser.add_argument('--namespace', default="ops-health-monitoring",
+                        help='namespace (be careful of using existing namespaces)')
     parser.add_argument('--loopcount', default="36",
                         help="how many 5 second loops before giving up on app creation")
     return parser.parse_args()
 
-def send_metrics(build_ran, create_app, route_http_failed, service_http_failed, run_time):
+def send_metrics(build_ran, create_app, http_code, run_time):
     """ send data to MetricSender"""
+    logger.debug("send_metrics()")
+
     ms_time = time.time()
     ms = MetricSender()
-
-    ms.add_metric({'openshift.master.app.create.route_http_failed': route_http_failed})
-    ms.add_metric({'openshift.master.app.create.service_http_failed': service_http_failed})
+    logger.info("Send data to MetricSender")
 
     if build_ran == 1:
         ms.add_metric({'openshift.master.app.build.create': create_app})
+        ms.add_metric({'openshift.master.app.build.create.code': http_code})
         ms.add_metric({'openshift.master.app.build.create.time': run_time})
     else:
         ms.add_metric({'openshift.master.app.create': create_app})
+        ms.add_metric({'openshift.master.app.create.code': http_code})
         ms.add_metric({'openshift.master.app.create.time': run_time})
-
-    logger.debug("Metrics being sent to zabbix:")
-    logger.debug(ms.print_unique_metrics())
 
     ms.send_metrics()
     logger.info("Data sent to Zagg in %s seconds", str(time.time() - ms_time))
@@ -117,7 +118,7 @@ def curl(ip_addr, port, timeout=30):
     except urllib2.HTTPError, e:
         return e.fp.getcode()
     except Exception as e:
-        logger.exception("Curl failed to connect to host")
+        logger.exception("Unknown error")
 
     return 0
 
@@ -166,12 +167,9 @@ def setup(config):
     except Exception:
         pass # don't want exception if project not found
 
-    # Create a new project using 'oc' instead of 'oc adm'.
-    # This will test the project-request template as part of project creation.
-    # Skip writing to kubeconfig, since we don't need to keep a record of every project created.
     if not project:
         try:
-            runOCcmd("new-project {} --skip-config-write=true".format(config.namespace), base_cmd='oc')
+            runOCcmd("new-project {}".format(config.namespace), base_cmd='oc adm')
             time.sleep(commandDelay)
         except Exception:
             logger.exception('error creating new project')
@@ -182,20 +180,12 @@ def setup(config):
         config.namespace,
     ))
 
-    # Expose the service to test route creation.
-    runOCcmd("expose svc {} -n {}".format(
-        config.podname,
-        config.namespace,
-    ))
-
-
 def testCurl(config):
-    """ run curl and return service_http_code and route_http_code, have retries """
+    """ run curl and return http_code, have retries """
     logger.info('testCurl()')
     logger.debug(config)
 
-    route_http_code = 0
-    service_http_code = 0
+    http_code = 0
 
     # attempt retries
     for curlCount in range(testCurlCountMax):
@@ -208,31 +198,18 @@ def testCurl(config):
             logger.debug("service")
             logger.debug(service)
 
-            service_http_code = curl(
+            http_code = curl(
                 service['spec']['clusterIP'],
                 service['spec']['ports'][0]['port']
-             )
-
-            logger.debug("service http code %s", service_http_code)
-
-        route = ocutil.get_route(config.podname)
-
-        if route:
-            logger.debug("route")
-            logger.debug(route)
-
-            route_http_code = curl(
-                route['spec']['host'],
-                80
             )
 
-            logger.debug("route http code %s", route_http_code)
+            logger.debug("http code %s", http_code)
 
-        if route_http_code == 200 and service_http_code == 200:
-            logger.debug("route and service curl completed in %d tries", curlCount)
+        if http_code == 200:
+            logger.debug("curl completed in %d tries", curlCount)
             break
 
-    return route_http_code, service_http_code
+    return http_code
 
 
 def test(config):
@@ -243,11 +220,7 @@ def test(config):
     build_ran = 0
     pod = None
     noPodCount = 0
-    route_http_code = 0
-    service_http_code = 0
-    # assume these have failed, until we see a success.
-    route_http_failed = 1
-    service_http_failed = 1
+    http_code = 0
 
     for _ in range(int(config.loopcount)):
         time.sleep(commandDelay)
@@ -290,31 +263,15 @@ def test(config):
             and pod['status'].has_key('podIP') \
             and not pod['metadata']['name'].endswith("build"):
 
-            route_http_code, service_http_code = testCurl(config)
-
-            # For the purpose of Zabbix alerting, it's easiest to do a
-            # pass/fail numeric value here. This helps when totaling
-            # the number of failures per hour.
-            if route_http_code == 200:
-                route_http_failed = 0
-
-            if service_http_code == 200:
-                service_http_failed = 0
+            http_code = testCurl(config)
 
             return {
                 'build_ran': build_ran,
                 'create_app': 0, # app create succeeded
-                'route_http_code': route_http_code,
-                'service_http_code': service_http_code,
-                'route_http_failed': route_http_failed,
-                'service_http_failed': service_http_failed,
-                # route/service curl failures are reported independently of app-create now
-                'failed': False,
+                'http_code': http_code,
+                'failed': (http_code != 200), # must be 200 to succeed
                 'pod': pod,
             }
-
-        else:
-            logger.info("Not running HTTP status checks because pod isn't running")
 
     if build_ran:
         logger.critical("build timed out, please check build log for last messages")
@@ -324,10 +281,7 @@ def test(config):
     return {
         'build_ran': build_ran,
         'create_app': 1, # app create failed
-        'route_http_code': route_http_code,
-        'service_http_code': service_http_code,
-        'route_http_failed': route_http_failed,
-        'service_http_failed': service_http_failed,
+        'http_code': http_code,
         'failed': True,
         'pod': pod,
     }
@@ -339,7 +293,8 @@ def teardown(config):
 
     time.sleep(commandDelay)
 
-    runOCcmd("delete project {}".format(
+    runOCcmd("delete all -l app={} -n {}".format(
+        config.podname,
         config.namespace,
     ))
 
@@ -357,22 +312,18 @@ def main():
     if args.verbose:
         logger.setLevel(logging.DEBUG)
 
-    ############# generate unique podname and namespace #############
-    args.uid = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(2))
-    args.timestamp = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
-    args.podname = '-'.join([args.basename, args.timestamp, args.uid]).lower()
-    args.namespace = '-'.join(["sre-app-check", args.timestamp, args.uid]).lower()
+    ocutil.namespace = args.namespace
 
-    # This number is based on a few different facts:
-    # 1. The FQDN for a route must be no longer than 63 characters.
-    # 2. Namespaces must be no longer than 63 characters.
-    # 3. Pod names must be no longer than 58 characters.
+    ############# generate unique podname #############
+    args.uid = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(2))
+    args.timestamp = datetime.datetime.utcnow().strftime("%m%d%H%Mz")
+    args.podname = '-'.join([args.basename, args.timestamp, args.uid]).lower()
+
     if len(args.podname) > 24:
         raise ValueError("len(args.podname) cannot exceed 24, currently {}: {}".format(
             len(args.podname), args.podname
         ))
 
-    ocutil.namespace = args.namespace
     ############# setup() #############
     try:
         setup(args)
@@ -394,10 +345,7 @@ def main():
             test_response = {
                 'build_ran': 0,
                 'create_app': 1, # app create failed
-                'service_http_code': service_http_code,
-                'route_http_code': route_http_code,
-                'route_http_failed': route_http_failed,
-                'service_http_failed': service_http_failed,
+                'http_code': 0,
                 'failed': True,
                 'pod': None,
             }
@@ -405,23 +353,13 @@ def main():
         # finish time tracking
         run_time = str(time.time() - start_time)
         logger.info('Test finished. Time to complete test only: %s', run_time)
-        if test_response['service_http_failed']:
-          logger.critical('Service HTTP response code: %s', test_response['service_http_code'])
-        else:
-          logger.info('Service HTTP response code: %s', test_response['service_http_code'])
-
-        if test_response['route_http_failed']:
-          logger.critical('Route HTTP response code: %s', test_response['route_http_code'])
-        else:
-          logger.info('Route HTTP response code: %s', test_response['route_http_code'])
 
         ############# send data to zabbix #############
         try:
             send_metrics(
                 test_response['build_ran'],
                 test_response['create_app'],
-                test_response['route_http_failed'],
-                test_response['service_http_failed'],
+                test_response['http_code'],
                 run_time
             )
         except Exception as e:
@@ -433,6 +371,7 @@ def main():
             try:
                 ocutil.verbose = True
                 logger.setLevel(logging.DEBUG)
+                logger.critical('Deploy State: Fail')
 
                 if test_response['pod']:
                     logger.info('Fetching Pod:')
@@ -449,14 +388,12 @@ def main():
                 )
                 writeTmpFile(events, filename=args.podname+".events")
                 logger.info(events)
-                # During a failure, this summary at the end of the script run makes it easy to tell what went wrong.
-                logger.critical('Deploy State: Fail')
-
             except Exception as e:
                 logger.exception("problem fetching additional error data")
                 exception = e
         else:
             logger.info('Deploy State: Success')
+            logger.info('Service HTTP response code: %s', test_response['http_code'])
 
     ############# teardown #############
     teardown(args)
