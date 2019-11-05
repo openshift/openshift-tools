@@ -40,7 +40,7 @@ import boto3
 elb_no_instances = []
 
 # number of unhealthy instances
-elb_instance_unhealthy_count = []
+elb_instances_unhealthy = []
 
 # Comparison for instance state
 instance_healthy = "InService"
@@ -100,7 +100,7 @@ def elb_instance_health(instance_state, instance_name, elb_name):
                 "instance": instance_name,
                 "state": instance_state,
                 }
-        elb_instance_unhealthy_count.append(unhealthy_detected)
+        elb_instances_unhealthy.append(unhealthy_detected)
 
 def elb_health_check(client, elbs_discovered):
     ''' Check health of each node found behind each ELB '''
@@ -160,17 +160,18 @@ def main():
     ### Metric Checks
     if len(elb_no_instances) != 0:
         for elb in range(len(elb_no_instances)):
+            elb_instances_unhealthy.append(elb_no_instances[elb])
             print("ELB: %s has no instances behind it. Please investigate." % elb_no_instances[elb])
 
     ### Unhealthy count check
-    elb_instance_unhealthy_count_metric = len(elb_instance_unhealthy_count)
-    if elb_instance_unhealthy_count_metric != 0:
-        for unhealthy in range(elb_instance_unhealthy_count_metric):
-            print(elb_instance_unhealthy_count[unhealthy])
+    elb_instances_unhealthy_metric = len(elb_instances_unhealthy)
+    if elb_instances_unhealthy_metric != 0:
+        for unhealthy in range(elb_instances_unhealthy_metric):
+            print(elb_instances_unhealthy[unhealthy])
 
 #    ''' Now that we know if this instance is missing, feed zabbix '''
     mts = MetricSender(verbose=args.verbose, debug=args.debug)
-    mts.add_metric({'openshift.aws.elb.health' : elb_instance_unhealthy_count_metric})
+    mts.add_metric({'openshift.aws.elb.health' : elb_instances_unhealthy_metric})
     mts.send_metrics()
 
 if __name__ == '__main__':
