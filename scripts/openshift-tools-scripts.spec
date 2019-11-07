@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.191
+Version:       0.1.193
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -522,6 +522,18 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Nov 06 2019 Drew Anderson <dranders@redhat.com> 0.1.193-1
+- 
+
+* Wed Nov 06 2019 Dominic Finn <dofinn@redhat.com> 0.1.192-1
+- Revert to previous verion until ready to release (sedgar@redhat.com)
+- cron-send-dedicated-admin.sh: Phasing out g_cluster_tier
+  (mbarnes@fedoraproject.org)
+- ammended script as per recommendations (dofinn@redhat.com)
+- cleaned script (dofinn@redhat.com)
+- SREP-2260 monitoring script for node health behind each available ELB
+  (dofinn@redhat.com)
+
 * Mon Nov 04 2019 Stefanie Forrester <sedgar@redhat.com> 0.1.191-1
 - Fix ordering of arguments passed to send_metrics (sedgar@redhat.com)
 

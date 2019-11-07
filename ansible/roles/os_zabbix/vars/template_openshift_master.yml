@@ -1340,8 +1340,8 @@ g_template_openshift_master:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/certificate_expiring.asciidoc"
     priority: high
 
-  - name: "Openshift-dedicated-role service is not running on  {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.service.dedicated.admin.count.sum(#2)}<2"
+  - name: "Dedicated-admin-operator is not running on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.service.dedicated.admin.count.sum(#2)}=0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/dedicated-admin.asciidoc"
     priority: high
 
