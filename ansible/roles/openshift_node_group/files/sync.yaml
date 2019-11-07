@@ -118,10 +118,12 @@ spec:
               continue
             fi
 
-            KUBELET_HOSTNAME_OVERRIDE=$(cat /etc/sysconfig/KUBELET_HOSTNAME_OVERRIDE) || :
-            if ! [[ -z "$KUBELET_HOSTNAME_OVERRIDE" ]]; then
-                  #Patching node-config for hostname override
-                  echo "nodeName: $KUBELET_HOSTNAME_OVERRIDE" >> /etc/origin/node/tmp/node-config.yaml
+            if [[ -f /etc/sysconfig/KUBELET_HOSTNAME_OVERRIDE ]]; then
+              KUBELET_HOSTNAME_OVERRIDE=$(cat /etc/sysconfig/KUBELET_HOSTNAME_OVERRIDE) || :
+              if ! [[ -z "$KUBELET_HOSTNAME_OVERRIDE" ]]; then
+                #Patching node-config for hostname override
+                echo "nodeName: $KUBELET_HOSTNAME_OVERRIDE" >> /etc/origin/node/tmp/node-config.yaml
+              fi
             fi
 
             # detect whether the node-config.yaml has changed, and if so trigger a restart of the kubelet.
