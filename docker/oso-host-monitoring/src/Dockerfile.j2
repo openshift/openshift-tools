@@ -9,18 +9,6 @@ FROM openshifttools/oso-centos7-ops-base:latest
 ARG OO_PAUSE_ON_BUILD
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
-# PCP
-##################
-# install pcp and its dependencies, clean the cache.
-RUN yum -y remove pcp-libs-devel pcp && yum clean all
-RUN yum -y install pcp pcp-conf xz && yum clean all
-# Run in the container as root - avoids PCP_USER mismatches
-RUN sed -i -e 's/PCP_USER=.*$/PCP_USER=root/' -e 's/PCP_GROUP=.*$/PCP_GROUP=root/' /etc/pcp.conf
-
-# Disable service advertising - no avahi daemon in the container
-# (dodges warnings from pmcd attempting to connect during startup)
-RUN . /etc/pcp.conf && echo "-A" >> $PCP_PMCDOPTIONS_PATH
-
 # denote this as a container environment, for rc scripts
 ENV PCP_CONTAINER_IMAGE pcp-collector
 ENV NAME pcp-collector
@@ -53,7 +41,7 @@ COPY google-cloud-sdk.repo /etc/yum.repos.d/
 RUN cd /etc/yum.repos.d && curl -O https://copr.fedorainfracloud.org/coprs/g/Hawkular/python-hawkular-client/repo/epel-7/group_Hawkular-python-hawkular-client-epel-7.repo
 {% endif %}
 
-RUN yum -y install python2-pip python2-requests \
+RUN yum -y install python2-pip python2-requests pcp pcp-conf \
         pyOpenSSL python-openshift-tools \
         python-openshift-tools-monitoring-pcp \
         python-openshift-tools-monitoring-docker \
@@ -85,7 +73,15 @@ RUN yum -y install python2-pip python2-requests \
         python-lxml \
         rkhunter \
         python-hawkular-client \
-        python-docker && yum clean all
+        python-docker pcp-manager pcp-webapi\
+        python-pcp patch && yum clean all
+
+# Run in the container as root - avoids PCP_USER mismatches
+RUN sed -i -e 's/PCP_USER=.*$/PCP_USER=root/' -e 's/PCP_GROUP=.*$/PCP_GROUP=root/' /etc/pcp.conf
+
+# Disable service advertising - no avahi daemon in the container
+# (dodges warnings from pmcd attempting to connect during startup)
+RUN . /etc/pcp.conf && echo "-A" >> $PCP_PMCDOPTIONS_PATH
 
 {# This is installed for gsutil and calculating the size of the gcs #}
 {# centos users should install this from https://cloud.google.com/sdk/downloads and follow the instructions #}
@@ -94,10 +90,9 @@ RUN yum -y install python2-pip python2-requests \
 RUN yum-install-check.sh -y google-cloud-sdk python2-uritemplate python2-google-api-client python2-oauth2client --disablerepo="rhel-server-releases-optional" --enablerepo="google-cloud-sdk" && yum clean all
 {% endif %}
 
-RUN yum install -y pcp-manager pcp-webapi python-pcp
 
 COPY urllib3-connectionpool-patch /root/
-RUN yum-install-check.sh -y patch && yum clean all && cd /usr/lib/python2.7/site-packages/ && patch -p1 < /root/urllib3-connectionpool-patch
+RUN cd /usr/lib/python2.7/site-packages/ && patch -p1 < /root/urllib3-connectionpool-patch
 
 # make mount points for security update count check, and make a circular symlink because yum is dumb about its root
 RUN mkdir -p /host \
