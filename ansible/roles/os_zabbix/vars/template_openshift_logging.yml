@@ -19,6 +19,10 @@ g_template_logging:
     applications:
     - EFK
     value_type: int
+  - key: openshift.logging.fluentd.queue.oldest
+    applications:
+    - EFK
+    value_type: int
   - key: openshift.logging.kibana.site_up
     applications:
     - EFK
