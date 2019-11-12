@@ -82,7 +82,7 @@ cp -p monitoring/cron-send-os-router-status.py %{buildroot}/usr/bin/cron-send-os
 cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
 cp -p monitoring/cron-send-build-counts.py %{buildroot}/usr/bin/cron-send-build-counts
 cp -p monitoring/cron-send-stuck-builds.py %{buildroot}/usr/bin/cron-send-stuck-builds
-cp -p monitoring/cron-send-elb-status.py %{buildroot}/usr/bin/cron-send-elb-status
+cp -p monitoring/cron-send-elb-health.py %{buildroot}/usr/bin/cron-send-elb-health
 cp -p monitoring/ops-ec2-check-tags.py %{buildroot}/usr/bin/ops-ec2-check-tags
 cp -p monitoring/ops-gcp-check-tags.py %{buildroot}/usr/bin/ops-gcp-check-tags
 cp -p monitoring/cron-send-zabbix-too-old.py %{buildroot}/usr/bin/cron-send-zabbix-too-old
@@ -408,7 +408,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-elb-status
 /usr/bin/cron-send-build-counts
 /usr/bin/cron-send-stuck-builds
-/usr/bin/cron-send-elb-status
+/usr/bin/cron-send-elb-health
 /usr/bin/cron-send-zabbix-too-old
 /usr/bin/cron-send-docker-oc-versions
 /usr/bin/cron-send-prometheus-data
