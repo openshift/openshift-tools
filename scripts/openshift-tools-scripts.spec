@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.193
+Version:       0.1.194
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -522,6 +522,10 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Mon Nov 11 2019 Dominic Finn <dofinn@redhat.com> 0.1.194-1
+- Added new elb health script to rpm spec so its build with monitoring
+  container (dofinn@redhat.com)
+
 * Wed Nov 06 2019 Drew Anderson <dranders@redhat.com> 0.1.193-1
 - 
 
