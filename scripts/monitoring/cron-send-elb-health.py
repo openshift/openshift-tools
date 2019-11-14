@@ -137,7 +137,7 @@ def main():
 
     args = parse_args()
 
-    aws_access, aws_secret = get_aws_creds('~/.aws/credentials')
+    aws_access, aws_secret = get_aws_creds('/root/.aws/credentials')
     instance_region = get_instance_region()
 
     # Create boto client to access ELB resources
