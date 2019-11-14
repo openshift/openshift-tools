@@ -74,7 +74,7 @@ class OpenshiftFluentdQueueCheck(object):
             timestamps.sort()
             if len(timestamps) > 0:
                 buffer_list.append(timestamps[0])
-                logger.info("Found files in fluentd queue on " + pod_name + "with timestamp(s): %s", str(timestamps)) 
+                logger.info("Found files in fluentd queue on " + pod_name + " with timestamp(s): %s", str(timestamps)) 
             else:
                 logger.info("No files found in fluentd queue on " + pod_name)
 
