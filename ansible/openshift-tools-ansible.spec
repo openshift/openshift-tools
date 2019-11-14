@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.71
+Version:        0.0.72
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,147 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Tue Nov 12 2019 Matt Woodson <mwoodson@redhat.com> 0.0.72-1
+- Add key for fluentd queue check (nbauer@redhat.com)
+- Update trigger for dedicated-admin-operator (sedgar@redhat.com)
+- Fix http_failed triggers (sedgar@redhat.com)
+- fixed the route 200 zabbix trigger (mwoodson@redhat.com)
+- Add data points and alerts for app curl failures (sedgar@redhat.com)
+- add zabbix key and trigger for new check (bmeng@redhat.com)
+- add cronjob for the new admin jks cert check (bmeng@redhat.com)
+- force sync attempt (dranders@redhat.com)
+- Resolves missing name:default label Cluster provisioning was occurring with
+  the `name:default` label missing from the default namespace. This caused user
+  created projects to fail due to the reliance on this label by the `allow-
+  from-default-namespace` NetworkPolicy. (dofinn@redhat.com)
+- updated the ssl check to accept the hosts from being passed into the role
+  (mwoodson@redhat.com)
+- added 2 more guardduty rules to the customer admin role (mwoodson@redhat.com)
+- updated the customer admin access policy (mwoodson@redhat.com)
+- fixed the registry ip docker cert dir role (mwoodson@redhat.com)
+- fixed the registry ip fix (mwoodson@redhat.com)
+- raise the priority of the exsiting checks (bmeng@redhat.com)
+- skip the teminating pod check on online free clusters (bmeng@redhat.com)
+- added the openshift registry ip cert role (mwoodson@redhat.com)
+- added route53 resolver rules customeradmin policy for BYOC
+  (mwoodson@redhat.com)
+- remove the check for the un-used path/cert for internal ssl
+  (bmeng@redhat.com)
+- added createvpcendpoint and describevpcendpoint to the byoc customer admin
+  policy (mwoodson@redhat.com)
+- added the RAM to the customeradmin policy for BYOC (mwoodson@redhat.com)
+- alert on elasticsearch cluster in red state (dranders@redhat.com)
+- Enable monitoring container to see cluster tier (sedgar@redhat.com)
+- template error (dranders@redhat.com)
+- es in red state zabbix average alert (dranders@redhat.com)
+- Fix triggers for node counts (nbauer@redhat.com)
+- Add triggers for node counts (nbauer@redhat.com)
+- Fix indentation (nbauer@redhat.com)
+- Add cron for node count check (nbauer@redhat.com)
+- Update cron check frequency (nbauer@redhat.com)
+- Update template_openshift_master.yml (nbauer@redhat.com)
+- Update template_openshift_master.yml (nbauer@redhat.com)
+- Fixing item order (nbauer@redhat.com)
+- Add node count keys to zabbix vars (nbauer@redhat.com)
+- Add node count to monitoring config (nbauer@redhat.com)
+- remove logging check from reg-aws for this cluster didn't have logging
+  (zhizhang@redhat.com)
+- add trigger for ds (zhizhang@redhat.com)
+- make the monitoring daemonset always pull on restart to ensure latest
+  monitoring pod (mwoodson@redhat.com)
+- using openshift repos (haowang@redhat.com)
+- add cronjob and zabbix trigger for terminating pod check (bmeng@redhat.com)
+- add monitor item for snapshot tags (haowang@redhat.com)
+- Add snapshot tag check script to rpm and cronjob (haowang@redhat.com)
+- add checks for logging check script (zhizhang@redhat.com)
+- revert changes (zhizhang@redhat.com)
+- add high alert for logging ops-runner (zhizhang@redhat.com)
+- Bump the project check priority (haowang@redhat.com)
+- add cronjob for fluentd and configpod (zhizhang@redhat.com)
+- fix trigger for dedicated admin check (zhizhang@redhat.com)
+- Revert "Adjust Zabbix alert thresholds for ES disks"
+  (dak1n1@users.noreply.github.com)
+- Added zabbix check for dedicated-admin-operator (sedgar@redhat.com)
+- Adjust Zabbix alert thresholds for ES disks (sedgar@redhat.com)
+- fix a typo in cronjob (bmeng@redhat.com)
+- Update the alert priority of autoapprover and metrics server pods
+  (haowang@redhat.com)
+- add cronjob and zabbix key for the console check script (bmeng@redhat.com)
+- add trigger for zabbix check (zhizhang@redhat.com)
+- add cronjob for zabbix check (zhizhang@redhat.com)
+- add zabbix monitor status check script (zhizhang@redhat.com)
+- zabbix_data_sync: Don't assume hostgroup is present
+  (mbarnes@fedoraproject.org)
+- add ansible role zabbix_data_sync (zhizhang@redhat.com)
+- Add dns resolution timeout monitor item (haowang@redhat.com)
+- Add zabbix monitor item (haowang@redhat.com)
+- build script into rpm (haowang@redhat.com)
+- update trigger time (dranders@redhat.com)
+- Fix the logging alert so that it clears at 20%% (sedgar@redhat.com)
+- Only alert after ES does automated disk balancing (sedgar@redhat.com)
+- Improve readability by using Markdown formatting
+  (18159+lisa@users.noreply.github.com)
+- enable ssl internal check again (zhizhang@redhat.com)
+- tmp remove internel check of ssl (zhizhang@redhat.com)
+- add_ca_file (dranders@redhat.com)
+- change level from avg to high for dedicated-admin service trigger
+  (zhizhang@redhat.com)
+- add trigger for the openshift-dedicated-admin service (zhizhang@redhat.com)
+- add monitoring for dedicated-admin service (zhizhang@redhat.com)
+- change ssl check from avg to high (zhizhang@redhat.com)
+- add cron job for Internal ssl check (zhizhang@redhat.com)
+- SREP-1064: short term fix to pin origin-ansible to a known good version
+  (nmalik@redhat.com)
+- make config pod tolerate everything (haowang@redhat.com)
+- Revert "change router-health check to high alert" (mbarnes@fedoraproject.org)
+- Add an item for openshift.master.atomic-openshift.version in zabbix
+  (bmorriso@redhat.com)
+- add avg alert on the public ssl check by http (zhizhang@redhat.com)
+- bugfix for the item ssl (zhizhang@redhat.com)
+- add zabbix item for ssl check (zhizhang@redhat.com)
+- fix the key name (zhizhang@redhat.com)
+- add cron job for the ssl expire info by http hearder (zhizhang@redhat.com)
+- working around oc_obj limitation (dedgar@redhat.com)
+- change router-health check to high alert (dranders@redhat.com)
+- add_etcd_volume: Support M4 instances (mbarnes@fedoraproject.org)
+- fixed some config loop of fetching zagg ip (mwoodson@redhat.com)
+- Adding openshift_node_group role from openshift-ansible's release-3.11 branch
+  (bmorriso@redhat.com)
+- add_etcd_volume.yml: Add some recommended comments
+  (mbarnes@fedoraproject.org)
+- Add adhoc playbook: add_etcd_volume.yml (mbarnes@fedoraproject.org)
+- Only run devaccess tasks on nodes that have a devaccess user
+  (bmorriso@redhat.com)
+- Tiered access for scalegroup nodes (bmorriso@redhat.com)
+- updated the sre first boot script insights to register with the cluster name
+  and node type (mwoodson@redhat.com)
+- adding roles and files for new containers - these will watch node journals
+  for new container creation events (PLEG) and log them to a PV
+  (dedgar@redhat.com)
+- splitting rkhunter into its own container with monitoring (dedgar@redhat.com)
+- cloud_storage_udev_rules: Rename "sd*" devices to "xvd*"
+  (mbarnes@fedoraproject.org)
+- updated to non fail (mail@rafaelazevedo.me)
+- fixed format strings (mail@rafaelazevedo.me)
+- code needs to be aster client is made (mail@rafaelazevedo.me)
+- added logic that tells us cert is already applied (mail@rafaelazevedo.me)
+- module to update cert id on elb (mail@rafaelazevedo.me)
+- Enable alerts for autoapprover and metrics-server (haowang@redhat.com)
+- Add tolerations to openshift-config DaemonSet (haowang@redhat.com)
+- Adjusted customer-admin access based on vpc peering tests via federated role
+  (nmalik@redhat.com)
+- Added openshift_aws_iam_byoc role (nmalik@redhat.com)
+- Add zabbix item and cronjob for pod check (haowang@redhat.com)
+- updated the lib_openshift link (mwoodson@redhat.com)
+- Update lib_openshift (gburges@redhat.com)
+- setup-etcd-volume.sh: Simplify (mbarnes@fedoraproject.org)
+- os_utils: Remove nvme-cli package (mbarnes@fedoraproject.org)
+- cloud_storage_udev_rules: Tweaks for RHEL 7 (mbarnes@fedoraproject.org)
+- only select az if it can support required instance types (tparikh@redhat.com)
+- Add cloud_storage_udev_rules (mbarnes@fedoraproject.org)
+- Fix fqdns (tfahlman@redhat.com)
+- Handle multiple infra elbs if multiple are defined (tfahlman@redhat.com)
+
 * Mon Jan 14 2019 Alex Chvatal <achvatal@redhat.com>
 - actually define the dns resolution timeout key (achvatal@redhat.com)
 - trigger an average alert if there's a dns timeout within 3 minutes

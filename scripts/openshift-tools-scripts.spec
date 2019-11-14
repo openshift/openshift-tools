@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.193
+Version:       0.1.196
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -109,6 +109,7 @@ cp -p monitoring/cron-send-terminating-pod-check.py %{buildroot}/usr/bin/cron-se
 cp -p monitoring/cron-send-snapshots-tags-check.py %{buildroot}/usr/bin/cron-send-snapshots-tags-check
 cp -p monitoring/cron-send-node-counts.py %{buildroot}/usr/bin/cron-send-node-counts
 cp -p monitoring/cron-send-secret-cert-check.py %{buildroot}/usr/bin/cron-send-secret-cert-check
+cp -p monitoring/cron-send-fluentd-depth.py %{buildroot}/usr/bin/cron-send-fluentd-depth
 
 mkdir -p %{buildroot}/etc/openshift_tools
 cp -p monitoring/metric_sender.yaml.example %{buildroot}/etc/openshift_tools/metric_sender.yaml
@@ -432,6 +433,7 @@ OpenShift Tools Openshift Product Scripts
 /usr/bin/cron-send-snapshots-tags-check
 /usr/bin/cron-send-node-counts
 /usr/bin/cron-send-secret-cert-check
+/usr/bin/cron-send-fluentd-depth
 
 # ----------------------------------------------------------------------------------
 # openshift-tools-scripts-monitoring-zabbix-heal subpackage
@@ -522,6 +524,16 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Tue Nov 12 2019 Matt Woodson <mwoodson@redhat.com> 0.1.196-1
+- 
+
+* Tue Nov 12 2019 Drew Anderson <dranders@redhat.com> 0.1.195-1
+- 
+
+* Mon Nov 11 2019 Dominic Finn <dofinn@redhat.com> 0.1.194-1
+- Added new elb health script to rpm spec so its build with monitoring
+  container (dofinn@redhat.com)
+
 * Wed Nov 06 2019 Drew Anderson <dranders@redhat.com> 0.1.193-1
 - 
 
