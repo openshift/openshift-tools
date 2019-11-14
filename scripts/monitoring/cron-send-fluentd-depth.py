@@ -70,7 +70,7 @@ class OpenshiftFluentdQueueCheck(object):
             find_ts = "exec " + pod_name + " -- find /var/lib/fluentd -type f -name \*.log ! -name '*output_ops_tag*' -printf '%T+\n'"
             buffer_ts = self.oc.run_user_cmd(find_ts)
             timestamps = buffer_ts.split("\n")
-            timestamps.pop()
+            timestamps.pop() # Removes empty newline
             timestamps.sort()
             if len(timestamps) > 0:
                 buffer_list.append(timestamps[0])
