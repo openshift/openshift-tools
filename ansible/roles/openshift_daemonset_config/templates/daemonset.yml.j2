@@ -85,6 +85,8 @@ spec:
           requests:
             cpu: {{ openshift_daemonset_config_resources.cpu }}
             memory: {{ openshift_daemonset_config_resources.memory }}
+          limits:
+            cpu: {{ openshift_daemonset_config_resource_limits.cpu }}
 {% if openshift_daemonset_config_monitoring %}
       - name: monitoring
         image: "{{ openshift_daemonset_config_monitoring_image }}"
@@ -152,6 +154,8 @@ spec:
           requests:
             cpu: 10m
             memory: 10Mi
+          limits:
+            cpu: {{ openshift_daemonset_config_resource_limits.cpu }}
 {% endif %}
       volumes:
       - name: tmp-shared-dir
