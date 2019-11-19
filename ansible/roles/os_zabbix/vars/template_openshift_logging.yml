@@ -57,6 +57,10 @@ g_template_logging:
     expression: "{Template OpenShift Logging:openshift.logging.kibana.site_up.last()}<>1"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_logging.asciidoc#kibana"
     priority: high
+  - name: "Fluentd queue file older than 2 minutes on {HOST.NAME}"
+    expression: "{Template OpenShift Logging:openshift.logging.fluentd.queue.oldest.last()}>120"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_fluentd_queue.asciidoc"
+    priority: high
 
   zdiscoveryrules:
   - name: openshift.logging.elasticsearch.pods
