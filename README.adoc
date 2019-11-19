@@ -1,5 +1,6 @@
 // vim: ft=asciidoc
 //DO NOT MERGE!!!!
+dummy to trigger test
 
 = openshift-tools repository
 :toc: macro
