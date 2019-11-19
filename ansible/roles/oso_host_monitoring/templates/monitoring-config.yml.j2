@@ -512,6 +512,10 @@ host_monitoring_cron:
   minute: "10"
   job: "ops-runner -f -s 10 -n cosp.openshift.metricsserver.check cron-send-pod-check -p cron-send-pod-check -p metrics-server -n openshift-metrics-server"
 
+- name: "Check fluentd queue depth"
+  minute: "*/10"
+  job: ops-runner -f -s 15 -n csfd.openshift.logging.fluentd.queue.oldest /usr/bin/cron-send-fluentd-depth
+
 #- name: "Report time to reload haproxy config"
 #  hour: "*"
 #  minute: "*/10"
