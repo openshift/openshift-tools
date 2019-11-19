@@ -11,6 +11,9 @@ ADD whitelist/ /whitelist/
 # away, as only the build process is important.
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
+# Add github via pip
+RUN pip install github
+
 RUN mkdir /validator && \
     git clone https://github.com/openshift/openshift-tools /validator/openshift-tools && \
     cd /validator/openshift-tools && \
