@@ -514,7 +514,7 @@ host_monitoring_cron:
 
 - name: "Check fluentd queue depth"
   minute: "*/10"
-  job: ops-runner -f -s 15 -n csfd.openshift.node.count /usr/bin/cron-send-fluentd-depth
+  job: ops-runner -f -s 15 -n csfd.openshift.logging.fluentd.depth /usr/bin/cron-send-fluentd-depth
 
 #- name: "Report time to reload haproxy config"
 #  hour: "*"
