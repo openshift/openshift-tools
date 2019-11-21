@@ -232,6 +232,12 @@ host_monitoring_cron:
   job: ops-runner -f -s 60 -n cses.openshift.aws.elbd.status /usr/bin/cron-send-elb-status
 {% endif %}
 
+{% if (osohm_master_primary | default(False) | bool) and osohm_cloud == 'aws' %}
+- name: send ELB Health
+  minute: "*/5"
+  job: ops-runner -f -s 60 -n cseh.openshift.aws.elb.health /usr/bin/cron-send-elb-health
+{% endif %}
+
 {% if osohm_host_type == 'master' or osohm_host_type == 'node' %}
 {# Openshift node checks #}
 - name: send openshift-node process count
