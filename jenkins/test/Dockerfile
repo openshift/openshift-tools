@@ -12,7 +12,7 @@ ADD whitelist/ /whitelist/
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 # Add github via pip
-RUN pip install github
+RUN pip install PyGithub
 
 RUN mkdir /validator && \
     git clone https://github.com/openshift/openshift-tools /validator/openshift-tools && \
