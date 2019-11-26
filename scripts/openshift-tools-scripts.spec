@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.197
+Version:       0.1.198
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -524,6 +524,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Mon Nov 25 2019 Dominic Finn <dofinn@redhat.com> 0.1.198-1
+- resolved path to aws creds, added cron for triggering (dofinn@redhat.com)
+
 * Thu Nov 14 2019 Nina Bauer <nbauer@redhat.com> 0.1.197-1
 - Add fluentd queue check script to spec (nbauer@redhat.com)
 - Add script for fluentd queue depth check (nbauer@redhat.com)
