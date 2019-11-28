@@ -38,6 +38,11 @@ g_template_aws:
     - EC2 Instance
     value_type: int
 
+  - key: openshift.aws.elb.health
+    applications:
+    - AWS ELB
+    value_type: int
+
   ztriggers:
   - name: "EBS Snapshot deletion failed on {HOST.NAME}"
     expression: "{Template AWS:aws.ebs.snapshotter.deletion_errors.min(#3)}>0"
@@ -59,6 +64,10 @@ g_template_aws:
     expression: "{Template AWS:aws.ec2.instance.events.last()}<>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_aws_instance.asciidoc"
     priority: average
+  - name: "Cluster ELBs have unhealthy instance/s checked from {HOST.NAME}"
+    expression: "{Template AWS:openshift.aws.elb.health.sum(15m)}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_elb_health.asciidoc"
+    priority: high
 
   zdiscoveryrules:
   - name: disc.aws
