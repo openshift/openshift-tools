@@ -67,7 +67,7 @@ g_template_aws:
   - name: "Cluster ELBs have unhealthy instance/s checked from {HOST.NAME}"
     expression: "{Template AWS:openshift.aws.elb.health.sum(15m)}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_elb_health.asciidoc"
-    priority: average
+    priority: high
 
   zdiscoveryrules:
   - name: disc.aws
