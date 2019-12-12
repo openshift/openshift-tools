@@ -1,0 +1,29 @@
+---
+- name: "create the cluster role {{ oscr_cluster_role_name }}"
+  oc_clusterrole:
+    state: present
+    name: "{{ oscr_cluster_role_name }}"
+    rules: "{{ oscr_cluster_role_rules }}"
+
+- name: create temp dir for ding work on targer
+  command: mktemp -td openshift-clusterrole-XXXXXX
+  register: l_mktemp
+  changed_when: False
+  when: oscr_apply_clusterrolebinding
+
+- name: "create the cluster role binding {{ oscr_cluster_role_binding_name }}"
+  oc_obj:
+    state: present
+    kind: ClusterRoleBinding
+    name: "{{ oscr_cluster_role_binding_name }}"
+    content:
+      path: "{{ l_mktemp.stdout }}/{{ oscr_cluster_role_binding_name }}"
+      data: "{{ oscr_cluster_role_binding_data }}"
+  when: oscr_apply_clusterrolebinding
+
+- name: Delete temp directory
+  file:
+    name: "{{ l_mktemp.stdout }}"
+    state: absent
+  changed_when: False
+  when: oscr_apply_clusterrolebinding
