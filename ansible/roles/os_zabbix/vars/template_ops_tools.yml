@@ -22,7 +22,7 @@ g_template_ops_tools:
     description: "The number of seconds waited before timing out"
     applications:
     - Ops Runner
-    
+
 
   ztriggerprototypes:
   - name: "{% raw %}ops-runner[{{ '{#' }}OSO_COMMAND}]: non-zero exit code on {HOST.NAME}{% endraw %}"
