@@ -65,7 +65,7 @@ g_template_aws:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_aws_instance.asciidoc"
     priority: average
   - name: "Cluster ELBs have unhealthy instance/s checked from {HOST.NAME}"
-    expression: "{Template AWS:openshift.aws.elb.health.sum(15m)}>0"
+    expression: "{Template AWS:openshift.aws.elb.health.min(#3)}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_elb_health.asciidoc"
     priority: high
 
