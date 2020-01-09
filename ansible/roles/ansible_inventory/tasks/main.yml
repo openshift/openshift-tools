@@ -58,14 +58,13 @@
 
     - name: setup known_hosts
       include_tasks: known_hosts.yml
-      with_items: "{{ oo_rsync_cache_targets }}"
-      when: oo_rsync_cache_targets is defined
+      with_items: "{{ oo_rsync_cache_targets + oo_rsync_cache_targets_rhmi_only }}"
 
     # This cron uses the above location to call its job
     - name: Cron to keep cache fresh
       cron:
         name: 'multi_inventory'
-        minute: '*/10'
+        minute: "{{ oo_rsync_cache_minutes }}"
         job: '/usr/bin/ops-runner -n cmirc.multi_inventory.refresh -t 120 /usr/local/bin/inventory.sh &> /dev/null'
 
     - name: Cron to update cache on reboot
