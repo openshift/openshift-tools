@@ -25,6 +25,22 @@ do
     fi
 done
 
+# rsync only inventory hosts with "oo_cluster_tier: rhmi"
+TMPFILE=$(mktemp)
+/usr/bin/jq '._meta.hostvars | with_entries(select(.value.oo_cluster_tier == "rhmi")) | {_meta: {hostvars: .}}' {{ oo_inventory_cache_location }} > $TMPFILE
+for target in {{ oo_rsync_cache_targets_rhmi_only | join(' ') }}
+do
+    # The RHMI targets will put the rsync user in a chroot jail,
+    # so just deposit the inventory file in the login directory.
+    /bin/rsync -e "ssh -i /root/.ssh/rsync_inventory_cache_key" $TMPFILE {{ oo_rsync_cache_target_user }}@$target:
+    RESULT=$?
+    if [ "$RESULT" != "0" ];
+    then
+        rsync_err_count=$((rsync_err_count+1))
+    fi
+done
+rm $TMPFILE
+
 # Send metrics
 ops-metric-client -s $host -k multi_inventory.account.refresh -o $err_count
 #ops-metric-client -s $host -k multi_inventory.account.refresh.rsync -o $rsync_err_count
