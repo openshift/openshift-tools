@@ -32,7 +32,7 @@ for target in {{ oo_rsync_cache_targets_rhmi_only | join(' ') }}
 do
     # The RHMI targets will put the rsync user in a chroot jail,
     # so just deposit the inventory file in the login directory.
-    /bin/rsync -e "ssh -i /root/.ssh/rsync_inventory_cache_key" $TMPFILE {{ oo_rsync_cache_target_user }}@$target:
+    /bin/rsync -e "ssh -i /root/.ssh/rsync_inventory_cache_key" $TMPFILE {{ oo_rsync_cache_target_user }}@$target:{{ oo_rsync_cache_target_dir }}/{{ g_oai_cache_location | basename }}
     RESULT=$?
     if [ "$RESULT" != "0" ];
     then
