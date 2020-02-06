@@ -43,7 +43,7 @@ logger.setLevel(logging.INFO)
 commandDelay = 5
 local_report_details_dir = '/opt/failure_reports/'
 max_details_report_files = 5
-
+ 
 import os
 from datetime import datetime
 import yaml
@@ -112,7 +112,7 @@ class OpenshiftMetricsStatus(object):
                     # if unmarshalled into interface{}
                     # even after yaml.v3 is released (which removes the yaml.v2 issue)
                     # we still need to support differing go yaml packages
-                    if type(pod_start_time) == str:
+                    if isinstance(pod_start_time, str):
                         pod_start_time = datetime.strptime(pod_start_time, "%Y-%m-%dT%H:%M:%SZ")
                         
                         # Since we convert to seconds it is an INT but pylint still complains. Only disable here
