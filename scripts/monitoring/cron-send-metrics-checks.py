@@ -106,25 +106,15 @@ class OpenshiftMetricsStatus(object):
                 # Get the time the pod was started, otherwise return 0
                 try:
                     pod_start_time = pod['status']['containerStatuses'][0]['state']['running']['startedAt']
-                    # oc get pods is returning this field as both
-                    # date (oc <= 3.11.153) and a string (oc >= 3.11.154 with yaml.v2 update)
-                    # yaml.v2 contains a modification that will output strings for dates
-                    # if unmarshalled into interface{}
-                    # even after yaml.v3 is released (which removes the yaml.v2 issue)
-                    # we still need to support differing go yaml packages
-                    if isinstance(pod_start_time, str):
-                        pod_start_time = datetime.strptime(pod_start_time, "%Y-%m-%dT%H:%M:%SZ")
-
-                        # Since we convert to seconds it is an INT but pylint still complains. Only disable here
-                        # pylint: disable=E1101
-                        # pylint: disable=maybe-no-member
-                        pod_start_time = int(pod_start_time.strftime("%s"))
-                        # pylint: enable=E1101
-                        # pylint: enable=maybe-no-member
                 except KeyError:
                     pod_start_time = 0
 
-                pod_report[pod_pretty_name]['starttime'] = pod_start_time
+                # Since we convert to seconds it is an INT but pylint still complains. Only disable here
+                # pylint: disable=E1101
+                # pylint: disable=maybe-no-member
+                pod_report[pod_pretty_name]['starttime'] = int(pod_start_time.strftime("%s"))
+                # pylint: enable=E1101
+                # pylint: enable=maybe-no-member
 
         return pod_report
 
