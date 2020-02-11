@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.199
+Version:       0.1.200
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -524,6 +524,12 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Sun Feb 09 2020 Brett Embery <bembery@redhat.com> 0.1.200-1
+- Correct whitespace pylint issue (bembery@redhat.com)
+- Correct pylint issue (bembery@redhat.com)
+- Fixed crash in cron-send-metrics-checks.py with oc 3.11.154+
+  (bembery@redhat.com)
+
 * Tue Jan 21 2020 Stefanie Forrester <sedgar@redhat.com> 0.1.199-1
 - Deploy changes to app-create check (sedgar@redhat.com)
 
