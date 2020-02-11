@@ -85,9 +85,9 @@
         instance: "{{ ec2_id }}"
         region: "{{ ec2_region }}"
         device_name: /dev/sdc
-        volume_size: 50
+        volume_size: 120
         volume_type: io1
-        iops: 2000
+        iops: 6000
 
     - name: Examine etcd volume path
       stat:
