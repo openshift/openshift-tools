@@ -60,7 +60,7 @@ g_template_logging:
   - name: "Fluentd queue file older than 2 minutes on {HOST.NAME}"
     expression: "{Template OpenShift Logging:openshift.logging.fluentd.queue.oldest.last()}>120"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_fluentd_queue.asciidoc"
-    priority: high
+    priority: warning
 
   zdiscoveryrules:
   - name: openshift.logging.elasticsearch.pods
