@@ -203,7 +203,8 @@ roles:
       switches:
         - http://169.254.169.254/latest/meta-data/instance-id
         - http://169.254.169.254/latest/meta-data/instance-type
-
+    - base: rhmi_check_rhsso.py
+      runner: sudo_command
 - name: nobody_role
   commands:
     - base: uname
