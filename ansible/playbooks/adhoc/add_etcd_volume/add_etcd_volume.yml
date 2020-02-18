@@ -31,8 +31,12 @@
     vars:
       vawsid_accountid: "{{ oo_accountid }}"
 
+# Need to gather facts for all masters up front so we have their FQDN.
 - hosts: "oo_clusterid_{{ cli_clusterid }}:&oo_hosttype_master"
   gather_facts: yes
+
+- hosts: "oo_clusterid_{{ cli_clusterid }}:&oo_hosttype_master"
+  gather_facts: no
   serial: 1
   user: root
 
@@ -224,8 +228,11 @@
           {%- endfor %}
           {{- result -}}
 
+    # Match the first etcd peer to an Ansible inventory host name.
     - set_fact:
-        etcd_delegate_to: "{{ cli_clusterid }}-master-{{ etcd_peers[0].name }}"
+        etcd_delegate_to: "{{ item }}"
+      when: "{{ hostvars[item].ansible_facts.fqdn == etcd_peers[0].name }}"
+      with_items: "{{ ansible_play_hosts }}"
 
     - assert:
         that: etcd_delegate_to in ansible_play_hosts
