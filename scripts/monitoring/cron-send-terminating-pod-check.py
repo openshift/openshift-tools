@@ -107,6 +107,7 @@ def check_terminating_pod(pods):
                         time_terminated = item['lastTransitionTime']
             elif ('phase' in yaml_result['status'] and
                   yaml_result['status']['phase'] == "Failed" and
+                  'reason' in yaml_result['status'] and
                   yaml_result['status']['reason'] == "DeadlineExceeded"):
                 # the pod has tried to terminate but failed
                 time_terminated = yaml_result['metadata']['deletionTimestamp']
