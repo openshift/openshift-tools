@@ -91,20 +91,33 @@ def check_terminating_pod(pods):
 
     # Get the pod's terminated timestamp and compare with the current time
     # if the time difference greater than 10 minutes
-    # we thought the pod is stuck in terminating status for too long time
+    # the pod is stuck in terminating status for too long
     time_now = datetime.datetime.now()
     long_time_terminate_pod = []
     if pods:
         for pod, ns in pods.iteritems():
             yaml_result = runOCcmd_yaml("get pod {} -n {}".format(pod, ns))
-            try:
+            pod_finalizer = None
+            if 'finalizers' in yaml_result['metadata']:
                 pod_finalizer = yaml_result['metadata']['finalizers']
-            except KeyError as e:
-                pod_finalizer = None
-            status_condition = yaml_result['status']['conditions']
-            for item in status_condition:
-                if item['type'] == "Ready":
-                    time_terminated = item['lastTransitionTime']
+            if 'conditions' in yaml_result['status']:
+                status_condition = yaml_result['status']['conditions']
+                for item in status_condition:
+                    if item['type'] == "Ready":
+                        time_terminated = item['lastTransitionTime']
+            elif ('phase' in yaml_result['status'] and
+                  yaml_result['status']['phase'] == "Failed" and
+                  yaml_result['status']['reason'] == "DeadlineExceeded"):
+                # the pod has tried to terminate but failed
+                time_terminated = yaml_result['metadata']['deletionTimestamp']
+            else:
+                time_terminated = datetime.datetime.now()
+                logger.debug("Unable to determine termination time for %s", pod)
+
+            # date object (oc <= 3.11.153) and a string (oc >= 3.11.154 with yaml.v2 update)
+            if isinstance(time_terminated, str):
+                time_terminated = datetime.datetime.strptime(time_terminated, "%Y-%m-%dT%H:%M:%SZ")
+
             status_life = time_now - time_terminated
             # if the pod has finalizer set, we should consider the terminating status is intentional
             if not pod_finalizer and status_life > datetime.timedelta(minutes=5):
