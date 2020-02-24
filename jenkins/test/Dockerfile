@@ -12,7 +12,8 @@ ADD whitelist/ /whitelist/
 RUN test "$OO_PAUSE_ON_BUILD" = "true" && while sleep 10; do true; done || :
 
 # Add github via pip
-RUN pip install PyGithub
+# note: Python 2 support was removed in 1.46; locked to 1.45
+RUN pip install PyGithub==1.45
 
 RUN mkdir /validator && \
     git clone https://github.com/openshift/openshift-tools /validator/openshift-tools && \
