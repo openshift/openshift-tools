@@ -284,7 +284,7 @@ host_monitoring_cron:
 {% if osohm_enable_app_create|bool %}
 - name: run create app
   minute: "*/10"
-  job: "ops-runner -f -t 480 -s 60 -n csca.openshift.master.app.create /usr/bin/cron-send-create-app -v --basename pull --source openshift/hello-openshift:v1.0.6 &>> /var/log/create_app.log"
+  job: "ops-runner -f -t 480 -s 60 -n csca.openshift.master.app.create /usr/bin/cron-send-create-app -v --basename pull --source openshift/hello-openshift:v1.0.6 --cpulimit 100m --memlimit 256Mi &>> /var/log/create_app.log"
 
 # TODO: This might be fixed, investigate if it's still an issue and possibly remove cron job if it has been fixed.
 - name: run Terminating status project
@@ -297,7 +297,7 @@ host_monitoring_cron:
 
 - name: run create app with build process
   minute: "*/30"
-  job: "ops-runner -f -t 1300 -s 120 -n csca.openshift.master.app.build.create /usr/bin/cron-send-create-app -v --basename build --loopcount 180 --source https://github.com/openshift/nodejs-ex &>> /var/log/build_app.log"
+  job: "ops-runner -f -t 1300 -s 120 -n csca.openshift.master.app.build.create /usr/bin/cron-send-create-app -v --basename build --loopcount 180 --source https://github.com/openshift/nodejs-ex --cpulimit 100m --memlimit 256Mi &>> /var/log/build_app.log"
 
 - name: check volumes snapshot tags
   hour: "*/3"
