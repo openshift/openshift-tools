@@ -16,8 +16,13 @@
 # to be different than the class name
 # pylint: disable=invalid-name
 
+# test() and main() have a lot of branches
+# pylint: disable=too-many-branches
+
 import argparse
 import datetime
+import json
+import logging
 import random
 import string
 import time
@@ -30,7 +35,6 @@ import urllib2
 from openshift_tools.monitoring.ocutil import OCUtil
 from openshift_tools.monitoring.metric_sender import MetricSender
 
-import logging
 logging.basicConfig(
     format='%(asctime)s - %(relativeCreated)6d - %(levelname)-8s - %(message)s',
 )
@@ -72,6 +76,8 @@ def parse_args():
     parser.add_argument('--basename', default="test", help='base name, added to via openshift')
     parser.add_argument('--loopcount', default="36",
                         help="how many 5 second loops before giving up on app creation")
+    parser.add_argument('--cpulimit', help='override default CPU limits in the app namespace')
+    parser.add_argument('--memlimit', help='override default Memory limits in the app namespace')
     return parser.parse_args()
 
 def send_metrics(build_ran, create_app, route_http_failed, service_http_failed, run_time):
@@ -114,12 +120,23 @@ def curl(ip_addr, port, timeout=30):
 
     try:
         return urllib2.urlopen(url, timeout=timeout).getcode()
-    except urllib2.HTTPError, e:
+    except urllib2.HTTPError as e:
         return e.fp.getcode()
     except Exception as e:
         logger.exception("Curl failed to connect to host")
 
     return 0
+
+def get_all_limitranges(namespace):
+    """ get the names of all limitranges in a namespace """
+    lr_info = runOCcmd_yaml("get limitrange -n {}".format(namespace))
+    limitranges = []
+    try:
+        # If we can't find limitranges, just ignore them
+        limitranges = [item['metadata']['name'] for item in lr_info['items']]
+    except KeyError:
+        pass
+    return limitranges
 
 def getPodStatus(pod):
     """ get pod status for display """
@@ -171,11 +188,52 @@ def setup(config):
     # Skip writing to kubeconfig, since we don't need to keep a record of every project created.
     if not project:
         try:
-            runOCcmd("new-project {} --skip-config-write=true".format(config.namespace), base_cmd='oc')
+            runOCcmd("new-project {} --skip-config-write=true".format(config.namespace),
+                     base_cmd='oc')
             time.sleep(commandDelay)
         except Exception:
             logger.exception('error creating new project')
 
+    # Apply limitrange defaults, if limitranges aren't being ignored
+    if len([x for x in (config.cpulimit, config.memlimit) if x is not None]) == 1:
+        logger.warning('--cpulimit and --memlimit must both be supplied '
+                       ' no limitrange change will be applied')
+
+    if config.cpulimit and config.memlimit:
+        logger.debug('Applying limitrange defaults cpu=%s,memory=%s',
+                     config.cpulimit, config.memlimit)
+        limitranges = get_all_limitranges(config.namespace)
+        for limitrange in limitranges:
+            try:
+                # Create the patch in JSON form
+                limitpatch = {
+                    "spec": {
+                        "limits": [
+                            {
+                                "default": {
+                                    "cpu": config.cpulimit,
+                                    "memory": config.memlimit
+                                },
+                                "defaultRequest": {
+                                    "cpu": config.cpulimit,
+                                    "memory": config.memlimit
+                                },
+                                "type": "Container"
+                            }
+                        ]
+                    }
+                }
+                # Convert patch to string for supplying to oc
+                limitpatch_str = json.dumps(limitpatch)
+                occmd = "patch limitrange {} -n {} -p '{}'".format(limitrange, config.namespace,
+                                                                   limitpatch_str)
+
+                runOCcmd(occmd, base_cmd='oc')
+
+            except Exception:
+                logger.exception('error patching project limitrange')
+
+    # Create and build the application
     runOCcmd("new-app {} --name={} -n {}".format(
         config.source,
         config.podname,
@@ -211,7 +269,7 @@ def testCurl(config):
             service_http_code = curl(
                 service['spec']['clusterIP'],
                 service['spec']['ports'][0]['port']
-             )
+            )
 
             logger.debug("service http code %s", service_http_code)
 
@@ -313,8 +371,7 @@ def test(config):
                 'pod': pod,
             }
 
-        else:
-            logger.info("Not running HTTP status checks because pod isn't running")
+        logger.info("Not running HTTP status checks because pod isn't running")
 
     if build_ran:
         logger.critical("build timed out, please check build log for last messages")
@@ -394,10 +451,10 @@ def main():
             test_response = {
                 'build_ran': 0,
                 'create_app': 1, # app create failed
-                'service_http_code': service_http_code,
-                'route_http_code': route_http_code,
-                'route_http_failed': route_http_failed,
-                'service_http_failed': service_http_failed,
+                'service_http_code': 0,
+                'route_http_code': 0,
+                'route_http_failed': 1,
+                'service_http_failed': 1,
                 'failed': True,
                 'pod': None,
             }
@@ -406,14 +463,14 @@ def main():
         run_time = str(time.time() - start_time)
         logger.info('Test finished. Time to complete test only: %s', run_time)
         if test_response['service_http_failed']:
-          logger.critical('Service HTTP response code: %s', test_response['service_http_code'])
+            logger.critical('Service HTTP response code: %s', test_response['service_http_code'])
         else:
-          logger.info('Service HTTP response code: %s', test_response['service_http_code'])
+            logger.info('Service HTTP response code: %s', test_response['service_http_code'])
 
         if test_response['route_http_failed']:
-          logger.critical('Route HTTP response code: %s', test_response['route_http_code'])
+            logger.critical('Route HTTP response code: %s', test_response['route_http_code'])
         else:
-          logger.info('Route HTTP response code: %s', test_response['route_http_code'])
+            logger.info('Route HTTP response code: %s', test_response['route_http_code'])
 
         ############# send data to zabbix #############
         try:
@@ -449,7 +506,8 @@ def main():
                 )
                 writeTmpFile(events, filename=args.podname+".events")
                 logger.info(events)
-                # During a failure, this summary at the end of the script run makes it easy to tell what went wrong.
+                # During a failure, this summary at the end of the script
+                # run makes it easy to tell what went wrong.
                 logger.critical('Deploy State: Fail')
 
             except Exception as e:
