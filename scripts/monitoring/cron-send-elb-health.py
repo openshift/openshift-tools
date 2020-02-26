@@ -49,6 +49,7 @@ def parse_args():
     ''' parse the args from the cli '''
 
     parser = argparse.ArgumentParser(description='ELB status checker')
+    parser.add_argument('--clusterid', default="", help='clusterid', required=True)
     parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
     parser.add_argument('--debug', action='store_true', default=None, help='Debug?')
     return parser.parse_args()
@@ -79,13 +80,25 @@ def get_instance_region():
 
     return instance_region
 
-def discover_elbs(elb_descriptions):
-    ''' Find all ELBs and append to list '''
+def get_elb_names(elb_descriptions):
+    ''' Get ELB names '''
+
     elbs_discovered = []
     for elb_desc_count in range(len(elb_descriptions['LoadBalancerDescriptions'])):
             elbs_discovered.append(elb_descriptions['LoadBalancerDescriptions'][elb_desc_count]['LoadBalancerName'])
 
     return elbs_discovered
+
+def filter_by_cluster(elb_tags, cluster_id):
+    ''' Find all ELBs for a specific cluster '''
+
+    cluster_elbs = []
+    for elb_tag_description in elb_tags['TagDescriptions']:
+        for elb_tag in elb_tag_description['Tags']:
+            if elb_tag['Key'] == 'kubernetes.io/cluster/' + cluster_id:
+                cluster_elbs.append(elb_tag_description['LoadBalancerName'])
+
+    return cluster_elbs
 
 def elb_instance_count(elb_instances, elb_name):
     ''' Get count of instances behind ELB '''
@@ -148,14 +161,16 @@ def main():
             region_name=instance_region
             )
 
-    # Call all available loadbalancers and store blob result in elb_descriptions
+    # Call all available loadbalancers in the AWS account and store blob result in elb_descriptions
     elb_descriptions = client.describe_load_balancers()
+    elb_names = get_elb_names(elb_descriptions)
 
-    # Get a list of available ELBs
-    elbs_discovered=discover_elbs(elb_descriptions)
+    # Get a list of available ELBs for a cluster
+    elb_tags = client.describe_tags(LoadBalancerNames=elb_names)
+    cluster_elbs=filter_by_cluster(elb_tags, args.clusterid)
 
     # Perform health check of each instance available behind each ELB
-    elb_health_check(client, elbs_discovered)
+    elb_health_check(client, cluster_elbs)
 
     ### Metric Checks
     if len(elb_no_instances) != 0:
