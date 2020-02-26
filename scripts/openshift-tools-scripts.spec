@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.200
+Version:       0.1.201
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -524,6 +524,13 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Tue Feb 25 2020 mrbarge <mbargenq@redhat.com> 0.1.201-1
+- Adding limitrange patching for cron-send-create-app OSD-2820
+  (matt.bargenquast@gmail.com)
+- Added missing key check (bembery@redhat.com)
+- Fixed terminating pod check to handle oc 3.11.154+ and pods that have failed
+  termination due to deadline exceeding (bembery@redhat.com)
+
 * Sun Feb 09 2020 Brett Embery <bembery@redhat.com> 0.1.200-1
 - Correct whitespace pylint issue (bembery@redhat.com)
 - Correct pylint issue (bembery@redhat.com)
