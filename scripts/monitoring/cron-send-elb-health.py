@@ -26,15 +26,13 @@
 # pylint: disable=line-too-long
 # pylint: disable=pointless-string-statement
 # pylint: disable=deprecated-lambda
-# pylint: disable=bad-builtin
 # pylint: disable=bare-except
 
 from ConfigParser import SafeConfigParser
 import argparse
-from openshift_tools.monitoring.metric_sender import MetricSender
 import urllib2
-import yaml
 import boto3
+from openshift_tools.monitoring.metric_sender import MetricSender
 
 # number instances behind elb
 elb_no_instances = []
@@ -84,8 +82,8 @@ def get_elb_names(elb_descriptions):
     ''' Get ELB names '''
 
     elbs_discovered = []
-    for elb_desc_count in range(len(elb_descriptions['LoadBalancerDescriptions'])):
-            elbs_discovered.append(elb_descriptions['LoadBalancerDescriptions'][elb_desc_count]['LoadBalancerName'])
+    for _, lb in enumerate(elb_descriptions['LoadBalancerDescriptions']):
+        elbs_discovered.append(lb['LoadBalancerName'])
 
     return elbs_discovered
 
@@ -109,20 +107,20 @@ def elb_instance_health(instance_state, instance_name, elb_name):
     ''' Check health of each instance '''
     if instance_state != instance_healthy:
         unhealthy_detected = {
-                "elb": elb_name,
-                "instance": instance_name,
-                "state": instance_state,
-                }
+            "elb": elb_name,
+            "instance": instance_name,
+            "state": instance_state,
+            }
         elb_instances_unhealthy.append(unhealthy_detected)
 
 def elb_health_check(client, elbs_discovered):
     ''' Check health of each node found behind each ELB '''
 
     # Iterate through raw health checks of each instance behind each ELB
-    for i in range(len(elbs_discovered)):
+    for i, item in enumerate(elbs_discovered):
         elb_health_checks_raw = client.describe_instance_health(
-                LoadBalancerName=elbs_discovered[i]
-                )
+            LoadBalancerName=item
+        )
 
         # Get https response
         elb_response_http = elb_health_checks_raw['ResponseMetadata']['HTTPStatusCode']
@@ -133,15 +131,15 @@ def elb_health_check(client, elbs_discovered):
         # Check count of instances behind each ELB. Alert on 0 count.
         elb_instance_count(elb_instance_response_states, elbs_discovered[i])
 
+        elb_name = elbs_discovered[i]
         # Iterate through each instances health/state behind the ELB
         for elb_instance_response_state in elb_instance_response_states:
-            elb_name = elbs_discovered[i]
             elb_instance_name = elb_instance_response_state['InstanceId']
             elb_instance_state = elb_instance_response_state['State']
 
             # Check http response
             if elb_response_http != 200:
-                print("A potential error occurred. HTTP Response: %s" % elb_response_http)
+                print "A potential error occurred. HTTP Response: %s" % elb_response_http
 
             elb_instance_health(elb_instance_state, elb_instance_name, elb_name)
 
@@ -155,11 +153,11 @@ def main():
 
     # Create boto client to access ELB resources
     client = boto3.client(
-            'elb',
-            aws_access_key_id=aws_access,
-            aws_secret_access_key=aws_secret,
-            region_name=instance_region
-            )
+        'elb',
+        aws_access_key_id=aws_access,
+        aws_secret_access_key=aws_secret,
+        region_name=instance_region
+    )
 
     # Call all available loadbalancers in the AWS account and store blob result in elb_descriptions
     elb_descriptions = client.describe_load_balancers()
@@ -167,22 +165,22 @@ def main():
 
     # Get a list of available ELBs for a cluster
     elb_tags = client.describe_tags(LoadBalancerNames=elb_names)
-    cluster_elbs=filter_by_cluster(elb_tags, args.clusterid)
+    cluster_elbs = filter_by_cluster(elb_tags, args.clusterid)
 
     # Perform health check of each instance available behind each ELB
     elb_health_check(client, cluster_elbs)
 
     ### Metric Checks
     if len(elb_no_instances) != 0:
-        for elb in range(len(elb_no_instances)):
-            elb_instances_unhealthy.append(elb_no_instances[elb])
-            print("ELB: %s has no instances behind it. Please investigate." % elb_no_instances[elb])
+        for _, elb in enumerate(elb_no_instances):
+            elb_instances_unhealthy.append(elb)
+            print "ELB: %s has no instances behind it. Please investigate." % elb
 
     ### Unhealthy count check
     elb_instances_unhealthy_metric = len(elb_instances_unhealthy)
     if elb_instances_unhealthy_metric != 0:
-        for unhealthy in range(elb_instances_unhealthy_metric):
-            print(elb_instances_unhealthy[unhealthy])
+        for _, unhealthy in enumerate(elb_instances_unhealthy):
+            print unhealthy
 
 #    ''' Now that we know if this instance is missing, feed zabbix '''
     mts = MetricSender(verbose=args.verbose, debug=args.debug)
