@@ -30,6 +30,7 @@
 
 from ConfigParser import SafeConfigParser
 import argparse
+import re
 import urllib2
 import boto3
 from openshift_tools.monitoring.metric_sender import MetricSender
@@ -42,6 +43,9 @@ elb_instances_unhealthy = []
 
 # Comparison for instance state
 instance_healthy = "InService"
+
+# Monitoring should only report for ELBs created by service of type LoadBalancer in namespaces which are defined in this regex.
+watched_ns_regex = '(^kube-.*|^openshift-.*)'
 
 def parse_args():
     ''' parse the args from the cli '''
@@ -78,14 +82,9 @@ def get_instance_region():
 
     return instance_region
 
-def get_elb_names(elb_descriptions):
-    ''' Get ELB names '''
-
-    elbs_discovered = []
-    for _, lb in enumerate(elb_descriptions['LoadBalancerDescriptions']):
-        elbs_discovered.append(lb['LoadBalancerName'])
-
-    return elbs_discovered
+def get_elb_name(lb):
+    ''' Get ELB name '''
+    return lb['LoadBalancerName']
 
 def filter_by_cluster(elb_tags, cluster_id):
     ''' Find all ELBs for a specific cluster '''
@@ -94,9 +93,27 @@ def filter_by_cluster(elb_tags, cluster_id):
     for elb_tag_description in elb_tags['TagDescriptions']:
         for elb_tag in elb_tag_description['Tags']:
             if elb_tag['Key'] == 'kubernetes.io/cluster/' + cluster_id:
-                cluster_elbs.append(elb_tag_description['LoadBalancerName'])
+                cluster_elbs.append(elb_tag_description)
 
     return cluster_elbs
+
+def filter_monitored_service_elbs(elb_tag_descriptions):
+    ''' Filter elbs created by service of type LoadBalancer not in watched namespaces '''
+
+    elbs = []
+    for elb_tag_description in elb_tag_descriptions:
+        ignore_elb = False
+        for elb_tag in elb_tag_description['Tags']:
+            # ELBs created by service of type LoadBalancer have a tag where the value is <namespace/service-name>
+            # If an elb is created by service of type LoadBalancer but not in a watched namespace, ignore
+            if elb_tag['Key'] == 'kubernetes.io/service-name' and not re.match(watched_ns_regex, elb_tag['Value']):
+                ignore_elb = True
+                break
+
+        if not ignore_elb:
+            elbs.append(elb_tag_description)
+
+    return elbs
 
 def elb_instance_count(elb_instances, elb_name):
     ''' Get count of instances behind ELB '''
@@ -161,14 +178,18 @@ def main():
 
     # Call all available loadbalancers in the AWS account and store blob result in elb_descriptions
     elb_descriptions = client.describe_load_balancers()
-    elb_names = get_elb_names(elb_descriptions)
+    elb_names = map(get_elb_name, elb_descriptions['LoadBalancerDescriptions'])
 
     # Get a list of available ELBs for a cluster
     elb_tags = client.describe_tags(LoadBalancerNames=elb_names)
     cluster_elbs = filter_by_cluster(elb_tags, args.clusterid)
 
+    # Filter any ELBs created by service of type LoadBalancer that is not in our watched namespaces
+    monitored_elbs = filter_monitored_service_elbs(cluster_elbs)
+    monitored_elb_names = map(get_elb_name, monitored_elbs)
+
     # Perform health check of each instance available behind each ELB
-    elb_health_check(client, cluster_elbs)
+    elb_health_check(client, monitored_elb_names)
 
     ### Metric Checks
     if len(elb_no_instances) != 0:
