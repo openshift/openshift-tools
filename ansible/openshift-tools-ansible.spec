@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.72
+Version:        0.0.73
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,36 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Tue Feb 25 2020 mrbarge <mbargenq@redhat.com> 0.0.73-1
+- Adding limitrange patching for cron-send-create-app OSD-2820
+  (matt.bargenquast@gmail.com)
+- added a CCS admin to the BYOC roles (mwoodson@redhat.com)
+- add_etcd_volume: Fix etcd_delegate_to host name determination
+  (mbarnes@fedoraproject.org)
+- Increase threshold for fluentd alert to 10 min (nbauer@redhat.com)
+- lower the alert level for fluentd (haowang@redhat.com)
+- incresing volume size for more iops to help etcd issues (pyates@redhat.com)
+- ansible_inventory: Fix rsync destination file for RHMI-only
+  (mbarnes@fedoraproject.org)
+- ansible_inventory: Actually use oo_rsync_cache_minutes
+  (mbarnes@fedoraproject.org)
+- ansible_inventory: Add oo_rsync_cache_targets_rhmi_only variable
+  (mbarnes@fedoraproject.org)
+- cleaned up some whitespaces (mwoodson@redhat.com)
+- updated teh elb health check to check last 3 values instead of just one value
+  (mwoodson@redhat.com)
+- added the openshift_clusterrole role (mwoodson@redhat.com)
+- updated sev (dofinn@redhat.com)
+- Added zabbix config for elb health check SREP-2260 (dofinn@redhat.com)
+- Remove beta from storageclass annotations (whearn@redhat.com)
+- Update monitoring-config.yml.j2 (nbauer@redhat.com)
+- Update monitoring-config.yml.j2 (nbauer@redhat.com)
+- Add triggers for fluentd queue check (nbauer@redhat.com)
+- Add fluentd check to cron (nbauer@redhat.com)
+- oc_storageclass: Drop "beta" from storage class annotation
+  (mbarnes@fedoraproject.org)
+- resolved path to aws creds, added cron for triggering (dofinn@redhat.com)
+
 * Tue Nov 12 2019 Matt Woodson <mwoodson@redhat.com> 0.0.72-1
 - Add key for fluentd queue check (nbauer@redhat.com)
 - Update trigger for dedicated-admin-operator (sedgar@redhat.com)
