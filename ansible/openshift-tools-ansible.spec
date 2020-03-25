@@ -1,5 +1,5 @@
 Name:           openshift-tools-ansible
-Version:        0.0.73
+Version:        0.0.74
 Release:        1%{?dist}
 Summary:        Openshift Tools Ansible
 License:        ASL 2.0
@@ -111,6 +111,9 @@ Ansible filter plugins used with the openshift-tools
 %{_datadir}/ansible_plugins/filter_plugins/ops_zabbix_filters.py*
 
 %changelog
+* Wed Mar 25 2020 mrbarge <mbargenq@redhat.com> 0.0.74-1
+- Report ELB instance health per cluster (jroche@redhat.com)
+
 * Tue Feb 25 2020 mrbarge <mbargenq@redhat.com> 0.0.73-1
 - Adding limitrange patching for cron-send-create-app OSD-2820
   (matt.bargenquast@gmail.com)
