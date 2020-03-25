@@ -235,7 +235,7 @@ host_monitoring_cron:
 {% if (osohm_master_primary | default(False) | bool) and osohm_cloud == 'aws' %}
 - name: send ELB Health
   minute: "*/5"
-  job: ops-runner -f -s 60 -n cseh.openshift.aws.elb.health /usr/bin/cron-send-elb-health
+  job: ops-runner -f -s 60 -n cseh.openshift.aws.elb.health /usr/bin/cron-send-elb-health --clusterid {{ osohm_cluster_id }}
 {% endif %}
 
 {% if osohm_host_type == 'master' or osohm_host_type == 'node' %}
