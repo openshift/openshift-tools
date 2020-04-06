@@ -24,14 +24,13 @@
 #pylint: disable=import-error
 
 import argparse
-from openshift_tools.monitoring.metric_sender import MetricSender
-import json
 from Queue import Queue
 import re
 import subprocess
 import threading
 import time
 import yaml
+from openshift_tools.monitoring.metric_sender import MetricSender
 
 #pylint: disable=too-few-public-methods
 class OpenshiftEventConsumer(object):
@@ -155,20 +154,19 @@ class OpenshiftEventWatcher(object):
             # k8s v1.11 has a bug preventing output of watches in non-default
             # format types, so we can't use -o here.
             popen = subprocess.Popen(['oc', 'get', 'events', '--all-namespaces',
-                                      '--config', self.args.kubeconfig, 
-                                      '--watch-only'], bufsize=1, 
-                                      stdout=subprocess.PIPE)
+                                      '--config', self.args.kubeconfig,
+                                      '--watch-only'], bufsize=1,
+                                     stdout=subprocess.PIPE)
 
-            json_str = ""
             print "Watching for events: " + str(self.args.watch_for)
 
             for line in iter(popen.stdout.readline, b''):
-                # The 'Reason' field should be the fourth element in 
+                # The 'Reason' field should be the fourth element in
                 # the line, and the previous three elements do not contain
                 # values that allow whitespace - a split will suffice.
 
                 fields = line.split()
-                # We need to do a little checking to know where to 
+                # We need to do a little checking to know where to
                 # find the 'message' column
                 if len(fields) > 8:
                     event = {
