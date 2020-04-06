@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.201
+Version:       0.1.202
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -524,6 +524,11 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Wed Mar 25 2020 mrbarge <mbargenq@redhat.com> 0.1.202-1
+- Only report for elb from watched namespaces (jroche@redhat.com)
+- Validator fixes (jroche@redhat.com)
+- Report ELB instance health per cluster (jroche@redhat.com)
+
 * Tue Feb 25 2020 mrbarge <mbargenq@redhat.com> 0.1.201-1
 - Adding limitrange patching for cron-send-create-app OSD-2820
   (matt.bargenquast@gmail.com)
