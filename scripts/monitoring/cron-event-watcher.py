@@ -24,14 +24,13 @@
 #pylint: disable=import-error
 
 import argparse
-from openshift_tools.monitoring.metric_sender import MetricSender
-import json
 from Queue import Queue
 import re
 import subprocess
 import threading
 import time
 import yaml
+from openshift_tools.monitoring.metric_sender import MetricSender
 
 #pylint: disable=too-few-public-methods
 class OpenshiftEventConsumer(object):
@@ -122,10 +121,14 @@ class OpenshiftEventWatcher(object):
 
         # Most events aren't something we will care about
         # so catch that case and return early
-        if event['reason'] not in self.args.watch_for.keys():
+        foundReason = ''
+        for reasonCandidate in event['reasonFields']:
+            if reasonCandidate in self.args.watch_for.keys():
+                foundReason = reasonCandidate
+        if not foundReason:
             return None
 
-        regex_list = self.args.watch_for[event['reason']]
+        regex_list = self.args.watch_for[foundReason]
         for regex in regex_list:
             if re.search(regex['pattern'], event['message']):
                 return regex['zbx_key']
@@ -148,34 +151,43 @@ class OpenshiftEventWatcher(object):
         ''' Loop to read/process OpenShift events '''
 
         while True:
+            # k8s v1.11 has a bug preventing output of watches in non-default
+            # format types, so we can't use -o here.
             popen = subprocess.Popen(['oc', 'get', 'events', '--all-namespaces',
-                                      '-o', 'json', '--config',
-                                      self.args.kubeconfig, '--watch-only'],
-                                     bufsize=1, stdout=subprocess.PIPE)
+                                      '--config', self.args.kubeconfig,
+                                      '--watch-only'], bufsize=1,
+                                     stdout=subprocess.PIPE)
 
-            json_str = ""
             print "Watching for events: " + str(self.args.watch_for)
 
             for line in iter(popen.stdout.readline, b''):
-                # concatenate each line of output into a single
-                # string holding a json-formatted object
-                json_str = json_str + ' ' + line.rstrip()
+                # The 'Reason' field should be the fourth element in
+                # the line, and the previous three elements do not contain
+                # values that allow whitespace - a split will suffice.
 
-                if re.match("}", line): # '}' signals end of json object
-                    json_obj = json.loads(json_str)
+                fields = line.split()
+                # We need to do a little checking to know where to
+                # find the 'message' column
+                if len(fields) > 8:
+                    event = {
+                        'reasonFields': fields[7:9],
+                        'message': ' '.join(fields[8:])
+                    }
+
                     if self.args.debug:
-                        print "Event type: " + json_obj['reason']
-                        print json.dumps(json_obj, sort_keys=True, indent=4)
+                        print "Event type candidates: " + ' '.join(event['reasonFields'])
+                        print line
 
-                    result = self.check_event(json_obj)
+                    result = self.check_event(event)
                     if result:
                         if self.args.verbose:
-                            print "Matched event: " + json_obj['reason'] + \
-                                  " " + json_obj['message']
+                            print "Matched event: " + ' '.join(event['reasonFields']) + \
+                                  " " + event['message']
                         self.queue.put(result)
-                    json_str = ""
 
-            # Never should get here
+            # Never should get here - but if it does, add a cool-off timer for a minute
+            # to avoid smashing repeated 'oc get events' calls.
+            time.sleep(self.args.reporting_period)
 
 if __name__ == '__main__':
     event_queue = Queue()

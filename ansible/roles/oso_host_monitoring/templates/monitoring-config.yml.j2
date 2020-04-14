@@ -651,7 +651,7 @@ event_watcher_config:
   #   - pattern: 'regex for OtherEvent'
   #     zbx_key: <zabbix key to report>
   FailedScheduling:
-    - pattern: failed to fit in any node
+    - pattern: 0/\d+ nodes are available
       zbx_key: openshift.master.cluster.event.failedscheduling
   Evicted:
     - pattern: The node was low on resource
