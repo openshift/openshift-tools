@@ -1,0 +1,3 @@
+---
+osinsc_dest_dir: /etc/origin/master
+osinc_restart_os_services: True

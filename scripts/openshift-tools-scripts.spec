@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.202
+Version:       0.1.203
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -524,6 +524,9 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Tue Apr 14 2020 mrbarge <mbargenq@redhat.com> 0.1.203-1
+- 3.11 fixes for event watcher monitor OSD-3225
+
 * Wed Mar 25 2020 mrbarge <mbargenq@redhat.com> 0.1.202-1
 - Only report for elb from watched namespaces (jroche@redhat.com)
 - Validator fixes (jroche@redhat.com)
