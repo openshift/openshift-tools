@@ -1,0 +1,9 @@
+---
+- name: "{{ osproj_state }} project for {{ osproj_name }}"
+  oc_project:
+    name: "{{ osproj_name }}"
+    display_name: "{{ osproj_display_name }}"
+    description: "{{ osproj_description | default(omit) }}"
+    state: "{{ osproj_state }}"
+  retries: 12
+  delay: 5
