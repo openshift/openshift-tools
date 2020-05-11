@@ -1,0 +1,3 @@
+---
+osproj_display_name: "{{ osproj_name }}"
+osproj_state: present
