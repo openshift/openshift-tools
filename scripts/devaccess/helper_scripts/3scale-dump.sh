@@ -18,6 +18,8 @@ DUMP_DIR="${CURRENT_DIR}/3scale_dump-${NOW}"
 DUMP_FILE="3scale-dump.tar"
 
 
+REDACT_SCRIPT="redact_env_vars.py"
+
 #############
 # Functions #
 #############
@@ -100,8 +102,10 @@ detect_error() {
 read_obj() {
     if [[ -z ${NOYAML} ]]; then
         YAML="-o yaml"
+        INLINE_FILTER="| ${REDACT_SCRIPT}"
     else
         unset YAML
+        unset INLINE_FILTER
     fi
 
     while read OBJ; do
@@ -152,8 +156,8 @@ read_obj() {
                 sleep 1.0
 
             else
-                ${COMMAND} ${OBJ} ${YAML} >> ${DUMP_DIR}/${SINGLE_FILE} 2>&1
-                ${COMMAND} ${OBJ} ${YAML} > ${DUMP_DIR}/${NEWDIR}/${OBJ}.yaml 2>&1
+                ${COMMAND} ${OBJ} ${YAML} ${INLINE_FILTER} >> ${DUMP_DIR}/${SINGLE_FILE} 2>&1
+                ${COMMAND} ${OBJ} ${YAML} ${INLINE_FILTER} > ${DUMP_DIR}/${NEWDIR}/${OBJ}.yaml 2>&1
 
                 sleep 0.5
             fi
