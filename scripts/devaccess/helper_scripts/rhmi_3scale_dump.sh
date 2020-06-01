@@ -1,7 +1,7 @@
 #!/bin/bash
 
-THREESCALE_DUMP_SCRIPT=/usr/local/bin/3scale-dump.sh
-OUTPUT_FILE=3scale-dump.tar
+THREESCALE_DUMP_SCRIPT="/usr/local/bin/3scale-dump.sh"
+OUTPUT_FILE="3scale-dump.tar"
 
 cat << EOF >&2
 ***WARNING***
