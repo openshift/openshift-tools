@@ -156,8 +156,8 @@ read_obj() {
                 sleep 1.0
 
             else
-                ${COMMAND} ${OBJ} ${YAML} ${INLINE_FILTER} >> ${DUMP_DIR}/${SINGLE_FILE} 2>&1
-                ${COMMAND} ${OBJ} ${YAML} ${INLINE_FILTER} > ${DUMP_DIR}/${NEWDIR}/${OBJ}.yaml 2>&1
+                eval ${COMMAND} ${OBJ} ${YAML} ${INLINE_FILTER} >> ${DUMP_DIR}/${SINGLE_FILE} 2>&1
+                eval ${COMMAND} ${OBJ} ${YAML} ${INLINE_FILTER} > ${DUMP_DIR}/${NEWDIR}/${OBJ}.yaml 2>&1
 
                 sleep 0.5
             fi
