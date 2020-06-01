@@ -18,7 +18,7 @@ DUMP_DIR="${CURRENT_DIR}/3scale_dump-${NOW}"
 DUMP_FILE="3scale-dump.tar"
 
 
-REDACT_SCRIPT="redact_env_vars.py"
+REDACT_SCRIPT="/usr/local/bin/redact_env_vars.py"
 
 #############
 # Functions #
