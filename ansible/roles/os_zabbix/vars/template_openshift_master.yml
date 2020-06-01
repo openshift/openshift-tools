@@ -1385,6 +1385,16 @@ g_template_openshift_master:
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_secret_cert_expiry.asciidoc"
     priority: avg
 
+  - name: "Average API latency to LIST 99 percentile of pods is greater than 1 second for past 10 minutes"
+    expression: "{Template Openshift Master:openshift.master.apiserver.latency.summary.pods.quantile.list.99.avg(10m)}>1000"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_master.asciidoc#210-openshift-master-api-call-latency"
+    priority: warn
+
+  - name: "Average API latency to LIST 90 percentile of pods is greater than 1 second for past 20 minutes"
+    expression: "{Template Openshift Master:openshift.master.apiserver.latency.summary.pods.quantile.list.9.avg(20m)}>1000"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_master.asciidoc#210-openshift-master-api-call-latency"
+    priority: avg
+
   zgraphs:
   - name: Openshift Master API Server Latency Pods LIST Quantiles
     width: 900
