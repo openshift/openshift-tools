@@ -37,7 +37,7 @@ echo "Streaming output file to stdout..." >&2
 cp ${OUTPUT_FILE} /dev/stdout
 
 # cleanup script/output files
-rm ${OUTPUT_FILE} ${THREESCALE_DUMP_SCRIPT}
+rm ${OUTPUT_FILE}
 
 popd > /dev/null
 
