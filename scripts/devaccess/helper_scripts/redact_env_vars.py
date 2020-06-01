@@ -5,7 +5,8 @@ and redacts the values of env vars likely to contain unfiltered passwords
 """
 import sys
 import yaml
-
+#pylint: disable=invalid-name
+#pylint: disable=superfluous-parens
 def find_all_env_lists(obj, modify_fn):
     """Recursive search obj for env lists and call a function for each of the members"""
     if isinstance(obj, dict):
