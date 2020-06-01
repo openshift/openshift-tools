@@ -1,6 +1,6 @@
 #!/bin/bash
 
-THREESCALE_DUMP_SCRIPT=3scale-dump.sh
+THREESCALE_DUMP_SCRIPT=/usr/local/bin/3scale-dump.sh
 OUTPUT_FILE=3scale-dump.tar
 
 cat << EOF >&2
@@ -43,4 +43,3 @@ popd > /dev/null
 
 # cleanup temp folder (only if empty)
 rmdir $TEMP_DIR
-
