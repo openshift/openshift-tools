@@ -24,10 +24,21 @@ g_template_openshift_cluster:
     - OpenShift Cluster
     value_type: float
 
+  - key: openshift.cluster.ssl.renewal
+    description: "The automated SSL renewal has failed for the cluster"
+    applications:
+    - OpenShift Cluster
+    value_type: int
+
   ztriggers:
   - name: "Config loop failed on {HOST.NAME}"
     expression: "{Template OpenShift Cluster:openshift.cluster.configloop.exitcode.min(#3)}>0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_config_loop.asciidoc"
+    priority: high
+
+  - name: "Automated SSL renewal has failed on {HOST.NAME}"
+    expression: "{Template OpenShift Cluster:openshift.cluster.ssl.renewal.last()}>0"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_auto_ssl_renewal.asciidoc"
     priority: high
 
   zdiscoveryrules:
