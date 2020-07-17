@@ -1,127 +1,146 @@
-#!/usr/bin/python2
-import json
+#!/usr/bin/env python2
+"""
+Perform checks on RH SSO
+"""
+
 import sys
-import yaml
 import subprocess
-import os
 import traceback
+import yaml
+
+# pylint: disable=broad-except
+# pylint: disable=no-self-use
 
 class DictQuery(dict):
-  def get(self, path, default = None):
-    keys = path.split("/")
-    val = None
+    """class DictQuery"""
+    def get(self, path, default=None):
+        keys = path.split("/")
+        val = None
 
-    for key in keys:
-      if val:
-        if isinstance(val, list):
-          val = [ v.get(key, default) if v else None for v in val]
-        else:
-          val = val.get(key, default)
-      else:
-        val = dict.get(self, key, default)
+        for key in keys:
+            if val:
+                if isinstance(val, list):
+                    val = [v.get(key, default) if v else None for v in list(val)]
+                else:
+                    val = val.get(key, default)
+            else:
+                val = dict.get(self, key, default)
 
-      if not val:
-        break;
+            if not val:
+                break
 
-    return val
+        return val
 
-class RHMICheckRHSSO(object):
-  def __init__(self):
-    self._results = []
+class RHMICheckRHSSO:
+    """class RHMICheckRHSSO"""
+    def __init__(self):
+        self._results = []
 
-  def oc_run(self, *args):
-    cmd = ("oc",) + args;
+    def oc_run(self, *args):
+        """helper cmd for oc"""
+        cmd = ("oc",) + args
 
-    out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
 
-    return out
+        return out
 
-  def get_rhsso_client_secret(self):
-    val = ""
-    try:
-      val = self.oc_run("get", "secret", "openshift-client-client","-n","openshift-sso","--template","{{.data.secret | base64decode }}")
-    except subprocess.CalledProcessError as e:
-      print >> sys.stderr, "Unable to retrieve client secret for rhsso instance.  oc returned: %s" % (e.output)
-      sys.exit(-1)
+    def get_rhsso_client_secret(self):
+        """get_rhsso_client_secret"""
+        val = ""
+        try:
+            val = self.oc_run("get", "secret", "openshift-client-client",
+                              "-n", "openshift-sso", "--template", "{{.data.secret | base64decode }}")
+        except subprocess.CalledProcessError as exception:
+            sys.stderr.write("Unable to retrieve client secret for rhsso instance."\
+                             " oc returned: %s" % (exception.output))
+            sys.exit(-1)
 
-    return val
+        return val
 
-  def get_masters(self):
-    pods = []
+    def get_masters(self):
+        """get_masters"""
+        pods = []
 
-    try:
-      res = self.oc_run("get", "pod", "-l", "openshift.io/component=api", "--no-headers", "-n", "kube-system", "-o", "custom-columns=:.metadata.name,:.status.hostIP")
+        try:
+            res = self.oc_run("get", "pod", "-l", "openshift.io/component=api",
+                              "--no-headers", "-n", "kube-system", "-o",
+                              "custom-columns=:.metadata.name,:.status.hostIP")
 
-      for line in res.splitlines():
-        pod, node = line.split()
-        pods.append((pod, node))
-    except subprocess.CalledProcessError as e:
-      print >> sys.stderr, "Failed to retrieve list of master api pods.  oc returned: %s" % (e.output)
-      sys.exit(-1)
+            for line in res.splitlines():
+                pod, node = line.split()
+                pods.append((pod, node))
+        except subprocess.CalledProcessError as exception:
+            sys.stderr.write("Failed to retrieve list of master api pods."\
+                             " oc returned: %s" % (exception.output))
+            sys.exit(-1)
 
-    return pods
+        return pods
 
-  def check_config(self):
-    expectedSecret = self.get_rhsso_client_secret()
+    def check_config(self):
+        """check_config"""
+        expected_secret = self.get_rhsso_client_secret()
 
-    masterPods = self.get_masters()
+        master_pods = self.get_masters()
 
-    for pod, node in masterPods:
-      try:
-        masterConfig = self.oc_run("-n","kube-system","exec",pod,"cat","/etc/origin/master/master-config.yaml")
+        for pod, node in master_pods:
+            try:
+                master_config = self.oc_run("-n", "kube-system", "exec", pod, "cat",
+                                            "/etc/origin/master/master-config.yaml")
 
-        y = yaml.safe_load(masterConfig)
+                yaml_data = yaml.safe_load(master_config)
 
-        rhsso = None
+                rhsso = None
 
-        for idp in y["oauthConfig"]["identityProviders"]:
-          if idp["name"] == "rh_sso":
-            rhsso = idp
-            break
+                for idp in yaml_data["oauthConfig"]["identityProviders"]:
+                    if idp["name"] == "rh_sso":
+                        rhsso = idp
+                        break
 
-        if rhsso:
-          provider = "found"
-          providerSecret = DictQuery(rhsso).get("provider/clientSecret", None)
+                if rhsso:
+                    provider = "found"
+                    provider_secret = DictQuery(rhsso).get("provider/clientSecret", None)
 
-          secret = "ok" if providerSecret == expectedSecret else "mismatch"
-        else:
-          provider = "missing"
-          secret = "n/a"
-      except:
-        provider = secret = "fail"
+                    secret = "ok" if provider_secret == expected_secret else "mismatch"
+                else:
+                    provider = "missing"
+                    secret = "n/a"
+            except Exception:
+                provider = secret = "fail"
 
-      self._results.append((node, provider, secret))
+            self._results.append((node, provider, secret))
 
-  def report(self):
-    lineFormat = "%-20s %-10s %-30s"
+    def report(self):
+        """report"""
+        line_format = "%-20s %-10s %-30s"
 
-    # print headers
-    print(lineFormat % ("MASTER_NODE","RHSSO","SECRET"))
+        # print headers
+        print(line_format % ("MASTER_NODE", "RHSSO", "SECRET"))
 
-    rc = 0
-    for node, provider, secret in self._results:
-      print (lineFormat % (node, provider, secret))
-      if secret != "ok":
-        rc = 1
+        return_code = 0
+        for node, provider, secret in self._results:
+            print(line_format % (node, provider, secret))
+            if secret != "ok":
+                return_code = 1
 
-    return rc
+        return return_code
 
-  def main(self):
-    self.check_config()
+    def main(self):
+        """main"""
+        self.check_config()
 
-    realCode = self.report()
+        real_code = self.report()
 
-    # swallow and report the actual return code; otherwise, the devaccess wrapper
-    # would hide any useful error info we printed to STDERR
-    print("overall result: %s" % (("ok" if realCode == 0 else "fail")))
+        # swallow and report the actual return code; otherwise, the devaccess wrapper
+        # would hide any useful error info we printed to STDERR
+        print("overall result: %s" % (("ok" if real_code == 0 else "fail")))
 
 if __name__ == "__main__":
-  code = 0
+    RETURN_CODE = 0
 
-  try:
-    check = RHMICheckRHSSO()
-    check.main()
-  except:
-    traceback.print_exc()
-  finally:
-    sys.exit(code)
+    try:
+        CHECK_SSO = RHMICheckRHSSO()
+        CHECK_SSO.main()
+    except Exception:
+        traceback.print_exc()
+    finally:
+        sys.exit(RETURN_CODE)
