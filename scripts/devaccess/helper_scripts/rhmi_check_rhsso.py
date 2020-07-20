@@ -11,7 +11,7 @@ import yaml
 # pylint: disable=broad-except
 # pylint: disable=no-self-use
 # pylint: disable=superfluous-parens
-# pylint: old-style-class
+# pylint: disable=old-style-class
 
 class DictQuery(dict):
     """class DictQuery"""
@@ -146,3 +146,4 @@ if __name__ == "__main__":
         traceback.print_exc()
     finally:
         sys.exit(RETURN_CODE)
+
