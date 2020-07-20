@@ -10,6 +10,8 @@ import yaml
 
 # pylint: disable=broad-except
 # pylint: disable=no-self-use
+# pylint: disable=superfluous-parens
+# pylint: old-style-class
 
 class DictQuery(dict):
     """class DictQuery"""
