@@ -70,7 +70,7 @@ def testProjects(projects, current_time=None,):
             )
 
             projectDeletionTimestamp = project['metadata']['deletionTimestamp']
-            project_deletion_datetime=datetime.datetime.strptime(projectDeletionTimestamp, "%Y-%m-%dT%H:%M:%SZ")
+            project_deletion_datetime = datetime.datetime.strptime(projectDeletionTimestamp, "%Y-%m-%dT%H:%M:%SZ")
 
             timeDelta = current_time - project_deletion_datetime
             logger.debug('Project in Terminating status for %s', timeDelta.seconds)
