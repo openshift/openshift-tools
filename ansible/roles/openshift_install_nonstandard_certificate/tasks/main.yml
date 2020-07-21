@@ -1,0 +1,22 @@
+---
+- name: Laydown the template
+  template:
+    src: cert_template.j2
+    dest: "{{ osinsc_dest_dir }}/{{ osinsc_cert_name }}"
+    owner: root
+    group: root
+    mode: '0644'
+  register: cert_template
+
+
+- name: master controllers 3.10 and greater
+  command: /usr/local/bin/master-restart controllers controllers
+  when:
+  - cert_template.changed
+  - "{{ osinc_restart_os_services }}"
+
+- name: master api 3.10 and greater
+  command: /usr/local/bin/master-restart api api
+  when:
+  - cert_template.changed
+  - "{{ osinc_restart_os_services }}"
