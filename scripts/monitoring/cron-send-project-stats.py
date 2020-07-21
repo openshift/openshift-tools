@@ -70,11 +70,12 @@ def testProjects(projects, current_time=None,):
             )
 
             projectDeletionTimestamp = project['metadata']['deletionTimestamp']
+            project_deletion_datetime=datetime.datetime.strptime(projectDeletionTimestamp, "%Y-%m-%dT%H:%M:%SZ")
 
-            timeDelta = current_time - projectDeletionTimestamp
+            timeDelta = current_time - project_deletion_datetime
             logger.debug('Project in Terminating status for %s', timeDelta.seconds)
 
-            if current_time > projectDeletionTimestamp:
+            if current_time > project_deletion_datetime:
                 maxDelta = max(maxDelta, timeDelta.seconds)
             else:
                 logger.warning('current_time <= projectDeletionTimestamp')
