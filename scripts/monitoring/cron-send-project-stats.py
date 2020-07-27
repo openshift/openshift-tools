@@ -19,10 +19,11 @@ import datetime
 # In the future we might move this to a container where these
 # libs might exist
 # pylint: disable=import-error
+
+import logging
 from openshift_tools.monitoring.ocutil import OCUtil
 from openshift_tools.monitoring.metric_sender import MetricSender
 
-import logging
 logging.basicConfig(
     format='%(asctime)s - %(relativeCreated)6d - %(levelname)-8s - %(message)s',
 )
@@ -70,11 +71,12 @@ def testProjects(projects, current_time=None,):
             )
 
             projectDeletionTimestamp = project['metadata']['deletionTimestamp']
+            project_deletion_datetime = datetime.datetime.strptime(projectDeletionTimestamp, "%Y-%m-%dT%H:%M:%SZ")
 
-            timeDelta = current_time - projectDeletionTimestamp
+            timeDelta = current_time - project_deletion_datetime
             logger.debug('Project in Terminating status for %s', timeDelta.seconds)
 
-            if current_time > projectDeletionTimestamp:
+            if current_time > project_deletion_datetime:
                 maxDelta = max(maxDelta, timeDelta.seconds)
             else:
                 logger.warning('current_time <= projectDeletionTimestamp')
