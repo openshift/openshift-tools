@@ -153,8 +153,10 @@ spec:
               node.openshift.io/last-transition-time="$( date +%Y-%m-%d-%H:%M:%S )" --overwrite
             fi
             # annotate node with md5sum of the config
-            oc annotate --config=/etc/origin/node/node.kubeconfig "node/${NODE_NAME}" \
-              node.openshift.io/md5sum="$( cat /tmp/.new | cut -d' ' -f1 )" --overwrite
+            if ! oc annotate --config=/etc/origin/node/node.kubeconfig "node/${NODE_NAME}" \
+              node.openshift.io/md5sum="$( cat /tmp/.new | cut -d' ' -f1 )" --overwrite; then
+                echo "error: annotate node failed"
+            fi
             sleep 180 &
             wait $!
           done
