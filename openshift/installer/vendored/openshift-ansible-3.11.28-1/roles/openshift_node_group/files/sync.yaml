@@ -60,7 +60,7 @@ spec:
 
           # track the current state of the config
           if [[ -f /etc/origin/node/node-config.yaml ]]; then
-            md5sum /etc/origin/node/node-config.yaml > /tmp/.old
+            md5sum /etc/origin/node/node-config.yaml | cut -d' ' -f1 > /tmp/.old
           else
             touch /tmp/.old
           fi
@@ -119,7 +119,7 @@ spec:
             fi
 
             # detect whether the node-config.yaml has changed, and if so trigger a restart of the kubelet.
-            md5sum /etc/origin/node/tmp/node-config.yaml > /tmp/.new
+            md5sum /etc/origin/node/tmp/node-config.yaml | cut -d' ' -f1 > /tmp/.new
             if [[ "$( cat /tmp/.old )" != "$( cat /tmp/.new )" ]]; then
               mv /etc/origin/node/tmp/node-config.yaml /etc/origin/node/node-config.yaml
               echo "info: Configuration changed, restarting kubelet" 2>&1
@@ -148,11 +148,13 @@ spec:
                 wait $!
                 continue
               fi
+              else
+                oc annotate --config=/etc/origin/node/node.kubeconfig "node/${NODE_NAME}" \
+              node.openshift.io/last-transition-time="$( date +%Y-%m-%d-%H:%M:%S )" --overwrite
             fi
             # annotate node with md5sum of the config
             oc annotate --config=/etc/origin/node/node.kubeconfig "node/${NODE_NAME}" \
               node.openshift.io/md5sum="$( cat /tmp/.new | cut -d' ' -f1 )" --overwrite
-            cp -f /tmp/.new /tmp/.old
             sleep 180 &
             wait $!
           done
