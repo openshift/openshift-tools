@@ -1,6 +1,6 @@
 Summary:       OpenShift Tools Scripts
 Name:          openshift-tools-scripts
-Version:       0.1.203
+Version:       0.1.204
 Release:       1%{?dist}
 License:       ASL 2.0
 URL:           https://github.com/openshift/openshift-tools
@@ -524,6 +524,28 @@ OpenShift Tools cicd scripts
 /usr/bin/verify-gather-logs-operations.py
 
 %changelog
+* Tue Jul 28 2020 Blair Morrison <bmorriso@redhat.com> 0.1.204-1
+- OSD-3776: fix for script cron-send-project-stats for v3 monitoring.
+  (bmorriso@redhat.com)
+- Update scripts/devaccess/helper_scripts/rhmi_3scale_dump.sh
+  (matt.bargenquast@gmail.com)
+- Update scripts/devaccess/helper_scripts/rhmi_3scale_dump.sh
+  (jsarnovsky@redhat.com)
+- Update scripts/devaccess/helper_scripts/3scale-dump.sh
+  (jsarnovsky@redhat.com)
+- Update scripts/devaccess/helper_scripts/3scale-dump.sh
+  (jsarnovsky@redhat.com)
+- Update scripts/devaccess/helper_scripts/rhmi_3scale_dump.sh
+  (jsarnovsky@redhat.com)
+- Update scripts/devaccess/helper_scripts/redact_env_vars.py
+  (jsarnovsky@redhat.com)
+- addressed linting issues (jsarnovsky@redhat.com)
+- bundled 3scale-dump.sh, redact probable password env vars
+  (jsarnovsky@redhat.com)
+- refactor to use bundled copy of 3scale-dump.sh script with security and
+  scriptability improvements (jsarnovsky@redhat.com)
+- wrap 3scale dump for rhmi (jsarnovsky@redhat.com)
+
 * Tue Apr 14 2020 mrbarge <mbargenq@redhat.com> 0.1.203-1
 - 3.11 fixes for event watcher monitor OSD-3225
 
