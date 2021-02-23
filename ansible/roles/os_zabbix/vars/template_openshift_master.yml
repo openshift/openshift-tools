@@ -1027,7 +1027,7 @@ g_template_openshift_master:
     priority: high
 
   - name: "dnsmasq failed on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.dnsmasq.curl.status.min(#3)}=0 or {Template Openshift Master:openshift.master.dnsmasq.service.status.min(#3)}=0"
+    expression: "{Template Openshift Master:openshift.master.dnsmasq.curl.status.sum(#6)}<=3 or {Template Openshift Master:openshift.master.dnsmasq.service.status.min(#3)}=0"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_dnsmasq.asciidoc"
     priority: high
 
@@ -1097,13 +1097,6 @@ g_template_openshift_master:
     - "Openshift Master process not running on {HOST.NAME}"
     priority: avg
 
-  - name: "Service IP returned non-200 HTTP status on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.app.create.service_http_failed.last(#1)}=1 and {Template Openshift Master:openshift.master.app.create.service_http_failed.last(#2)}=1"
-    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_create_app.asciidoc"
-    dependencies:
-    - "Openshift Master process not running on {HOST.NAME}"
-    priority: avg
-
   - name: "Application creation has failed multiple times in the last hour on {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.app.create.sum(1h)}>3"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_create_app.asciidoc"
@@ -1114,21 +1107,13 @@ g_template_openshift_master:
 
   # The app-create check runs every 10 minutes + an additional 2 times per hour.
   # Over the course of an hour, it has run 8 times and provided 8 values for route_http_failed.
-  # This trigger will alert if 2 or more of the last 5 runs have failed.
+  # This trigger will alert if 3 or more of the last 6 runs have failed.
   - name: "Route has returned non-200 HTTP code multiple times in the last hour on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.app.create.route_http_failed.sum(#5)}>=2"
+    expression: "{Template Openshift Master:openshift.master.app.create.route_http_failed.sum(#6)}>=3"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_create_app.asciidoc"
     dependencies:
     - "Openshift Master process not running on {HOST.NAME}"
-    description: The app-create route curl check failed 2 out of the last 5 times.
-    priority: high
-
-  - name: "Service IP has returned non-200 HTTP code multiple times in the last hour on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.app.create.service_http_failed.sum(#5)}>=2"
-    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_create_app.asciidoc"
-    dependencies:
-    - "Openshift Master process not running on {HOST.NAME}"
-    description: The app-create service curl check failed 2 out of the last 5 times.
+    description: The app-create route curl check failed 3 out of the last 6 times.
     priority: high
 
   - name: "Application with build creation has failed multiple times in the last 2 hour on {HOST.NAME}"
