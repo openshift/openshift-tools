@@ -7,18 +7,6 @@ g_template_heartbeat:
     - Heartbeat
     key: heartbeat.ping
   ztriggers:
-  - name: "Heartbeat.ping has failed (5min) on {HOST.NAME}"
-    expression: "{Template Heartbeat:heartbeat.ping.nodata(5m)}=1"
-    priority: avg
-    status: disabled
-    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_node_heartbeat.asciidoc"
-
-  - name: "Heartbeat.ping has failed 15 min on {HOST.NAME}"
-    expression: "{Template Heartbeat:heartbeat.ping.nodata(15m)}=1"
-    priority: avg
-    status: disabled
-    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/check_node_heartbeat.asciidoc"
-
   - name: "Heartbeat.ping has failed (10min) on {HOST.NAME}"
     expression: "{Template Heartbeat:heartbeat.ping.nodata(10m)}=1"
     priority: avg
