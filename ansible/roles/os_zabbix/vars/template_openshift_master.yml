@@ -1248,8 +1248,8 @@ g_template_openshift_master:
     priority: high
 
   - name: "Node flapping NotReady status on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.nodesnotready.count(1h,0,gt)}>5"
-    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_node_not_ready.asciidoc"
+    expression: "{Template Openshift Master:openshift.master.nodesnotready.count.count(1h,0,gt)}>5"
+    url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_node_flapping_not_ready.asciidoc"
     dependencies:
     - "Openshift Master process not running on {HOST.NAME}"
     priority: info
