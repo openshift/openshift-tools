@@ -71,7 +71,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='OpenShift app create end-to-end test')
     parser.add_argument('-v', '--verbose', action='store_true', default=None, help='Verbose?')
-    parser.add_argument('--source', default="openshift/hello-openshift:v1.0.6",
+    parser.add_argument('--source', default="quay.io/openshift-sre/hello-openshift:v1.0.6",
                         help='source application to use')
     parser.add_argument('--basename', default="test", help='base name, added to via openshift')
     parser.add_argument('--loopcount', default="36",
