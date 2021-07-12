@@ -723,6 +723,15 @@ g_template_openshift_master:
     applications:
     - Openshift Master
 
+  - key: openshift.master.nodesnotready.flap
+    description: "Count of nodes in NotReady status has changed from 0 to 1"
+    value_type: int
+    zabbix_type: calculated
+    interval: 60
+    params: "diff(\"openshift.master.nodesnotready.count\")"
+    applications:
+    - Openshift Master
+
   - key: openshift.master.api.process.cpu
     description: Show openshift master api process cpu usage
     value_type: float
@@ -1247,12 +1256,10 @@ g_template_openshift_master:
     - "Openshift Master process not running on {HOST.NAME}"
     priority: high
 
-  - name: "Node flapping NotReady status on {HOST.NAME}"
-    expression: "{Template Openshift Master:openshift.master.nodesnotready.count.count(1h,0,gt)}>5"
+  - name: "Node flapping NotReady status more than 5 times in the last hour on {HOST.NAME}"
+    expression: "{Template Openshift Master:openshift.master.nodesnotready.flap.count(1h,0,gt)}>5"
     url: "https://github.com/openshift/ops-sop/blob/master/v3/alerts/openshift_node_flapping_not_ready.asciidoc"
-    dependencies:
-    - "Openshift Master process not running on {HOST.NAME}"
-    priority: info
+    priority: high
 
   - name: "Hosts not labeled according to {HOST.NAME}"
     expression: "{Template Openshift Master:openshift.master.nodesnotlabeled.count.min(#2)}>0"
