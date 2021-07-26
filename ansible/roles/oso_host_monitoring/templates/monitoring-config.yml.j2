@@ -301,7 +301,7 @@ host_monitoring_cron:
 
 - name: check volumes snapshot tags
   hour: "*/3"
-  job: "ops-runner -f -t 1300 -s 120 -n csca.openshift.master.volume.snapshot.tags /usr/bin/cron-send-snapshots-tags-check  --aws-creds-profile snapshotter --region {{ osohm_region }} &>> /var/log/snaptshots_tags.log"
+  job: "ops-runner -f -t 1300 -s 120 -n csca.openshift.master.volume.snapshot.tags /usr/bin/cron-send-snapshots-tags-check  --aws-creds-profile snapshotter --region {{ osohm_region }} &>> /var/log/snapshots_tags.log"
 {% endif %}
 {% endif %}
 

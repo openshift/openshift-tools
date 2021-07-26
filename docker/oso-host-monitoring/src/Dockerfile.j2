@@ -119,6 +119,8 @@ RUN mkdir -p /var/local/rkhunter_chroot \
 # Ansible startup configuration playbook
 COPY root /root
 
+COPY logrotate_configs/ /etc/logrotate.d
+
 RUN cat bash_aliases >> /root/.bashrc
 
 # FIXME: These are vendor libs that need to be packaged and installed via RPM.

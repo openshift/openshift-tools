@@ -1,0 +1,8 @@
+/var/log/create_app.log {
+    daily
+    notifempty
+    create 640 root root
+    compress
+    missingok
+    maxage 5
+}
