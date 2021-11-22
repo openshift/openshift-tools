@@ -40,4 +40,6 @@
     sslverify: "{{ item.sslverify | default(1) }}"
     sslclientkey: "{{ item.sslclientkey | default(omit) }}"
     sslclientcert: "{{ item.sslclientcert | default(omit) }}"
+    username: "{{ item.username | default(omit) }}"
+    password: "{{ item.password | default(omit) }}"
   with_items: "{{ yr_yum_repo_list }}"
