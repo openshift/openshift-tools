@@ -325,28 +325,40 @@ class DeleteUser(object):
                 self.check_user(aws_account, args.user, client)
 
         elif args.all and args.user:
+            failed_aws_accounts = []
 
             for aws_account in ops_accounts:
-                matching = [s for s in ops_accounts if aws_account in s]
-                account_number = matching[0].split(':')[1]
-                client = self.get_token(account_number, 'iam', args.user)
+                try:
+                    matching = [s for s in ops_accounts if aws_account in s]
+                    account_number = matching[0].split(':')[1]
+                    client = self.get_token(account_number, 'iam', args.user)
 
-                existing_keys = self.get_keys(args.user, client, aws_account)
+                    existing_keys = self.get_keys(args.user, client, aws_account)
 
-                if existing_keys:
-                    for key in existing_keys:
-                        self.delete_key(aws_account, args.user, key, client)
+                    if existing_keys:
+                        for key in existing_keys:
+                            self.delete_key(aws_account, args.user, key, client)
 
 
-                user_client = self.get_token(account_number, 'user', args.user)
+                    user_client = self.get_token(account_number, 'user', args.user)
 
-                policy_list = self.get_policies(aws_account, args.user, client)
+                    policy_list = self.get_policies(aws_account, args.user, client)
 
-                if policy_list:
-                    for policy in policy_list:
-                        self.detach_policy(args.user, user_client, policy)
+                    if policy_list:
+                        for policy in policy_list:
+                            self.detach_policy(args.user, user_client, policy)
 
-                self.check_user(aws_account, args.user, client)
+                    self.check_user(aws_account, args.user, client)
+                except Exception as e:
+                    failed_aws_accounts.append(aws_account)
+                    print(e)
+
+            if failed_aws_accounts:
+                print('FAILED TO REMOVE THE USER ON THE FOLLOWING ACCOUNTS:\n  ' + '\n  '.join(failed_aws_accounts))
+                successful_aws_accounts = [aws_account for aws_account in ops_accounts if aws_account not in failed_aws_accounts]
+                if successful_aws_accounts:
+                    print('But the removal was sucessfully processed on the following accounts:\n  ' + '\n  '.join(successful_aws_accounts))
+                sys.exit(1)
 
         else:
             raise ValueError('No suitable arguments provided.')
