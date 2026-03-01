@@ -205,6 +205,8 @@ roles:
         - http://169.254.169.254/latest/meta-data/instance-type
     - base: rhmi_3scale_dump.sh
       runner: sudo_command
+    - base: rhmi_check_rhsso.py
+      runner: sudo_command
 
 - name: nobody_role
   commands:
