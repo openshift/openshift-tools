@@ -335,6 +335,7 @@ openshift_management_install_management=false
 
 # Openshift Logging
 {% if obg_install_logging %}
+openshift_logging_install_logging=true
 openshift_hosted_logging_deploy=true
 openshift_logging_install_logging=true
 openshift_hosted_logging_elasticsearch_cluster_size=2
@@ -352,12 +353,14 @@ openshift_logging_kibana_cert={{ obg_logging_kibana_cert }}
 openshift_logging_kibana_key={{ obg_logging_kibana_key }}
 openshift_logging_kibana_ca={{ obg_logging_kibana_ca }}
 {% else %}
+openshift_logging_install_logging=false
 openshift_hosted_logging_deploy=false
 {# END Openshift Logging #}
 {% endif %}
 
 # Openshift Metrics
 {% if obg_install_metrics %}
+openshift_metrics_install_metrics=true
 openshift_hosted_metrics_deploy=true
 openshift_metrics_install_metrics=true
 openshift_hosted_metrics_storage_kind=dynamic
@@ -373,6 +376,7 @@ openshift_metrics_hawkular_ca={{ obg_metrics_hawkular_ca }}
 openshift_metrics_hawkular_cert={{ obg_metrics_hawkular_cert }}
 openshift_metrics_hawkular_key={{ obg_metrics_hawkular_key }}
 {% else %}
+openshift_metrics_install_metrics=false
 openshift_hosted_metrics_deploy=false
 {# END Openshift Metrics #}
 {% endif %}
